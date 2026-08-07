@@ -1,0 +1,13 @@
+# Template only: replace placeholder handles with real GitHub teams or users.
+* @fixnow/maintainers
+
+/mobile/ @fixnow/mobile
+/backend/ @fixnow/backend
+/admin/ @fixnow/admin
+/shared/ @fixnow/platform
+/infrastructure/ @fixnow/platform @fixnow/security
+/ai/ @fixnow/ai @fixnow/security
+/docs/ @fixnow/maintainers
+/.github/ @fixnow/maintainers
+/AGENTS.md @fixnow/maintainers
+/CLAUDE.md @fixnow/maintainers

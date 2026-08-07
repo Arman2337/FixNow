@@ -1,0 +1,82 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Operating systems and editors
+.DS_Store
+Thumbs.db
+Desktop.ini
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.swp
+*.swo
+*~
+
+# Logs, coverage, and temporary files
+*.log
+logs/
+coverage/
+.coverage
+htmlcov/
+.cache/
+.tmp/
+tmp/
+temp/
+
+# Node.js / TypeScript (backend and admin)
+node_modules/
+.npm/
+.pnpm-store/
+.yarn/cache/
+.yarn/install-state.gz
+dist/
+build/
+.next/
+out/
+.turbo/
+*.tsbuildinfo
+
+# Flutter / Dart (mobile)
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+**/doc/api/
+**/ios/Flutter/.last_build_id
+**/android/.gradle/
+**/android/local.properties
+**/GeneratedPluginRegistrant.*
+
+# Python (AI tooling)
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Infrastructure and IaC
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+crash.log
+crash.*.log
+*.tfplan
+.serverless/
+.aws-sam/
+
+# Generated artifacts
+artifacts/
+reports/

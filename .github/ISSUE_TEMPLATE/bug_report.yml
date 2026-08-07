@@ -1,0 +1,55 @@
+name: Bug report
+description: Report reproducible incorrect behavior
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: "Do not report security vulnerabilities here. Follow SECURITY.md instead."
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options: [Mobile, Backend, Admin, Shared, Infrastructure, AI, Documentation, Other]
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Explain what happened and what you expected.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      placeholder: "1. ...\n2. ...\n3. ..."
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Add sanitized logs, screenshots, or a minimal reproduction.
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      placeholder: v1.2.3 or commit SHA
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, browser/device, runtime versions, and relevant configuration without secrets.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched for an existing issue.
+          required: true
+        - label: I removed secrets and sensitive data.
+          required: true
+        - label: This is not a security vulnerability.
+          required: true

@@ -1,0 +1,14 @@
+#!/bin/sh
+set -eu
+
+branch="$(git symbolic-ref --quiet --short HEAD 2>/dev/null || true)"
+
+if [ "$branch" = "main" ]; then
+  printf '%s\n' \
+    'ERROR: Direct commits to main are prohibited.' \
+    'Create a branch first, for example:' \
+    '  git switch -c chore/short-description' >&2
+  exit 1
+fi
+
+exit 0

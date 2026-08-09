@@ -17,15 +17,16 @@ import { ConfigService } from '@nestjs/config';
           store = await redisStore({
             url,
             socket: {
-              reconnectStrategy: (retries: number) => Math.min(retries * 50, 2000),
+              reconnectStrategy: (retries: number) =>
+                Math.min(retries * 50, 2000),
               connectTimeout: 5000,
             },
           });
-        } catch (error) {
+        } catch {
           // Fallback if module is missing or connection fails synchronously
           store = 'memory';
         }
-        
+
         return {
           store,
           ttl: 60 * 1000, // Default TTL 60 seconds

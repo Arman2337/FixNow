@@ -8,7 +8,7 @@ import { EnvironmentVariables } from '../config/env.validation';
     PinoLoggerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: async (configService: ConfigService<EnvironmentVariables>) => {
+      useFactory: (configService: ConfigService<EnvironmentVariables>) => {
         const isProduction = configService.get('NODE_ENV') === 'production';
         return {
           pinoHttp: {

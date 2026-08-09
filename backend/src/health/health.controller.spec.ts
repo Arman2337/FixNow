@@ -4,12 +4,10 @@ import { HealthCheckService, TypeOrmHealthIndicator } from '@nestjs/terminus';
 
 describe('HealthController', () => {
   let controller: HealthController;
-  let healthCheckService: HealthCheckService;
+  const check = jest.fn();
 
   beforeEach(async () => {
-    const mockHealthCheckService = {
-      check: jest.fn(),
-    };
+    const mockHealthCheckService = { check };
 
     const mockTypeOrmHealthIndicator = {
       pingCheck: jest.fn(),
@@ -30,7 +28,7 @@ describe('HealthController', () => {
     }).compile();
 
     controller = module.get<HealthController>(HealthController);
-    healthCheckService = module.get<HealthCheckService>(HealthCheckService);
+    jest.clearAllMocks();
   });
 
   it('should be defined', () => {
@@ -53,10 +51,10 @@ describe('HealthController', () => {
         error: {},
         details: { database: { status: 'up' } },
       };
-      (healthCheckService.check as jest.Mock).mockResolvedValue(mockResult);
+      check.mockResolvedValue(mockResult);
 
       const result = await controller.checkReadiness();
-      expect(healthCheckService.check).toHaveBeenCalled();
+      expect(check).toHaveBeenCalled();
       expect(result).toEqual(mockResult);
     });
   });

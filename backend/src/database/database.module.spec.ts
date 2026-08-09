@@ -1,31 +1,18 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { DatabaseModule } from './database.module';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigService } from '@nestjs/config';
+import { createDatabaseOptions } from './database.module';
 
-describe('DatabaseModule', () => {
-  let module: TestingModule;
+describe('database configuration', () => {
+  it('builds safe options without opening a database connection', () => {
+    const get = jest.fn().mockReturnValue('postgresql://test-host/fixnow_test');
+    const configService = { get } as unknown as ConfigService;
 
-  beforeEach(async () => {
-    // We mock the database module compilation without actual connection
-    // to ensure our provider configuration and injection works.
-    module = await Test.createTestingModule({
-      imports: [
-        ConfigModule.forRoot({
-          isGlobal: true,
-          ignoreEnvFile: true,
-          ignoreEnvVars: true,
-          load: [
-            () => ({
-              DATABASE_URL: 'postgresql://fixnow:replace-me@localhost:5432/fixnow',
-            }),
-          ],
-        }),
-        DatabaseModule,
-      ],
-    }).compile();
-  });
-
-  it('should be defined', () => {
-    expect(module).toBeDefined();
+    expect(createDatabaseOptions(configService)).toEqual({
+      type: 'postgres',
+      url: 'postgresql://test-host/fixnow_test',
+      autoLoadEntities: true,
+      synchronize: false,
+      migrationsRun: false,
+    });
+    expect(get).toHaveBeenCalledWith('DATABASE_URL');
   });
 });

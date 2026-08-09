@@ -1,42 +1,35 @@
+import { ArgumentsHost, HttpException, HttpStatus } from '@nestjs/common';
+import { HttpAdapterHost } from '@nestjs/core';
+import { Logger } from 'nestjs-pino';
 import { AllExceptionsFilter } from './all-exceptions.filter';
-import { HttpException, HttpStatus } from '@nestjs/common';
 
 describe('AllExceptionsFilter', () => {
-  let filter: AllExceptionsFilter;
-  let mockHttpAdapterHost: any;
-  let mockLogger: any;
-  let mockArgumentsHost: any;
-  let mockHttpAdapter: any;
-
-  beforeEach(() => {
-    mockHttpAdapter = {
+  const reply = jest.fn();
+  const loggerError = jest.fn();
+  const argumentsHost = {
+    switchToHttp: jest.fn().mockReturnValue({
+      getRequest: jest.fn(),
+      getResponse: jest.fn(),
+    }),
+  } as unknown as ArgumentsHost;
+  const httpAdapterHost = {
+    httpAdapter: {
       getRequestUrl: jest.fn().mockReturnValue('/test-url'),
-      reply: jest.fn(),
-    };
+      reply,
+    },
+  } as unknown as HttpAdapterHost;
+  const logger = { error: loggerError } as unknown as Logger;
+  const filter = new AllExceptionsFilter(httpAdapterHost, logger);
 
-    mockHttpAdapterHost = {
-      httpAdapter: mockHttpAdapter,
-    };
+  beforeEach(() => jest.clearAllMocks());
 
-    mockLogger = {
-      error: jest.fn(),
-    };
+  it('formats an HttpException without logging it as an internal error', () => {
+    filter.catch(
+      new HttpException('Bad Request', HttpStatus.BAD_REQUEST),
+      argumentsHost,
+    );
 
-    filter = new AllExceptionsFilter(mockHttpAdapterHost, mockLogger);
-
-    mockArgumentsHost = {
-      switchToHttp: jest.fn().mockReturnValue({
-        getRequest: jest.fn(),
-        getResponse: jest.fn(),
-      }),
-    };
-  });
-
-  it('should format HttpException correctly', () => {
-    const exception = new HttpException('Bad Request', HttpStatus.BAD_REQUEST);
-    filter.catch(exception, mockArgumentsHost);
-
-    expect(mockHttpAdapter.reply).toHaveBeenCalledWith(
+    expect(reply).toHaveBeenCalledWith(
       undefined,
       expect.objectContaining({
         statusCode: HttpStatus.BAD_REQUEST,
@@ -45,15 +38,30 @@ describe('AllExceptionsFilter', () => {
       }),
       HttpStatus.BAD_REQUEST,
     );
-    // Should not log expected http exceptions as standard errors
-    expect(mockLogger.error).not.toHaveBeenCalled();
+    expect(loggerError).not.toHaveBeenCalled();
   });
 
-  it('should format unknown exceptions as 500 Internal Server Error and log them', () => {
-    const exception = new Error('Database connection failed');
-    filter.catch(exception, mockArgumentsHost);
+  it('preserves safe validation message arrays', () => {
+    filter.catch(
+      new HttpException(
+        { message: ['name is required'] },
+        HttpStatus.BAD_REQUEST,
+      ),
+      argumentsHost,
+    );
 
-    expect(mockHttpAdapter.reply).toHaveBeenCalledWith(
+    expect(reply).toHaveBeenCalledWith(
+      undefined,
+      expect.objectContaining({ message: ['name is required'] }),
+      HttpStatus.BAD_REQUEST,
+    );
+  });
+
+  it('hides and logs unknown exceptions', () => {
+    const exception = new Error('Database connection failed');
+    filter.catch(exception, argumentsHost);
+
+    expect(reply).toHaveBeenCalledWith(
       undefined,
       expect.objectContaining({
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -62,7 +70,6 @@ describe('AllExceptionsFilter', () => {
       }),
       HttpStatus.INTERNAL_SERVER_ERROR,
     );
-    // Should log unexpected internal errors
-    expect(mockLogger.error).toHaveBeenCalledWith(exception);
+    expect(loggerError).toHaveBeenCalledWith(exception);
   });
 });

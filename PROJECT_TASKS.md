@@ -31,14 +31,14 @@ Only these statuses are valid. A task cannot be completed while required validat
 
 # Project Progress
 
-Total Tasks: 72
-Completed: 22
+Total Tasks: 73
+Completed: 25
 In Progress: 0
 Blocked: 0
-Pending: 52
+Pending: 48
 Cancelled: 0
-Current Phase: Phase 1 — Project Architecture
-Next Recommended Task: FN-017 — Initialize Backend Application
+Current Phase: Phase 3 — Authentication & Users
+Next Recommended Task: FN-024 — Implement Customer Authentication
 
 # Current Work
 
@@ -919,7 +919,7 @@ PR: Pending
 # Phase 3 — Authentication & Users
 
 ## FN-023 — Create User and Identity Data Model
-Status: ⬜ Pending
+Status: ✅ Completed
 Priority: P1 — High
 Area: Backend/Identity
 Depends On: FN-013, FN-019, FN-021
@@ -932,7 +932,7 @@ Model users, identities, roles, account states, and audit fields.
 ### Do Not
 - Do not store plaintext secrets or implement login.
 ### Acceptance Criteria
-- [ ] Constraints, lifecycle states, migration rollback, and repository tests pass.
+- [x] Constraints, lifecycle states, migration rollback, and repository tests pass.
 ### Validation
 ```bash
 # Run backend checks plus identity migration and repository tests.
@@ -942,12 +942,13 @@ Model users, identities, roles, account states, and audit fields.
 backend/src/users/ backend/migrations/
 ```
 ### Notes
-None.
+Implemented user, external identity, role, and role-assignment entities; explicit lifecycle transitions with audit reasons; a reversible migration; and unit/boundary/integration tests. Validated migration apply, schema constraints, rollback to zero identity tables, forward reapply, repository persistence, and unique external identity enforcement against disposable PostgreSQL 16. Full backend lint, unit tests, integration tests, and build pass.
+
 ### Completion Record
-Completed By:
-Completed Date:
-Commit:
-PR:
+Completed By: Codex
+Completed Date: 2026-08-09
+Commit: Pending
+PR: Pending
 
 ## FN-024 — Implement Customer Registration and Login
 Status: ⬜ Pending
@@ -1264,7 +1265,7 @@ PR:
 # Phase 5 — Customer Mobile Foundation
 
 ## FN-034 — Initialize Flutter Mobile Application
-Status: ⬜ Pending
+Status: ✅ Completed
 Priority: P1 — High
 Area: Mobile
 Depends On: FN-010, FN-011, FN-014
@@ -1277,7 +1278,7 @@ Initialize the approved Flutter application for customer and provider roles.
 ### Do Not
 - Do not implement authentication, booking, or final screens.
 ### Acceptance Criteria
-- [ ] App runs, `flutter analyze` passes, and default tests pass.
+- [x] App runs, `flutter analyze` passes, and default tests pass.
 ### Validation
 ```bash
 flutter pub get
@@ -1289,12 +1290,12 @@ flutter test
 mobile/
 ```
 ### Notes
-Flutter must be explicitly approved and recorded before initialization.
+Flutter was explicitly approved by the user and recorded in ADR-0009 before initialization. The minimal Android/iOS scaffold uses validated non-secret compile-time environments and intentionally defers navigation, authentication, booking, and final screens. Work remained on `feat/user-identity-model` at the user's explicit direction instead of the listed task branch.
 ### Completion Record
-Completed By:
-Completed Date:
-Commit:
-PR:
+Completed By: Codex
+Completed Date: 2026-08-09
+Commit: Pending
+PR: Pending
 
 ## FN-035 — Establish Mobile Navigation, State, and Design System
 Status: ⬜ Pending
@@ -2340,6 +2341,43 @@ Completed By:
 Completed Date:
 Commit:
 PR:
+
+## FN-073 — Repair Backend Validation Baseline
+Status: ✅ Completed
+Priority: P1 — High
+Area: Backend/Quality
+Depends On: FN-017
+Branch: fix/backend-validation-baseline
+
+### Objective
+Restore deterministic, environment-isolated backend lint and test validation.
+### Scope
+- Resolve existing backend ESLint violations without weakening rules.
+- Isolate database module tests from developer PostgreSQL credentials and document the integration-test database setup.
+### Do Not
+- Do not weaken lint rules, embed credentials, or require a shared/production database.
+### Acceptance Criteria
+- [x] Backend lint passes without unrelated formatter churn.
+- [x] Backend unit tests pass without connecting to a developer database.
+- [x] The isolated PostgreSQL integration-test setup is documented and can validate migration up/down behavior.
+### Validation
+```bash
+cd backend
+npm run lint
+npm test -- --runInBand
+npm run build
+```
+### Files / Areas
+```text
+backend/src/cache/ backend/src/common/ backend/src/config/ backend/src/database/ backend/src/health/ backend/src/logging/ backend/test/ backend/README.md
+```
+### Notes
+Discovered while validating FN-023. Replaced the database module's connection-coupled unit test with pure configuration validation, corrected typed lint failures, and documented disposable loopback-only PostgreSQL migration validation. Required lint, unit test, and build commands pass.
+### Completion Record
+Completed By: Codex
+Completed Date: 2026-08-09
+Commit: Pending
+PR: Pending
 
 # Phase 15 — Deployment
 

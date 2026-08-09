@@ -8,9 +8,17 @@ import { DatabaseModule } from './database/database.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { RedisCacheModule } from './cache/cache.module';
 import { HealthModule } from './health/health.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
-  imports: [AppConfigModule, AppLoggerModule, DatabaseModule, RedisCacheModule, HealthModule],
+  imports: [
+    AppConfigModule,
+    AppLoggerModule,
+    DatabaseModule,
+    RedisCacheModule,
+    HealthModule,
+    UsersModule,
+  ],
   controllers: [AppController],
   providers: [
     AppService,

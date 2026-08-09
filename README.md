@@ -2,21 +2,21 @@
 
 FixNow is a planned multi-surface platform with a mobile client, backend services, an administrative web application, shared contracts, infrastructure definitions, and AI capabilities.
 
-This repository currently contains only the engineering foundation. No Flutter, NestJS, Next.js, infrastructure, or AI application code has been generated.
+This repository contains the engineering foundation, an initial NestJS backend foundation, and a minimal Flutter mobile application foundation. Product features remain tracked in `PROJECT_TASKS.md`; no authentication, booking, admin, infrastructure deployment, or AI product capability should be inferred from the scaffolds.
 
 ## Repository layout
 
 | Path | Intended ownership |
 | --- | --- |
-| `mobile/` | Future Flutter mobile application |
-| `backend/` | Future NestJS services and APIs |
+| `mobile/` | Flutter mobile application foundation |
+| `backend/` | NestJS backend foundation |
 | `admin/` | Future Next.js administration application |
 | `shared/` | Cross-project contracts, schemas, and tooling |
 | `infrastructure/` | Deployment and infrastructure-as-code definitions |
 | `ai/` | AI services, evaluation assets, and supporting tools |
 | `docs/` | Architecture, workflow, and engineering documentation |
 
-Each empty project directory contains a `.gitkeep` file so Git preserves the intended structure. Replace it when real files are introduced.
+Uninitialized project directories contain a `.gitkeep` file so Git preserves the intended structure. Replace it when real files are introduced.
 
 ## Getting started
 
@@ -38,6 +38,20 @@ Each empty project directory contains a `.gitkeep` file so Git preserves the int
 
 Technology-specific setup will be added when each application is bootstrapped.
 
+### Mobile foundation
+
+Install the supported stable Flutter SDK, then run:
+
+```bash
+cd mobile
+flutter pub get
+flutter analyze
+flutter test
+flutter run --dart-define=APP_ENV=development
+```
+
+See [`mobile/README.md`](mobile/README.md) for supported environments and platform prerequisites.
+
 ## Development rules
 
 - Never commit directly to `main`; the pre-commit hook enforces this locally.
@@ -58,7 +72,7 @@ Technology-specific setup will be added when each application is bootstrapped.
 
 ## Status
 
-Foundation only. Product implementation is intentionally out of scope for this initial revision.
+Foundation phase. The backend and mobile directories contain validated application scaffolds; product workflows remain pending.
 
 ## License
 

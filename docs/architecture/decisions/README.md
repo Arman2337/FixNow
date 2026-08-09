@@ -26,3 +26,4 @@ Start with [`0000-template.md`](0000-template.md).
 - [ADR-0006: Use transactional outbox events and WebSocket projections](0006-use-outbox-events-and-websocket-projections.md) — Accepted
 - [ADR-0007: Adopt NestJS as the backend framework](0007-adopt-nestjs-backend.md) — Accepted
 - [ADR-0008: Adopt TypeORM as the primary ORM for PostgreSQL](0008-adopt-typeorm-orm.md) — Accepted
+- [ADR-0009: Adopt Flutter for the mobile application](0009-adopt-flutter-mobile.md) — Accepted

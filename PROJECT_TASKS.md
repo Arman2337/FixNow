@@ -407,7 +407,7 @@ Initial manual maintenance is intentional.
 Completed By: Arman
 Completed Date: 2026-08-09
 Commit: c567595
-PR: Pending
+PR: #1
 
 # Phase 1 — Project Architecture
 
@@ -450,7 +450,7 @@ Created a draft stakeholder-review baseline with stable requirement IDs, actor j
 Completed By: Arman
 Completed Date: 2026-08-09
 Commit: 43b0df4
-PR: Pending
+PR: #1
 
 ## FN-011 — Define API and Error-Response Conventions
 
@@ -489,7 +489,7 @@ Documented normative synchronous API and error conventions and recorded the tran
 Completed By: Arman
 Completed Date: 2026-08-09
 Commit: 43b0df4
-PR: Pending
+PR: #1
 
 ## FN-012 — Decide Data and Storage Architecture
 
@@ -528,7 +528,7 @@ Accepted PostgreSQL as the transactional system of record, Redis for disposable 
 Completed By: Arman
 Completed Date: 2026-08-09
 Commit: 43b0df4
-PR: Pending
+PR: #1
 
 ## FN-013 — Define Identity, Roles, and Permission Model
 
@@ -567,7 +567,7 @@ Defined deny-by-default hybrid authorization, internal identity boundaries, narr
 Completed By: Arman
 Completed Date: 2026-08-09
 Commit: 43b0df4
-PR: Pending
+PR: #1
 
 ## FN-014 — Define Security and Privacy Architecture
 
@@ -606,7 +606,7 @@ Documented trust boundaries, security/privacy governance, sensitive-data process
 Completed By: Arman
 Completed Date: 2026-08-09
 Commit: 43b0df4
-PR: Pending
+PR: #1
 
 ## FN-015 — Define Real-Time and Notification Architecture
 
@@ -645,7 +645,7 @@ Defined versioned event envelopes, transactional outbox delivery, at-least-once 
 Completed By: Codex
 Completed Date: 2026-08-09
 Commit: 43b0df4
-PR: Pending
+PR: #1
 
 ## FN-016 — Define AI Governance and Evaluation Architecture
 

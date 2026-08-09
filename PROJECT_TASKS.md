@@ -947,7 +947,7 @@ Implemented user, external identity, role, and role-assignment entities; explici
 ### Completion Record
 Completed By: Codex
 Completed Date: 2026-08-09
-Commit: Pending
+Commit: 874c9b3
 PR: Pending
 
 ## FN-024 — Implement Customer Registration and Login
@@ -1294,7 +1294,7 @@ Flutter was explicitly approved by the user and recorded in ADR-0009 before init
 ### Completion Record
 Completed By: Codex
 Completed Date: 2026-08-09
-Commit: Pending
+Commit: 411acdb
 PR: Pending
 
 ## FN-035 — Establish Mobile Navigation, State, and Design System
@@ -2376,7 +2376,7 @@ Discovered while validating FN-023. Replaced the database module's connection-co
 ### Completion Record
 Completed By: Codex
 Completed Date: 2026-08-09
-Commit: Pending
+Commit: 23d9275
 PR: Pending
 
 # Phase 15 — Deployment

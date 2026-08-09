@@ -1,98 +1,68 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# FixNow backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+NestJS backend foundation for FixNow. It provides validated configuration, structured logging, PostgreSQL/TypeORM wiring, Redis-backed cache fallback, health endpoints, and domain modules as tracked in `PROJECT_TASKS.md`.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Prerequisites
 
-## Description
+- Node.js 24.x or a compatible supported release
+- npm
+- PostgreSQL 16 for migration and integration validation
+- Redis 7 when exercising Redis-backed behavior
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Setup
 
-## Project setup
+From `backend/`:
 
 ```bash
-$ npm install
+npm ci
 ```
 
-## Compile and run the project
+Copy the repository root `.env.example` to an untracked `backend/.env` only when running the application locally. Replace every placeholder locally; never commit credentials.
+
+## Checks
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+npm run lint
+npm test -- --runInBand
+npm run build
 ```
 
-## Run tests
+Unit tests are deterministic and do not connect to developer services. Integration and end-to-end tests must use explicitly isolated local test services and synthetic data.
+
+## Isolated PostgreSQL migration validation
+
+The following disposable container binds only to loopback on port `55432`, avoiding the normal local development database on port `5432`. The values are test-only placeholders.
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+docker run --rm -d --name fixnow-postgres-test -e POSTGRES_USER=fixnow_test -e POSTGRES_PASSWORD=fixnow_test -e POSTGRES_DB=fixnow_test -p 127.0.0.1:55432:5432 postgres:16-alpine
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+Wait for PostgreSQL readiness, set `DATABASE_URL` in the current shell to `postgresql://fixnow_test:fixnow_test@127.0.0.1:55432/fixnow_test`, then validate both migration directions:
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+node -r ts-node/register -r tsconfig-paths/register node_modules/typeorm/cli.js migration:run -d typeorm.config.ts
+node -r ts-node/register -r tsconfig-paths/register node_modules/typeorm/cli.js migration:revert -d typeorm.config.ts
+node -r ts-node/register -r tsconfig-paths/register node_modules/typeorm/cli.js migration:run -d typeorm.config.ts
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+With `TEST_DATABASE_URL` set to the same isolated database, run repository and constraint integration tests:
 
-## Resources
+```bash
+npm run test:integration
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+Stop the disposable service after validation:
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+```bash
+docker stop fixnow-postgres-test
+```
 
-## Support
+Never point automated tests or migration validation at a shared, staging, or production database.
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+## Run locally
 
-## Stay in touch
+```bash
+npm run start:dev
+```
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+The API uses the `/api/v1` prefix. Health endpoints are available under that prefix once the application is running.

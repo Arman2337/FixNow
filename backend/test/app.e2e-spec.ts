@@ -8,8 +8,9 @@ describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
 
   beforeEach(async () => {
-    process.env.DATABASE_URL = 'postgresql://fixnow:replace-me@localhost:5432/fixnow';
-    
+    process.env.DATABASE_URL =
+      'postgresql://fixnow:replace-me@localhost:5432/fixnow';
+
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();

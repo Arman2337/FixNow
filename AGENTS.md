@@ -152,6 +152,7 @@ Applications must not import another application's private source files. Cross-b
 
 ## Documentation rules
 
+- All UI implementation tasks must read and follow `DESIGN.md` before modifying UI.
 - Update `README.md` when setup, top-level structure, or primary workflows change.
 - Update architecture docs when component boundaries or data flows change.
 - Add ADRs under `docs/architecture/decisions/` using the template for material decisions.

@@ -31,8 +31,8 @@ Only these statuses are valid. A task cannot be completed while required validat
 
 # Project Progress
 
-Total Tasks: 71
-Completed: 15
+Total Tasks: 72
+Completed: 16
 In Progress: 0
 Blocked: 0
 Pending: 56
@@ -685,6 +685,48 @@ Completed By:
 Completed Date:
 Commit:
 PR:
+
+## FN-072 — Establish Authoritative UI/UX Design System
+
+Status: ✅ Completed
+Priority: P1 — High
+Area: Design System
+Depends On: FN-010, FN-014
+Branch: docs/design-system
+
+### Objective
+Create the authoritative cross-platform UI/UX design system for customer, provider, and admin experiences.
+
+### Scope
+- Document product design principles, semantic tokens, component patterns, navigation, core journeys, responsive behavior, accessibility, emergency UX, and agent governance.
+- Add a concise repository-wide rule requiring UI tasks to follow `DESIGN.md`.
+
+### Do Not
+- Do not implement screens, install UI packages, download third-party assets, or copy another product's protected visual identity.
+
+### Acceptance Criteria
+- [x] Root `DESIGN.md` defines the requested design direction, tokens, states, reusable components, product flows, accessibility, and agent rules.
+- [x] `AGENTS.md` requires UI implementation tasks to read and follow `DESIGN.md`.
+- [x] No application UI or dependency changes are introduced.
+
+### Validation
+```bash
+git diff --check
+```
+
+### Files / Areas
+```text
+DESIGN.md AGENTS.md PROJECT_TASKS.md
+```
+
+### Notes
+Created the original FixNow design direction with three-layer token governance, cross-platform component specifications, customer/provider/admin hierarchy, booking and tracking patterns, emergency safety rules, accessibility requirements, and strict agent/change protocols. This documentation task is separate from FN-035, which remains responsible for future mobile navigation, state, theme, and component implementation.
+
+### Completion Record
+Completed By: Codex
+Completed Date: 2026-08-09
+Commit: Pending
+PR: Pending
 
 # Phase 2 — Backend Foundation
 

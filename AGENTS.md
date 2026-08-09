@@ -16,7 +16,7 @@ FixNow is a polyglot monorepo planned around `mobile`, `backend`, `admin`, `shar
 
 ## Required working method
 
-1. Read `README.md`, relevant files under `docs/`, and the nearest `AGENTS.md` before editing.
+1. Read `README.md`, `PROJECT_TASKS.md`, relevant files under `docs/`, and the nearest `AGENTS.md` before editing.
 2. Inspect the working tree with `git status --short` and preserve unrelated user changes.
 3. State assumptions when requirements are ambiguous and the assumption affects architecture, security, data, cost, or external behavior.
 4. Make the smallest cohesive change that fully solves the request. Do not perform unrelated refactors.
@@ -24,6 +24,73 @@ FixNow is a polyglot monorepo planned around `mobile`, `backend`, `admin`, `shar
 6. Run the narrowest relevant checks first, then broader checks where risk warrants them.
 7. Review the final diff for correctness, secrets, generated files, and unintended edits.
 8. Report what changed, what was verified, and any remaining risk.
+
+## Project Task Execution Protocol
+
+`PROJECT_TASKS.md` is the authoritative, permanent record of project work. Every AI coding agent MUST read both `AGENTS.md` and `PROJECT_TASKS.md` before beginning implementation.
+
+Before starting a tracked task, an agent must:
+
+1. Read `PROJECT_TASKS.md` in full.
+2. Check the task's explicit dependencies and confirm each is `✅ Completed`.
+3. Find an eligible `⬜ Pending` task, or use the task explicitly assigned by the user.
+4. Confirm that no `In Progress` task conflicts with its files or areas.
+5. Change the selected task's status to `In Progress` and add it under **Current Work**.
+6. Create or use the branch specified by the task, following the branching strategy.
+7. Work only on that task.
+
+Unless the user explicitly instructs otherwise:
+
+```text
+ONE AGENT RUN = ONE TASK
+```
+
+Complete exactly one tracked task, run its required validation, update its status and completion record, remove it from **Current Work**, update the progress summary, and stop. Do not independently start related or future tasks.
+
+When asked to "Take the next task," select the first task satisfying all of these conditions:
+
+```text
+Status = ⬜ Pending
+AND all Depends On tasks = ✅ Completed
+AND the task is not otherwise blocked
+```
+
+Choose by priority (`P0`, then `P1`, `P2`, and `P3`). Within one priority, generally choose the lowest eligible task ID unless dependencies make another ordering necessary.
+
+If work cannot continue, do not claim completion. Change the status from `In Progress` to `Blocked` and add `### Blocker` and `### Required To Unblock` sections with the exact missing decision, dependency, credential, service, or prerequisite. Do not silently skip blockers.
+
+A task becomes `✅ Completed` only after every acceptance criterion and required validation succeeds. If validation cannot run or fails, the task is not complete; record the limitation truthfully. Fill in `Completed By`, `Completed Date`, `Commit`, and `PR`, using `Pending` when a commit or PR does not yet exist. Never invent identifiers.
+
+Keep completed and cancelled tasks as permanent history. Never reuse a task ID. If implementation reveals additional work, add a new `⬜ Pending` task with the next unused ID and continue only the assigned task. Split work that is too large for one focused agent run. Before editing shared files, compare the task's **Files / Areas** with active tasks and avoid significant concurrent overlap unless explicitly coordinated.
+
+### Agent command examples
+
+```text
+Read AGENTS.md and PROJECT_TASKS.md.
+Take the next eligible task.
+Complete exactly one task.
+Run all required validation.
+Update PROJECT_TASKS.md.
+Do not start another task.
+```
+
+```text
+Read AGENTS.md and PROJECT_TASKS.md.
+Work only on FN-025.
+Check its dependencies first.
+Complete it, validate it, and update its completion record.
+Do not work on any other task.
+```
+
+```text
+Read PROJECT_TASKS.md and tell me:
+- current progress
+- active tasks
+- blocked tasks
+- next 5 eligible tasks
+
+Do not modify code.
+```
 
 ## Repository boundaries
 

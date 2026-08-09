@@ -81,14 +81,13 @@ The arrows describe intended contract-level communication. They do not authorize
 
 ## Environments
 
-The expected progression is local, development, staging, and production. Exact cloud providers, regions, databases, queues, and deployment topology are intentionally undecided. Select them through ADRs after requirements are known.
+The expected progression is local, development, staging, and production. Exact cloud/managed-service providers, regions, queues, and deployment topology are intentionally undecided. Select them through ADRs after requirements are known. PostgreSQL, Redis, and private object-storage capability roles are defined in the [data and storage architecture](data-architecture.md); provider and version choices remain gated.
 
 ## Decisions intentionally deferred
 
 - Cloud and deployment platform
-- Database and cache products
-- Authentication provider and identity model
-- API style and event transport
+- Authentication provider, credentials, and recovery methods
+- Durable event broker and hosted real-time/notification providers
 - Monorepo package manager and build orchestrator
 - AI model providers and data governance controls
 
@@ -97,3 +96,24 @@ Deferring these prevents a foundation commit from silently locking the project i
 ## Architecture decision records
 
 Create a numbered ADR in [`decisions/`](decisions/) for material choices. Copy [`0000-template.md`](decisions/0000-template.md), assign the next number, and keep superseded records for historical context.
+
+## Contract conventions
+
+- [API conventions](api-conventions.md)
+- [Error response conventions](error-response-conventions.md)
+- [Event conventions](event-conventions.md)
+
+## Real-time and notifications
+
+- [Real-time and notification architecture](realtime-and-notification-architecture.md)
+
+## Data architecture
+
+- [Data and storage architecture](data-architecture.md)
+
+## Security architecture
+
+- [Identity, roles, and permissions](../security/identity-and-access.md)
+- [Permission matrix](../security/permission-matrix.md)
+- [Security and privacy architecture](../security/security-and-privacy-architecture.md)
+- [Threat model and risk register](../security/threat-model.md)

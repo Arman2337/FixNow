@@ -11,12 +11,15 @@ import { CredentialEntity } from '../users/credential.entity';
 import { IdentityEntity } from '../users/identity.entity';
 import { UserRoleEntity } from '../users/user-role.entity';
 import { UserEntity } from '../users/user.entity';
+import { ProviderApplicationEntity } from '../providers/provider-application.entity';
+import { ProviderOnboardingStatus } from '../providers/provider-onboarding-status';
 import {
   ACCESS_TOKEN_AUDIENCE,
   ACCESS_TOKEN_ISSUER,
   ACCESS_TOKEN_TTL_SECONDS,
   CUSTOMER_ROLE_ID,
   LOCAL_EMAIL_PROVIDER,
+  PROVIDER_APPLICANT_ROLE_ID,
 } from './auth.constants';
 import { AuthenticationResponse, EmailPasswordDto } from './auth.dto';
 
@@ -27,7 +30,33 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async register(input: EmailPasswordDto): Promise<AuthenticationResponse> {
+  registerCustomer(input: EmailPasswordDto): Promise<AuthenticationResponse> {
+    return this.register(input, {
+      role: 'customer',
+      roleId: CUSTOMER_ROLE_ID,
+      reason: 'Customer self-registration',
+      providerApplicant: false,
+    });
+  }
+
+  registerProvider(input: EmailPasswordDto): Promise<AuthenticationResponse> {
+    return this.register(input, {
+      role: 'provider_applicant',
+      roleId: PROVIDER_APPLICANT_ROLE_ID,
+      reason: 'Provider self-registration',
+      providerApplicant: true,
+    });
+  }
+
+  private async register(
+    input: EmailPasswordDto,
+    persona: {
+      role: 'customer' | 'provider_applicant';
+      roleId: string;
+      reason: string;
+      providerApplicant: boolean;
+    },
+  ): Promise<AuthenticationResponse> {
     const passwordHash = await argon2.hash(input.password, {
       type: argon2.argon2id,
     });
@@ -63,12 +92,20 @@ export class AuthService {
         await manager.save(
           manager.create(UserRoleEntity, {
             userId: createdUser.id,
-            roleId: CUSTOMER_ROLE_ID,
+            roleId: persona.roleId,
             assignedByUserId: null,
-            reason: 'Customer self-registration',
+            reason: persona.reason,
             expiresAt: null,
           }),
         );
+        if (persona.providerApplicant) {
+          await manager.save(
+            manager.create(ProviderApplicationEntity, {
+              userId: createdUser.id,
+              status: ProviderOnboardingStatus.Unverified,
+            }),
+          );
+        }
         return createdUser;
       });
     } catch (error: unknown) {
@@ -84,7 +121,7 @@ export class AuthService {
       throw error;
     }
 
-    return this.createAuthenticationResponse(user);
+    return this.createAuthenticationResponse(user, persona.role);
   }
 
   async login(input: EmailPasswordDto): Promise<AuthenticationResponse> {
@@ -113,14 +150,15 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    return this.createAuthenticationResponse(identity.user);
+    return this.createAuthenticationResponse(identity.user, 'customer');
   }
 
   private async createAuthenticationResponse(
     user: UserEntity,
+    role: 'customer' | 'provider_applicant',
   ): Promise<AuthenticationResponse> {
     const accessToken = await this.jwtService.signAsync(
-      { accountStatus: user.status, role: 'customer' },
+      { accountStatus: user.status, role },
       {
         subject: user.id,
         issuer: ACCESS_TOKEN_ISSUER,

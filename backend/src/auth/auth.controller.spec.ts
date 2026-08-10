@@ -12,11 +12,12 @@ describe('AuthController', () => {
   const response = {
     userId: 'user-1',
     accessToken: 'access-token',
+    refreshToken: 'refresh-token',
     tokenType: 'Bearer' as const,
     expiresIn: 900,
   };
   const authService = {
-    register: jest.fn().mockResolvedValue(response),
+    registerCustomer: jest.fn().mockResolvedValue(response),
     login: jest.fn().mockResolvedValue(response),
   };
 
@@ -53,7 +54,7 @@ describe('AuthController', () => {
       .expect(201)
       .expect(response);
 
-    expect(authService.register).toHaveBeenCalledWith({
+    expect(authService.registerCustomer).toHaveBeenCalledWith({
       email: 'customer@example.com',
       password: 'Correct Horse Battery Staple!',
     });

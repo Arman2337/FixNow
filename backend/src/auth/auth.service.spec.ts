@@ -1,16 +1,24 @@
 import { ConflictException, UnauthorizedException } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import * as argon2 from 'argon2';
 import { DataSource, EntityManager, Repository } from 'typeorm';
 import { AccountStatus } from '../users/account-status';
 import { CredentialEntity } from '../users/credential.entity';
 import { IdentityEntity } from '../users/identity.entity';
 import { UserEntity } from '../users/user.entity';
+import { ProviderApplicationEntity } from '../providers/provider-application.entity';
+import { ProviderOnboardingStatus } from '../providers/provider-onboarding-status';
 import { AuthService } from './auth.service';
+import { TokenLifecycleService } from './token-lifecycle.service';
 
 describe('AuthService', () => {
-  const signAsync = jest.fn().mockResolvedValue('signed-access-token');
-  const jwtService = { signAsync } as unknown as JwtService;
+  const issueSession = jest.fn().mockResolvedValue({
+    userId: 'user-1',
+    accessToken: 'signed-access-token',
+    refreshToken: 'refresh-token',
+    tokenType: 'Bearer',
+    expiresIn: 900,
+  });
+  const tokenLifecycle = { issueSession } as unknown as TokenLifecycleService;
   const manager = {
     findOneBy: jest.fn(),
     create: jest.fn((entity: unknown, values: object) => {
@@ -34,7 +42,7 @@ describe('AuthService', () => {
       entity === IdentityEntity ? identityRepository : credentialRepository,
     ),
   } as unknown as DataSource;
-  const service = new AuthService(dataSource, jwtService);
+  const service = new AuthService(dataSource, tokenLifecycle);
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -42,7 +50,7 @@ describe('AuthService', () => {
   });
 
   it('registers a normalized customer with an Argon2id hash', async () => {
-    const result = await service.register({
+    const result = await service.registerCustomer({
       email: 'customer@example.com',
       password: 'Correct Horse Battery Staple!',
     });
@@ -50,6 +58,7 @@ describe('AuthService', () => {
     expect(result).toEqual({
       userId: 'user-1',
       accessToken: 'signed-access-token',
+      refreshToken: 'refresh-token',
       tokenType: 'Bearer',
       expiresIn: 900,
     });
@@ -64,15 +73,12 @@ describe('AuthService', () => {
     await expect(
       argon2.verify(credential.passwordHash, 'Correct Horse Battery Staple!'),
     ).resolves.toBe(true);
-    expect(signAsync).toHaveBeenCalledWith(
+    expect(issueSession).toHaveBeenCalledWith(
       expect.objectContaining({
-        accountStatus: AccountStatus.PendingVerification,
-        role: 'customer',
+        id: 'user-1',
+        status: AccountStatus.PendingVerification,
       }),
-      expect.objectContaining({
-        subject: 'user-1',
-        expiresIn: 900,
-      }),
+      'customer',
     );
   });
 
@@ -80,11 +86,31 @@ describe('AuthService', () => {
     manager.findOneBy.mockResolvedValue({ id: 'identity-1' });
 
     await expect(
-      service.register({
+      service.registerCustomer({
         email: 'customer@example.com',
         password: 'Correct Horse Battery Staple!',
       }),
     ).rejects.toEqual(new ConflictException('Unable to create account'));
+  });
+
+  it('registers only an unverified provider-applicant persona', async () => {
+    const result = await service.registerProvider({
+      email: 'provider@example.com',
+      password: 'Correct Horse Battery Staple!',
+    });
+
+    const providerCreate = manager.create.mock.calls.find(
+      ([entity]) => entity === ProviderApplicationEntity,
+    );
+    expect(providerCreate?.[1]).toEqual({
+      userId: 'user-1',
+      status: ProviderOnboardingStatus.Unverified,
+    });
+    expect(issueSession).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'user-1' }),
+      'provider_applicant',
+    );
+    expect(result).toEqual(expect.objectContaining({ userId: 'user-1' }));
   });
 
   it('logs in with a valid password and rejects unknown or invalid credentials identically', async () => {

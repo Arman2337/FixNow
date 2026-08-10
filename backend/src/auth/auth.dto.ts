@@ -18,6 +18,7 @@ export class EmailPasswordDto {
 export interface AuthenticationResponse {
   userId: string;
   accessToken: string;
+  refreshToken: string;
   tokenType: 'Bearer';
   expiresIn: number;
 }

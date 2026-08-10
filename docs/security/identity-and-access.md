@@ -8,6 +8,14 @@ The detailed baseline is in the [permission matrix](permission-matrix.md). [ADR-
 
 This task does not select an identity provider, credential type, OTP vendor, token format, federation protocol, or recovery method. Those choices require the product decisions identified by OD-005 and a separate ADR before implementation.
 
+## Backend enforcement baseline
+
+FN-027 implements the first trusted-backend enforcement boundary under this model. A global NestJS authorization guard denies routes unless they are explicitly marked public or declare an exact registered permission. Protected requests validate the access-token issuer, audience, expiry, active database session, authoritative account status, and current non-expired database role assignments; role and account-status claims in the token are not authorization authority.
+
+Resource policy receives ownership, assignment, target, and independent-approval facts only after the application loads them from authoritative domain state. Missing policy or context, inactive accounts, revoked sessions, unknown permissions, cross-role access, ownership mismatch, self-grant, and absent independent approval fail closed. Decisions emit minimal authorization classifications to the authentication audit store without tokens, email addresses, resource identifiers, or request payloads.
+
+Existing registration, authentication, OTP, token renewal/logout, root, and health routes are explicitly public because they enforce their own credential, refresh-token, throttling, or operational boundary. Future backend routes are denied until their owning task assigns an exact permission and, where applicable, supplies authoritative resource context.
+
 ## Security principles
 
 1. **Deny by default.** A request is denied unless an explicit policy permits the authenticated principal to perform the action on the resource in its current context.

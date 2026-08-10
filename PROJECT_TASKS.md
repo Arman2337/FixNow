@@ -32,13 +32,13 @@ Only these statuses are valid. A task cannot be completed while required validat
 # Project Progress
 
 Total Tasks: 73
-Completed: 28
+Completed: 30
 In Progress: 0
 Blocked: 0
-Pending: 45
+Pending: 43
 Cancelled: 0
 Current Phase: Phase 3 — Authentication & Users
-Next Recommended Task: FN-027 — Enforce Role-Based Authorization
+Next Recommended Task: FN-029 — Model Service Categories and Provider Skills
 
 # Current Work
 
@@ -1045,7 +1045,7 @@ Commit: 0e8efc0
 PR: #7
 
 ## FN-027 — Enforce Role-Based Authorization
-Status: ⬜ Pending
+Status: ✅ Completed
 Priority: P1 — High
 Area: Backend/Security
 Depends On: FN-013, FN-023, FN-026
@@ -1058,7 +1058,7 @@ Enforce the approved permission model at trusted backend boundaries.
 ### Do Not
 - Do not rely on client-side role checks.
 ### Acceptance Criteria
-- [ ] Cross-role, inactive-account, ownership, and privilege-escalation tests pass.
+- [x] Cross-role, inactive-account, ownership, and privilege-escalation tests pass.
 ### Validation
 ```bash
 # Run backend checks and authorization matrix tests.
@@ -1068,15 +1068,15 @@ Enforce the approved permission model at trusted backend boundaries.
 backend/src/auth/ backend/src/common/ docs/security/
 ```
 ### Notes
-None.
+Implemented a centralized deny-by-default backend authorization boundary with explicit public-route and exact-permission decorators, authoritative access-token/session/account/role validation, current non-expired database grants, ownership and assignment policy inputs, self-grant and independent-approval controls, and minimal allow/deny audit classifications. Existing authentication and operational entry points are explicitly public; future unclassified routes fail closed. Focused policy/guard/service tests, the PostgreSQL authorization matrix, full unit and integration suites, lint, type checking, build, and E2E public-route smoke validation pass.
 ### Completion Record
-Completed By:
-Completed Date:
-Commit:
-PR:
+Completed By: Codex
+Completed Date: 2026-08-11
+Commit: 758f7cd
+PR: Pending
 
 ## FN-028 — Implement Customer Profile Management
-Status: ⬜ Pending
+Status: ✅ Completed
 Priority: P2 — Medium
 Area: Backend/Users
 Depends On: FN-024, FN-027
@@ -1089,7 +1089,7 @@ Allow customers to read and safely update approved profile fields.
 ### Do Not
 - Do not expose another user's profile or collect unnecessary data.
 ### Acceptance Criteria
-- [ ] Read, update, validation, ownership, and privacy tests pass.
+- [x] Read, update, validation, ownership, and privacy tests pass.
 ### Validation
 ```bash
 # Run backend checks and customer profile integration tests.
@@ -1099,12 +1099,12 @@ Allow customers to read and safely update approved profile fields.
 backend/src/users/ shared/
 ```
 ### Notes
-None.
+The user explicitly directed FN-028 to remain on `feat/role-authorization` instead of its listed branch. Because no approved profile-field list exists, implementation is limited to a purpose-bound display name; phone, address, birth date, location, language, and other personal data remain uncollected. Added authenticated `/users/me/profile` read/update endpoints, token-derived ownership, value-free audit events, a cascade-deleted profile table, and validation/privacy coverage. Backend lint, 65 unit tests, 14 PostgreSQL integration tests, build, and migration up/down/up validation pass.
 ### Completion Record
-Completed By:
-Completed Date:
-Commit:
-PR:
+Completed By: Codex
+Completed Date: 2026-08-11
+Commit: 5132e41
+PR: #8
 
 # Phase 4 — Provider System
 

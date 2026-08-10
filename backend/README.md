@@ -86,3 +86,12 @@ FN-026 adds these endpoints:
 OTP messages go to the email address registered with the account. Configure a separate `OTP_SECRET` of at least 32 random characters. For real email delivery, set `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, and `SMTP_FROM` in an untracked local `.env`. Gmail can use `smtp.gmail.com`; use an account-specific app password rather than a normal account password. Automated tests use a fake delivery adapter and never send email.
 
 OTPs expire after 10 minutes, enforce a 60-second resend delay, and allow five attempts. Refresh tokens expire after 30 days, rotate once without grace, and revoke the token family if an already-rotated token is replayed. Raw OTPs and refresh tokens are never stored.
+
+## Customer profile
+
+FN-028 adds authenticated self-service profile endpoints:
+
+- `GET /api/v1/users/me/profile`
+- `PATCH /api/v1/users/me/profile`
+
+The initial profile contract contains only `displayName`, a trimmed string from 1 to 80 characters. Ownership is derived from the validated access token; clients cannot select another user ID. Profile reads and updates are audited without recording the display-name value. Additional personal data is intentionally not collected.

@@ -979,8 +979,8 @@ Implemented approved local email/password registration and login, normalized ide
 ### Completion Record
 Completed By: Codex
 Completed Date: 2026-08-11
-Commit: Pending
-PR: Pending
+Commit: 4acc17c
+PR: #5
 
 ## FN-025 — Implement Provider Registration
 Status: ✅ Completed

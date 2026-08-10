@@ -8,6 +8,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import type { Request } from 'express';
 import {
+  OWN_RESOURCE_KEY,
   PUBLIC_ROUTE_KEY,
   REQUIRED_PERMISSION_KEY,
 } from './authorization.decorators';
@@ -44,8 +45,17 @@ export class AuthorizationGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest<AuthorizedRequest>();
     const token = this.bearerToken(request.headers.authorization);
+    const ownResource = this.reflector.getAllAndOverride<boolean>(
+      OWN_RESOURCE_KEY,
+      [context.getHandler(), context.getClass()],
+    );
     request.authorizationPrincipal =
-      await this.authorization.authorizeAccessToken(token, permission);
+      await this.authorization.authorizeAccessToken(
+        token,
+        permission,
+        undefined,
+        ownResource,
+      );
     return true;
   }
 

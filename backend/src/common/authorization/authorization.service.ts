@@ -37,6 +37,7 @@ export class AuthorizationService {
     token: string,
     permission: Permission,
     context?: AuthorizationContext,
+    ownResource = false,
   ): Promise<AuthorizationPrincipal> {
     let claims: AccessTokenClaims;
     try {
@@ -93,8 +94,11 @@ export class AuthorizationService {
       sessionId: session.id,
       roles: grants.map((grant) => grant.role.code as RoleCode),
     };
+    const resolvedContext = ownResource
+      ? { ...context, ownerId: user.id }
+      : context;
     const allowed = this.policy.isAllowed(
-      { principal, permission, context },
+      { principal, permission, context: resolvedContext },
       user.status,
     );
     await this.audit(

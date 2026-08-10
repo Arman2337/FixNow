@@ -59,7 +59,8 @@ describe('AuthorizationGuard', () => {
   it('delegates protected requests to authoritative authorization', async () => {
     reflector.getAllAndOverride
       .mockReturnValueOnce(false)
-      .mockReturnValueOnce(PERMISSIONS.securityAuditReadAuthorized);
+      .mockReturnValueOnce(PERMISSIONS.securityAuditReadAuthorized)
+      .mockReturnValueOnce(false);
     request.headers = { authorization: 'Bearer header.payload.signature' };
     authorization.authorizeAccessToken.mockResolvedValue({
       userId: 'user-1',
@@ -70,6 +71,28 @@ describe('AuthorizationGuard', () => {
     expect(authorization.authorizeAccessToken).toHaveBeenCalledWith(
       'header.payload.signature',
       PERMISSIONS.securityAuditReadAuthorized,
+      undefined,
+      false,
+    );
+  });
+
+  it('binds self-service permissions to the authenticated principal', async () => {
+    reflector.getAllAndOverride
+      .mockReturnValueOnce(false)
+      .mockReturnValueOnce(PERMISSIONS.profileReadSelf)
+      .mockReturnValueOnce(true);
+    request.headers = { authorization: 'Bearer header.payload.signature' };
+    authorization.authorizeAccessToken.mockResolvedValue({
+      userId: 'user-1',
+      sessionId: 'session-1',
+      roles: ['customer'],
+    });
+    await expect(guard.canActivate(context)).resolves.toBe(true);
+    expect(authorization.authorizeAccessToken).toHaveBeenCalledWith(
+      'header.payload.signature',
+      PERMISSIONS.profileReadSelf,
+      undefined,
+      true,
     );
   });
 });

@@ -32,13 +32,13 @@ Only these statuses are valid. A task cannot be completed while required validat
 # Project Progress
 
 Total Tasks: 73
-Completed: 25
+Completed: 26
 In Progress: 0
 Blocked: 0
-Pending: 48
+Pending: 47
 Cancelled: 0
 Current Phase: Phase 3 — Authentication & Users
-Next Recommended Task: FN-024 — Implement Customer Authentication
+Next Recommended Task: FN-025 — Implement Provider Registration
 
 # Current Work
 
@@ -951,7 +951,7 @@ Commit: 874c9b3
 PR: #4
 
 ## FN-024 — Implement Customer Registration and Login
-Status: ⬜ Pending
+Status: ✅ Completed
 Priority: P1 — High
 Area: Backend/Auth
 Depends On: FN-023
@@ -964,7 +964,7 @@ Provide secure customer registration and login under the approved identity desig
 ### Do Not
 - Do not implement provider onboarding or password recovery.
 ### Acceptance Criteria
-- [ ] Success, duplicate, invalid, enumeration, and throttling boundaries are tested.
+- [x] Success, duplicate, invalid, enumeration, and throttling boundaries are tested.
 ### Validation
 ```bash
 # Run backend checks and customer authentication integration tests.
@@ -974,12 +974,13 @@ Provide secure customer registration and login under the approved identity desig
 backend/src/auth/ backend/src/users/
 ```
 ### Notes
-None.
+Implemented approved local email/password registration and login, normalized identities, separate Argon2id credential storage, customer-role assignment, short-lived audience/issuer-bound JWT access tokens, generic authentication failures, and per-endpoint throttling. Refresh-token and OTP lifecycles remain scoped to FN-026. Focused and full unit tests, lint, type checking, build, disposable PostgreSQL migration apply/revert/reapply, and integration tests pass.
+
 ### Completion Record
-Completed By:
-Completed Date:
-Commit:
-PR:
+Completed By: Codex
+Completed Date: 2026-08-11
+Commit: Pending
+PR: Pending
 
 ## FN-025 — Implement Provider Registration
 Status: ⬜ Pending

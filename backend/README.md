@@ -66,3 +66,7 @@ npm run start:dev
 ```
 
 The API uses the `/api/v1` prefix. Health endpoints are available under that prefix once the application is running.
+
+## Customer authentication
+
+FN-024 provides `POST /api/v1/auth/customer/register` and `POST /api/v1/auth/customer/login`. Both accept a normalized email and a 12–128 character password. Passwords are stored only as Argon2id hashes, and successful responses contain a short-lived bearer access token. Configure `JWT_SECRET` with at least 32 random characters outside source control. OTP, refresh-token lifecycle, and password recovery are not part of these endpoints.

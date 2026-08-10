@@ -8,6 +8,7 @@ describe('Environment Validation', () => {
       LOG_LEVEL: 'info',
       DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/test',
       REDIS_URL: 'redis://localhost:6379',
+      JWT_SECRET: 'test-only-jwt-secret-at-least-32-characters',
     };
     const result = validate(validConfig);
     expect(result.NODE_ENV).toBe('development');
@@ -26,6 +27,7 @@ describe('Environment Validation', () => {
     const emptyConfig = {
       DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/test',
       REDIS_URL: 'redis://localhost:6379',
+      JWT_SECRET: 'test-only-jwt-secret-at-least-32-characters',
     };
     const result = validate(emptyConfig);
     expect(result.NODE_ENV).toBe('development');

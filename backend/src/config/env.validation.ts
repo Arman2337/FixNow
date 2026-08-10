@@ -5,6 +5,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  MinLength,
   validateSync,
 } from 'class-validator';
 
@@ -32,6 +33,10 @@ export class EnvironmentVariables {
 
   @IsString()
   REDIS_URL: string;
+
+  @IsString()
+  @MinLength(32)
+  JWT_SECRET: string;
 }
 
 export function validate(config: Record<string, unknown>) {

@@ -32,13 +32,13 @@ Only these statuses are valid. A task cannot be completed while required validat
 # Project Progress
 
 Total Tasks: 73
-Completed: 26
+Completed: 28
 In Progress: 0
 Blocked: 0
-Pending: 47
+Pending: 45
 Cancelled: 0
 Current Phase: Phase 3 — Authentication & Users
-Next Recommended Task: FN-025 — Implement Provider Registration
+Next Recommended Task: FN-027 — Enforce Role-Based Authorization
 
 # Current Work
 
@@ -979,11 +979,11 @@ Implemented approved local email/password registration and login, normalized ide
 ### Completion Record
 Completed By: Codex
 Completed Date: 2026-08-11
-Commit: Pending
-PR: Pending
+Commit: 4acc17c
+PR: #5
 
 ## FN-025 — Implement Provider Registration
-Status: ⬜ Pending
+Status: ✅ Completed
 Priority: P1 — High
 Area: Backend/Auth
 Depends On: FN-023
@@ -996,7 +996,7 @@ Register provider identities in an unverified onboarding state.
 ### Do Not
 - Do not approve providers or accept KYC documents.
 ### Acceptance Criteria
-- [ ] Registration, duplicate, invalid-state, and permission tests pass.
+- [x] Registration, duplicate, invalid-state, and permission tests pass.
 ### Validation
 ```bash
 # Run backend checks and provider registration integration tests.
@@ -1006,15 +1006,15 @@ Register provider identities in an unverified onboarding state.
 backend/src/auth/ backend/src/providers/ backend/src/users/
 ```
 ### Notes
-None.
+Implemented throttled provider registration using the approved email/password credential boundary. Registration atomically creates a pending-verification user, local identity, Argon2id credential, provider-applicant role assignment, and provider application constrained to the sole `unverified` state. Client-supplied role/status fields are rejected; no approval or KYC behavior is included. Full lint, unit tests, build, disposable PostgreSQL integration tests, and migration apply/revert/reapply validation pass.
 ### Completion Record
-Completed By:
-Completed Date:
-Commit:
-PR:
+Completed By: Codex
+Completed Date: 2026-08-11
+Commit: 5af807e
+PR: #6
 
 ## FN-026 — Implement OTP and Refresh-Token Lifecycles
-Status: ⬜ Pending
+Status: ✅ Completed
 Priority: P1 — High
 Area: Backend/Auth
 Depends On: FN-024
@@ -1027,7 +1027,7 @@ Implement OTP verification and secure session renewal/revocation.
 ### Do Not
 - Do not log OTPs or raw tokens.
 ### Acceptance Criteria
-- [ ] Expiry, replay, brute-force, rotation, and revocation tests pass.
+- [x] Expiry, replay, brute-force, rotation, and revocation tests pass.
 ### Validation
 ```bash
 # Run backend checks and focused OTP/token security tests.
@@ -1037,12 +1037,12 @@ Implement OTP verification and secure session renewal/revocation.
 backend/src/auth/ backend/src/notifications/
 ```
 ### Notes
-External delivery credentials may require blocking this task.
+Implemented email OTP through a configurable Gmail-compatible SMTP adapter, with fake-only automated delivery tests and live delivery disabled until local credentials are supplied. OTP challenges use HMAC hashes, expire after 10 minutes, enforce a 60-second resend delay and five-attempt limit, and activate the account after successful verification. Opaque 30-day refresh tokens are stored only as SHA-256 hashes, rotate once without grace, revoke their token family on replay, and support current-session and all-session logout. Minimal audit classifications exclude OTPs, tokens, and email addresses. Unit tests, lint, type checking, build, disposable PostgreSQL migration apply/revert/reapply, and integration tests pass.
 ### Completion Record
-Completed By:
-Completed Date:
-Commit:
-PR:
+Completed By: Codex
+Completed Date: 2026-08-11
+Commit: 0e8efc0
+PR: #7
 
 ## FN-027 — Enforce Role-Based Authorization
 Status: ⬜ Pending

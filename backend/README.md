@@ -70,3 +70,19 @@ The API uses the `/api/v1` prefix. Health endpoints are available under that pre
 ## Customer authentication
 
 FN-024 provides `POST /api/v1/auth/customer/register` and `POST /api/v1/auth/customer/login`. Both accept a normalized email and a 12–128 character password. Passwords are stored only as Argon2id hashes, and successful responses contain a short-lived bearer access token. Configure `JWT_SECRET` with at least 32 random characters outside source control. OTP, refresh-token lifecycle, and password recovery are not part of these endpoints.
+
+FN-025 adds `POST /api/v1/auth/provider/register` with the same credential boundary. It creates only a `provider_applicant` role and an `unverified` onboarding record. The endpoint does not accept lifecycle status or role input and cannot approve a provider or collect KYC documents.
+
+## OTP email and sessions
+
+FN-026 adds these endpoints:
+
+- `POST /api/v1/auth/otp/request`
+- `POST /api/v1/auth/otp/verify`
+- `POST /api/v1/auth/token/refresh`
+- `POST /api/v1/auth/logout`
+- `POST /api/v1/auth/logout-all`
+
+OTP messages go to the email address registered with the account. Configure a separate `OTP_SECRET` of at least 32 random characters. For real email delivery, set `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, and `SMTP_FROM` in an untracked local `.env`. Gmail can use `smtp.gmail.com`; use an account-specific app password rather than a normal account password. Automated tests use a fake delivery adapter and never send email.
+
+OTPs expire after 10 minutes, enforce a 60-second resend delay, and allow five attempts. Refresh tokens expire after 30 days, rotate once without grace, and revoke the token family if an already-rotated token is replayed. Raw OTPs and refresh tokens are never stored.

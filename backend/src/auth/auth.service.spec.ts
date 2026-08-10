@@ -6,6 +6,8 @@ import { AccountStatus } from '../users/account-status';
 import { CredentialEntity } from '../users/credential.entity';
 import { IdentityEntity } from '../users/identity.entity';
 import { UserEntity } from '../users/user.entity';
+import { ProviderApplicationEntity } from '../providers/provider-application.entity';
+import { ProviderOnboardingStatus } from '../providers/provider-onboarding-status';
 import { AuthService } from './auth.service';
 
 describe('AuthService', () => {
@@ -42,7 +44,7 @@ describe('AuthService', () => {
   });
 
   it('registers a normalized customer with an Argon2id hash', async () => {
-    const result = await service.register({
+    const result = await service.registerCustomer({
       email: 'customer@example.com',
       password: 'Correct Horse Battery Staple!',
     });
@@ -80,11 +82,31 @@ describe('AuthService', () => {
     manager.findOneBy.mockResolvedValue({ id: 'identity-1' });
 
     await expect(
-      service.register({
+      service.registerCustomer({
         email: 'customer@example.com',
         password: 'Correct Horse Battery Staple!',
       }),
     ).rejects.toEqual(new ConflictException('Unable to create account'));
+  });
+
+  it('registers only an unverified provider-applicant persona', async () => {
+    const result = await service.registerProvider({
+      email: 'provider@example.com',
+      password: 'Correct Horse Battery Staple!',
+    });
+
+    const providerCreate = manager.create.mock.calls.find(
+      ([entity]) => entity === ProviderApplicationEntity,
+    );
+    expect(providerCreate?.[1]).toEqual({
+      userId: 'user-1',
+      status: ProviderOnboardingStatus.Unverified,
+    });
+    expect(signAsync).toHaveBeenCalledWith(
+      expect.objectContaining({ role: 'provider_applicant' }),
+      expect.objectContaining({ subject: 'user-1' }),
+    );
+    expect(result).toEqual(expect.objectContaining({ userId: 'user-1' }));
   });
 
   it('logs in with a valid password and rejects unknown or invalid credentials identically', async () => {

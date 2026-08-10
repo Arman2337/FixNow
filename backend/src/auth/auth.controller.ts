@@ -10,7 +10,7 @@ export class AuthController {
   @Post('register')
   @Throttle({ default: { limit: 3, ttl: 60_000 } })
   register(@Body() input: EmailPasswordDto): Promise<AuthenticationResponse> {
-    return this.authService.register(input);
+    return this.authService.registerCustomer(input);
   }
 
   @Post('login')

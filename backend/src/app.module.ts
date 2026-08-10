@@ -11,6 +11,7 @@ import { RedisCacheModule } from './cache/cache.module';
 import { HealthModule } from './health/health.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { ProvidersModule } from './providers/providers.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { AuthModule } from './auth/auth.module';
     UsersModule,
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 60 }]),
     AuthModule,
+    ProvidersModule,
   ],
   controllers: [AppController],
   providers: [

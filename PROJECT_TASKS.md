@@ -32,13 +32,13 @@ Only these statuses are valid. A task cannot be completed while required validat
 # Project Progress
 
 Total Tasks: 73
-Completed: 26
+Completed: 27
 In Progress: 0
 Blocked: 0
-Pending: 47
+Pending: 46
 Cancelled: 0
 Current Phase: Phase 3 — Authentication & Users
-Next Recommended Task: FN-025 — Implement Provider Registration
+Next Recommended Task: FN-026 — Implement OTP and Refresh-Token Lifecycles
 
 # Current Work
 
@@ -983,7 +983,7 @@ Commit: 4acc17c
 PR: #5
 
 ## FN-025 — Implement Provider Registration
-Status: ⬜ Pending
+Status: ✅ Completed
 Priority: P1 — High
 Area: Backend/Auth
 Depends On: FN-023
@@ -996,7 +996,7 @@ Register provider identities in an unverified onboarding state.
 ### Do Not
 - Do not approve providers or accept KYC documents.
 ### Acceptance Criteria
-- [ ] Registration, duplicate, invalid-state, and permission tests pass.
+- [x] Registration, duplicate, invalid-state, and permission tests pass.
 ### Validation
 ```bash
 # Run backend checks and provider registration integration tests.
@@ -1006,12 +1006,12 @@ Register provider identities in an unverified onboarding state.
 backend/src/auth/ backend/src/providers/ backend/src/users/
 ```
 ### Notes
-None.
+Implemented throttled provider registration using the approved email/password credential boundary. Registration atomically creates a pending-verification user, local identity, Argon2id credential, provider-applicant role assignment, and provider application constrained to the sole `unverified` state. Client-supplied role/status fields are rejected; no approval or KYC behavior is included. Full lint, unit tests, build, disposable PostgreSQL integration tests, and migration apply/revert/reapply validation pass.
 ### Completion Record
-Completed By:
-Completed Date:
-Commit:
-PR:
+Completed By: Codex
+Completed Date: 2026-08-11
+Commit: 5af807e
+PR: #6
 
 ## FN-026 — Implement OTP and Refresh-Token Lifecycles
 Status: ⬜ Pending

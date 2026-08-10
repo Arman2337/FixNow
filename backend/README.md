@@ -70,3 +70,5 @@ The API uses the `/api/v1` prefix. Health endpoints are available under that pre
 ## Customer authentication
 
 FN-024 provides `POST /api/v1/auth/customer/register` and `POST /api/v1/auth/customer/login`. Both accept a normalized email and a 12–128 character password. Passwords are stored only as Argon2id hashes, and successful responses contain a short-lived bearer access token. Configure `JWT_SECRET` with at least 32 random characters outside source control. OTP, refresh-token lifecycle, and password recovery are not part of these endpoints.
+
+FN-025 adds `POST /api/v1/auth/provider/register` with the same credential boundary. It creates only a `provider_applicant` role and an `unverified` onboarding record. The endpoint does not accept lifecycle status or role input and cannot approve a provider or collect KYC documents.

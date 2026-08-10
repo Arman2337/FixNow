@@ -32,13 +32,13 @@ Only these statuses are valid. A task cannot be completed while required validat
 # Project Progress
 
 Total Tasks: 73
-Completed: 28
+Completed: 29
 In Progress: 0
 Blocked: 0
-Pending: 45
+Pending: 44
 Cancelled: 0
 Current Phase: Phase 3 — Authentication & Users
-Next Recommended Task: FN-027 — Enforce Role-Based Authorization
+Next Recommended Task: FN-029 — Model Service Categories and Provider Skills
 
 # Current Work
 
@@ -1045,7 +1045,7 @@ Commit: 0e8efc0
 PR: #7
 
 ## FN-027 — Enforce Role-Based Authorization
-Status: ⬜ Pending
+Status: ✅ Completed
 Priority: P1 — High
 Area: Backend/Security
 Depends On: FN-013, FN-023, FN-026
@@ -1058,7 +1058,7 @@ Enforce the approved permission model at trusted backend boundaries.
 ### Do Not
 - Do not rely on client-side role checks.
 ### Acceptance Criteria
-- [ ] Cross-role, inactive-account, ownership, and privilege-escalation tests pass.
+- [x] Cross-role, inactive-account, ownership, and privilege-escalation tests pass.
 ### Validation
 ```bash
 # Run backend checks and authorization matrix tests.
@@ -1068,12 +1068,12 @@ Enforce the approved permission model at trusted backend boundaries.
 backend/src/auth/ backend/src/common/ docs/security/
 ```
 ### Notes
-None.
+Implemented a centralized deny-by-default backend authorization boundary with explicit public-route and exact-permission decorators, authoritative access-token/session/account/role validation, current non-expired database grants, ownership and assignment policy inputs, self-grant and independent-approval controls, and minimal allow/deny audit classifications. Existing authentication and operational entry points are explicitly public; future unclassified routes fail closed. Focused policy/guard/service tests, the PostgreSQL authorization matrix, full unit and integration suites, lint, type checking, build, and E2E public-route smoke validation pass.
 ### Completion Record
-Completed By:
-Completed Date:
-Commit:
-PR:
+Completed By: Codex
+Completed Date: 2026-08-11
+Commit: Pending
+PR: Pending
 
 ## FN-028 — Implement Customer Profile Management
 Status: ⬜ Pending

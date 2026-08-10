@@ -32,13 +32,13 @@ Only these statuses are valid. A task cannot be completed while required validat
 # Project Progress
 
 Total Tasks: 73
-Completed: 27
+Completed: 28
 In Progress: 0
 Blocked: 0
-Pending: 46
+Pending: 45
 Cancelled: 0
 Current Phase: Phase 3 — Authentication & Users
-Next Recommended Task: FN-026 — Implement OTP and Refresh-Token Lifecycles
+Next Recommended Task: FN-027 — Enforce Role-Based Authorization
 
 # Current Work
 
@@ -1014,7 +1014,7 @@ Commit: 5af807e
 PR: #6
 
 ## FN-026 — Implement OTP and Refresh-Token Lifecycles
-Status: ⬜ Pending
+Status: ✅ Completed
 Priority: P1 — High
 Area: Backend/Auth
 Depends On: FN-024
@@ -1027,7 +1027,7 @@ Implement OTP verification and secure session renewal/revocation.
 ### Do Not
 - Do not log OTPs or raw tokens.
 ### Acceptance Criteria
-- [ ] Expiry, replay, brute-force, rotation, and revocation tests pass.
+- [x] Expiry, replay, brute-force, rotation, and revocation tests pass.
 ### Validation
 ```bash
 # Run backend checks and focused OTP/token security tests.
@@ -1037,12 +1037,12 @@ Implement OTP verification and secure session renewal/revocation.
 backend/src/auth/ backend/src/notifications/
 ```
 ### Notes
-External delivery credentials may require blocking this task.
+Implemented email OTP through a configurable Gmail-compatible SMTP adapter, with fake-only automated delivery tests and live delivery disabled until local credentials are supplied. OTP challenges use HMAC hashes, expire after 10 minutes, enforce a 60-second resend delay and five-attempt limit, and activate the account after successful verification. Opaque 30-day refresh tokens are stored only as SHA-256 hashes, rotate once without grace, revoke their token family on replay, and support current-session and all-session logout. Minimal audit classifications exclude OTPs, tokens, and email addresses. Unit tests, lint, type checking, build, disposable PostgreSQL migration apply/revert/reapply, and integration tests pass.
 ### Completion Record
-Completed By:
-Completed Date:
-Commit:
-PR:
+Completed By: Codex
+Completed Date: 2026-08-11
+Commit: Pending
+PR: Pending
 
 ## FN-027 — Enforce Role-Based Authorization
 Status: ⬜ Pending

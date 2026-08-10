@@ -1,5 +1,4 @@
 import { ConflictException, UnauthorizedException } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import * as argon2 from 'argon2';
 import { DataSource, EntityManager, Repository } from 'typeorm';
 import { AccountStatus } from '../users/account-status';
@@ -9,10 +8,17 @@ import { UserEntity } from '../users/user.entity';
 import { ProviderApplicationEntity } from '../providers/provider-application.entity';
 import { ProviderOnboardingStatus } from '../providers/provider-onboarding-status';
 import { AuthService } from './auth.service';
+import { TokenLifecycleService } from './token-lifecycle.service';
 
 describe('AuthService', () => {
-  const signAsync = jest.fn().mockResolvedValue('signed-access-token');
-  const jwtService = { signAsync } as unknown as JwtService;
+  const issueSession = jest.fn().mockResolvedValue({
+    userId: 'user-1',
+    accessToken: 'signed-access-token',
+    refreshToken: 'refresh-token',
+    tokenType: 'Bearer',
+    expiresIn: 900,
+  });
+  const tokenLifecycle = { issueSession } as unknown as TokenLifecycleService;
   const manager = {
     findOneBy: jest.fn(),
     create: jest.fn((entity: unknown, values: object) => {
@@ -36,7 +42,7 @@ describe('AuthService', () => {
       entity === IdentityEntity ? identityRepository : credentialRepository,
     ),
   } as unknown as DataSource;
-  const service = new AuthService(dataSource, jwtService);
+  const service = new AuthService(dataSource, tokenLifecycle);
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -52,6 +58,7 @@ describe('AuthService', () => {
     expect(result).toEqual({
       userId: 'user-1',
       accessToken: 'signed-access-token',
+      refreshToken: 'refresh-token',
       tokenType: 'Bearer',
       expiresIn: 900,
     });
@@ -66,15 +73,12 @@ describe('AuthService', () => {
     await expect(
       argon2.verify(credential.passwordHash, 'Correct Horse Battery Staple!'),
     ).resolves.toBe(true);
-    expect(signAsync).toHaveBeenCalledWith(
+    expect(issueSession).toHaveBeenCalledWith(
       expect.objectContaining({
-        accountStatus: AccountStatus.PendingVerification,
-        role: 'customer',
+        id: 'user-1',
+        status: AccountStatus.PendingVerification,
       }),
-      expect.objectContaining({
-        subject: 'user-1',
-        expiresIn: 900,
-      }),
+      'customer',
     );
   });
 
@@ -102,9 +106,9 @@ describe('AuthService', () => {
       userId: 'user-1',
       status: ProviderOnboardingStatus.Unverified,
     });
-    expect(signAsync).toHaveBeenCalledWith(
-      expect.objectContaining({ role: 'provider_applicant' }),
-      expect.objectContaining({ subject: 'user-1' }),
+    expect(issueSession).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'user-1' }),
+      'provider_applicant',
     );
     expect(result).toEqual(expect.objectContaining({ userId: 'user-1' }));
   });

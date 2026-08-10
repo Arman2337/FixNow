@@ -3,7 +3,6 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import * as argon2 from 'argon2';
 import { DataSource } from 'typeorm';
 import { AccountStatus } from '../users/account-status';
@@ -14,20 +13,18 @@ import { UserEntity } from '../users/user.entity';
 import { ProviderApplicationEntity } from '../providers/provider-application.entity';
 import { ProviderOnboardingStatus } from '../providers/provider-onboarding-status';
 import {
-  ACCESS_TOKEN_AUDIENCE,
-  ACCESS_TOKEN_ISSUER,
-  ACCESS_TOKEN_TTL_SECONDS,
   CUSTOMER_ROLE_ID,
   LOCAL_EMAIL_PROVIDER,
   PROVIDER_APPLICANT_ROLE_ID,
 } from './auth.constants';
 import { AuthenticationResponse, EmailPasswordDto } from './auth.dto';
+import { TokenLifecycleService } from './token-lifecycle.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly dataSource: DataSource,
-    private readonly jwtService: JwtService,
+    private readonly tokenLifecycle: TokenLifecycleService,
   ) {}
 
   registerCustomer(input: EmailPasswordDto): Promise<AuthenticationResponse> {
@@ -121,7 +118,7 @@ export class AuthService {
       throw error;
     }
 
-    return this.createAuthenticationResponse(user, persona.role);
+    return this.tokenLifecycle.issueSession(user, persona.role);
   }
 
   async login(input: EmailPasswordDto): Promise<AuthenticationResponse> {
@@ -150,27 +147,6 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    return this.createAuthenticationResponse(identity.user, 'customer');
-  }
-
-  private async createAuthenticationResponse(
-    user: UserEntity,
-    role: 'customer' | 'provider_applicant',
-  ): Promise<AuthenticationResponse> {
-    const accessToken = await this.jwtService.signAsync(
-      { accountStatus: user.status, role },
-      {
-        subject: user.id,
-        issuer: ACCESS_TOKEN_ISSUER,
-        audience: ACCESS_TOKEN_AUDIENCE,
-        expiresIn: ACCESS_TOKEN_TTL_SECONDS,
-      },
-    );
-    return {
-      userId: user.id,
-      accessToken,
-      tokenType: 'Bearer',
-      expiresIn: ACCESS_TOKEN_TTL_SECONDS,
-    };
+    return this.tokenLifecycle.issueSession(identity.user, 'customer');
   }
 }

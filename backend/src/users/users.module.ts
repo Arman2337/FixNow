@@ -5,6 +5,7 @@ import { RoleEntity } from './role.entity';
 import { UserRoleEntity } from './user-role.entity';
 import { UserEntity } from './user.entity';
 import { UsersRepository } from './users.repository';
+import { CredentialEntity } from './credential.entity';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { UsersRepository } from './users.repository';
       IdentityEntity,
       RoleEntity,
       UserRoleEntity,
+      CredentialEntity,
     ]),
   ],
   providers: [UsersRepository],

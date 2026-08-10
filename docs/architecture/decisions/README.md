@@ -28,3 +28,4 @@ Start with [`0000-template.md`](0000-template.md).
 - [ADR-0008: Adopt TypeORM as the primary ORM for PostgreSQL](0008-adopt-typeorm-orm.md) — Accepted
 - [ADR-0009: Adopt Flutter for the mobile application](0009-adopt-flutter-mobile.md) — Accepted
 - [ADR-0010: Use local email and password authentication](0010-use-local-email-password-authentication.md) — Accepted
+- [ADR-0011: Use email OTP and rotating refresh tokens](0011-use-email-otp-and-rotating-refresh-tokens.md) — Accepted

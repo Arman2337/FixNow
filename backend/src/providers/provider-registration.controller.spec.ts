@@ -10,6 +10,7 @@ describe('ProviderRegistrationController', () => {
   const response = {
     userId: 'provider-1',
     accessToken: 'access-token',
+    refreshToken: 'refresh-token',
     tokenType: 'Bearer' as const,
     expiresIn: 900,
   };

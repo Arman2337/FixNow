@@ -1,6 +1,11 @@
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import { DataSource } from 'typeorm';
 import { AuthService } from '../src/auth/auth.service';
+import { AuthSessionEntity } from '../src/auth/auth-session.entity';
+import { AuthAuditEventEntity } from '../src/auth/auth-audit-event.entity';
+import { OtpChallengeEntity } from '../src/auth/otp-challenge.entity';
+import { TokenLifecycleService } from '../src/auth/token-lifecycle.service';
 import { CredentialEntity } from '../src/users/credential.entity';
 import { IdentityEntity } from '../src/users/identity.entity';
 import { RoleEntity } from '../src/users/role.entity';
@@ -33,18 +38,29 @@ describe('customer authentication PostgreSQL boundaries', () => {
       CredentialEntity,
       RoleEntity,
       UserRoleEntity,
+      AuthSessionEntity,
+      AuthAuditEventEntity,
+      OtpChallengeEntity,
     ],
     synchronize: false,
   });
   const jwt = new JwtService({
     secret: 'test-only-jwt-secret-at-least-32-characters',
   });
-  const service = new AuthService(dataSource, jwt);
+  const lifecycle = new TokenLifecycleService(
+    dataSource,
+    jwt,
+    new ConfigService({
+      OTP_SECRET: 'test-only-otp-secret-at-least-32-characters',
+    }),
+    { sendVerificationCode: jest.fn() },
+  );
+  const service = new AuthService(dataSource, lifecycle);
 
   beforeAll(() => dataSource.initialize());
   beforeEach(async () => {
     await dataSource.query(
-      'TRUNCATE TABLE "auth_credentials", "user_roles", "user_identities", "users" CASCADE',
+      'TRUNCATE TABLE "auth_audit_events", "auth_sessions", "otp_challenges", "auth_credentials", "user_roles", "user_identities", "users" CASCADE',
     );
     await dataSource.query(
       `INSERT INTO "roles" ("id", "code", "description") VALUES ('00000000-0000-4000-8000-000000000001', 'customer', 'Customer account') ON CONFLICT ("code") DO NOTHING`,

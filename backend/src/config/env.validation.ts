@@ -37,6 +37,30 @@ export class EnvironmentVariables {
   @IsString()
   @MinLength(32)
   JWT_SECRET: string;
+
+  @IsString()
+  @MinLength(32)
+  OTP_SECRET: string;
+
+  @IsString()
+  @IsOptional()
+  SMTP_HOST?: string;
+
+  @IsNumber()
+  @IsOptional()
+  SMTP_PORT: number = 587;
+
+  @IsString()
+  @IsOptional()
+  SMTP_USER?: string;
+
+  @IsString()
+  @IsOptional()
+  SMTP_PASS?: string;
+
+  @IsString()
+  @IsOptional()
+  SMTP_FROM?: string;
 }
 
 export function validate(config: Record<string, unknown>) {

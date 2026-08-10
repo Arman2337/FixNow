@@ -1010,8 +1010,8 @@ Implemented throttled provider registration using the approved email/password cr
 ### Completion Record
 Completed By: Codex
 Completed Date: 2026-08-11
-Commit: Pending
-PR: Pending
+Commit: 5af807e
+PR: #6
 
 ## FN-026 — Implement OTP and Refresh-Token Lifecycles
 Status: ⬜ Pending

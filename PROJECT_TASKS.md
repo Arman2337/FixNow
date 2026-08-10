@@ -32,10 +32,10 @@ Only these statuses are valid. A task cannot be completed while required validat
 # Project Progress
 
 Total Tasks: 73
-Completed: 29
+Completed: 30
 In Progress: 0
 Blocked: 0
-Pending: 44
+Pending: 43
 Cancelled: 0
 Current Phase: Phase 3 — Authentication & Users
 Next Recommended Task: FN-029 — Model Service Categories and Provider Skills
@@ -1076,7 +1076,7 @@ Commit: 758f7cd
 PR: Pending
 
 ## FN-028 — Implement Customer Profile Management
-Status: ⬜ Pending
+Status: ✅ Completed
 Priority: P2 — Medium
 Area: Backend/Users
 Depends On: FN-024, FN-027
@@ -1089,7 +1089,7 @@ Allow customers to read and safely update approved profile fields.
 ### Do Not
 - Do not expose another user's profile or collect unnecessary data.
 ### Acceptance Criteria
-- [ ] Read, update, validation, ownership, and privacy tests pass.
+- [x] Read, update, validation, ownership, and privacy tests pass.
 ### Validation
 ```bash
 # Run backend checks and customer profile integration tests.
@@ -1099,12 +1099,12 @@ Allow customers to read and safely update approved profile fields.
 backend/src/users/ shared/
 ```
 ### Notes
-None.
+The user explicitly directed FN-028 to remain on `feat/role-authorization` instead of its listed branch. Because no approved profile-field list exists, implementation is limited to a purpose-bound display name; phone, address, birth date, location, language, and other personal data remain uncollected. Added authenticated `/users/me/profile` read/update endpoints, token-derived ownership, value-free audit events, a cascade-deleted profile table, and validation/privacy coverage. Backend lint, 65 unit tests, 14 PostgreSQL integration tests, build, and migration up/down/up validation pass.
 ### Completion Record
-Completed By:
-Completed Date:
-Commit:
-PR:
+Completed By: Codex
+Completed Date: 2026-08-11
+Commit: Pending
+PR: Pending
 
 # Phase 4 — Provider System
 

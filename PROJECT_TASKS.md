@@ -1041,8 +1041,8 @@ Implemented email OTP through a configurable Gmail-compatible SMTP adapter, with
 ### Completion Record
 Completed By: Codex
 Completed Date: 2026-08-11
-Commit: Pending
-PR: Pending
+Commit: 0e8efc0
+PR: #7
 
 ## FN-027 — Enforce Role-Based Authorization
 Status: ⬜ Pending

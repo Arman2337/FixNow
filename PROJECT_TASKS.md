@@ -1138,7 +1138,7 @@ None.
 Completed By: Kiro
 Completed Date: 2026-08-11
 Commit: 1ebdfb6
-PR: Pending
+PR: #9
 
 ## FN-030 — Implement Provider Profile and Service Areas
 Status: ⬜ Pending

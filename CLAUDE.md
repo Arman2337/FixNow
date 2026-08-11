@@ -20,11 +20,11 @@ Read and follow [`AGENTS.md`](AGENTS.md) as the authoritative repository-wide ag
 
 ## Repository map
 
-- `mobile/`: future Flutter client
-- `backend/`: future NestJS services
+- `mobile/`: Flutter client, application shell, design system, API/auth state, and customer features
+- `backend/`: NestJS services and domain APIs
 - `admin/`: future Next.js application
-- `shared/`: future cross-project contracts and packages
-- `infrastructure/`: future infrastructure and deployment definitions
+- `shared/`: cross-project contracts and packages
+- `infrastructure/`: local service definitions and future deployment infrastructure
 - `ai/`: future AI services, prompts, and evaluations
 - `docs/`: durable engineering documentation
 

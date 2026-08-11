@@ -27,7 +27,7 @@ describe('AuthorizationService', () => {
   } as unknown as DataSource;
   const service = new AuthorizationService(
     dataSource,
-    { verifyAsync } as unknown as JwtService,
+    { verifyAsync },
     new AuthorizationPolicyService(),
   );
 

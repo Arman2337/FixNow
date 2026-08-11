@@ -458,10 +458,10 @@ Centralize three layers:
 2. **Semantic:** `primary`, `surface`, `textSecondary`, `danger`, `pagePadding`, `focus`, and other purpose roles.
 3. **Component:** `button.primary.background`, `input.focus.border`, `providerCard.padding`, etc., referencing semantic tokens.
 
-Future Flutter structure should resemble:
+The Flutter design-system structure is:
 
 ```text
-mobile/lib/core/design/
+mobile/lib/design_system/
     app_colors.dart
     app_typography.dart
     app_spacing.dart

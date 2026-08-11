@@ -1,6 +1,6 @@
 # FixNow mobile
 
-Flutter application foundation for the FixNow customer and provider experiences. The application shell, role-aware primary navigation, design tokens, and reusable UI primitives are established; authentication, booking, and production screens remain deferred to their tracked tasks.
+Flutter application foundation for the FixNow customer and provider experiences. The application shell, role-aware primary navigation, design tokens, reusable UI primitives, authentication state, and initial customer discovery/profile screens are established; registration UI, booking, and later production screens remain deferred to their tracked tasks.
 
 ## Prerequisites
 

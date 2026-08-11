@@ -2,7 +2,7 @@
 
 FixNow is a planned multi-surface platform with a mobile client, backend services, an administrative web application, shared contracts, infrastructure definitions, and AI capabilities.
 
-This repository contains the engineering foundation, an initial NestJS backend foundation, and a minimal Flutter mobile application foundation. Product features remain tracked in `PROJECT_TASKS.md`; no authentication, booking, admin, infrastructure deployment, or AI product capability should be inferred from the scaffolds.
+This repository contains the engineering foundation, an initial NestJS backend, and a Flutter mobile foundation with customer navigation, secure authentication state, service discovery, optional foreground-location consent, and customer profile management. Product features remain tracked in `PROJECT_TASKS.md`; booking, admin, infrastructure deployment, and AI product capabilities remain future work.
 
 ## Repository layout
 
@@ -36,7 +36,7 @@ Uninitialized project directories contain a `.gitkeep` file so Git preserves the
 
 5. Copy `.env.example` to an untracked `.env` only when local configuration is needed.
 
-Technology-specific setup will be added when each application is bootstrapped.
+Application-specific prerequisites and commands are documented in each initialized application's README.
 
 ### Mobile foundation
 
@@ -76,7 +76,7 @@ See [`mobile/README.md`](mobile/README.md) for supported environments and platfo
 
 ## Status
 
-Foundation phase. The backend and mobile directories contain validated application scaffolds; product workflows remain pending.
+Foundation phase. The backend and mobile applications contain validated foundations plus the tracked authentication, provider, and initial customer-discovery capabilities. Booking and later product workflows remain pending.
 
 ## License
 

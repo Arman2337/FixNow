@@ -10,7 +10,10 @@ Activate the repository hooks after cloning:
 git config core.hooksPath .githooks
 ```
 
-No application toolchain is required yet because this revision contains foundation files only.
+Install the toolchain for the area you change. Backend work uses Node.js and npm;
+mobile work uses Flutter and its platform prerequisites. Follow
+[`backend/README.md`](backend/README.md) or
+[`mobile/README.md`](mobile/README.md) for exact setup and validation commands.
 
 ## Contribution flow
 

@@ -12,6 +12,7 @@ import { HealthModule } from './health/health.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { ProvidersModule } from './providers/providers.module';
+import { ServicesModule } from './services/services.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { ProvidersModule } from './providers/providers.module';
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 60 }]),
     AuthModule,
     ProvidersModule,
+    ServicesModule,
   ],
   controllers: [AppController],
   providers: [

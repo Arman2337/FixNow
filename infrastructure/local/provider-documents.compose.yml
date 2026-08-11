@@ -1,0 +1,20 @@
+services:
+  seaweedfs:
+    image: chrislusf/seaweedfs:4.06
+    command: mini -dir=/data
+    ports:
+      - "127.0.0.1:8333:8333"
+    environment:
+      AWS_ACCESS_KEY_ID: ${PROVIDER_DOCUMENT_S3_ACCESS_KEY:?set local access key}
+      AWS_SECRET_ACCESS_KEY: ${PROVIDER_DOCUMENT_S3_SECRET_KEY:?set local secret key}
+      S3_BUCKET: ${PROVIDER_DOCUMENT_BUCKET:-fixnow-provider-documents}
+    volumes:
+      - provider_documents:/data
+
+  clamav:
+    image: clamav/clamav:1.4.3
+    ports:
+      - "127.0.0.1:3310:3310"
+
+volumes:
+  provider_documents:

@@ -95,3 +95,18 @@ FN-028 adds authenticated self-service profile endpoints:
 - `PATCH /api/v1/users/me/profile`
 
 The initial profile contract contains only `displayName`, a trimmed string from 1 to 80 characters. Ownership is derived from the validated access token; clients cannot select another user ID. Profile reads and updates are audited without recording the display-name value. Additional personal data is intentionally not collected.
+
+## Provider availability
+
+FN-033 adds verified-provider self-service endpoints:
+
+- `GET /api/v1/provider-availability/me`
+- `PUT /api/v1/provider-availability/me/schedule`
+- `PUT /api/v1/provider-availability/me/status`
+
+Schedules use an explicit IANA time zone, weekly intervals expressed as local
+minutes after midnight, and date-specific exceptions. Intervals cannot overlap
+or cross midnight; split overnight availability across two days. Online and
+busy status must include an expiry no more than 12 hours in the future and
+automatically reads as offline after expiry. Mutations require the current
+`version` so stale concurrent updates are rejected.

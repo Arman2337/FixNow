@@ -5,11 +5,19 @@ export const PERMISSIONS = {
   providerApplicationReadSelf: 'providers.application.read.self',
   providerApplicationUpdateSelf: 'providers.application.update.self',
   providerApplicationReviewAssigned: 'providers.application.review.assigned',
+  providerVerificationReview: 'providers.verification.review',
   providerSkillsRead: 'provider.skills.read',
   providerSkillsReadAny: 'provider.skills.read.any',
   providerSkillsCreate: 'provider.skills.create',
   providerSkillsUpdate: 'provider.skills.update',
   providerSkillsDelete: 'provider.skills.delete',
+  providerProfileRead: 'provider.profile.read',
+  providerProfileUpdate: 'provider.profile.update',
+  providerAvailabilityRead: 'provider.availability.read',
+  providerAvailabilityUpdate: 'provider.availability.update',
+  providerDocumentsCreate: 'provider.documents.create',
+  providerDocumentsRead: 'provider.documents.read',
+  providerDocumentsDelete: 'provider.documents.delete',
   adminServicesCreate: 'admin.services.create',
   adminServicesUpdate: 'admin.services.update',
   adminServicesDelete: 'admin.services.delete',
@@ -84,6 +92,9 @@ export const PERMISSION_POLICIES: Readonly<
     roles: ['provider_reviewer', 'operations_administrator'],
     relationship: 'assigned',
   },
+  [PERMISSIONS.providerVerificationReview]: {
+    roles: ['provider_reviewer', 'operations_administrator'],
+  },
   [PERMISSIONS.providerSkillsRead]: {
     roles: [
       'provider_applicant',
@@ -110,6 +121,34 @@ export const PERMISSION_POLICIES: Readonly<
   },
   [PERMISSIONS.providerSkillsDelete]: {
     roles: ['provider_applicant', 'verified_provider'],
+  },
+  [PERMISSIONS.providerProfileRead]: {
+    roles: ['provider_applicant', 'verified_provider'],
+    relationship: 'self',
+  },
+  [PERMISSIONS.providerProfileUpdate]: {
+    roles: ['provider_applicant', 'verified_provider'],
+    relationship: 'self',
+  },
+  [PERMISSIONS.providerAvailabilityRead]: {
+    roles: ['verified_provider'],
+    relationship: 'self',
+  },
+  [PERMISSIONS.providerAvailabilityUpdate]: {
+    roles: ['verified_provider'],
+    relationship: 'self',
+  },
+  [PERMISSIONS.providerDocumentsCreate]: {
+    roles: ['provider_applicant'],
+    relationship: 'self',
+  },
+  [PERMISSIONS.providerDocumentsRead]: {
+    roles: ['provider_applicant'],
+    relationship: 'self',
+  },
+  [PERMISSIONS.providerDocumentsDelete]: {
+    roles: ['provider_applicant'],
+    relationship: 'self',
   },
   [PERMISSIONS.adminServicesCreate]: {
     roles: ['service_catalog_manager', 'operations_administrator'],

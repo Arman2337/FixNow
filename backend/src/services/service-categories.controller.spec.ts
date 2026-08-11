@@ -1,3 +1,5 @@
+/* Jest service mocks are intentionally asserted as detached functions. */
+/* eslint-disable @typescript-eslint/unbound-method */
 import { Test, TestingModule } from '@nestjs/testing';
 import { ServiceCategoriesController } from './service-categories.controller';
 import { ServiceCategoriesService } from './service-categories.service';

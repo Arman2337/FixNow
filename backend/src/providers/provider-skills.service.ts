@@ -54,7 +54,7 @@ export class ProviderSkillsService {
   async findById(id: string): Promise<ProviderSkillEntity> {
     const skill = await this.providerSkillRepository.findOne({
       where: { id },
-      relations: ['user', 'serviceCategory'],
+      relations: { user: true, serviceCategory: true },
     });
 
     if (!skill) {
@@ -179,7 +179,7 @@ export class ProviderSkillsService {
         serviceCategoryId,
         isVerified: true,
       },
-      relations: ['user', 'serviceCategory'],
+      relations: { user: true, serviceCategory: true },
     });
   }
 

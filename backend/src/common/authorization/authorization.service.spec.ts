@@ -1,5 +1,4 @@
 import { ForbiddenException, UnauthorizedException } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import { DataSource } from 'typeorm';
 import { AuthAuditEventEntity } from '../../auth/auth-audit-event.entity';
 import { AuthSessionEntity } from '../../auth/auth-session.entity';

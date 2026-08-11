@@ -32,13 +32,13 @@ Only these statuses are valid. A task cannot be completed while required validat
 # Project Progress
 
 Total Tasks: 73
-Completed: 31
+Completed: 35
 In Progress: 0
 Blocked: 0
-Pending: 42
+Pending: 38
 Cancelled: 0
 Current Phase: Phase 4 — Provider System
-Next Recommended Task: FN-030 — Implement Provider Profile and Service Areas
+Next Recommended Task: FN-035 — Establish Mobile Navigation, State, and Design System
 
 # Current Work
 
@@ -1141,7 +1141,7 @@ Commit: 1ebdfb6
 PR: #9
 
 ## FN-030 — Implement Provider Profile and Service Areas
-Status: ⬜ Pending
+Status: ✅ Completed
 Priority: P1 — High
 Area: Backend/Providers
 Depends On: FN-025, FN-027, FN-029
@@ -1154,7 +1154,7 @@ Manage provider profile, skills, service radius, and location coverage.
 ### Do Not
 - Do not expose precise private locations to unauthorized users.
 ### Acceptance Criteria
-- [ ] Profile, skill, radius, ownership, and geospatial boundary tests pass.
+- [x] Profile, skill, radius, ownership, and geospatial boundary tests pass.
 ### Validation
 ```bash
 # Run backend checks and provider profile integration tests.
@@ -1164,15 +1164,15 @@ Manage provider profile, skills, service radius, and location coverage.
 backend/src/providers/ backend/src/services/ shared/
 ```
 ### Notes
-None.
+Added owner-controlled provider profile persistence and APIs, provider-skill composition, bounded service radius and coordinate validation, privacy-safe coverage checks, shared contracts, and migration coverage. Repaired the inherited FN-029 validation baseline by aligning controllers with the global authorization guard, correcting TypeORM relation typing, and separating PostgreSQL integration tests from the default unit suite.
 ### Completion Record
-Completed By:
-Completed Date:
-Commit:
-PR:
+Completed By: Codex
+Completed Date: 2026-08-11
+Commit: afe1d9d
+PR: #10
 
 ## FN-031 — Implement Provider Document Upload
-Status: ⬜ Pending
+Status: ✅ Completed
 Priority: P1 — High
 Area: Backend/Providers
 Depends On: FN-012, FN-014, FN-025
@@ -1185,7 +1185,7 @@ Accept KYC documents through approved private storage controls.
 ### Do Not
 - Do not commit documents or expose public object URLs.
 ### Acceptance Criteria
-- [ ] Upload, rejection, access, deletion, and audit tests pass.
+- [x] Upload, rejection, access, deletion, and audit tests pass.
 ### Validation
 ```bash
 # Run backend checks and isolated document integration tests.
@@ -1195,15 +1195,17 @@ Accept KYC documents through approved private storage controls.
 backend/src/providers/documents/ backend/src/storage/ infrastructure/
 ```
 ### Notes
-Storage provider and credentials must be available or the task is blocked.
+Implemented a development-only private document boundary using SeaweedFS's S3-compatible API and ClamAV, both behind vendor-neutral adapters. Uploads are bounded and signature-validated, quarantined under opaque keys, scanned before availability, digest-recorded, owner-authorized, audit-recorded, safely served without public URLs, and deleted with metadata tombstones. Local configuration uses placeholders only and is not approved for real KYC or production processing.
+
+
 ### Completion Record
-Completed By:
-Completed Date:
-Commit:
-PR:
+Completed By: Codex
+Completed Date: 2026-08-11
+Commit: afe1d9d
+PR: #10
 
 ## FN-032 — Implement Provider Verification Workflow
-Status: ⬜ Pending
+Status: ✅ Completed
 Priority: P1 — High
 Area: Backend/Providers
 Depends On: FN-027, FN-030, FN-031
@@ -1216,7 +1218,7 @@ Support auditable provider review, approval, rejection, and resubmission.
 ### Do Not
 - Do not auto-approve or overwrite audit history.
 ### Acceptance Criteria
-- [ ] Transition, permission, concurrency, reason, and audit tests pass.
+- [x] Transition, permission, concurrency, reason, and audit tests pass.
 ### Validation
 ```bash
 # Run backend checks and verification workflow tests.
@@ -1226,15 +1228,15 @@ Support auditable provider review, approval, rejection, and resubmission.
 backend/src/providers/ backend/src/admin/ shared/
 ```
 ### Notes
-None.
+Implemented reviewer claim and decision endpoints with a centralized role permission plus transactional assignment enforcement. The versioned state machine blocks stale, illegal, unassigned, and self-review transitions; requires bounded reasons; appends immutable verification events; and atomically activates the approved account and grants the verified-provider role without duplicating grants. Production use remains gated by the documented KYC/legal/privacy approvals.
 ### Completion Record
-Completed By:
-Completed Date:
-Commit:
-PR:
+Completed By: Codex
+Completed Date: 2026-08-11
+Commit: afe1d9d
+PR: #10
 
 ## FN-033 — Implement Provider Availability
-Status: ⬜ Pending
+Status: ✅ Completed
 Priority: P1 — High
 Area: Backend/Providers
 Depends On: FN-030, FN-032
@@ -1247,7 +1249,7 @@ Manage verified provider schedules and online availability safely.
 ### Do Not
 - Do not implement job matching or live GPS.
 ### Acceptance Criteria
-- [ ] Time-zone, overlap, authorization, and verified-state tests pass.
+- [x] Time-zone, overlap, authorization, and verified-state tests pass.
 ### Validation
 ```bash
 # Run backend checks and provider availability tests.
@@ -1257,12 +1259,19 @@ Manage verified provider schedules and online availability safely.
 backend/src/providers/availability/ shared/
 ```
 ### Notes
-None.
+Implemented verified-provider self-service schedules, dated exceptions, transient
+online/busy status, optimistic concurrency, IANA time-zone validation, interval
+conflict and bounds validation, explicit response mapping, shared contracts,
+database constraints, migration coverage, and backend usage documentation.
+Validated with repository-wide backend lint, all 161 backend tests, targeted
+availability and authorization tests, production TypeScript checking, emitted
+NestJS build, and `git diff --check`.
+
 ### Completion Record
-Completed By:
-Completed Date:
-Commit:
-PR:
+Completed By: Codex
+Completed Date: 2026-08-11
+Commit: afe1d9d
+PR: #10
 
 # Phase 5 — Customer Mobile Foundation
 

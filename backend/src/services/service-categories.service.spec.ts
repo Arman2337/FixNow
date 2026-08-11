@@ -1,3 +1,5 @@
+/* Jest repository mocks are intentionally asserted as detached functions. */
+/* eslint-disable @typescript-eslint/unbound-method */
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -114,7 +116,7 @@ describe('ServiceCategoriesService', () => {
 
       expect(repository.findOne).toHaveBeenCalledWith({
         where: { id: 'test-id' },
-        relations: ['providerSkills'],
+        relations: { providerSkills: true },
       });
       expect(result).toEqual(mockCategory);
     });
@@ -136,7 +138,7 @@ describe('ServiceCategoriesService', () => {
 
       expect(repository.findOne).toHaveBeenCalledWith({
         where: { slug: 'test-service' },
-        relations: ['providerSkills'],
+        relations: { providerSkills: true },
       });
       expect(result).toEqual(mockCategory);
     });
@@ -184,7 +186,7 @@ describe('ServiceCategoriesService', () => {
 
       expect(repository.findOne).toHaveBeenCalledWith({
         where: { id: 'test-id' },
-        relations: ['providerSkills'],
+        relations: { providerSkills: true },
       });
       expect(repository.save).toHaveBeenCalledWith(
         expect.objectContaining(updateDto),

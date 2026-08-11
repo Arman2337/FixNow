@@ -62,9 +62,13 @@ See [`mobile/README.md`](mobile/README.md) for supported environments and platfo
 
 ## Documentation
 
+- [Backend setup and API notes](backend/README.md)
+- [Local provider-document services](infrastructure/local/README.md)
 - [Architecture](docs/architecture/README.md)
 - [Branching strategy](docs/development/branching-strategy.md)
 - [Git workflow](docs/development/git-workflow.md)
+- [Project task tracker](PROJECT_TASKS.md)
+- [Changelog](CHANGELOG.md)
 - [AI agent rules](AGENTS.md)
 - [Claude guidance](CLAUDE.md)
 - [Contributing](CONTRIBUTING.md)

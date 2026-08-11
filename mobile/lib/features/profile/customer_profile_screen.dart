@@ -1,0 +1,195 @@
+import 'package:fixnow_mobile/design_system/app_spacing.dart';
+import 'package:fixnow_mobile/design_system/fix_button.dart';
+import 'package:fixnow_mobile/design_system/fix_card.dart';
+import 'package:fixnow_mobile/design_system/fix_status_chip.dart';
+import 'package:fixnow_mobile/features/profile/customer_profile_controller.dart';
+import 'package:flutter/material.dart';
+
+class CustomerProfileScreen extends StatefulWidget {
+  const CustomerProfileScreen({required this.controller, super.key});
+  final CustomerProfileController controller;
+
+  @override
+  State<CustomerProfileScreen> createState() => _CustomerProfileScreenState();
+}
+
+class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _nameController;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController();
+    widget.controller.addListener(_syncName);
+    widget.controller.load();
+  }
+
+  void _syncName() {
+    if (widget.controller.status == ProfileViewStatus.ready ||
+        widget.controller.status == ProfileViewStatus.saved) {
+      _nameController.text = widget.controller.displayName;
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_syncName);
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => ListenableBuilder(
+    listenable: widget.controller,
+    builder: (context, _) => SingleChildScrollView(
+      padding: const EdgeInsets.all(AppSpacing.pagePadding),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Semantics(
+            header: true,
+            child: Text(
+              'Profile',
+              style: Theme.of(context).textTheme.headlineLarge,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            'Only your display name is collected here.',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          if (widget.controller.status == ProfileViewStatus.loading)
+            const Center(
+              child: CircularProgressIndicator(
+                semanticsLabel: 'Loading profile',
+              ),
+            )
+          else if (_failed)
+            _ProfileFailure(
+              status: widget.controller.status,
+              onRetry: widget.controller.load,
+            )
+          else
+            FixCard(
+              semanticLabel: 'Customer profile form',
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    TextFormField(
+                      controller: _nameController,
+                      maxLength: 80,
+                      autofillHints: const [AutofillHints.name],
+                      textInputAction: TextInputAction.done,
+                      decoration: const InputDecoration(
+                        labelText: 'Display name',
+                        hintText: 'How should we address you?',
+                      ),
+                      validator: (value) {
+                        final candidate = value?.trim() ?? '';
+                        if (candidate.isEmpty) return 'Enter a display name.';
+                        if (candidate.contains(RegExp(r'[\x00-\x1F\x7F]'))) {
+                          return 'Remove unsupported characters.';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    FixButton(
+                      label: 'Save profile',
+                      isLoading:
+                          widget.controller.status == ProfileViewStatus.saving,
+                      onPressed: () async {
+                        if (_formKey.currentState?.validate() ?? false) {
+                          await widget.controller.save(_nameController.text);
+                        }
+                      },
+                    ),
+                    if (widget.controller.status ==
+                        ProfileViewStatus.saved) ...[
+                      const SizedBox(height: AppSpacing.md),
+                      const Align(
+                        alignment: Alignment.centerLeft,
+                        child: FixStatusChip(
+                          label: 'Profile saved',
+                          icon: Icons.check_circle_outline,
+                          tone: FixStatusTone.success,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          const SizedBox(height: AppSpacing.xl),
+          const FixCard(
+            semanticLabel: 'Profile privacy information',
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.privacy_tip_outlined),
+                SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Text(
+                    'Your location is not part of your profile and is never saved by this screen.',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+
+  bool get _failed => const {
+    ProfileViewStatus.offline,
+    ProfileViewStatus.unauthorized,
+    ProfileViewStatus.error,
+  }.contains(widget.controller.status);
+}
+
+class _ProfileFailure extends StatelessWidget {
+  const _ProfileFailure({required this.status, required this.onRetry});
+  final ProfileViewStatus status;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final unauthorized = status == ProfileViewStatus.unauthorized;
+    final offline = status == ProfileViewStatus.offline;
+    return FixCard(
+      semanticLabel: 'Profile unavailable',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            unauthorized
+                ? 'Sign in required'
+                : offline
+                ? 'You are offline'
+                : 'Profile unavailable',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            unauthorized
+                ? 'Sign in to view or update your profile.'
+                : offline
+                ? 'Check your connection, then try again.'
+                : 'We could not load your profile. Try again.',
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          FixButton(
+            label: 'Try again',
+            onPressed: onRetry,
+            variant: FixButtonVariant.secondary,
+          ),
+        ],
+      ),
+    );
+  }
+}

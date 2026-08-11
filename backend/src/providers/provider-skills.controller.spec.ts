@@ -1,3 +1,5 @@
+/* Jest repository/service mocks are intentionally asserted as detached functions. */
+/* eslint-disable @typescript-eslint/unbound-method */
 import { Test, TestingModule } from '@nestjs/testing';
 import { ProviderSkillsController } from './provider-skills.controller';
 import { ProviderSkillsService } from './provider-skills.service';
@@ -6,7 +8,7 @@ import {
   UpdateProviderSkillDto,
   VerifyProviderSkillDto,
 } from './provider-skills.dto';
-import { AuthorizedRequest } from '../auth/types/auth.types';
+import type { AuthorizedRequest } from '../common/authorization/authorization.guard';
 
 describe('ProviderSkillsController', () => {
   let controller: ProviderSkillsController;
@@ -27,9 +29,10 @@ describe('ProviderSkillsController', () => {
   };
 
   const mockRequest = {
-    user: {
+    authorizationPrincipal: {
       userId: 'user-id',
-      permissions: ['provider.skills.read', 'provider.skills.create'],
+      sessionId: 'session-id',
+      roles: ['provider_applicant'],
     },
   } as AuthorizedRequest;
 
@@ -163,11 +166,12 @@ describe('ProviderSkillsController', () => {
       expect(result).toEqual(expect.objectContaining(updateDto));
     });
 
-    it('should detect admin permissions', async () => {
+    it('does not elevate an owner endpoint from request role claims', async () => {
       const adminRequest = {
-        user: {
+        authorizationPrincipal: {
           userId: 'admin-id',
-          permissions: ['admin.skills.update'],
+          sessionId: 'session-id',
+          roles: ['operations_administrator'],
         },
       } as AuthorizedRequest;
 
@@ -180,7 +184,7 @@ describe('ProviderSkillsController', () => {
         'skill-id',
         'admin-id',
         updateDto,
-        true,
+        false,
       );
     });
   });
@@ -213,11 +217,12 @@ describe('ProviderSkillsController', () => {
       expect(service.delete).toHaveBeenCalledWith('skill-id', 'user-id', false);
     });
 
-    it('should detect admin permissions for delete', async () => {
+    it('does not elevate delete from request role claims', async () => {
       const adminRequest = {
-        user: {
+        authorizationPrincipal: {
           userId: 'admin-id',
-          permissions: ['admin.skills.delete'],
+          sessionId: 'session-id',
+          roles: ['operations_administrator'],
         },
       } as AuthorizedRequest;
 
@@ -225,7 +230,11 @@ describe('ProviderSkillsController', () => {
 
       await controller.delete('skill-id', adminRequest);
 
-      expect(service.delete).toHaveBeenCalledWith('skill-id', 'admin-id', true);
+      expect(service.delete).toHaveBeenCalledWith(
+        'skill-id',
+        'admin-id',
+        false,
+      );
     });
   });
 });

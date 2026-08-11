@@ -44,7 +44,7 @@ Next Recommended Task: FN-029 — Model Service Categories and Provider Skills
 
 Active Tasks:
 
-- None
+- FN-029 — Model Service Categories and Provider Skills
 
 # Decision Log
 
@@ -1109,7 +1109,7 @@ PR: #8
 # Phase 4 — Provider System
 
 ## FN-029 — Model Service Categories and Provider Skills
-Status: ⬜ Pending
+Status: In Progress
 Priority: P1 — High
 Area: Backend/Providers
 Depends On: FN-019, FN-027

@@ -5,6 +5,17 @@ export const PERMISSIONS = {
   providerApplicationReadSelf: 'providers.application.read.self',
   providerApplicationUpdateSelf: 'providers.application.update.self',
   providerApplicationReviewAssigned: 'providers.application.review.assigned',
+  providerSkillsRead: 'provider.skills.read',
+  providerSkillsReadAny: 'provider.skills.read.any',
+  providerSkillsCreate: 'provider.skills.create',
+  providerSkillsUpdate: 'provider.skills.update',
+  providerSkillsDelete: 'provider.skills.delete',
+  adminServicesCreate: 'admin.services.create',
+  adminServicesUpdate: 'admin.services.update',
+  adminServicesDelete: 'admin.services.delete',
+  adminSkillsUpdate: 'admin.skills.update',
+  adminSkillsVerify: 'admin.skills.verify',
+  adminSkillsDelete: 'admin.skills.delete',
   bookingCreateSelf: 'bookings.request.create.self',
   roleGrantAuthorized: 'access.role.grant.authorized',
   securityAuditReadAuthorized: 'access.audit.read.authorized',
@@ -72,6 +83,59 @@ export const PERMISSION_POLICIES: Readonly<
   [PERMISSIONS.providerApplicationReviewAssigned]: {
     roles: ['provider_reviewer', 'operations_administrator'],
     relationship: 'assigned',
+  },
+  [PERMISSIONS.providerSkillsRead]: {
+    roles: [
+      'provider_applicant',
+      'verified_provider',
+      'provider_reviewer',
+      'service_catalog_manager',
+      'operations_administrator',
+    ],
+    relationship: 'self',
+  },
+  [PERMISSIONS.providerSkillsReadAny]: {
+    roles: [
+      'provider_reviewer',
+      'service_catalog_manager',
+      'operations_administrator',
+      'auditor',
+    ],
+  },
+  [PERMISSIONS.providerSkillsCreate]: {
+    roles: ['provider_applicant', 'verified_provider'],
+  },
+  [PERMISSIONS.providerSkillsUpdate]: {
+    roles: ['provider_applicant', 'verified_provider'],
+  },
+  [PERMISSIONS.providerSkillsDelete]: {
+    roles: ['provider_applicant', 'verified_provider'],
+  },
+  [PERMISSIONS.adminServicesCreate]: {
+    roles: ['service_catalog_manager', 'operations_administrator'],
+  },
+  [PERMISSIONS.adminServicesUpdate]: {
+    roles: ['service_catalog_manager', 'operations_administrator'],
+  },
+  [PERMISSIONS.adminServicesDelete]: {
+    roles: ['service_catalog_manager', 'operations_administrator'],
+  },
+  [PERMISSIONS.adminSkillsUpdate]: {
+    roles: [
+      'provider_reviewer',
+      'service_catalog_manager',
+      'operations_administrator',
+    ],
+  },
+  [PERMISSIONS.adminSkillsVerify]: {
+    roles: [
+      'provider_reviewer',
+      'service_catalog_manager',
+      'operations_administrator',
+    ],
+  },
+  [PERMISSIONS.adminSkillsDelete]: {
+    roles: ['service_catalog_manager', 'operations_administrator'],
   },
   [PERMISSIONS.bookingCreateSelf]: {
     roles: ['customer'],

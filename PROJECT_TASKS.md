@@ -1168,7 +1168,7 @@ Added owner-controlled provider profile persistence and APIs, provider-skill com
 ### Completion Record
 Completed By: Codex
 Completed Date: 2026-08-11
-Commit: Pending
+Commit: afe1d9d
 PR: Pending
 
 ## FN-031 — Implement Provider Document Upload
@@ -1201,7 +1201,7 @@ Implemented a development-only private document boundary using SeaweedFS's S3-co
 ### Completion Record
 Completed By: Codex
 Completed Date: 2026-08-11
-Commit: Pending
+Commit: afe1d9d
 PR: Pending
 
 ## FN-032 — Implement Provider Verification Workflow
@@ -1232,7 +1232,7 @@ Implemented reviewer claim and decision endpoints with a centralized role permis
 ### Completion Record
 Completed By: Codex
 Completed Date: 2026-08-11
-Commit: Pending
+Commit: afe1d9d
 PR: Pending
 
 ## FN-033 — Implement Provider Availability
@@ -1270,7 +1270,7 @@ NestJS build, and `git diff --check`.
 ### Completion Record
 Completed By: Codex
 Completed Date: 2026-08-11
-Commit: Pending
+Commit: afe1d9d
 PR: Pending
 
 # Phase 5 — Customer Mobile Foundation

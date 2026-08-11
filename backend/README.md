@@ -96,6 +96,46 @@ FN-028 adds authenticated self-service profile endpoints:
 
 The initial profile contract contains only `displayName`, a trimmed string from 1 to 80 characters. Ownership is derived from the validated access token; clients cannot select another user ID. Profile reads and updates are audited without recording the display-name value. Additional personal data is intentionally not collected.
 
+## Provider profile and service area
+
+FN-030 adds provider-applicant self-service endpoints:
+
+- `GET /api/v1/provider-profile/me`
+- `PUT /api/v1/provider-profile/me`
+- `PUT /api/v1/provider-profile/me/coverage-check`
+
+Profiles contain a display name, optional biography, service radius, base
+coordinates, and service-category skills. The coverage-check response reports
+only whether a coordinate is within the provider's configured radius; it does
+not disclose the provider's private base coordinates.
+
+## Provider documents
+
+FN-031 adds provider-applicant self-service endpoints:
+
+- `POST /api/v1/provider-documents/:documentType`
+- `GET /api/v1/provider-documents/:id`
+- `DELETE /api/v1/provider-documents/:id`
+
+Upload one file in the multipart `document` field. Supported document types are
+`identity`, `license`, and `certification`; uploads are limited to 10 MiB and
+remain unavailable until malware scanning succeeds. Objects use private opaque
+keys and are returned only through the authorized download endpoint. For the
+development-only SeaweedFS and ClamAV setup, see
+[`../infrastructure/local/README.md`](../infrastructure/local/README.md).
+
+## Provider verification
+
+FN-032 adds authorized reviewer endpoints:
+
+- `POST /api/v1/provider-verification/:applicationId/claim`
+- `POST /api/v1/provider-verification/:applicationId/decision`
+
+Both mutations require the application's expected version. Only the assigned
+reviewer can record a decision, every decision requires a reason, and approval
+atomically activates the provider account and grants the verified-provider role.
+The local document stack is not approved for real KYC or production processing.
+
 ## Provider availability
 
 FN-033 adds verified-provider self-service endpoints:

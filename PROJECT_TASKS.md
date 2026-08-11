@@ -32,19 +32,17 @@ Only these statuses are valid. A task cannot be completed while required validat
 # Project Progress
 
 Total Tasks: 73
-Completed: 35
+Completed: 38
 In Progress: 0
 Blocked: 0
-Pending: 38
+Pending: 34
 Cancelled: 0
-Current Phase: Phase 4 — Provider System
-Next Recommended Task: FN-035 — Establish Mobile Navigation, State, and Design System
+Current Phase: Phase 5 — Customer Mobile Foundation
+Next Recommended Task: FN-038 — Create Booking Data Model and Lifecycle Contract
 
 # Current Work
 
-Active Tasks:
-
-- None
+Active Tasks: None.
 
 # Decision Log
 
@@ -1309,7 +1307,7 @@ Commit: 411acdb
 PR: #4
 
 ## FN-035 — Establish Mobile Navigation, State, and Design System
-Status: ⬜ Pending
+Status: ✅ Completed
 Priority: P1 — High
 Area: Mobile
 Depends On: FN-034
@@ -1322,7 +1320,7 @@ Create accessible navigation, state boundaries, themes, tokens, and reusable pri
 ### Do Not
 - Do not build product workflows or add redundant packages.
 ### Acceptance Criteria
-- [ ] Navigation, theme, accessibility, and component tests pass.
+- [x] Navigation, theme, accessibility, and component tests pass.
 ### Validation
 ```bash
 flutter analyze
@@ -1333,15 +1331,19 @@ flutter test
 mobile/lib/app/ mobile/lib/design_system/ mobile/test/
 ```
 ### Notes
-State-management choice must be documented.
+Added customer and provider application-shell navigation, an explicit
+`ChangeNotifier` navigation-state boundary, centralized `DESIGN.md` color,
+typography, spacing, radius, shadow, and theme mappings, plus reusable button,
+card, status-chip, and bottom-navigation primitives. The built-in state choice
+and its intentionally narrow ownership are documented in `mobile/README.md`.
 ### Completion Record
-Completed By:
-Completed Date:
-Commit:
-PR:
+Completed By: Codex
+Completed Date: 2026-08-11
+Commit: Pending
+PR: Pending
 
 ## FN-036 — Add Mobile API Client and Authentication State
-Status: ⬜ Pending
+Status: ✅ Completed
 Priority: P1 — High
 Area: Mobile
 Depends On: FN-026, FN-034, FN-035
@@ -1354,7 +1356,7 @@ Consume documented contracts with secure session storage and authentication stat
 ### Do Not
 - Do not store tokens in plaintext or implement registration UI.
 ### Acceptance Criteria
-- [ ] Authenticated, expired, offline, retry, and logout cases pass.
+- [x] Authenticated, expired, offline, retry, and logout cases pass.
 ### Validation
 ```bash
 flutter analyze
@@ -1365,15 +1367,19 @@ flutter test
 mobile/lib/api/ mobile/lib/auth/ shared/
 ```
 ### Notes
-None.
+Added bounded HTTP transport, timeouts, safe error mapping, and GET-only retry.
+Added secure platform-backed session persistence, authentication restoration,
+single-flight rotating-token renewal, logout cleanup, and deterministic tests.
+Android and iOS secure-storage requirements are configured. Per user direction,
+this work remained on `feat/mobile-app-shell`.
 ### Completion Record
-Completed By:
-Completed Date:
-Commit:
-PR:
+Completed By: Codex
+Completed Date: 2026-08-11
+Commit: Pending
+PR: Pending
 
 ## FN-037 — Implement Customer Profile, Location, and Service Discovery UI
-Status: ⬜ Pending
+Status: ✅ Completed
 Priority: P1 — High
 Area: Mobile/Customer
 Depends On: FN-028, FN-029, FN-035, FN-036
@@ -1386,7 +1392,7 @@ Let customers manage profiles, consent to location, and browse service categorie
 ### Do Not
 - Do not create bookings or track providers.
 ### Acceptance Criteria
-- [ ] Permission denial, privacy, loading, error, and accessibility tests pass.
+- [x] Permission denial, privacy, loading, error, and accessibility tests pass.
 ### Validation
 ```bash
 flutter analyze
@@ -1397,12 +1403,18 @@ flutter test
 mobile/lib/features/profile/ mobile/lib/features/location/ mobile/lib/features/services/
 ```
 ### Notes
-None.
+Connected customer Home to active service-category discovery and optional
+foreground location consent, and connected Profile to the approved display-name
+read/update contract. Added explicit loading, empty, offline, error, denial, and
+privacy states using the existing design tokens and components. Location denial
+never blocks browsing; no coordinates are stored, no booking is created, and no
+provider tracking was added. Per user direction, work remained on
+`feat/mobile-app-shell`.
 ### Completion Record
-Completed By:
-Completed Date:
-Commit:
-PR:
+Completed By: Codex
+Completed Date: 2026-08-11
+Commit: Pending
+PR: Pending
 
 # Phase 6 — Service Booking
 

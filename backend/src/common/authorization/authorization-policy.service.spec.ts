@@ -36,6 +36,39 @@ describe('AuthorizationPolicyService', () => {
     ).toBe(false);
   });
 
+  it('allows only a verified provider to manage their own availability', () => {
+    expect(
+      policy.isAllowed(
+        {
+          principal: principal('provider-1', ['verified_provider']),
+          permission: PERMISSIONS.providerAvailabilityUpdate,
+          context: { ownerId: 'provider-1' },
+        },
+        AccountStatus.Active,
+      ),
+    ).toBe(true);
+    expect(
+      policy.isAllowed(
+        {
+          principal: principal('applicant-1', ['provider_applicant']),
+          permission: PERMISSIONS.providerAvailabilityUpdate,
+          context: { ownerId: 'applicant-1' },
+        },
+        AccountStatus.Active,
+      ),
+    ).toBe(false);
+    expect(
+      policy.isAllowed(
+        {
+          principal: principal('provider-1', ['verified_provider']),
+          permission: PERMISSIONS.providerAvailabilityUpdate,
+          context: { ownerId: 'provider-2' },
+        },
+        AccountStatus.Active,
+      ),
+    ).toBe(false);
+  });
+
   it.each([
     AccountStatus.PendingVerification,
     AccountStatus.Restricted,

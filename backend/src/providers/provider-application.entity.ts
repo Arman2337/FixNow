@@ -30,6 +30,23 @@ export class ProviderApplicationEntity {
   })
   status!: ProviderOnboardingStatus;
 
+  @Column({ name: 'assigned_reviewer_user_id', type: 'uuid', nullable: true })
+  assignedReviewerUserId!: string | null;
+
+  @Column({
+    name: 'decision_reason',
+    type: 'varchar',
+    length: 1000,
+    nullable: true,
+  })
+  decisionReason!: string | null;
+
+  @Column({ name: 'reviewed_at', type: 'timestamptz', nullable: true })
+  reviewedAt!: Date | null;
+
+  @Column({ type: 'integer', default: 0 })
+  version!: number;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;
 

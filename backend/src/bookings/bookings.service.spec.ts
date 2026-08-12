@@ -1,216 +1,160 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { BookingsService } from './bookings.service';
-import { Booking } from './domain/booking.entity';
+import { ConflictException, ForbiddenException } from '@nestjs/common';
+import type { DataSource, EntityManager, Repository } from 'typeorm';
 import { BookingStatus } from '../../../shared/booking-lifecycle.types';
-import { Repository } from 'typeorm';
+import type { MatchingService } from '../matching/matching.service';
+import { BookingsService } from './bookings.service';
+import { BookingEvent } from './domain/booking-event.entity';
+import { Booking } from './domain/booking.entity';
 
 describe('BookingsService', () => {
   let service: BookingsService;
-  let repository: jest.Mocked<Repository<Booking>>;
+  let bookingRepository: jest.Mocked<Repository<Booking>>;
+  let eventRepository: jest.Mocked<Repository<BookingEvent>>;
+  let dataSource: jest.Mocked<DataSource>;
+  let manager: jest.Mocked<EntityManager>;
+  let matchingService: jest.Mocked<MatchingService>;
+  let bookingFindOneBy: jest.Mock;
+  let bookingSave: jest.Mock;
+  let eventSave: jest.Mock;
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        BookingsService,
+  const booking = (overrides: Partial<Booking> = {}): Booking =>
+    Object.assign(new Booking(), {
+      id: '00000000-0000-4000-8000-000000000101',
+      customerId: '00000000-0000-4000-8000-000000000001',
+      providerId: null,
+      serviceCategoryId: '00000000-0000-4000-8000-000000000010',
+      idempotencyKey: 'request-key-123',
+      requestFingerprint: '',
+      status: BookingStatus.REQUESTED,
+      description: 'Repair a leaking pipe',
+      locationLat: 22.3,
+      locationLng: 73.2,
+      scheduledAt: null,
+      assignedAt: null,
+      enRouteAt: null,
+      startedAt: null,
+      completedAt: null,
+      cancelledAt: null,
+      cancellationReason: null,
+      deletedAt: null,
+      createdAt: new Date('2026-08-12T10:00:00.000Z'),
+      updatedAt: new Date('2026-08-12T10:00:00.000Z'),
+      version: 1,
+      ...overrides,
+    });
+
+  beforeEach(() => {
+    bookingFindOneBy = jest.fn();
+    bookingSave = jest.fn();
+    eventSave = jest.fn().mockResolvedValue(new BookingEvent());
+    bookingRepository = {
+      findOneBy: bookingFindOneBy,
+      findOneByOrFail: jest.fn(),
+      create: jest.fn((value: Partial<Booking>) => booking(value)),
+      save: bookingSave,
+      createQueryBuilder: jest.fn(),
+    } as unknown as jest.Mocked<Repository<Booking>>;
+    eventRepository = {
+      create: jest.fn((value: Partial<BookingEvent>) =>
+        Object.assign(new BookingEvent(), value),
+      ),
+      save: eventSave,
+    } as unknown as jest.Mocked<Repository<BookingEvent>>;
+    manager = {
+      getRepository: jest.fn((entity: unknown) =>
+        entity === Booking ? bookingRepository : eventRepository,
+      ),
+    } as unknown as jest.Mocked<EntityManager>;
+    dataSource = {
+      getRepository: jest.fn(() => bookingRepository),
+      transaction: jest.fn(
+        (callback: (transactionManager: EntityManager) => unknown) =>
+          Promise.resolve(callback(manager)),
+      ),
+    } as unknown as jest.Mocked<DataSource>;
+    matchingService = {
+      findEligibleProviders: jest.fn(),
+    } as unknown as jest.Mocked<MatchingService>;
+    service = new BookingsService(dataSource, matchingService);
+  });
+
+  it('creates a booking and an initial immutable lifecycle event', async () => {
+    bookingFindOneBy.mockResolvedValue(null);
+    bookingSave.mockImplementation((value: Booking) => {
+      value.requestFingerprint ||= 'generated-fingerprint';
+      return Promise.resolve(value);
+    });
+
+    const result = await service.create(
+      '00000000-0000-4000-8000-000000000001',
+      {
+        serviceCategoryId: '00000000-0000-4000-8000-000000000010',
+        description: ' Repair a leaking pipe ',
+        locationLat: 22.3,
+        locationLng: 73.2,
+      },
+      'request-key-123',
+    );
+
+    expect(result.description).toBe('Repair a leaking pipe');
+    expect(eventSave).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns an existing booking for an identical idempotent replay', async () => {
+    bookingFindOneBy.mockResolvedValue(null);
+    bookingSave.mockImplementation((value: Booking) => Promise.resolve(value));
+    const input = {
+      serviceCategoryId: '00000000-0000-4000-8000-000000000010',
+      description: 'Repair a leaking pipe',
+      locationLat: 22.3,
+      locationLng: 73.2,
+    };
+    const created = await service.create(
+      'customer-id',
+      input,
+      'request-key-123',
+    );
+    bookingFindOneBy.mockResolvedValue(created);
+
+    await expect(
+      service.create('customer-id', input, 'request-key-123'),
+    ).resolves.toBe(created);
+  });
+
+  it('rejects reuse of an idempotency key with a different payload', async () => {
+    bookingFindOneBy.mockResolvedValue(
+      booking({ requestFingerprint: 'different-fingerprint' }),
+    );
+    await expect(
+      service.create(
+        'customer-id',
         {
-          provide: getRepositoryToken(Booking),
-          useValue: {
-            save: jest.fn(),
-            findOne: jest.fn(),
-            createQueryBuilder: jest.fn(),
-          },
+          serviceCategoryId: '00000000-0000-4000-8000-000000000010',
+          description: 'Different work',
+          locationLat: 22.3,
+          locationLng: 73.2,
         },
-      ],
-    }).compile();
-
-    service = module.get<BookingsService>(BookingsService);
-    repository = module.get(getRepositoryToken(Booking));
+        'request-key-123',
+      ),
+    ).rejects.toBeInstanceOf(ConflictException);
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  it('rejects acceptance by an ineligible provider', async () => {
+    bookingFindOneBy.mockResolvedValue(booking());
+    matchingService.findEligibleProviders.mockResolvedValue([]);
+
+    await expect(
+      service.acceptBooking(
+        '00000000-0000-4000-8000-000000000101',
+        '00000000-0000-4000-8000-000000000002',
+        1,
+      ),
+    ).rejects.toBeInstanceOf(ForbiddenException);
   });
 
-  describe('create', () => {
-    it('should create and save a new booking', async () => {
-      const input = {
-        serviceCategoryId: 'category-id',
-        description: 'Test booking',
-        locationLat: 40.7128,
-        locationLng: -74.0060,
-      };
-
-      const mockSavedBooking = new Booking();
-      mockSavedBooking.id = 'booking-id';
-      mockSavedBooking.customerId = 'customer-id';
-      mockSavedBooking.serviceCategoryId = input.serviceCategoryId;
-      mockSavedBooking.description = input.description;
-      mockSavedBooking.locationLat = input.locationLat;
-      mockSavedBooking.locationLng = input.locationLng;
-      mockSavedBooking.status = BookingStatus.REQUESTED;
-      
-      repository.save.mockResolvedValue(mockSavedBooking);
-
-      const result = await service.create('customer-id', input);
-
-      expect(repository.save).toHaveBeenCalled();
-      const savedObj = repository.save.mock.calls[0][0];
-      expect(savedObj.customerId).toBe('customer-id');
-      expect(savedObj.serviceCategoryId).toBe(input.serviceCategoryId);
-      expect(savedObj.status).toBe(BookingStatus.REQUESTED); // Validated by class constructor
-      expect(result).toEqual(mockSavedBooking);
-    });
-  });
-
-  describe('acceptBooking', () => {
-    it('should accept a booking and transition to ASSIGNED', async () => {
-      const mockBooking = new Booking();
-      mockBooking.id = 'booking-id';
-      mockBooking.status = BookingStatus.REQUESTED;
-      mockBooking.transitionTo = jest.fn().mockImplementation(function (status) { this.status = status; });
-      
-      repository.findOne.mockResolvedValue(mockBooking);
-      repository.save.mockResolvedValue(mockBooking);
-
-      const result = await service.acceptBooking('booking-id', 'provider-id');
-
-      expect(mockBooking.providerId).toBe('provider-id');
-      expect(mockBooking.transitionTo).toHaveBeenCalledWith(BookingStatus.ASSIGNED);
-      expect(repository.save).toHaveBeenCalledWith(mockBooking);
-      expect(result.status).toBe(BookingStatus.ASSIGNED);
-    });
-
-    it('should throw ConflictException if booking is not REQUESTED', async () => {
-      const mockBooking = new Booking();
-      mockBooking.id = 'booking-id';
-      mockBooking.status = BookingStatus.ASSIGNED;
-      
-      repository.findOne.mockResolvedValue(mockBooking);
-
-      await expect(service.acceptBooking('booking-id', 'provider-id')).rejects.toThrow('Booking is no longer available');
-    });
-
-    it('should throw ConflictException on OptimisticLockVersionMismatchError', async () => {
-      const mockBooking = new Booking();
-      mockBooking.id = 'booking-id';
-      mockBooking.status = BookingStatus.REQUESTED;
-      mockBooking.transitionTo = jest.fn();
-      
-      repository.findOne.mockResolvedValue(mockBooking);
-      
-      const error = new Error('Lock error');
-      error.name = 'OptimisticLockVersionMismatchError';
-      repository.save.mockRejectedValue(error);
-
-      await expect(service.acceptBooking('booking-id', 'provider-id')).rejects.toThrow('Booking was already accepted by another provider');
-    });
-  });
-
-  describe('updateStatus', () => {
-    it('should update booking status if provider matches', async () => {
-      const mockBooking = new Booking();
-      mockBooking.id = 'booking-id';
-      mockBooking.providerId = 'provider-id';
-      mockBooking.status = BookingStatus.ASSIGNED;
-      mockBooking.transitionTo = jest.fn().mockImplementation(function (status) { this.status = status; });
-      
-      repository.findOne.mockResolvedValue(mockBooking);
-      repository.save.mockResolvedValue(mockBooking);
-
-      const result = await service.updateStatus('booking-id', 'provider-id', BookingStatus.EN_ROUTE);
-
-      expect(mockBooking.transitionTo).toHaveBeenCalledWith(BookingStatus.EN_ROUTE);
-      expect(repository.save).toHaveBeenCalledWith(mockBooking);
-      expect(result.status).toBe(BookingStatus.EN_ROUTE);
-    });
-
-    it('should throw ForbiddenException if provider does not match', async () => {
-      const mockBooking = new Booking();
-      mockBooking.id = 'booking-id';
-      mockBooking.providerId = 'other-provider-id';
-      mockBooking.status = BookingStatus.ASSIGNED;
-      
-      repository.findOne.mockResolvedValue(mockBooking);
-
-      await expect(service.updateStatus('booking-id', 'provider-id', BookingStatus.EN_ROUTE)).rejects.toThrow('You are not assigned to this booking');
-    });
-  });
-
-  describe('cancelBooking', () => {
-    it('should cancel booking and redact if needed', async () => {
-      const mockBooking = new Booking();
-      mockBooking.id = 'booking-id';
-      mockBooking.customerId = 'customer-id';
-      mockBooking.status = BookingStatus.REQUESTED;
-      mockBooking.transitionTo = jest.fn().mockImplementation(function (status, reason) { 
-        this.status = status; 
-        this.cancellationReason = reason; 
-      });
-      
-      repository.findOne.mockResolvedValue(mockBooking);
-      repository.save.mockResolvedValue(mockBooking);
-
-      const result = await service.cancelBooking('booking-id', 'customer-id', 'Changed mind');
-
-      expect(mockBooking.transitionTo).toHaveBeenCalledWith(BookingStatus.CANCELLED, 'Changed mind');
-      expect(result.status).toBe(BookingStatus.CANCELLED);
-    });
-
-    it('should throw ForbiddenException if unauthorized', async () => {
-      const mockBooking = new Booking();
-      mockBooking.customerId = 'customer-id';
-      mockBooking.providerId = 'provider-id';
-      
-      repository.findOne.mockResolvedValue(mockBooking);
-
-      await expect(service.cancelBooking('booking-id', 'other-id', 'Reason')).rejects.toThrow('You are not authorized to cancel this booking');
-    });
-  });
-
-  describe('getBookingHistory', () => {
-    it('should fetch history for customer without redaction', async () => {
-      const mockBooking = new Booking();
-      mockBooking.locationLat = 40.0;
-      mockBooking.locationLng = -70.0;
-      mockBooking.status = BookingStatus.COMPLETED;
-
-      const mockQueryBuilder = {
-        where: jest.fn().mockReturnThis(),
-        orderBy: jest.fn().mockReturnThis(),
-        take: jest.fn().mockReturnThis(),
-        skip: jest.fn().mockReturnThis(),
-        getMany: jest.fn().mockResolvedValue([mockBooking]),
-      };
-
-      repository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
-
-      const result = await service.getBookingHistory('customer-id', false, 10, 0);
-
-      expect(mockQueryBuilder.where).toHaveBeenCalledWith('booking.customerId = :userId', { userId: 'customer-id' });
-      expect(result[0].locationLat).toBe(40.0);
-    });
-
-    it('should fetch history for provider with redaction', async () => {
-      const mockBooking = new Booking();
-      mockBooking.locationLat = 40.0;
-      mockBooking.locationLng = -70.0;
-      mockBooking.status = BookingStatus.COMPLETED;
-
-      const mockQueryBuilder = {
-        where: jest.fn().mockReturnThis(),
-        orderBy: jest.fn().mockReturnThis(),
-        take: jest.fn().mockReturnThis(),
-        skip: jest.fn().mockReturnThis(),
-        getMany: jest.fn().mockResolvedValue([mockBooking]),
-      };
-
-      repository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
-
-      const result = await service.getBookingHistory('provider-id', true, 10, 0);
-
-      expect(mockQueryBuilder.where).toHaveBeenCalledWith('booking.providerId = :userId', { userId: 'provider-id' });
-      expect(result[0].locationLat).toBe(0); // Redacted
-    });
+  it('rejects malformed history cursors', async () => {
+    await expect(
+      service.getBookingHistory('customer-id', 20, 'not-json'),
+    ).rejects.toThrow('Invalid booking history cursor');
   });
 });

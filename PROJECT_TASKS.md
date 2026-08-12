@@ -32,13 +32,13 @@ Only these statuses are valid. A task cannot be completed while required validat
 # Project Progress
 
 Total Tasks: 73
-Completed: 38
+Completed: 43
 In Progress: 0
 Blocked: 0
-Pending: 34
+Pending: 30
 Cancelled: 0
-Current Phase: Phase 5 — Customer Mobile Foundation
-Next Recommended Task: FN-038 — Create Booking Data Model and Lifecycle Contract
+Current Phase: Phase 7 — Real-Time & Location
+Next Recommended Task: FN-043 — Add Authenticated WebSocket Infrastructure
 
 # Current Work
 
@@ -1419,7 +1419,7 @@ PR: Pending
 # Phase 6 — Service Booking
 
 ## FN-038 — Create Booking Data Model and Lifecycle Contract
-Status: ⬜ Pending
+Status: ✅ Completed
 Priority: P1 — High
 Area: Backend/Booking
 Depends On: FN-011, FN-019, FN-029
@@ -1432,7 +1432,7 @@ Define booking entities, states, transitions, ownership, and event contracts.
 ### Do Not
 - Do not implement matching, acceptance, or payments.
 ### Acceptance Criteria
-- [ ] Constraints, legal transitions, rollback, and concurrency tests pass.
+- [x] Constraints, legal transitions, rollback, and concurrency tests pass.
 ### Validation
 ```bash
 # Run backend checks plus booking model and migration tests.
@@ -1442,15 +1442,18 @@ Define booking entities, states, transitions, ownership, and event contracts.
 backend/src/bookings/domain/ backend/migrations/ shared/
 ```
 ### Notes
-None.
+Added the shared lifecycle contract, constrained booking schema, focused
+reversible migration, legal transition model, lifecycle timestamps, optimistic
+versioning, immutable event schema, indexes, and PostgreSQL constraint and race
+coverage. Migration apply/revert/reapply passed against isolated PostgreSQL 18.
 ### Completion Record
-Completed By:
-Completed Date:
-Commit:
-PR:
+Completed By: Codex
+Completed Date: 2026-08-12
+Commit: 1f000c8
+PR: Pending
 
 ## FN-039 — Implement Service Request Creation
-Status: ⬜ Pending
+Status: ✅ Completed
 Priority: P1 — High
 Area: Backend/Booking
 Depends On: FN-027, FN-038
@@ -1463,7 +1466,7 @@ Allow customers to create idempotent service requests with validated location an
 ### Do Not
 - Do not assign providers or take payment.
 ### Acceptance Criteria
-- [ ] Validation, duplicate, authorization, privacy, and idempotency tests pass.
+- [x] Validation, duplicate, authorization, privacy, and idempotency tests pass.
 ### Validation
 ```bash
 # Run backend checks and service-request integration tests.
@@ -1473,15 +1476,19 @@ Allow customers to create idempotent service requests with validated location an
 backend/src/bookings/ backend/src/location/ shared/
 ```
 ### Notes
-None.
+Implemented customer-owned request creation with bounded description,
+coordinates, scheduling, privacy-safe output, and database-backed idempotency.
+Keys are scoped per customer and bound to a normalized request fingerprint;
+identical sequential/concurrent retries return one booking while payload reuse
+conflicts. Authorization policy, unit tests, and PostgreSQL tests pass.
 ### Completion Record
-Completed By:
-Completed Date:
-Commit:
-PR:
+Completed By: Codex
+Completed Date: 2026-08-12
+Commit: 1f000c8
+PR: Pending
 
 ## FN-040 — Implement Provider Matching
-Status: ⬜ Pending
+Status: ✅ Completed
 Priority: P1 — High
 Area: Backend/Booking
 Depends On: FN-030, FN-033, FN-039
@@ -1494,7 +1501,7 @@ Find eligible providers using category, verification, availability, and service 
 ### Do Not
 - Do not use opaque AI ranking or expose exact provider locations.
 ### Acceptance Criteria
-- [ ] Eligibility, no-match, ordering, privacy, and load boundaries are tested.
+- [x] Eligibility, no-match, ordering, privacy, and load boundaries are tested.
 ### Validation
 ```bash
 # Run backend checks and provider matching tests.
@@ -1504,15 +1511,19 @@ Find eligible providers using category, verification, availability, and service 
 backend/src/matching/ backend/src/providers/ backend/src/bookings/
 ```
 ### Notes
-None.
+Implemented deterministic database matching across active accounts, verified
+skills, active categories, non-expired online availability, and service radius.
+Results are distance-ordered with provider-ID tie breaking, capped at 50, and
+return no private provider coordinates. Unit and PostgreSQL eligibility,
+no-match, ordering, privacy, and limit coverage pass.
 ### Completion Record
-Completed By:
-Completed Date:
-Commit:
-PR:
+Completed By: Codex
+Completed Date: 2026-08-12
+Commit: 1f000c8
+PR: Pending
 
 ## FN-041 — Implement Provider Acceptance and Booking Progress
-Status: ⬜ Pending
+Status: ✅ Completed
 Priority: P1 — High
 Area: Backend/Booking
 Depends On: FN-038, FN-040
@@ -1525,7 +1536,7 @@ Support atomic provider acceptance and authorized progress through completion.
 ### Do Not
 - Do not implement payment settlement or ratings.
 ### Acceptance Criteria
-- [ ] Race, stale update, role, ownership, and lifecycle tests pass.
+- [x] Race, stale update, role, ownership, and lifecycle tests pass.
 ### Validation
 ```bash
 # Run backend checks and booking lifecycle integration tests.
@@ -1535,15 +1546,19 @@ Support atomic provider acceptance and authorized progress through completion.
 backend/src/bookings/ backend/src/matching/ shared/
 ```
 ### Notes
-None.
+Implemented eligibility-gated provider acceptance and assigned-provider status
+commands using required expected versions and compare-and-update transactions.
+Exactly one concurrent acceptance succeeds; stale, cross-provider, self-accept,
+and illegal commands fail. Named timestamps and database-immutable lifecycle
+events are recorded atomically. PostgreSQL race and ownership tests pass.
 ### Completion Record
-Completed By:
-Completed Date:
-Commit:
-PR:
+Completed By: Codex
+Completed Date: 2026-08-12
+Commit: 1f000c8
+PR: Pending
 
 ## FN-042 — Implement Booking Cancellation and Service History
-Status: ⬜ Pending
+Status: ✅ Completed
 Priority: P1 — High
 Area: Backend/Booking
 Depends On: FN-041
@@ -1556,7 +1571,7 @@ Apply cancellation policy and provide privacy-safe customer/provider history.
 ### Do Not
 - Do not implement refunds before payment workflows exist.
 ### Acceptance Criteria
-- [ ] Policy, race, authorization, pagination, and data-minimization tests pass.
+- [x] Policy, race, authorization, pagination, and data-minimization tests pass.
 ### Validation
 ```bash
 # Run backend checks and cancellation/history tests.
@@ -1566,12 +1581,17 @@ Apply cancellation policy and provide privacy-safe customer/provider history.
 backend/src/bookings/ shared/
 ```
 ### Notes
-None.
+Implemented participant/state-specific cancellation rules, bounded reasons,
+expected-version race handling, cancellation timestamps, and immutable events.
+Combined participant history uses stable opaque cursor pagination and removes
+exact coordinates from provider views. PostgreSQL policy, race, authorization,
+pagination, audit immutability, and data-minimization tests pass. No refund or
+payment behavior was added.
 ### Completion Record
-Completed By:
-Completed Date:
-Commit:
-PR:
+Completed By: Codex
+Completed Date: 2026-08-12
+Commit: 1f000c8
+PR: Pending
 
 # Phase 7 — Real-Time & Location
 

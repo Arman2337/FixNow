@@ -150,3 +150,22 @@ or cross midnight; split overnight availability across two days. Online and
 busy status must include an expiry no more than 12 hours in the future and
 automatically reads as offline after expiry. Mutations require the current
 `version` so stale concurrent updates are rejected.
+
+## Booking lifecycle
+
+FN-038 through FN-042 provide authenticated booking endpoints under
+`/api/v1/bookings`:
+
+- `POST /api/v1/bookings` requires an `Idempotency-Key` header containing 8–128
+  safe characters. Reusing a key with an identical request returns the original
+  booking; reusing it with a different request returns a conflict.
+- `POST /api/v1/bookings/:id/accept`, `PATCH /api/v1/bookings/:id/status`, and
+  `POST /api/v1/bookings/:id/cancel` require `expectedVersion`. Stale or racing
+  commands return a conflict.
+- `GET /api/v1/bookings?limit=20&cursor=...` returns stable cursor pagination.
+  Exact booking coordinates are removed from provider history responses.
+
+Provider acceptance is limited to active, online, non-expired providers with a
+verified skill, active category, and matching service radius. Lifecycle changes
+are atomic and append database-immutable audit events. Payment, refunds,
+ratings, and live tracking remain outside these tasks.

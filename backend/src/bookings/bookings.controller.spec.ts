@@ -4,38 +4,63 @@ import { BookingsService } from './bookings.service';
 import { CreateBookingDto } from './bookings.dto';
 import { BookingStatus } from '../../../shared/booking-lifecycle.types';
 import { Booking } from './domain/booking.entity';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { AuthorizedRequest } from '../common/authorization/authorization.guard';
+import type { RoleCode } from '../common/authorization/permission-policies';
 
 describe('BookingsController', () => {
   let controller: BookingsController;
-  let service: BookingsService;
+  let createMock: jest.MockedFunction<BookingsService['create']>;
+  let acceptMock: jest.MockedFunction<BookingsService['acceptBooking']>;
+  let updateStatusMock: jest.MockedFunction<BookingsService['updateStatus']>;
+  let cancelMock: jest.MockedFunction<BookingsService['cancelBooking']>;
+  let historyMock: jest.MockedFunction<BookingsService['getBookingHistory']>;
+
+  const requestFor = (
+    userId: string,
+    roles: readonly RoleCode[] = [],
+  ): AuthorizedRequest =>
+    ({
+      authorizationPrincipal: { userId, sessionId: 'session-id', roles },
+    }) as unknown as AuthorizedRequest;
+
+  const completeBooking = (booking: Booking): Booking => {
+    booking.providerId ??= null;
+    booking.scheduledAt ??= null;
+    booking.assignedAt ??= null;
+    booking.enRouteAt ??= null;
+    booking.startedAt ??= null;
+    booking.completedAt ??= null;
+    booking.cancelledAt ??= null;
+    booking.cancellationReason ??= null;
+    booking.createdAt ??= new Date('2026-08-12T00:00:00.000Z');
+    booking.updatedAt ??= new Date('2026-08-12T00:00:00.000Z');
+    booking.version ??= 1;
+    return booking;
+  };
 
   beforeEach(async () => {
+    createMock = jest.fn();
+    acceptMock = jest.fn();
+    updateStatusMock = jest.fn();
+    cancelMock = jest.fn();
+    historyMock = jest.fn();
     const module: TestingModule = await Test.createTestingModule({
       controllers: [BookingsController],
       providers: [
         {
           provide: BookingsService,
           useValue: {
-            create: jest.fn(),
-            acceptBooking: jest.fn(),
-            updateStatus: jest.fn(),
-            cancelBooking: jest.fn(),
-            getBookingHistory: jest.fn(),
+            create: createMock,
+            acceptBooking: acceptMock,
+            updateStatus: updateStatusMock,
+            cancelBooking: cancelMock,
+            getBookingHistory: historyMock,
           },
         },
-        {
-          provide: CACHE_MANAGER,
-          useValue: {
-            get: jest.fn(),
-            set: jest.fn(),
-          },
-        }
       ],
     }).compile();
 
     controller = module.get<BookingsController>(BookingsController);
-    service = module.get<BookingsService>(BookingsService);
   });
 
   it('should be defined', () => {
@@ -48,10 +73,10 @@ describe('BookingsController', () => {
         serviceCategoryId: 'category-id',
         description: 'Test booking',
         locationLat: 40.7128,
-        locationLng: -74.0060,
+        locationLng: -74.006,
       };
-      
-      const mockBooking = new Booking();
+
+      const mockBooking = completeBooking(new Booking());
       mockBooking.id = 'booking-id';
       mockBooking.customerId = 'user-id';
       mockBooking.serviceCategoryId = dto.serviceCategoryId;
@@ -60,89 +85,103 @@ describe('BookingsController', () => {
       mockBooking.locationLng = dto.locationLng;
       mockBooking.status = BookingStatus.REQUESTED;
 
-      jest.spyOn(service, 'create').mockResolvedValue(mockBooking);
+      createMock.mockResolvedValue(mockBooking);
+      const req = requestFor('user-id');
 
-      const req: any = {
-        authorizationPrincipal: { userId: 'user-id' },
-      };
+      const result = await controller.create(req, dto, 'request-key-123');
 
-      const result = await controller.create(req, dto);
-
-      expect(service.create).toHaveBeenCalledWith('user-id', dto);
-      expect(result.booking).toEqual(mockBooking);
+      expect(createMock).toHaveBeenCalledWith(
+        'user-id',
+        dto,
+        'request-key-123',
+      );
+      expect(result.booking).toMatchObject({ id: mockBooking.id });
     });
   });
 
   describe('accept', () => {
     it('should call acceptBooking on service', async () => {
-      const mockBooking = new Booking();
+      const mockBooking = completeBooking(new Booking());
       mockBooking.id = 'booking-id';
       mockBooking.status = BookingStatus.ASSIGNED;
 
-      jest.spyOn(service, 'acceptBooking').mockResolvedValue(mockBooking);
+      acceptMock.mockResolvedValue(mockBooking);
+      const req = requestFor('provider-id');
 
-      const req: any = {
-        authorizationPrincipal: { userId: 'provider-id' },
-      };
+      const result = await controller.accept('booking-id', req, {
+        expectedVersion: 1,
+      });
 
-      const result = await controller.accept('booking-id', req);
-
-      expect(service.acceptBooking).toHaveBeenCalledWith('booking-id', 'provider-id');
-      expect(result.booking).toEqual(mockBooking);
+      expect(acceptMock).toHaveBeenCalledWith('booking-id', 'provider-id', 1);
+      expect(result.booking).toMatchObject({ id: mockBooking.id });
     });
   });
 
   describe('updateStatus', () => {
     it('should call updateStatus on service', async () => {
-      const mockBooking = new Booking();
+      const mockBooking = completeBooking(new Booking());
       mockBooking.id = 'booking-id';
       mockBooking.status = BookingStatus.EN_ROUTE;
 
-      jest.spyOn(service, 'updateStatus').mockResolvedValue(mockBooking);
+      updateStatusMock.mockResolvedValue(mockBooking);
+      const req = requestFor('provider-id');
 
-      const req: any = {
-        authorizationPrincipal: { userId: 'provider-id' },
-      };
+      const result = await controller.updateStatus('booking-id', req, {
+        status: BookingStatus.EN_ROUTE,
+        expectedVersion: 2,
+      });
 
-      const result = await controller.updateStatus('booking-id', req, { status: BookingStatus.EN_ROUTE });
-
-      expect(service.updateStatus).toHaveBeenCalledWith('booking-id', 'provider-id', BookingStatus.EN_ROUTE);
-      expect(result.booking).toEqual(mockBooking);
+      expect(updateStatusMock).toHaveBeenCalledWith(
+        'booking-id',
+        'provider-id',
+        BookingStatus.EN_ROUTE,
+        2,
+      );
+      expect(result.booking).toMatchObject({ id: mockBooking.id });
     });
   });
 
   describe('cancel', () => {
     it('should call cancelBooking on service', async () => {
-      const mockBooking = new Booking();
+      const mockBooking = completeBooking(new Booking());
       mockBooking.id = 'booking-id';
       mockBooking.status = BookingStatus.CANCELLED;
 
-      jest.spyOn(service, 'cancelBooking').mockResolvedValue(mockBooking);
+      cancelMock.mockResolvedValue(mockBooking);
+      const req = requestFor('user-id');
 
-      const req: any = {
-        authorizationPrincipal: { userId: 'user-id' },
-      };
+      const result = await controller.cancel('booking-id', req, {
+        reason: 'reason',
+        expectedVersion: 1,
+      });
 
-      const result = await controller.cancel('booking-id', req, { reason: 'reason' });
-
-      expect(service.cancelBooking).toHaveBeenCalledWith('booking-id', 'user-id', 'reason');
-      expect(result.booking).toEqual(mockBooking);
+      expect(cancelMock).toHaveBeenCalledWith(
+        'booking-id',
+        'user-id',
+        'reason',
+        1,
+      );
+      expect(result.booking).toMatchObject({ id: mockBooking.id });
     });
   });
 
   describe('getHistory', () => {
     it('should call getBookingHistory on service', async () => {
-      const mockBooking = new Booking();
-      jest.spyOn(service, 'getBookingHistory').mockResolvedValue([mockBooking]);
+      const mockBooking = completeBooking(new Booking());
+      historyMock.mockResolvedValue({
+        bookings: [mockBooking],
+        nextCursor: 'next-page',
+      });
+      const req = requestFor('user-id', ['customer']);
 
-      const req: any = {
-        authorizationPrincipal: { userId: 'user-id', roles: ['customer'] },
-      };
+      const result = await controller.getHistory(req, {
+        limit: 5,
+        cursor: 'cursor-value',
+      });
 
-      const result = await controller.getHistory(req, { limit: 5, offset: 0 });
-
-      expect(service.getBookingHistory).toHaveBeenCalledWith('user-id', false, 5, 0);
-      expect(result.bookings).toEqual([mockBooking]);
+      expect(historyMock).toHaveBeenCalledWith('user-id', 5, 'cursor-value');
+      expect(result.bookings).toHaveLength(1);
+      expect(result.nextCursor).toBe('next-page');
     });
   });
 });

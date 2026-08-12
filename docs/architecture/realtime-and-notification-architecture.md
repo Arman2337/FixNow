@@ -185,15 +185,17 @@ A location update includes only fields required by the approved contract:
 - Backend authenticates provider/device session and validates provider/account/booking/consent/permission state, monotonic device-session sequence, timestamp skew, coordinate bounds, accuracy bounds, rate, and payload size.
 - Server records/uses `receivedAt` separately and never presents client time as server truth.
 - Plausibility/spoof signals route to approved trust review; they do not autonomously punish a provider.
-- Updates are accepted only for approved purposes/states, such as matching coarsened presence or an active assigned booking. The purposes do not silently share precision or retention.
-- Background collection, OS permission, user notice/consent/lawful basis, manual fallback, precision, frequency, and retention require OD-010/privacy approval before implementation.
+- Precise updates are accepted only for an assigned provider after booking acceptance while the booking is in `On The Way` or the equivalent active-travel state. Online/available presence alone never authorizes continuous precise tracking.
+- Background collection is permitted only during that active travel/service period when required for ETA/live tracking. The provider must first receive the approved versioned OD-010 notice and grant required consent/OS permission.
+- Moving clients target a configurable 10–15-second update interval and reduce frequency while stationary where practical. Updates older than the configurable stale threshold, initially 60 seconds, are rejected or projected as unavailable for tracking/ETA.
+- Accuracy/precision acceptance bounds, update interval, stale threshold, and cache retention are centralized configuration. They are enforced server-side as well as coalesced client-side.
 
 ### Storage and distribution
 
-- Latest operational location MAY be held in Redis with strict TTL and is not authoritative historical state.
-- Raw point history is not durably retained by default. Any route/history requirement needs explicit purpose, approved retention, access, deletion, security/privacy review, and a tracker task/ADR if material.
+- Latest operational location is held primarily in Redis (or an equivalent approved ephemeral cache) with a strict TTL no longer than the stale threshold and is not authoritative historical state.
+- Raw point/route history is prohibited for the MVP. Any future history requires an approved purpose, explicit retention/access/deletion rules, security/privacy/product review, and a separate tracker task/ADR if material.
 - Matching SHOULD use the coarsest representation that meets approved accuracy. Exact customer/provider coordinates are not published in integration-event routing or telemetry.
-- Only authorized active booking participants/assigned operations receive the minimum projection; access ends promptly when state/assignment/consent changes.
+- Exact location is available only to the provider, the customer assigned to the active booking, authorized backend/realtime services, and narrowly authorized, audited support/admin personnel for an operational need. It is never available to unrelated customers or providers, and access ends immediately when state, assignment, permission, or consent changes.
 - WebSocket location frames include captured/received time, freshness/accuracy, and per-stream sequence so clients can show stale/unknown honestly.
 - ETA is a separate estimate with provider/time/source freshness and unavailable state; it is never guaranteed.
 
@@ -202,7 +204,9 @@ A location update includes only fields required by the approved contract:
 - Clients coalesce movement and apply minimum distance/time/accuracy rules selected by FN-044. Server independently rate-limits and may drop redundant stale points.
 - Backpressure favors latest authorized state over a backlog of obsolete points.
 - Do not log raw coordinates/routes, include them in event/topic/key names, push payloads, crash reports, analytics, or unrestricted support views.
-- On app background, logout, suspension, booking end/cancellation, consent withdrawal, or expiry, collection/distribution stops according to policy and cached data expires/deletes.
+- Consent/permission withdrawal stops transmission immediately, invalidates active location, and projects “Live location unavailable” without automatically cancelling the booking. Manual status controls and call/chat/service workflows remain available where possible.
+- Collection/distribution and cached precise location stop/delete on consent or permission withdrawal, applicable provider offline state, booking cancellation/completion, arrival, or any end of active travel/tracking. App background stops collection unless the active-job background authorization applies; logout, suspension, and expiry always revoke access.
+- Google Maps Platform is the initial maps/navigation provider under ADR-0012 and must be accessed through a replaceable adapter with minimized, purpose-bound data.
 
 ## Notification architecture
 
@@ -358,7 +362,7 @@ A location update includes only fields required by the approved contract:
 ## Decision and implementation gates
 
 - FN-043 implements authenticated WebSocket infrastructure under this contract.
-- FN-044 implements provider presence/live location ingestion after OD-010 privacy/product decisions.
+- OD-010 was approved on 2026-08-13. FN-044 may implement provider presence/live-location ingestion under that policy and ADR-0012, subject to its focused security/privacy validation.
 - FN-045 implements booking tracking/ETA/event projections.
 - FN-061 selects and integrates the push provider; FCM remains a candidate until its ADR/configuration review.
 - FN-062 maps approved domain events to booking/provider/reminder/emergency notification policies.

@@ -32,13 +32,13 @@ Only these statuses are valid. A task cannot be completed while required validat
 # Project Progress
 
 Total Tasks: 73
-Completed: 43
+Completed: 46
 In Progress: 0
 Blocked: 0
-Pending: 30
+Pending: 27
 Cancelled: 0
 Current Phase: Phase 7 — Real-Time & Location
-Next Recommended Task: FN-043 — Add Authenticated WebSocket Infrastructure
+Next Recommended Task: FN-046 — Initialize Admin Web Application
 
 # Current Work
 
@@ -1301,7 +1301,7 @@ mobile/
 ### Notes
 Flutter was explicitly approved by the user and recorded in ADR-0009 before initialization. The minimal Android/iOS scaffold uses validated non-secret compile-time environments and intentionally defers navigation, authentication, booking, and final screens. Work remained on `feat/user-identity-model` at the user's explicit direction instead of the listed task branch.
 ### Completion Record
-Completed By: Codex
+Completed By: Arman
 Completed Date: 2026-08-09
 Commit: 411acdb
 PR: #4
@@ -1337,7 +1337,7 @@ typography, spacing, radius, shadow, and theme mappings, plus reusable button,
 card, status-chip, and bottom-navigation primitives. The built-in state choice
 and its intentionally narrow ownership are documented in `mobile/README.md`.
 ### Completion Record
-Completed By: Codex
+Completed By: Arman
 Completed Date: 2026-08-11
 Commit: Pending
 PR: Pending
@@ -1373,7 +1373,7 @@ single-flight rotating-token renewal, logout cleanup, and deterministic tests.
 Android and iOS secure-storage requirements are configured. Per user direction,
 this work remained on `feat/mobile-app-shell`.
 ### Completion Record
-Completed By: Codex
+Completed By: Arman
 Completed Date: 2026-08-11
 Commit: Pending
 PR: Pending
@@ -1411,7 +1411,7 @@ never blocks browsing; no coordinates are stored, no booking is created, and no
 provider tracking was added. Per user direction, work remained on
 `feat/mobile-app-shell`.
 ### Completion Record
-Completed By: Codex
+Completed By: Arman
 Completed Date: 2026-08-11
 Commit: Pending
 PR: Pending
@@ -1447,7 +1447,7 @@ reversible migration, legal transition model, lifecycle timestamps, optimistic
 versioning, immutable event schema, indexes, and PostgreSQL constraint and race
 coverage. Migration apply/revert/reapply passed against isolated PostgreSQL 18.
 ### Completion Record
-Completed By: Codex
+Completed By: Arman
 Completed Date: 2026-08-12
 Commit: 1f000c8
 PR: Pending
@@ -1482,7 +1482,7 @@ Keys are scoped per customer and bound to a normalized request fingerprint;
 identical sequential/concurrent retries return one booking while payload reuse
 conflicts. Authorization policy, unit tests, and PostgreSQL tests pass.
 ### Completion Record
-Completed By: Codex
+Completed By: Arman
 Completed Date: 2026-08-12
 Commit: 1f000c8
 PR: Pending
@@ -1517,7 +1517,7 @@ Results are distance-ordered with provider-ID tie breaking, capped at 50, and
 return no private provider coordinates. Unit and PostgreSQL eligibility,
 no-match, ordering, privacy, and limit coverage pass.
 ### Completion Record
-Completed By: Codex
+Completed By: Arman
 Completed Date: 2026-08-12
 Commit: 1f000c8
 PR: Pending
@@ -1552,7 +1552,7 @@ Exactly one concurrent acceptance succeeds; stale, cross-provider, self-accept,
 and illegal commands fail. Named timestamps and database-immutable lifecycle
 events are recorded atomically. PostgreSQL race and ownership tests pass.
 ### Completion Record
-Completed By: Codex
+Completed By: Arman
 Completed Date: 2026-08-12
 Commit: 1f000c8
 PR: Pending
@@ -1588,7 +1588,7 @@ exact coordinates from provider views. PostgreSQL policy, race, authorization,
 pagination, audit immutability, and data-minimization tests pass. No refund or
 payment behavior was added.
 ### Completion Record
-Completed By: Codex
+Completed By: Arman
 Completed Date: 2026-08-12
 Commit: 1f000c8
 PR: Pending
@@ -1596,7 +1596,7 @@ PR: Pending
 # Phase 7 — Real-Time & Location
 
 ## FN-043 — Add Authenticated WebSocket Infrastructure
-Status: ⬜ Pending
+Status: ✅ Completed
 Priority: P1 — High
 Area: Backend/Real-Time
 Depends On: FN-015, FN-020, FN-027
@@ -1609,7 +1609,7 @@ Provide authenticated, authorized, observable real-time connections.
 ### Do Not
 - Do not broadcast private events across users.
 ### Acceptance Criteria
-- [ ] Authentication, authorization, reconnect, limit, and failure tests pass.
+- [x] Authentication, authorization, reconnect, limit, and failure tests pass.
 ### Validation
 ```bash
 # Run backend checks and WebSocket integration tests.
@@ -1619,15 +1619,23 @@ Provide authenticated, authorized, observable real-time connections.
 backend/src/realtime/ infrastructure/
 ```
 ### Notes
-None.
+Added an isolated NestJS `ws` gateway with first-frame access-token
+authentication, authoritative session/account/role checks, allowlisted semantic
+channels, self-resource subscription authorization, safe snapshot recovery on
+reconnect, browser-origin validation, connection/subscription/message/payload
+limits, ping/pong liveness, graceful drain, and payload-free bounded telemetry.
+The initial account channel provides the authorization foundation only; booking
+and location projections remain scoped to FN-045. Full backend lint, all 187
+unit tests, seven real WebSocket integration tests, and the production build
+pass.
 ### Completion Record
-Completed By:
-Completed Date:
-Commit:
-PR:
+Completed By: Arman
+Completed Date: 2026-08-13
+Commit: Pending
+PR: Pending
 
 ## FN-044 — Implement Provider Presence and Live Location Ingestion
-Status: ⬜ Pending
+Status: ✅ Completed
 Priority: P1 — High
 Area: Backend/Location
 Depends On: FN-014, FN-033, FN-043
@@ -1640,7 +1648,7 @@ Ingest online/offline presence and bounded live GPS updates for active work.
 ### Do Not
 - Do not retain indefinite location history or accept spoofable ownership.
 ### Acceptance Criteria
-- [ ] Consent, stale, rate, authorization, retention, and offline tests pass.
+- [x] Consent, stale, rate, authorization, retention, and offline tests pass.
 ### Validation
 ```bash
 # Run backend checks and live-location integration tests.
@@ -1650,15 +1658,15 @@ Ingest online/offline presence and bounded live GPS updates for active work.
 backend/src/location/ backend/src/realtime/ backend/src/providers/
 ```
 ### Notes
-None.
+OD-010 was approved and documented on 2026-08-13. Added authenticated provider presence, versioned consent, and precise-location WebSocket frames. Precise ingestion is restricted to the assigned verified provider during `EN_ROUTE`, requires current presence and consent, validates coordinates/accuracy/freshness/sequence/rate, and stores only the latest point in ephemeral cache for at most 60 seconds. Consent withdrawal, provider offline, cancellation, arrival, and completion invalidate active location. Configuration bounds, no-history behavior, safe telemetry, backend documentation, seven focused location tests, configuration coverage, and booking lifecycle cleanup are included. Backend lint, all 195 unit tests, seven realtime integration tests, and the production build pass. Work remained on `feat/realtime-foundation` at the user's explicit direction.
 ### Completion Record
-Completed By:
-Completed Date:
-Commit:
-PR:
+Completed By: Codex
+Completed Date: 2026-08-13
+Commit: Pending
+PR: Pending
 
 ## FN-045 — Implement Booking Tracking, ETA, and Real-Time Events
-Status: ⬜ Pending
+Status: ✅ Completed
 Priority: P1 — High
 Area: Booking/Real-Time
 Depends On: FN-041, FN-044
@@ -1671,7 +1679,7 @@ Deliver authorized booking events, provider tracking, and bounded ETA estimates.
 ### Do Not
 - Do not promise exact ETA or expose tracking outside an active booking.
 ### Acceptance Criteria
-- [ ] Authorization, ordering, reconnect, stale location, fallback, and UI tests pass.
+- [x] Authorization, ordering, reconnect, stale location, fallback, and UI tests pass.
 ### Validation
 ```bash
 # Run backend real-time tests and mobile analyze/test commands.
@@ -1681,12 +1689,12 @@ Deliver authorized booking events, provider tracking, and bounded ETA estimates.
 backend/src/bookings/ backend/src/realtime/ mobile/lib/features/tracking/ shared/
 ```
 ### Notes
-Coordinate backend and mobile contract edits within this single task.
+Implemented authorized participant-only booking subscriptions, monotonic booking/location projections, a bounded and explicitly sourced ETA fallback adapter, and a shared tracking contract. Mobile tracking reconciles an HTTP snapshot after reconnect or sequence gaps, ignores stale/duplicate frames, preserves the last booking state offline, and honestly displays unavailable location/ETA. The Bookings destination now provides a real empty/active-tracking entry instead of a development placeholder, and internal task identifiers were removed from location consent copy. The accessible UI reuses FixNow cards, buttons, status chips, typography, spacing, and semantic colors without introducing a new visual style. Backend lint, all 197 unit tests, seven realtime integration tests, and production build pass. Flutter analyze reports no issues, all 39 mobile tests pass, and the improved development app built, installed, and launched successfully on a USB-connected A059 running Android 16. Work remained on `feat/realtime-foundation` at the user's explicit direction.
 ### Completion Record
-Completed By:
-Completed Date:
-Commit:
-PR:
+Completed By: Codex
+Completed Date: 2026-08-13
+Commit: Pending
+PR: Pending
 
 # Phase 8 — Admin Dashboard
 

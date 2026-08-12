@@ -258,6 +258,23 @@ Numeric targets remain `TBD` until product, operations, budget, and risk owners 
 
 A capability is not ready for production merely because its implementation task is complete. Before production, the relevant product decision, security/privacy controls, tests, operational ownership, monitoring, support procedure, and rollback path must be approved. Emergency, payments, KYC, precise location, privileged administration, and consequential AI require focused review.
 
+## Approved product decisions
+
+### OD-010 — Provider live-location policy
+
+Approved 2026-08-13 by FixNow product, privacy, and security ownership.
+
+- Precise provider tracking is limited to an accepted booking in the `On The Way` or equivalent active-travel state. Online/available presence alone never starts continuous precise tracking.
+- Background location is allowed only during that active travel/service period when needed for ETA or live tracking.
+- Before tracking starts, the provider sees a clear, versioned notice describing purpose, start and stop conditions, authorized viewers, Google Maps Platform processing, and the prohibition on continuous tracking outside the active-job flow.
+- Permission or consent withdrawal stops transmission immediately and invalidates the live projection. The customer sees “Live location unavailable”; manual booking status, call, chat, and service workflows continue where possible, and withdrawal alone does not cancel the booking.
+- Moving updates target a configurable 10–15-second interval and should slow while stationary. Updates older than the configurable stale threshold, initially 60 seconds, are unavailable for live tracking and ETA.
+- Exact location is visible only to the provider, the customer assigned to the active booking, authorized backend/realtime services, and operationally necessary support/admin personnel with narrow permission and audit. It is never exposed to unrelated users.
+- The latest point is ephemeral cache state with a maximum lifetime no longer than the stale threshold. It is invalidated when consent/permission is withdrawn, applicable provider presence goes offline, the booking is cancelled/completed, or active travel/tracking ends (including arrival).
+- MVP stores no raw route or precise-location history. A future historical trail requires a new approved purpose, privacy/security/product decision, retention policy, and implementation task.
+- Retention, update interval, stale threshold, and precision/accuracy bounds are centralized configuration, not business-logic constants.
+- Google Maps Platform is the initial maps/navigation integration under [ADR-0012](../architecture/decisions/0012-use-google-maps-platform.md). Another provider requires approval and an ADR update or superseding ADR.
+
 ## Open decisions and stakeholder questions
 
 | ID | Decision required | Why it matters | Required owners/evidence |
@@ -271,7 +288,6 @@ A capability is not ready for production merely because its implementation task 
 | OD-007 | Service taxonomy ownership and change policy | Prevents incompatible booking and reporting history | Product, operations, data |
 | OD-008 | Pricing model, estimates, platform fees, taxes, cancellation fees, and provider earnings | Controls customer consent, payments, refunds, invoices, and reporting | Product, finance, legal |
 | OD-009 | Payment methods, settlement/payout model, refund policy, and provider | Controls compliance, reconciliation, credentials, and data boundaries | Finance, legal, security; ADR for provider |
-| OD-010 | Location precision, maps/navigation provider, retention, and sharing rules | Controls privacy, cost, matching, ETA, and safety | Product, privacy, security; ADR for provider |
 | OD-011 | Definition and scope of “emergency,” public-service guidance, provider qualification, and escalation | High safety and liability impact | Legal, safety, product, operations |
 | OD-012 | Notification channels, critical-message fallback, quiet hours, and provider | Controls reliability, privacy, cost, and consent | Product, privacy, operations; ADR for provider |
 | OD-013 | Complaint categories, evidence rules, response targets, appeals, and enforcement | Controls fairness, support staffing, data retention, and trust | Trust/safety, legal, operations |

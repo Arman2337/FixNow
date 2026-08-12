@@ -15,6 +15,7 @@ import { ProvidersModule } from './providers/providers.module';
 import { ServicesModule } from './services/services.module';
 import { BookingsModule } from './bookings/bookings.module';
 import { MatchingModule } from './matching/matching.module';
+import { RealtimeModule } from './realtime/realtime.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { MatchingModule } from './matching/matching.module';
     ServicesModule,
     BookingsModule,
     MatchingModule,
+    RealtimeModule,
   ],
   controllers: [AppController],
   providers: [

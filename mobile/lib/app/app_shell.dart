@@ -11,6 +11,7 @@ class AppShell extends StatefulWidget {
     this.controller,
     this.customerHome,
     this.customerProfile,
+    this.customerBookings,
     super.key,
   });
 
@@ -18,6 +19,7 @@ class AppShell extends StatefulWidget {
   final AppShellController? controller;
   final Widget? customerHome;
   final Widget? customerProfile;
+  final Widget? customerBookings;
 
   @override
   State<AppShell> createState() => _AppShellState();
@@ -71,6 +73,10 @@ class _AppShellState extends State<AppShell> {
                       index == 0 &&
                       widget.customerHome != null)
                     widget.customerHome!
+                  else if (widget.role == AppShellRole.customer &&
+                      index == 1 &&
+                      widget.customerBookings != null)
+                    widget.customerBookings!
                   else if (widget.role == AppShellRole.customer &&
                       index == 3 &&
                       widget.customerProfile != null)

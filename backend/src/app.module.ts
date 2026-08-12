@@ -13,6 +13,8 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { ProvidersModule } from './providers/providers.module';
 import { ServicesModule } from './services/services.module';
+import { BookingsModule } from './bookings/bookings.module';
+import { MatchingModule } from './matching/matching.module';
 
 @Module({
   imports: [
@@ -26,6 +28,8 @@ import { ServicesModule } from './services/services.module';
     AuthModule,
     ProvidersModule,
     ServicesModule,
+    BookingsModule,
+    MatchingModule,
   ],
   controllers: [AppController],
   providers: [

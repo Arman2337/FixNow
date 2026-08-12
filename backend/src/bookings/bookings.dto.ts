@@ -1,6 +1,22 @@
-import { IsString, IsNotEmpty, IsNumber, IsOptional, IsDateString, Min, Max, IsUUID, IsInt } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsDateString,
+  Min,
+  Max,
+  IsUUID,
+  IsInt,
+  IsEnum,
+  MaxLength,
+  Matches,
+} from 'class-validator';
 import { Type } from 'class-transformer';
-import { CreateBookingRequest } from '../../../shared/booking-lifecycle.types';
+import {
+  BookingStatus,
+  CreateBookingRequest,
+} from '../../../shared/booking-lifecycle.types';
 
 export class CreateBookingDto implements CreateBookingRequest {
   @IsUUID()
@@ -9,6 +25,7 @@ export class CreateBookingDto implements CreateBookingRequest {
 
   @IsString()
   @IsNotEmpty()
+  @MaxLength(2000)
   description: string;
 
   @IsNumber()
@@ -23,32 +40,46 @@ export class CreateBookingDto implements CreateBookingRequest {
 
   @IsOptional()
   @IsDateString()
-  scheduledAt?: Date | null;
+  scheduledAt?: string | null;
 }
 
 export class UpdateBookingStatusDto {
-  @IsString()
-  @IsNotEmpty()
-  status: string; // Will be validated against enum in service or here. For now string.
+  @IsEnum(BookingStatus)
+  status: BookingStatus;
+
+  @IsInt()
+  @Min(1)
+  expectedVersion: number;
 }
 
 export class CancelBookingDto {
   @IsString()
   @IsNotEmpty()
+  @MaxLength(500)
   reason: string;
+
+  @IsInt()
+  @Min(1)
+  expectedVersion: number;
 }
 
+export class AcceptBookingDto {
+  @IsInt()
+  @Min(1)
+  expectedVersion: number;
+}
 
 export class BookingHistoryQueryDto {
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
+  @Max(100)
   limit?: number = 10;
 
   @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(0)
-  offset?: number = 0;
+  @IsString()
+  @MaxLength(512)
+  @Matches(/^[A-Za-z0-9_-]+$/)
+  cursor?: string;
 }

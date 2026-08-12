@@ -15,7 +15,9 @@ describe('Booking Entity Domain Logic', () => {
   });
 
   it('should allow valid transition from REQUESTED to CANCELLED', () => {
-    expect(() => booking.transitionTo(BookingStatus.CANCELLED, 'No longer needed')).not.toThrow();
+    expect(() =>
+      booking.transitionTo(BookingStatus.CANCELLED, 'No longer needed'),
+    ).not.toThrow();
     expect(booking.status).toBe(BookingStatus.CANCELLED);
     expect(booking.cancellationReason).toBe('No longer needed');
   });

@@ -1449,7 +1449,7 @@ coverage. Migration apply/revert/reapply passed against isolated PostgreSQL 18.
 ### Completion Record
 Completed By: Codex
 Completed Date: 2026-08-12
-Commit: Pending
+Commit: 1f000c8
 PR: Pending
 
 ## FN-039 — Implement Service Request Creation
@@ -1484,7 +1484,7 @@ conflicts. Authorization policy, unit tests, and PostgreSQL tests pass.
 ### Completion Record
 Completed By: Codex
 Completed Date: 2026-08-12
-Commit: Pending
+Commit: 1f000c8
 PR: Pending
 
 ## FN-040 — Implement Provider Matching
@@ -1519,7 +1519,7 @@ no-match, ordering, privacy, and limit coverage pass.
 ### Completion Record
 Completed By: Codex
 Completed Date: 2026-08-12
-Commit: Pending
+Commit: 1f000c8
 PR: Pending
 
 ## FN-041 — Implement Provider Acceptance and Booking Progress
@@ -1554,7 +1554,7 @@ events are recorded atomically. PostgreSQL race and ownership tests pass.
 ### Completion Record
 Completed By: Codex
 Completed Date: 2026-08-12
-Commit: Pending
+Commit: 1f000c8
 PR: Pending
 
 ## FN-042 — Implement Booking Cancellation and Service History
@@ -1590,7 +1590,7 @@ payment behavior was added.
 ### Completion Record
 Completed By: Codex
 Completed Date: 2026-08-12
-Commit: Pending
+Commit: 1f000c8
 PR: Pending
 
 # Phase 7 — Real-Time & Location

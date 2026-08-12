@@ -13,6 +13,8 @@ import { CreateBookingDto } from './bookings.dto';
 import { BookingEvent } from './domain/booking-event.entity';
 import { Booking } from './domain/booking.entity';
 import { MatchingService } from '../matching/matching.service';
+import { LocationService } from '../location/location.service';
+import { BookingProjectionService } from '../realtime/booking-projection.service';
 
 export interface BookingHistoryPage {
   bookings: Booking[];
@@ -29,6 +31,8 @@ export class BookingsService {
   constructor(
     @InjectDataSource() private readonly dataSource: DataSource,
     private readonly matchingService: MatchingService,
+    private readonly locationService?: LocationService,
+    private readonly bookingProjections?: BookingProjectionService,
   ) {}
 
   async create(
@@ -147,7 +151,7 @@ export class BookingsService {
     ) {
       throw new BadRequestException('Unsupported provider status command');
     }
-    return this.transition(
+    const booking = await this.transition(
       bookingId,
       providerId,
       expectedVersion,
@@ -158,6 +162,14 @@ export class BookingsService {
         this.applyDomainTransition(booking, status);
       },
     );
+    if (
+      status === BookingStatus.IN_PROGRESS ||
+      status === BookingStatus.COMPLETED
+    ) {
+      await this.locationService?.invalidateBooking(bookingId);
+    }
+    await this.bookingProjections?.publishBooking(booking);
+    return booking;
   }
 
   async cancelBooking(
@@ -167,7 +179,7 @@ export class BookingsService {
     expectedVersion: number,
   ): Promise<Booking> {
     const normalizedReason = reason.trim();
-    return this.transition(
+    const booking = await this.transition(
       bookingId,
       userId,
       expectedVersion,
@@ -195,6 +207,9 @@ export class BookingsService {
       },
       normalizedReason,
     );
+    await this.locationService?.invalidateBooking(bookingId);
+    await this.bookingProjections?.publishUnavailable(booking);
+    return booking;
   }
 
   async getBookingHistory(

@@ -45,8 +45,10 @@ class _LocationConsentCardState extends State<LocationConsentCard> {
               ],
             ),
             const SizedBox(height: AppSpacing.sm),
-            const Text(
-              'Allow location only while using FixNow to show services relevant to your area. FN-037 does not store or share your coordinates.',
+            Text(
+              granted
+                  ? 'Location is used only to show services relevant to your area.'
+                  : 'Allow location only while using FixNow to show services relevant to your area. FixNow does not store or share these coordinates.',
             ),
             const SizedBox(height: AppSpacing.md),
             if (state == LocationPermissionState.checking)

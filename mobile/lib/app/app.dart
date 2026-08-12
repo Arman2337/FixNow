@@ -13,6 +13,7 @@ import 'package:fixnow_mobile/features/profile/customer_profile_repository.dart'
 import 'package:fixnow_mobile/features/profile/customer_profile_screen.dart';
 import 'package:fixnow_mobile/features/services/service_discovery_controller.dart';
 import 'package:fixnow_mobile/features/services/service_discovery_screen.dart';
+import 'package:fixnow_mobile/features/tracking/booking_tracking_overview_screen.dart';
 
 class FixNowApp extends StatefulWidget {
   const FixNowApp({
@@ -83,6 +84,7 @@ class _FixNowAppState extends State<FixNowApp> {
           locationController: _location,
         ),
         customerProfile: CustomerProfileScreen(controller: _profile),
+        customerBookings: const BookingTrackingOverviewScreen(),
       ),
     );
   }

@@ -29,6 +29,8 @@ export const PERMISSIONS = {
   bookingUpdateStatus: 'bookings.update.status',
   bookingCancelSelf: 'bookings.cancel.self',
   bookingHistoryReadSelf: 'bookings.history.read.self',
+  realtimeConnect: 'realtime.connect',
+  realtimeSubscribeSelf: 'realtime.subscribe.self',
   roleGrantAuthorized: 'access.role.grant.authorized',
   securityAuditReadAuthorized: 'access.audit.read.authorized',
 } as const;
@@ -197,6 +199,13 @@ export const PERMISSION_POLICIES: Readonly<
   },
   [PERMISSIONS.bookingHistoryReadSelf]: {
     roles: ['customer', 'verified_provider'],
+    relationship: 'self',
+  },
+  [PERMISSIONS.realtimeConnect]: {
+    roles: allHumanRoles,
+  },
+  [PERMISSIONS.realtimeSubscribeSelf]: {
+    roles: allHumanRoles,
     relationship: 'self',
   },
   [PERMISSIONS.roleGrantAuthorized]: {

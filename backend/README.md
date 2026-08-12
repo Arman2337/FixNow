@@ -169,3 +169,56 @@ Provider acceptance is limited to active, online, non-expired providers with a
 verified skill, active category, and matching service radius. Lifecycle changes
 are atomic and append database-immutable audit events. Payment, refunds,
 ratings, and live tracking remain outside these tasks.
+
+## Authenticated real-time connections
+
+FN-043 adds the WebSocket endpoint at `/realtime`. Shared environments must use
+TLS (`wss://`). Browser origins are deny-by-default and must be listed as
+comma-separated HTTPS origins in `REALTIME_ALLOWED_ORIGINS`; loopback HTTP is
+accepted only outside production for local development.
+
+The client sends authentication as its first text frame so credentials never
+appear in a URL:
+
+```json
+{"type":"authenticate","accessToken":"<short-lived access token>"}
+```
+
+After the `ready` frame, a client may subscribe only to allowlisted semantic
+channels. FN-043 exposes the self-owned `account` channel as the authorization
+foundation; booking and live-location projections remain owned by FN-045.
+Subscriptions are re-authorized against the current session, account, and role
+state. Reconnects do not imply replay: a request containing `afterSequence`
+receives `snapshot-required`, and the authenticated HTTP API remains the source
+of truth.
+
+The gateway enforces a 16 KiB text-frame limit, a five-second authentication
+deadline, three connections per principal, ten subscriptions per connection,
+thirty client messages per minute, browser-origin validation, and a 30-second
+ping/pong heartbeat. Limits are conservative initial safety boundaries and must
+be measured before scale changes. Frames, tokens, resource IDs, and payloads are
+excluded from telemetry; only bounded outcome counters are recorded.
+
+## Provider presence and live-location ingestion
+
+FN-044 adds authenticated provider frames on `/realtime`:
+
+- `presence-update` creates or clears a short Redis presence lease. It requires
+  verified-provider role and current non-expired online/busy availability.
+- `location-consent` records versioned, booking-scoped ephemeral consent or
+  immediately invalidates consent and the latest point on withdrawal.
+- `location-update` accepts a bounded point only from the provider assigned to
+  a booking currently in `EN_ROUTE`, with current presence and consent.
+
+Coordinates, accuracy, client time, monotonic sequence, freshness, ownership,
+and rate are validated server-side. Only the latest operational point is cached
+for at most the stale threshold; no raw route/history is stored. Going offline
+invalidates active consent and location state. Customer location projections
+and the “Live location unavailable” presentation remain FN-045; the service
+exposes invalidation semantics for that projection.
+
+`LOCATION_UPDATE_INTERVAL_MS` is limited to 10–15 seconds. The initial
+`LOCATION_STALE_AFTER_MS` and maximum `LOCATION_CACHE_TTL_MS` are 60 seconds;
+cache TTL cannot exceed the stale threshold. Presence TTL, consent TTL, maximum
+accepted accuracy, and notice version are also centralized in validated
+configuration. These values must remain within the approved OD-010 policy.

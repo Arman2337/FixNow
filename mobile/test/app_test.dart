@@ -26,10 +26,7 @@ void main() {
     await tester.tap(find.text('Bookings'));
     await tester.pumpAndSettle();
 
-    expect(
-      find.text('Bookings content will be added in its tracked product task.'),
-      findsOneWidget,
-    );
+    expect(find.text('No active booking'), findsOneWidget);
     final navigation = tester.widget<NavigationBar>(find.byType(NavigationBar));
     expect(navigation.selectedIndex, 1);
   });

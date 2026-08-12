@@ -96,7 +96,7 @@ Operations plane (separate privileged boundary)
 | Identity/contact | Account access, verified communication, support | Confidential; auth material Restricted | Required attributes, verification channel, lawful basis/notice, account-linking and recovery policy `TBD` | Account lifecycle, fraud/legal need, deletion/anonymization `TBD` | Product, identity engineering, privacy/legal, security |
 | Provider KYC/qualifications | Determine service eligibility under approved policy | Restricted | Required documents by service/jurisdiction, reviewer purpose, vendor/subprocessor, lawful basis `TBD` | Rejected/expired/approved/offboarded/legal-hold periods `TBD` | Trust/operations, privacy/legal, security |
 | Service request/booking | Match and deliver requested service, support/dispute | Confidential; sensitive fields Restricted | Minimum description, category, timing, participant disclosures and notices `TBD` | Active/history/dispute/financial dependency periods `TBD` | Booking product/engineering, privacy/legal |
-| Precise location | Request placement, matching, active navigation/tracking, emergency flow | Restricted | Purpose per lifecycle state, consent/lawful basis, precision, foreground/background behavior and fallback `TBD` | Live freshness and history duration by purpose `TBD`; no indefinite raw trail | Product, location engineering, privacy/legal, security |
+| Precise provider location | Active navigation/tracking for an accepted booking in the `On The Way`/active-travel state | Restricted | Versioned notice and consent/permission evidence; configurable minimum necessary precision; foreground/background collection only for the active-job purpose; manual status/call/chat fallback | Latest point only in ephemeral cache, expiring no later than the initial 60-second stale threshold and invalidated when tracking authority ends; no MVP route history | Product, location engineering, privacy/legal, security |
 | Payment/financial | Orders, verification, refunds, invoices, earnings, reconciliation | Restricted | Provider/compliance scope, fields, notices, tax/financial obligations `TBD` | Transaction/invoice/refund/legal periods `TBD` | Finance, payments engineering, privacy/legal, security |
 | Ratings/reviews | Participant feedback and provider quality | Confidential/public subset | Eligibility, visibility, moderation, lawful use `TBD` | Account/booking relationship and moderation history `TBD` | Product, trust/safety, privacy/legal |
 | Complaints/evidence | Investigate and resolve safety/trust disputes | Restricted | Categories, evidence rules, participant notices, investigator purpose, appeal `TBD` | Case, appeal, enforcement and legal periods `TBD` | Trust/safety, privacy/legal, security |
@@ -131,6 +131,8 @@ Where consent or permission is required:
 - Withdrawal is as accessible as grant and stops future processing promptly, while clearly explaining retained legal/contractual records.
 - Mobile OS permission is necessary but not sufficient product consent/purpose authorization. Backend lifecycle and preference policy still applies.
 - Denied/revoked location, notification, microphone, camera, or media permission produces a documented fallback or an honest unsupported outcome.
+
+For OD-010 provider live tracking, the notice MUST explain why precise location is needed, when collection starts and stops, who can see it, Google Maps Platform processing, and that FixNow does not continuously track providers outside the defined active-job flow. Revocation immediately stops transmission and invalidates the live projection; it does not by itself cancel the booking. Customers receive “Live location unavailable,” while manual status, call, chat, and service flows continue where possible.
 
 ### Individual rights and account lifecycle
 
@@ -338,7 +340,7 @@ Abuse defenses supplement authentication/authorization and MUST avoid hidden dis
 - OD-001/OD-003: launch jurisdiction and marketplace/provider legal model.
 - OD-005/OD-006: identity assurance, authentication/recovery, and KYC requirements.
 - OD-008/OD-009: price/payment/refund/payout/compliance model.
-- OD-010/OD-011/OD-012: location, emergency, and notification scope/providers/policy.
+- OD-011/OD-012: emergency and notification scope/providers/policy. OD-010 provider live-location policy is approved in the product requirements and ADR-0012; each implementation still requires the focused precise-location release review above.
 - OD-013/OD-014: complaints, enforcement, appeals, ratings, and moderation policy.
 - OD-015: AI features/providers/data governance/evaluation thresholds.
 - OD-016/OD-020: retention, deletion, legal hold, suspension/offboarding, and active-work handling.

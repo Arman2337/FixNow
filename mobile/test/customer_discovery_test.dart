@@ -45,7 +45,7 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.textContaining('does not store or share your coordinates'),
+      find.textContaining('does not store or share these coordinates'),
       findsOneWidget,
     );
     expect(find.widgetWithText(FixButton, 'Allow location'), findsOneWidget);

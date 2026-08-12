@@ -25,6 +25,10 @@ export const PERMISSIONS = {
   adminSkillsVerify: 'admin.skills.verify',
   adminSkillsDelete: 'admin.skills.delete',
   bookingCreateSelf: 'bookings.request.create.self',
+  bookingAccept: 'bookings.accept',
+  bookingUpdateStatus: 'bookings.update.status',
+  bookingCancelSelf: 'bookings.cancel.self',
+  bookingHistoryReadSelf: 'bookings.history.read.self',
   roleGrantAuthorized: 'access.role.grant.authorized',
   securityAuditReadAuthorized: 'access.audit.read.authorized',
 } as const;
@@ -178,6 +182,21 @@ export const PERMISSION_POLICIES: Readonly<
   },
   [PERMISSIONS.bookingCreateSelf]: {
     roles: ['customer'],
+    relationship: 'self',
+  },
+  [PERMISSIONS.bookingAccept]: {
+    roles: ['verified_provider'],
+  },
+  [PERMISSIONS.bookingUpdateStatus]: {
+    roles: ['verified_provider'],
+    relationship: 'self',
+  },
+  [PERMISSIONS.bookingCancelSelf]: {
+    roles: ['customer', 'verified_provider'],
+    relationship: 'self',
+  },
+  [PERMISSIONS.bookingHistoryReadSelf]: {
+    roles: ['customer', 'verified_provider'],
     relationship: 'self',
   },
   [PERMISSIONS.roleGrantAuthorized]: {

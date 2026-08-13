@@ -14,6 +14,7 @@ FN-076 now provides a connected customer journey across authentication, email ve
 - The backend had no HTTP CORS allowlist for Flutter Web.
 - The repository had no Flutter Web host platform.
 - Secure-storage initialization used a platform-only dependency on web; browser QA now uses an in-memory session while native platforms retain secure storage.
+- The original API transport used `dart:io` `HttpClient`, which crashes in Chrome. It now uses the cross-platform HTTP client on native and web.
 
 ## UX decisions
 
@@ -28,6 +29,7 @@ FN-076 now provides a connected customer journey across authentication, email ve
 - `flutter analyze`: passed with no issues.
 - `flutter test`: 43 tests passed.
 - `flutter build web`: passed; Wasm dry run also succeeded.
+- Headless Chrome rendered the corrected phone-width authentication screen successfully; evidence: `fn-076-browser-proof.png`.
 - `flutter build apk --debug`: passed before the phone was disconnected.
 - Backend focused environment validation: 7 tests passed.
 - Backend complete Jest suite: 44 suites / 197 tests passed.

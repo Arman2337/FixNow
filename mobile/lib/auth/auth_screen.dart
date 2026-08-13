@@ -1,4 +1,5 @@
 import 'package:fixnow_mobile/auth/auth_controller.dart';
+import 'package:fixnow_mobile/auth/auth_session.dart';
 import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/app_shadows.dart';
@@ -8,8 +9,17 @@ import 'package:fixnow_mobile/design_system/fix_page_frame.dart';
 import 'package:flutter/material.dart';
 
 class AuthScreen extends StatefulWidget {
-  const AuthScreen({required this.controller, super.key});
+  const AuthScreen({
+    required this.controller,
+    required this.role,
+    required this.initialRegister,
+    required this.onBack,
+    super.key,
+  });
   final AuthController controller;
+  final AccountRole role;
+  final bool initialRegister;
+  final VoidCallback onBack;
 
   @override
   State<AuthScreen> createState() => _AuthScreenState();
@@ -19,8 +29,14 @@ class _AuthScreenState extends State<AuthScreen> {
   final _formKey = GlobalKey<FormState>();
   final _email = TextEditingController();
   final _password = TextEditingController();
-  bool _register = false;
+  late bool _register;
   bool _obscure = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _register = widget.initialRegister;
+  }
 
   @override
   void dispose() {
@@ -36,11 +52,13 @@ class _AuthScreenState extends State<AuthScreen> {
       await widget.controller.register(
         email: _email.text,
         password: _password.text,
+        role: widget.role,
       );
     } else {
       await widget.controller.login(
         email: _email.text,
         password: _password.text,
+        role: widget.role,
       );
     }
   }
@@ -51,7 +69,15 @@ class _AuthScreenState extends State<AuthScreen> {
     builder: (context, _) {
       final loading = widget.controller.status == AuthStatus.loading;
       return Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            tooltip: 'Back',
+            onPressed: loading ? null : widget.onBack,
+            icon: const Icon(Icons.arrow_back_rounded),
+          ),
+        ),
         body: SafeArea(
+          top: false,
           child: LayoutBuilder(
             builder: (context, constraints) => SingleChildScrollView(
               padding: EdgeInsets.symmetric(
@@ -89,9 +115,36 @@ class _AuthScreenState extends State<AuthScreen> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         const FixBrandMark(),
-                        const SizedBox(height: AppSpacing.xxl),
+                        const SizedBox(height: AppSpacing.xl),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.md,
+                              vertical: AppSpacing.sm,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.primarySoft,
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.pill,
+                              ),
+                            ),
+                            child: Text(
+                              widget.role == AccountRole.customer
+                                  ? 'CUSTOMER'
+                                  : 'SERVICE PROVIDER',
+                              style: Theme.of(context).textTheme.labelSmall
+                                  ?.copyWith(
+                                    color: AppColors.primary,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 1,
+                                  ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.xl),
                         Text(
-                          _register ? 'GET STARTED' : 'MEMBER ACCESS',
+                          _register ? 'CREATE ACCOUNT' : 'SECURE ACCESS',
                           style: Theme.of(context).textTheme.labelSmall
                               ?.copyWith(
                                 color: AppColors.primary,
@@ -107,8 +160,12 @@ class _AuthScreenState extends State<AuthScreen> {
                         const SizedBox(height: AppSpacing.sm),
                         Text(
                           _register
-                              ? 'Book trusted local help and follow every update.'
-                              : 'Sign in to request and track trusted help.',
+                              ? widget.role == AccountRole.customer
+                                    ? 'Book trusted local help and follow every update.'
+                                    : 'Create your professional account. Verification is required before receiving work.'
+                              : widget.role == AccountRole.customer
+                              ? 'Sign in to request and track trusted help.'
+                              : 'Sign in to continue your professional setup.',
                           style: Theme.of(context).textTheme.bodyLarge,
                         ),
                         const SizedBox(height: AppSpacing.xxl),

@@ -24,8 +24,8 @@ Routes are conceptual because the current app uses a root state switch, an index
 | Screen | Role | Feature | Current status | Route | Implementation status | Design status | Dependencies | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Session restore | Shared | Authentication | EXISTS + NEEDS REDESIGN | Root state | Functional | Generic fullscreen spinner | FN-036, FN-076 | Replace with branded, non-jumping launch state. |
-| Welcome / entry | Shared | Onboarding | MISSING | Root | Not implemented | Required | FN-080 | Must offer Get Started and Sign In without claiming unsupported auth methods. |
-| Role selection | Shared | Onboarding | MISSING | Onboarding | Not implemented | Required | FN-025, FN-080 | Customer and provider cards; selected role must be explicit. |
+| Welcome / entry | Shared | Onboarding | EXISTS + GOOD | Root | Get Started and Sign In are implemented | Premium dark | FN-081 | Does not claim unsupported auth methods. |
+| Role selection | Shared | Onboarding | EXISTS + GOOD | Onboarding | Customer/provider selection implemented | Premium dark | FN-025, FN-081 | Registration and sign-in intents remain explicit. |
 | Global offline state | Shared | Reliability | PARTIAL | Overlay/contained | Feature-level handling exists | Inconsistent | FN-080 | Needs shared banner and stale-state language. |
 | Global error state | Shared | Reliability | PARTIAL | Reusable component | Screen-specific implementations | Inconsistent | FN-080 | Preserve input and provide recovery. |
 | Empty state system | Shared | Reliability | PARTIAL | Reusable component | Ad hoc cards | Inconsistent | FN-080 | Bookings, jobs, notifications, reviews, and earnings require dedicated variants. |
@@ -35,11 +35,11 @@ Routes are conceptual because the current app uses a root state switch, an index
 
 | Screen | Role | Feature | Current status | Route | Implementation status | Design status | Dependencies | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Shared sign in | Shared | Authentication | EXISTS + NEEDS REDESIGN | Root/auth | Customer email/password works | Superseded light/blue | FN-024, FN-026, FN-081 | Backend currently exposes customer login; role resolution must be honest. |
-| Customer registration | Customer | Authentication | PARTIAL | Root/auth register mode | Email/password registration works | Needs premium flow | FN-024, FN-026, FN-081 | Account details are combined in one screen. |
+| Shared sign in | Shared | Authentication | EXISTS + GOOD | Root/auth | Customer/provider email/password works with persisted server-resolved role | Premium dark | FN-024, FN-026, FN-081 | Separate entry endpoints share server-side role resolution. |
+| Customer registration | Customer | Authentication | EXISTS + GOOD | Root/auth register mode | Email/password registration works | Premium dark | FN-024, FN-026, FN-081 | Collects only supported credentials. |
 | Email OTP verification | Shared | Authentication | EXISTS + NEEDS REDESIGN | Root/verification | Functional | Superseded light/blue | FN-026, FN-081 | Six-digit email code; do not label as phone verification. |
 | Forgot password | Shared | Authentication | BLOCKED | Auth | No recovery contract | Not designed | New backend recovery task | Must not expose an inert action. |
-| Provider registration entry | Provider | Authentication | MISSING | Onboarding/provider | Backend registration exists | Required | FN-025, FN-081 | Must route into provider onboarding, not customer shell. |
+| Provider registration entry | Provider | Authentication | EXISTS + GOOD | Onboarding/provider | Backend registration, email verification, persisted role, and honest handoff work | Premium dark | FN-025, FN-081 | Routes to incomplete onboarding state, never customer shell. |
 | Provider personal/profile setup | Provider | Onboarding | MISSING | Provider onboarding | Backend profile contract exists | Required | FN-030, FN-083 | Collect only supported fields. |
 | Provider categories and skills | Provider | Onboarding | MISSING | Provider onboarding | Backend skills contract exists | Required | FN-029, FN-083 | Verification state is distinct from skill claims. |
 | Provider service area | Provider | Onboarding | MISSING | Provider onboarding | Coverage contract exists | Required | FN-030, FN-083 | Must follow location/privacy policy. |

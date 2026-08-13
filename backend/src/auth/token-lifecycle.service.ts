@@ -246,6 +246,7 @@ export class TokenLifecycleService {
     );
     return {
       userId: user.id,
+      role,
       accessToken,
       refreshToken,
       tokenType: 'Bearer',

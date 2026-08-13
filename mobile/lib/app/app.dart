@@ -5,8 +5,12 @@ import 'package:fixnow_mobile/api/api_client.dart';
 import 'package:fixnow_mobile/api/api_config.dart';
 import 'package:fixnow_mobile/auth/auth_api.dart';
 import 'package:fixnow_mobile/auth/auth_controller.dart';
+import 'package:fixnow_mobile/auth/auth_session.dart';
 import 'package:fixnow_mobile/auth/auth_session_store.dart';
 import 'package:fixnow_mobile/auth/auth_screen.dart';
+import 'package:fixnow_mobile/auth/provider_onboarding_entry_screen.dart';
+import 'package:fixnow_mobile/auth/role_selection_screen.dart';
+import 'package:fixnow_mobile/auth/welcome_screen.dart';
 import 'package:fixnow_mobile/auth/verification_screen.dart';
 import 'package:fixnow_mobile/config/app_environment.dart';
 import 'package:fixnow_mobile/design_system/app_theme.dart';
@@ -45,6 +49,9 @@ class _FixNowAppState extends State<FixNowApp> {
   late final ServiceDiscoveryController _discovery;
   late final LocationConsentController _location;
   late final BookingController _bookings;
+  _AuthEntryStep _authEntryStep = _AuthEntryStep.welcome;
+  bool _registrationIntent = false;
+  AccountRole _selectedRole = AccountRole.customer;
 
   @override
   void initState() {
@@ -109,7 +116,33 @@ class _FixNowAppState extends State<FixNowApp> {
           if (_auth.status == AuthStatus.verificationRequired) {
             return VerificationScreen(controller: _auth);
           }
-          if (!_auth.isAuthenticated) return AuthScreen(controller: _auth);
+          if (!_auth.isAuthenticated) {
+            return switch (_authEntryStep) {
+              _AuthEntryStep.welcome => WelcomeScreen(
+                onGetStarted: () => _selectIntent(true),
+                onSignIn: () => _selectIntent(false),
+              ),
+              _AuthEntryStep.role => RoleSelectionScreen(
+                isRegistration: _registrationIntent,
+                onBack: () =>
+                    setState(() => _authEntryStep = _AuthEntryStep.welcome),
+                onContinue: (role) => setState(() {
+                  _selectedRole = role;
+                  _authEntryStep = _AuthEntryStep.form;
+                }),
+              ),
+              _AuthEntryStep.form => AuthScreen(
+                controller: _auth,
+                role: _selectedRole,
+                initialRegister: _registrationIntent,
+                onBack: () =>
+                    setState(() => _authEntryStep = _AuthEntryStep.role),
+              ),
+            };
+          }
+          if (_auth.session?.role == AccountRole.providerApplicant) {
+            return ProviderOnboardingEntryScreen(onSignOut: _signOut);
+          }
           return AppShell(
             customerHome: ServiceDiscoveryScreen(
               controller: _discovery,
@@ -136,7 +169,7 @@ class _FixNowAppState extends State<FixNowApp> {
             ),
             customerProfile: CustomerProfileScreen(
               controller: _profile,
-              onSignOut: _auth.logout,
+              onSignOut: _signOut,
             ),
             customerBookings: CustomerBookingsScreen(controller: _bookings),
           );
@@ -144,4 +177,17 @@ class _FixNowAppState extends State<FixNowApp> {
       ),
     );
   }
+
+  void _selectIntent(bool registration) => setState(() {
+    _registrationIntent = registration;
+    _authEntryStep = _AuthEntryStep.role;
+  });
+
+  Future<void> _signOut() async {
+    await _auth.logout();
+    if (!mounted) return;
+    setState(() => _authEntryStep = _AuthEntryStep.welcome);
+  }
 }
+
+enum _AuthEntryStep { welcome, role, form }

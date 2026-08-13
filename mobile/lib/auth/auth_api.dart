@@ -13,11 +13,14 @@ class AuthApi {
   Future<AuthSession> login({
     required String email,
     required String password,
+    required AccountRole role,
   }) async {
     final response = await _transport.send(
       ApiRequest(
         method: ApiMethod.post,
-        path: 'auth/customer/login',
+        path: role == AccountRole.customer
+            ? 'auth/customer/login'
+            : 'auth/provider/login',
         body: {'email': email.trim(), 'password': password},
       ),
     );
@@ -27,11 +30,14 @@ class AuthApi {
   Future<AuthSession> register({
     required String email,
     required String password,
+    required AccountRole role,
   }) async {
     final response = await _transport.send(
       ApiRequest(
         method: ApiMethod.post,
-        path: 'auth/customer/register',
+        path: role == AccountRole.customer
+            ? 'auth/customer/register'
+            : 'auth/provider/register',
         body: {'email': email.trim(), 'password': password},
       ),
     );
@@ -85,11 +91,17 @@ class AuthApi {
     final accessToken = body?['accessToken'];
     final refreshToken = body?['refreshToken'];
     final expiresIn = body?['expiresIn'];
+    final role = switch (body?['role']) {
+      'customer' => AccountRole.customer,
+      'provider_applicant' => AccountRole.providerApplicant,
+      _ => null,
+    };
     if (userId is! String ||
         accessToken is! String ||
         refreshToken is! String ||
         expiresIn is! num ||
-        expiresIn <= 0) {
+        expiresIn <= 0 ||
+        role == null) {
       throw const ApiException(
         ApiFailureKind.invalidResponse,
         'The authentication response was invalid.',
@@ -100,6 +112,7 @@ class AuthApi {
       accessToken: accessToken,
       refreshToken: refreshToken,
       expiresAt: _now().toUtc().add(Duration(seconds: expiresIn.toInt())),
+      role: role,
       verificationEmail: _isPending(accessToken) ? verificationEmail : null,
     );
   }

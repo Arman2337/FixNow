@@ -11,6 +11,7 @@ describe('AuthController', () => {
   let app: INestApplication<App>;
   const response = {
     userId: 'user-1',
+    role: 'customer' as const,
     accessToken: 'access-token',
     refreshToken: 'refresh-token',
     tokenType: 'Bearer' as const,

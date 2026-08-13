@@ -29,6 +29,7 @@ class SecureAuthSessionStore implements AuthSessionStore {
   static const _refreshTokenKey = 'fixnow.auth.refresh_token';
   static const _expiresAtKey = 'fixnow.auth.expires_at';
   static const _verificationEmailKey = 'fixnow.auth.verification_email';
+  static const _roleKey = 'fixnow.auth.role';
 
   final FlutterSecureStorage _storage;
 
@@ -40,8 +41,9 @@ class SecureAuthSessionStore implements AuthSessionStore {
       _storage.read(key: _refreshTokenKey),
       _storage.read(key: _expiresAtKey),
       _storage.read(key: _verificationEmailKey),
+      _storage.read(key: _roleKey),
     ]);
-    if (values.any((value) => value == null)) {
+    if (values.take(4).any((value) => value == null)) {
       await clear();
       return null;
     }
@@ -56,6 +58,9 @@ class SecureAuthSessionStore implements AuthSessionStore {
       refreshToken: values[2]!,
       expiresAt: expiresAt.toUtc(),
       verificationEmail: values[4],
+      role: values[5] == 'provider_applicant'
+          ? AccountRole.providerApplicant
+          : AccountRole.customer,
     );
   }
 
@@ -68,6 +73,12 @@ class SecureAuthSessionStore implements AuthSessionStore {
       _storage.write(
         key: _expiresAtKey,
         value: session.expiresAt.toUtc().toIso8601String(),
+      ),
+      _storage.write(
+        key: _roleKey,
+        value: session.role == AccountRole.customer
+            ? 'customer'
+            : 'provider_applicant',
       ),
       if (session.verificationEmail == null)
         _storage.delete(key: _verificationEmailKey)
@@ -87,6 +98,7 @@ class SecureAuthSessionStore implements AuthSessionStore {
       _storage.delete(key: _refreshTokenKey),
       _storage.delete(key: _expiresAtKey),
       _storage.delete(key: _verificationEmailKey),
+      _storage.delete(key: _roleKey),
     ]);
   }
 }

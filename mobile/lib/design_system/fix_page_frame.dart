@@ -66,8 +66,11 @@ class FixBrandMark extends StatelessWidget {
   final bool compact;
 
   @override
-  Widget build(BuildContext context) => Row(
-    mainAxisSize: MainAxisSize.min,
+  Widget build(BuildContext context) => Wrap(
+    alignment: WrapAlignment.start,
+    crossAxisAlignment: WrapCrossAlignment.center,
+    spacing: AppSpacing.md,
+    runSpacing: AppSpacing.sm,
     children: [
       Container(
         width: compact ? 40 : 52,
@@ -83,7 +86,6 @@ class FixBrandMark extends StatelessWidget {
           size: compact ? 22 : 28,
         ),
       ),
-      const SizedBox(width: AppSpacing.md),
       Text(
         'FixNow',
         style:

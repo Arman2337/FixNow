@@ -147,6 +147,15 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    return this.tokenLifecycle.issueSession(identity.user, 'customer');
+    const providerRole = await this.dataSource
+      .getRepository(UserRoleEntity)
+      .findOneBy({
+        userId: identity.userId,
+        roleId: PROVIDER_APPLICANT_ROLE_ID,
+      });
+    return this.tokenLifecycle.issueSession(
+      identity.user,
+      providerRole ? 'provider_applicant' : 'customer',
+    );
   }
 }

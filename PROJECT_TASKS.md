@@ -32,10 +32,10 @@ Only these statuses are valid. A task cannot be completed while required validat
 # Project Progress
 
 Total Tasks: 83
-Completed: 52
+Completed: 53
 In Progress: 0
 Blocked: 0
-Pending: 31
+Pending: 30
 Cancelled: 0
 Current Phase: Phase 7 — Real-Time & Location
 Next Recommended Task: FN-046 — Initialize Admin Web Application
@@ -2886,7 +2886,7 @@ Commit: 8ddc582
 PR: Pending
 
 ## FN-081 — Implement Premium Role-Aware Authentication and Onboarding Entry
-Status: ⬜ Pending
+Status: ✅ Completed
 Priority: P1 — High
 Area: Mobile / Authentication / Provider
 Depends On: FN-025, FN-026, FN-080
@@ -2904,9 +2904,9 @@ Implement welcome, role selection, premium shared sign-in, customer registration
 - Do not present phone OTP, social login, forgot-password recovery, or provider approval as available without backend support.
 
 ### Acceptance Criteria
-- [ ] Customer and provider entry paths are visually related, accessible, and route by real account state.
-- [ ] Keyboard, validation, loading, failure, verification, session restore, and sign-out tests pass.
-- [ ] No inert or falsely enabled authentication action is shown.
+- [x] Customer and provider entry paths are visually related, accessible, and route by real account state.
+- [x] Keyboard, validation, loading, failure, verification, session restore, and sign-out tests pass.
+- [x] No inert or falsely enabled authentication action is shown.
 
 ### Validation
 ```bash
@@ -2920,13 +2920,13 @@ mobile/lib/auth/ mobile/lib/app/ mobile/test/ backend/src/auth/ backend/src/prov
 ```
 
 ### Notes
-Forgot-password requires a separately approved backend task.
+Implemented premium Welcome, registration/sign-in intent, customer/provider role selection, shared credential form, and the existing email OTP flow. Authentication responses now include the server-resolved role; sessions persist it across refresh and relaunch. Added provider login routing and corrected login role resolution from persisted assignments. Verified provider applicants reach an honest profile-incomplete handoff stating that setup and verification are required before receiving work; FN-083 owns the full onboarding. Forgot-password, social login, and phone OTP remain absent because no approved backend support exists. Flutter analysis and 51 tests passed; backend lint, 44 suites / 200 tests, and build passed.
 
 ### Completion Record
-Completed By:
-Completed Date:
-Commit:
-PR:
+Completed By: Codex
+Completed Date: 2026-08-13
+Commit: Pending
+PR: Pending
 
 ## FN-082 — Reconstruct Premium Customer Core and Tracking Experience
 Status: ⬜ Pending

@@ -63,13 +63,20 @@ class AuthController extends ChangeNotifier {
     }
   }
 
-  Future<void> login({required String email, required String password}) async {
-    await _authenticate(() => _api.login(email: email, password: password));
+  Future<void> login({
+    required String email,
+    required String password,
+    AccountRole role = AccountRole.customer,
+  }) async {
+    await _authenticate(
+      () => _api.login(email: email, password: password, role: role),
+    );
   }
 
   Future<void> register({
     required String email,
     required String password,
+    AccountRole role = AccountRole.customer,
   }) async {
     errorMessage = null;
     _setStatus(AuthStatus.loading);
@@ -78,6 +85,7 @@ class AuthController extends ChangeNotifier {
       final next = await _api.register(
         email: normalizedEmail,
         password: password,
+        role: role,
       );
       await _store.write(next);
       _session = next;
@@ -123,6 +131,7 @@ class AuthController extends ChangeNotifier {
         accessToken: current.accessToken,
         refreshToken: current.refreshToken,
         expiresAt: current.expiresAt,
+        role: current.role,
       );
       await _store.write(_session!);
       verificationEmail = null;
@@ -205,6 +214,7 @@ class AuthController extends ChangeNotifier {
             accessToken: refreshed.accessToken,
             refreshToken: refreshed.refreshToken,
             expiresAt: refreshed.expiresAt,
+            role: refreshed.role,
             verificationEmail: verificationEmail ?? _session?.verificationEmail,
           );
     await _store.write(next);

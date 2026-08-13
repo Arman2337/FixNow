@@ -1,5 +1,6 @@
 import { Transform } from 'class-transformer';
 import { IsEmail, IsString, MaxLength, MinLength } from 'class-validator';
+import type { RoleCode } from '../common/authorization/permission-policies';
 
 export class EmailPasswordDto {
   @Transform(({ value }: { value: unknown }) =>
@@ -17,7 +18,7 @@ export class EmailPasswordDto {
 
 export interface AuthenticationResponse {
   userId: string;
-  role: 'customer' | 'provider_applicant' | 'verified_provider';
+  role: RoleCode;
   accessToken: string;
   refreshToken: string;
   tokenType: 'Bearer';

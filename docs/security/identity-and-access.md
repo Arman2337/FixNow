@@ -221,6 +221,21 @@ FN-013 does not choose authentication mechanisms, but later choices MUST satisfy
 - Long-lived service credentials are avoided where workload identity or short-lived credentials are available.
 - Authentication errors and recovery flows prevent account enumeration according to the [API error conventions](../architecture/error-response-conventions.md).
 
+### Administrative web sessions
+
+- Administrative sign-in uses a dedicated backend entry point and an admin-specific access-token audience; mobile-audience tokens are not accepted for administrative session checks.
+- Only active identities with exactly one current staff role can establish an administrative session. Customer, provider, missing-role, expired-role, and ambiguous multi-role attempts receive the same safe authentication failure.
+- The administrative web application stores access and rotating refresh tokens in HTTP-only, secure-in-production, strict same-site cookies. Browser JavaScript cannot read them.
+- Navigation visibility reflects the current server-authorized staff role for orientation only. Every protected backend operation still performs authoritative permission evaluation.
+- Expired access sessions may use the existing one-time rotating refresh flow. Failed refresh, unauthorized access, and explicit logout clear local session cookies; logout also revokes the backend refresh session when reachable.
+
+### Administrative management projections
+
+- User management exposes opaque account IDs, account status, current non-expired role codes, and timestamps only. It does not expose credentials, identity subjects, contact details, status reasons, or unrestricted raw records.
+- Provider verification list/detail views expose the professional profile fields required for review while excluding precise base coordinates. Review history retains actor attribution, version, transition, reason, and timestamp.
+- Provider documents are available only to the reviewer currently assigned to the application. Reads are audited, returned with private no-store caching, and never expose object-storage keys or hashes.
+- Claim and decision operations reuse the authoritative provider verification state machine, assignment checks, self-review protection, required reasons, and optimistic version checks. UI state never bypasses these backend rules.
+
 ## Audit and observability
 
 Audit-worthy events include:

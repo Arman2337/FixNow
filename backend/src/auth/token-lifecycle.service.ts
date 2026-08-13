@@ -23,6 +23,7 @@ import { IdentityEntity } from '../users/identity.entity';
 import { UserEntity } from '../users/user.entity';
 import {
   ACCESS_TOKEN_AUDIENCE,
+  ADMIN_ACCESS_TOKEN_AUDIENCE,
   ACCESS_TOKEN_ISSUER,
   ACCESS_TOKEN_TTL_SECONDS,
   LOCAL_EMAIL_PROVIDER,
@@ -30,6 +31,7 @@ import {
 import { AuthAuditEventEntity } from './auth-audit-event.entity';
 import { AuthSessionEntity } from './auth-session.entity';
 import { AuthenticationResponse } from './auth.dto';
+import type { RoleCode } from '../common/authorization/permission-policies';
 import { OtpChallengeEntity } from './otp-challenge.entity';
 
 const OTP_TTL_MS = 10 * 60_000;
@@ -47,7 +49,7 @@ export class TokenLifecycleService {
 
   async issueSession(
     user: UserEntity,
-    role: 'customer' | 'provider_applicant' | 'verified_provider',
+    role: RoleCode,
   ): Promise<AuthenticationResponse> {
     const refreshToken = randomBytes(32).toString('base64url');
     const session = await this.dataSource
@@ -128,12 +130,7 @@ export class TokenLifecycleService {
           outcome: 'success',
         }),
       );
-      return this.response(
-        user,
-        session.role as 'customer' | 'provider_applicant',
-        nextToken,
-        next.id,
-      );
+      return this.response(user, session.role as RoleCode, nextToken, next.id);
     });
     if (!result) throw new UnauthorizedException('Invalid refresh token');
     return result;
@@ -231,7 +228,7 @@ export class TokenLifecycleService {
 
   private response(
     user: UserEntity,
-    role: 'customer' | 'provider_applicant' | 'verified_provider',
+    role: RoleCode,
     refreshToken: string,
     sessionId: string,
   ): AuthenticationResponse {
@@ -240,7 +237,9 @@ export class TokenLifecycleService {
       {
         subject: user.id,
         issuer: ACCESS_TOKEN_ISSUER,
-        audience: ACCESS_TOKEN_AUDIENCE,
+        audience: this.isStaffRole(role)
+          ? ADMIN_ACCESS_TOKEN_AUDIENCE
+          : ACCESS_TOKEN_AUDIENCE,
         expiresIn: ACCESS_TOKEN_TTL_SECONDS,
       },
     );
@@ -252,6 +251,12 @@ export class TokenLifecycleService {
       tokenType: 'Bearer',
       expiresIn: ACCESS_TOKEN_TTL_SECONDS,
     };
+  }
+
+  private isStaffRole(role: RoleCode): boolean {
+    return !['customer', 'provider_applicant', 'verified_provider'].includes(
+      role,
+    );
   }
 
   private hashToken(token: string): string {

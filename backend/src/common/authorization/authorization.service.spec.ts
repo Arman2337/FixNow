@@ -8,6 +8,11 @@ import { UserEntity } from '../../users/user.entity';
 import { AuthorizationPolicyService } from './authorization-policy.service';
 import { AuthorizationService } from './authorization.service';
 import { PERMISSIONS } from './permission-policies';
+import {
+  ACCESS_TOKEN_AUDIENCE,
+  ADMIN_ACCESS_TOKEN_AUDIENCE,
+  ACCESS_TOKEN_ISSUER,
+} from '../../auth/auth.constants';
 
 describe('AuthorizationService', () => {
   const verifyAsync = jest.fn();
@@ -68,6 +73,26 @@ describe('AuthorizationService', () => {
       userId: '00000000-0000-4000-8000-000000000001',
       eventType: 'authorization.allowed',
       outcome: 'success',
+    });
+    expect(verifyAsync).toHaveBeenCalledWith('access-token', {
+      issuer: ACCESS_TOKEN_ISSUER,
+      audience: ACCESS_TOKEN_AUDIENCE,
+    });
+  });
+
+  it('requires the admin audience for an admin session check', async () => {
+    findGrants.mockResolvedValue([{ role: { code: 'support_agent' } }]);
+    await expect(
+      service.authorizeAccessToken(
+        'admin-access-token',
+        PERMISSIONS.adminSessionReadSelf,
+        undefined,
+        true,
+      ),
+    ).resolves.toMatchObject({ roles: ['support_agent'] });
+    expect(verifyAsync).toHaveBeenCalledWith('admin-access-token', {
+      issuer: ACCESS_TOKEN_ISSUER,
+      audience: ADMIN_ACCESS_TOKEN_AUDIENCE,
     });
   });
 

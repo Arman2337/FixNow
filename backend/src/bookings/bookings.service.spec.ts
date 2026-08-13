@@ -157,4 +157,20 @@ describe('BookingsService', () => {
       service.getBookingHistory('customer-id', 20, 'not-json'),
     ).rejects.toThrow('Invalid booking history cursor');
   });
+
+  it('prevents an admin intervention from rewriting completed history', async () => {
+    bookingFindOneBy.mockResolvedValue(
+      booking({ status: BookingStatus.COMPLETED, completedAt: new Date() }),
+    );
+
+    await expect(
+      service.cancelBookingAsAdmin(
+        '00000000-0000-4000-8000-000000000101',
+        '00000000-0000-4000-8000-000000000099',
+        'Operational correction',
+        1,
+      ),
+    ).rejects.toBeInstanceOf(ConflictException);
+    expect(eventSave).not.toHaveBeenCalled();
+  });
 });

@@ -229,4 +229,51 @@ describe('AuthService', () => {
       'verified_provider',
     );
   });
+
+  it('issues an admin session only for exactly one active staff role', async () => {
+    const passwordHash = await argon2.hash('Correct Horse Battery Staple!', {
+      type: argon2.argon2id,
+    });
+    identityRepository.findOne.mockResolvedValue({
+      id: 'identity-1',
+      userId: 'staff-1',
+      user: { id: 'staff-1', status: AccountStatus.Active },
+    } as IdentityEntity);
+    credentialRepository.findOneBy.mockResolvedValue({
+      passwordHash,
+    } as CredentialEntity);
+    userRoleRepository.find.mockResolvedValue([
+      { role: { code: 'provider_reviewer' } } as UserRoleEntity,
+    ]);
+
+    await service.loginAdmin({
+      email: 'reviewer@example.com',
+      password: 'Correct Horse Battery Staple!',
+    });
+    expect(issueSession).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'staff-1' }),
+      'provider_reviewer',
+    );
+
+    userRoleRepository.find.mockResolvedValue([
+      { role: { code: 'customer' } } as UserRoleEntity,
+    ]);
+    await expect(
+      service.loginAdmin({
+        email: 'customer@example.com',
+        password: 'Correct Horse Battery Staple!',
+      }),
+    ).rejects.toEqual(new UnauthorizedException('Invalid email or password'));
+
+    userRoleRepository.find.mockResolvedValue([
+      { role: { code: 'provider_reviewer' } } as UserRoleEntity,
+      { role: { code: 'auditor' } } as UserRoleEntity,
+    ]);
+    await expect(
+      service.loginAdmin({
+        email: 'multi-role@example.com',
+        password: 'Correct Horse Battery Staple!',
+      }),
+    ).rejects.toEqual(new UnauthorizedException('Invalid email or password'));
+  });
 });

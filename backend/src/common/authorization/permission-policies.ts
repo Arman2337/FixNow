@@ -19,6 +19,7 @@ export const PERMISSIONS = {
   providerDocumentsRead: 'provider.documents.read',
   providerDocumentsDelete: 'provider.documents.delete',
   adminServicesCreate: 'admin.services.create',
+  adminServicesRead: 'admin.services.read',
   adminServicesUpdate: 'admin.services.update',
   adminServicesDelete: 'admin.services.delete',
   adminSkillsUpdate: 'admin.skills.update',
@@ -33,6 +34,12 @@ export const PERMISSIONS = {
   realtimeSubscribeSelf: 'realtime.subscribe.self',
   roleGrantAuthorized: 'access.role.grant.authorized',
   securityAuditReadAuthorized: 'access.audit.read.authorized',
+  adminSessionReadSelf: 'admin.session.read.self',
+  adminUsersRead: 'admin.users.read',
+  adminProviderApplicationsRead: 'admin.provider-applications.read',
+  adminProviderDocumentsRead: 'admin.provider-documents.read.assigned',
+  adminBookingsRead: 'admin.bookings.read',
+  adminBookingsIntervene: 'admin.bookings.intervene',
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -52,6 +59,7 @@ export type RoleCode =
 
 export interface PermissionPolicy {
   readonly roles: readonly RoleCode[];
+  readonly audience?: 'mobile' | 'admin';
   readonly relationship?: 'self' | 'assigned';
   readonly forbidSelfTarget?: boolean;
   readonly requireIndependentApproval?: boolean;
@@ -74,6 +82,37 @@ const allHumanRoles: readonly RoleCode[] = [
 export const PERMISSION_POLICIES: Readonly<
   Record<Permission, PermissionPolicy>
 > = {
+  [PERMISSIONS.adminSessionReadSelf]: {
+    roles: [
+      'provider_reviewer',
+      'support_agent',
+      'trust_safety_reviewer',
+      'finance_operator',
+      'service_catalog_manager',
+      'operations_administrator',
+      'security_administrator',
+      'auditor',
+    ],
+    audience: 'admin',
+    relationship: 'self',
+  },
+  [PERMISSIONS.adminUsersRead]: {
+    roles: [
+      'support_agent',
+      'operations_administrator',
+      'security_administrator',
+      'auditor',
+    ],
+    audience: 'admin',
+  },
+  [PERMISSIONS.adminProviderApplicationsRead]: {
+    roles: ['provider_reviewer', 'operations_administrator', 'auditor'],
+    audience: 'admin',
+  },
+  [PERMISSIONS.adminProviderDocumentsRead]: {
+    roles: ['provider_reviewer', 'operations_administrator'],
+    audience: 'admin',
+  },
   [PERMISSIONS.profileReadSelf]: {
     roles: allHumanRoles,
     relationship: 'self',
@@ -97,9 +136,11 @@ export const PERMISSION_POLICIES: Readonly<
   [PERMISSIONS.providerApplicationReviewAssigned]: {
     roles: ['provider_reviewer', 'operations_administrator'],
     relationship: 'assigned',
+    audience: 'admin',
   },
   [PERMISSIONS.providerVerificationReview]: {
     roles: ['provider_reviewer', 'operations_administrator'],
+    audience: 'admin',
   },
   [PERMISSIONS.providerSkillsRead]: {
     roles: [
@@ -158,12 +199,19 @@ export const PERMISSION_POLICIES: Readonly<
   },
   [PERMISSIONS.adminServicesCreate]: {
     roles: ['service_catalog_manager', 'operations_administrator'],
+    audience: 'admin',
+  },
+  [PERMISSIONS.adminServicesRead]: {
+    roles: ['service_catalog_manager', 'operations_administrator', 'auditor'],
+    audience: 'admin',
   },
   [PERMISSIONS.adminServicesUpdate]: {
     roles: ['service_catalog_manager', 'operations_administrator'],
+    audience: 'admin',
   },
   [PERMISSIONS.adminServicesDelete]: {
     roles: ['service_catalog_manager', 'operations_administrator'],
+    audience: 'admin',
   },
   [PERMISSIONS.adminSkillsUpdate]: {
     roles: [
@@ -200,6 +248,19 @@ export const PERMISSION_POLICIES: Readonly<
   [PERMISSIONS.bookingHistoryReadSelf]: {
     roles: ['customer', 'verified_provider'],
     relationship: 'self',
+  },
+  [PERMISSIONS.adminBookingsRead]: {
+    roles: [
+      'support_agent',
+      'trust_safety_reviewer',
+      'operations_administrator',
+      'auditor',
+    ],
+    audience: 'admin',
+  },
+  [PERMISSIONS.adminBookingsIntervene]: {
+    roles: ['trust_safety_reviewer', 'operations_administrator'],
+    audience: 'admin',
   },
   [PERMISSIONS.realtimeConnect]: {
     roles: allHumanRoles,

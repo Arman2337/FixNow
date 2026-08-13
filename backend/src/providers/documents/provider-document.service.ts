@@ -14,6 +14,7 @@ import { PRIVATE_OBJECT_STORAGE } from '../../storage/private-object-storage';
 import type { PrivateObjectStorage } from '../../storage/private-object-storage';
 import { ProviderDocumentEntity } from './provider-document.entity';
 import { ProviderDocumentAuditEntity } from './provider-document-audit.entity';
+import { ProviderApplicationEntity } from '../provider-application.entity';
 
 const MAX_BYTES = 10 * 1024 * 1024;
 const TYPES = new Set(['identity', 'license', 'certification']);
@@ -29,6 +30,8 @@ export class ProviderDocumentService {
     @Inject(MALWARE_SCANNER) private readonly scanner: MalwareScanner,
     @InjectRepository(ProviderDocumentAuditEntity)
     private readonly audits: Repository<ProviderDocumentAuditEntity>,
+    @InjectRepository(ProviderApplicationEntity)
+    private readonly applications: Repository<ProviderApplicationEntity>,
   ) {}
 
   rejectMissingFile(): never {
@@ -116,6 +119,68 @@ export class ProviderDocumentService {
     document.deletedAt = new Date();
     await this.documents.save(document);
     await this.audit(document.id, userId, 'delete', 'allowed');
+  }
+
+  async listForReview(actorId: string, applicationId: string) {
+    const application = await this.assertAssignedReview(actorId, applicationId);
+    const documents = await this.documents.find({
+      where: { userId: application.userId, status: 'available' },
+      order: { createdAt: 'DESC' },
+    });
+    return documents.map(
+      ({
+        id,
+        documentType,
+        contentType,
+        sizeBytes,
+        status,
+        retentionUntil,
+        createdAt,
+        updatedAt,
+      }) => ({
+        id,
+        documentType,
+        contentType,
+        sizeBytes,
+        status,
+        retentionUntil,
+        createdAt,
+        updatedAt,
+      }),
+    );
+  }
+
+  async readForReview(
+    actorId: string,
+    applicationId: string,
+    documentId: string,
+  ) {
+    const application = await this.assertAssignedReview(actorId, applicationId);
+    const document = await this.find(documentId);
+    if (
+      document.userId !== application.userId ||
+      document.status !== 'available'
+    ) {
+      await this.audit(document.id, actorId, 'review-read', 'denied');
+      throw new NotFoundException('Provider document not found');
+    }
+    await this.audit(document.id, actorId, 'review-read', 'allowed');
+    return {
+      metadata: document,
+      content: await this.storage.readPrivate(document.objectKey),
+    };
+  }
+
+  private async assertAssignedReview(actorId: string, applicationId: string) {
+    const application = await this.applications.findOneBy({
+      id: applicationId,
+    });
+    if (!application || application.assignedReviewerUserId !== actorId) {
+      throw new ForbiddenException(
+        'Provider review is not assigned to this reviewer',
+      );
+    }
+    return application;
   }
 
   private async find(id: string): Promise<ProviderDocumentEntity> {

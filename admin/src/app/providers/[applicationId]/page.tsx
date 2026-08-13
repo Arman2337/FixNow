@@ -1,0 +1,41 @@
+import Link from "next/link";
+import { getSession } from "@/auth/session";
+import { AdminShell } from "@/components/admin-shell";
+import { env } from "@/config/env";
+import { getProviderApplication, listProviderDocuments } from "@/features/providers/api";
+import { claimAction, decisionAction } from "@/features/providers/actions";
+import { requireManagementResult } from "@/features/management-api";
+import { StatusBadge } from "@/features/status-badge";
+import { redirect } from "next/navigation";
+
+const messages: Record<string, string> = {
+  claimed: "Review assigned to you.", decided: "Decision recorded in the audit history.",
+  stale: "This application changed. Review the latest version before trying again.",
+  forbidden: "This review is not assigned to you.", invalid: "Choose a decision and provide a reason of at least 3 characters.",
+  failed: "The action could not be completed. Try again.",
+};
+
+export default async function ProviderDetailPage({ params, searchParams }: { params: Promise<{ applicationId: string }>; searchParams: Promise<{ result?: string }> }) {
+  const session = await getSession();
+  if (session.state !== "authenticated") redirect("/login?reason=expired");
+  const { applicationId } = await params;
+  const application = await requireManagementResult(await getProviderApplication(applicationId));
+  const assigned = application.assignedReviewerUserId === session.session.userId;
+  const canReview = session.session.roles.some((role) => role === "provider_reviewer" || role === "operations_administrator");
+  const documents = assigned && canReview ? (await requireManagementResult(await listProviderDocuments(applicationId))).documents : [];
+  const result = (await searchParams).result;
+
+  return <AdminShell environment={env.appEnvironment} roles={session.session.roles} current="Providers">
+    <Link href="/providers" className="text-sm font-semibold text-[var(--color-primary)]">← Provider verification</Link>
+    <header className="mt-5 flex flex-col gap-4 border-b border-[var(--color-border-default)] pb-6 sm:flex-row sm:items-start sm:justify-between"><div><p className="m-0 text-sm font-semibold text-[var(--color-primary)]">Application review</p><h1 className="mt-2 mb-0 text-3xl font-bold">{application.profile?.displayName ?? "Provider application"}</h1><p className="mt-2 mb-0 break-all font-mono text-xs text-[var(--color-text-muted)]">{application.id}</p></div><StatusBadge status={application.status}/></header>
+    {result && messages[result] ? <p role={result === "claimed" || result === "decided" ? "status" : "alert"} className={`mt-5 rounded-xl border p-4 ${result === "claimed" || result === "decided" ? "border-[var(--color-primary)] bg-[var(--color-primary-soft)]" : "border-[var(--color-warning)] bg-[var(--color-warning-soft)]"}`}>{messages[result]}</p> : null}
+    <div className="mt-6 grid gap-6 xl:grid-cols-[1fr_22rem]">
+      <div className="space-y-6">
+        <section aria-labelledby="profile-heading" className="rounded-2xl border border-[var(--color-border-default)] bg-[var(--color-surface-primary)] p-6"><h2 id="profile-heading" className="m-0 text-xl font-semibold">Professional profile</h2>{application.profile ? <dl className="mt-4 grid gap-4 sm:grid-cols-2"><div><dt className="text-sm text-[var(--color-text-muted)]">Display name</dt><dd className="mt-1">{application.profile.displayName}</dd></div><div><dt className="text-sm text-[var(--color-text-muted)]">Service radius</dt><dd className="mt-1">{application.profile.serviceRadiusKm} km</dd></div><div className="sm:col-span-2"><dt className="text-sm text-[var(--color-text-muted)]">Bio</dt><dd className="mt-1 whitespace-pre-wrap">{application.profile.bio ?? "Not provided"}</dd></div></dl> : <p className="mt-3 mb-0 text-[var(--color-text-secondary)]">No professional profile has been submitted.</p>}</section>
+        <section aria-labelledby="documents-heading" className="rounded-2xl border border-[var(--color-border-default)] bg-[var(--color-surface-primary)] p-6"><h2 id="documents-heading" className="m-0 text-xl font-semibold">Private documents</h2>{!assigned ? <p className="mt-3 mb-0 text-[var(--color-text-secondary)]">Documents become available only after this review is assigned to you.</p> : documents.length === 0 ? <p className="mt-3 mb-0 text-[var(--color-text-secondary)]">No available documents were submitted.</p> : <ul className="mt-4 list-none space-y-3 p-0">{documents.map((document) => <li key={document.id} className="flex flex-col gap-2 rounded-xl border border-[var(--color-border-default)] p-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="m-0 font-semibold capitalize">{document.documentType}</p><p className="mt-1 mb-0 text-sm text-[var(--color-text-muted)]">{document.contentType} · {Math.ceil(document.sizeBytes / 1024)} KB</p></div><a href={`/providers/${application.id}/documents/${document.id}`} className="font-semibold text-[var(--color-primary)]">Download securely</a></li>)}</ul>}</section>
+        <section aria-labelledby="history-heading" className="rounded-2xl border border-[var(--color-border-default)] bg-[var(--color-surface-primary)] p-6"><h2 id="history-heading" className="m-0 text-xl font-semibold">Audit history</h2>{application.events.length === 0 ? <p className="mt-3 mb-0 text-[var(--color-text-secondary)]">No verification events recorded.</p> : <ol className="mt-4 space-y-4 pl-5">{application.events.map((event) => <li key={event.id}><div className="flex flex-wrap items-center gap-2"><StatusBadge status={event.toStatus}/><span className="text-sm text-[var(--color-text-muted)]">Version {event.applicationVersion} · {new Date(event.createdAt).toLocaleString()}</span></div><p className="mt-2 mb-0 whitespace-pre-wrap text-sm text-[var(--color-text-secondary)]">{event.reason}</p></li>)}</ol>}</section>
+      </div>
+      <aside aria-labelledby="action-heading" className="h-fit rounded-2xl border border-[var(--color-border-default)] bg-[var(--color-surface-elevated)] p-6"><h2 id="action-heading" className="m-0 text-xl font-semibold">Review action</h2><p className="mt-2 text-sm text-[var(--color-text-secondary)]">Current version: {application.version}. Actions fail safely if another reviewer changes it.</p>{application.status === "unverified" && canReview ? <form action={claimAction} className="mt-5"><input type="hidden" name="applicationId" value={application.id}/><input type="hidden" name="expectedVersion" value={application.version}/><button className="min-h-12 w-full rounded-xl bg-[var(--color-primary)] px-5 text-sm font-semibold text-[var(--color-on-primary)]">Assign review to me</button></form> : application.status === "under_review" && assigned && canReview ? <form action={decisionAction} className="mt-5 space-y-4"><input type="hidden" name="applicationId" value={application.id}/><input type="hidden" name="expectedVersion" value={application.version}/><div><label htmlFor="decision" className="block text-sm font-semibold">Decision</label><select id="decision" name="decision" required className="mt-2 min-h-12 w-full rounded-xl border border-[var(--color-border-default)] bg-[var(--color-surface-secondary)] px-4"><option value="">Choose a decision</option><option value="approved">Approve</option><option value="resubmission_requested">Request resubmission</option><option value="rejected">Reject</option></select></div><div><label htmlFor="reason" className="block text-sm font-semibold">Decision reason</label><textarea id="reason" name="reason" required minLength={3} maxLength={1000} rows={5} className="mt-2 w-full rounded-xl border border-[var(--color-border-default)] bg-[var(--color-surface-secondary)] p-4"/><p className="mt-1 mb-0 text-xs text-[var(--color-text-muted)]">Recorded permanently in the verification audit history.</p></div><button className="min-h-12 w-full rounded-xl bg-[var(--color-primary)] px-5 text-sm font-semibold text-[var(--color-on-primary)]">Record decision</button></form> : <p className="mt-5 mb-0 rounded-xl bg-[var(--color-surface-secondary)] p-4 text-sm text-[var(--color-text-secondary)]">{application.status === "under_review" ? "This review is assigned to another reviewer." : "No action is available for this state."}</p>}</aside>
+    </div>
+  </AdminShell>;
+}

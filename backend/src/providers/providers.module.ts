@@ -60,6 +60,11 @@ import { ProviderApplicationController } from './provider-application.controller
     { provide: PRIVATE_OBJECT_STORAGE, useExisting: S3PrivateObjectStorage },
     { provide: MALWARE_SCANNER, useExisting: ClamAvMalwareScanner },
   ],
-  exports: [ProviderSkillsService, ProviderProfileService],
+  exports: [
+    ProviderSkillsService,
+    ProviderProfileService,
+    ProviderDocumentService,
+    ProviderVerificationService,
+  ],
 })
 export class ProvidersModule {}

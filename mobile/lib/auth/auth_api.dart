@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:fixnow_mobile/api/api_client.dart';
 import 'package:fixnow_mobile/auth/auth_session.dart';
 
@@ -19,7 +21,41 @@ class AuthApi {
         body: {'email': email.trim(), 'password': password},
       ),
     );
-    return _parseSession(response.body);
+    return _parseSession(response.body, verificationEmail: email.trim());
+  }
+
+  Future<AuthSession> register({
+    required String email,
+    required String password,
+  }) async {
+    final response = await _transport.send(
+      ApiRequest(
+        method: ApiMethod.post,
+        path: 'auth/customer/register',
+        body: {'email': email.trim(), 'password': password},
+      ),
+    );
+    return _parseSession(response.body, verificationEmail: email.trim());
+  }
+
+  Future<void> requestOtp(String email) async {
+    await _transport.send(
+      ApiRequest(
+        method: ApiMethod.post,
+        path: 'auth/otp/request',
+        body: {'email': email.trim()},
+      ),
+    );
+  }
+
+  Future<void> verifyOtp({required String email, required String code}) async {
+    await _transport.send(
+      ApiRequest(
+        method: ApiMethod.post,
+        path: 'auth/otp/verify',
+        body: {'email': email.trim(), 'code': code.trim()},
+      ),
+    );
   }
 
   Future<AuthSession> refresh(String refreshToken) async {
@@ -43,7 +79,7 @@ class AuthApi {
     );
   }
 
-  AuthSession _parseSession(Object? rawBody) {
+  AuthSession _parseSession(Object? rawBody, {String? verificationEmail}) {
     final body = rawBody is Map<String, dynamic> ? rawBody : null;
     final userId = body?['userId'];
     final accessToken = body?['accessToken'];
@@ -64,6 +100,21 @@ class AuthApi {
       accessToken: accessToken,
       refreshToken: refreshToken,
       expiresAt: _now().toUtc().add(Duration(seconds: expiresIn.toInt())),
+      verificationEmail: _isPending(accessToken) ? verificationEmail : null,
     );
+  }
+
+  bool _isPending(String token) {
+    try {
+      final parts = token.split('.');
+      if (parts.length != 3) return false;
+      final payload = jsonDecode(
+        utf8.decode(base64Url.decode(base64Url.normalize(parts[1]))),
+      );
+      return payload is Map<String, dynamic> &&
+          payload['accountStatus'] == 'pending_verification';
+    } catch (_) {
+      return false;
+    }
   }
 }

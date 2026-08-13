@@ -31,8 +31,8 @@ Only these statuses are valid. A task cannot be completed while required validat
 
 # Project Progress
 
-Total Tasks: 75
-Completed: 47
+Total Tasks: 76
+Completed: 48
 In Progress: 0
 Blocked: 0
 Pending: 28
@@ -2602,7 +2602,7 @@ Completed a physical Android 16 walkthrough against an isolated local PostgreSQL
 ### Completion Record
 Completed By: Codex
 Completed Date: 2026-08-13
-Commit: Pending
+Commit: b8bf252
 PR: Pending
 
 ## FN-075 — Implement Customer Help and Support Experience
@@ -2648,3 +2648,52 @@ Completed By:
 Completed Date:
 Commit:
 PR:
+
+## FN-076 — Complete Customer Sign-In and Service Request Journey
+Status: ✅ Completed
+Priority: P0 — Critical
+Area: Mobile / Backend / Quality
+Depends On: FN-026, FN-037, FN-042, FN-074
+Branch: feat/customer-core-journey
+
+### Objective
+Turn the current mobile foundation into a usable customer journey: authenticate, choose a service, describe the problem, confirm location, create a request, and see the resulting booking state in a professional phone UI.
+
+### Scope
+- Add polished customer sign-in and registration screens with validation, loading, failure, session restore, and sign-out behavior.
+- Make service categories actionable and implement the supported request flow through the existing authenticated booking contract.
+- Replace the static bookings preview with authenticated booking history and clear requested/matching states.
+- Add focused API, controller, and widget coverage and verify the journey against the isolated local backend on a phone-sized target.
+
+### Do Not
+- Do not claim that a customer selected a provider when the booking contract only supports provider acceptance after request creation.
+- Do not change matching policy, expose provider coordinates, add payment, or introduce a new framework, vendor, or production dependency.
+- Do not implement unrelated provider, admin, support, or live-tracking roadmap scope.
+
+### Acceptance Criteria
+- [x] A new customer can register, verify email, an existing customer can sign in, a valid session restores, and sign-out returns to authentication.
+- [x] Selecting a service opens a usable request form and a successful submission creates exactly one authenticated booking.
+- [x] Customers can see their booking history and understand requested, matching, empty, loading, offline, and failure states.
+- [x] The changed phone UI follows `DESIGN.md`, is accessible at supported text scale, and has no inert primary controls.
+- [x] Mobile analysis/tests and relevant backend checks pass; a local end-to-end smoke test is recorded.
+
+### Validation
+```bash
+cd mobile && flutter analyze && flutter test
+cd backend && npm run lint && npm test -- --runInBand && npm run build
+git diff --check
+```
+
+### Files / Areas
+```text
+mobile/lib/app/ mobile/lib/auth/ mobile/lib/features/services/ mobile/lib/features/bookings/ mobile/test/ backend/src/auth/ backend/src/bookings/ backend/test/ docs/quality/ PROJECT_TASKS.md
+```
+
+### Notes
+Completed the connected customer journey across native and web targets. Added authentication, registration, required email verification/resend, secure native session restore, web-safe session behavior, actionable services, location-backed idempotent requests, and API-backed booking history. Added strict configured browser CORS support and Flutter Web host files after the user explicitly selected browser QA. Flutter analysis, 43 tests, web build and Android debug build passed; backend lint, 44 suites / 198 tests, build, and isolated registration/login/booking/history smoke passed. Local SMTP was unavailable by design, so delivery failure/retry behavior was verified while backend OTP behavior remains covered by tests. Full evidence: `docs/quality/customer-core-journey-browser-qa-2026-08-13.md`.
+
+### Completion Record
+Completed By: Codex
+Completed Date: 2026-08-13
+Commit: Pending
+PR: Pending

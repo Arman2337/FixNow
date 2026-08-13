@@ -7,6 +7,19 @@ abstract interface class AuthSessionStore {
   Future<void> clear();
 }
 
+class MemoryAuthSessionStore implements AuthSessionStore {
+  AuthSession? _session;
+
+  @override
+  Future<void> clear() async => _session = null;
+
+  @override
+  Future<AuthSession?> read() async => _session;
+
+  @override
+  Future<void> write(AuthSession session) async => _session = session;
+}
+
 class SecureAuthSessionStore implements AuthSessionStore {
   SecureAuthSessionStore({FlutterSecureStorage? storage})
     : _storage = storage ?? const FlutterSecureStorage();
@@ -15,6 +28,7 @@ class SecureAuthSessionStore implements AuthSessionStore {
   static const _accessTokenKey = 'fixnow.auth.access_token';
   static const _refreshTokenKey = 'fixnow.auth.refresh_token';
   static const _expiresAtKey = 'fixnow.auth.expires_at';
+  static const _verificationEmailKey = 'fixnow.auth.verification_email';
 
   final FlutterSecureStorage _storage;
 
@@ -25,6 +39,7 @@ class SecureAuthSessionStore implements AuthSessionStore {
       _storage.read(key: _accessTokenKey),
       _storage.read(key: _refreshTokenKey),
       _storage.read(key: _expiresAtKey),
+      _storage.read(key: _verificationEmailKey),
     ]);
     if (values.any((value) => value == null)) {
       await clear();
@@ -40,6 +55,7 @@ class SecureAuthSessionStore implements AuthSessionStore {
       accessToken: values[1]!,
       refreshToken: values[2]!,
       expiresAt: expiresAt.toUtc(),
+      verificationEmail: values[4],
     );
   }
 
@@ -53,6 +69,13 @@ class SecureAuthSessionStore implements AuthSessionStore {
         key: _expiresAtKey,
         value: session.expiresAt.toUtc().toIso8601String(),
       ),
+      if (session.verificationEmail == null)
+        _storage.delete(key: _verificationEmailKey)
+      else
+        _storage.write(
+          key: _verificationEmailKey,
+          value: session.verificationEmail,
+        ),
     ]);
   }
 
@@ -63,6 +86,7 @@ class SecureAuthSessionStore implements AuthSessionStore {
       _storage.delete(key: _accessTokenKey),
       _storage.delete(key: _refreshTokenKey),
       _storage.delete(key: _expiresAtKey),
+      _storage.delete(key: _verificationEmailKey),
     ]);
   }
 }

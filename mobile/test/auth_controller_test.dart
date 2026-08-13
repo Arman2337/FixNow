@@ -100,6 +100,32 @@ void main() {
     expect(transport.requests, hasLength(2));
   });
 
+  test('register creates and persists a customer session', () async {
+    final store = MemorySessionStore();
+    final transport = FakeTransport(
+      responses: [
+        _tokenResponse(),
+        const ApiResponse(statusCode: 202, body: {'accepted': true}),
+      ],
+    );
+    final controller = AuthController(
+      api: AuthApi(transport),
+      store: store,
+      now: () => now,
+    );
+
+    await controller.register(
+      email: ' new@example.com ',
+      password: 'long-password',
+    );
+
+    expect(controller.status, AuthStatus.verificationRequired);
+    expect(store.session?.accessToken, 'access');
+    expect(transport.requests.first.path, 'auth/customer/register');
+    expect(transport.requests.first.body?['email'], 'new@example.com');
+    expect(transport.requests.last.path, 'auth/otp/request');
+  });
+
   test(
     'logout clears local session even when the network is offline',
     () async {

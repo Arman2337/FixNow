@@ -6,8 +6,13 @@ import 'package:fixnow_mobile/features/profile/customer_profile_controller.dart'
 import 'package:flutter/material.dart';
 
 class CustomerProfileScreen extends StatefulWidget {
-  const CustomerProfileScreen({required this.controller, super.key});
+  const CustomerProfileScreen({
+    required this.controller,
+    this.onSignOut,
+    super.key,
+  });
   final CustomerProfileController controller;
+  final Future<void> Function()? onSignOut;
 
   @override
   State<CustomerProfileScreen> createState() => _CustomerProfileScreenState();
@@ -124,6 +129,15 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                 ),
               ),
             ),
+          if (widget.onSignOut != null) ...[
+            const SizedBox(height: AppSpacing.xl),
+            FixButton(
+              label: 'Sign out',
+              icon: Icons.logout_rounded,
+              variant: FixButtonVariant.secondary,
+              onPressed: widget.onSignOut,
+            ),
+          ],
           const SizedBox(height: AppSpacing.xl),
           const FixCard(
             semanticLabel: 'Profile privacy information',

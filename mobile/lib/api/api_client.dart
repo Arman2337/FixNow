@@ -11,12 +11,14 @@ class ApiRequest {
     required this.path,
     this.body,
     this.bearerToken,
+    this.headers = const {},
   });
 
   final ApiMethod method;
   final String path;
   final Map<String, Object?>? body;
   final String? bearerToken;
+  final Map<String, String> headers;
 }
 
 class ApiResponse {
@@ -94,6 +96,7 @@ class ApiClient implements ApiTransport {
       if (request.bearerToken case final token?) {
         ioRequest.headers.set(HttpHeaders.authorizationHeader, 'Bearer $token');
       }
+      request.headers.forEach(ioRequest.headers.set);
       if (request.body case final body?) {
         ioRequest.headers.contentType = ContentType.json;
         ioRequest.write(jsonEncode(body));

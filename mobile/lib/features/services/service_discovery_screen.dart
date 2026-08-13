@@ -11,10 +11,12 @@ class ServiceDiscoveryScreen extends StatefulWidget {
   const ServiceDiscoveryScreen({
     required this.controller,
     required this.locationController,
+    this.onCategorySelected,
     super.key,
   });
   final ServiceDiscoveryController controller;
   final LocationConsentController locationController;
+  final ValueChanged<ServiceCategory>? onCategorySelected;
 
   @override
   State<ServiceDiscoveryScreen> createState() => _ServiceDiscoveryScreenState();
@@ -96,21 +98,30 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
           ),
         ],
         DiscoveryStatus.ready => [
-          _CategoryList(categories: widget.controller.categories),
+          _CategoryList(
+            categories: widget.controller.categories,
+            onSelected: widget.onCategorySelected,
+          ),
         ],
       };
 }
 
 class _CategoryList extends StatelessWidget {
-  const _CategoryList({required this.categories});
+  const _CategoryList({required this.categories, required this.onSelected});
   final List<ServiceCategory> categories;
+  final ValueChanged<ServiceCategory>? onSelected;
 
   @override
   Widget build(BuildContext context) => Card(
     child: Column(
       children: [
         for (var index = 0; index < categories.length; index += 1) ...[
-          _CategoryRow(category: categories[index]),
+          _CategoryRow(
+            category: categories[index],
+            onTap: onSelected == null
+                ? null
+                : () => onSelected!(categories[index]),
+          ),
           if (index < categories.length - 1)
             const Divider(height: 1, indent: 64),
         ],
@@ -120,8 +131,9 @@ class _CategoryList extends StatelessWidget {
 }
 
 class _CategoryRow extends StatelessWidget {
-  const _CategoryRow({required this.category});
+  const _CategoryRow({required this.category, required this.onTap});
   final ServiceCategory category;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) => Semantics(
@@ -130,39 +142,44 @@ class _CategoryRow extends StatelessWidget {
     label: '${category.name} service category',
     child: ConstrainedBox(
       constraints: const BoxConstraints(minHeight: 72),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg,
-          vertical: AppSpacing.md,
-        ),
-        child: Row(
-          children: [
-            Icon(
-              _categoryIcon(category.iconName),
-              color: Theme.of(context).colorScheme.primary,
-            ),
-            const SizedBox(width: AppSpacing.lg),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    category.name,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  if (category.description case final description?) ...[
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      description,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ],
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.md,
+          ),
+          child: Row(
+            children: [
+              Icon(
+                _categoryIcon(category.iconName),
+                color: Theme.of(context).colorScheme.primary,
               ),
-            ),
-          ],
+              const SizedBox(width: AppSpacing.lg),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      category.name,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    if (category.description case final description?) ...[
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        description,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              const Icon(Icons.chevron_right_rounded),
+            ],
+          ),
         ),
       ),
     ),

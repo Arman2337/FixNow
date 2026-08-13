@@ -31,8 +31,8 @@ Only these statuses are valid. A task cannot be completed while required validat
 
 # Project Progress
 
-Total Tasks: 77
-Completed: 49
+Total Tasks: 78
+Completed: 50
 In Progress: 0
 Blocked: 0
 Pending: 28
@@ -2743,4 +2743,53 @@ The user explicitly requested that this follow-up remain on `feat/customer-core-
 Completed By: Codex
 Completed Date: 2026-08-13
 Commit: b49aec7
+PR: Pending
+
+## FN-078 — Run Connected Android Customer Journey QA
+Status: ✅ Completed
+Priority: P0 — Critical
+Area: Mobile / Backend / Quality
+Depends On: FN-076, FN-077
+Branch: feat/customer-core-journey
+
+### Objective
+Deploy the current customer application to the connected Android phone and verify the available authentication, discovery, request, booking, Help preview, Profile, navigation, failure, and backend paths as a real user.
+
+### Scope
+- Start the isolated local backend dependencies and API required by the phone build.
+- Install and run the current Flutter application on the connected Android 16 device.
+- Exercise every implemented customer screen and primary interaction, record reproducible issues, fix standard-tier findings, and re-test.
+- Keep device screenshots and transient QA artifacts outside Git and restore the user's existing screenshots afterward.
+
+### Do Not
+- Do not use production credentials, services, or data.
+- Do not implement pending roadmap features such as full Help, payments, provider selection, or live tracking.
+- Do not commit screenshots or expose test credentials in reports or logs.
+
+### Acceptance Criteria
+- [x] The current app installs and starts on device `00162358M004276`.
+- [x] Local backend health and required customer endpoints are available to the device.
+- [x] Authentication, Home, service request, bookings, Help preview, Profile, sign-out, validation, and recoverable failure states are tested.
+- [x] Every verified critical, high, and medium issue is fixed and re-tested, or recorded truthfully as blocked/deferred.
+- [x] Relevant Flutter/backend checks pass and no screenshots are committed.
+
+### Validation
+```bash
+cd mobile && flutter analyze && flutter test && flutter build apk --debug
+cd backend && npm run lint && npm test -- --runInBand && npm run build
+git diff --check
+```
+
+### Files / Areas
+```text
+mobile/ backend/ docs/quality/ PROJECT_TASKS.md
+```
+
+### Notes
+Deployed the branch APK to the connected A059 Android 16 phone and tested the implemented customer journey against the isolated local backend over USB forwarding. Valid and invalid login, location state, four service categories, request validation and creation, booking history, Help safety copy, Profile save, navigation, and sign-out passed. No reproducible critical, high, or medium issue required a code change. Flutter analysis and 43 tests passed; Android debug build passed; backend lint, 44 suites / 198 tests, and build passed. Text-only evidence: `docs/quality/connected-android-customer-qa-2026-08-13.md`. Temporary screenshots were not committed and the user's root screenshots were restored.
+
+### Completion Record
+Completed By: Codex
+Completed Date: 2026-08-13
+Commit: 90692fc
 PR: Pending

@@ -32,10 +32,10 @@ Only these statuses are valid. A task cannot be completed while required validat
 # Project Progress
 
 Total Tasks: 83
-Completed: 51
+Completed: 52
 In Progress: 0
 Blocked: 0
-Pending: 32
+Pending: 31
 Cancelled: 0
 Current Phase: Phase 7 — Real-Time & Location
 Next Recommended Task: FN-046 — Initialize Admin Web Application
@@ -2842,7 +2842,7 @@ Commit: 531ea44
 PR: Pending
 
 ## FN-080 — Implement Premium Dark Mobile Design Foundation
-Status: ⬜ Pending
+Status: ✅ Completed
 Priority: P1 — High
 Area: Mobile / Design System
 Depends On: FN-079
@@ -2861,9 +2861,9 @@ Migrate the Flutter design tokens, theme, shared states, components, motion, and
 - Do not add a new icon library, hosted dependency, proprietary asset, or unsupported feature.
 
 ### Acceptance Criteria
-- [ ] Semantic dark tokens cover every role defined by `DESIGN.md` with contrast evidence.
-- [ ] Shared components and customer/provider navigation use one coherent visual grammar.
-- [ ] Small/standard/large phone, keyboard, text-scale, reduced-motion, and state tests pass.
+- [x] Semantic dark tokens cover every role defined by `DESIGN.md` with contrast evidence.
+- [x] Shared components and customer/provider navigation use one coherent visual grammar.
+- [x] Small/standard/large phone, keyboard, text-scale, reduced-motion, and state tests pass.
 
 ### Validation
 ```bash
@@ -2877,13 +2877,13 @@ mobile/lib/design_system/ mobile/lib/app/ mobile/test/ DESIGN.md
 ```
 
 ### Notes
-Implementation order foundation slice from FN-079.
+Implemented the premium dark default theme with deep neutral surfaces, emerald interaction states, separate danger/emergency/verified/rating semantics, elevated surfaces, motion tokens, responsive button behavior, card variants, and reusable empty, error, offline, and skeleton states. Existing customer/provider navigation metadata and feature behavior remain unchanged. Flutter analysis passed, all 45 tests passed, and the web production build plus Wasm dry run succeeded. Contrast assertions cover primary text, secondary text, and primary CTA content; adaptive tests cover 320, 390, and 600 logical-pixel widths at 200% text scale with reduced motion. The adaptive test exposed a shared long-label overflow, which was fixed by making button content wrap safely.
 
 ### Completion Record
-Completed By:
-Completed Date:
-Commit:
-PR:
+Completed By: Codex
+Completed Date: 2026-08-13
+Commit: Pending
+PR: Pending
 
 ## FN-081 — Implement Premium Role-Aware Authentication and Onboarding Entry
 Status: ⬜ Pending

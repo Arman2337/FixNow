@@ -15,7 +15,11 @@ void main() {
 
     final materialApp = tester.widget<MaterialApp>(find.byType(MaterialApp));
     expect(materialApp.theme?.colorScheme.primary, AppColors.primary);
-    expect(materialApp.theme?.scaffoldBackgroundColor, AppColors.background);
+    expect(materialApp.themeMode, ThemeMode.dark);
+    expect(
+      materialApp.theme?.scaffoldBackgroundColor,
+      AppColors.backgroundPrimary,
+    );
     expect(find.text('Bookings'), findsOneWidget);
     expect(find.text('Help'), findsOneWidget);
     expect(find.text('Profile'), findsOneWidget);

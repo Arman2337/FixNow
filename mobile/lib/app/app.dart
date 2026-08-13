@@ -90,7 +90,9 @@ class _FixNowAppState extends State<FixNowApp> {
       debugShowCheckedModeBanner:
           widget.environment != AppEnvironment.production,
       title: 'FixNow',
-      theme: AppTheme.light,
+      theme: AppTheme.dark,
+      darkTheme: AppTheme.dark,
+      themeMode: ThemeMode.dark,
       home: ListenableBuilder(
         listenable: _auth,
         builder: (context, _) {

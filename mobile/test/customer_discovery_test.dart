@@ -34,7 +34,7 @@ void main() {
     );
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.light,
+        theme: AppTheme.dark,
         home: Scaffold(body: LocationConsentCard(controller: location)),
       ),
     );
@@ -65,7 +65,7 @@ void main() {
     );
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.light,
+        theme: AppTheme.dark,
         home: Scaffold(
           body: ServiceDiscoveryScreen(
             controller: discovery,
@@ -94,7 +94,7 @@ void main() {
     );
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.light,
+        theme: AppTheme.dark,
         home: Scaffold(
           body: ServiceDiscoveryScreen(
             controller: discovery,

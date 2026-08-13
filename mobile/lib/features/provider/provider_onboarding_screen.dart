@@ -7,6 +7,7 @@ import 'package:fixnow_mobile/design_system/fix_state_views.dart';
 import 'package:fixnow_mobile/design_system/fix_status_chip.dart';
 import 'package:fixnow_mobile/features/provider/provider_controller.dart';
 import 'package:fixnow_mobile/features/provider/provider_models.dart';
+import 'package:fixnow_mobile/features/provider/provider_setup_screen.dart';
 import 'package:flutter/material.dart';
 
 class ProviderOnboardingScreen extends StatelessWidget {
@@ -88,6 +89,21 @@ class ProviderOnboardingScreen extends StatelessWidget {
                         'Private upload is available after profile setup; files are never shown publicly.',
                   ),
                   const SizedBox(height: AppSpacing.xxl),
+                  FixButton(
+                    label: controller.profile == null
+                        ? 'Start professional setup'
+                        : 'Continue professional setup',
+                    icon: Icons.arrow_forward_rounded,
+                    onPressed: () async {
+                      await Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              ProviderSetupScreen(controller: controller),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: AppSpacing.md),
                   FixButton(
                     label: 'Sign out',
                     onPressed: onSignOut,

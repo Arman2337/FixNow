@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 
 enum ApiMethod { get, post, put, patch, delete }
 
@@ -64,6 +65,51 @@ class ApiClient implements ApiTransport {
   final Future<void> Function(Duration) _delay;
   final Duration timeout;
   final int maxGetAttempts;
+
+  Future<ApiResponse> uploadFile({
+    required String path,
+    required String bearerToken,
+    required String fieldName,
+    required String fileName,
+    required String contentType,
+    required List<int> bytes,
+  }) async {
+    try {
+      final request = http.MultipartRequest('POST', _baseUri.resolve(path))
+        ..headers['Accept'] = 'application/json'
+        ..headers['Authorization'] = 'Bearer $bearerToken'
+        ..files.add(
+          http.MultipartFile.fromBytes(
+            fieldName,
+            bytes,
+            filename: fileName,
+            contentType: MediaType.parse(contentType),
+          ),
+        );
+      final response = await _httpClient.send(request).timeout(timeout);
+      final responseBytes = await response.stream.toBytes().timeout(timeout);
+      final body = _decodeJson(responseBytes);
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw _safeHttpFailure(response.statusCode, body);
+      }
+      return ApiResponse(statusCode: response.statusCode, body: body);
+    } on TimeoutException {
+      throw const ApiException(
+        ApiFailureKind.timeout,
+        'The request timed out.',
+      );
+    } on http.ClientException {
+      throw const ApiException(
+        ApiFailureKind.offline,
+        'No network connection.',
+      );
+    } on FormatException {
+      throw const ApiException(
+        ApiFailureKind.invalidResponse,
+        'The server response was invalid.',
+      );
+    }
+  }
 
   @override
   Future<ApiResponse> send(ApiRequest request) async {

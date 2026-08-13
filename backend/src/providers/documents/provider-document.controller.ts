@@ -25,6 +25,25 @@ interface UploadedDocument {
 @Controller('provider-documents')
 export class ProviderDocumentController {
   constructor(private readonly service: ProviderDocumentService) {}
+  @Get()
+  @RequireOwnPermission('provider.documents.read')
+  async list(@Request() request: AuthorizedRequest) {
+    const documents = await this.service.listOwn(
+      request.authorizationPrincipal!.userId,
+    );
+    return {
+      documents: documents.map((document) => ({
+        id: document.id,
+        documentType: document.documentType,
+        contentType: document.contentType,
+        sizeBytes: document.sizeBytes,
+        status: document.status,
+        retentionUntil: document.retentionUntil,
+        createdAt: document.createdAt,
+        updatedAt: document.updatedAt,
+      })),
+    };
+  }
   @Post(':documentType')
   @RequireOwnPermission('provider.documents.create')
   @UseInterceptors(

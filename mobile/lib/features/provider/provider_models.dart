@@ -53,12 +53,62 @@ class ProviderProfile {
 }
 
 class ProviderAvailability {
-  const ProviderAvailability({required this.status, required this.version});
+  const ProviderAvailability({
+    required this.status,
+    required this.version,
+    required this.timeZone,
+    required this.weeklyRules,
+  });
   final String status;
   final int version;
+  final String timeZone;
+  final List<Map<String, Object?>> weeklyRules;
   factory ProviderAvailability.fromJson(Map<String, Object?> json) =>
       ProviderAvailability(
         status: json['status'] as String,
         version: json['version'] as int,
+        timeZone: json['timeZone'] as String? ?? 'UTC',
+        weeklyRules: (json['weeklyRules'] as List? ?? const [])
+            .map((rule) => Map<String, Object?>.from(rule as Map))
+            .toList(),
+      );
+}
+
+class ProviderSkill {
+  const ProviderSkill({
+    required this.id,
+    required this.categoryName,
+    required this.verified,
+  });
+  final String id;
+  final String categoryName;
+  final bool verified;
+  factory ProviderSkill.fromJson(Map<String, Object?> json) {
+    final category = Map<String, Object?>.from(json['serviceCategory'] as Map);
+    return ProviderSkill(
+      id: json['id'] as String,
+      categoryName: category['name'] as String,
+      verified: json['isVerified'] as bool,
+    );
+  }
+}
+
+class ProviderDocument {
+  const ProviderDocument({
+    required this.id,
+    required this.type,
+    required this.status,
+    required this.sizeBytes,
+  });
+  final String id;
+  final String type;
+  final String status;
+  final int sizeBytes;
+  factory ProviderDocument.fromJson(Map<String, Object?> json) =>
+      ProviderDocument(
+        id: json['id'] as String,
+        type: json['documentType'] as String,
+        status: json['status'] as String,
+        sizeBytes: json['sizeBytes'] as int,
       );
 }

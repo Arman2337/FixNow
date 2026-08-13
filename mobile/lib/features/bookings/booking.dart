@@ -5,12 +5,14 @@ class CustomerBooking {
     required this.status,
     required this.description,
     required this.createdAt,
+    required this.version,
   });
   final String id;
   final String serviceCategoryId;
   final String status;
   final String description;
   final DateTime createdAt;
+  final int version;
 
   factory CustomerBooking.fromJson(Map<String, Object?> json) {
     final id = json['id'];
@@ -31,6 +33,7 @@ class CustomerBooking {
       status: status,
       description: description,
       createdAt: createdAt,
+      version: (json['version'] as num?)?.toInt() ?? 1,
     );
   }
 }

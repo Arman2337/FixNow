@@ -51,6 +51,7 @@ describe('ProviderDocumentService', () => {
             ),
             save: jest.fn(),
             findOne: jest.fn(),
+            find: jest.fn(),
           },
         },
         {
@@ -84,6 +85,15 @@ describe('ProviderDocumentService', () => {
     );
     audits.save.mockResolvedValue({} as ProviderDocumentAuditEntity);
     scanner.scan.mockResolvedValue('clean');
+  });
+
+  it('lists only the owner documents newest first', async () => {
+    documents.find.mockResolvedValue([entity]);
+    await expect(service.listOwn('user-id')).resolves.toEqual([entity]);
+    expect(documents.find).toHaveBeenCalledWith({
+      where: { userId: 'user-id' },
+      order: { createdAt: 'DESC' },
+    });
   });
 
   it('uploads a validated document, scans it, and audits access', async () => {

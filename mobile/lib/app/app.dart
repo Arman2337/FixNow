@@ -27,6 +27,7 @@ import 'package:fixnow_mobile/features/services/service_discovery_controller.dar
 import 'package:fixnow_mobile/features/services/service_discovery_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_controller.dart';
 import 'package:fixnow_mobile/features/provider/provider_home_screen.dart';
+import 'package:fixnow_mobile/features/provider/provider_jobs_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_onboarding_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_repository.dart';
 
@@ -104,8 +105,7 @@ class _FixNowAppState extends State<FixNowApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner:
-          widget.environment != AppEnvironment.production,
+      debugShowCheckedModeBanner: false,
       title: 'FixNow',
       theme: AppTheme.dark,
       darkTheme: AppTheme.dark,
@@ -165,11 +165,17 @@ class _FixNowAppState extends State<FixNowApp> {
                 _provider.application == null) {
               _provider.load(verified: true);
             }
-            final home = ProviderHomeScreen(controller: _provider);
             return AppShell(
               role: AppShellRole.provider,
-              providerHome: home,
-              providerJobs: home,
+              providerHome: ProviderHomeScreen(controller: _provider),
+              providerJobs: ProviderJobsScreen(
+                controller: _provider,
+                showHistory: false,
+              ),
+              providerHistory: ProviderJobsScreen(
+                controller: _provider,
+                showHistory: true,
+              ),
               providerProfile: ProviderOnboardingScreen(
                 controller: _provider,
                 onSignOut: _signOut,

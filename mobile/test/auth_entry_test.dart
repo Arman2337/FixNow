@@ -138,6 +138,21 @@ class _Transport implements ApiTransport {
         statusCode: 404,
       );
     }
+    if (request.path == 'provider-skills/me') {
+      return const ApiResponse(statusCode: 200, body: <Object?>[]);
+    }
+    if (request.path == 'service-categories') {
+      return const ApiResponse(
+        statusCode: 200,
+        body: {'categories': <Object?>[]},
+      );
+    }
+    if (request.path == 'provider-documents') {
+      return const ApiResponse(
+        statusCode: 200,
+        body: {'documents': <Object?>[]},
+      );
+    }
     return const ApiResponse(statusCode: 200, body: <Object?>[]);
   }
 }

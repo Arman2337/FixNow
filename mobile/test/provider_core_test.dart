@@ -87,6 +87,21 @@ class _ProviderTransport implements ApiTransport {
         body: {'status': 'offline', 'version': 2},
       );
     }
+    if (request.path == 'provider-skills/me') {
+      return const ApiResponse(statusCode: 200, body: <Object?>[]);
+    }
+    if (request.path == 'service-categories') {
+      return const ApiResponse(
+        statusCode: 200,
+        body: {'categories': <Object?>[]},
+      );
+    }
+    if (request.path == 'provider-documents') {
+      return const ApiResponse(
+        statusCode: 200,
+        body: {'documents': <Object?>[]},
+      );
+    }
     if (request.path.startsWith('bookings?')) {
       return const ApiResponse(
         statusCode: 200,

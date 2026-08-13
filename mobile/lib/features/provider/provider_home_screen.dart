@@ -87,6 +87,41 @@ class ProviderHomeScreen extends StatelessWidget {
                 ],
               ),
             ),
+            const SizedBox(height: AppSpacing.md),
+            FixCard(
+              semanticLabel: 'Working schedule',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Working schedule',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    availability?.weeklyRules.isEmpty ?? true
+                        ? 'No recurring hours set.'
+                        : 'Monday to Friday, 09:00–17:00 ${availability?.timeZone}',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  FixButton(
+                    label: availability?.weeklyRules.isEmpty ?? true
+                        ? 'Set weekday hours'
+                        : 'Clear recurring hours',
+                    icon: Icons.calendar_month_rounded,
+                    variant: FixButtonVariant.secondary,
+                    onPressed: availability == null
+                        ? null
+                        : () => controller.setWeekdaySchedule(
+                            availability.weeklyRules.isEmpty,
+                          ),
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: AppSpacing.xxl),
             Text(
               'Assigned work',

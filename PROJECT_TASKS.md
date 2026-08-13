@@ -42,7 +42,7 @@ Next Recommended Task: FN-046 — Initialize Admin Web Application
 
 # Current Work
 
-Active Tasks: FN-083 — Implement Premium Provider Mobile Core
+Active Tasks: None
 
 # Decision Log
 
@@ -2980,7 +2980,7 @@ Commit: d28a7b4
 PR: Pending
 
 ## FN-083 — Implement Premium Provider Mobile Core
-Status: ⬜ Pending
+Status: ✅ Completed
 Priority: P1 — High
 Area: Mobile / Provider / Design
 Depends On: FN-030, FN-031, FN-032, FN-033, FN-041, FN-042, FN-080, FN-081
@@ -2998,9 +2998,9 @@ Implement the backend-supported provider onboarding, verification, availability,
 - Do not display fake earnings, reviews, notifications, customer precision, or incoming-job data unsupported by a provider job-feed contract.
 
 ### Acceptance Criteria
-- [ ] Provider onboarding truthfully covers every backend-supported verification state and recovery action.
-- [ ] Approved providers can manage availability and valid assigned-booking transitions without accessing unrelated customer data.
-- [ ] Provider UI shares the customer design system and passes responsive, accessibility, security-boundary, Flutter, and backend checks.
+- [x] Provider onboarding truthfully covers every backend-supported verification state and recovery action.
+- [x] Approved providers can manage availability and valid assigned-booking transitions without accessing unrelated customer data.
+- [x] Provider UI shares the customer design system and passes responsive, accessibility, security-boundary, Flutter, and backend checks.
 
 ### Validation
 ```bash
@@ -3017,15 +3017,16 @@ mobile/lib/features/provider/ mobile/lib/app/ mobile/test/ backend/src/providers
 ### Notes
 Incoming job feed, provider earnings, ratings, and push notifications remain separate dependency-backed work.
 
-In progress: implemented server-resolved `verified_provider` authentication, an own-application read contract,
-premium status-aware applicant onboarding, and the approved-provider shell with authoritative availability and
-assigned-booking history. Connected Android QA passed for provider sign-in and the applicant UI. Remaining FN-083
-work includes editable profile/service-area and skills flows plus a private-document picker/management experience.
-The current backend has no applicant self-submit transition or owner document-list endpoint; these gaps must be
-resolved without weakening review separation or private-document controls.
+Implemented server-resolved `verified_provider` authentication, an own-application read contract, premium status-aware
+applicant onboarding, editable professional profile/service area, service skills, private document upload/listing, and
+the approved-provider shell. Approved providers can manage online status, a conservative weekday schedule, valid
+assigned-job transitions, history, and profile settings without exposing unrelated customer or document storage data.
+The backend intentionally has no applicant self-submit transition; review remains reviewer-controlled. Connected A059
+QA verified provider sign-in, profile-incomplete recovery, and the professional setup screen at 1080x2392 without
+overflow. Screenshots remain outside Git under the temporary QA directory.
 
 ### Completion Record
-Completed By:
-Completed Date:
-Commit:
-PR:
+Completed By: Codex
+Completed Date: 2026-08-14
+Commit: Pending
+PR: Pending

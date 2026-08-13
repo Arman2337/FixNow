@@ -96,6 +96,37 @@ class ProviderRepository {
     ),
   );
 
+  Future<ProviderAvailability> setWeekdaySchedule(
+    ProviderAvailability current,
+    bool enabled,
+  ) async => ProviderAvailability.fromJson(
+    _map(
+      (await _api.send(
+        ApiRequest(
+          method: ApiMethod.put,
+          path: 'provider-availability/me/schedule',
+          bearerToken: await _token(),
+          body: {
+            'timeZone': current.timeZone,
+            'weeklyRules': enabled
+                ? [
+                    for (var day = 1; day <= 5; day += 1)
+                      {
+                        'dayOfWeek': day,
+                        'intervals': [
+                          {'startMinute': 540, 'endMinute': 1020},
+                        ],
+                      },
+                  ]
+                : const [],
+            'exceptions': const [],
+            'expectedVersion': current.version,
+          },
+        ),
+      )).body,
+    ),
+  );
+
   Future<List<CustomerBooking>> jobs() async {
     final body = _map(
       (await _api.send(
@@ -109,5 +140,93 @@ class ProviderRepository {
     return (body['bookings'] as List)
         .map((row) => CustomerBooking.fromJson(_map(row)))
         .toList();
+  }
+
+  Future<List<ProviderSkill>> skills() async {
+    final response = await _api.send(
+      ApiRequest(
+        method: ApiMethod.get,
+        path: 'provider-skills/me',
+        bearerToken: await _token(),
+      ),
+    );
+    return (response.body as List)
+        .map((row) => ProviderSkill.fromJson(_map(row)))
+        .toList();
+  }
+
+  Future<List<Map<String, Object?>>> categories() async {
+    final response = await _api.send(
+      const ApiRequest(method: ApiMethod.get, path: 'service-categories'),
+    );
+    final body = response.body is Map ? _map(response.body) : null;
+    final rows = body?['categories'] ?? response.body;
+    return (rows as List).map(_map).toList();
+  }
+
+  Future<void> addSkill(String serviceCategoryId) async {
+    await _api.send(
+      ApiRequest(
+        method: ApiMethod.post,
+        path: 'provider-skills',
+        bearerToken: await _token(),
+        body: {'serviceCategoryId': serviceCategoryId},
+      ),
+    );
+  }
+
+  Future<List<ProviderDocument>> documents() async {
+    final body = _map(
+      (await _api.send(
+        ApiRequest(
+          method: ApiMethod.get,
+          path: 'provider-documents',
+          bearerToken: await _token(),
+        ),
+      )).body,
+    );
+    return (body['documents'] as List)
+        .map((row) => ProviderDocument.fromJson(_map(row)))
+        .toList();
+  }
+
+  Future<void> uploadDocument({
+    required String type,
+    required String name,
+    required String contentType,
+    required List<int> bytes,
+  }) async {
+    final api = _api;
+    if (api is! ApiClient) {
+      throw const ApiException(
+        ApiFailureKind.invalidResponse,
+        'Document upload is unavailable.',
+      );
+    }
+    await api.uploadFile(
+      path: 'provider-documents/$type',
+      bearerToken: await _token(),
+      fieldName: 'document',
+      fileName: name,
+      contentType: contentType,
+      bytes: bytes,
+    );
+  }
+
+  Future<CustomerBooking> updateJobStatus(
+    CustomerBooking job,
+    String status,
+  ) async {
+    final body = _map(
+      (await _api.send(
+        ApiRequest(
+          method: ApiMethod.patch,
+          path: 'bookings/${job.id}/status',
+          bearerToken: await _token(),
+          body: {'status': status, 'expectedVersion': job.version},
+        ),
+      )).body,
+    );
+    return CustomerBooking.fromJson(_map(body['booking']));
   }
 }

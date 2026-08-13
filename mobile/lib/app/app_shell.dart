@@ -3,6 +3,7 @@ import 'package:fixnow_mobile/app/app_shell_controller.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/fix_bottom_navigation.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
+import 'package:fixnow_mobile/design_system/fix_page_frame.dart';
 import 'package:flutter/material.dart';
 
 class AppShell extends StatefulWidget {
@@ -65,25 +66,27 @@ class _AppShellState extends State<AppShell> {
         return Scaffold(
           body: SafeArea(
             bottom: false,
-            child: IndexedStack(
-              index: selectedIndex,
-              children: [
-                for (var index = 0; index < destinations.length; index += 1)
-                  if (widget.role == AppShellRole.customer &&
-                      index == 0 &&
-                      widget.customerHome != null)
-                    widget.customerHome!
-                  else if (widget.role == AppShellRole.customer &&
-                      index == 1 &&
-                      widget.customerBookings != null)
-                    widget.customerBookings!
-                  else if (widget.role == AppShellRole.customer &&
-                      index == 3 &&
-                      widget.customerProfile != null)
-                    widget.customerProfile!
-                  else
-                    _ShellDestination(label: destinations[index].label),
-              ],
+            child: FixPageFrame(
+              child: IndexedStack(
+                index: selectedIndex,
+                children: [
+                  for (var index = 0; index < destinations.length; index += 1)
+                    if (widget.role == AppShellRole.customer &&
+                        index == 0 &&
+                        widget.customerHome != null)
+                      widget.customerHome!
+                    else if (widget.role == AppShellRole.customer &&
+                        index == 1 &&
+                        widget.customerBookings != null)
+                      widget.customerBookings!
+                    else if (widget.role == AppShellRole.customer &&
+                        index == 3 &&
+                        widget.customerProfile != null)
+                      widget.customerProfile!
+                    else
+                      _ShellDestination(label: destinations[index].label),
+                ],
+              ),
             ),
           ),
           bottomNavigationBar: SafeArea(
@@ -117,17 +120,29 @@ class _ShellDestination extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Semantics(
-            header: true,
-            child: Text(
-              label,
-              style: Theme.of(context).textTheme.headlineLarge,
-            ),
+          FixPageHeader(
+            eyebrow: 'FixNow care',
+            title: label,
+            description: label == 'Help'
+                ? 'Clear guidance when you need a hand.'
+                : 'This area is being prepared.',
           ),
-          const SizedBox(height: AppSpacing.xl),
+          const SizedBox(height: AppSpacing.xxl),
           FixCard(
             semanticLabel: '$label section',
-            child: Text(_messageFor(label)),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  label == 'Help'
+                      ? Icons.support_agent_rounded
+                      : Icons.construction_rounded,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(child: Text(_messageFor(label))),
+              ],
+            ),
           ),
         ],
       ),

@@ -4,6 +4,7 @@ import 'package:fixnow_mobile/api/api_client.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
+import 'package:fixnow_mobile/design_system/fix_page_frame.dart';
 import 'package:fixnow_mobile/features/bookings/booking_controller.dart';
 import 'package:fixnow_mobile/features/services/service_category.dart';
 import 'package:flutter/material.dart';
@@ -91,87 +92,87 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Request service')),
+    appBar: AppBar(title: const Text('Request service'), centerTitle: false),
     body: SafeArea(
-      child: ListView(
-        padding: const EdgeInsets.all(AppSpacing.pagePadding),
-        children: [
-          Text(
-            widget.category.name,
-            style: Theme.of(context).textTheme.headlineMedium,
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            widget.category.description ??
-                'Tell us what needs attention and we will match a verified provider nearby.',
-          ),
-          const SizedBox(height: AppSpacing.xl),
-          FixCard(
-            semanticLabel: 'How matching works',
-            child: const Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: FixPageFrame(
+        child: ListView(
+          padding: const EdgeInsets.all(AppSpacing.pagePadding),
+          children: [
+            FixPageHeader(
+              eyebrow: 'Request details',
+              title: widget.category.name,
+              description:
+                  widget.category.description ??
+                  'Tell us what needs attention and we will match a verified provider nearby.',
+            ),
+            const SizedBox(height: AppSpacing.xl),
+            FixCard(
+              semanticLabel: 'How matching works',
+              child: const Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.verified_user_outlined),
+                  SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Text(
+                      'Your request is shared only with eligible providers. A provider is assigned after they accept it.',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xl),
+            Form(
+              key: _formKey,
+              child: TextFormField(
+                controller: _details,
+                enabled: !_submitting,
+                minLines: 4,
+                maxLines: 7,
+                maxLength: 2000,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: const InputDecoration(
+                  labelText: 'What needs fixing?',
+                  hintText:
+                      'Describe the issue, where it is, and anything the provider should know.',
+                  alignLabelWithHint: true,
+                ),
+                validator: (value) => (value?.trim().length ?? 0) < 10
+                    ? 'Add at least 10 characters so the provider can prepare.'
+                    : null,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            const Row(
               children: [
-                Icon(Icons.verified_user_outlined),
-                SizedBox(width: AppSpacing.md),
+                Icon(Icons.location_on_outlined, size: 20),
+                SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
-                    'Your request is shared only with eligible providers. A provider is assigned after they accept it.',
+                    'Your current location is captured only when you submit.',
                   ),
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: AppSpacing.xl),
-          Form(
-            key: _formKey,
-            child: TextFormField(
-              controller: _details,
-              enabled: !_submitting,
-              minLines: 4,
-              maxLines: 7,
-              maxLength: 2000,
-              textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(
-                labelText: 'What needs fixing?',
-                hintText:
-                    'Describe the issue, where it is, and anything the provider should know.',
-                alignLabelWithHint: true,
-              ),
-              validator: (value) => (value?.trim().length ?? 0) < 10
-                  ? 'Add at least 10 characters so the provider can prepare.'
-                  : null,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          const Row(
-            children: [
-              Icon(Icons.location_on_outlined, size: 20),
-              SizedBox(width: AppSpacing.sm),
-              Expanded(
+            if (_error case final message?) ...[
+              const SizedBox(height: AppSpacing.md),
+              Semantics(
+                liveRegion: true,
                 child: Text(
-                  'Your current location is captured only when you submit.',
+                  message,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
               ),
             ],
-          ),
-          if (_error case final message?) ...[
-            const SizedBox(height: AppSpacing.md),
-            Semantics(
-              liveRegion: true,
-              child: Text(
-                message,
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
-              ),
+            const SizedBox(height: AppSpacing.xl),
+            FixButton(
+              label: 'Find a verified provider',
+              icon: Icons.arrow_forward_rounded,
+              onPressed: _submit,
+              isLoading: _submitting,
             ),
           ],
-          const SizedBox(height: AppSpacing.xl),
-          FixButton(
-            label: 'Find a verified provider',
-            icon: Icons.arrow_forward_rounded,
-            onPressed: _submit,
-            isLoading: _submitting,
-          ),
-        ],
+        ),
       ),
     ),
   );

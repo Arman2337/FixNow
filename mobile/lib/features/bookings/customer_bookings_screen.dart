@@ -1,6 +1,7 @@
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
+import 'package:fixnow_mobile/design_system/fix_page_frame.dart';
 import 'package:fixnow_mobile/design_system/fix_status_chip.dart';
 import 'package:fixnow_mobile/features/bookings/booking.dart';
 import 'package:fixnow_mobile/features/bookings/booking_controller.dart';
@@ -29,13 +30,12 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(AppSpacing.pagePadding),
         children: [
-          Text(
-            'Your bookings',
-            style: Theme.of(context).textTheme.headlineLarge,
+          const FixPageHeader(
+            eyebrow: 'Your activity',
+            title: 'Your bookings',
+            description: 'Track active requests and review completed work.',
           ),
-          const SizedBox(height: AppSpacing.sm),
-          const Text('Follow active requests and review completed work.'),
-          const SizedBox(height: AppSpacing.xl),
+          const SizedBox(height: AppSpacing.xxl),
           ...switch (widget.controller.status) {
             BookingListStatus.initial || BookingListStatus.loading => const [
               Center(
@@ -88,6 +88,20 @@ class _BookingCard extends StatelessWidget {
         children: [
           Row(
             children: [
+              Container(
+                width: 44,
+                height: 44,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  requested ? Icons.search_rounded : Icons.receipt_long_rounded,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Text(
                   requested ? 'Finding a provider' : _label(booking.status),
@@ -110,11 +124,29 @@ class _BookingCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: AppSpacing.md),
-          Text(
-            requested
-                ? 'Your request is open to eligible verified providers.'
-                : 'Created ${_date(booking.createdAt)}',
-            style: Theme.of(context).textTheme.bodySmall,
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.sm,
+            ),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceContainer,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.verified_user_outlined, size: 18),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Text(
+                    requested
+                        ? 'Open to eligible verified providers'
+                        : 'Created ${_date(booking.createdAt)}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),

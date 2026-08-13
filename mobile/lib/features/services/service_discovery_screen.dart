@@ -1,6 +1,9 @@
+import 'package:fixnow_mobile/design_system/app_colors.dart';
+import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
+import 'package:fixnow_mobile/design_system/fix_page_frame.dart';
 import 'package:fixnow_mobile/features/location/location_consent_card.dart';
 import 'package:fixnow_mobile/features/location/location_consent_controller.dart';
 import 'package:fixnow_mobile/features/services/service_category.dart';
@@ -38,30 +41,51 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(AppSpacing.pagePadding),
         children: [
-          Semantics(
-            header: true,
-            child: Text(
-              'Find a service',
-              style: Theme.of(context).textTheme.headlineLarge,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            'Browse trusted help by category.',
-            style: Theme.of(context).textTheme.bodyMedium,
+          if (widget.controller.status == DiscoveryStatus.ready ||
+              widget.controller.status == DiscoveryStatus.initial ||
+              widget.controller.status == DiscoveryStatus.loading) ...[
+            const FixBrandMark(compact: true),
+            const SizedBox(height: AppSpacing.xxl),
+          ],
+          const FixPageHeader(
+            eyebrow: 'Local help, on demand',
+            title: 'What needs fixing?',
+            description: 'Choose a service and tell us what happened.',
           ),
           const SizedBox(height: AppSpacing.xl),
+          if (widget.controller.status == DiscoveryStatus.offline ||
+              widget.controller.status == DiscoveryStatus.error ||
+              widget.controller.status == DiscoveryStatus.empty) ...[
+            const SizedBox(height: AppSpacing.xl),
+            ..._content(context),
+            const SizedBox(height: AppSpacing.xl),
+          ],
           LocationConsentCard(controller: widget.locationController),
-          const SizedBox(height: AppSpacing.xl),
-          Semantics(
-            header: true,
-            child: Text(
-              'Services',
-              style: Theme.of(context).textTheme.headlineSmall,
+          if (widget.controller.status == DiscoveryStatus.ready ||
+              widget.controller.status == DiscoveryStatus.initial ||
+              widget.controller.status == DiscoveryStatus.loading) ...[
+            const SizedBox(height: AppSpacing.xxl),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: Semantics(
+                    header: true,
+                    child: Text(
+                      'Popular services',
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                  ),
+                ),
+                Text(
+                  'Verified categories',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          ..._content(context),
+            const SizedBox(height: AppSpacing.md),
+            ..._content(context),
+          ],
         ],
       ),
     ),
@@ -151,11 +175,21 @@ class _CategoryRow extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Icon(
-                _categoryIcon(category.iconName),
-                color: Theme.of(context).colorScheme.primary,
+              Container(
+                width: 44,
+                height: 44,
+                alignment: Alignment.center,
+                decoration: const BoxDecoration(
+                  color: AppColors.primarySoft,
+                  borderRadius: AppRadius.inputBorder,
+                ),
+                child: Icon(
+                  _categoryIcon(category.iconName),
+                  color: AppColors.primary,
+                  size: 22,
+                ),
               ),
-              const SizedBox(width: AppSpacing.lg),
+              const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

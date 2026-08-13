@@ -1,4 +1,6 @@
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
+import 'package:fixnow_mobile/design_system/app_colors.dart';
+import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
 import 'package:fixnow_mobile/design_system/fix_status_chip.dart';
@@ -34,7 +36,20 @@ class _LocationConsentCardState extends State<LocationConsentCard> {
           children: [
             Row(
               children: [
-                const Icon(Icons.location_on_outlined),
+                Container(
+                  width: 40,
+                  height: 40,
+                  alignment: Alignment.center,
+                  decoration: const BoxDecoration(
+                    color: AppColors.primarySoft,
+                    borderRadius: AppRadius.inputBorder,
+                  ),
+                  child: const Icon(
+                    Icons.location_on_outlined,
+                    color: AppColors.primary,
+                    size: 22,
+                  ),
+                ),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(

@@ -2,6 +2,7 @@ import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
 import 'package:fixnow_mobile/design_system/fix_status_chip.dart';
+import 'package:fixnow_mobile/design_system/fix_page_frame.dart';
 import 'package:fixnow_mobile/features/profile/customer_profile_controller.dart';
 import 'package:flutter/material.dart';
 
@@ -52,19 +53,12 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Semantics(
-            header: true,
-            child: Text(
-              'Profile',
-              style: Theme.of(context).textTheme.headlineLarge,
-            ),
+          const FixPageHeader(
+            eyebrow: 'Your account',
+            title: 'Profile',
+            description: 'Only your display name is collected here.',
           ),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            'Only your display name is collected here.',
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-          const SizedBox(height: AppSpacing.xl),
+          const SizedBox(height: AppSpacing.xxl),
           if (widget.controller.status == ProfileViewStatus.loading)
             const Center(
               child: CircularProgressIndicator(
@@ -84,6 +78,28 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 24,
+                          backgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.primaryContainer,
+                          child: Icon(
+                            Icons.person_rounded,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.md),
+                        Expanded(
+                          child: Text(
+                            'Personal details',
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
                     TextFormField(
                       controller: _nameController,
                       maxLength: 80,

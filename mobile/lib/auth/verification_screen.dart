@@ -1,6 +1,7 @@
 import 'package:fixnow_mobile/auth/auth_controller.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
+import 'package:fixnow_mobile/design_system/fix_page_frame.dart';
 import 'package:flutter/material.dart';
 
 class VerificationScreen extends StatefulWidget {
@@ -29,28 +30,22 @@ class _VerificationScreenState extends State<VerificationScreen> {
           child: Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(AppSpacing.pagePadding),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 460),
+              child: FixPageFrame(
+                maxWidth: 460,
                 child: Form(
                   key: _formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Icon(
-                        Icons.mark_email_read_outlined,
-                        size: 56,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
+                      const FixBrandMark(),
                       const SizedBox(height: AppSpacing.xl),
                       Text(
                         'Verify your email',
-                        textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.headlineLarge,
                       ),
                       const SizedBox(height: AppSpacing.sm),
                       Text(
                         'Enter the six-digit code sent to ${widget.controller.verificationEmail}.',
-                        textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: AppSpacing.xl),
                       TextFormField(

@@ -31,11 +31,11 @@ Only these statuses are valid. A task cannot be completed while required validat
 
 # Project Progress
 
-Total Tasks: 78
-Completed: 50
+Total Tasks: 83
+Completed: 51
 In Progress: 0
 Blocked: 0
-Pending: 28
+Pending: 32
 Cancelled: 0
 Current Phase: Phase 7 — Real-Time & Location
 Next Recommended Task: FN-046 — Initialize Admin Web Application
@@ -2793,3 +2793,225 @@ Completed By: Codex
 Completed Date: 2026-08-13
 Commit: 90692fc
 PR: Pending
+
+## FN-079 — Reconcile Premium Mobile Design Direction and Screen Inventory
+Status: ✅ Completed
+Priority: P1 — High
+Area: Mobile / Design / Product
+Depends On: FN-010, FN-014, FN-072, FN-078
+Branch: feat/customer-core-journey
+
+### Objective
+Turn the approved premium dark, emerald, map-first visual direction into durable FixNow design guidance and an evidence-based inventory of every customer and provider mobile screen.
+
+### Scope
+- Audit mobile routes, screens, design tokens, navigation, models, API contracts, feature modules, and relevant product/privacy architecture.
+- Reconcile `DESIGN.md` with the approved premium direction while preserving safety, privacy, accessibility, and honest-state requirements.
+- Create `docs/design/screen-inventory.md` with routes, implementation/design status, dependencies, and notes.
+- Record cohesive follow-up tasks for implementation gaps without presenting unavailable product functionality as complete.
+
+### Do Not
+- Do not redesign application code or implement multiple product flows in this documentation task.
+- Do not mark backend-dependent screens complete because a visual concept exists.
+- Do not add proprietary assets, unsupported features, hosted dependencies, or committed screenshots.
+
+### Acceptance Criteria
+- [x] `DESIGN.md` defines the approved shared customer/provider premium dark system and semantic emerald palette.
+- [x] The screen inventory classifies all required mobile screens as exists/good, needs redesign, partial, missing, blocked, or future with evidence.
+- [x] Missing implementation work is represented by dependency-aware pending tasks.
+- [x] Documentation links and formatting validate, and user-owned screenshots remain untracked.
+
+### Validation
+```bash
+git diff --check
+git status --short
+```
+
+### Files / Areas
+```text
+DESIGN.md docs/design/ PROJECT_TASKS.md mobile/lib/ backend/src/ shared/
+```
+
+### Notes
+The user explicitly requested that the premium reconstruction remain on `feat/customer-core-journey`. Audited the Flutter shell, routes, screens, design system, feature models/controllers, backend controllers, shared booking contracts, product requirements, and privacy rules. `DESIGN.md` now defines the approved premium dark/emerald direction and `docs/design/screen-inventory.md` records current coverage and honest dependencies. Implementation is split into FN-080 through FN-083.
+
+### Completion Record
+Completed By: Codex
+Completed Date: 2026-08-13
+Commit: Pending
+PR: Pending
+
+## FN-080 — Implement Premium Dark Mobile Design Foundation
+Status: ⬜ Pending
+Priority: P1 — High
+Area: Mobile / Design System
+Depends On: FN-079
+Branch: feat/customer-core-journey
+
+### Objective
+Migrate the Flutter design tokens, theme, shared states, components, motion, and role-aware navigation foundation to the approved premium dark emerald system.
+
+### Scope
+- Update existing centralized tokens and theme; do not create a parallel design system.
+- Implement or consolidate reusable buttons, inputs, cards, badges, navigation, loading, empty, error, and offline patterns.
+- Preserve accessibility, safe areas, text scaling, keyboard behavior, and existing functionality.
+
+### Do Not
+- Do not redesign feature screens beyond the minimum migration needed to keep them functional.
+- Do not add a new icon library, hosted dependency, proprietary asset, or unsupported feature.
+
+### Acceptance Criteria
+- [ ] Semantic dark tokens cover every role defined by `DESIGN.md` with contrast evidence.
+- [ ] Shared components and customer/provider navigation use one coherent visual grammar.
+- [ ] Small/standard/large phone, keyboard, text-scale, reduced-motion, and state tests pass.
+
+### Validation
+```bash
+cd mobile && flutter analyze && flutter test
+git diff --check
+```
+
+### Files / Areas
+```text
+mobile/lib/design_system/ mobile/lib/app/ mobile/test/ DESIGN.md
+```
+
+### Notes
+Implementation order foundation slice from FN-079.
+
+### Completion Record
+Completed By:
+Completed Date:
+Commit:
+PR:
+
+## FN-081 — Implement Premium Role-Aware Authentication and Onboarding Entry
+Status: ⬜ Pending
+Priority: P1 — High
+Area: Mobile / Authentication / Provider
+Depends On: FN-025, FN-026, FN-080
+Branch: feat/customer-core-journey
+
+### Objective
+Implement welcome, role selection, premium shared sign-in, customer registration, email verification, and the supported provider-registration entry without inventing recovery or social authentication.
+
+### Scope
+- Add a concise welcome screen and explicit customer/provider role selection.
+- Preserve customer email/password registration/login and email OTP verification.
+- Connect provider registration to the existing backend contract and route provider accounts into honest onboarding state.
+
+### Do Not
+- Do not present phone OTP, social login, forgot-password recovery, or provider approval as available without backend support.
+
+### Acceptance Criteria
+- [ ] Customer and provider entry paths are visually related, accessible, and route by real account state.
+- [ ] Keyboard, validation, loading, failure, verification, session restore, and sign-out tests pass.
+- [ ] No inert or falsely enabled authentication action is shown.
+
+### Validation
+```bash
+cd mobile && flutter analyze && flutter test
+cd backend && npm run lint && npm test -- --runInBand && npm run build
+```
+
+### Files / Areas
+```text
+mobile/lib/auth/ mobile/lib/app/ mobile/test/ backend/src/auth/ backend/src/providers/
+```
+
+### Notes
+Forgot-password requires a separately approved backend task.
+
+### Completion Record
+Completed By:
+Completed Date:
+Commit:
+PR:
+
+## FN-082 — Reconstruct Premium Customer Core and Tracking Experience
+Status: ⬜ Pending
+Priority: P1 — High
+Area: Mobile / Customer / Design
+Depends On: FN-045, FN-080, FN-081
+Branch: feat/customer-core-journey
+
+### Objective
+Apply the premium system to the supported customer journey from discovery through request, matching, booking detail, live status, profile, and honest support.
+
+### Scope
+- Reconstruct Home, services, request, location consent, matching, booking list/detail, tracking, Profile, and Help using actual contracts.
+- Wire existing authorized tracking state into reachable booking navigation and use a map-first layout only where map data and SDK configuration are available.
+- Cover loading, empty, offline, error, keyboard, responsive, and accessibility states.
+
+### Do Not
+- Do not fabricate nearby providers, price, payments, chat, reviews, saved addresses, emergency response, or unsupported ETA.
+
+### Acceptance Criteria
+- [ ] The complete supported customer flow is reachable and visually coherent.
+- [ ] Booking actions and tracking labels follow the authoritative lifecycle and freshness rules.
+- [ ] Phone/device visual QA and relevant Flutter/backend checks pass with screenshots outside Git.
+
+### Validation
+```bash
+cd mobile && flutter analyze && flutter test
+cd backend && npm run lint && npm test -- --runInBand && npm run build
+git diff --check
+```
+
+### Files / Areas
+```text
+mobile/lib/features/ mobile/lib/app/ mobile/test/ docs/quality/
+```
+
+### Notes
+Provider results/profile remain blocked until a customer-safe read model is defined.
+
+### Completion Record
+Completed By:
+Completed Date:
+Commit:
+PR:
+
+## FN-083 — Implement Premium Provider Mobile Core
+Status: ⬜ Pending
+Priority: P1 — High
+Area: Mobile / Provider / Design
+Depends On: FN-030, FN-031, FN-032, FN-033, FN-041, FN-042, FN-080, FN-081
+Branch: feat/customer-core-journey
+
+### Objective
+Implement the backend-supported provider onboarding, verification, availability, profile, active-job lifecycle, and history as one coherent role-specific mobile experience.
+
+### Scope
+- Implement provider profile, skills, service area, private document, review, and verification-state screens.
+- Implement provider shell, availability/schedule, active job lifecycle controls, history, and profile management.
+- Enforce role, ownership, verification, privacy, and legal transition constraints in UI and API integration.
+
+### Do Not
+- Do not display fake earnings, reviews, notifications, customer precision, or incoming-job data unsupported by a provider job-feed contract.
+
+### Acceptance Criteria
+- [ ] Provider onboarding truthfully covers every backend-supported verification state and recovery action.
+- [ ] Approved providers can manage availability and valid assigned-booking transitions without accessing unrelated customer data.
+- [ ] Provider UI shares the customer design system and passes responsive, accessibility, security-boundary, Flutter, and backend checks.
+
+### Validation
+```bash
+cd mobile && flutter analyze && flutter test
+cd backend && npm run lint && npm test -- --runInBand && npm run build
+git diff --check
+```
+
+### Files / Areas
+```text
+mobile/lib/features/provider/ mobile/lib/app/ mobile/test/ backend/src/providers/ backend/src/bookings/
+```
+
+### Notes
+Incoming job feed, provider earnings, ratings, and push notifications remain separate dependency-backed work.
+
+### Completion Record
+Completed By:
+Completed Date:
+Commit:
+PR:

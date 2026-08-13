@@ -2,7 +2,7 @@
 
 Status: authoritative coverage audit
 
-Last audited: 2026-08-14
+Last audited: 2026-08-14 (FN-083 provider core pass)
 
 Branch: `feat/customer-core-journey`
 
@@ -39,13 +39,13 @@ Routes are conceptual because the current app uses a root state switch, an index
 | Customer registration | Customer | Authentication | EXISTS + GOOD | Root/auth register mode | Email/password registration works | Premium dark | FN-024, FN-026, FN-081 | Collects only supported credentials. |
 | Email OTP verification | Shared | Authentication | EXISTS + NEEDS REDESIGN | Root/verification | Functional | Superseded light/blue | FN-026, FN-081 | Six-digit email code; do not label as phone verification. |
 | Forgot password | Shared | Authentication | BLOCKED | Auth | No recovery contract | Not designed | New backend recovery task | Must not expose an inert action. |
-| Provider registration entry | Provider | Authentication | EXISTS + GOOD | Onboarding/provider | Backend registration, email verification, persisted role, and honest handoff work | Premium dark | FN-025, FN-081 | Routes to incomplete onboarding state, never customer shell. |
+| Provider registration entry | Provider | Authentication | EXISTS + GOOD | Onboarding/provider | Backend registration, email verification, persisted role, and status-aware handoff work | Premium dark | FN-025, FN-081, FN-083 | Routes applicants to onboarding and approved accounts to the provider shell. |
 | Provider personal/profile setup | Provider | Onboarding | MISSING | Provider onboarding | Backend profile contract exists | Required | FN-030, FN-083 | Collect only supported fields. |
 | Provider categories and skills | Provider | Onboarding | MISSING | Provider onboarding | Backend skills contract exists | Required | FN-029, FN-083 | Verification state is distinct from skill claims. |
 | Provider service area | Provider | Onboarding | MISSING | Provider onboarding | Coverage contract exists | Required | FN-030, FN-083 | Must follow location/privacy policy. |
 | Provider document upload | Provider | KYC | MISSING | Provider onboarding | Private upload contract exists | Required | FN-031, FN-083 | Never cache or expose documents as ordinary media. |
 | Provider onboarding review | Provider | Onboarding | MISSING | Provider onboarding | Backend fields exist | Required | FN-030, FN-031, FN-083 | Review before submission; no fake approval. |
-| Provider verification status | Provider | Verification | MISSING | Provider/status | Backend supports unverified, under review, approved, rejected, resubmission requested | Required | FN-032, FN-083 | Suspended is an account state, not an onboarding status. |
+| Provider verification status | Provider | Verification | EXISTS + GOOD | Provider/status | All backend states and reviewer reason are rendered honestly | Premium dark | FN-032, FN-083 | Suspended is an account state, not an onboarding status. |
 
 ## Customer experience
 

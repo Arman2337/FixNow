@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:fixnow_mobile/app/app_shell.dart';
+import 'package:fixnow_mobile/app/app_navigation.dart';
 import 'package:fixnow_mobile/api/api_client.dart';
 import 'package:fixnow_mobile/api/api_config.dart';
 import 'package:fixnow_mobile/auth/auth_api.dart';
@@ -8,7 +9,6 @@ import 'package:fixnow_mobile/auth/auth_controller.dart';
 import 'package:fixnow_mobile/auth/auth_session.dart';
 import 'package:fixnow_mobile/auth/auth_session_store.dart';
 import 'package:fixnow_mobile/auth/auth_screen.dart';
-import 'package:fixnow_mobile/auth/provider_onboarding_entry_screen.dart';
 import 'package:fixnow_mobile/auth/role_selection_screen.dart';
 import 'package:fixnow_mobile/auth/welcome_screen.dart';
 import 'package:fixnow_mobile/auth/verification_screen.dart';
@@ -25,6 +25,10 @@ import 'package:fixnow_mobile/features/profile/customer_profile_repository.dart'
 import 'package:fixnow_mobile/features/profile/customer_profile_screen.dart';
 import 'package:fixnow_mobile/features/services/service_discovery_controller.dart';
 import 'package:fixnow_mobile/features/services/service_discovery_screen.dart';
+import 'package:fixnow_mobile/features/provider/provider_controller.dart';
+import 'package:fixnow_mobile/features/provider/provider_home_screen.dart';
+import 'package:fixnow_mobile/features/provider/provider_onboarding_screen.dart';
+import 'package:fixnow_mobile/features/provider/provider_repository.dart';
 
 class FixNowApp extends StatefulWidget {
   const FixNowApp({
@@ -50,6 +54,7 @@ class _FixNowAppState extends State<FixNowApp> {
   late final ServiceDiscoveryController _discovery;
   late final LocationConsentController _location;
   late final BookingController _bookings;
+  late final ProviderController _provider;
   _AuthEntryStep _authEntryStep = _AuthEntryStep.welcome;
   bool _registrationIntent = false;
   AccountRole _selectedRole = AccountRole.customer;
@@ -79,6 +84,9 @@ class _FixNowAppState extends State<FixNowApp> {
     _bookings = BookingController(
       BookingRepository(api: api, accessToken: _auth.validAccessToken),
     );
+    _provider = ProviderController(
+      ProviderRepository(api: api, accessToken: _auth.validAccessToken),
+    );
     _auth.restore();
   }
 
@@ -89,6 +97,7 @@ class _FixNowAppState extends State<FixNowApp> {
     _discovery.dispose();
     _location.dispose();
     _bookings.dispose();
+    _provider.dispose();
     super.dispose();
   }
 
@@ -142,7 +151,30 @@ class _FixNowAppState extends State<FixNowApp> {
             };
           }
           if (_auth.session?.role == AccountRole.providerApplicant) {
-            return ProviderOnboardingEntryScreen(onSignOut: _signOut);
+            if (_provider.state == ProviderLoadState.loading &&
+                _provider.application == null) {
+              _provider.load(verified: false);
+            }
+            return ProviderOnboardingScreen(
+              controller: _provider,
+              onSignOut: _signOut,
+            );
+          }
+          if (_auth.session?.role == AccountRole.verifiedProvider) {
+            if (_provider.state == ProviderLoadState.loading &&
+                _provider.application == null) {
+              _provider.load(verified: true);
+            }
+            final home = ProviderHomeScreen(controller: _provider);
+            return AppShell(
+              role: AppShellRole.provider,
+              providerHome: home,
+              providerJobs: home,
+              providerProfile: ProviderOnboardingScreen(
+                controller: _provider,
+                onSignOut: _signOut,
+              ),
+            );
           }
           return AppShell(
             customerHome: ServiceDiscoveryScreen(

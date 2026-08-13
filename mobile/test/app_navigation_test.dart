@@ -12,7 +12,7 @@ void main() {
   test('provider navigation follows the approved destination order', () {
     expect(
       AppNavigation.forRole(AppShellRole.provider).map((item) => item.label),
-      ['Home', 'Active Job', 'Earnings', 'Profile'],
+      ['Home', 'Active Job', 'History', 'Profile'],
     );
   });
 }

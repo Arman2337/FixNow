@@ -147,15 +147,21 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    const providerRole = await this.dataSource
+    const providerRoles = await this.dataSource
       .getRepository(UserRoleEntity)
-      .findOneBy({
-        userId: identity.userId,
-        roleId: PROVIDER_APPLICANT_ROLE_ID,
+      .find({
+        where: { userId: identity.userId },
+        relations: { role: true },
       });
-    return this.tokenLifecycle.issueSession(
-      identity.user,
-      providerRole ? 'provider_applicant' : 'customer',
-    );
+    const resolvedRole = providerRoles.some(
+      (assignment) => assignment.role?.code === 'verified_provider',
+    )
+      ? 'verified_provider'
+      : providerRoles.some(
+            (assignment) => assignment.role?.code === 'provider_applicant',
+          )
+        ? 'provider_applicant'
+        : 'customer';
+    return this.tokenLifecycle.issueSession(identity.user, resolvedRole);
   }
 }

@@ -47,7 +47,7 @@ export class TokenLifecycleService {
 
   async issueSession(
     user: UserEntity,
-    role: 'customer' | 'provider_applicant',
+    role: 'customer' | 'provider_applicant' | 'verified_provider',
   ): Promise<AuthenticationResponse> {
     const refreshToken = randomBytes(32).toString('base64url');
     const session = await this.dataSource
@@ -231,7 +231,7 @@ export class TokenLifecycleService {
 
   private response(
     user: UserEntity,
-    role: 'customer' | 'provider_applicant',
+    role: 'customer' | 'provider_applicant' | 'verified_provider',
     refreshToken: string,
     sessionId: string,
   ): AuthenticationResponse {

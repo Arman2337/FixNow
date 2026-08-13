@@ -13,6 +13,9 @@ class AppShell extends StatefulWidget {
     this.customerHome,
     this.customerProfile,
     this.customerBookings,
+    this.providerHome,
+    this.providerJobs,
+    this.providerProfile,
     super.key,
   });
 
@@ -21,6 +24,9 @@ class AppShell extends StatefulWidget {
   final Widget? customerHome;
   final Widget? customerProfile;
   final Widget? customerBookings;
+  final Widget? providerHome;
+  final Widget? providerJobs;
+  final Widget? providerProfile;
 
   @override
   State<AppShell> createState() => _AppShellState();
@@ -83,6 +89,18 @@ class _AppShellState extends State<AppShell> {
                         index == 3 &&
                         widget.customerProfile != null)
                       widget.customerProfile!
+                    else if (widget.role == AppShellRole.provider &&
+                        index == 0 &&
+                        widget.providerHome != null)
+                      widget.providerHome!
+                    else if (widget.role == AppShellRole.provider &&
+                        index == 1 &&
+                        widget.providerJobs != null)
+                      widget.providerJobs!
+                    else if (widget.role == AppShellRole.provider &&
+                        index == 3 &&
+                        widget.providerProfile != null)
+                      widget.providerProfile!
                     else
                       _ShellDestination(label: destinations[index].label),
                 ],

@@ -79,7 +79,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Profile incomplete'), findsOneWidget);
-    expect(find.textContaining('cannot receive jobs yet'), findsOneWidget);
+    expect(find.textContaining('Complete supported profile'), findsOneWidget);
   });
 
   testWidgets('auth entry remains usable on a small phone with large text', (
@@ -124,8 +124,22 @@ class _Store implements AuthSessionStore {
 
 class _Transport implements ApiTransport {
   @override
-  Future<ApiResponse> send(ApiRequest request) async =>
-      const ApiResponse(statusCode: 200, body: <Object?>[]);
+  Future<ApiResponse> send(ApiRequest request) async {
+    if (request.path == 'provider-applications/me') {
+      return const ApiResponse(
+        statusCode: 200,
+        body: {'status': 'unverified', 'decisionReason': null},
+      );
+    }
+    if (request.path == 'provider-profile/me') {
+      throw const ApiException(
+        ApiFailureKind.invalidResponse,
+        'Not found',
+        statusCode: 404,
+      );
+    }
+    return const ApiResponse(statusCode: 200, body: <Object?>[]);
+  }
 }
 
 class _LocationGateway implements LocationPermissionGateway {

@@ -94,6 +94,7 @@ class AuthApi {
     final role = switch (body?['role']) {
       'customer' => AccountRole.customer,
       'provider_applicant' => AccountRole.providerApplicant,
+      'verified_provider' => AccountRole.verifiedProvider,
       _ => null,
     };
     if (userId is! String ||

@@ -38,6 +38,7 @@ describe('AuthService', () => {
   } as unknown as jest.Mocked<Repository<CredentialEntity>>;
   const userRoleRepository = {
     findOneBy: jest.fn(),
+    find: jest.fn(),
   } as unknown as jest.Mocked<Repository<UserRoleEntity>>;
   const dataSource = {
     transaction: jest.fn((callback: (value: EntityManager) => unknown) =>
@@ -55,6 +56,7 @@ describe('AuthService', () => {
     jest.clearAllMocks();
     manager.findOneBy.mockResolvedValue(null);
     userRoleRepository.findOneBy.mockResolvedValue(null);
+    userRoleRepository.find.mockResolvedValue([]);
   });
 
   it('registers a normalized customer with an Argon2id hash', async () => {
@@ -177,9 +179,12 @@ describe('AuthService', () => {
     credentialRepository.findOneBy.mockResolvedValue({
       passwordHash,
     } as CredentialEntity);
-    userRoleRepository.findOneBy.mockResolvedValue({
-      userId: 'provider-1',
-    } as UserRoleEntity);
+    userRoleRepository.find.mockResolvedValue([
+      {
+        userId: 'provider-1',
+        role: { code: 'provider_applicant' },
+      } as UserRoleEntity,
+    ]);
 
     await service.login({
       email: 'provider@example.com',
@@ -189,6 +194,39 @@ describe('AuthService', () => {
     expect(issueSession).toHaveBeenCalledWith(
       expect.objectContaining({ id: 'provider-1' }),
       'provider_applicant',
+    );
+  });
+
+  it('prefers verified provider access after approval', async () => {
+    const passwordHash = await argon2.hash('Correct Horse Battery Staple!', {
+      type: argon2.argon2id,
+    });
+    identityRepository.findOne.mockResolvedValue({
+      id: 'identity-1',
+      userId: 'provider-1',
+      user: { id: 'provider-1', status: AccountStatus.Active },
+    } as IdentityEntity);
+    credentialRepository.findOneBy.mockResolvedValue({
+      passwordHash,
+    } as CredentialEntity);
+    userRoleRepository.find.mockResolvedValue([
+      {
+        userId: 'provider-1',
+        role: { code: 'provider_applicant' },
+      } as UserRoleEntity,
+      {
+        userId: 'provider-1',
+        role: { code: 'verified_provider' },
+      } as UserRoleEntity,
+    ]);
+
+    await service.login({
+      email: 'provider@example.com',
+      password: 'Correct Horse Battery Staple!',
+    });
+    expect(issueSession).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'provider-1' }),
+      'verified_provider',
     );
   });
 });

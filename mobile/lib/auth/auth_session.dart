@@ -1,4 +1,4 @@
-enum AccountRole { customer, providerApplicant }
+enum AccountRole { customer, providerApplicant, verifiedProvider }
 
 class AuthSession {
   const AuthSession({

@@ -33,7 +33,7 @@ Only these statuses are valid. A task cannot be completed while required validat
 
 Total Tasks: 83
 Completed: 54
-In Progress: 0
+In Progress: 1
 Blocked: 0
 Pending: 29
 Cancelled: 0
@@ -42,7 +42,7 @@ Next Recommended Task: FN-046 — Initialize Admin Web Application
 
 # Current Work
 
-Active Tasks: None
+Active Tasks: FN-083 — Implement Premium Provider Mobile Core
 
 # Decision Log
 
@@ -2606,7 +2606,7 @@ Commit: b8bf252
 PR: Pending
 
 ## FN-075 — Implement Customer Help and Support Experience
-Status: ⬜ Pending
+Status: In Progress
 Priority: P2 — Medium
 Area: Mobile / Backend / Support
 Depends On: FN-027, FN-034
@@ -3016,6 +3016,13 @@ mobile/lib/features/provider/ mobile/lib/app/ mobile/test/ backend/src/providers
 
 ### Notes
 Incoming job feed, provider earnings, ratings, and push notifications remain separate dependency-backed work.
+
+In progress: implemented server-resolved `verified_provider` authentication, an own-application read contract,
+premium status-aware applicant onboarding, and the approved-provider shell with authoritative availability and
+assigned-booking history. Connected Android QA passed for provider sign-in and the applicant UI. Remaining FN-083
+work includes editable profile/service-area and skills flows plus a private-document picker/management experience.
+The current backend has no applicant self-submit transition or owner document-list endpoint; these gaps must be
+resolved without weakening review separation or private-document controls.
 
 ### Completion Record
 Completed By:

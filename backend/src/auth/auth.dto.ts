@@ -17,7 +17,7 @@ export class EmailPasswordDto {
 
 export interface AuthenticationResponse {
   userId: string;
-  role: 'customer' | 'provider_applicant';
+  role: 'customer' | 'provider_applicant' | 'verified_provider';
   accessToken: string;
   refreshToken: string;
   tokenType: 'Bearer';

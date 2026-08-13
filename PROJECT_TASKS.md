@@ -31,8 +31,8 @@ Only these statuses are valid. A task cannot be completed while required validat
 
 # Project Progress
 
-Total Tasks: 76
-Completed: 48
+Total Tasks: 77
+Completed: 49
 In Progress: 0
 Blocked: 0
 Pending: 28
@@ -2696,4 +2696,51 @@ Completed the connected customer journey across native and web targets. Added au
 Completed By: Codex
 Completed Date: 2026-08-13
 Commit: 0a37340
+PR: Pending
+
+## FN-077 — Elevate Customer Mobile Visual Design
+Status: ✅ Completed
+Priority: P1 — High
+Area: Mobile / Design / Quality
+Depends On: FN-074, FN-076
+Branch: feat/customer-core-journey
+
+### Objective
+Turn the working customer journey into a polished, premium-feeling experience across phone and browser layouts while preserving its existing behavior, accessibility, and honest product states.
+
+### Scope
+- Strengthen visual hierarchy, responsive content width, page composition, typography, and calm blue-led surface treatment across authentication, Home, request, bookings, Help preview, and Profile.
+- Refine shared mobile design-system components and tokens only where the approved `DESIGN.md` language already permits the change.
+- Verify the refreshed journey at phone and desktop browser sizes and keep newly captured review screenshots outside Git.
+
+### Do Not
+- Do not change backend contracts, booking/authentication behavior, provider matching, or roadmap feature scope.
+- Do not add gradients, glassmorphism, decorative clutter, a new font/icon library, random colors, hosted dependencies, or committed QA screenshots.
+- Do not turn the Help preview into a support implementation or imply unavailable functionality.
+
+### Acceptance Criteria
+- [x] Authentication, Home, service request, bookings, Help preview, and Profile share a deliberate premium visual hierarchy and responsive content frame.
+- [x] The approved semantic palette, typography, spacing, radii, component states, touch targets, and accessibility requirements remain intact.
+- [x] Existing customer journey widget tests pass and focused design-system or screen assertions cover changed behavior where appropriate.
+- [x] Flutter analysis, Flutter tests, web build, desktop/phone browser visual checks, and `git diff --check` pass.
+- [x] No newly captured review screenshot is committed.
+
+### Validation
+```bash
+cd mobile && flutter analyze && flutter test && flutter build web
+git diff --check
+```
+
+### Files / Areas
+```text
+mobile/lib/design_system/ mobile/lib/auth/ mobile/lib/app/ mobile/lib/features/ mobile/test/ PROJECT_TASKS.md
+```
+
+### Notes
+The user explicitly requested that this follow-up remain on `feat/customer-core-journey`. Added a shared responsive page frame and brand/header patterns; refined authentication, Home, request, bookings, Help preview, and Profile hierarchy using the approved navy, blue, neutral, spacing, radius, and shadow tokens. Flutter analysis, all 43 tests, web production build, focused narrow-screen accessibility tests, and temporary phone/desktop Chrome checks passed. Review screenshots remained in the operating-system temporary directory and were not committed. Existing root screenshots were restored after completion.
+
+### Completion Record
+Completed By: Codex
+Completed Date: 2026-08-13
+Commit: b49aec7
 PR: Pending

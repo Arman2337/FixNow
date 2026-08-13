@@ -8,8 +8,13 @@ import 'package:fixnow_mobile/features/bookings/booking_controller.dart';
 import 'package:flutter/material.dart';
 
 class CustomerBookingsScreen extends StatefulWidget {
-  const CustomerBookingsScreen({required this.controller, super.key});
+  const CustomerBookingsScreen({
+    required this.controller,
+    this.onBookingSelected,
+    super.key,
+  });
   final BookingController controller;
+  final ValueChanged<CustomerBooking>? onBookingSelected;
   @override
   State<CustomerBookingsScreen> createState() => _CustomerBookingsScreenState();
 }
@@ -64,7 +69,12 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
                   .map(
                     (booking) => Padding(
                       padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                      child: _BookingCard(booking: booking),
+                      child: _BookingCard(
+                        booking: booking,
+                        onTap: widget.onBookingSelected == null
+                            ? null
+                            : () => widget.onBookingSelected!(booking),
+                      ),
                     ),
                   )
                   .toList(),
@@ -76,79 +86,106 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
 }
 
 class _BookingCard extends StatelessWidget {
-  const _BookingCard({required this.booking});
+  const _BookingCard({required this.booking, required this.onTap});
   final CustomerBooking booking;
+  final VoidCallback? onTap;
   @override
   Widget build(BuildContext context) {
     final requested = booking.status == 'REQUESTED';
-    return FixCard(
-      semanticLabel: '${booking.status} booking',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return Semantics(
+      button: onTap != null,
+      label: '${booking.status} booking. Open details',
+      child: GestureDetector(
+        onTap: onTap,
+        child: FixCard(
+          tone: requested ? FixCardTone.elevated : FixCardTone.standard,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      requested
+                          ? Icons.search_rounded
+                          : Icons.receipt_long_rounded,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Text(
+                      requested ? 'Finding a provider' : _label(booking.status),
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ),
+                  FixStatusChip(
+                    label: _label(booking.status),
+                    icon: requested
+                        ? Icons.search_rounded
+                        : Icons.check_circle_outline,
+                    tone: requested
+                        ? FixStatusTone.info
+                        : FixStatusTone.neutral,
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Text(
+                booking.description,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: AppSpacing.md),
               Container(
-                width: 44,
-                height: 44,
-                alignment: Alignment.center,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md,
+                  vertical: AppSpacing.sm,
+                ),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primaryContainer,
+                  color: Theme.of(context).colorScheme.surfaceContainer,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(
-                  requested ? Icons.search_rounded : Icons.receipt_long_rounded,
-                  color: Theme.of(context).colorScheme.primary,
+                child: Row(
+                  children: [
+                    const Icon(Icons.verified_user_outlined, size: 18),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        requested
+                            ? 'Open to eligible verified providers'
+                            : 'Created ${_date(booking.createdAt)}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Text(
-                  requested ? 'Finding a provider' : _label(booking.status),
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-              ),
-              FixStatusChip(
-                label: _label(booking.status),
-                icon: requested
-                    ? Icons.search_rounded
-                    : Icons.check_circle_outline,
-                tone: requested ? FixStatusTone.info : FixStatusTone.neutral,
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.md),
-          Text(
-            booking.description,
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: AppSpacing.md),
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.md,
-              vertical: AppSpacing.sm,
-            ),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surfaceContainer,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.verified_user_outlined, size: 18),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: Text(
-                    requested
-                        ? 'Open to eligible verified providers'
-                        : 'Created ${_date(booking.createdAt)}',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
+              if (onTap != null) ...[
+                const SizedBox(height: AppSpacing.md),
+                Row(
+                  children: [
+                    Text(
+                      'View details',
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                    const Spacer(),
+                    const Icon(Icons.arrow_forward_rounded, size: 20),
+                  ],
                 ),
               ],
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

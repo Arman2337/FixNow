@@ -76,11 +76,16 @@ void main() {
     );
     await tester.pump();
 
+    await tester.scrollUntilVisible(
+      find.text('Plumbing'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('Plumbing'), findsOneWidget);
     expect(find.bySemanticsLabel('Plumbing service category'), findsOneWidget);
     expect(find.text('Leaks and pipe repairs'), findsOneWidget);
     expect(find.byIcon(Icons.plumbing_outlined), findsOneWidget);
-    expect(find.byType(Card), findsNWidgets(2));
+    expect(find.byType(Card), findsNWidgets(3));
   });
 
   testWidgets('shows offline recovery and retries', (tester) async {

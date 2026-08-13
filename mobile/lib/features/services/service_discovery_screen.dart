@@ -48,11 +48,38 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
             const SizedBox(height: AppSpacing.xxl),
           ],
           const FixPageHeader(
-            eyebrow: 'Local help, on demand',
-            title: 'What needs fixing?',
-            description: 'Choose a service and tell us what happened.',
+            eyebrow: 'Professional help is minutes away',
+            title: 'What can we fix today?',
+            description: 'Choose a trusted service and describe what happened.',
           ),
           const SizedBox(height: AppSpacing.xl),
+          const FixCard(
+            tone: FixCardTone.elevated,
+            semanticLabel: 'Verified professional matching',
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.verified_rounded, color: AppColors.verified),
+                SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Trusted local professionals',
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      SizedBox(height: AppSpacing.xs),
+                      Text(
+                        'Requests are offered only to eligible providers. Assignment happens after acceptance.',
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.lg),
           if (widget.controller.status == DiscoveryStatus.offline ||
               widget.controller.status == DiscoveryStatus.error ||
               widget.controller.status == DiscoveryStatus.empty) ...[

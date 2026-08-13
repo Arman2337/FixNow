@@ -16,6 +16,7 @@ import 'package:fixnow_mobile/config/app_environment.dart';
 import 'package:fixnow_mobile/design_system/app_theme.dart';
 import 'package:fixnow_mobile/features/location/location_consent_controller.dart';
 import 'package:fixnow_mobile/features/bookings/booking_controller.dart';
+import 'package:fixnow_mobile/features/bookings/booking_detail_screen.dart';
 import 'package:fixnow_mobile/features/bookings/booking_repository.dart';
 import 'package:fixnow_mobile/features/bookings/customer_bookings_screen.dart';
 import 'package:fixnow_mobile/features/bookings/service_request_screen.dart';
@@ -171,7 +172,14 @@ class _FixNowAppState extends State<FixNowApp> {
               controller: _profile,
               onSignOut: _signOut,
             ),
-            customerBookings: CustomerBookingsScreen(controller: _bookings),
+            customerBookings: CustomerBookingsScreen(
+              controller: _bookings,
+              onBookingSelected: (booking) => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => BookingDetailScreen(booking: booking),
+                ),
+              ),
+            ),
           );
         },
       ),

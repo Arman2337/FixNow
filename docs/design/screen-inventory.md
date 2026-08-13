@@ -2,7 +2,7 @@
 
 Status: authoritative coverage audit
 
-Last audited: 2026-08-13
+Last audited: 2026-08-14
 
 Branch: `feat/customer-core-journey`
 
@@ -51,28 +51,28 @@ Routes are conceptual because the current app uses a root state switch, an index
 
 | Screen | Role | Feature | Current status | Route | Implementation status | Design status | Dependencies | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Customer home | Customer | Discovery | EXISTS + NEEDS REDESIGN | Shell/Home | Categories and foreground location work | Superseded light/blue | FN-037, FN-082 | Add premium location/header composition; nearby-provider data is not currently returned. |
+| Customer home | Customer | Discovery | EXISTS + GOOD | Shell/Home | Categories and foreground location work | Premium dark | FN-037, FN-082 | Nearby-provider data is not currently returned, so the UI makes no proximity claims. |
 | Emergency entry | Customer | Safety | BLOCKED | Home/contextual | Not implemented | Future design only | FN-063, FN-064 | Must not imply emergency response before policy and dispatch exist. |
 | All services | Customer | Discovery | PARTIAL | Home | Active category grid exists | Needs redesign | FN-037, FN-082 | No separate search/detail taxonomy experience. |
 | Service search | Customer | Discovery | MISSING | Home/services/search | No mobile search | Required | FN-029, FN-082 | Search only backend-supported active categories. |
 | Service detail | Customer | Discovery | MISSING | Home/services/:id | Category endpoint exists | Required | FN-029, FN-082 | Scope/pricing content is limited by current contract. |
-| Problem entry | Customer | Booking | EXISTS + NEEDS REDESIGN | Push/service-request | Text request works | Superseded light/blue | FN-039, FN-082 | Voice/photo/AI are blocked; do not show active controls. |
+| Problem entry | Customer | Booking | EXISTS + GOOD | Push/service-request | Text request works | Premium dark | FN-039, FN-082 | Voice/photo/AI are blocked; no fake controls are shown. |
 | AI-assisted problem entry | Customer | AI | BLOCKED | Request | No approved AI service | Future | FN-016, FN-056–FN-059 | Manual text remains the deterministic fallback. |
 | Location permission explanation | Customer | Location | PARTIAL | Home/request | Foreground consent card exists | Needs redesign | FN-037, FN-082 | Denial is handled; precise location remains purpose-bound. |
 | Choose/search/confirm address | Customer | Location | MISSING | Request/location | No address/map-pin contract | Required later | FN-082 plus address contract task | Do not infer saved addresses from profile. |
 | Saved addresses | Customer | Location | BLOCKED | Profile/addresses | No backend model | Not designed | New address-domain task | Must define retention and deletion first. |
-| Provider matching | Customer | Matching | PARTIAL | Bookings/requested | Booking card communicates matching | Visually weak | FN-040, FN-082 | No dedicated timeout/search projection exposed to mobile. |
+| Provider matching | Customer | Matching | PARTIAL | Bookings/requested/detail | Booking card and detail communicate matching | Premium honest state | FN-040, FN-082 | No dedicated timeout/search projection is exposed to mobile. |
 | Provider results | Customer | Marketplace | BLOCKED | Matching/results | Matching is backend-driven; no list contract | Not designed | New provider-discovery contract task | Do not fabricate ratings, ETA, distance, or prices. |
 | Provider profile | Customer | Marketplace | BLOCKED | Providers/:id | No customer-safe aggregate endpoint | Not designed | FN-054 plus new read-model task | Private provider data must remain hidden. |
 | Booking confirmation | Customer | Booking | PARTIAL | Service request | Explicit submit exists | Needs stronger review hierarchy | FN-039, FN-082 | No provider, price, payment, or cancellation-fee data exists. |
-| Booking list | Customer | Booking | EXISTS + NEEDS REDESIGN | Shell/Bookings | API-backed history works | Needs status grouping/density | FN-042, FN-082 | Current contract supports active and historical status grouping. |
-| Booking details | Customer | Booking | MISSING | Bookings/:id | History objects exist | Required | FN-042, FN-082 | Actions must follow lifecycle and ownership. |
-| Active booking tracking | Customer | Tracking | PARTIAL | Unreachable tracking widget | Controller/screen exists but is not wired into shell | Needs map-first redesign | FN-045, FN-082 | Google Maps ADR exists; current screen has no map implementation. |
+| Booking list | Customer | Booking | EXISTS + GOOD | Shell/Bookings | API-backed history and detail navigation work | Premium dark | FN-042, FN-082 | Cards expose authoritative status and request metadata only. |
+| Booking details | Customer | Booking | EXISTS + GOOD | Bookings/:id | Reachable from booking cards | Premium dark | FN-042, FN-082 | Tracking/provider/price content remains explicitly unavailable until supplied by contracts. |
+| Active booking tracking | Customer | Tracking | PARTIAL | Booking detail | Reachable honest tracking handoff exists | Premium map-ready composition | FN-045, FN-082 | No map is rendered until an authorized current provider location and configured SDK are available. |
 | Tracking bottom sheet | Customer | Tracking | MISSING | Tracking overlay | Not implemented | Required | FN-045, FN-082 | Show only authorized and freshness-labelled data. |
 | Service in progress | Customer | Booking | PARTIAL | Booking detail/tracking | Status can be displayed | Not composed | FN-041, FN-082 | Backend lifecycle uses `IN_PROGRESS`. |
 | Service completion | Customer | Booking | MISSING | Booking completion | Completion state exists | Required | FN-041, FN-082 | Payment/invoice/warranty content remains blocked. |
 | Rating and review | Customer | Trust | BLOCKED | Booking/rating | Not implemented | Not designed | FN-054 | Rich rating categories require an approved contract. |
-| Customer profile hub | Customer | Account | EXISTS + NEEDS REDESIGN | Shell/Profile | Basic name/phone edit and sign-out work | Too sparse | FN-028, FN-082 | Unsupported settings must be absent or honest. |
+| Customer profile hub | Customer | Account | EXISTS + GOOD | Shell/Profile | Basic name/phone edit and sign-out work | Premium dark | FN-028, FN-082 | Unsupported settings remain absent or explicitly unavailable. |
 | Customer support | Customer | Support | PARTIAL | Shell/Help | Honest preview only | Needs full IA | FN-075 | No operational channel may be claimed yet. |
 | Notifications | Customer | Notifications | BLOCKED | Contextual/profile | No push/mobile notification UI | Not designed | FN-061, FN-062 | Do not create fake unread items. |
 | Payment methods | Customer | Payments | BLOCKED | Profile/payments | No payment architecture | Not designed | FN-051–FN-053 | Never collect card data before the provider model is approved. |

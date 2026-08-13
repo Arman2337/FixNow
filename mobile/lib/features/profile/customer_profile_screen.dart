@@ -1,4 +1,5 @@
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
+import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
 import 'package:fixnow_mobile/design_system/fix_status_chip.dart';
@@ -59,6 +60,34 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
             description: 'Only your display name is collected here.',
           ),
           const SizedBox(height: AppSpacing.xxl),
+          const FixCard(
+            tone: FixCardTone.elevated,
+            semanticLabel: 'Customer account summary',
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 28,
+                  backgroundColor: AppColors.primarySoft,
+                  child: Icon(Icons.person_rounded, color: AppColors.primary),
+                ),
+                SizedBox(width: AppSpacing.lg),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'FixNow customer',
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      SizedBox(height: AppSpacing.xs),
+                      Text('Your service history and account stay private.'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.lg),
           if (widget.controller.status == ProfileViewStatus.loading)
             const Center(
               child: CircularProgressIndicator(

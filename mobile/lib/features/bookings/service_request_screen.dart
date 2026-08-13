@@ -99,7 +99,7 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
           padding: const EdgeInsets.all(AppSpacing.pagePadding),
           children: [
             FixPageHeader(
-              eyebrow: 'Request details',
+              eyebrow: 'Fast, secure matching',
               title: widget.category.name,
               description:
                   widget.category.description ??
@@ -107,6 +107,7 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
             ),
             const SizedBox(height: AppSpacing.xl),
             FixCard(
+              tone: FixCardTone.elevated,
               semanticLabel: 'How matching works',
               child: const Row(
                 crossAxisAlignment: CrossAxisAlignment.start,

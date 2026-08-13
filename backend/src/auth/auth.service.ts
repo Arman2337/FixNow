@@ -5,6 +5,8 @@ import {
 } from '@nestjs/common';
 import * as argon2 from 'argon2';
 import { DataSource } from 'typeorm';
+import { IsNull, MoreThan } from 'typeorm';
+import type { RoleCode } from '../common/authorization/permission-policies';
 import { AccountStatus } from '../users/account-status';
 import { CredentialEntity } from '../users/credential.entity';
 import { IdentityEntity } from '../users/identity.entity';
@@ -122,6 +124,42 @@ export class AuthService {
   }
 
   async login(input: EmailPasswordDto): Promise<AuthenticationResponse> {
+    const { identity } = await this.validateCredentials(input);
+    const providerRoles = await this.activeRoles(identity.userId);
+    const resolvedRole = providerRoles.includes('verified_provider')
+      ? 'verified_provider'
+      : providerRoles.includes('provider_applicant')
+        ? 'provider_applicant'
+        : 'customer';
+    return this.tokenLifecycle.issueSession(identity.user, resolvedRole);
+  }
+
+  async loginAdmin(input: EmailPasswordDto): Promise<AuthenticationResponse> {
+    const { identity } = await this.validateCredentials(input, true);
+    const staffRoles = (await this.activeRoles(identity.userId)).filter(
+      (role) => AuthService.staffRoles.has(role),
+    );
+    if (staffRoles.length !== 1) {
+      throw new UnauthorizedException('Invalid email or password');
+    }
+    return this.tokenLifecycle.issueSession(identity.user, staffRoles[0]);
+  }
+
+  private static readonly staffRoles = new Set<RoleCode>([
+    'provider_reviewer',
+    'support_agent',
+    'trust_safety_reviewer',
+    'finance_operator',
+    'service_catalog_manager',
+    'operations_administrator',
+    'security_administrator',
+    'auditor',
+  ]);
+
+  private async validateCredentials(
+    input: EmailPasswordDto,
+    staffOnly = false,
+  ) {
     const identity = await this.dataSource
       .getRepository(IdentityEntity)
       .findOne({
@@ -142,26 +180,24 @@ export class AuthService {
     }
     if (
       identity.user.status !== AccountStatus.Active &&
-      identity.user.status !== AccountStatus.PendingVerification
+      (staffOnly || identity.user.status !== AccountStatus.PendingVerification)
     ) {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    const providerRoles = await this.dataSource
+    return { identity, credential };
+  }
+
+  private async activeRoles(userId: string): Promise<RoleCode[]> {
+    const assignments = await this.dataSource
       .getRepository(UserRoleEntity)
       .find({
-        where: { userId: identity.userId },
+        where: [
+          { userId, expiresAt: IsNull() },
+          { userId, expiresAt: MoreThan(new Date()) },
+        ],
         relations: { role: true },
       });
-    const resolvedRole = providerRoles.some(
-      (assignment) => assignment.role?.code === 'verified_provider',
-    )
-      ? 'verified_provider'
-      : providerRoles.some(
-            (assignment) => assignment.role?.code === 'provider_applicant',
-          )
-        ? 'provider_applicant'
-        : 'customer';
-    return this.tokenLifecycle.issueSession(identity.user, resolvedRole);
+    return assignments.map((assignment) => assignment.role.code as RoleCode);
   }
 }

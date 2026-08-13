@@ -262,6 +262,40 @@ export class BookingsService {
     };
   }
 
+  async cancelBookingAsAdmin(
+    bookingId: string,
+    actorUserId: string,
+    reason: string,
+    expectedVersion: number,
+  ): Promise<Booking> {
+    const normalizedReason = reason.trim();
+    const booking = await this.transition(
+      bookingId,
+      actorUserId,
+      expectedVersion,
+      (candidate) => {
+        if (
+          [BookingStatus.COMPLETED, BookingStatus.CANCELLED].includes(
+            candidate.status,
+          )
+        ) {
+          throw new ConflictException(
+            'Completed or cancelled bookings cannot be changed',
+          );
+        }
+        this.applyDomainTransition(
+          candidate,
+          BookingStatus.CANCELLED,
+          normalizedReason,
+        );
+      },
+      normalizedReason,
+    );
+    await this.locationService?.invalidateBooking(bookingId);
+    await this.bookingProjections?.publishUnavailable(booking);
+    return booking;
+  }
+
   private async transition(
     bookingId: string,
     actorUserId: string,

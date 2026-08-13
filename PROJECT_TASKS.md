@@ -32,17 +32,17 @@ Only these statuses are valid. A task cannot be completed while required validat
 # Project Progress
 
 Total Tasks: 83
-Completed: 54
+Completed: 58
 In Progress: 1
 Blocked: 0
-Pending: 29
+Pending: 25
 Cancelled: 0
 Current Phase: Phase 7 — Real-Time & Location
-Next Recommended Task: FN-046 — Initialize Admin Web Application
+Next Recommended Task: FN-050 — Implement Admin Complaints and Analytics Views
 
 # Current Work
 
-Active Tasks: None
+Active Tasks: FN-075 — Implement Customer Help and Support Experience
 
 # Decision Log
 
@@ -1699,7 +1699,7 @@ PR: Pending
 # Phase 8 — Admin Dashboard
 
 ## FN-046 — Initialize Admin Web Application
-Status: ⬜ Pending
+Status: ✅ Completed
 Priority: P1 — High
 Area: Admin
 Depends On: FN-010, FN-011, FN-014
@@ -1712,7 +1712,7 @@ Initialize the approved admin framework with linting, typing, tests, and accessi
 ### Do Not
 - Do not implement admin workflows or embed secrets.
 ### Acceptance Criteria
-- [ ] App starts and lint, type, build, and default tests pass.
+- [x] App starts and lint, type, build, and default tests pass.
 ### Validation
 ```bash
 # Run the admin package-manager lint, type-check, test, and build commands.
@@ -1722,15 +1722,15 @@ Initialize the approved admin framework with linting, typing, tests, and accessi
 admin/
 ```
 ### Notes
-Next.js is a candidate requiring explicit approval and rationale.
+The user explicitly approved Next.js. ADR-0013 records the App Router and TypeScript decision and its boundaries. Initialized the isolated admin package with Next.js 16, React 19, Tailwind CSS 4, strict TypeScript, Next.js Core Web Vitals linting, Vitest, validated public environment configuration, and an accessible responsive shell. The shell reuses the semantic premium dark and emerald tokens from `DESIGN.md`, labels unavailable modules honestly, and exposes no fake privileged action. ESLint, strict type checking, four tests, the production build, `git diff --check`, and an HTTP 200 runtime smoke test passed.
 ### Completion Record
-Completed By:
-Completed Date:
-Commit:
-PR:
+Completed By: Codex
+Completed Date: 2026-08-14
+Commit: Pending
+PR: Pending
 
 ## FN-047 — Implement Admin Authentication and Authorization UI
-Status: ⬜ Pending
+Status: ✅ Completed
 Priority: P1 — High
 Area: Admin/Security
 Depends On: FN-027, FN-046
@@ -1743,7 +1743,7 @@ Provide secure admin sign-in, session handling, and permission-aware navigation.
 ### Do Not
 - Do not treat UI checks as backend authorization.
 ### Acceptance Criteria
-- [ ] Login, expiry, unauthorized, logout, and accessibility tests pass.
+- [x] Login, expiry, unauthorized, logout, and accessibility tests pass.
 ### Validation
 ```bash
 # Run admin lint, type-check, tests, and build.
@@ -1753,15 +1753,15 @@ Provide secure admin sign-in, session handling, and permission-aware navigation.
 admin/src/auth/ admin/src/app/ backend/src/auth/
 ```
 ### Notes
-None.
+Completed on `feat/admin-foundation` at the user's explicit direction. Added a staff-only backend login boundary, admin-specific token audience, protected session summary, active/expiring role resolution, and deny-by-default rejection for customer/provider, inactive, missing-role, and ambiguous multi-role access. The Next.js application uses server actions and HTTP-only strict same-site cookies for login, refresh, and logout; routes anonymous, expired, and unauthorized states explicitly; and filters navigation from the authoritative session role without treating UI visibility as authorization. UI reuses the FN-046 shell and `DESIGN.md` semantic dark/emerald tokens. Admin lint, strict type checking, 10 tests, production build, runtime login/protected-route smoke, backend lint, all 45 suites / 206 tests, backend build, and `git diff --check` passed.
 ### Completion Record
-Completed By:
-Completed Date:
-Commit:
-PR:
+Completed By: Codex
+Completed Date: 2026-08-14
+Commit: Pending
+PR: Pending
 
 ## FN-048 — Implement Admin User and Provider Verification Management
-Status: ⬜ Pending
+Status: ✅ Completed
 Priority: P1 — High
 Area: Admin
 Depends On: FN-032, FN-047
@@ -1774,7 +1774,7 @@ Let authorized admins inspect users and perform provider verification workflows.
 ### Do Not
 - Do not expose unnecessary personal data or bypass backend policy.
 ### Acceptance Criteria
-- [ ] Permission, redaction, review, concurrency, and accessibility tests pass.
+- [x] Permission, redaction, review, concurrency, and accessibility tests pass.
 ### Validation
 ```bash
 # Run admin checks and relevant backend integration tests.
@@ -1784,15 +1784,15 @@ Let authorized admins inspect users and perform provider verification workflows.
 admin/src/features/users/ admin/src/features/providers/ backend/src/admin/
 ```
 ### Notes
-None.
+Completed on `feat/admin-foundation` at the user's explicit direction. Added admin-audience, permission-gated user and provider endpoints with bounded cursor pagination, opaque-ID search, minimized user/profile projections, current-role filtering, immutable verification history, and assigned-review-only document listing/download with audit and no-store headers. Claim and decision actions reuse the FN-032 transactional workflow, assignment/self-review guards, required reasons, legal transitions, and application-version concurrency check. The Next.js UI adds responsive Users and Provider Verification list/detail screens, filters, empty states, accessible tables/forms, clear stale/forbidden feedback, role-aware navigation, and secure server-proxied document downloads using only the existing `DESIGN.md` tokens and shell. Admin lint, strict type checking, 11 tests, production build, backend lint, all 46 suites / 211 tests, backend build, and `git diff --check` passed.
 ### Completion Record
-Completed By:
-Completed Date:
-Commit:
-PR:
+Completed By: Codex
+Completed Date: 2026-08-14
+Commit: Pending
+PR: Pending
 
 ## FN-049 — Implement Admin Service and Booking Management
-Status: ⬜ Pending
+Status: ✅ Completed
 Priority: P2 — Medium
 Area: Admin
 Depends On: FN-029, FN-042, FN-047
@@ -1805,7 +1805,7 @@ Manage service taxonomy and inspect bookings with auditable privileged actions.
 ### Do Not
 - Do not mutate completed financial history or hide audit actions.
 ### Acceptance Criteria
-- [ ] Authorization, validation, search, audit, and accessibility tests pass.
+- [x] Authorization, validation, search, audit, and accessibility tests pass.
 ### Validation
 ```bash
 # Run admin checks and relevant backend integration tests.
@@ -1815,12 +1815,15 @@ Manage service taxonomy and inspect bookings with auditable privileged actions.
 admin/src/features/services/ admin/src/features/bookings/ backend/src/admin/
 ```
 ### Notes
-None.
+Added role-gated service taxonomy management and booking search/detail pages using the existing admin shell,
+tokens, form controls, and status badge. Privileged booking cancellation requires a reason and explicit
+confirmation, rejects terminal bookings, uses optimistic version checks, and appends the staff actor and reason
+to immutable booking history. Service mutations and booking operations use admin-audience permissions.
 ### Completion Record
-Completed By:
-Completed Date:
-Commit:
-PR:
+Completed By: Codex
+Completed Date: 2026-08-14
+Commit: Pending
+PR: Pending
 
 ## FN-050 — Implement Admin Complaints and Analytics Views
 Status: ⬜ Pending

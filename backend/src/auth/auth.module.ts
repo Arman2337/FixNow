@@ -14,6 +14,7 @@ import { TokenLifecycleService } from './token-lifecycle.service';
 import { AuthorizationGuard } from '../common/authorization/authorization.guard';
 import { AuthorizationPolicyService } from '../common/authorization/authorization-policy.service';
 import { AuthorizationService } from '../common/authorization/authorization.service';
+import { AdminAuthController } from './admin-auth.controller';
 
 @Module({
   imports: [
@@ -30,7 +31,7 @@ import { AuthorizationService } from '../common/authorization/authorization.serv
       }),
     }),
   ],
-  controllers: [AuthController, TokenLifecycleController],
+  controllers: [AuthController, AdminAuthController, TokenLifecycleController],
   providers: [
     AuthService,
     TokenLifecycleService,

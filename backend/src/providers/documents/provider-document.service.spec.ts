@@ -15,6 +15,7 @@ import {
 import { ProviderDocumentAuditEntity } from './provider-document-audit.entity';
 import { ProviderDocumentEntity } from './provider-document.entity';
 import { ProviderDocumentService } from './provider-document.service';
+import { ProviderApplicationEntity } from '../provider-application.entity';
 
 describe('ProviderDocumentService', () => {
   let service: ProviderDocumentService;
@@ -22,6 +23,7 @@ describe('ProviderDocumentService', () => {
   let audits: jest.Mocked<Repository<ProviderDocumentAuditEntity>>;
   let storage: jest.Mocked<PrivateObjectStorage>;
   let scanner: jest.Mocked<MalwareScanner>;
+  let applications: jest.Mocked<Repository<ProviderApplicationEntity>>;
   const pdf = Buffer.from('%PDF-safe');
   const entity = {
     id: 'doc-id',
@@ -65,6 +67,10 @@ describe('ProviderDocumentService', () => {
           },
         },
         {
+          provide: getRepositoryToken(ProviderApplicationEntity),
+          useValue: { findOneBy: jest.fn() },
+        },
+        {
           provide: PRIVATE_OBJECT_STORAGE,
           useValue: {
             putQuarantined: jest.fn(),
@@ -80,11 +86,44 @@ describe('ProviderDocumentService', () => {
     audits = module.get(getRepositoryToken(ProviderDocumentAuditEntity));
     storage = module.get(PRIVATE_OBJECT_STORAGE);
     scanner = module.get(MALWARE_SCANNER);
+    applications = module.get(getRepositoryToken(ProviderApplicationEntity));
     documents.save.mockImplementation((v) =>
       Promise.resolve({ ...entity, ...v } as ProviderDocumentEntity),
     );
     audits.save.mockResolvedValue({} as ProviderDocumentAuditEntity);
     scanner.scan.mockResolvedValue('clean');
+  });
+
+  it('allows only the assigned reviewer to read a matching available document', async () => {
+    applications.findOneBy.mockResolvedValue({
+      id: 'application-id',
+      userId: 'user-id',
+      assignedReviewerUserId: 'reviewer-id',
+    } as ProviderApplicationEntity);
+    documents.findOne.mockResolvedValue(entity);
+    storage.readPrivate.mockResolvedValue(pdf);
+    await expect(
+      service.readForReview('reviewer-id', 'application-id', 'doc-id'),
+    ).resolves.toEqual({ metadata: entity, content: pdf });
+    expect(audits.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actorUserId: 'reviewer-id',
+        action: 'review-read',
+        outcome: 'allowed',
+      }),
+    );
+  });
+
+  it('denies document access outside an assigned review', async () => {
+    applications.findOneBy.mockResolvedValue({
+      id: 'application-id',
+      userId: 'user-id',
+      assignedReviewerUserId: 'other-reviewer',
+    } as ProviderApplicationEntity);
+    await expect(
+      service.readForReview('reviewer-id', 'application-id', 'doc-id'),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+    expect(storage.readPrivate).not.toHaveBeenCalled();
   });
 
   it('lists only the owner documents newest first', async () => {

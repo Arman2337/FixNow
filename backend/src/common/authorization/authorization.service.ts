@@ -9,6 +9,7 @@ import { AuthAuditEventEntity } from '../../auth/auth-audit-event.entity';
 import { AuthSessionEntity } from '../../auth/auth-session.entity';
 import {
   ACCESS_TOKEN_AUDIENCE,
+  ADMIN_ACCESS_TOKEN_AUDIENCE,
   ACCESS_TOKEN_ISSUER,
 } from '../../auth/auth.constants';
 import { UserRoleEntity } from '../../users/user-role.entity';
@@ -18,7 +19,11 @@ import type {
   AuthorizationPrincipal,
 } from './authorization.types';
 import { AuthorizationPolicyService } from './authorization-policy.service';
-import type { Permission, RoleCode } from './permission-policies';
+import {
+  PERMISSION_POLICIES,
+  type Permission,
+  type RoleCode,
+} from './permission-policies';
 
 interface AccessTokenClaims {
   sub?: string;
@@ -43,7 +48,10 @@ export class AuthorizationService {
     try {
       claims = await this.jwtService.verifyAsync<AccessTokenClaims>(token, {
         issuer: ACCESS_TOKEN_ISSUER,
-        audience: ACCESS_TOKEN_AUDIENCE,
+        audience:
+          PERMISSION_POLICIES[permission].audience === 'admin'
+            ? ADMIN_ACCESS_TOKEN_AUDIENCE
+            : ACCESS_TOKEN_AUDIENCE,
       });
     } catch {
       await this.audit(null, 'authorization.authentication', 'denied');

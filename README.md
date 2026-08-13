@@ -2,7 +2,7 @@
 
 FixNow is a planned multi-surface platform with a mobile client, backend services, an administrative web application, shared contracts, infrastructure definitions, and AI capabilities.
 
-This repository contains the engineering foundation, an initial NestJS backend, and a Flutter mobile foundation with customer navigation, secure authentication state, service discovery, optional foreground-location consent, and customer profile management. Product features remain tracked in `PROJECT_TASKS.md`; booking, admin, infrastructure deployment, and AI product capabilities remain future work.
+This repository contains the engineering foundation, a NestJS backend, a Flutter mobile application, and a Next.js administrative web foundation. Product features remain tracked in `PROJECT_TASKS.md`; later administrative workflows, infrastructure deployment, and AI product capabilities remain future work.
 
 ## Repository layout
 
@@ -10,7 +10,7 @@ This repository contains the engineering foundation, an initial NestJS backend, 
 | --- | --- |
 | `mobile/` | Flutter mobile application foundation |
 | `backend/` | NestJS backend foundation |
-| `admin/` | Future Next.js administration application |
+| `admin/` | Next.js administrative web application foundation |
 | `shared/` | Cross-project contracts, schemas, and tooling |
 | `infrastructure/` | Deployment and infrastructure-as-code definitions |
 | `ai/` | AI services, evaluation assets, and supporting tools |
@@ -52,6 +52,18 @@ flutter run --dart-define=APP_ENV=development
 
 See [`mobile/README.md`](mobile/README.md) for supported environments and platform prerequisites.
 
+### Admin foundation
+
+Install Node.js 20.9 or later, then run:
+
+```bash
+cd admin
+npm install
+npm run dev
+```
+
+See [`admin/README.md`](admin/README.md) for environment configuration and validation commands.
+
 ## Development rules
 
 - Never commit directly to `main`; the pre-commit hook enforces this locally.
@@ -76,7 +88,7 @@ See [`mobile/README.md`](mobile/README.md) for supported environments and platfo
 
 ## Status
 
-Foundation phase. The backend and mobile applications contain validated foundations plus the tracked authentication, provider, and initial customer-discovery capabilities. Booking and later product workflows remain pending.
+Foundation phase. The backend, mobile, and admin applications contain validated foundations plus completed tracked capabilities. Later product workflows remain tracked in `PROJECT_TASKS.md`.
 
 ## License
 

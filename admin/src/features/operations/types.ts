@@ -1,0 +1,6 @@
+export type ServiceCategory = { id: string; name: string; slug: string; description: string | null; displayOrder: number; isActive: boolean; isEmergency: boolean };
+export type BookingStatus = "REQUESTED" | "ASSIGNED" | "EN_ROUTE" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+export type BookingSummary = { id: string; customerId: string; providerId: string | null; serviceCategoryId: string; status: BookingStatus; description: string; scheduledAt: string | null; cancellationReason: string | null; version: number; createdAt: string; updatedAt: string };
+export type BookingEvent = { id: string; actorUserId: string; fromStatus: BookingStatus | null; toStatus: BookingStatus; reason: string | null; bookingVersion: number; createdAt: string };
+export type BookingDetail = BookingSummary & { events: readonly BookingEvent[] };
+export type BookingPage = { items: readonly BookingSummary[]; nextCursor: string | null };

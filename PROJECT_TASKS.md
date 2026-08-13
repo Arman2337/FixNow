@@ -1726,8 +1726,8 @@ The user explicitly approved Next.js. ADR-0013 records the App Router and TypeSc
 ### Completion Record
 Completed By: Codex
 Completed Date: 2026-08-14
-Commit: Pending
-PR: Pending
+Commit: 759f403
+PR: #16
 
 ## FN-047 — Implement Admin Authentication and Authorization UI
 Status: ✅ Completed
@@ -1757,8 +1757,8 @@ Completed on `feat/admin-foundation` at the user's explicit direction. Added a s
 ### Completion Record
 Completed By: Codex
 Completed Date: 2026-08-14
-Commit: Pending
-PR: Pending
+Commit: 759f403
+PR: #16
 
 ## FN-048 — Implement Admin User and Provider Verification Management
 Status: ✅ Completed
@@ -1788,8 +1788,8 @@ Completed on `feat/admin-foundation` at the user's explicit direction. Added adm
 ### Completion Record
 Completed By: Codex
 Completed Date: 2026-08-14
-Commit: Pending
-PR: Pending
+Commit: 759f403
+PR: #16
 
 ## FN-049 — Implement Admin Service and Booking Management
 Status: ✅ Completed
@@ -1822,8 +1822,8 @@ to immutable booking history. Service mutations and booking operations use admin
 ### Completion Record
 Completed By: Codex
 Completed Date: 2026-08-14
-Commit: Pending
-PR: Pending
+Commit: 759f403
+PR: #16
 
 ## FN-050 — Implement Admin Complaints and Analytics Views
 Status: ⬜ Pending

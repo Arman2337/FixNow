@@ -127,12 +127,16 @@ class _ShellDestination extends StatelessWidget {
           const SizedBox(height: AppSpacing.xl),
           FixCard(
             semanticLabel: '$label section',
-            child: Text(
-              '$label content will be added in its tracked product task.',
-            ),
+            child: Text(_messageFor(label)),
           ),
         ],
       ),
     );
   }
+
+  static String _messageFor(String label) => switch (label) {
+    'Help' =>
+      'Support is not available in this preview yet. If anyone is in immediate danger, contact local emergency services.',
+    _ => 'This area is not available in this preview yet.',
+  };
 }

@@ -48,8 +48,13 @@ node -r ts-node/register -r tsconfig-paths/register node_modules/typeorm/cli.js 
 With `TEST_DATABASE_URL` set to the same isolated database, run repository and constraint integration tests:
 
 ```bash
+$env:TEST_REDIS_URL = "redis://127.0.0.1:56379" # PowerShell; use an isolated Redis instance
 npm run test:integration
 ```
+
+Integration tests default to `redis://localhost:6379` only when
+`TEST_REDIS_URL` is not provided. Set `TEST_REDIS_URL` whenever another local
+project uses the default Redis port so FixNow tests never share its state.
 
 Stop the disposable service after validation:
 

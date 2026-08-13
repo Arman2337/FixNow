@@ -31,11 +31,11 @@ Only these statuses are valid. A task cannot be completed while required validat
 
 # Project Progress
 
-Total Tasks: 73
-Completed: 46
+Total Tasks: 75
+Completed: 47
 In Progress: 0
 Blocked: 0
-Pending: 27
+Pending: 28
 Cancelled: 0
 Current Phase: Phase 7 — Real-Time & Location
 Next Recommended Task: FN-046 — Initialize Admin Web Application
@@ -2551,6 +2551,98 @@ docs/releases/ docs/runbooks/ .github/workflows/ infrastructure/
 ```
 ### Notes
 None.
+### Completion Record
+Completed By:
+Completed Date:
+Commit:
+PR:
+
+## FN-074 — Audit and Polish Mobile UX and Local System Health
+Status: ✅ Completed
+Priority: P1 — High
+Area: Mobile / Backend / Quality
+Depends On: FN-034, FN-045, FN-073
+Branch: fix/mobile-ui-system-audit
+
+### Objective
+Validate the implemented mobile and backend foundations together, identify what works and what fails, and correct the highest-impact phone UI/UX defects visible in current customer flows.
+
+### Scope
+- Run the complete available Flutter and backend static, unit, widget, integration, build, and local runtime smoke checks that the workstation supports.
+- Audit current customer mobile screens at phone size, using supplied and newly captured screenshots as evidence.
+- Remove internal implementation language from customer-facing UI and improve hierarchy, density, spacing, actions, loading, empty, and offline states where findings are verified.
+- Add or update focused tests for changed behavior and record follow-up tasks for issues outside this task's bounded implementation scope.
+
+### Do Not
+- Do not implement roadmap features, scaffold the admin application, deploy services, or connect to production data or credentials.
+- Do not redesign backend contracts or introduce a new framework, hosted dependency, or database.
+
+### Acceptance Criteria
+- [x] Mobile analysis and tests pass, and the application builds for an available local target.
+- [x] Backend lint, unit tests, integration tests that can run safely, and build pass.
+- [x] Available services start locally and receive non-destructive smoke checks, with unsupported prerequisites documented precisely.
+- [x] High-impact customer phone UI findings are fixed and covered by focused widget tests.
+- [x] Final screenshots and an audit report clearly distinguish working, failing, fixed, and deferred areas.
+
+### Validation
+```bash
+cd mobile && flutter analyze && flutter test
+cd backend && npm run lint && npm test -- --runInBand && npm run build
+git diff --check
+```
+
+### Files / Areas
+```text
+mobile/lib/ mobile/test/ backend/ docs/quality/ PROJECT_TASKS.md
+```
+
+### Notes
+Completed a physical Android 16 walkthrough against an isolated local PostgreSQL/Redis-backed API. Fixed Home density and category recognition, removed internal task language, repaired isolated integration testing and suite order safety, and aligned backend runtime scripts with the monorepo build output. Mobile analysis and 40 tests, backend lint, 197 unit tests, 38 integration tests, build, migrations, health/readiness, and live category API checks passed. Full evidence and deferred scope are recorded in `docs/quality/mobile-system-audit-2026-08-13.md`. Existing untracked root screenshots remain user-owned and unchanged.
+
+### Completion Record
+Completed By: Codex
+Completed Date: 2026-08-13
+Commit: Pending
+PR: Pending
+
+## FN-075 — Implement Customer Help and Support Experience
+Status: ⬜ Pending
+Priority: P2 — Medium
+Area: Mobile / Backend / Support
+Depends On: FN-027, FN-034
+Branch: feat/customer-help-support
+
+### Objective
+Replace the honest Help preview state with a usable, safe customer support experience.
+
+### Scope
+- Define supported contact and self-service paths, case ownership, response expectations, and safe emergency escalation copy.
+- Implement authenticated customer Help UI and the minimum backend contract approved for support requests.
+- Cover loading, offline, unauthenticated, submission, duplicate, and failure states accessibly.
+
+### Do Not
+- Do not present Help as an emergency-response service or promise unavailable response times.
+- Do not add a hosted support vendor without explicit approval and an ADR where required.
+
+### Acceptance Criteria
+- [ ] Customers can understand available support options and submit or follow the approved support flow.
+- [ ] Emergency guidance is clearly separated from ordinary support and uses approved safety language.
+- [ ] Authorization, abuse, privacy, accessibility, offline, and failure tests pass.
+
+### Validation
+```bash
+cd mobile && flutter analyze && flutter test
+cd backend && npm run lint && npm test -- --runInBand && npm run build
+```
+
+### Files / Areas
+```text
+mobile/lib/features/support/ mobile/test/ backend/src/support/ backend/test/ docs/product/ docs/security/
+```
+
+### Notes
+Discovered during FN-074 live-device QA. Until this task is complete, the Help tab must remain an honest preview state with immediate-danger guidance.
+
 ### Completion Record
 Completed By:
 Completed Date:

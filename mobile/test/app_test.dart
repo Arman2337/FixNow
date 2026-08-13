@@ -31,6 +31,19 @@ void main() {
     expect(navigation.selectedIndex, 1);
   });
 
+  testWidgets('help uses customer-safe preview language', (tester) async {
+    await tester.pumpWidget(_testApp(AppEnvironment.development));
+
+    await tester.tap(find.text('Help'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('tracked product task'), findsNothing);
+    expect(
+      find.textContaining('contact local emergency services'),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('supports narrow screens and enlarged text', (tester) async {
     tester.view.physicalSize = const Size(320, 640);
     tester.view.devicePixelRatio = 1;

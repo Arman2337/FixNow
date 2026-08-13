@@ -41,13 +41,10 @@ void main() {
     await tester.pump();
 
     expect(
-      find.text('Location access is off. You can still browse all services.'),
+      find.text('You can still browse without sharing your location.'),
       findsOneWidget,
     );
-    expect(
-      find.textContaining('does not store or share these coordinates'),
-      findsOneWidget,
-    );
+    expect(find.textContaining('does not store it'), findsOneWidget);
     expect(find.widgetWithText(FixButton, 'Allow location'), findsOneWidget);
   });
 
@@ -59,6 +56,7 @@ void main() {
           name: 'Plumbing',
           slug: 'plumbing',
           description: 'Leaks and pipe repairs',
+          iconName: 'plumbing',
         ),
       ]),
     );
@@ -81,6 +79,8 @@ void main() {
     expect(find.text('Plumbing'), findsOneWidget);
     expect(find.bySemanticsLabel('Plumbing service category'), findsOneWidget);
     expect(find.text('Leaks and pipe repairs'), findsOneWidget);
+    expect(find.byIcon(Icons.plumbing_outlined), findsOneWidget);
+    expect(find.byType(Card), findsNWidgets(2));
   });
 
   testWidgets('shows offline recovery and retries', (tester) async {

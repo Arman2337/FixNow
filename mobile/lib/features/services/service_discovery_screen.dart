@@ -96,43 +96,85 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
           ),
         ],
         DiscoveryStatus.ready => [
-          for (final category in widget.controller.categories) ...[
-            _CategoryCard(category: category),
-            const SizedBox(height: AppSpacing.md),
-          ],
+          _CategoryList(categories: widget.controller.categories),
         ],
       };
 }
 
-class _CategoryCard extends StatelessWidget {
-  const _CategoryCard({required this.category});
-  final ServiceCategory category;
+class _CategoryList extends StatelessWidget {
+  const _CategoryList({required this.categories});
+  final List<ServiceCategory> categories;
 
   @override
-  Widget build(BuildContext context) => FixCard(
-    semanticLabel: '${category.name} service category',
-    child: Row(
+  Widget build(BuildContext context) => Card(
+    child: Column(
       children: [
-        const Icon(Icons.home_repair_service_outlined),
-        const SizedBox(width: AppSpacing.md),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                category.name,
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              if (category.description case final description?) ...[
-                const SizedBox(height: AppSpacing.xs),
-                Text(description),
-              ],
-            ],
-          ),
-        ),
+        for (var index = 0; index < categories.length; index += 1) ...[
+          _CategoryRow(category: categories[index]),
+          if (index < categories.length - 1)
+            const Divider(height: 1, indent: 64),
+        ],
       ],
     ),
   );
+}
+
+class _CategoryRow extends StatelessWidget {
+  const _CategoryRow({required this.category});
+  final ServiceCategory category;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    container: true,
+    explicitChildNodes: true,
+    label: '${category.name} service category',
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 72),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.md,
+        ),
+        child: Row(
+          children: [
+            Icon(
+              _categoryIcon(category.iconName),
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            const SizedBox(width: AppSpacing.lg),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    category.name,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  if (category.description case final description?) ...[
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      description,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+
+  static IconData _categoryIcon(String? value) => switch (value) {
+    'plumbing' => Icons.plumbing_outlined,
+    'electrical_services' => Icons.electrical_services_outlined,
+    'ac_unit' => Icons.ac_unit_outlined,
+    'key' => Icons.key_outlined,
+    _ => Icons.home_repair_service_outlined,
+  };
 }
 
 class _DiscoveryMessage extends StatelessWidget {

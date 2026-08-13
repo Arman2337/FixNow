@@ -18,6 +18,14 @@ async function bootstrap() {
     }),
   );
   const configService = app.get(ConfigService);
+  const webOrigins = configService
+    .get<string>('WEB_ALLOWED_ORIGINS')
+    ?.split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+  if (webOrigins?.length) {
+    app.enableCors({ origin: webOrigins, credentials: false });
+  }
   const port = configService.get<number>('PORT') ?? 3000;
   await app.listen(port);
 }

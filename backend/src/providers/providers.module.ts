@@ -24,6 +24,7 @@ import { ProviderVerificationService } from './verification/provider-verificatio
 import { ProviderAvailabilityEntity } from './availability/provider-availability.entity';
 import { ProviderAvailabilityController } from './availability/provider-availability.controller';
 import { ProviderAvailabilityService } from './availability/provider-availability.service';
+import { ProviderApplicationController } from './provider-application.controller';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { ProviderAvailabilityService } from './availability/provider-availabilit
     ProviderDocumentController,
     ProviderVerificationController,
     ProviderAvailabilityController,
+    ProviderApplicationController,
   ],
   providers: [
     ProviderSkillsService,

@@ -12,7 +12,7 @@ FixNow combines **Uber-like immediacy + TaskRabbit-like provider trust + Urban C
 - Provider trust means professional profiles, verification context, ratings, completed-job evidence, skills, availability, and useful comparison.
 - Service discovery means understandable categories, clear service details, transparent indicative pricing, and a short booking path.
 
-These products are references for interaction principles, not templates. Do not reproduce their branding, layouts, copy, illustrations, icons, trade dress, or component geometry. FixNow must remain recognizable as an original, calm, blue-led service platform.
+These products are references for interaction principles, not templates. Do not reproduce their branding, layouts, copy, illustrations, icons, trade dress, or component geometry. FixNow must remain recognizable as an original premium utility platform: deep navy/near-black surfaces, an emerald/mint identity, compact trust-rich cards, and map-first active-service experiences.
 
 Design decisions follow this order:
 
@@ -59,42 +59,40 @@ The voice is direct, respectful, and reassuring. Never sound playful during risk
 
 ## 4. Color System
 
-Use three layers: primitive values, semantic roles, then component tokens. Application code consumes semantic or component tokens, never raw hex values. The following light theme is the proposed baseline and requires contrast validation in implementation.
+Use three layers: primitive values, semantic roles, then component tokens. Application code consumes semantic or component tokens, never raw hex values. The following premium dark theme is the approved mobile baseline and requires contrast validation in implementation.
 
-### Light-mode semantic tokens
+### Premium dark semantic tokens
 
 | Token | Value | Use |
 | --- | --- | --- |
-| `color.primary` | `#1565D8` | Main CTA, selected navigation, trusted interactive emphasis. |
-| `color.primaryHover` | `#0F56BE` | Pointer hover only. |
-| `color.primaryPressed` | `#0B469D` | Pressed/active feedback. |
-| `color.primarySoft` | `#EAF2FD` | Selected rows, informational emphasis, subtle blue containers. |
-| `color.onPrimary` | `#FFFFFF` | Content on primary fills. |
-| `color.background` | `#F7F9FC` | Page/app background. |
-| `color.surface` | `#FFFFFF` | Cards, sheets, dialogs, inputs. |
-| `color.surfaceSecondary` | `#F0F3F8` | Grouped sections, muted controls, skeleton bases. |
-| `color.textPrimary` | `#172033` | Headings and primary body text. |
-| `color.textSecondary` | `#536078` | Supporting text and metadata. |
-| `color.textDisabled` | `#8C96A8` | Disabled content; never use for required readable information. |
-| `color.border` | `#D7DEE9` | Standard dividers and component borders. |
-| `color.focus` | `#2F7DE1` | Focus rings with sufficient surrounding contrast. |
-| `color.success` | `#168A52` | Success, available, completed. |
-| `color.successSoft` | `#E7F6EE` | Success container. |
-| `color.warning` | `#A96500` | Caution, delay, attention required. |
-| `color.warningSoft` | `#FFF3D6` | Warning container. |
-| `color.danger` | `#C93636` | Validation failure and destructive actions. |
-| `color.dangerSoft` | `#FDECEC` | Error container. |
-| `color.emergency` | `#A91F2C` | Genuine urgent escalation/SOS only. |
-| `color.emergencySoft` | `#FBEAEC` | Emergency message container. |
-| `color.info` | `#286FBE` | Neutral operational information. |
-| `color.infoSoft` | `#EAF3FC` | Informational container. |
-| `color.scrim` | `rgba(10, 18, 32, 0.48)` | Modal/sheet scrim. |
+| `color.backgroundPrimary` | `#07110F` | Main authenticated app background. |
+| `color.backgroundSecondary` | `#0A1714` | Secondary page region and map fallback. |
+| `color.surfacePrimary` | `#10201C` | Cards, sheets, dialogs, and inputs. |
+| `color.surfaceSecondary` | `#152923` | Grouped sections and muted controls. |
+| `color.surfaceElevated` | `#1B332C` | Floating panels, tracking sheets, and emphasized cards. |
+| `color.primary` | `#45E0A8` | Main CTA, selected navigation, and interactive emphasis. |
+| `color.primaryPressed` | `#29BC88` | Pressed/active feedback. |
+| `color.primarySoft` | `#153D31` | Selected rows and restrained emerald containers. |
+| `color.onPrimary` | `#04120D` | Content on primary fills. |
+| `color.textPrimary` | `#F5FBF8` | Headings and primary body text. |
+| `color.textSecondary` | `#B5C8C1` | Supporting text and metadata. |
+| `color.textMuted` | `#82978F` | Low-emphasis, non-critical metadata. |
+| `color.textDisabled` | `#62736D` | Disabled content; never required readable information. |
+| `color.borderDefault` | `#274139` | Standard dividers and component borders. |
+| `color.borderStrong` | `#3B5C51` | Focus-adjacent and emphasized boundaries. |
+| `color.focus` | `#79F0C4` | Visible focus rings. |
+| `color.success` | `#45E0A8` | Successful or available state; context and labels remain required. |
+| `color.warning` | `#F2B84B` | Caution, delay, or attention required. |
+| `color.danger` | `#F06A6A` | Validation failure and destructive actions. |
+| `color.info` | `#78B7FF` | Neutral operational information. |
+| `color.emergency` | `#E14B55` | Genuine urgent escalation/SOS only. |
+| `color.verified` | `#45E0A8` | Verified identity badge with explanatory label. |
+| `color.rating` | `#F2C45C` | Rating iconography only, never general decoration. |
+| `color.scrim` | `rgba(0, 7, 5, 0.64)` | Modal/sheet scrim. |
 
 `danger` covers errors and destructive actions. `emergency` is a separately governed role for an immediate safety escalation; neither is decorative. Green means verified success or current availability, not merely “good-looking.” Amber means caution or waiting, never failure.
 
-### Future dark mode
-
-Dark mode must override semantic tokens, not components or screen-level colors. Start from deep neutral navy surfaces rather than pure black; keep primary blue, status colors, text, borders, map overlays, and scrims contrast-tested. Preserve the meanings above and test WCAG contrast, OLED smearing, map legibility, photographs, disabled states, and elevation boundaries before release. Dark mode is not approved merely by inverting light tokens.
+The authenticated customer and provider experience uses this premium dark system by default. Authentication entry may use a controlled dark-to-surface composition, but must remain part of the same visual language. Any future light theme must override semantic tokens rather than screen components and requires independent contrast and visual validation. Dark implementation must test WCAG contrast, OLED smearing, map legibility, photographs, disabled states, and elevation boundaries; it is not approved by color substitution alone.
 
 ## 5. Typography
 
@@ -326,7 +324,7 @@ Do not pretend GPS is exact, or show stale location as live. Communicate delayed
 - Customer marker: stable person/location symbol with text alternative.
 - Provider marker: directional provider symbol; selected state is visually and semantically distinct.
 - Destination/service marker: distinct pin when different from customer position.
-- Route line: primary blue with sufficient contrast against the approved map style; never encode status solely in route color.
+- Route line: primary emerald with sufficient contrast against the approved map style; never encode status solely in route color.
 - ETA card: surface overlay with ETA, status label, and last-updated/stale state where needed.
 - Actions: locate me, recenter route, accessibility/list alternative; 48px targets.
 - Bottom sheet: uses defined snap points and never permanently obscures the full route/context.
@@ -454,7 +452,7 @@ Admin breakpoints are implementation tokens, not scattered media queries. Suppor
 
 Centralize three layers:
 
-1. **Primitive:** raw blue/neutral/status scales, 4px spacing, type values, radii, shadows, durations.
+1. **Primitive:** raw navy/emerald/neutral/status scales, 4px spacing, type values, radii, shadows, durations.
 2. **Semantic:** `primary`, `surface`, `textSecondary`, `danger`, `pagePadding`, `focus`, and other purpose roles.
 3. **Component:** `button.primary.background`, `input.focus.border`, `providerCard.padding`, etc., referencing semantic tokens.
 
@@ -519,7 +517,7 @@ Before implementing any UI, an agent must:
 
 Agents must not:
 
-- Invent colors without approval.
+- Invent colors without approval or restore the previous blue-led visual language.
 - Introduce fonts or arbitrary type values.
 - Create another spacing/radius/elevation system.
 - Create a one-screen button or card language.
@@ -553,7 +551,7 @@ Role context may change labels and content density, not the visual grammar.
 
 ## 38. Admin Consistency
 
-Admin uses denser desktop layouts while retaining brand colors, Inter typography, semantic statuses, 4/8px spacing philosophy, radii, focus behavior, form rules, and component states. Dense does not mean cramped: tables keep readable rows, actions remain discoverable, and mobile-only patterns such as bottom navigation are translated to suitable desktop patterns rather than copied literally.
+Admin uses denser desktop layouts while retaining the deep-neutral and emerald brand system, Inter typography, semantic statuses, 4/8px spacing philosophy, radii, focus behavior, form rules, and component states. Dense does not mean cramped: tables keep readable rows, actions remain discoverable, and mobile-only patterns such as bottom navigation are translated to suitable desktop patterns rather than copied literally.
 
 ## 39. Do / Don't Examples
 
@@ -580,3 +578,5 @@ Admin uses denser desktop layouts while retaining brand colors, Inter typography
 **Urban Company:** Use for home-service discovery, categorization, service information, and booking inspiration.
 
 These references are inspiration only. FixNow must maintain its own original branding, layouts, components, content, and design identity. Do not download or copy their assets, reproduce their screens, or create trademark-confusing visual similarities.
+
+The approved FixNow visual benchmark is a premium dark utility interface with emerald/mint identity, compact information-rich provider cards, strong verification signals, restrained motion, clear emergency hierarchy, and map-first real-time service states. Customer and provider applications must look like role-specific parts of one product. The intended promise is: **Professional help is minutes away.**

@@ -49,6 +49,10 @@ export class EnvironmentVariables {
   @IsOptional()
   REALTIME_ALLOWED_ORIGINS?: string;
 
+  @IsString()
+  @IsOptional()
+  WEB_ALLOWED_ORIGINS?: string;
+
   @IsInt()
   @Min(10_000)
   @Max(15_000)
@@ -120,6 +124,7 @@ export function validate(config: Record<string, unknown>) {
     throw new Error(errors.toString());
   }
   validateRealtimeOrigins(validatedConfig);
+  validateWebOrigins(validatedConfig);
   if (
     validatedConfig.LOCATION_CACHE_TTL_MS >
     validatedConfig.LOCATION_STALE_AFTER_MS
@@ -131,14 +136,30 @@ export function validate(config: Record<string, unknown>) {
   return validatedConfig;
 }
 
+function validateWebOrigins(config: EnvironmentVariables): void {
+  validateOriginList(config, config.WEB_ALLOWED_ORIGINS, 'WEB_ALLOWED_ORIGINS');
+}
+
 function validateRealtimeOrigins(config: EnvironmentVariables): void {
-  if (!config.REALTIME_ALLOWED_ORIGINS) return;
-  for (const value of config.REALTIME_ALLOWED_ORIGINS.split(',')) {
+  validateOriginList(
+    config,
+    config.REALTIME_ALLOWED_ORIGINS,
+    'REALTIME_ALLOWED_ORIGINS',
+  );
+}
+
+function validateOriginList(
+  config: EnvironmentVariables,
+  values: string | undefined,
+  name: string,
+): void {
+  if (!values) return;
+  for (const value of values.split(',')) {
     let origin: URL;
     try {
       origin = new URL(value.trim());
     } catch {
-      throw new Error('REALTIME_ALLOWED_ORIGINS must contain valid origins');
+      throw new Error(`${name} must contain valid origins`);
     }
     const secure = origin.protocol === 'https:';
     const localDevelopment =
@@ -154,7 +175,7 @@ function validateRealtimeOrigins(config: EnvironmentVariables): void {
       origin.hash
     ) {
       throw new Error(
-        'REALTIME_ALLOWED_ORIGINS must use HTTPS origins (loopback HTTP is allowed outside production)',
+        `${name} must use HTTPS origins (loopback HTTP is allowed outside production)`,
       );
     }
   }

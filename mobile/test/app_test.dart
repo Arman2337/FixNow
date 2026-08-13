@@ -11,10 +11,15 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   testWidgets('renders the customer shell with design tokens', (tester) async {
     await tester.pumpWidget(_testApp(AppEnvironment.development));
+    await tester.pumpAndSettle();
 
     final materialApp = tester.widget<MaterialApp>(find.byType(MaterialApp));
     expect(materialApp.theme?.colorScheme.primary, AppColors.primary);
-    expect(materialApp.theme?.scaffoldBackgroundColor, AppColors.background);
+    expect(materialApp.themeMode, ThemeMode.dark);
+    expect(
+      materialApp.theme?.scaffoldBackgroundColor,
+      AppColors.backgroundPrimary,
+    );
     expect(find.text('Bookings'), findsOneWidget);
     expect(find.text('Help'), findsOneWidget);
     expect(find.text('Profile'), findsOneWidget);
@@ -22,13 +27,28 @@ void main() {
 
   testWidgets('navigates between shell destinations', (tester) async {
     await tester.pumpWidget(_testApp(AppEnvironment.development));
+    await tester.pumpAndSettle();
 
     await tester.tap(find.text('Bookings'));
     await tester.pumpAndSettle();
 
-    expect(find.text('No active booking'), findsOneWidget);
+    expect(find.text('No bookings yet'), findsOneWidget);
     final navigation = tester.widget<NavigationBar>(find.byType(NavigationBar));
     expect(navigation.selectedIndex, 1);
+  });
+
+  testWidgets('help uses customer-safe preview language', (tester) async {
+    await tester.pumpWidget(_testApp(AppEnvironment.development));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Help'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('tracked product task'), findsNothing);
+    expect(
+      find.textContaining('contact local emergency services'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('supports narrow screens and enlarged text', (tester) async {
@@ -43,12 +63,14 @@ void main() {
         child: _testApp(AppEnvironment.development),
       ),
     );
+    await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
   });
 
   testWidgets('hides the debug banner in production', (tester) async {
     await tester.pumpWidget(_testApp(AppEnvironment.production));
+    await tester.pumpAndSettle();
 
     expect(find.byType(Banner), findsNothing);
   });
@@ -57,7 +79,7 @@ void main() {
 FixNowApp _testApp(AppEnvironment environment) => FixNowApp(
   environment: environment,
   apiTransport: _TestTransport(),
-  sessionStore: _EmptySessionStore(),
+  sessionStore: _AuthenticatedSessionStore(),
   locationGateway: _DeniedLocationGateway(),
 );
 
@@ -67,15 +89,26 @@ class _TestTransport implements ApiTransport {
     if (request.path == 'service-categories/active') {
       return const ApiResponse(statusCode: 200, body: <Object?>[]);
     }
+    if (request.path.startsWith('bookings?')) {
+      return const ApiResponse(
+        statusCode: 200,
+        body: {'bookings': <Object?>[], 'nextCursor': null},
+      );
+    }
     throw const ApiException(ApiFailureKind.unauthorized, 'Sign in required.');
   }
 }
 
-class _EmptySessionStore implements AuthSessionStore {
+class _AuthenticatedSessionStore implements AuthSessionStore {
   @override
   Future<void> clear() async {}
   @override
-  Future<AuthSession?> read() async => null;
+  Future<AuthSession?> read() async => AuthSession(
+    userId: 'customer-1',
+    accessToken: 'access',
+    refreshToken: 'refresh',
+    expiresAt: DateTime.now().toUtc().add(const Duration(hours: 1)),
+  );
   @override
   Future<void> write(AuthSession session) async {}
 }

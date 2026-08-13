@@ -3,20 +3,40 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { ServiceCategoriesService } from './service-categories.service';
 import { ServiceCategoryEntity } from './service-category.entity';
+import { ProviderSkillEntity } from '../providers/provider-skill.entity';
+import { UserEntity } from '../users/user.entity';
 
 describe('ServiceCategoriesService (Integration)', () => {
   let service: ServiceCategoriesService;
   let dataSource: DataSource;
+  let module: TestingModule;
 
   beforeAll(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    const databaseUrl = process.env.TEST_DATABASE_URL;
+    if (!databaseUrl) {
+      throw new Error(
+        'TEST_DATABASE_URL must target an isolated test database',
+      );
+    }
+    const parsedUrl = new URL(databaseUrl);
+    if (
+      !['127.0.0.1', 'localhost'].includes(parsedUrl.hostname) ||
+      parsedUrl.port !== '55432' ||
+      parsedUrl.pathname !== '/fixnow_test'
+    ) {
+      throw new Error(
+        'Refusing destructive integration tests: TEST_DATABASE_URL must be the documented loopback fixnow_test database on port 55432',
+      );
+    }
+
+    module = await Test.createTestingModule({
       imports: [
         TypeOrmModule.forRoot({
           type: 'postgres',
-          url: 'postgresql://localhost:5432/fixnow_test',
-          entities: [ServiceCategoryEntity],
-          synchronize: true,
-          dropSchema: true,
+          url: databaseUrl,
+          entities: [ServiceCategoryEntity, ProviderSkillEntity, UserEntity],
+          synchronize: false,
+          retryAttempts: 0,
         }),
         TypeOrmModule.forFeature([ServiceCategoryEntity]),
       ],
@@ -28,12 +48,13 @@ describe('ServiceCategoriesService (Integration)', () => {
   });
 
   afterAll(async () => {
-    await dataSource.destroy();
+    await module?.close();
   });
 
   beforeEach(async () => {
-    // Clean database before each test
-    await dataSource.getRepository(ServiceCategoryEntity).clear();
+    await dataSource.query(
+      'TRUNCATE TABLE "provider_skills", "service_categories" RESTART IDENTITY CASCADE',
+    );
   });
 
   describe('CRUD operations', () => {
@@ -54,7 +75,12 @@ describe('ServiceCategoriesService (Integration)', () => {
       expect(created.slug).toBe(createDto.slug);
 
       const retrieved = await service.findById(created.id);
-      expect(retrieved).toEqual(created);
+      expect(retrieved).toMatchObject({
+        id: created.id,
+        name: created.name,
+        slug: created.slug,
+        providerSkills: [],
+      });
     });
 
     it('should update service category', async () => {

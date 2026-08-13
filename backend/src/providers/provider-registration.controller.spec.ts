@@ -9,17 +9,21 @@ describe('ProviderRegistrationController', () => {
   let app: INestApplication<App>;
   const response = {
     userId: 'provider-1',
+    role: 'provider_applicant' as const,
     accessToken: 'access-token',
     refreshToken: 'refresh-token',
     tokenType: 'Bearer' as const,
     expiresIn: 900,
   };
   const registerProvider = jest.fn().mockResolvedValue(response);
+  const login = jest.fn().mockResolvedValue(response);
 
   beforeAll(async () => {
     const module = await Test.createTestingModule({
       controllers: [ProviderRegistrationController],
-      providers: [{ provide: AuthService, useValue: { registerProvider } }],
+      providers: [
+        { provide: AuthService, useValue: { registerProvider, login } },
+      ],
     }).compile();
     app = module.createNestApplication();
     app.useGlobalPipes(
@@ -58,5 +62,21 @@ describe('ProviderRegistrationController', () => {
         role: 'verified_provider',
       })
       .expect(400);
+  });
+
+  it('supports provider sign in without accepting a role assertion', async () => {
+    await request(app.getHttpServer())
+      .post('/auth/provider/login')
+      .send({
+        email: ' Provider@Example.COM ',
+        password: 'Correct Horse Battery Staple!',
+      })
+      .expect(200)
+      .expect(response);
+
+    expect(login).toHaveBeenCalledWith({
+      email: 'provider@example.com',
+      password: 'Correct Horse Battery Staple!',
+    });
   });
 });

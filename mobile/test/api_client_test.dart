@@ -95,30 +95,33 @@ void main() {
     },
   );
 
-  test('maps unauthorized responses without exposing response detail', () async {
-    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
-    addTearDown(server.close);
-    server.listen((request) async {
-      request.response
-        ..statusCode = HttpStatus.unauthorized
-        ..headers.contentType = ContentType.json
-        ..write(jsonEncode({'code': 'TOKEN_EXPIRED', 'detail': 'secret'}));
-      await request.response.close();
-    });
-    final client = ApiClient(
-      baseUri: Uri.parse('http://${server.address.host}:${server.port}/'),
-    );
+  test(
+    'maps unauthorized responses without exposing response detail',
+    () async {
+      final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+      addTearDown(server.close);
+      server.listen((request) async {
+        request.response
+          ..statusCode = HttpStatus.unauthorized
+          ..headers.contentType = ContentType.json
+          ..write(jsonEncode({'code': 'TOKEN_EXPIRED', 'detail': 'secret'}));
+        await request.response.close();
+      });
+      final client = ApiClient(
+        baseUri: Uri.parse('http://${server.address.host}:${server.port}/'),
+      );
 
-    await expectLater(
-      client.send(const ApiRequest(method: ApiMethod.get, path: 'profile')),
-      throwsA(
-        isA<ApiException>()
-            .having((e) => e.kind, 'kind', ApiFailureKind.unauthorized)
-            .having((e) => e.code, 'code', 'TOKEN_EXPIRED')
-            .having((e) => e.message, 'message', isNot(contains('secret'))),
-      ),
-    );
-  });
+      await expectLater(
+        client.send(const ApiRequest(method: ApiMethod.get, path: 'profile')),
+        throwsA(
+          isA<ApiException>()
+              .having((e) => e.kind, 'kind', ApiFailureKind.unauthorized)
+              .having((e) => e.code, 'code', 'TOKEN_EXPIRED')
+              .having((e) => e.message, 'message', isNot(contains('secret'))),
+        ),
+      );
+    },
+  );
 
   test('rejects malformed and oversized responses', () async {
     for (final payload in [

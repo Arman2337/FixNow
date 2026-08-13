@@ -74,6 +74,20 @@ describe('Environment Validation', () => {
     ).toThrow('REALTIME_ALLOWED_ORIGINS must use HTTPS origins');
   });
 
+  it('validates browser HTTP origins with the same secure policy', () => {
+    const base = {
+      DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/test',
+      REDIS_URL: 'redis://localhost:6379',
+      JWT_SECRET: 'test-only-jwt-secret-at-least-32-characters',
+      OTP_SECRET: 'test-only-otp-secret-at-least-32-characters',
+      WEB_ALLOWED_ORIGINS: 'http://127.0.0.1:8080,https://app.fixnow.test',
+    };
+    expect(validate(base).WEB_ALLOWED_ORIGINS).toBe(base.WEB_ALLOWED_ORIGINS);
+    expect(() => validate({ ...base, NODE_ENV: 'production' })).toThrow(
+      'WEB_ALLOWED_ORIGINS must use HTTPS origins',
+    );
+  });
+
   it('validates bounded and internally consistent live-location policy', () => {
     const base = {
       DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/test',

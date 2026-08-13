@@ -1,4 +1,6 @@
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
+import 'package:fixnow_mobile/design_system/app_colors.dart';
+import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
 import 'package:fixnow_mobile/design_system/fix_status_chip.dart';
@@ -34,7 +36,20 @@ class _LocationConsentCardState extends State<LocationConsentCard> {
           children: [
             Row(
               children: [
-                const Icon(Icons.location_on_outlined),
+                Container(
+                  width: 40,
+                  height: 40,
+                  alignment: Alignment.center,
+                  decoration: const BoxDecoration(
+                    color: AppColors.primarySoft,
+                    borderRadius: AppRadius.inputBorder,
+                  ),
+                  child: const Icon(
+                    Icons.location_on_outlined,
+                    color: AppColors.primary,
+                    size: 22,
+                  ),
+                ),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
@@ -47,8 +62,8 @@ class _LocationConsentCardState extends State<LocationConsentCard> {
             const SizedBox(height: AppSpacing.sm),
             Text(
               granted
-                  ? 'Location is used only to show services relevant to your area.'
-                  : 'Allow location only while using FixNow to show services relevant to your area. FixNow does not store or share these coordinates.',
+                  ? 'Showing services available near you. FixNow does not store your location.'
+                  : 'See what is available nearby. FixNow uses your location only while the app is open and does not store it.',
             ),
             const SizedBox(height: AppSpacing.md),
             if (state == LocationPermissionState.checking)
@@ -67,12 +82,13 @@ class _LocationConsentCardState extends State<LocationConsentCard> {
             else ...[
               if (state == LocationPermissionState.denied)
                 const Text(
-                  'Location access is off. You can still browse all services.',
+                  'You can still browse without sharing your location.',
                 ),
               if (state == LocationPermissionState.unavailable)
                 const Text(
-                  'Location permission is unavailable. You can still browse all services.',
+                  'Location is unavailable. You can still browse all services.',
                 ),
+              const SizedBox(height: AppSpacing.md),
               FixButton(
                 label: permanent ? 'Open settings' : 'Allow location',
                 variant: FixButtonVariant.secondary,

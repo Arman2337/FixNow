@@ -35,6 +35,13 @@ export class ProviderDocumentService {
     throw new BadRequestException('Document file is required');
   }
 
+  async listOwn(userId: string): Promise<ProviderDocumentEntity[]> {
+    return this.documents.find({
+      where: { userId },
+      order: { createdAt: 'DESC' },
+    });
+  }
+
   async upload(
     userId: string,
     documentType: string,

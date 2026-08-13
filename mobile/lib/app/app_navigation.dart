@@ -51,9 +51,9 @@ abstract final class AppNavigation {
       selectedIcon: Icons.navigation_rounded,
     ),
     AppDestination(
-      label: 'Earnings',
-      icon: Icons.account_balance_wallet_outlined,
-      selectedIcon: Icons.account_balance_wallet_rounded,
+      label: 'History',
+      icon: Icons.history_rounded,
+      selectedIcon: Icons.history_toggle_off_rounded,
     ),
     AppDestination(
       label: 'Profile',

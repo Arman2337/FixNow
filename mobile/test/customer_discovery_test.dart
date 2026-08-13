@@ -34,20 +34,17 @@ void main() {
     );
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.light,
+        theme: AppTheme.dark,
         home: Scaffold(body: LocationConsentCard(controller: location)),
       ),
     );
     await tester.pump();
 
     expect(
-      find.text('Location access is off. You can still browse all services.'),
+      find.text('You can still browse without sharing your location.'),
       findsOneWidget,
     );
-    expect(
-      find.textContaining('does not store or share these coordinates'),
-      findsOneWidget,
-    );
+    expect(find.textContaining('does not store it'), findsOneWidget);
     expect(find.widgetWithText(FixButton, 'Allow location'), findsOneWidget);
   });
 
@@ -59,6 +56,7 @@ void main() {
           name: 'Plumbing',
           slug: 'plumbing',
           description: 'Leaks and pipe repairs',
+          iconName: 'plumbing',
         ),
       ]),
     );
@@ -67,7 +65,7 @@ void main() {
     );
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.light,
+        theme: AppTheme.dark,
         home: Scaffold(
           body: ServiceDiscoveryScreen(
             controller: discovery,
@@ -78,9 +76,16 @@ void main() {
     );
     await tester.pump();
 
+    await tester.scrollUntilVisible(
+      find.text('Plumbing'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('Plumbing'), findsOneWidget);
     expect(find.bySemanticsLabel('Plumbing service category'), findsOneWidget);
     expect(find.text('Leaks and pipe repairs'), findsOneWidget);
+    expect(find.byIcon(Icons.plumbing_outlined), findsOneWidget);
+    expect(find.byType(Card), findsNWidgets(3));
   });
 
   testWidgets('shows offline recovery and retries', (tester) async {
@@ -94,7 +99,7 @@ void main() {
     );
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.light,
+        theme: AppTheme.dark,
         home: Scaffold(
           body: ServiceDiscoveryScreen(
             controller: discovery,

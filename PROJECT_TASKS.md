@@ -31,18 +31,18 @@ Only these statuses are valid. A task cannot be completed while required validat
 
 # Project Progress
 
-Total Tasks: 73
-Completed: 46
-In Progress: 0
+Total Tasks: 83
+Completed: 54
+In Progress: 1
 Blocked: 0
-Pending: 27
+Pending: 29
 Cancelled: 0
 Current Phase: Phase 7 — Real-Time & Location
 Next Recommended Task: FN-046 — Initialize Admin Web Application
 
 # Current Work
 
-Active Tasks: None.
+Active Tasks: None
 
 # Decision Log
 
@@ -2556,3 +2556,477 @@ Completed By:
 Completed Date:
 Commit:
 PR:
+
+## FN-074 — Audit and Polish Mobile UX and Local System Health
+Status: ✅ Completed
+Priority: P1 — High
+Area: Mobile / Backend / Quality
+Depends On: FN-034, FN-045, FN-073
+Branch: fix/mobile-ui-system-audit
+
+### Objective
+Validate the implemented mobile and backend foundations together, identify what works and what fails, and correct the highest-impact phone UI/UX defects visible in current customer flows.
+
+### Scope
+- Run the complete available Flutter and backend static, unit, widget, integration, build, and local runtime smoke checks that the workstation supports.
+- Audit current customer mobile screens at phone size, using supplied and newly captured screenshots as evidence.
+- Remove internal implementation language from customer-facing UI and improve hierarchy, density, spacing, actions, loading, empty, and offline states where findings are verified.
+- Add or update focused tests for changed behavior and record follow-up tasks for issues outside this task's bounded implementation scope.
+
+### Do Not
+- Do not implement roadmap features, scaffold the admin application, deploy services, or connect to production data or credentials.
+- Do not redesign backend contracts or introduce a new framework, hosted dependency, or database.
+
+### Acceptance Criteria
+- [x] Mobile analysis and tests pass, and the application builds for an available local target.
+- [x] Backend lint, unit tests, integration tests that can run safely, and build pass.
+- [x] Available services start locally and receive non-destructive smoke checks, with unsupported prerequisites documented precisely.
+- [x] High-impact customer phone UI findings are fixed and covered by focused widget tests.
+- [x] Final screenshots and an audit report clearly distinguish working, failing, fixed, and deferred areas.
+
+### Validation
+```bash
+cd mobile && flutter analyze && flutter test
+cd backend && npm run lint && npm test -- --runInBand && npm run build
+git diff --check
+```
+
+### Files / Areas
+```text
+mobile/lib/ mobile/test/ backend/ docs/quality/ PROJECT_TASKS.md
+```
+
+### Notes
+Completed a physical Android 16 walkthrough against an isolated local PostgreSQL/Redis-backed API. Fixed Home density and category recognition, removed internal task language, repaired isolated integration testing and suite order safety, and aligned backend runtime scripts with the monorepo build output. Mobile analysis and 40 tests, backend lint, 197 unit tests, 38 integration tests, build, migrations, health/readiness, and live category API checks passed. Full evidence and deferred scope are recorded in `docs/quality/mobile-system-audit-2026-08-13.md`. Existing untracked root screenshots remain user-owned and unchanged.
+
+### Completion Record
+Completed By: Codex
+Completed Date: 2026-08-13
+Commit: b8bf252
+PR: Pending
+
+## FN-075 — Implement Customer Help and Support Experience
+Status: In Progress
+Priority: P2 — Medium
+Area: Mobile / Backend / Support
+Depends On: FN-027, FN-034
+Branch: feat/customer-help-support
+
+### Objective
+Replace the honest Help preview state with a usable, safe customer support experience.
+
+### Scope
+- Define supported contact and self-service paths, case ownership, response expectations, and safe emergency escalation copy.
+- Implement authenticated customer Help UI and the minimum backend contract approved for support requests.
+- Cover loading, offline, unauthenticated, submission, duplicate, and failure states accessibly.
+
+### Do Not
+- Do not present Help as an emergency-response service or promise unavailable response times.
+- Do not add a hosted support vendor without explicit approval and an ADR where required.
+
+### Acceptance Criteria
+- [ ] Customers can understand available support options and submit or follow the approved support flow.
+- [ ] Emergency guidance is clearly separated from ordinary support and uses approved safety language.
+- [ ] Authorization, abuse, privacy, accessibility, offline, and failure tests pass.
+
+### Validation
+```bash
+cd mobile && flutter analyze && flutter test
+cd backend && npm run lint && npm test -- --runInBand && npm run build
+```
+
+### Files / Areas
+```text
+mobile/lib/features/support/ mobile/test/ backend/src/support/ backend/test/ docs/product/ docs/security/
+```
+
+### Notes
+Discovered during FN-074 live-device QA. Until this task is complete, the Help tab must remain an honest preview state with immediate-danger guidance.
+
+### Completion Record
+Completed By:
+Completed Date:
+Commit:
+PR:
+
+## FN-076 — Complete Customer Sign-In and Service Request Journey
+Status: ✅ Completed
+Priority: P0 — Critical
+Area: Mobile / Backend / Quality
+Depends On: FN-026, FN-037, FN-042, FN-074
+Branch: feat/customer-core-journey
+
+### Objective
+Turn the current mobile foundation into a usable customer journey: authenticate, choose a service, describe the problem, confirm location, create a request, and see the resulting booking state in a professional phone UI.
+
+### Scope
+- Add polished customer sign-in and registration screens with validation, loading, failure, session restore, and sign-out behavior.
+- Make service categories actionable and implement the supported request flow through the existing authenticated booking contract.
+- Replace the static bookings preview with authenticated booking history and clear requested/matching states.
+- Add focused API, controller, and widget coverage and verify the journey against the isolated local backend on a phone-sized target.
+
+### Do Not
+- Do not claim that a customer selected a provider when the booking contract only supports provider acceptance after request creation.
+- Do not change matching policy, expose provider coordinates, add payment, or introduce a new framework, vendor, or production dependency.
+- Do not implement unrelated provider, admin, support, or live-tracking roadmap scope.
+
+### Acceptance Criteria
+- [x] A new customer can register, verify email, an existing customer can sign in, a valid session restores, and sign-out returns to authentication.
+- [x] Selecting a service opens a usable request form and a successful submission creates exactly one authenticated booking.
+- [x] Customers can see their booking history and understand requested, matching, empty, loading, offline, and failure states.
+- [x] The changed phone UI follows `DESIGN.md`, is accessible at supported text scale, and has no inert primary controls.
+- [x] Mobile analysis/tests and relevant backend checks pass; a local end-to-end smoke test is recorded.
+
+### Validation
+```bash
+cd mobile && flutter analyze && flutter test
+cd backend && npm run lint && npm test -- --runInBand && npm run build
+git diff --check
+```
+
+### Files / Areas
+```text
+mobile/lib/app/ mobile/lib/auth/ mobile/lib/features/services/ mobile/lib/features/bookings/ mobile/test/ backend/src/auth/ backend/src/bookings/ backend/test/ docs/quality/ PROJECT_TASKS.md
+```
+
+### Notes
+Completed the connected customer journey across native and web targets. Added authentication, registration, required email verification/resend, secure native session restore, web-safe session behavior, actionable services, location-backed idempotent requests, and API-backed booking history. Added strict configured browser CORS support and Flutter Web host files after the user explicitly selected browser QA. Flutter analysis, 43 tests, web build and Android debug build passed; backend lint, 44 suites / 198 tests, build, and isolated registration/login/booking/history smoke passed. Local SMTP was unavailable by design, so delivery failure/retry behavior was verified while backend OTP behavior remains covered by tests. Full evidence: `docs/quality/customer-core-journey-browser-qa-2026-08-13.md`.
+
+### Completion Record
+Completed By: Codex
+Completed Date: 2026-08-13
+Commit: 0a37340
+PR: Pending
+
+## FN-077 — Elevate Customer Mobile Visual Design
+Status: ✅ Completed
+Priority: P1 — High
+Area: Mobile / Design / Quality
+Depends On: FN-074, FN-076
+Branch: feat/customer-core-journey
+
+### Objective
+Turn the working customer journey into a polished, premium-feeling experience across phone and browser layouts while preserving its existing behavior, accessibility, and honest product states.
+
+### Scope
+- Strengthen visual hierarchy, responsive content width, page composition, typography, and calm blue-led surface treatment across authentication, Home, request, bookings, Help preview, and Profile.
+- Refine shared mobile design-system components and tokens only where the approved `DESIGN.md` language already permits the change.
+- Verify the refreshed journey at phone and desktop browser sizes and keep newly captured review screenshots outside Git.
+
+### Do Not
+- Do not change backend contracts, booking/authentication behavior, provider matching, or roadmap feature scope.
+- Do not add gradients, glassmorphism, decorative clutter, a new font/icon library, random colors, hosted dependencies, or committed QA screenshots.
+- Do not turn the Help preview into a support implementation or imply unavailable functionality.
+
+### Acceptance Criteria
+- [x] Authentication, Home, service request, bookings, Help preview, and Profile share a deliberate premium visual hierarchy and responsive content frame.
+- [x] The approved semantic palette, typography, spacing, radii, component states, touch targets, and accessibility requirements remain intact.
+- [x] Existing customer journey widget tests pass and focused design-system or screen assertions cover changed behavior where appropriate.
+- [x] Flutter analysis, Flutter tests, web build, desktop/phone browser visual checks, and `git diff --check` pass.
+- [x] No newly captured review screenshot is committed.
+
+### Validation
+```bash
+cd mobile && flutter analyze && flutter test && flutter build web
+git diff --check
+```
+
+### Files / Areas
+```text
+mobile/lib/design_system/ mobile/lib/auth/ mobile/lib/app/ mobile/lib/features/ mobile/test/ PROJECT_TASKS.md
+```
+
+### Notes
+The user explicitly requested that this follow-up remain on `feat/customer-core-journey`. Added a shared responsive page frame and brand/header patterns; refined authentication, Home, request, bookings, Help preview, and Profile hierarchy using the approved navy, blue, neutral, spacing, radius, and shadow tokens. Flutter analysis, all 43 tests, web production build, focused narrow-screen accessibility tests, and temporary phone/desktop Chrome checks passed. Review screenshots remained in the operating-system temporary directory and were not committed. Existing root screenshots were restored after completion.
+
+### Completion Record
+Completed By: Codex
+Completed Date: 2026-08-13
+Commit: b49aec7
+PR: Pending
+
+## FN-078 — Run Connected Android Customer Journey QA
+Status: ✅ Completed
+Priority: P0 — Critical
+Area: Mobile / Backend / Quality
+Depends On: FN-076, FN-077
+Branch: feat/customer-core-journey
+
+### Objective
+Deploy the current customer application to the connected Android phone and verify the available authentication, discovery, request, booking, Help preview, Profile, navigation, failure, and backend paths as a real user.
+
+### Scope
+- Start the isolated local backend dependencies and API required by the phone build.
+- Install and run the current Flutter application on the connected Android 16 device.
+- Exercise every implemented customer screen and primary interaction, record reproducible issues, fix standard-tier findings, and re-test.
+- Keep device screenshots and transient QA artifacts outside Git and restore the user's existing screenshots afterward.
+
+### Do Not
+- Do not use production credentials, services, or data.
+- Do not implement pending roadmap features such as full Help, payments, provider selection, or live tracking.
+- Do not commit screenshots or expose test credentials in reports or logs.
+
+### Acceptance Criteria
+- [x] The current app installs and starts on device `00162358M004276`.
+- [x] Local backend health and required customer endpoints are available to the device.
+- [x] Authentication, Home, service request, bookings, Help preview, Profile, sign-out, validation, and recoverable failure states are tested.
+- [x] Every verified critical, high, and medium issue is fixed and re-tested, or recorded truthfully as blocked/deferred.
+- [x] Relevant Flutter/backend checks pass and no screenshots are committed.
+
+### Validation
+```bash
+cd mobile && flutter analyze && flutter test && flutter build apk --debug
+cd backend && npm run lint && npm test -- --runInBand && npm run build
+git diff --check
+```
+
+### Files / Areas
+```text
+mobile/ backend/ docs/quality/ PROJECT_TASKS.md
+```
+
+### Notes
+Deployed the branch APK to the connected A059 Android 16 phone and tested the implemented customer journey against the isolated local backend over USB forwarding. Valid and invalid login, location state, four service categories, request validation and creation, booking history, Help safety copy, Profile save, navigation, and sign-out passed. No reproducible critical, high, or medium issue required a code change. Flutter analysis and 43 tests passed; Android debug build passed; backend lint, 44 suites / 198 tests, and build passed. Text-only evidence: `docs/quality/connected-android-customer-qa-2026-08-13.md`. Temporary screenshots were not committed and the user's root screenshots were restored.
+
+### Completion Record
+Completed By: Codex
+Completed Date: 2026-08-13
+Commit: 90692fc
+PR: Pending
+
+## FN-079 — Reconcile Premium Mobile Design Direction and Screen Inventory
+Status: ✅ Completed
+Priority: P1 — High
+Area: Mobile / Design / Product
+Depends On: FN-010, FN-014, FN-072, FN-078
+Branch: feat/customer-core-journey
+
+### Objective
+Turn the approved premium dark, emerald, map-first visual direction into durable FixNow design guidance and an evidence-based inventory of every customer and provider mobile screen.
+
+### Scope
+- Audit mobile routes, screens, design tokens, navigation, models, API contracts, feature modules, and relevant product/privacy architecture.
+- Reconcile `DESIGN.md` with the approved premium direction while preserving safety, privacy, accessibility, and honest-state requirements.
+- Create `docs/design/screen-inventory.md` with routes, implementation/design status, dependencies, and notes.
+- Record cohesive follow-up tasks for implementation gaps without presenting unavailable product functionality as complete.
+
+### Do Not
+- Do not redesign application code or implement multiple product flows in this documentation task.
+- Do not mark backend-dependent screens complete because a visual concept exists.
+- Do not add proprietary assets, unsupported features, hosted dependencies, or committed screenshots.
+
+### Acceptance Criteria
+- [x] `DESIGN.md` defines the approved shared customer/provider premium dark system and semantic emerald palette.
+- [x] The screen inventory classifies all required mobile screens as exists/good, needs redesign, partial, missing, blocked, or future with evidence.
+- [x] Missing implementation work is represented by dependency-aware pending tasks.
+- [x] Documentation links and formatting validate, and user-owned screenshots remain untracked.
+
+### Validation
+```bash
+git diff --check
+git status --short
+```
+
+### Files / Areas
+```text
+DESIGN.md docs/design/ PROJECT_TASKS.md mobile/lib/ backend/src/ shared/
+```
+
+### Notes
+The user explicitly requested that the premium reconstruction remain on `feat/customer-core-journey`. Audited the Flutter shell, routes, screens, design system, feature models/controllers, backend controllers, shared booking contracts, product requirements, and privacy rules. `DESIGN.md` now defines the approved premium dark/emerald direction and `docs/design/screen-inventory.md` records current coverage and honest dependencies. Implementation is split into FN-080 through FN-083.
+
+### Completion Record
+Completed By: Codex
+Completed Date: 2026-08-13
+Commit: 531ea44
+PR: Pending
+
+## FN-080 — Implement Premium Dark Mobile Design Foundation
+Status: ✅ Completed
+Priority: P1 — High
+Area: Mobile / Design System
+Depends On: FN-079
+Branch: feat/customer-core-journey
+
+### Objective
+Migrate the Flutter design tokens, theme, shared states, components, motion, and role-aware navigation foundation to the approved premium dark emerald system.
+
+### Scope
+- Update existing centralized tokens and theme; do not create a parallel design system.
+- Implement or consolidate reusable buttons, inputs, cards, badges, navigation, loading, empty, error, and offline patterns.
+- Preserve accessibility, safe areas, text scaling, keyboard behavior, and existing functionality.
+
+### Do Not
+- Do not redesign feature screens beyond the minimum migration needed to keep them functional.
+- Do not add a new icon library, hosted dependency, proprietary asset, or unsupported feature.
+
+### Acceptance Criteria
+- [x] Semantic dark tokens cover every role defined by `DESIGN.md` with contrast evidence.
+- [x] Shared components and customer/provider navigation use one coherent visual grammar.
+- [x] Small/standard/large phone, keyboard, text-scale, reduced-motion, and state tests pass.
+
+### Validation
+```bash
+cd mobile && flutter analyze && flutter test
+git diff --check
+```
+
+### Files / Areas
+```text
+mobile/lib/design_system/ mobile/lib/app/ mobile/test/ DESIGN.md
+```
+
+### Notes
+Implemented the premium dark default theme with deep neutral surfaces, emerald interaction states, separate danger/emergency/verified/rating semantics, elevated surfaces, motion tokens, responsive button behavior, card variants, and reusable empty, error, offline, and skeleton states. Existing customer/provider navigation metadata and feature behavior remain unchanged. Flutter analysis passed, all 45 tests passed, and the web production build plus Wasm dry run succeeded. Contrast assertions cover primary text, secondary text, and primary CTA content; adaptive tests cover 320, 390, and 600 logical-pixel widths at 200% text scale with reduced motion. The adaptive test exposed a shared long-label overflow, which was fixed by making button content wrap safely.
+
+### Completion Record
+Completed By: Codex
+Completed Date: 2026-08-13
+Commit: 8ddc582
+PR: Pending
+
+## FN-081 — Implement Premium Role-Aware Authentication and Onboarding Entry
+Status: ✅ Completed
+Priority: P1 — High
+Area: Mobile / Authentication / Provider
+Depends On: FN-025, FN-026, FN-080
+Branch: feat/customer-core-journey
+
+### Objective
+Implement welcome, role selection, premium shared sign-in, customer registration, email verification, and the supported provider-registration entry without inventing recovery or social authentication.
+
+### Scope
+- Add a concise welcome screen and explicit customer/provider role selection.
+- Preserve customer email/password registration/login and email OTP verification.
+- Connect provider registration to the existing backend contract and route provider accounts into honest onboarding state.
+
+### Do Not
+- Do not present phone OTP, social login, forgot-password recovery, or provider approval as available without backend support.
+
+### Acceptance Criteria
+- [x] Customer and provider entry paths are visually related, accessible, and route by real account state.
+- [x] Keyboard, validation, loading, failure, verification, session restore, and sign-out tests pass.
+- [x] No inert or falsely enabled authentication action is shown.
+
+### Validation
+```bash
+cd mobile && flutter analyze && flutter test
+cd backend && npm run lint && npm test -- --runInBand && npm run build
+```
+
+### Files / Areas
+```text
+mobile/lib/auth/ mobile/lib/app/ mobile/test/ backend/src/auth/ backend/src/providers/
+```
+
+### Notes
+Implemented premium Welcome, registration/sign-in intent, customer/provider role selection, shared credential form, and the existing email OTP flow. Authentication responses now include the server-resolved role; sessions persist it across refresh and relaunch. Added provider login routing and corrected login role resolution from persisted assignments. Verified provider applicants reach an honest profile-incomplete handoff stating that setup and verification are required before receiving work; FN-083 owns the full onboarding. Forgot-password, social login, and phone OTP remain absent because no approved backend support exists. Flutter analysis and 51 tests passed; backend lint, 44 suites / 200 tests, and build passed.
+
+### Completion Record
+Completed By: Codex
+Completed Date: 2026-08-13
+Commit: 49baaa8
+PR: Pending
+
+## FN-082 — Reconstruct Premium Customer Core and Tracking Experience
+Status: ✅ Completed
+Priority: P1 — High
+Area: Mobile / Customer / Design
+Depends On: FN-045, FN-080, FN-081
+Branch: feat/customer-core-journey
+
+### Objective
+Apply the premium system to the supported customer journey from discovery through request, matching, booking detail, live status, profile, and honest support.
+
+### Scope
+- Reconstruct Home, services, request, location consent, matching, booking list/detail, tracking, Profile, and Help using actual contracts.
+- Wire existing authorized tracking state into reachable booking navigation and use a map-first layout only where map data and SDK configuration are available.
+- Cover loading, empty, offline, error, keyboard, responsive, and accessibility states.
+
+### Do Not
+- Do not fabricate nearby providers, price, payments, chat, reviews, saved addresses, emergency response, or unsupported ETA.
+
+### Acceptance Criteria
+- [x] The complete supported customer flow is reachable and visually coherent.
+- [x] Booking actions and tracking labels follow the authoritative lifecycle and freshness rules.
+- [x] Phone/device visual QA and relevant Flutter/backend checks pass with screenshots outside Git.
+
+### Validation
+```bash
+cd mobile && flutter analyze && flutter test
+cd backend && npm run lint && npm test -- --runInBand && npm run build
+git diff --check
+```
+
+### Files / Areas
+```text
+mobile/lib/features/ mobile/lib/app/ mobile/test/ docs/quality/
+```
+
+### Notes
+Provider results/profile remain blocked until a customer-safe read model is defined.
+
+Implemented a premium discovery header, trust composition, request/matching surface,
+reachable booking-detail flow, and customer account presentation. Tracking is map-ready
+but intentionally renders an honest unavailable state until the API supplies an authorized,
+fresh provider position and the map SDK is configured. Android cleartext access is enabled
+only in the debug manifest for USB-local API QA. Physical-device evidence is documented in
+`docs/quality/connected-android-premium-customer-qa-2026-08-14.md`; screenshots remain outside Git.
+
+### Completion Record
+Completed By: Codex
+Completed Date: 2026-08-14
+Commit: d28a7b4
+PR: Pending
+
+## FN-083 — Implement Premium Provider Mobile Core
+Status: ✅ Completed
+Priority: P1 — High
+Area: Mobile / Provider / Design
+Depends On: FN-030, FN-031, FN-032, FN-033, FN-041, FN-042, FN-080, FN-081
+Branch: feat/customer-core-journey
+
+### Objective
+Implement the backend-supported provider onboarding, verification, availability, profile, active-job lifecycle, and history as one coherent role-specific mobile experience.
+
+### Scope
+- Implement provider profile, skills, service area, private document, review, and verification-state screens.
+- Implement provider shell, availability/schedule, active job lifecycle controls, history, and profile management.
+- Enforce role, ownership, verification, privacy, and legal transition constraints in UI and API integration.
+
+### Do Not
+- Do not display fake earnings, reviews, notifications, customer precision, or incoming-job data unsupported by a provider job-feed contract.
+
+### Acceptance Criteria
+- [x] Provider onboarding truthfully covers every backend-supported verification state and recovery action.
+- [x] Approved providers can manage availability and valid assigned-booking transitions without accessing unrelated customer data.
+- [x] Provider UI shares the customer design system and passes responsive, accessibility, security-boundary, Flutter, and backend checks.
+
+### Validation
+```bash
+cd mobile && flutter analyze && flutter test
+cd backend && npm run lint && npm test -- --runInBand && npm run build
+git diff --check
+```
+
+### Files / Areas
+```text
+mobile/lib/features/provider/ mobile/lib/app/ mobile/test/ backend/src/providers/ backend/src/bookings/
+```
+
+### Notes
+Incoming job feed, provider earnings, ratings, and push notifications remain separate dependency-backed work.
+
+Implemented server-resolved `verified_provider` authentication, an own-application read contract, premium status-aware
+applicant onboarding, editable professional profile/service area, service skills, private document upload/listing, and
+the approved-provider shell. Approved providers can manage online status, a conservative weekday schedule, valid
+assigned-job transitions, history, and profile settings without exposing unrelated customer or document storage data.
+The backend intentionally has no applicant self-submit transition; review remains reviewer-controlled. Connected A059
+QA verified provider sign-in, profile-incomplete recovery, and the professional setup screen at 1080x2392 without
+overflow. Screenshots remain outside Git under the temporary QA directory.
+
+### Completion Record
+Completed By: Codex
+Completed Date: 2026-08-14
+Commit: fd3c885
+PR: Pending

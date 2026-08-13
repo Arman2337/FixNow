@@ -1,7 +1,9 @@
+import 'package:fixnow_mobile/design_system/app_colors.dart';
+import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:flutter/material.dart';
 
-enum FixButtonVariant { primary, secondary, tertiary }
+enum FixButtonVariant { primary, secondary, tertiary, destructive, emergency }
 
 class FixButton extends StatelessWidget {
   const FixButton({
@@ -22,21 +24,20 @@ class FixButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final callback = isLoading ? null : onPressed;
-    final child = Row(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.center,
+    final child = Wrap(
+      alignment: WrapAlignment.center,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: AppSpacing.sm,
+      runSpacing: AppSpacing.xs,
       children: [
-        if (isLoading) ...[
+        if (isLoading)
           const SizedBox.square(
             dimension: 18,
             child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-        ] else if (icon case final value?) ...[
+          )
+        else if (icon case final value?)
           Icon(value, size: 20),
-          const SizedBox(width: AppSpacing.sm),
-        ],
-        Text(label),
+        Text(label, textAlign: TextAlign.center),
       ],
     );
 
@@ -53,6 +54,28 @@ class FixButton extends StatelessWidget {
           child: child,
         ),
         FixButtonVariant.tertiary => TextButton(
+          onPressed: callback,
+          child: child,
+        ),
+        FixButtonVariant.destructive => OutlinedButton(
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AppColors.danger,
+            side: const BorderSide(color: AppColors.danger),
+            shape: const RoundedRectangleBorder(
+              borderRadius: AppRadius.buttonBorder,
+            ),
+          ),
+          onPressed: callback,
+          child: child,
+        ),
+        FixButtonVariant.emergency => FilledButton(
+          style: FilledButton.styleFrom(
+            backgroundColor: AppColors.emergency,
+            foregroundColor: AppColors.textPrimary,
+            shape: const RoundedRectangleBorder(
+              borderRadius: AppRadius.buttonBorder,
+            ),
+          ),
           onPressed: callback,
           child: child,
         ),

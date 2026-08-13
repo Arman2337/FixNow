@@ -100,6 +100,60 @@ void main() {
     expect(transport.requests, hasLength(2));
   });
 
+  test('register creates and persists a customer session', () async {
+    final store = MemorySessionStore();
+    final transport = FakeTransport(
+      responses: [
+        _tokenResponse(),
+        const ApiResponse(statusCode: 202, body: {'accepted': true}),
+      ],
+    );
+    final controller = AuthController(
+      api: AuthApi(transport),
+      store: store,
+      now: () => now,
+    );
+
+    await controller.register(
+      email: ' new@example.com ',
+      password: 'long-password',
+    );
+
+    expect(controller.status, AuthStatus.verificationRequired);
+    expect(store.session?.accessToken, 'access');
+    expect(transport.requests.first.path, 'auth/customer/register');
+    expect(transport.requests.first.body?['email'], 'new@example.com');
+    expect(transport.requests.last.path, 'auth/otp/request');
+  });
+
+  test(
+    'provider registration uses provider endpoint and persists role',
+    () async {
+      final store = MemorySessionStore();
+      final transport = FakeTransport(
+        responses: [
+          _tokenResponse(role: 'provider_applicant'),
+          const ApiResponse(statusCode: 202, body: {'accepted': true}),
+        ],
+      );
+      final controller = AuthController(
+        api: AuthApi(transport),
+        store: store,
+        now: () => now,
+      );
+
+      await controller.register(
+        email: 'provider@example.com',
+        password: 'long-password',
+        role: AccountRole.providerApplicant,
+      );
+
+      expect(transport.requests.first.path, 'auth/provider/register');
+      expect(store.session?.role, AccountRole.providerApplicant);
+      expect(controller.status, AuthStatus.verificationRequired);
+    },
+  );
+
   test(
     'logout clears local session even when the network is offline',
     () async {
@@ -205,10 +259,12 @@ AuthSession _session(DateTime expiresAt) => AuthSession(
 ApiResponse _tokenResponse({
   String access = 'access',
   String refresh = 'refresh',
+  String role = 'customer',
 }) => ApiResponse(
   statusCode: 200,
   body: {
     'userId': 'user-1',
+    'role': role,
     'accessToken': access,
     'refreshToken': refresh,
     'tokenType': 'Bearer',

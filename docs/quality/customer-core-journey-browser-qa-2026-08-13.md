@@ -41,3 +41,18 @@ FN-076 now provides a connected customer journey across authentication, email ve
 - Local SMTP credentials are intentionally absent, so real email delivery cannot be completed locally. The UI accurately reports send failure and offers resend; verification APIs are covered by the backend suite.
 - The optional gstack browser daemon was unavailable because its local installation lacked Playwright. Installed Chrome and Flutter's browser compilation/runtime were used instead.
 - Headless Chrome command-line screenshots did not reliably wait for Flutter canvas paint on this Windows host, so blank captures were discarded rather than recorded as product evidence.
+
+## Full browser journey retest
+
+A fresh synthetic customer was created and activated only in the disposable local database. Visible Chrome was then driven through the complete customer journey using an isolated browser profile and browser geolocation override:
+
+1. Signed in successfully through the rendered form.
+2. Loaded Home and all four active service categories.
+3. Opened Plumbing and submitted “Kitchen sink is leaking underneath the cabinet.”
+4. Confirmed booking `8ded4f21-c09f-4317-8a5c-073701e48181` exactly once in API history with status `REQUESTED`.
+5. Confirmed Bookings presents the request as “Finding a provider / Matching.”
+6. Confirmed Help shows honest preview and immediate-danger guidance.
+7. Saved the display name “Browser QA Customer” and observed the success state.
+8. Signed out and returned to the login screen.
+
+Evidence screenshots are stored beside this report with the `fn-076-e2e-*` prefix. No production account, credential, coordinate, or service was used.

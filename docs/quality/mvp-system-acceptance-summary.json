@@ -1,0 +1,56 @@
+{
+  "audit_date": "2026-08-14",
+  "task_id": "FN-087",
+  "branch": "fix/local-booking-schema",
+  "verdict": "NOT_MVP_READY",
+  "customer_request": "PASS",
+  "provider_matching_backend": "PASS",
+  "provider_request_discovery": "FAIL",
+  "provider_acceptance": "PARTIAL",
+  "customer_realtime_update": "FAIL",
+  "live_tracking": "FAIL",
+  "booking_completion": "PARTIAL",
+  "customer_history": "PARTIAL",
+  "provider_history": "PARTIAL",
+  "automated_validation": {
+    "flutter_analyze": "PASS",
+    "flutter_tests": { "result": "PASS", "passed": 55, "failed": 0 },
+    "flutter_debug_apk": "PASS",
+    "backend_lint": "PASS",
+    "backend_unit_tests": { "result": "PASS", "suites": 46, "passed": 213, "failed": 0 },
+    "backend_integration_tests": { "result": "PASS", "suites": 9, "passed": 40, "failed": 0 },
+    "backend_build": "PASS",
+    "backend_e2e_smoke": { "result": "FAIL", "passed": 0, "failed": 1, "reason": "test harness does not install the configured WebSocket adapter" },
+    "admin_tests": { "result": "PASS", "files": 6, "passed": 11, "failed": 0 },
+    "admin_lint_typecheck_build": "PASS"
+  },
+  "core_blockers": [
+    { "id": "BLOCKER-01", "task_id": "FN-088", "name": "Provider incoming request discovery and acceptance path is missing" },
+    { "id": "BLOCKER-02", "task_id": "FN-089", "name": "Mobile realtime booking and live-location integration is missing" }
+  ],
+  "screens": {
+    "working_count": 18,
+    "working": [
+      "Welcome", "Role selection", "Registration/sign in", "Email verification", "Session restore",
+      "Customer Home/categories", "Location consent", "Service request", "Booking list", "Customer profile",
+      "Provider registration", "Provider verification status", "Provider Home", "Availability/schedule",
+      "Provider history", "Admin dashboard/shell", "Admin user management", "Admin service management"
+    ],
+    "partial_count": 6,
+    "partial": [
+      "Booking details", "Help", "Professional setup", "Active assigned job", "Provider profile", "Admin provider review"
+    ],
+    "missing_core_count": 4,
+    "missing_core": [
+      "Provider incoming requests", "Provider incoming request detail/acceptance",
+      "Customer realtime tracking/status synchronization", "Provider presence/consent/live-location controls"
+    ],
+    "future_count": 10,
+    "future": [
+      "Payments", "Invoices/refunds", "Provider earnings", "Ratings/reviews", "AI assistance",
+      "Push notifications", "Emergency dispatch", "Complaints", "Analytics", "Premium subscriptions"
+    ]
+  },
+  "follow_up_tasks": ["FN-088", "FN-089", "FN-090", "FN-091", "FN-092", "FN-093"],
+  "production_ready": false
+}

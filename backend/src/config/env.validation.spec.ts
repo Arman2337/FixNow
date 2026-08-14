@@ -35,6 +35,25 @@ describe('Environment Validation', () => {
     expect(result.NODE_ENV).toBe('development');
     expect(result.PORT).toBe(3000);
     expect(result.LOG_LEVEL).toBe('info');
+    expect(result.LOCAL_OTP_BYPASS_ENABLED).toBe('false');
+  });
+
+  it('allows the local OTP bypass only in development', () => {
+    const base = {
+      DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/test',
+      REDIS_URL: 'redis://localhost:6379',
+      JWT_SECRET: 'test-only-jwt-secret-at-least-32-characters',
+      OTP_SECRET: 'test-only-otp-secret-at-least-32-characters',
+      LOCAL_OTP_BYPASS_ENABLED: 'true',
+    };
+
+    expect(validate(base).LOCAL_OTP_BYPASS_ENABLED).toBe('true');
+    expect(() => validate({ ...base, NODE_ENV: 'test' })).toThrow(
+      'LOCAL_OTP_BYPASS_ENABLED may be enabled only in development',
+    );
+    expect(() => validate({ ...base, NODE_ENV: 'production' })).toThrow(
+      'LOCAL_OTP_BYPASS_ENABLED may be enabled only in development',
+    );
   });
 
   it('accepts loopback HTTP real-time origins only outside production', () => {

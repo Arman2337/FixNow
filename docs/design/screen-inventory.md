@@ -1,113 +1,77 @@
-# FixNow Mobile Screen Inventory
+# FixNow Screen Inventory
 
-Status: authoritative coverage audit
+Status: current-state acceptance inventory
 
-Last audited: 2026-08-14 (FN-083 provider core pass)
+Last audited: 2026-08-14 (FN-087)
 
-Branch: `feat/customer-core-journey`
+Branch: `fix/local-booking-schema`
 
-This inventory maps the required customer and provider mobile experience to implemented Flutter surfaces, backend contracts, product requirements, and tracked work. A screen is not considered implemented because a backend endpoint or visual placeholder exists.
+This inventory is based on inspected routes/source, automated checks, and a physical Android walkthrough. Backend capability alone does not make a screen complete.
 
 ## Classification
 
-- **EXISTS + GOOD:** implemented, reachable, validated, and aligned with the design direction.
-- **EXISTS + NEEDS REDESIGN:** implemented and functional, but still uses the superseded light/blue system.
-- **PARTIAL:** some UI or contract exists, but the complete experience is not reachable or supported.
-- **MISSING:** required and supported enough to implement, but no production mobile screen exists.
-- **BLOCKED:** the experience depends on unfinished product/backend work.
-- **FUTURE:** explicitly outside the approved current product scope.
+- **EXISTS + WORKING:** reachable and connected to the implemented backend behavior.
+- **EXISTS + PARTIAL:** reachable, but an advertised or required part is absent.
+- **EXISTS + BROKEN:** reachable but failed during acceptance testing.
+- **MISSING:** no usable screen exists for an in-scope capability.
+- **BLOCKED BY BACKEND:** UI completion needs a missing backend contract.
+- **FUTURE:** roadmap work outside the current MVP audit.
 
-Routes are conceptual because the current app uses a root state switch, an indexed shell, and direct `MaterialPageRoute` pushes rather than named routes.
+## Mobile inventory
 
-## Foundation and shared states
-
-| Screen | Role | Feature | Current status | Route | Implementation status | Design status | Dependencies | Notes |
+| Screen | Route | Role | Feature | Source file | Backend dependency | Reachable from UI? | Tested? | Result |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Session restore | Shared | Authentication | EXISTS + NEEDS REDESIGN | Root state | Functional | Generic fullscreen spinner | FN-036, FN-076 | Replace with branded, non-jumping launch state. |
-| Welcome / entry | Shared | Onboarding | EXISTS + GOOD | Root | Get Started and Sign In are implemented | Premium dark | FN-081 | Does not claim unsupported auth methods. |
-| Role selection | Shared | Onboarding | EXISTS + GOOD | Onboarding | Customer/provider selection implemented | Premium dark | FN-025, FN-081 | Registration and sign-in intents remain explicit. |
-| Global offline state | Shared | Reliability | PARTIAL | Overlay/contained | Feature-level handling exists | Inconsistent | FN-080 | Needs shared banner and stale-state language. |
-| Global error state | Shared | Reliability | PARTIAL | Reusable component | Screen-specific implementations | Inconsistent | FN-080 | Preserve input and provide recovery. |
-| Empty state system | Shared | Reliability | PARTIAL | Reusable component | Ad hoc cards | Inconsistent | FN-080 | Bookings, jobs, notifications, reviews, and earnings require dedicated variants. |
-| Skeleton/loading system | Shared | Reliability | MISSING | Reusable component | Mostly spinners/text | Required | FN-080 | Use shape-matched skeletons without fake data. |
+| Welcome | Root/welcome | Shared | Entry | `mobile/lib/auth/welcome_screen.dart` | None | Yes | Physical + widget | EXISTS + WORKING |
+| Role selection | Root/role | Shared | Entry | `mobile/lib/auth/role_selection_screen.dart` | None | Yes | Physical + widget | EXISTS + WORKING |
+| Registration/sign in | Root/auth | Shared | Authentication | `mobile/lib/auth/auth_screen.dart` | Customer/provider auth APIs | Yes | Physical customer + automated roles | EXISTS + WORKING |
+| Email verification | Root/verification | Shared | Authentication | `mobile/lib/auth/verification_screen.dart` | OTP APIs | Yes | Physical local-dev OTP + widget | EXISTS + WORKING |
+| Session restore | Root state | Shared | Authentication | `mobile/lib/app/app.dart` | Refresh/session store | Yes | Physical restart + unit | EXISTS + WORKING |
+| Customer home/categories | Shell/Home | Customer | Discovery | `mobile/lib/features/services/service_discovery_screen.dart` | Active categories | Yes | Physical + widget | EXISTS + WORKING |
+| Location consent | Home card/system dialog | Customer | Location | `mobile/lib/features/location/location_consent_card.dart` | Device location | Yes | Physical grant + denial widget | EXISTS + WORKING |
+| Service request | Push/request | Customer | Booking | `mobile/lib/features/bookings/service_request_screen.dart` | `POST /bookings` | Yes | Physical | EXISTS + WORKING |
+| Booking list | Shell/Bookings | Customer | Booking | `mobile/lib/features/bookings/customer_bookings_screen.dart` | `GET /bookings` | Yes | Physical + widget | EXISTS + WORKING |
+| Booking details | Push/bookings/:id | Customer | Booking | `mobile/lib/features/bookings/booking_detail_screen.dart` | Booking history projection | Yes | Physical/source | EXISTS + PARTIAL — no cancel action, provider read model, or live data |
+| Live tracking screen | Booking details → tracking | Customer | Realtime/location | `mobile/lib/features/tracking/booking_tracking_screen.dart`, `mobile/lib/features/realtime/realtime_client.dart` | HTTP reconciliation plus authenticated WebSocket projection updates | Yes for active assigned jobs | Widget + realtime client tests | EXISTS + PARTIAL — location is honestly unavailable until an authorized fresh point arrives |
+| Customer profile | Shell/Profile | Customer | Profile | `mobile/lib/features/profile/customer_profile_screen.dart` | Profile API | Yes | Physical + widget | EXISTS + WORKING |
+| Help | Shell/Help | Customer | Support | `mobile/lib/app/app_shell.dart` | Support contract absent/in progress | Yes | Physical | EXISTS + PARTIAL — honest preview (FN-075) |
+| Provider registration | Root/auth provider | Provider applicant | Authentication | `mobile/lib/auth/auth_screen.dart` | Provider auth API | Yes | Widget/source | EXISTS + WORKING |
+| Provider verification status | Root/provider onboarding | Provider applicant | Onboarding | `mobile/lib/features/provider/provider_onboarding_screen.dart` | Own application API | Yes by role | Widget/source | EXISTS + WORKING |
+| Professional setup | Push/provider setup | Provider applicant | Profile/skills/area/documents | `mobile/lib/features/provider/provider_setup_screen.dart` | Profile, skills, categories, private documents | Yes | Widget/source; prior physical evidence | EXISTS + PARTIAL — no applicant submit transition |
+| Provider home | Provider shell/Home | Verified provider | Workspace | `mobile/lib/features/provider/provider_home_screen.dart` | Profile, availability, assigned history | Yes by role | Widget/source | EXISTS + WORKING for assigned work |
+| Availability/schedule | Provider Home | Verified provider | Availability | `mobile/lib/features/provider/provider_home_screen.dart` | Availability API | Yes | Unit/source | EXISTS + WORKING |
+| Incoming requests | Provider Home | Verified provider | Matching | `mobile/lib/features/provider/provider_home_screen.dart` | Privacy-safe eligible-request feed with manual refresh | Yes by role | Widget + controller/repository tests | EXISTS + WORKING for eligible previews |
+| Incoming request detail/accept | Provider Home request card | Verified provider | Booking acceptance | `mobile/lib/features/provider/provider_home_screen.dart` | Request details and atomic accept action; conflict returns honest recovery state | Yes by role | Widget + controller/backend tests | EXISTS + WORKING |
+| Active assigned job | Provider shell/Active Job | Verified provider | Lifecycle | `mobile/lib/features/provider/provider_jobs_screen.dart` | Assigned `GET /bookings`, status command | Yes by role | Widget/integration backend | EXISTS + PARTIAL — unreachable through normal marketplace flow |
+| Provider history | Provider shell/History | Verified provider | Booking history | `mobile/lib/features/provider/provider_jobs_screen.dart` | Assigned `GET /bookings` | Yes by role | Widget/source | EXISTS + WORKING for assigned records |
+| Provider profile | Provider shell/Profile | Verified provider | Profile | `mobile/lib/features/provider/provider_onboarding_screen.dart` | Provider APIs | Yes by role | Widget/source | EXISTS + PARTIAL — onboarding composition reused |
+| Provider live-location controls | Provider Active Job | Verified provider | Location/realtime | `mobile/lib/features/provider/provider_jobs_screen.dart`, `mobile/lib/features/realtime/realtime_client.dart` | Consent and current-device location publication controls for `EN_ROUTE` jobs | Yes by role | Mobile source + backend policy tests | EXISTS + PARTIAL — device permission/error recovery remains platform-dependent |
+| Customer/provider cancellation | Booking details / Provider Active Job | Both | Booking | `mobile/lib/features/bookings/booking_detail_screen.dart`, `mobile/lib/features/provider/provider_jobs_screen.dart` | Reason, confirmation, expected-version command, loading/error recovery | Yes in permitted states | Widget + repository/controller tests | EXISTS + PARTIAL — backend remains authoritative for denial/reconciliation |
 
-## Authentication and onboarding
+## Admin inventory
 
-| Screen | Role | Feature | Current status | Route | Implementation status | Design status | Dependencies | Notes |
+| Screen | Route | Role | Feature | Source file | Backend dependency | Reachable from UI? | Tested? | Result |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Shared sign in | Shared | Authentication | EXISTS + GOOD | Root/auth | Customer/provider email/password works with persisted server-resolved role | Premium dark | FN-024, FN-026, FN-081 | Separate entry endpoints share server-side role resolution. |
-| Customer registration | Customer | Authentication | EXISTS + GOOD | Root/auth register mode | Email/password registration works | Premium dark | FN-024, FN-026, FN-081 | Collects only supported credentials. |
-| Email OTP verification | Shared | Authentication | EXISTS + NEEDS REDESIGN | Root/verification | Functional | Superseded light/blue | FN-026, FN-081 | Six-digit email code; do not label as phone verification. |
-| Forgot password | Shared | Authentication | BLOCKED | Auth | No recovery contract | Not designed | New backend recovery task | Must not expose an inert action. |
-| Provider registration entry | Provider | Authentication | EXISTS + GOOD | Onboarding/provider | Backend registration, email verification, persisted role, and status-aware handoff work | Premium dark | FN-025, FN-081, FN-083 | Routes applicants to onboarding and approved accounts to the provider shell. |
-| Provider personal/profile setup | Provider | Onboarding | MISSING | Provider onboarding | Backend profile contract exists | Required | FN-030, FN-083 | Collect only supported fields. |
-| Provider categories and skills | Provider | Onboarding | MISSING | Provider onboarding | Backend skills contract exists | Required | FN-029, FN-083 | Verification state is distinct from skill claims. |
-| Provider service area | Provider | Onboarding | MISSING | Provider onboarding | Coverage contract exists | Required | FN-030, FN-083 | Must follow location/privacy policy. |
-| Provider document upload | Provider | KYC | MISSING | Provider onboarding | Private upload contract exists | Required | FN-031, FN-083 | Never cache or expose documents as ordinary media. |
-| Provider onboarding review | Provider | Onboarding | MISSING | Provider onboarding | Backend fields exist | Required | FN-030, FN-031, FN-083 | Review before submission; no fake approval. |
-| Provider verification status | Provider | Verification | EXISTS + GOOD | Provider/status | All backend states and reviewer reason are rendered honestly | Premium dark | FN-032, FN-083 | Suspended is an account state, not an onboarding status. |
+| Admin login | `/login` | Staff | Authentication | `admin/src/app/login/page.tsx` | Admin auth | Yes | Unit/build | EXISTS + WORKING in source; live login blocked by no documented local staff fixture |
+| Dashboard/shell | `/` | Staff | Navigation | `admin/src/app/page.tsx` | Session | Yes | Unit/build | EXISTS + WORKING |
+| Provider queue | `/providers` | Reviewer | Verification | `admin/src/app/providers/page.tsx` | Admin applications API | Yes | Build/source | EXISTS + WORKING |
+| Provider review/documents | `/providers/:id` | Reviewer | Verification | `admin/src/app/providers/[applicationId]/page.tsx` | Claim/decision/private document APIs | Yes | Unit/build/backend tests | EXISTS + WORKING in source; live fixture unavailable |
+| Customer/user management | `/users`, `/users/:id` | Staff | Users | `admin/src/app/users/` | Minimized admin user APIs | Yes | Build/backend tests | EXISTS + WORKING |
+| Booking management | `/bookings`, `/bookings/:id` | Operations | Booking | `admin/src/app/bookings/` | Admin booking APIs | Yes | Build/source | EXISTS + WORKING |
+| Service management | `/services` | Catalog manager | Taxonomy | `admin/src/app/services/page.tsx` | Admin service APIs | Yes | Build/source | EXISTS + WORKING |
+| Complaints | None | Support/trust | Trust | None | Not implemented | No | Source audit | FUTURE / ROADMAP |
+| Analytics | None | Operations | Analytics | None | Not implemented | No | Source audit | FUTURE / ROADMAP |
 
-## Customer experience
+## Dead or unreachable implementation
 
-| Screen | Role | Feature | Current status | Route | Implementation status | Design status | Dependencies | Notes |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Customer home | Customer | Discovery | EXISTS + GOOD | Shell/Home | Categories and foreground location work | Premium dark | FN-037, FN-082 | Nearby-provider data is not currently returned, so the UI makes no proximity claims. |
-| Emergency entry | Customer | Safety | BLOCKED | Home/contextual | Not implemented | Future design only | FN-063, FN-064 | Must not imply emergency response before policy and dispatch exist. |
-| All services | Customer | Discovery | PARTIAL | Home | Active category grid exists | Needs redesign | FN-037, FN-082 | No separate search/detail taxonomy experience. |
-| Service search | Customer | Discovery | MISSING | Home/services/search | No mobile search | Required | FN-029, FN-082 | Search only backend-supported active categories. |
-| Service detail | Customer | Discovery | MISSING | Home/services/:id | Category endpoint exists | Required | FN-029, FN-082 | Scope/pricing content is limited by current contract. |
-| Problem entry | Customer | Booking | EXISTS + GOOD | Push/service-request | Text request works | Premium dark | FN-039, FN-082 | Voice/photo/AI are blocked; no fake controls are shown. |
-| AI-assisted problem entry | Customer | AI | BLOCKED | Request | No approved AI service | Future | FN-016, FN-056–FN-059 | Manual text remains the deterministic fallback. |
-| Location permission explanation | Customer | Location | PARTIAL | Home/request | Foreground consent card exists | Needs redesign | FN-037, FN-082 | Denial is handled; precise location remains purpose-bound. |
-| Choose/search/confirm address | Customer | Location | MISSING | Request/location | No address/map-pin contract | Required later | FN-082 plus address contract task | Do not infer saved addresses from profile. |
-| Saved addresses | Customer | Location | BLOCKED | Profile/addresses | No backend model | Not designed | New address-domain task | Must define retention and deletion first. |
-| Provider matching | Customer | Matching | PARTIAL | Bookings/requested/detail | Booking card and detail communicate matching | Premium honest state | FN-040, FN-082 | No dedicated timeout/search projection is exposed to mobile. |
-| Provider results | Customer | Marketplace | BLOCKED | Matching/results | Matching is backend-driven; no list contract | Not designed | New provider-discovery contract task | Do not fabricate ratings, ETA, distance, or prices. |
-| Provider profile | Customer | Marketplace | BLOCKED | Providers/:id | No customer-safe aggregate endpoint | Not designed | FN-054 plus new read-model task | Private provider data must remain hidden. |
-| Booking confirmation | Customer | Booking | PARTIAL | Service request | Explicit submit exists | Needs stronger review hierarchy | FN-039, FN-082 | No provider, price, payment, or cancellation-fee data exists. |
-| Booking list | Customer | Booking | EXISTS + GOOD | Shell/Bookings | API-backed history and detail navigation work | Premium dark | FN-042, FN-082 | Cards expose authoritative status and request metadata only. |
-| Booking details | Customer | Booking | EXISTS + GOOD | Bookings/:id | Reachable from booking cards | Premium dark | FN-042, FN-082 | Tracking/provider/price content remains explicitly unavailable until supplied by contracts. |
-| Active booking tracking | Customer | Tracking | PARTIAL | Booking detail | Reachable honest tracking handoff exists | Premium map-ready composition | FN-045, FN-082 | No map is rendered until an authorized current provider location and configured SDK are available. |
-| Tracking bottom sheet | Customer | Tracking | MISSING | Tracking overlay | Not implemented | Required | FN-045, FN-082 | Show only authorized and freshness-labelled data. |
-| Service in progress | Customer | Booking | PARTIAL | Booking detail/tracking | Status can be displayed | Not composed | FN-041, FN-082 | Backend lifecycle uses `IN_PROGRESS`. |
-| Service completion | Customer | Booking | MISSING | Booking completion | Completion state exists | Required | FN-041, FN-082 | Payment/invoice/warranty content remains blocked. |
-| Rating and review | Customer | Trust | BLOCKED | Booking/rating | Not implemented | Not designed | FN-054 | Rich rating categories require an approved contract. |
-| Customer profile hub | Customer | Account | EXISTS + GOOD | Shell/Profile | Basic name/phone edit and sign-out work | Premium dark | FN-028, FN-082 | Unsupported settings remain absent or explicitly unavailable. |
-| Customer support | Customer | Support | PARTIAL | Shell/Help | Honest preview only | Needs full IA | FN-075 | No operational channel may be claimed yet. |
-| Notifications | Customer | Notifications | BLOCKED | Contextual/profile | No push/mobile notification UI | Not designed | FN-061, FN-062 | Do not create fake unread items. |
-| Payment methods | Customer | Payments | BLOCKED | Profile/payments | No payment architecture | Not designed | FN-051–FN-053 | Never collect card data before the provider model is approved. |
-| Invoice/transaction detail | Customer | Payments | BLOCKED | Booking/payment | No financial records | Not designed | FN-052, FN-053 | Amounts and payment states must be authoritative. |
+- `BookingTrackingOverviewScreen` exists but is not used by production navigation; active booking tracking now routes through `BookingTrackingScreen`.
+- The provider can view only bookings already assigned to that provider. There is no incoming/unassigned request route.
 
-## Provider experience
+## MVP gaps
 
-| Screen | Role | Feature | Current status | Route | Implementation status | Design status | Dependencies | Notes |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Provider shell/navigation | Provider | Navigation | PARTIAL | Provider shell | Destination metadata exists; shell is never selected | Placeholder only | FN-083 | Role-aware bootstrap and provider controllers are missing. |
-| Provider home/dashboard | Provider | Jobs | MISSING | Provider/Home | Backend profile/availability exists | Required | FN-083 | Earnings metrics remain blocked by FN-053. |
-| Availability/schedule | Provider | Availability | MISSING | Provider/Home/availability | Backend get/update endpoints exist | Required | FN-033, FN-083 | Explicit Online/Busy/Offline sync and errors required. |
-| Incoming requests | Provider | Matching | MISSING | Provider/Jobs | Matching service exists; no provider inbox/read contract | Required later | New provider job-feed task | Show minimum customer area before acceptance. |
-| Request detail | Provider | Matching | MISSING | Provider/Jobs/:id | Acceptance command exists | Required later | FN-041 plus job-feed task | Acceptance must remain atomic. |
-| Provider active job | Provider | Booking | MISSING | Provider/Active Job | Status commands exist | Required | FN-041, FN-083 | Controls: accepted → en route → in progress → completed only. |
-| Provider navigation/tracking | Provider | Location | MISSING | Provider/Active Job/map | Location ingestion exists | Required later | FN-044, FN-083 | Consent, freshness, and background-location rules apply. |
-| Provider job completion | Provider | Booking | MISSING | Provider/Active Job/complete | Completion transition exists | Required | FN-041, FN-083 | Charges/payment are not yet supported. |
-| Provider history | Provider | Booking | MISSING | Provider/Jobs/history | Booking history endpoint is role-aware | Required | FN-042, FN-083 | Verify returned fields before exposing customer data. |
-| Provider earnings | Provider | Finance | BLOCKED | Provider/Earnings | No financial ledger | Not designed | FN-053 | Never display generated balances. |
-| Provider profile | Provider | Account | MISSING | Provider/Profile | Backend profile/skills endpoints exist | Required | FN-030, FN-083 | Reviews remain blocked by FN-054. |
-| Provider documents | Provider | KYC | MISSING | Provider/Profile/documents | Private document contract exists | Required | FN-031, FN-083 | Download/delete require explicit safe UX. |
-| Provider notifications | Provider | Notifications | BLOCKED | Provider/notifications | No push UI | Not designed | FN-061, FN-062 | Booking state remains authoritative. |
+- Core: provider incoming-request discovery and request acceptance UI/contract (FN-088).
+- Core: mobile realtime booking synchronization and provider live-location integration (FN-089).
+- Supporting: Help remains an honest preview while FN-075 is in progress.
 
-## Delivery order
+## Roadmap, not defects
 
-1. FN-080 — migrate tokens, theme, motion, shared components, and role-aware navigation foundation.
-2. FN-081 — implement premium welcome, role selection, shared auth, verification, and supported provider entry.
-3. FN-082 — reconstruct the currently supported customer core and wire honest tracking states.
-4. FN-083 — implement the backend-supported provider onboarding and operational mobile core.
-5. Existing roadmap tasks then unlock support, payments, ratings, notifications, emergency, and AI screens.
-
-## Evidence
-
-- Flutter composition: `mobile/lib/app/`, `mobile/lib/auth/`, `mobile/lib/features/`, and `mobile/lib/design_system/`.
-- Backend capability: `backend/src/auth/`, `backend/src/providers/`, `backend/src/bookings/`, `backend/src/location/`, `backend/src/realtime/`, and `backend/src/services/`.
-- Shared lifecycle contracts: `shared/booking-lifecycle.types.ts` and `shared/booking-tracking.types.ts`.
-- Product and privacy authority: `docs/product/requirements.md`, `docs/security/security-and-privacy-architecture.md`, and `docs/security/permission-matrix.md`.
-- Implementation authority: `PROJECT_TASKS.md`.
+Payments, invoices/refunds, earnings, ratings/reviews, AI/voice/image assistance, push notifications, emergency dispatch, complaints, and analytics remain future work.

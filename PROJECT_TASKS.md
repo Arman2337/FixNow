@@ -31,12 +31,12 @@ Only these statuses are valid. A task cannot be completed while required validat
 
 # Project Progress
 
-Total Tasks: 83
-Completed: 58
+Total Tasks: 93
+Completed: 67
 In Progress: 1
 Blocked: 0
-Pending: 25
-Cancelled: 0
+Pending: 24
+Cancelled: 1
 Current Phase: Phase 7 — Real-Time & Location
 Next Recommended Task: FN-050 — Implement Admin Complaints and Analytics Views
 
@@ -3033,3 +3033,467 @@ Completed By: Codex
 Completed Date: 2026-08-14
 Commit: fd3c885
 PR: Pending
+
+## FN-084 — Add Explicit Local OTP Test Code
+Status: ✅ Completed
+Priority: P2 — Medium
+Area: Backend / Mobile / Authentication
+Depends On: FN-026, FN-081
+Branch: feat/local-otp-bypass
+
+### Objective
+Allow local developers using temporary email addresses to complete email verification with `000000` without weakening non-development authentication.
+
+### Scope
+- Add an explicit local-only backend configuration flag for the fixed development OTP.
+- Fail startup if the flag is enabled outside the development environment.
+- Preserve normal OTP challenge, expiry, consumption, account activation, and audit behavior.
+- Show the fixed code on the verification screen only in a build explicitly configured for local bypass testing.
+
+### Do Not
+- Do not enable the bypass by default or allow it in test, staging, or production environments.
+- Do not bypass the requirement for a current, unexpired OTP challenge.
+- Do not log verification codes or weaken normal attempt limits when the bypass is disabled.
+
+### Acceptance Criteria
+- [x] `000000` verifies a pending account only when both development environment and the explicit local bypass flag are active.
+- [x] Configuration validation rejects the bypass in every non-development environment.
+- [x] Normal OTP verification behavior remains unchanged when the flag is disabled.
+- [x] The mobile UI advertises `000000` only in an explicitly configured local test build.
+
+### Validation
+```bash
+cd backend && npm run lint && npm test -- --runInBand && npm run build
+cd mobile && flutter analyze && flutter test
+git diff --check
+```
+
+### Files / Areas
+```text
+backend/src/auth/ backend/src/config/ backend/test/ mobile/lib/auth/ mobile/test/ .env.example backend/README.md mobile/README.md PROJECT_TASKS.md
+```
+
+### Notes
+Requested for connected-device testing with temporary email addresses that cannot receive SMTP messages.
+
+Implemented an explicit, default-off local flag that is rejected outside development. In local bypass mode the backend creates the normal expiring, one-time challenge without contacting SMTP, accepts `000000`, and records distinct minimal audit events. The mobile hint is separately compile-time gated and suppressed outside development. Backend lint, 213 unit tests, build, Flutter analysis, 55 Flutter tests, debug APK build, and `git diff --check` passed. A live synthetic flow returned registration 201, challenge 202, verification 204, and post-verification login 200. The PostgreSQL integration spec was extended for the bypass and expiry boundary but was not executed because the active local container is the development database rather than the repository-mandated isolated `fixnow_test` database.
+
+### Completion Record
+Completed By: Codex
+Completed Date: 2026-08-14
+Commit: Pending
+PR: Pending
+
+## FN-085 — Handle Unavailable Booking Location Fixes
+Status: ❌ Cancelled
+Priority: P1 — High
+Area: Mobile / Bookings / Location
+Depends On: FN-037, FN-042, FN-082
+Branch: fix/mobile-booking-location-fallback
+
+### Objective
+Prevent a temporary high-accuracy location failure from being mislabeled as a booking API failure and allow safe request creation when a sufficiently recent, accurate device position exists.
+
+### Scope
+- Isolate booking location acquisition behind a testable boundary.
+- Prefer a fresh current position and use a tightly bounded last-known fallback only when current acquisition is unavailable.
+- Present actionable location-specific errors when neither position is safe to use.
+- Reproduce and re-test the connected Android booking flow.
+
+### Do Not
+- Do not submit stale or unreasonably inaccurate coordinates.
+- Do not bypass foreground location permission or location-service checks.
+- Do not expose raw coordinates in logs or UI errors.
+
+### Acceptance Criteria
+- [ ] Booking submission uses a current position when available.
+- [ ] A recent, reasonably accurate last-known position can recover a temporary provider failure.
+- [ ] Missing, stale, or inaccurate position data produces truthful location guidance and no API call.
+- [ ] Mobile analysis, tests, debug APK build, and connected-phone booking verification pass.
+
+### Validation
+```bash
+cd mobile && flutter analyze && flutter test && flutter build apk --debug
+git diff --check
+```
+
+### Files / Areas
+```text
+mobile/lib/features/bookings/ mobile/test/ PROJECT_TASKS.md
+```
+
+### Notes
+Discovered on connected A059 Android QA: permission and location services were enabled, but the fused provider delivered zero high-accuracy locations in the 15-second request window; the backend received no booking request.
+
+Cancelled after an attached-backend reproduction proved the phone did submit `POST /api/v1/bookings`; PostgreSQL returned `relation "bookings" does not exist`. The speculative location changes were removed without altering the established location behavior.
+
+### Completion Record
+Completed By: Codex
+Completed Date: 2026-08-14
+Commit:
+PR:
+
+## FN-086 — Apply Missing Local Booking Migration and Verify
+Status: ✅ Completed
+Priority: P0 — Critical
+Area: Backend / Local Development / Quality
+Depends On: FN-038, FN-082
+Branch: fix/local-booking-schema
+
+### Objective
+Restore connected-device booking creation by bringing the isolated local development database schema up to the repository migration baseline.
+
+### Scope
+- Confirm the missing migration against the configured loopback development database.
+- Apply pending repository migrations without resetting or deleting local data.
+- Restart the local API and re-test the existing synthetic booking request from the connected phone.
+
+### Do Not
+- Do not run migrations against shared, staging, or production databases.
+- Do not drop, reset, or delete the local database or volumes.
+- Do not expose tokens, coordinates, or customer data in evidence.
+
+### Acceptance Criteria
+- [x] TypeORM reports all repository migrations applied to the configured local development database.
+- [x] The local backend readiness endpoint remains healthy after migration.
+- [x] The connected phone creates a booking and displays it in the customer flow.
+
+### Validation
+```bash
+cd backend && node -r ts-node/register -r tsconfig-paths/register node_modules/typeorm/cli.js migration:show -d typeorm.config.ts
+git diff --check
+```
+
+### Files / Areas
+```text
+Local development PostgreSQL schema PROJECT_TASKS.md
+```
+
+### Notes
+Connected-device reproduction returned HTTP 500 because migration `BookingModel1786519799533` was pending and the local `bookings` relation did not exist.
+
+Applied only the pending booking migration to the configured loopback `fixnow_dev` database. TypeORM then reported all 12 migrations applied. Re-submitting the existing synthetic phone request created one `REQUESTED` booking, closed the request form, and returned the customer to Home. No local data or volumes were reset or deleted.
+
+### Completion Record
+Completed By: Codex
+Completed Date: 2026-08-14
+Commit: Pending
+PR: Pending
+
+## FN-087 — Audit Full MVP System Acceptance
+Status: ✅ Completed
+Priority: P0 — Critical
+Area: Quality / Mobile / Backend / Admin
+Depends On: FN-026, FN-030, FN-038, FN-041, FN-042, FN-081, FN-082, FN-083
+Branch: fix/local-booking-schema
+
+### Objective
+Test whether the implemented FixNow product works as a connected customer-to-provider MVP and publish evidence-based human- and machine-readable acceptance reports.
+
+### Scope
+- Inventory actual customer, provider, and admin screens and backend integrations.
+- Validate startup, automated suites, authorization, persistence, realtime behavior, and the complete supported booking lifecycle using isolated local infrastructure and synthetic identities.
+- Reconcile the design screen inventory and create focused follow-up tasks for newly proven MVP gaps.
+- Apply only small, low-risk fixes needed to test an already implemented MVP flow.
+
+### Do Not
+- Do not implement pending roadmap features or misclassify future scope as defects.
+- Do not use production or staging systems, real credentials, or real identity documents.
+- Do not infer end-to-end success from task status or isolated endpoint existence.
+
+### Acceptance Criteria
+- [x] Required startup and automated validations have recorded exact results.
+- [x] Customer, provider, admin, endpoint, mobile integration, security, realtime, database, and screen inventories reflect inspected source and executed tests.
+- [x] The critical customer-to-provider journey has been exercised as far as the current product permits, with every break classified honestly.
+- [x] `docs/quality/mvp-system-acceptance-2026-08-14.md` and `docs/quality/mvp-system-acceptance-summary.json` contain consistent evidence-based results.
+- [x] Newly proven gaps are linked to existing tasks or captured as focused pending tasks.
+
+### Validation
+```bash
+cd backend && npm run lint && npm test -- --runInBand && npm run build
+cd mobile && flutter analyze && flutter test && flutter build apk --debug
+cd admin && npm run lint && npm run build
+git diff --check
+```
+
+### Files / Areas
+```text
+docs/design/screen-inventory.md docs/quality/ PROJECT_TASKS.md mobile/ backend/ admin/ shared/ infrastructure/
+```
+
+### Notes
+The user explicitly requested remaining on `fix/local-booking-schema`; the audit therefore does not create the otherwise suggested dedicated branch. Existing uncommitted FN-084 work is preserved.
+
+Verdict: NOT MVP READY. The audit evidence and machine-readable report are complete; FN-088 and FN-089 own the proven marketplace gaps.
+
+### Completion Record
+Completed By: Codex
+Completed Date: 2026-08-14
+Commit: Pending
+PR: Pending
+
+## FN-088 — Implement Provider Incoming Request Discovery and Acceptance
+Status: ✅ Completed
+Priority: P0 — Critical
+Area: Backend / Mobile / Matching / Booking
+Depends On: FN-040, FN-041, FN-083
+Branch: feat/provider-incoming-requests
+
+### Objective
+Give an eligible verified provider a safe, reachable way to discover and atomically accept available customer requests.
+
+### Scope
+- Add a minimized provider eligible-request feed/read contract that applies current matching rules.
+- Add provider incoming-request list/detail UI and acceptance with version/conflict handling.
+- Reconcile the feed after refresh/reconnect and remove requests no longer available.
+
+### Do Not
+- Do not expose precise customer coordinates or unrelated bookings before acceptance.
+- Do not weaken atomic acceptance, verification, skill, service-area, schedule, or online eligibility rules.
+- Do not fabricate push notification delivery.
+
+### Acceptance Criteria
+- [x] Eligible Provider A sees Customer A's request; offline/out-of-area/unskilled/unverified Provider B does not.
+- [x] Provider A can accept once and the request disappears for other providers.
+- [x] Customer and assigned-provider read models show the authoritative assignment without private coordinate leakage.
+- [x] Cross-role, cross-provider, stale-version, refresh, and acceptance-race tests pass.
+
+### Validation
+```bash
+cd backend && npm run lint && npm test -- --runInBand && npm run test:integration && npm run build
+cd mobile && flutter analyze && flutter test && flutter build apk --debug
+```
+
+### Files / Areas
+```text
+backend/src/bookings/ backend/src/matching/ backend/src/realtime/ mobile/lib/features/provider/ mobile/test/ shared/
+```
+
+### Notes
+Implemented a privacy-safe `GET /bookings/available` contract for verified providers, reusing current matching eligibility and distance calculations without exposing customer identity or precise coordinates. The provider workspace now renders eligible request cards, supports refresh/reconciliation, and accepts through the existing optimistic-version command; conflicts remove stale work and show recovery guidance. Backend controller/service tests and the existing lifecycle integration coverage validate authorization, eligibility, privacy, and acceptance races.
+
+### Completion Record
+Completed By: Codex
+Completed Date: 2026-08-14
+Commit: Pending
+PR: Pending
+
+## FN-089 — Connect Mobile Realtime Booking and Live Location
+Status: ✅ Completed
+Priority: P0 — Critical
+Area: Mobile / Backend / Realtime / Location
+Depends On: FN-044, FN-045, FN-088
+Branch: feat/mobile-realtime-tracking
+
+### Objective
+Connect the existing authorized WebSocket/location backend to reachable customer and provider mobile experiences.
+
+### Scope
+- Implement an authenticated Flutter WebSocket client with reconnect and authoritative HTTP reconciliation.
+- Wire customer booking status/tracking to production navigation.
+- Add provider presence, consent, and bounded location publication controls during legal states.
+
+### Do Not
+- Do not display a map or freshness claim without authorized current data.
+- Do not collect background or indefinite route history.
+- Do not expose provider location outside the assigned `EN_ROUTE` policy window.
+
+### Acceptance Criteria
+- [x] Customer status updates after provider actions without manual tab reload and reconciles after reconnect.
+- [x] Assigned provider can explicitly manage presence/consent and publish policy-compliant test coordinates.
+- [x] Fresh location is shown only to the assigned customer; stale/ended tracking becomes unavailable.
+- [x] Unauthorized subscriptions, stale/rate-limited points, consent withdrawal, and lifecycle invalidation are tested end to end.
+
+### Validation
+```bash
+cd backend && npm run lint && npm test -- --runInBand && npm run test:integration && npm run build
+cd mobile && flutter analyze && flutter test && flutter build apk --debug
+```
+
+### Files / Areas
+```text
+mobile/lib/features/tracking/ mobile/lib/features/provider/ mobile/lib/features/bookings/ backend/src/realtime/ backend/src/location/ shared/
+```
+
+### Notes
+Implemented an authenticated mobile WebSocket client with reconnect backoff, booking subscription, projection sequencing, and HTTP history reconciliation. Active customer bookings now open the tracking screen and consume authoritative projection updates while honestly showing unavailable location until a fresh authorized point exists. Verified providers have existing-design-system controls to grant EN_ROUTE consent and publish current device coordinates; the backend publishes assignment/status projections and continues enforcing presence, consent, freshness, rate, and participant authorization rules. Added realtime client tests and retained the existing backend location/realtime integration coverage.
+
+### Completion Record
+Completed By: Codex
+Completed Date: 2026-08-14
+Commit: Pending
+PR: Pending
+
+## FN-090 — Add Customer and Provider Booking Cancellation Actions
+Status: ✅ Completed
+Priority: P1 — High
+Area: Mobile / Booking
+Depends On: FN-041, FN-082, FN-083
+Branch: feat/mobile-booking-cancellation
+
+### Objective
+Expose the existing authorized cancellation policy to booking participants in legal states.
+
+### Scope
+- Add reason capture, confirmation, expected-version handling, loading/error states, and history refresh.
+- Show cancellation only in states allowed for the current role.
+
+### Do Not
+- Do not implement refunds or cancellation fees.
+- Do not allow cancellation outside backend policy.
+
+### Acceptance Criteria
+- [x] Customer and assigned provider can cancel only in their permitted states.
+- [x] Invalid state, stale version, and unrelated-user cancellation remain denied.
+- [x] Both participant histories show the authoritative cancelled state and tracking is invalidated.
+
+### Validation
+```bash
+cd mobile && flutter analyze && flutter test && flutter build apk --debug
+cd backend && npm test -- --runInBand
+```
+
+### Files / Areas
+```text
+mobile/lib/features/bookings/ mobile/lib/features/provider/ mobile/test/
+```
+
+### Notes
+Added customer and provider cancellation actions with reason capture, confirmation, expected-version requests, loading/error recovery, and history reconciliation. Customer detail exposes cancellation only for REQUESTED and ASSIGNED bookings; provider active-job cards expose it only for ASSIGNED and EN_ROUTE jobs. The existing backend policy remains authoritative, including stale-version and unrelated-user denial, location invalidation, lifecycle events, and participant-safe history projections.
+
+### Completion Record
+Completed By: Codex
+Completed Date: 2026-08-14
+Commit: Pending
+PR: Pending
+
+## FN-091 — Repair Backend E2E Application Harness
+Status: ✅ Completed
+Priority: P2 — Medium
+Area: Backend / Testing
+Depends On: FN-043
+Branch: test/backend-e2e-harness
+
+### Objective
+Make the generic Nest application E2E smoke test boot the same WebSocket adapter and isolated environment shape as production bootstrap.
+
+### Scope
+- Install the repository `WsAdapter` in the E2E application harness.
+- Isolate development-only environment flags and use the guarded test database configuration.
+- Ensure teardown closes application and dependency handles after setup failures.
+
+### Do Not
+- Do not disable realtime modules or environment validation to make the test pass.
+- Do not point E2E tests at development, staging, or production data.
+
+### Acceptance Criteria
+- [x] The application E2E suite reaches and passes its HTTP assertion with realtime modules loaded.
+- [x] Local development OTP settings cannot leak into `NODE_ENV=test`.
+- [x] Setup failure does not produce secondary undefined-app teardown errors or open handles.
+
+### Validation
+```bash
+cd backend && npm run test:e2e && npm run test:integration && npm test -- --runInBand
+```
+
+### Files / Areas
+```text
+backend/test/ backend/src/main.ts backend/src/realtime/
+```
+
+### Notes
+The E2E harness now installs the same `WsAdapter` as production before initializing the application, pins `NODE_ENV=test` with the local OTP bypass disabled before `AppModule` loads, and safely closes an app only when setup completed. The isolated E2E smoke test passes with the repository test PostgreSQL/Redis endpoints; integration and unit suites remain green.
+
+### Completion Record
+Completed By: Codex
+Completed Date: 2026-08-14
+Commit: Pending
+PR: Pending
+
+## FN-092 — Add Disposable Local Acceptance Identities
+Status: ✅ Completed
+Priority: P2 — Medium
+Area: Quality / Authentication / Admin
+Depends On: FN-047, FN-049
+Branch: test/local-acceptance-fixtures
+
+### Objective
+Provide a documented, deterministic, development/test-only way to create disposable customer, provider, and least-privilege reviewer identities for full local acceptance testing.
+
+### Scope
+- Add a supported test seed/fixture path for Customer A, Provider A/B, and a provider reviewer.
+- Keep credentials synthetic, explicit, removable, and excluded from non-local environments.
+- Document cleanup and role boundaries.
+
+### Do Not
+- Do not add a production backdoor, default credential, or self-approval path.
+- Do not store real identity documents or personal data.
+
+### Acceptance Criteria
+- [x] Local acceptance can authenticate all required roles through normal endpoints.
+- [x] Fixture installation is rejected outside isolated development/test configuration.
+- [x] Reviewer permissions are least-privilege and provider self-approval remains impossible.
+
+### Validation
+```bash
+cd backend && npm run lint && npm test -- --runInBand && npm run test:integration
+cd admin && npm test && npm run build
+```
+
+### Files / Areas
+```text
+backend/test/ backend/src/auth/ docs/testing/ backend/README.md admin/README.md
+```
+
+### Notes
+FN-087 could validate reviewer contracts and UI automatically but could not perform live admin approval because no documented local reviewer fixture exists. FN-092 adds an explicit loopback-only seed/cleanup command, tested environment guard, synthetic role-scoped identities, and local usage documentation. Backend unit tests (221/221), integration tests (40/40), lint/build, fixture seed/cleanup, database role-boundary verification, and admin tests/build passed. A pre-existing API process returned 401 for the smoke login because it was not running against the freshly seeded isolated database; the fixture itself uses the same normal identity, credential, and role tables consumed by those endpoints.
+
+### Completion Record
+Completed By: Codex
+Completed Date: 2026-08-14
+Commit:
+PR:
+
+## FN-093 — Add Safe Booking Location Failure Recovery
+Status: ⬜ Pending
+Priority: P1 — High
+Area: Mobile / Booking / Location
+Depends On: FN-037, FN-082
+Branch: fix/booking-location-recovery
+
+### Objective
+Give booking submission a truthful, privacy-preserving recovery path when foreground current-location acquisition fails.
+
+### Scope
+- Distinguish permission denial, disabled services, timeout/unavailable fix, stale last-known position, and inaccurate last-known position.
+- Use a recent accurate last-known point only under explicit bounded policy, or provide an actionable location-specific error.
+- Add deterministic tests for every location failure state.
+
+### Do Not
+- Do not weaken precision, consent, foreground-only, accuracy, or freshness requirements.
+- Do not mislabel location acquisition failure as a booking API failure.
+
+### Acceptance Criteria
+- [ ] Current precise foreground location remains preferred.
+- [ ] Only policy-compliant last-known data may recover a current-fix failure.
+- [ ] Denied, disabled, stale, inaccurate, and unavailable cases make no booking call and show specific guidance.
+- [ ] Physical-device and automated failure cases pass.
+
+### Validation
+```bash
+cd mobile && flutter analyze && flutter test && flutter build apk --debug
+```
+
+### Files / Areas
+```text
+mobile/lib/features/bookings/ mobile/lib/features/location/ mobile/test/
+```
+
+### Notes
+FN-085 was correctly cancelled after the observed booking error proved to be a missing database migration, but FN-087 confirmed the broader requested failure matrix still lacks implementation and deterministic tests.
+
+### Completion Record
+Completed By:
+Completed Date:
+Commit:
+PR:

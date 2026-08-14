@@ -62,6 +62,25 @@ export interface BookingHistoryResponse {
   nextCursor: string | null;
 }
 
+/**
+ * Provider-facing request preview. It intentionally excludes customer identity
+ * and precise request coordinates until the provider accepts the booking.
+ */
+export interface ProviderBookingRequestContract {
+  id: string;
+  serviceCategoryId: string;
+  status: BookingStatus.REQUESTED;
+  description: string;
+  scheduledAt: string | null;
+  createdAt: string;
+  version: number;
+  distanceKm: number;
+}
+
+export interface ProviderBookingRequestResponse {
+  bookings: ProviderBookingRequestContract[];
+}
+
 export interface VersionedBookingCommand {
   expectedVersion: number;
 }

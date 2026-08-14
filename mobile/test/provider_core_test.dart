@@ -2,6 +2,7 @@ import 'package:fixnow_mobile/api/api_client.dart';
 import 'package:fixnow_mobile/features/provider/provider_controller.dart';
 import 'package:fixnow_mobile/features/provider/provider_home_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_onboarding_screen.dart';
+import 'package:fixnow_mobile/features/provider/provider_models.dart';
 import 'package:fixnow_mobile/features/provider/provider_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -53,6 +54,39 @@ void main() {
     expect(find.textContaining('No active assigned jobs'), findsOneWidget);
     expect(find.textContaining('earnings'), findsNothing);
   });
+
+  testWidgets('verified provider sees an eligible incoming request preview', (
+    tester,
+  ) async {
+    final controller = ProviderController(
+      ProviderRepository(
+        api: _ProviderTransport(verified: true),
+        accessToken: () async => 'token',
+      ),
+    );
+    await controller.load(verified: true);
+    controller.requests = [
+      ProviderRequest(
+        id: 'request-1',
+        serviceCategoryId: 'category-1',
+        description: 'Kitchen sink leak',
+        createdAt: DateTime.utc(2026, 8, 14),
+        version: 1,
+        distanceKm: 1.2,
+      ),
+    ];
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData.dark(),
+        home: Scaffold(body: ProviderHomeScreen(controller: controller)),
+      ),
+    );
+
+    expect(find.text('Incoming requests'), findsOneWidget);
+    expect(find.text('Kitchen sink leak'), findsOneWidget);
+    expect(find.text('1.2 km away'), findsOneWidget);
+    expect(find.text('Accept request'), findsOneWidget);
+  });
 }
 
 class _ProviderTransport implements ApiTransport {
@@ -102,7 +136,8 @@ class _ProviderTransport implements ApiTransport {
         body: {'documents': <Object?>[]},
       );
     }
-    if (request.path.startsWith('bookings?')) {
+    if (request.path.startsWith('bookings?') ||
+        request.path.startsWith('bookings/available?')) {
       return const ApiResponse(
         statusCode: 200,
         body: {'bookings': <Object?>[], 'nextCursor': null},

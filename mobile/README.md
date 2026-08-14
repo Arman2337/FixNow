@@ -26,6 +26,11 @@ flutter run --dart-define=APP_ENV=development \
   --dart-define=API_BASE_URL=http://127.0.0.1:3000/api/v1/
 ```
 
+When the backend's explicit local OTP bypass is enabled, add
+`--dart-define=LOCAL_OTP_BYPASS_ENABLED=true` to show the local verification
+hint. This hint is suppressed outside `APP_ENV=development`; the backend remains
+the authoritative enforcement boundary.
+
 Supported non-secret environment names are `development`, `staging`, and `production`. `API_BASE_URL` must be an absolute HTTPS URL for staging and production; development defaults to `http://127.0.0.1:3000/api/v1/`. Credentials and tokens must never be supplied through compile-time configuration.
 
 ## Structure

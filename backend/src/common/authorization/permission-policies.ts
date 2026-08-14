@@ -27,6 +27,7 @@ export const PERMISSIONS = {
   adminSkillsDelete: 'admin.skills.delete',
   bookingCreateSelf: 'bookings.request.create.self',
   bookingAccept: 'bookings.accept',
+  bookingAvailableRead: 'bookings.available.read',
   bookingUpdateStatus: 'bookings.update.status',
   bookingCancelSelf: 'bookings.cancel.self',
   bookingHistoryReadSelf: 'bookings.history.read.self',
@@ -236,6 +237,10 @@ export const PERMISSION_POLICIES: Readonly<
   },
   [PERMISSIONS.bookingAccept]: {
     roles: ['verified_provider'],
+  },
+  [PERMISSIONS.bookingAvailableRead]: {
+    roles: ['verified_provider'],
+    audience: 'mobile',
   },
   [PERMISSIONS.bookingUpdateStatus]: {
     roles: ['verified_provider'],

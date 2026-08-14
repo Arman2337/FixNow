@@ -142,6 +142,42 @@ class ProviderRepository {
         .toList();
   }
 
+  Future<List<ProviderRequest>> availableRequests() async {
+    final body = _map(
+      (await _api.send(
+        ApiRequest(
+          method: ApiMethod.get,
+          path: 'bookings/available?limit=30',
+          bearerToken: await _token(),
+        ),
+      )).body,
+    );
+    final rows = body['bookings'];
+    if (rows is! List) {
+      throw const ApiException(
+        ApiFailureKind.invalidResponse,
+        'Available requests were invalid.',
+      );
+    }
+    return rows
+        .map((row) => ProviderRequest.fromJson(_map(row)))
+        .toList(growable: false);
+  }
+
+  Future<CustomerBooking> acceptRequest(ProviderRequest request) async {
+    final body = _map(
+      (await _api.send(
+        ApiRequest(
+          method: ApiMethod.post,
+          path: 'bookings/${request.id}/accept',
+          bearerToken: await _token(),
+          body: {'expectedVersion': request.version},
+        ),
+      )).body,
+    );
+    return CustomerBooking.fromJson(_map(body['booking']));
+  }
+
   Future<List<ProviderSkill>> skills() async {
     final response = await _api.send(
       ApiRequest(
@@ -224,6 +260,20 @@ class ProviderRepository {
           path: 'bookings/${job.id}/status',
           bearerToken: await _token(),
           body: {'status': status, 'expectedVersion': job.version},
+        ),
+      )).body,
+    );
+    return CustomerBooking.fromJson(_map(body['booking']));
+  }
+
+  Future<CustomerBooking> cancelJob(CustomerBooking job, String reason) async {
+    final body = _map(
+      (await _api.send(
+        ApiRequest(
+          method: ApiMethod.post,
+          path: 'bookings/${job.id}/cancel',
+          bearerToken: await _token(),
+          body: {'reason': reason.trim(), 'expectedVersion': job.version},
         ),
       )).body,
     );

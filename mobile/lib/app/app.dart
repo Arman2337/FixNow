@@ -16,6 +16,7 @@ import 'package:fixnow_mobile/config/app_environment.dart';
 import 'package:fixnow_mobile/design_system/app_theme.dart';
 import 'package:fixnow_mobile/features/location/location_consent_controller.dart';
 import 'package:fixnow_mobile/features/bookings/booking_controller.dart';
+import 'package:fixnow_mobile/features/bookings/booking.dart';
 import 'package:fixnow_mobile/features/bookings/booking_detail_screen.dart';
 import 'package:fixnow_mobile/features/bookings/booking_repository.dart';
 import 'package:fixnow_mobile/features/bookings/customer_bookings_screen.dart';
@@ -30,6 +31,10 @@ import 'package:fixnow_mobile/features/provider/provider_home_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_jobs_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_onboarding_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_repository.dart';
+import 'package:fixnow_mobile/features/realtime/realtime_client.dart';
+import 'package:fixnow_mobile/features/tracking/booking_tracking_controller.dart';
+import 'package:fixnow_mobile/features/tracking/booking_tracking_screen.dart';
+import 'package:fixnow_mobile/features/tracking/booking_tracking_source.dart';
 
 class FixNowApp extends StatefulWidget {
   const FixNowApp({
@@ -50,6 +55,7 @@ class FixNowApp extends StatefulWidget {
 }
 
 class _FixNowAppState extends State<FixNowApp> {
+  late final ApiTransport _api;
   late final AuthController _auth;
   late final CustomerProfileController _profile;
   late final ServiceDiscoveryController _discovery;
@@ -66,6 +72,7 @@ class _FixNowAppState extends State<FixNowApp> {
     final api =
         widget.apiTransport ??
         ApiClient(baseUri: ApiConfig.baseUriFor(widget.environment));
+    _api = api;
     _auth = AuthController(
       api: AuthApi(api),
       store:
@@ -87,6 +94,7 @@ class _FixNowAppState extends State<FixNowApp> {
     );
     _provider = ProviderController(
       ProviderRepository(api: api, accessToken: _auth.validAccessToken),
+      realtime: _createRealtimeClient(),
     );
     _auth.restore();
   }
@@ -213,9 +221,7 @@ class _FixNowAppState extends State<FixNowApp> {
             customerBookings: CustomerBookingsScreen(
               controller: _bookings,
               onBookingSelected: (booking) => Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => BookingDetailScreen(booking: booking),
-                ),
+                MaterialPageRoute(builder: (_) => _bookingDestination(booking)),
               ),
             ),
           );
@@ -228,6 +234,40 @@ class _FixNowAppState extends State<FixNowApp> {
     _registrationIntent = registration;
     _authEntryStep = _AuthEntryStep.role;
   });
+
+  Widget _bookingDestination(CustomerBooking booking) {
+    final active = {
+      'ASSIGNED',
+      'EN_ROUTE',
+      'IN_PROGRESS',
+    }.contains(booking.status);
+    if (!active) {
+      return BookingDetailScreen(
+        booking: booking,
+        onCancel: const {'REQUESTED', 'ASSIGNED'}.contains(booking.status)
+            ? (reason) => _bookings.cancel(booking, reason)
+            : null,
+      );
+    }
+    final tracking = BookingTrackingController(
+      bookingId: booking.id,
+      source: ApiBookingTrackingSource(
+        api: _api,
+        accessToken: _auth.validAccessToken,
+      ),
+      realtime: _createRealtimeClient(),
+    );
+    return BookingTrackingScreen(controller: tracking);
+  }
+
+  RealtimeClient? _createRealtimeClient() {
+    if (widget.apiTransport != null) return null;
+    final uri = ApiConfig.baseUriFor(widget.environment);
+    return RealtimeClient(
+      uri: realtimeUriFromApi(uri),
+      accessToken: _auth.validAccessToken,
+    );
+  }
 
   Future<void> _signOut() async {
     await _auth.logout();

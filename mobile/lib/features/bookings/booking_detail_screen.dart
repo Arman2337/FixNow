@@ -2,14 +2,17 @@ import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
+import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_page_frame.dart';
 import 'package:fixnow_mobile/design_system/fix_status_chip.dart';
 import 'package:fixnow_mobile/features/bookings/booking.dart';
+import 'package:fixnow_mobile/features/bookings/cancellation_dialog.dart';
 import 'package:flutter/material.dart';
 
 class BookingDetailScreen extends StatelessWidget {
-  const BookingDetailScreen({required this.booking, super.key});
+  const BookingDetailScreen({required this.booking, this.onCancel, super.key});
   final CustomerBooking booking;
+  final Future<CustomerBooking> Function(String reason)? onCancel;
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +30,7 @@ class BookingDetailScreen extends StatelessWidget {
             padding: const EdgeInsets.all(AppSpacing.pagePadding),
             children: [
               Container(
-                height: 220,
+                constraints: const BoxConstraints(minHeight: 220),
                 padding: const EdgeInsets.all(AppSpacing.xl),
                 decoration: BoxDecoration(
                   color: AppColors.backgroundSecondary,
@@ -115,6 +118,11 @@ class BookingDetailScreen extends StatelessWidget {
                   ],
                 ),
               ),
+              if (onCancel != null &&
+                  const {'REQUESTED', 'ASSIGNED'}.contains(booking.status)) ...[
+                const SizedBox(height: AppSpacing.lg),
+                _CancelButton(booking: booking, onCancel: onCancel!),
+              ],
             ],
           ),
         ),
@@ -149,4 +157,55 @@ class BookingDetailScreen extends StatelessWidget {
   };
   static String _date(DateTime value) =>
       '${value.day}/${value.month}/${value.year}';
+}
+
+class _CancelButton extends StatefulWidget {
+  const _CancelButton({required this.booking, required this.onCancel});
+  final CustomerBooking booking;
+  final Future<CustomerBooking> Function(String reason) onCancel;
+
+  @override
+  State<_CancelButton> createState() => _CancelButtonState();
+}
+
+class _CancelButtonState extends State<_CancelButton> {
+  bool loading = false;
+  String? error;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      if (error case final message?) ...[
+        Text(message, style: const TextStyle(color: AppColors.danger)),
+        const SizedBox(height: AppSpacing.sm),
+      ],
+      FixButton(
+        label: 'Cancel booking',
+        icon: Icons.cancel_outlined,
+        variant: FixButtonVariant.destructive,
+        isLoading: loading,
+        onPressed: () async {
+          final reason = await showCancellationDialog(context);
+          if (reason == null) return;
+          setState(() {
+            loading = true;
+            error = null;
+          });
+          try {
+            await widget.onCancel(reason);
+            if (context.mounted) Navigator.of(context).pop();
+          } catch (_) {
+            if (mounted) {
+              setState(() {
+                loading = false;
+                error =
+                    'The booking could not be cancelled. Refresh and try again.';
+              });
+            }
+          }
+        },
+      ),
+    ],
+  );
 }

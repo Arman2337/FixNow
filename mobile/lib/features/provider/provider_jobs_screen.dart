@@ -5,6 +5,7 @@ import 'package:fixnow_mobile/design_system/fix_card.dart';
 import 'package:fixnow_mobile/design_system/fix_page_frame.dart';
 import 'package:fixnow_mobile/design_system/fix_status_chip.dart';
 import 'package:fixnow_mobile/features/bookings/booking.dart';
+import 'package:fixnow_mobile/features/bookings/cancellation_dialog.dart';
 import 'package:fixnow_mobile/features/provider/provider_controller.dart';
 import 'package:flutter/material.dart';
 
@@ -126,9 +127,85 @@ class _JobCard extends StatelessWidget {
                 onPressed: () => controller.advanceJob(job),
               ),
             ],
+            if (!readOnly && job.status == 'EN_ROUTE') ...[
+              const SizedBox(height: AppSpacing.md),
+              FixButton(
+                label: controller.locationSharing[job.id] == true
+                    ? 'Stop sharing location'
+                    : 'Share live location',
+                icon: Icons.my_location_rounded,
+                variant: FixButtonVariant.secondary,
+                onPressed: () => controller.setLocationConsent(
+                  job,
+                  controller.locationSharing[job.id] != true,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              FixButton(
+                label: 'Send current location',
+                icon: Icons.location_searching_rounded,
+                variant: FixButtonVariant.tertiary,
+                onPressed: () => controller.publishCurrentLocation(job),
+              ),
+            ],
+            if (!readOnly &&
+                const {'ASSIGNED', 'EN_ROUTE'}.contains(job.status)) ...[
+              const SizedBox(height: AppSpacing.md),
+              _CancelJobButton(job: job, controller: controller),
+            ],
           ],
         ),
       ),
     );
   }
+}
+
+class _CancelJobButton extends StatefulWidget {
+  const _CancelJobButton({required this.job, required this.controller});
+  final CustomerBooking job;
+  final ProviderController controller;
+
+  @override
+  State<_CancelJobButton> createState() => _CancelJobButtonState();
+}
+
+class _CancelJobButtonState extends State<_CancelJobButton> {
+  bool loading = false;
+  String? error;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      if (error case final message?) ...[
+        Text(message, style: const TextStyle(color: AppColors.danger)),
+        const SizedBox(height: AppSpacing.sm),
+      ],
+      FixButton(
+        label: 'Cancel job',
+        icon: Icons.cancel_outlined,
+        variant: FixButtonVariant.destructive,
+        isLoading: loading,
+        onPressed: () async {
+          final reason = await showCancellationDialog(context);
+          if (reason == null) return;
+          setState(() {
+            loading = true;
+            error = null;
+          });
+          try {
+            await widget.controller.cancelJob(widget.job, reason);
+          } catch (_) {
+            if (mounted) {
+              setState(() {
+                loading = false;
+                error =
+                    'The job could not be cancelled. Refresh and try again.';
+              });
+            }
+          }
+        },
+      ),
+    ],
+  );
 }

@@ -20,6 +20,8 @@ Open `http://localhost:3100`. The default API URL is `http://localhost:3000/api/
 
 Only active accounts with exactly one current staff role can establish an admin session. Customer and provider credentials receive the same safe sign-in failure as invalid credentials.
 
+For controlled local reviewer testing, use the disposable reviewer fixture documented in [`../docs/testing/local-acceptance-fixtures.md`](../docs/testing/local-acceptance-fixtures.md). It grants only `provider_reviewer`; it is never a production credential or a provider self-approval path.
+
 ## Validation
 
 ```powershell

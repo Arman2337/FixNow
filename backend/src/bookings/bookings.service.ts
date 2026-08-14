@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { createHash } from 'crypto';
-import { DataSource, EntityManager, QueryFailedError } from 'typeorm';
+import { DataSource, EntityManager, IsNull, QueryFailedError } from 'typeorm';
 import { BookingStatus } from '../../../shared/booking-lifecycle.types';
 import { CreateBookingDto } from './bookings.dto';
 import { BookingEvent } from './domain/booking-event.entity';
@@ -19,6 +19,10 @@ import { BookingProjectionService } from '../realtime/booking-projection.service
 export interface BookingHistoryPage {
   bookings: Booking[];
   nextCursor: string | null;
+}
+
+export interface ProviderBookingRequestPage {
+  bookings: Array<{ booking: Booking; distanceKm: number }>;
 }
 
 interface HistoryCursor {
@@ -117,7 +121,7 @@ export class BookingsService {
     if (!eligibleProviders.some(({ providerId: id }) => id === providerId)) {
       throw new ForbiddenException('Provider is not eligible for this booking');
     }
-    return this.transition(
+    const booking = await this.transition(
       bookingId,
       providerId,
       expectedVersion,
@@ -134,6 +138,8 @@ export class BookingsService {
         booking.transitionTo(BookingStatus.ASSIGNED);
       },
     );
+    await this.bookingProjections?.publishBooking(booking);
+    return booking;
   }
 
   async updateStatus(
@@ -260,6 +266,36 @@ export class BookingsService {
             })
           : null,
     };
+  }
+
+  async getAvailableRequests(
+    providerId: string,
+    limit = 20,
+  ): Promise<ProviderBookingRequestPage> {
+    const boundedLimit = Math.min(Math.max(Math.trunc(limit), 1), 50);
+    const candidates = await this.dataSource.getRepository(Booking).find({
+      where: { status: BookingStatus.REQUESTED, deletedAt: IsNull() },
+      order: { createdAt: 'DESC', id: 'DESC' },
+      take: Math.min(boundedLimit * 4, 200),
+    });
+    const bookings: Array<{ booking: Booking; distanceKm: number }> = [];
+
+    for (const booking of candidates) {
+      const match = await this.matchingService.findEligibleProviders(
+        Number(booking.locationLat),
+        Number(booking.locationLng),
+        booking.serviceCategoryId,
+        50,
+      );
+      const providerMatch = match.find(
+        ({ providerId: id }) => id === providerId,
+      );
+      if (!providerMatch) continue;
+      bookings.push({ booking, distanceKm: providerMatch.distanceKm });
+      if (bookings.length === boundedLimit) break;
+    }
+
+    return { bookings };
   }
 
   async cancelBookingAsAdmin(

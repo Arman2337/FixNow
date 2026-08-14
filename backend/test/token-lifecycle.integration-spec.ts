@@ -61,6 +61,19 @@ describe('OTP and refresh-token PostgreSQL boundaries', () => {
     { sendVerificationCode },
   );
   const auth = new AuthService(dataSource, lifecycle);
+  const createLocalBypassLifecycle = () =>
+    new TokenLifecycleService(
+      dataSource,
+      new JwtService({
+        secret: 'test-only-jwt-secret-at-least-32-characters',
+      }),
+      new ConfigService({
+        NODE_ENV: 'development',
+        OTP_SECRET: 'test-only-otp-secret-at-least-32-characters',
+        LOCAL_OTP_BYPASS_ENABLED: 'true',
+      }),
+      { sendVerificationCode },
+    );
   const input = {
     email: 'customer@example.com',
     password: 'Correct Horse Battery Staple!',
@@ -118,6 +131,39 @@ describe('OTP and refresh-token PostgreSQL boundaries', () => {
     expect(user.status).toBe(AccountStatus.Active);
     await expect(
       lifecycle.verifyOtp(input.email, validCode),
+    ).rejects.toMatchObject({ status: 401 });
+  });
+
+  it('accepts 000000 only for an explicitly enabled development bypass', async () => {
+    const registration = await auth.registerCustomer(input);
+    const localLifecycle = createLocalBypassLifecycle();
+    await localLifecycle.requestOtp(input.email);
+
+    expect(sendVerificationCode).not.toHaveBeenCalled();
+
+    await localLifecycle.verifyOtp(input.email, '000000');
+
+    const user = await dataSource
+      .getRepository(UserEntity)
+      .findOneByOrFail({ id: registration.userId });
+    expect(user.status).toBe(AccountStatus.Active);
+    expect(
+      await dataSource
+        .getRepository(AuthAuditEventEntity)
+        .findOneBy({ eventType: 'otp.verify.local_bypass' }),
+    ).toMatchObject({ userId: registration.userId, outcome: 'success' });
+  });
+
+  it('rejects the local bypass after the current challenge expires', async () => {
+    await auth.registerCustomer(input);
+    const localLifecycle = createLocalBypassLifecycle();
+    await localLifecycle.requestOtp(input.email);
+    await dataSource.query(
+      `UPDATE "otp_challenges" SET "expires_at" = NOW() - INTERVAL '1 second'`,
+    );
+
+    await expect(
+      localLifecycle.verifyOtp(input.email, '000000'),
     ).rejects.toMatchObject({ status: 401 });
   });
 

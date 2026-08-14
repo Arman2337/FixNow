@@ -14,6 +14,7 @@ describe('BookingsService', () => {
   let manager: jest.Mocked<EntityManager>;
   let matchingService: jest.Mocked<MatchingService>;
   let bookingFindOneBy: jest.Mock;
+  let bookingFind: jest.Mock;
   let bookingSave: jest.Mock;
   let eventSave: jest.Mock;
 
@@ -45,10 +46,12 @@ describe('BookingsService', () => {
 
   beforeEach(() => {
     bookingFindOneBy = jest.fn();
+    bookingFind = jest.fn();
     bookingSave = jest.fn();
     eventSave = jest.fn().mockResolvedValue(new BookingEvent());
     bookingRepository = {
       findOneBy: bookingFindOneBy,
+      find: bookingFind,
       findOneByOrFail: jest.fn(),
       create: jest.fn((value: Partial<Booking>) => booking(value)),
       save: bookingSave,
@@ -156,6 +159,21 @@ describe('BookingsService', () => {
     await expect(
       service.getBookingHistory('customer-id', 20, 'not-json'),
     ).rejects.toThrow('Invalid booking history cursor');
+  });
+
+  it('returns only requests for which the provider is currently eligible', async () => {
+    const first = booking({ id: '00000000-0000-4000-8000-000000000201' });
+    const second = booking({ id: '00000000-0000-4000-8000-000000000202' });
+    bookingFind.mockResolvedValue([first, second]);
+    matchingService.findEligibleProviders
+      .mockResolvedValueOnce([{ providerId: 'provider-id', distanceKm: 2.4 }])
+      .mockResolvedValueOnce([]);
+
+    await expect(
+      service.getAvailableRequests('provider-id', 20),
+    ).resolves.toEqual({
+      bookings: [{ booking: first, distanceKm: 2.4 }],
+    });
   });
 
   it('prevents an admin intervention from rewriting completed history', async () => {

@@ -18,6 +18,7 @@ import {
   CancelBookingDto,
   BookingHistoryQueryDto,
   AcceptBookingDto,
+  AvailableBookingQueryDto,
 } from './bookings.dto';
 import { RequireOwnPermission } from '../common/authorization/authorization.decorators';
 import { PERMISSIONS } from '../common/authorization/permission-policies';
@@ -25,8 +26,12 @@ import type { AuthorizedRequest } from '../common/authorization/authorization.gu
 import {
   BookingHistoryResponse,
   BookingResponse,
+  ProviderBookingRequestResponse,
 } from '../../../shared/booking-lifecycle.types';
-import { presentBooking } from './booking.presenter';
+import {
+  presentBooking,
+  presentProviderBookingRequest,
+} from './booking.presenter';
 
 @Controller('bookings')
 export class BookingsController {
@@ -131,6 +136,24 @@ export class BookingsController {
     return {
       bookings: page.bookings.map(presentBooking),
       nextCursor: page.nextCursor,
+    };
+  }
+
+  @Get('available')
+  @RequireOwnPermission(PERMISSIONS.bookingAvailableRead)
+  async getAvailableRequests(
+    @Req() req: AuthorizedRequest,
+    @Query() query: AvailableBookingQueryDto,
+  ): Promise<ProviderBookingRequestResponse> {
+    const providerId = req.authorizationPrincipal!.userId;
+    const page = await this.bookingsService.getAvailableRequests(
+      providerId,
+      query.limit,
+    );
+    return {
+      bookings: page.bookings.map(({ booking, distanceKm }) =>
+        presentProviderBookingRequest(booking, distanceKm),
+      ),
     };
   }
 }

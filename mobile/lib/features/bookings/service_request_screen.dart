@@ -1,23 +1,23 @@
-import 'dart:async';
-
 import 'package:fixnow_mobile/api/api_client.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
 import 'package:fixnow_mobile/design_system/fix_page_frame.dart';
 import 'package:fixnow_mobile/features/bookings/booking_controller.dart';
+import 'package:fixnow_mobile/features/location/booking_location.dart';
 import 'package:fixnow_mobile/features/services/service_category.dart';
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
 
 class ServiceRequestScreen extends StatefulWidget {
   const ServiceRequestScreen({
     required this.category,
     required this.controller,
+    this.locationProvider,
     super.key,
   });
   final ServiceCategory category;
   final BookingController controller;
+  final BookingLocationProvider? locationProvider;
 
   @override
   State<ServiceRequestScreen> createState() => _ServiceRequestScreenState();
@@ -42,41 +42,18 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
       _error = null;
     });
     try {
-      if (!await Geolocator.isLocationServiceEnabled()) {
-        throw const _LocationFailure(
-          'Turn on Location Services to request nearby help.',
-        );
-      }
-      var permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-      }
-      if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
-        throw const _LocationFailure(
-          'Location access is needed to match providers near you.',
-        );
-      }
-      final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          timeLimit: Duration(seconds: 15),
-        ),
-      );
+      final location =
+          await (widget.locationProvider ?? BookingLocationResolver())
+              .resolve();
       await widget.controller.create(
         serviceCategoryId: widget.category.id,
         description: _details.text,
-        latitude: position.latitude,
-        longitude: position.longitude,
+        latitude: location.latitude,
+        longitude: location.longitude,
       );
       if (mounted) Navigator.of(context).pop(true);
-    } on _LocationFailure catch (error) {
+    } on BookingLocationFailure catch (error) {
       setState(() => _error = error.message);
-    } on TimeoutException {
-      setState(
-        () => _error =
-            'We could not get your location. Move to an open area and try again.',
-      );
     } on ApiException catch (error) {
       setState(
         () => _error = error.kind == ApiFailureKind.offline
@@ -177,9 +154,4 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
       ),
     ),
   );
-}
-
-class _LocationFailure implements Exception {
-  const _LocationFailure(this.message);
-  final String message;
 }

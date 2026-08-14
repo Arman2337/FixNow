@@ -32,10 +32,10 @@ Only these statuses are valid. A task cannot be completed while required validat
 # Project Progress
 
 Total Tasks: 93
-Completed: 67
+Completed: 68
 In Progress: 1
 Blocked: 0
-Pending: 24
+Pending: 23
 Cancelled: 1
 Current Phase: Phase 7 — Real-Time & Location
 Next Recommended Task: FN-050 — Implement Admin Complaints and Analytics Views
@@ -3455,7 +3455,7 @@ Commit:
 PR:
 
 ## FN-093 — Add Safe Booking Location Failure Recovery
-Status: ⬜ Pending
+Status: ✅ Completed
 Priority: P1 — High
 Area: Mobile / Booking / Location
 Depends On: FN-037, FN-082
@@ -3474,10 +3474,10 @@ Give booking submission a truthful, privacy-preserving recovery path when foregr
 - Do not mislabel location acquisition failure as a booking API failure.
 
 ### Acceptance Criteria
-- [ ] Current precise foreground location remains preferred.
-- [ ] Only policy-compliant last-known data may recover a current-fix failure.
-- [ ] Denied, disabled, stale, inaccurate, and unavailable cases make no booking call and show specific guidance.
-- [ ] Physical-device and automated failure cases pass.
+- [x] Current precise foreground location remains preferred.
+- [x] Only policy-compliant last-known data may recover a current-fix failure.
+- [x] Denied, disabled, stale, inaccurate, and unavailable cases make no booking call and show specific guidance.
+- [x] Physical-device and automated failure cases pass.
 
 ### Validation
 ```bash
@@ -3490,10 +3490,10 @@ mobile/lib/features/bookings/ mobile/lib/features/location/ mobile/test/
 ```
 
 ### Notes
-FN-085 was correctly cancelled after the observed booking error proved to be a missing database migration, but FN-087 confirmed the broader requested failure matrix still lacks implementation and deterministic tests.
+FN-085 was correctly cancelled after the observed booking error proved to be a missing database migration, but FN-087 confirmed the broader requested failure matrix still lacked implementation and deterministic tests. FN-093 adds a bounded two-minute/100-meter location policy, current-fix preference, safe last-known fallback, location-specific guidance, and a widget assertion that no booking request is sent when location resolution fails. Flutter analyze, 70 tests, debug APK build, and the focused nine-test location suite on connected Android device A059 passed.
 
 ### Completion Record
-Completed By:
-Completed Date:
+Completed By: Codex
+Completed Date: 2026-08-15
 Commit:
 PR:

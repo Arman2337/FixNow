@@ -14,6 +14,9 @@ describe('BookingsController', () => {
   let updateStatusMock: jest.MockedFunction<BookingsService['updateStatus']>;
   let cancelMock: jest.MockedFunction<BookingsService['cancelBooking']>;
   let historyMock: jest.MockedFunction<BookingsService['getBookingHistory']>;
+  let availableMock: jest.MockedFunction<
+    BookingsService['getAvailableRequests']
+  >;
 
   const requestFor = (
     userId: string,
@@ -44,6 +47,7 @@ describe('BookingsController', () => {
     updateStatusMock = jest.fn();
     cancelMock = jest.fn();
     historyMock = jest.fn();
+    availableMock = jest.fn();
     const module: TestingModule = await Test.createTestingModule({
       controllers: [BookingsController],
       providers: [
@@ -55,6 +59,7 @@ describe('BookingsController', () => {
             updateStatus: updateStatusMock,
             cancelBooking: cancelMock,
             getBookingHistory: historyMock,
+            getAvailableRequests: availableMock,
           },
         },
       ],
@@ -182,6 +187,33 @@ describe('BookingsController', () => {
       expect(historyMock).toHaveBeenCalledWith('user-id', 5, 'cursor-value');
       expect(result.bookings).toHaveLength(1);
       expect(result.nextCursor).toBe('next-page');
+    });
+  });
+
+  describe('getAvailableRequests', () => {
+    it('returns provider-safe request previews', async () => {
+      const mockBooking = completeBooking(new Booking());
+      mockBooking.id = '00000000-0000-4000-8000-000000000201';
+      mockBooking.status = BookingStatus.REQUESTED;
+      availableMock.mockResolvedValue({
+        bookings: [{ booking: mockBooking, distanceKm: 1.8 }],
+      });
+
+      const result = await controller.getAvailableRequests(
+        requestFor('provider-id', ['verified_provider']),
+        { limit: 10 },
+      );
+
+      expect(availableMock).toHaveBeenCalledWith('provider-id', 10);
+      expect(result.bookings).toEqual([
+        expect.objectContaining({
+          id: mockBooking.id,
+          distanceKm: 1.8,
+          status: BookingStatus.REQUESTED,
+        }),
+      ]);
+      expect(result.bookings[0]).not.toHaveProperty('locationLat');
+      expect(result.bookings[0]).not.toHaveProperty('customerId');
     });
   });
 });

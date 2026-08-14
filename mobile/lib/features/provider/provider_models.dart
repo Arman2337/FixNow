@@ -112,3 +112,44 @@ class ProviderDocument {
         sizeBytes: json['sizeBytes'] as int,
       );
 }
+
+class ProviderRequest {
+  const ProviderRequest({
+    required this.id,
+    required this.serviceCategoryId,
+    required this.description,
+    required this.createdAt,
+    required this.version,
+    required this.distanceKm,
+  });
+
+  final String id;
+  final String serviceCategoryId;
+  final String description;
+  final DateTime createdAt;
+  final int version;
+  final double distanceKm;
+
+  factory ProviderRequest.fromJson(Map<String, Object?> json) {
+    final id = json['id'];
+    final category = json['serviceCategoryId'];
+    final description = json['description'];
+    final createdAt = DateTime.tryParse(json['createdAt']?.toString() ?? '');
+    final distance = json['distanceKm'];
+    if (id is! String ||
+        category is! String ||
+        description is! String ||
+        createdAt == null ||
+        distance is! num) {
+      throw const FormatException();
+    }
+    return ProviderRequest(
+      id: id,
+      serviceCategoryId: category,
+      description: description,
+      createdAt: createdAt,
+      version: (json['version'] as num?)?.toInt() ?? 1,
+      distanceKm: distance.toDouble(),
+    );
+  }
+}

@@ -1,4 +1,8 @@
-import type { BookingContract } from '../../../shared/booking-lifecycle.types';
+import { BookingStatus } from '../../../shared/booking-lifecycle.types';
+import type {
+  BookingContract,
+  ProviderBookingRequestContract,
+} from '../../../shared/booking-lifecycle.types';
 import type { Booking } from './domain/booking.entity';
 
 const toIsoString = (value: Date | null | undefined): string | null =>
@@ -25,4 +29,18 @@ export const presentBooking = (booking: Booking): BookingContract => ({
   createdAt: booking.createdAt.toISOString(),
   updatedAt: booking.updatedAt.toISOString(),
   version: booking.version,
+});
+
+export const presentProviderBookingRequest = (
+  booking: Booking,
+  distanceKm: number,
+): ProviderBookingRequestContract => ({
+  id: booking.id,
+  serviceCategoryId: booking.serviceCategoryId,
+  status: BookingStatus.REQUESTED,
+  description: booking.description,
+  scheduledAt: toIsoString(booking.scheduledAt),
+  createdAt: booking.createdAt.toISOString(),
+  version: booking.version,
+  distanceKm,
 });

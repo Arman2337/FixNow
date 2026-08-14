@@ -124,6 +124,79 @@ class ProviderHomeScreen extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.xxl),
             Text(
+              'Incoming requests',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            FixButton(
+              label: 'Refresh requests',
+              icon: Icons.refresh_rounded,
+              variant: FixButtonVariant.secondary,
+              isLoading: controller.refreshingRequests,
+              onPressed: controller.refreshRequests,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            if (controller.actionError case final message?)
+              Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                child: FixCard(
+                  tone: FixCardTone.secondary,
+                  semanticLabel: 'Request action failed',
+                  child: Text(
+                    message,
+                    style: const TextStyle(color: AppColors.danger),
+                  ),
+                ),
+              ),
+            if (controller.requests.isEmpty)
+              const FixCard(
+                child: Row(
+                  children: [
+                    Icon(Icons.inbox_outlined, color: AppColors.textMuted),
+                    SizedBox(width: AppSpacing.md),
+                    Expanded(child: Text('No eligible requests right now.')),
+                  ],
+                ),
+              )
+            else
+              ...controller.requests.map(
+                (request) => Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                  child: FixCard(
+                    tone: FixCardTone.elevated,
+                    semanticLabel: 'Incoming service request',
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const FixStatusChip(
+                          label: 'REQUESTED',
+                          icon: Icons.radar_rounded,
+                          tone: FixStatusTone.warning,
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        Text(
+                          request.description,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(
+                          '${request.distanceKm.toStringAsFixed(1)} km away',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: AppColors.textSecondary),
+                        ),
+                        const SizedBox(height: AppSpacing.lg),
+                        FixButton(
+                          label: 'Accept request',
+                          icon: Icons.check_circle_outline_rounded,
+                          onPressed: () => controller.acceptRequest(request),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            const SizedBox(height: AppSpacing.xxl),
+            Text(
               'Assigned work',
               style: Theme.of(context).textTheme.titleLarge,
             ),

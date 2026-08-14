@@ -47,4 +47,13 @@ class BookingController extends ChangeNotifier {
     status = BookingListStatus.ready;
     notifyListeners();
   }
+
+  Future<CustomerBooking> cancel(CustomerBooking booking, String reason) async {
+    final updated = await _repository.cancel(booking: booking, reason: reason);
+    bookings = bookings
+        .map((item) => item.id == updated.id ? updated : item)
+        .toList(growable: false);
+    notifyListeners();
+    return updated;
+  }
 }

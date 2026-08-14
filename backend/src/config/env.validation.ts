@@ -18,6 +18,11 @@ export enum Environment {
   Test = 'test',
 }
 
+export enum BooleanString {
+  False = 'false',
+  True = 'true',
+}
+
 export class EnvironmentVariables {
   @IsEnum(Environment)
   @IsOptional()
@@ -44,6 +49,10 @@ export class EnvironmentVariables {
   @IsString()
   @MinLength(32)
   OTP_SECRET: string;
+
+  @IsEnum(BooleanString)
+  @IsOptional()
+  LOCAL_OTP_BYPASS_ENABLED: BooleanString = BooleanString.False;
 
   @IsString()
   @IsOptional()
@@ -125,6 +134,7 @@ export function validate(config: Record<string, unknown>) {
   }
   validateRealtimeOrigins(validatedConfig);
   validateWebOrigins(validatedConfig);
+  validateLocalOtpBypass(validatedConfig);
   if (
     validatedConfig.LOCATION_CACHE_TTL_MS >
     validatedConfig.LOCATION_STALE_AFTER_MS
@@ -134,6 +144,17 @@ export function validate(config: Record<string, unknown>) {
     );
   }
   return validatedConfig;
+}
+
+function validateLocalOtpBypass(config: EnvironmentVariables): void {
+  if (
+    config.LOCAL_OTP_BYPASS_ENABLED === BooleanString.True &&
+    config.NODE_ENV !== Environment.Development
+  ) {
+    throw new Error(
+      'LOCAL_OTP_BYPASS_ENABLED may be enabled only in development',
+    );
+  }
 }
 
 function validateWebOrigins(config: EnvironmentVariables): void {

@@ -77,6 +77,29 @@ class BookingRepository {
     return CustomerBooking.fromJson(Map<String, Object?>.from(raw));
   }
 
+  Future<CustomerBooking> cancel({
+    required CustomerBooking booking,
+    required String reason,
+  }) async {
+    final response = await _api.send(
+      ApiRequest(
+        method: ApiMethod.post,
+        path: 'bookings/${booking.id}/cancel',
+        bearerToken: await _token(),
+        body: {'reason': reason.trim(), 'expectedVersion': booking.version},
+      ),
+    );
+    final body = response.body;
+    final raw = body is Map<String, dynamic> ? body['booking'] : null;
+    if (raw is! Map) {
+      throw const ApiException(
+        ApiFailureKind.invalidResponse,
+        'The cancellation response was invalid.',
+      );
+    }
+    return CustomerBooking.fromJson(Map<String, Object?>.from(raw));
+  }
+
   Future<String> _token() async {
     final token = await _accessToken();
     if (token == null) {

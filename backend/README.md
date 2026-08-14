@@ -29,6 +29,10 @@ npm run build
 
 Unit tests are deterministic and do not connect to developer services. Integration and end-to-end tests must use explicitly isolated local test services and synthetic data.
 
+## Disposable local acceptance identities
+
+FN-092 provides guarded synthetic Customer A, Provider A/B, and provider-reviewer fixtures for controlled local acceptance testing. See [`../docs/testing/local-acceptance-fixtures.md`](../docs/testing/local-acceptance-fixtures.md). Set `ACCEPTANCE_FIXTURES_ENABLED=true` and use only a loopback `fixnow_dev` or `fixnow_test` database before running `npm run test:acceptance:seed`; cleanup with `npm run test:acceptance:cleanup`. The command is rejected outside development/test or against non-isolated databases.
+
 ## Isolated PostgreSQL migration validation
 
 The following disposable container binds only to loopback on port `55432`, avoiding the normal local development database on port `5432`. The values are test-only placeholders.
@@ -91,6 +95,13 @@ FN-026 adds these endpoints:
 OTP messages go to the email address registered with the account. Configure a separate `OTP_SECRET` of at least 32 random characters. For real email delivery, set `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, and `SMTP_FROM` in an untracked local `.env`. Gmail can use `smtp.gmail.com`; use an account-specific app password rather than a normal account password. Automated tests use a fake delivery adapter and never send email.
 
 OTPs expire after 10 minutes, enforce a 60-second resend delay, and allow five attempts. Refresh tokens expire after 30 days, rotate once without grace, and revoke the token family if an already-rotated token is replayed. Raw OTPs and refresh tokens are never stored.
+
+For temporary-email testing on a local device, set
+`LOCAL_OTP_BYPASS_ENABLED=true` in the untracked `backend/.env` while
+`NODE_ENV=development`. A current, unexpired OTP challenge can then be verified
+with `000000`; local mode creates that challenge without contacting SMTP.
+Configuration validation rejects this flag in every other environment; it is
+disabled by default and must never be used for shared data.
 
 ## Customer profile
 

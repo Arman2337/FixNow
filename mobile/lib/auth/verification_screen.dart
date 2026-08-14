@@ -1,12 +1,20 @@
 import 'package:fixnow_mobile/auth/auth_controller.dart';
+import 'package:fixnow_mobile/auth/local_auth_config.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_page_frame.dart';
 import 'package:flutter/material.dart';
 
 class VerificationScreen extends StatefulWidget {
-  const VerificationScreen({required this.controller, super.key});
+  VerificationScreen({
+    required this.controller,
+    bool? localOtpBypassEnabled,
+    super.key,
+  }) : localOtpBypassEnabled =
+           localOtpBypassEnabled ?? LocalAuthConfig.otpBypassEnabled;
+
   final AuthController controller;
+  final bool localOtpBypassEnabled;
   @override
   State<VerificationScreen> createState() => _VerificationScreenState();
 }
@@ -47,6 +55,13 @@ class _VerificationScreenState extends State<VerificationScreen> {
                       Text(
                         'Enter the six-digit code sent to ${widget.controller.verificationEmail}.',
                       ),
+                      if (widget.localOtpBypassEnabled) ...[
+                        const SizedBox(height: AppSpacing.md),
+                        Semantics(
+                          label: 'Local testing verification code 000000',
+                          child: const Text('Local testing: use 000000.'),
+                        ),
+                      ],
                       const SizedBox(height: AppSpacing.xl),
                       TextFormField(
                         controller: _code,

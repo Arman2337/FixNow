@@ -37,6 +37,7 @@ import { OtpChallengeEntity } from './otp-challenge.entity';
 const OTP_TTL_MS = 10 * 60_000;
 const OTP_RESEND_MS = 60_000;
 const REFRESH_TTL_MS = 30 * 24 * 60 * 60_000;
+const LOCAL_OTP_BYPASS_CODE = '000000';
 
 @Injectable()
 export class TokenLifecycleService {
@@ -173,7 +174,10 @@ export class TokenLifecycleService {
       throw new HttpException('Try again later', HttpStatus.TOO_MANY_REQUESTS);
     }
     const code = randomInt(100_000, 1_000_000).toString();
-    await this.delivery.sendVerificationCode(email, code);
+    const localBypass = this.isLocalOtpBypassEnabled();
+    if (!localBypass) {
+      await this.delivery.sendVerificationCode(email, code);
+    }
     await challenges.save({
       identityId: identity.id,
       codeHash: this.hashOtp(identity.id, code),
@@ -182,7 +186,11 @@ export class TokenLifecycleService {
       attemptsRemaining: 5,
       consumedAt: null,
     });
-    await this.audit(identity.userId, 'otp.sent', 'success');
+    await this.audit(
+      identity.userId,
+      localBypass ? 'otp.local_challenge.created' : 'otp.sent',
+      'success',
+    );
   }
 
   async verifyOtp(email: string, code: string): Promise<void> {
@@ -205,9 +213,10 @@ export class TokenLifecycleService {
     ) {
       throw new UnauthorizedException('Invalid verification code');
     }
+    const localBypass = this.isLocalOtpBypass(code);
     const actual = Buffer.from(this.hashOtp(identity.id, code));
     const expected = Buffer.from(challenge.codeHash);
-    if (!timingSafeEqual(actual, expected)) {
+    if (!localBypass && !timingSafeEqual(actual, expected)) {
       challenge.attemptsRemaining -= 1;
       await challenges.save(challenge);
       await this.audit(identity.userId, 'otp.verify', 'denied');
@@ -223,7 +232,22 @@ export class TokenLifecycleService {
       statusReason: 'Email verified',
       statusChangedAt: new Date(),
     });
-    await this.audit(identity.userId, 'otp.verify', 'success');
+    await this.audit(
+      identity.userId,
+      localBypass ? 'otp.verify.local_bypass' : 'otp.verify',
+      'success',
+    );
+  }
+
+  private isLocalOtpBypass(code: string): boolean {
+    return code === LOCAL_OTP_BYPASS_CODE && this.isLocalOtpBypassEnabled();
+  }
+
+  private isLocalOtpBypassEnabled(): boolean {
+    return (
+      this.config.get<string>('NODE_ENV') === 'development' &&
+      this.config.get<string>('LOCAL_OTP_BYPASS_ENABLED') === 'true'
+    );
   }
 
   private response(

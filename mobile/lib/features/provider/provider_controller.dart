@@ -2,22 +2,30 @@ import 'package:fixnow_mobile/api/api_client.dart';
 import 'package:fixnow_mobile/features/bookings/booking.dart';
 import 'package:fixnow_mobile/features/provider/provider_models.dart';
 import 'package:fixnow_mobile/features/provider/provider_repository.dart';
+import 'package:fixnow_mobile/features/realtime/realtime_client.dart';
 import 'package:flutter/foundation.dart';
+import 'package:geolocator/geolocator.dart';
 
 enum ProviderLoadState { loading, ready, failure }
 
 class ProviderController extends ChangeNotifier {
-  ProviderController(this.repository);
+  ProviderController(this.repository, {this.realtime});
   final ProviderRepository repository;
+  final RealtimeClient? realtime;
   ProviderLoadState state = ProviderLoadState.loading;
   ProviderApplication? application;
   ProviderProfile? profile;
   ProviderAvailability? availability;
   List<CustomerBooking> jobs = const [];
+  List<ProviderRequest> requests = const [];
   List<ProviderSkill> skills = const [];
   List<ProviderDocument> documents = const [];
   List<Map<String, Object?>> categories = const [];
   String? errorMessage;
+  String? actionError;
+  bool refreshingRequests = false;
+  final Map<String, int> _locationSequences = {};
+  final Map<String, bool> locationSharing = {};
 
   Future<void> load({required bool verified}) async {
     state = ProviderLoadState.loading;
@@ -31,6 +39,13 @@ class ProviderController extends ChangeNotifier {
       if (verified) {
         availability = await repository.availability();
         jobs = await repository.jobs();
+        try {
+          requests = await repository.availableRequests();
+        } on ApiException {
+          requests = const [];
+          actionError =
+              'Incoming requests are temporarily unavailable. Refresh to try again.';
+        }
       }
       state = ProviderLoadState.ready;
     } on ApiException {
@@ -92,5 +107,79 @@ class ProviderController extends ChangeNotifier {
     final updated = await repository.updateJobStatus(job, next);
     jobs = jobs.map((item) => item.id == updated.id ? updated : item).toList();
     notifyListeners();
+  }
+
+  Future<CustomerBooking> cancelJob(CustomerBooking job, String reason) async {
+    final updated = await repository.cancelJob(job, reason);
+    jobs = jobs.map((item) => item.id == updated.id ? updated : item).toList();
+    notifyListeners();
+    return updated;
+  }
+
+  Future<void> setLocationConsent(CustomerBooking job, bool granted) async {
+    final client = realtime;
+    if (client == null || job.status != 'EN_ROUTE') return;
+    await client.subscribeBooking(job.id);
+    await client.sendLocationConsent(
+      bookingId: job.id,
+      granted: granted,
+      noticeVersion: '2026-08-13',
+    );
+    locationSharing[job.id] = granted;
+    notifyListeners();
+  }
+
+  Future<void> publishCurrentLocation(CustomerBooking job) async {
+    final client = realtime;
+    if (client == null || job.status != 'EN_ROUTE') return;
+    final position = await Geolocator.getCurrentPosition(
+      locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+    );
+    final sequence = (_locationSequences[job.id] ?? 0) + 1;
+    _locationSequences[job.id] = sequence;
+    await client.subscribeBooking(job.id);
+    await client.sendLocation(
+      bookingId: job.id,
+      sequence: sequence,
+      capturedAt: position.timestamp,
+      latitude: position.latitude,
+      longitude: position.longitude,
+      accuracyMeters: position.accuracy,
+    );
+  }
+
+  Future<void> acceptRequest(ProviderRequest request) async {
+    actionError = null;
+    notifyListeners();
+    try {
+      final accepted = await repository.acceptRequest(request);
+      requests = requests.where((item) => item.id != request.id).toList();
+      jobs = [accepted, ...jobs.where((item) => item.id != accepted.id)];
+    } on ApiException {
+      actionError =
+          'That request is no longer available. Refresh to try another.';
+    }
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    realtime?.dispose();
+    super.dispose();
+  }
+
+  Future<void> refreshRequests() async {
+    if (refreshingRequests) return;
+    refreshingRequests = true;
+    actionError = null;
+    notifyListeners();
+    try {
+      requests = await repository.availableRequests();
+    } on ApiException {
+      actionError = 'Incoming requests are temporarily unavailable. Try again.';
+    } finally {
+      refreshingRequests = false;
+      notifyListeners();
+    }
   }
 }

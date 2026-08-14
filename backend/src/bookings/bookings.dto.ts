@@ -83,3 +83,12 @@ export class BookingHistoryQueryDto {
   @Matches(/^[A-Za-z0-9_-]+$/)
   cursor?: string;
 }
+
+export class AvailableBookingQueryDto {
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(50)
+  limit?: number = 20;
+}

@@ -1,6 +1,7 @@
 import 'package:fixnow_mobile/features/tracking/booking_tracking.dart';
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 
 class ProviderLiveMap extends StatelessWidget {
   const ProviderLiveMap({required this.location, super.key});
@@ -16,19 +17,31 @@ class ProviderLiveMap extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         child: SizedBox(
           height: 240,
-          child: GoogleMap(
-            initialCameraPosition: CameraPosition(target: position, zoom: 15),
-            markers: {
-              Marker(
-                markerId: const MarkerId('assigned-provider'),
-                position: position,
-                infoWindow: const InfoWindow(title: 'Provider location'),
+          child: FlutterMap(
+            options: MapOptions(
+              initialCenter: position,
+              initialZoom: 15.0,
+            ),
+            children: [
+              TileLayer(
+                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                userAgentPackageName: 'com.fixnow.app',
               ),
-            },
-            compassEnabled: false,
-            mapToolbarEnabled: false,
-            myLocationButtonEnabled: false,
-            zoomControlsEnabled: false,
+              MarkerLayer(
+                markers: [
+                  Marker(
+                    point: position,
+                    width: 40,
+                    height: 40,
+                    child: const Icon(
+                      Icons.location_on,
+                      color: Colors.blueAccent,
+                      size: 40,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ),

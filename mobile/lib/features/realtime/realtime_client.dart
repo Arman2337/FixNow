@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 class RealtimeProjection {
   const RealtimeProjection(this.data);
@@ -19,26 +19,29 @@ abstract interface class RealtimeSocketConnector {
   Future<RealtimeSocket> connect(Uri uri);
 }
 
-class IoRealtimeSocketConnector implements RealtimeSocketConnector {
-  const IoRealtimeSocketConnector();
+class ChannelRealtimeSocketConnector implements RealtimeSocketConnector {
+  const ChannelRealtimeSocketConnector();
 
   @override
-  Future<RealtimeSocket> connect(Uri uri) async =>
-      _IoRealtimeSocket(await WebSocket.connect(uri.toString()));
+  Future<RealtimeSocket> connect(Uri uri) async {
+    final channel = WebSocketChannel.connect(uri);
+    await channel.ready;
+    return _ChannelRealtimeSocket(channel);
+  }
 }
 
-class _IoRealtimeSocket implements RealtimeSocket {
-  _IoRealtimeSocket(this._socket);
-  final WebSocket _socket;
+class _ChannelRealtimeSocket implements RealtimeSocket {
+  _ChannelRealtimeSocket(this._channel);
+  final WebSocketChannel _channel;
 
   @override
-  Stream<Object?> get messages => _socket;
+  Stream<Object?> get messages => _channel.stream;
 
   @override
-  Future<void> send(Object message) async => _socket.add(message);
+  Future<void> send(Object message) async => _channel.sink.add(message);
 
   @override
-  Future<void> close() => _socket.close();
+  Future<void> close() async => await _channel.sink.close();
 }
 
 class RealtimeClient extends ChangeNotifier {
@@ -46,7 +49,7 @@ class RealtimeClient extends ChangeNotifier {
     required this.uri,
     required this.accessToken,
     RealtimeSocketConnector? connector,
-  }) : _connector = connector ?? const IoRealtimeSocketConnector();
+  }) : _connector = connector ?? const ChannelRealtimeSocketConnector();
 
   final Uri uri;
   final Future<String?> Function() accessToken;
@@ -63,7 +66,7 @@ class RealtimeClient extends ChangeNotifier {
   Stream<RealtimeProjection> get projections => _projections.stream;
 
   Future<void> subscribeBooking(String bookingId) async {
-    if (_bookingId == bookingId) {
+    if (_bookingId == bookingId && _socket != null) {
       if (_readyCompleter?.isCompleted == false) {
         try {
           await _readyCompleter!.future;
@@ -125,19 +128,27 @@ class RealtimeClient extends ChangeNotifier {
       );
       _subscription = socket.messages.listen(
         _onMessage,
-        onDone: _handleDisconnect,
-        onError: (_) => _handleDisconnect(),
+        onDone: () {
+          print('WS CLOSED: onDone');
+          _handleDisconnect();
+        },
+        onError: (e) {
+          print('WS ERROR: $e');
+          _handleDisconnect();
+        },
         cancelOnError: true,
       );
       notifyListeners();
       await _readyCompleter!.future.timeout(const Duration(seconds: 5));
-    } catch (_) {
+    } catch (e) {
+      print('WS CONNECT ERROR: $e');
       _handleDisconnect();
     }
   }
 
-  void _onMessage(Object? raw) {
+  void _onMessage(dynamic raw) {
     if (raw is! String) return;
+    print('WS RECV: $raw');
     try {
       final decoded = jsonDecode(raw);
       if (decoded is! Map) return;
@@ -180,7 +191,10 @@ class RealtimeClient extends ChangeNotifier {
 
   Future<void> _send(Map<String, Object?> message) async {
     final socket = _socket;
-    if (socket == null) return;
+    if (socket == null) {
+      print('WS DROPPED MESSAGE: socket is null! Message: ${message['type']}');
+      return;
+    }
     await socket.send(jsonEncode(message));
   }
 
@@ -198,6 +212,4 @@ class RealtimeClient extends ChangeNotifier {
 Uri realtimeUriFromApi(Uri apiUri) => apiUri.replace(
   scheme: apiUri.scheme == 'https' ? 'wss' : 'ws',
   path: '/realtime',
-  query: '',
-  fragment: '',
 );

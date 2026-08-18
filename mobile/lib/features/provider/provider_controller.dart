@@ -132,22 +132,41 @@ class ProviderController extends ChangeNotifier {
 
   Future<void> publishCurrentLocation(CustomerBooking job) async {
     final client = realtime;
-    if (client == null || job.status != 'EN_ROUTE') return;
-    final position = await Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
-    );
-    final sequence = (_locationSequences[job.id] ?? 0) + 1;
-    _locationSequences[job.id] = sequence;
-    await client.subscribeBooking(job.id);
-    await client.sendPresence(true);
-    await client.sendLocation(
-      bookingId: job.id,
-      sequence: sequence,
-      capturedAt: position.timestamp,
-      latitude: position.latitude,
-      longitude: position.longitude,
-      accuracyMeters: position.accuracy,
-    );
+    if (client == null || job.status != 'EN_ROUTE') {
+      print('publishCurrentLocation aborted: client is null or job not EN_ROUTE');
+      return;
+    }
+    
+    try {
+      print('Requesting current position from browser...');
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+      );
+      print('Position obtained: ${position.latitude}, ${position.longitude}');
+
+      final sequence = (_locationSequences[job.id] ?? 0) + 1;
+      _locationSequences[job.id] = sequence;
+      
+      print('Connecting and subscribing to booking ${job.id}...');
+      await client.subscribeBooking(job.id);
+      
+      print('Sending presence...');
+      await client.sendPresence(true);
+      
+      print('Sending location update...');
+      await client.sendLocation(
+        bookingId: job.id,
+        sequence: sequence,
+        capturedAt: position.timestamp,
+        latitude: position.latitude,
+        longitude: position.longitude,
+        accuracyMeters: position.accuracy,
+      );
+      print('Location update completely sent!');
+    } catch (e, stack) {
+      print('Error in publishCurrentLocation: $e');
+      print(stack);
+    }
   }
 
   Future<void> acceptRequest(ProviderRequest request) async {

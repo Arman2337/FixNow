@@ -90,7 +90,12 @@ class ProviderRepository {
           method: ApiMethod.put,
           path: 'provider-availability/me/status',
           bearerToken: await _token(),
-          body: {'status': status, 'expectedVersion': current.version},
+          body: {
+            'status': status, 
+            'expectedVersion': current.version,
+            if (status != 'offline') 
+              'expiresAt': DateTime.now().toUtc().add(const Duration(hours: 8)).toIso8601String(),
+          },
         ),
       )).body,
     ),

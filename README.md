@@ -22,6 +22,23 @@ Uninitialized project directories contain a `.gitkeep` file so Git preserves the
 
 1. Install Git 2.28 or later.
 2. Clone the repository.
+
+### Running with Bun (Zero-Docker Workflow)
+
+If you prefer to run the entire backend, proxy, and mobile app locally without Docker, you can use the Bun dev orchestrator:
+
+```bash
+bun dev
+```
+
+This single command will:
+- Check and start your native PostgreSQL service.
+- Start a Bun reverse proxy on port `8080` (with live CORS and request logging).
+- Boot the NestJS backend in watch mode on port `3300`.
+- Launch the Flutter mobile app automatically.
+
+*(See [docs/development/bun-dev-workflow.md](docs/development/bun-dev-workflow.md) for more details on proxy ports and backend-only execution).*
+
 3. Activate the version-controlled hooks:
 
    ```bash

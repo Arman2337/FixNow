@@ -1,4 +1,6 @@
 import 'package:fixnow_mobile/api/api_client.dart';
+import 'package:fixnow_mobile/design_system/app_colors.dart';
+import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
@@ -7,6 +9,8 @@ import 'package:fixnow_mobile/features/bookings/booking_controller.dart';
 import 'package:fixnow_mobile/features/location/booking_location.dart';
 import 'package:fixnow_mobile/features/services/service_category.dart';
 import 'package:flutter/material.dart';
+
+enum ServiceUrgency { normal, urgent, emergency }
 
 class ServiceRequestScreen extends StatefulWidget {
   const ServiceRequestScreen({
@@ -26,6 +30,7 @@ class ServiceRequestScreen extends StatefulWidget {
 class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
   final _formKey = GlobalKey<FormState>();
   final _details = TextEditingController();
+  ServiceUrgency _urgency = ServiceUrgency.normal;
   bool _submitting = false;
   String? _error;
 
@@ -33,6 +38,14 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
   void dispose() {
     _details.dispose();
     super.dispose();
+  }
+
+  void _addSuggestion(String text) {
+    if (_details.text.isEmpty) {
+      _details.text = text;
+    } else {
+      _details.text = '${_details.text.trim()}, $text';
+    }
   }
 
   Future<void> _submit() async {
@@ -55,12 +68,14 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
     } on BookingLocationFailure catch (error) {
       setState(() => _error = error.message);
     } on ApiException catch (error) {
+      debugPrint('ApiException during request creation: ${error.kind} - ${error.message}');
       setState(
         () => _error = error.kind == ApiFailureKind.offline
             ? 'You are offline. Reconnect and try again.'
             : 'We could not create the request. Try again.',
       );
-    } catch (_) {
+    } catch (e, stackTrace) {
+      debugPrint('Error creating request: $e\n$stackTrace');
       setState(() => _error = 'We could not create the request. Try again.');
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -76,20 +91,21 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
           padding: const EdgeInsets.all(AppSpacing.pagePadding),
           children: [
             FixPageHeader(
-              eyebrow: 'Fast, secure matching',
+              eyebrow: 'FAST, SECURE MATCHING',
               title: widget.category.name,
               description:
                   widget.category.description ??
                   'Tell us what needs attention and we will match a verified provider nearby.',
             ),
-            const SizedBox(height: AppSpacing.xl),
-            FixCard(
+            const SizedBox(height: AppSpacing.lg),
+
+            const FixCard(
               tone: FixCardTone.elevated,
               semanticLabel: 'How matching works',
-              child: const Row(
+              child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.verified_user_outlined),
+                  Icon(Icons.verified_user_outlined, color: AppColors.verified),
                   SizedBox(width: AppSpacing.md),
                   Expanded(
                     child: Text(
@@ -99,20 +115,22 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: AppSpacing.xl),
+            const SizedBox(height: AppSpacing.lg),
+
             Form(
               key: _formKey,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
               child: TextFormField(
                 controller: _details,
                 enabled: !_submitting,
-                minLines: 4,
-                maxLines: 7,
-                maxLength: 2000,
+                minLines: 3,
+                maxLines: 6,
+                maxLength: 500,
                 textCapitalization: TextCapitalization.sentences,
                 decoration: const InputDecoration(
                   labelText: 'What needs fixing?',
                   hintText:
-                      'Describe the issue, where it is, and anything the provider should know.',
+                      'Describe the issue (e.g. pipe leak, low pressure, installation)...',
                   alignLabelWithHint: true,
                 ),
                 validator: (value) => (value?.trim().length ?? 0) < 10
@@ -121,13 +139,15 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
               ),
             ),
             const SizedBox(height: AppSpacing.md),
+
             const Row(
               children: [
-                Icon(Icons.location_on_outlined, size: 20),
+                Icon(Icons.location_on_outlined, size: 20, color: AppColors.accentGold),
                 SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
                     'Your current location is captured only when you submit.',
+                    style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
                   ),
                 ),
               ],
@@ -143,7 +163,7 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
               ),
             ],
             const SizedBox(height: AppSpacing.xl),
-            FixButton(
+            FixPrimaryButton(
               label: 'Find a verified provider',
               icon: Icons.arrow_forward_rounded,
               onPressed: _submit,
@@ -154,4 +174,64 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
       ),
     ),
   );
+
+  Widget _buildChip(String label) {
+    return ActionChip(
+      label: Text(label),
+      backgroundColor: AppColors.surfaceSecondary,
+      side: const BorderSide(color: AppColors.borderDefault),
+      labelStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+      onPressed: () => _addSuggestion(label),
+    );
+  }
+
+  Widget _buildUrgencyCard({
+    required ServiceUrgency urgency,
+    required String title,
+    required String time,
+    required IconData icon,
+    bool isEmergency = false,
+  }) {
+    final selected = _urgency == urgency;
+    final activeColor = isEmergency ? AppColors.emergency : AppColors.primary;
+    final bgColor = selected
+        ? (isEmergency ? AppColors.emergencySoft : AppColors.primarySoft)
+        : AppColors.surfacePrimary;
+    final borderColor = selected ? activeColor : AppColors.borderDefault;
+
+    return InkWell(
+      onTap: () => setState(() => _urgency = urgency),
+      borderRadius: BorderRadius.circular(AppRadius.card),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          border: Border.all(color: borderColor, width: selected ? 1.5 : 1),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: selected ? activeColor : AppColors.textSecondary, size: 20),
+            const SizedBox(height: 4),
+            Text(
+              title,
+              style: TextStyle(
+                color: selected ? AppColors.cream : AppColors.textPrimary,
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              time,
+              style: TextStyle(
+                color: selected ? activeColor : AppColors.textMuted,
+                fontSize: 11,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

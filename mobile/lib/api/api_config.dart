@@ -8,7 +8,7 @@ class ApiConfig {
   static Uri baseUriFor(AppEnvironment environment) {
     final configured = _configuredBaseUrl.trim();
     final value = configured.isEmpty
-        ? 'http://127.0.0.1:3000/api/v1/'
+        ? 'http://127.0.0.1:8080/api/v1/'
         : configured;
     final uri = Uri.parse(value);
 

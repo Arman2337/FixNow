@@ -1,0 +1,21 @@
+{
+  "name": "fixnow",
+  "version": "0.1.0",
+  "private": true,
+  "description": "FixNow - On-Demand Local Services Monorepo",
+  "scripts": {
+    "dev": "bun run scripts/dev.ts",
+    "dev:backend": "bun run scripts/dev.ts --backend-only",
+    "dev:proxy": "bun run scripts/proxy.ts",
+    "proxy": "bun run scripts/proxy.ts"
+  },
+  "keywords": [
+    "fixnow",
+    "monorepo",
+    "bun",
+    "nestjs",
+    "flutter"
+  ],
+  "author": "",
+  "license": "UNLICENSED"
+}

@@ -31,6 +31,21 @@ When the backend's explicit local OTP bypass is enabled, add
 hint. This hint is suppressed outside `APP_ENV=development`; the backend remains
 the authoritative enforcement boundary.
 
+### Local Google Maps development key
+
+Live provider tracking uses Google Maps only after the backend has authorized a
+fresh provider location for the assigned customer. Enable **Maps SDK for
+Android** in a development-only Google Cloud project, restrict its key to the
+`com.fixnow.fixnow_mobile` Android application, and add this untracked value to
+`mobile/android/local.properties`:
+
+```properties
+GOOGLE_MAPS_API_KEY=your-development-key
+```
+
+Never commit the key. A missing key leaves the app buildable but Google Maps
+cannot display tiles; it does not bypass authorization or freshness rules.
+
 Supported non-secret environment names are `development`, `staging`, and `production`. `API_BASE_URL` must be an absolute HTTPS URL for staging and production; development defaults to `http://127.0.0.1:3000/api/v1/`. Credentials and tokens must never be supplied through compile-time configuration.
 
 ## Structure

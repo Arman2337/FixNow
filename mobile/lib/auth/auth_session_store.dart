@@ -1,5 +1,6 @@
 import 'package:fixnow_mobile/auth/auth_session.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'dart:html' as html;
 
 abstract interface class AuthSessionStore {
   Future<AuthSession?> read();
@@ -7,17 +8,78 @@ abstract interface class AuthSessionStore {
   Future<void> clear();
 }
 
-class MemoryAuthSessionStore implements AuthSessionStore {
-  AuthSession? _session;
+class WebAuthSessionStore implements AuthSessionStore {
+  static const _userIdKey = 'fixnow.auth.user_id';
+  static const _accessTokenKey = 'fixnow.auth.access_token';
+  static const _refreshTokenKey = 'fixnow.auth.refresh_token';
+  static const _expiresAtKey = 'fixnow.auth.expires_at';
+  static const _verificationEmailKey = 'fixnow.auth.verification_email';
+  static const _roleKey = 'fixnow.auth.role';
 
   @override
-  Future<void> clear() async => _session = null;
+  Future<AuthSession?> read() async {
+    final storage = html.window.localStorage;
+    final userId = storage[_userIdKey];
+    final accessToken = storage[_accessTokenKey];
+    final refreshToken = storage[_refreshTokenKey];
+    final expiresAtStr = storage[_expiresAtKey];
+    final roleStr = storage[_roleKey];
+
+    if (userId == null || accessToken == null || refreshToken == null || expiresAtStr == null) {
+      await clear();
+      return null;
+    }
+
+    final expiresAt = DateTime.tryParse(expiresAtStr);
+    if (expiresAt == null) {
+      await clear();
+      return null;
+    }
+
+    return AuthSession(
+      userId: userId,
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+      expiresAt: expiresAt.toUtc(),
+      verificationEmail: storage[_verificationEmailKey],
+      role: roleStr == 'provider_applicant'
+          ? AccountRole.providerApplicant
+          : roleStr == 'verified_provider'
+              ? AccountRole.verifiedProvider
+              : AccountRole.customer,
+    );
+  }
 
   @override
-  Future<AuthSession?> read() async => _session;
+  Future<void> write(AuthSession session) async {
+    final storage = html.window.localStorage;
+    storage[_userIdKey] = session.userId;
+    storage[_accessTokenKey] = session.accessToken;
+    storage[_refreshTokenKey] = session.refreshToken;
+    storage[_expiresAtKey] = session.expiresAt.toUtc().toIso8601String();
+    storage[_roleKey] = session.role == AccountRole.customer
+        ? 'customer'
+        : session.role == AccountRole.providerApplicant
+            ? 'provider_applicant'
+            : 'verified_provider';
+    
+    if (session.verificationEmail != null) {
+      storage[_verificationEmailKey] = session.verificationEmail!;
+    } else {
+      storage.remove(_verificationEmailKey);
+    }
+  }
 
   @override
-  Future<void> write(AuthSession session) async => _session = session;
+  Future<void> clear() async {
+    final storage = html.window.localStorage;
+    storage.remove(_userIdKey);
+    storage.remove(_accessTokenKey);
+    storage.remove(_refreshTokenKey);
+    storage.remove(_expiresAtKey);
+    storage.remove(_verificationEmailKey);
+    storage.remove(_roleKey);
+  }
 }
 
 class SecureAuthSessionStore implements AuthSessionStore {
@@ -60,7 +122,9 @@ class SecureAuthSessionStore implements AuthSessionStore {
       verificationEmail: values[4],
       role: values[5] == 'provider_applicant'
           ? AccountRole.providerApplicant
-          : AccountRole.customer,
+          : values[5] == 'verified_provider'
+              ? AccountRole.verifiedProvider
+              : AccountRole.customer,
     );
   }
 
@@ -78,7 +142,9 @@ class SecureAuthSessionStore implements AuthSessionStore {
         key: _roleKey,
         value: session.role == AccountRole.customer
             ? 'customer'
-            : 'provider_applicant',
+            : session.role == AccountRole.providerApplicant
+                ? 'provider_applicant'
+                : 'verified_provider',
       ),
       if (session.verificationEmail == null)
         _storage.delete(key: _verificationEmailKey)

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:fixnow_mobile/app/app_shell.dart';
@@ -75,9 +77,8 @@ class _FixNowAppState extends State<FixNowApp> {
     _api = api;
     _auth = AuthController(
       api: AuthApi(api),
-      store:
-          widget.sessionStore ??
-          (kIsWeb ? MemoryAuthSessionStore() : SecureAuthSessionStore()),
+      store: widget.sessionStore ??
+          (kIsWeb ? WebAuthSessionStore() : SecureAuthSessionStore()),
     );
     _profile = CustomerProfileController(
       ApiCustomerProfileRepository(
@@ -91,6 +92,7 @@ class _FixNowAppState extends State<FixNowApp> {
     );
     _bookings = BookingController(
       BookingRepository(api: api, accessToken: _auth.validAccessToken),
+      realtime: _createRealtimeClient(),
     );
     _provider = ProviderController(
       ProviderRepository(api: api, accessToken: _auth.validAccessToken),
@@ -190,6 +192,7 @@ class _FixNowAppState extends State<FixNowApp> {
               ),
             );
           }
+          unawaited(_bookings.startRealtime());
           return AppShell(
             customerHome: ServiceDiscoveryScreen(
               controller: _discovery,

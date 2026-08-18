@@ -23,11 +23,24 @@ export class ProviderAvailabilityService {
 
   async getOwn(userId: string): Promise<ProviderAvailabilityResponseDto> {
     await this.assertVerified(this.dataSource.manager, userId, false);
-    const entity = await this.dataSource
-      .getRepository(ProviderAvailabilityEntity)
-      .findOne({ where: { userId } });
-    if (!entity) throw new NotFoundException('Provider availability not found');
-    return this.toResponse(entity);
+    return this.dataSource.transaction(async (manager) => {
+      const repository = manager.getRepository(ProviderAvailabilityEntity);
+      let entity = await repository.findOne({ where: { userId }, lock: { mode: 'pessimistic_write' } });
+      if (!entity) {
+        entity = await repository.save(
+          repository.create({
+            userId,
+            timeZone: 'UTC',
+            weeklyRules: [],
+            exceptions: [],
+            status: ProviderAvailabilityStatus.Offline,
+            statusExpiresAt: null,
+            version: 0,
+          })
+        );
+      }
+      return this.toResponse(entity);
+    });
   }
 
   async updateSchedule(

@@ -70,6 +70,9 @@ Use three layers: primitive values, semantic roles, then component tokens. Appli
 | `color.surfacePrimary` | `#10201C` | Cards, sheets, dialogs, and inputs. |
 | `color.surfaceSecondary` | `#152923` | Grouped sections and muted controls. |
 | `color.surfaceElevated` | `#1B332C` | Floating panels, tracking sheets, and emphasized cards. |
+| `color.accentGold` | `#E5B869` | Signature brand gold accent, ratings, and highlights. |
+| `color.accentGoldSoft` | `#2D2516` | Warm gold tinted container surfaces. |
+| `color.cream` | `#FAF8F5` | Soft cream / warm white high-contrast headings. |
 | `color.primary` | `#45E0A8` | Main CTA, selected navigation, and interactive emphasis. |
 | `color.primaryPressed` | `#29BC88` | Pressed/active feedback. |
 | `color.primarySoft` | `#153D31` | Selected rows and restrained emerald containers. |
@@ -80,6 +83,7 @@ Use three layers: primitive values, semantic roles, then component tokens. Appli
 | `color.textDisabled` | `#62736D` | Disabled content; never required readable information. |
 | `color.borderDefault` | `#274139` | Standard dividers and component borders. |
 | `color.borderStrong` | `#3B5C51` | Focus-adjacent and emphasized boundaries. |
+| `color.borderGold` | `#5C4825` | Gold accent card borders. |
 | `color.focus` | `#79F0C4` | Visible focus rings. |
 | `color.success` | `#45E0A8` | Successful or available state; context and labels remain required. |
 | `color.warning` | `#F2B84B` | Caution, delay, or attention required. |
@@ -96,19 +100,19 @@ The authenticated customer and provider experience uses this premium dark system
 
 ## 5. Typography
 
-Use **Inter** as the single primary family when implementation begins, with a platform-appropriate sans-serif fallback while it loads. Do not introduce a display or secondary font without an approved design-system change. Use tabular numerals for prices, ETA countdowns, and aligned financial data when supported.
+Use **Playfair Display** (with serif fallback) for premium headings (`display`, `heading1`, `heading2`, `heading3`) and **Inter** (with sans-serif fallback) for title, body, labels, and captions. Use tabular numerals for prices, ETA countdowns, and aligned financial data when supported.
 
 | Token | Size | Weight | Line height | Use |
 | --- | ---: | ---: | ---: | --- |
-| `type.display` | 40px | 700 | 48px | Rare marketing or major admin overview statement; not routine mobile screens. |
-| `type.heading1` | 32px | 700 | 40px | Top-level page heading. |
-| `type.heading2` | 24px | 700 | 32px | Major section or sheet heading. |
-| `type.heading3` | 20px | 600 | 28px | Card group or subsection heading. |
-| `type.title` | 18px | 600 | 24px | Card/dialog title and prominent provider name. |
-| `type.bodyLarge` | 18px | 400 | 28px | High-priority explanatory text. |
-| `type.body` | 16px | 400 | 24px | Default body and input value. |
-| `type.label` | 14px | 600 | 20px | Buttons, field labels, navigation, status labels. |
-| `type.caption` | 12px | 500 | 16px | Supporting metadata; never critical instructions. |
+| `type.display` | 36px | 700 | 44px | Playfair Display: Hero / marketing headline. |
+| `type.heading1` | 28px | 700 | 36px | Playfair Display: Top-level page heading. |
+| `type.heading2` | 24px | 600 | 32px | Playfair Display: Major section or sheet heading. |
+| `type.heading3` | 20px | 600 | 28px | Playfair Display: Card group or subsection heading. |
+| `type.title` | 18px | 600 | 24px | Inter: Card/dialog title and prominent provider name. |
+| `type.bodyLarge` | 16px | 500 | 24px | Inter: High-priority explanatory text. |
+| `type.body` | 14px | 400 | 20px | Inter: Default body and input value. |
+| `type.label` | 14px | 600 | 20px | Inter: Buttons, field labels, navigation, status labels. |
+| `type.caption` | 12px | 400 | 16px | Inter: Supporting metadata; never critical instructions. |
 
 Mobile body text remains 16px equivalent by default. Support platform text scaling without clipping, hiding actions, or replacing text with ellipses where the full value is needed. Use only tokenized sizes, weights, and line heights.
 

@@ -20,9 +20,7 @@ void main() {
       );
 
       await client.subscribeBooking('booking-1');
-      expect(jsonDecode(socket.sent.single)['type'], 'authenticate');
-      socket.emit({'type': 'ready'});
-      await Future<void>.delayed(Duration.zero);
+      expect(jsonDecode(socket.sent.first)['type'], 'authenticate');
       final subscribe = jsonDecode(socket.sent[1]) as Map<String, dynamic>;
       expect(subscribe, containsPair('resourceId', 'booking-1'));
       socket.emit({
@@ -61,10 +59,10 @@ void main() {
       longitude: 73.1,
       accuracyMeters: 10,
     );
-    expect(socket.sent, hasLength(4));
-    expect(jsonDecode(socket.sent[1])['type'], 'presence-update');
-    expect(jsonDecode(socket.sent[2])['type'], 'location-consent');
-    expect(jsonDecode(socket.sent[3])['type'], 'location-update');
+    expect(socket.sent, hasLength(5));
+    expect(jsonDecode(socket.sent[2])['type'], 'presence-update');
+    expect(jsonDecode(socket.sent[3])['type'], 'location-consent');
+    expect(jsonDecode(socket.sent[4])['type'], 'location-update');
     client.dispose();
   });
 }
@@ -85,7 +83,12 @@ class _FakeSocket implements RealtimeSocket {
   Stream<Object?> get messages => _messages.stream;
 
   @override
-  Future<void> send(Object message) async => sent.add(message.toString());
+  Future<void> send(Object message) async {
+    sent.add(message.toString());
+    if (message.toString().contains('"authenticate"')) {
+      Future.delayed(Duration.zero, () => emit({'type': 'ready'}));
+    }
+  }
 
   void emit(Map<String, Object?> message) => _messages.add(jsonEncode(message));
 

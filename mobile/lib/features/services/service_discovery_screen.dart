@@ -1,9 +1,10 @@
 import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
+import 'package:fixnow_mobile/design_system/app_typography.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
-import 'package:fixnow_mobile/design_system/fix_page_frame.dart';
+import 'package:fixnow_mobile/design_system/fix_components.dart';
 import 'package:fixnow_mobile/features/location/location_consent_card.dart';
 import 'package:fixnow_mobile/features/location/location_consent_controller.dart';
 import 'package:fixnow_mobile/features/services/service_category.dart';
@@ -32,91 +33,390 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
     widget.controller.load();
   }
 
+  void _handleQuickService(String slug, String name) {
+    if (widget.controller.categories.isNotEmpty) {
+      final match = widget.controller.categories.where(
+        (c) => c.slug.toLowerCase() == slug.toLowerCase() ||
+               c.name.toLowerCase().contains(name.toLowerCase()),
+      ).firstOrNull;
+      if (match != null && widget.onCategorySelected != null) {
+        widget.onCategorySelected!(match);
+        return;
+      }
+      if (widget.onCategorySelected != null) {
+        widget.onCategorySelected!(widget.controller.categories.first);
+        return;
+      }
+    }
+  }
+
+  void _showEmergencyContactDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surfaceElevated,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.large)),
+        title: const Row(
+          children: [
+            Icon(Icons.emergency_rounded, color: AppColors.emergency),
+            SizedBox(width: 8),
+            Text('Emergency Support', style: TextStyle(color: Colors.white)),
+          ],
+        ),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'FixNow 24/7 Emergency Dispatch is available for urgent safety hazards.',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
+            SizedBox(height: AppSpacing.md),
+            Text(
+              'Helpline: +91 800 349 6691\nDispatched in average 12 minutes.',
+              style: TextStyle(color: AppColors.cream, fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Close', style: TextStyle(color: AppColors.textSecondary)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.emergency,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Connecting to 24/7 Emergency Dispatch...')),
+              );
+            },
+            child: const Text('Call Dispatch'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: widget.controller,
-    builder: (context, _) => RefreshIndicator(
-      onRefresh: widget.controller.load,
-      child: ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(AppSpacing.pagePadding),
-        children: [
-          if (widget.controller.status == DiscoveryStatus.ready ||
-              widget.controller.status == DiscoveryStatus.initial ||
-              widget.controller.status == DiscoveryStatus.loading) ...[
-            const FixBrandMark(compact: true),
-            const SizedBox(height: AppSpacing.xxl),
-          ],
-          const FixPageHeader(
-            eyebrow: 'Professional help is minutes away',
-            title: 'What can we fix today?',
-            description: 'Choose a trusted service and describe what happened.',
-          ),
-          const SizedBox(height: AppSpacing.xl),
-          const FixCard(
-            tone: FixCardTone.elevated,
-            semanticLabel: 'Verified professional matching',
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(Icons.verified_rounded, color: AppColors.verified),
-                SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Trusted local professionals',
-                        style: TextStyle(fontWeight: FontWeight.w700),
+    builder: (context, _) {
+      final isOfflineOrError = widget.controller.status == DiscoveryStatus.offline ||
+          widget.controller.status == DiscoveryStatus.error ||
+          widget.controller.status == DiscoveryStatus.empty;
+
+      return RefreshIndicator(
+        onRefresh: widget.controller.load,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(AppSpacing.pagePadding),
+          children: [
+            _buildCustomerHeader(context),
+            const SizedBox(height: AppSpacing.lg),
+
+            if (isOfflineOrError) ...[
+              ..._content(context),
+              const SizedBox(height: AppSpacing.xl),
+              LocationConsentCard(controller: widget.locationController),
+            ] else ...[
+              FixEmergencyBanner(
+                onCallNow: _showEmergencyContactDialog,
+              ),
+              const SizedBox(height: AppSpacing.md),
+
+              FixAiPromptCard(
+                onTap: () {
+                  if (widget.controller.categories.isNotEmpty && widget.onCategorySelected != null) {
+                    widget.onCategorySelected!(widget.controller.categories.first);
+                  }
+                },
+              ),
+              const SizedBox(height: AppSpacing.xl),
+
+              _buildQuickServicesSection(context),
+              const SizedBox(height: AppSpacing.xl),
+
+              const FixCard(
+                tone: FixCardTone.elevated,
+                semanticLabel: 'Verified professional matching',
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.verified_rounded, color: AppColors.verified),
+                    SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Trusted local professionals',
+                            style: TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                          SizedBox(height: AppSpacing.xs),
+                          Text(
+                            'Requests are offered only to eligible providers. Assignment happens after acceptance.',
+                          ),
+                        ],
                       ),
-                      SizedBox(height: AppSpacing.xs),
-                      Text(
-                        'Requests are offered only to eligible providers. Assignment happens after acceptance.',
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          if (widget.controller.status == DiscoveryStatus.offline ||
-              widget.controller.status == DiscoveryStatus.error ||
-              widget.controller.status == DiscoveryStatus.empty) ...[
-            const SizedBox(height: AppSpacing.xl),
-            ..._content(context),
-            const SizedBox(height: AppSpacing.xl),
-          ],
-          LocationConsentCard(controller: widget.locationController),
-          if (widget.controller.status == DiscoveryStatus.ready ||
-              widget.controller.status == DiscoveryStatus.initial ||
-              widget.controller.status == DiscoveryStatus.loading) ...[
-            const SizedBox(height: AppSpacing.xxl),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Expanded(
-                  child: Semantics(
-                    header: true,
-                    child: Text(
-                      'Popular services',
-                      style: Theme.of(context).textTheme.headlineSmall,
+              ),
+              const SizedBox(height: AppSpacing.lg),
+
+              LocationConsentCard(controller: widget.locationController),
+              const SizedBox(height: AppSpacing.xl),
+
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: Semantics(
+                      header: true,
+                      child: Text(
+                        'Popular services',
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
                     ),
                   ),
-                ),
-                Text(
-                  'Verified categories',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.md),
-            ..._content(context),
+                  Text(
+                    'Verified categories',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.md),
+              ..._content(context),
+
+              const SizedBox(height: AppSpacing.xxl),
+              _buildTrustAndSafetySection(context),
+              const SizedBox(height: AppSpacing.xl),
+            ],
           ],
+        ),
+      );
+    },
+  );
+
+  Widget _buildCustomerHeader(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.location_on_rounded, color: AppColors.accentGold, size: 16),
+                  const SizedBox(width: 4),
+                  Flexible(
+                    child: Text(
+                      'Ahmedabad, Gujarat',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.caption.copyWith(
+                        color: AppColors.accentGold,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.accentGold, size: 16),
+                ],
+              ),
+              const SizedBox(height: 4),
+              RichText(
+                text: TextSpan(
+                  style: AppTypography.heading2.copyWith(color: AppColors.cream),
+                  children: const [
+                    TextSpan(text: 'Right help. '),
+                    TextSpan(
+                      text: 'Right now. 👋',
+                      style: TextStyle(color: AppColors.primary),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const FixAvatar(
+          name: 'Arman',
+          size: 44,
+          isVerified: true,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuickServicesSection(BuildContext context) {
+    final quickItems = [
+      (Icons.plumbing_rounded, 'Plumber', 'plumbing'),
+      (Icons.electrical_services_rounded, 'Electrician', 'electrical_services'),
+      (Icons.kitchen_rounded, 'Appliance Pro', 'appliances'),
+      (Icons.ac_unit_rounded, 'AC Expert', 'ac_unit'),
+      (Icons.carpenter_rounded, 'Carpenter', 'carpentry'),
+      (Icons.format_paint_rounded, 'Painter', 'painting'),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const FixSectionHeader(
+          title: 'Quick Services',
+          subtitle: 'Choose a service to match nearby pros in minutes',
+        ),
+        const SizedBox(height: AppSpacing.md),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            mainAxisSpacing: AppSpacing.sm,
+            crossAxisSpacing: AppSpacing.sm,
+            childAspectRatio: 1.05,
+          ),
+          itemCount: quickItems.length,
+          itemBuilder: (context, index) {
+            final item = quickItems[index];
+            return InkWell(
+              onTap: () => _handleQuickService(item.$3, item.$2),
+              borderRadius: BorderRadius.circular(AppRadius.card),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppColors.surfacePrimary,
+                  borderRadius: BorderRadius.circular(AppRadius.card),
+                  border: Border.all(color: AppColors.borderDefault),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: AppColors.primarySoft,
+                        borderRadius: BorderRadius.circular(AppRadius.medium),
+                      ),
+                      child: Icon(item.$1, color: AppColors.primary, size: 22),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      item.$2,
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTrustAndSafetySection(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const FixSectionHeader(
+          title: 'Why FixNow?',
+          subtitle: 'Guaranteed quality with 30-day service protection',
+        ),
+        const SizedBox(height: AppSpacing.md),
+        Row(
+          children: [
+            Expanded(
+              child: _buildTrustCard(
+                icon: Icons.verified_user_rounded,
+                title: 'Verified Pros',
+                description: '100% background checked professionals',
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: _buildTrustCard(
+                icon: Icons.currency_rupee_rounded,
+                title: 'Fixed Pricing',
+                description: 'Transparent upfront estimates with no hidden fees',
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Row(
+          children: [
+            Expanded(
+              child: _buildTrustCard(
+                icon: Icons.shield_rounded,
+                title: '30-Day Protection',
+                description: 'Complete warranty on eligible completed work',
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: _buildTrustCard(
+                icon: Icons.lock_clock_rounded,
+                title: 'OTP Verified Work',
+                description: 'Work begins only after safety code confirmation',
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTrustCard({
+    required IconData icon,
+    required String title,
+    required String description,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.surfacePrimary,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: AppColors.borderDefault),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: AppColors.accentGold, size: 20),
+          const SizedBox(height: 6),
+          Text(
+            title,
+            style: const TextStyle(
+              color: AppColors.cream,
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            description,
+            style: const TextStyle(
+              color: AppColors.textMuted,
+              fontSize: 11,
+            ),
+          ),
         ],
       ),
-    ),
-  );
+    );
+  }
 
   List<Widget> _content(BuildContext context) =>
       switch (widget.controller.status) {

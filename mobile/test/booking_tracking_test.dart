@@ -24,6 +24,26 @@ void main() {
     },
   );
 
+  test('accepts location updates that reuse the current sequence', () async {
+    final controller = BookingTrackingController(
+      bookingId: 'booking-1',
+      source: _Source(
+        _tracking(sequence: 5, availability: LocationAvailability.unavailable),
+      ),
+    );
+    await controller.loadSnapshot();
+    
+    // Simulate a realtime location update that does not bump the booking sequence.
+    await controller.applyRealtime(
+      _tracking(sequence: 5, availability: LocationAvailability.live),
+    );
+    
+    expect(
+      controller.tracking?.locationAvailability,
+      LocationAvailability.live,
+    );
+  });
+
   test('preserves last status and reports offline on disconnect', () async {
     final controller = BookingTrackingController(
       bookingId: 'booking-1',

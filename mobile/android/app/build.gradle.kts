@@ -28,6 +28,10 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        manifestPlaceholders["GOOGLE_MAPS_API_KEY"] = providers
+            .gradleProperty("GOOGLE_MAPS_API_KEY")
+            .orElse("")
+            .get()
     }
 
     // Release signing is intentionally unconfigured until an approved secure

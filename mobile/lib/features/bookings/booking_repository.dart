@@ -49,7 +49,7 @@ class BookingRepository {
     required double latitude,
     required double longitude,
   }) async {
-    final key = 'mobile-${DateTime.now().toUtc().microsecondsSinceEpoch}';
+    final key = 'mobile-${DateTime.now().toUtc().millisecondsSinceEpoch}';
     final response = await _api.send(
       ApiRequest(
         method: ApiMethod.post,

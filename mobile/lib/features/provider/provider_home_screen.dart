@@ -1,4 +1,5 @@
 import 'package:fixnow_mobile/design_system/app_colors.dart';
+import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
@@ -46,7 +47,30 @@ class ProviderHomeScreen extends StatelessWidget {
               description:
                   'Manage availability and only the work assigned to your account.',
             ),
-            const SizedBox(height: AppSpacing.xl),
+            const SizedBox(height: AppSpacing.md),
+
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+              decoration: BoxDecoration(
+                color: AppColors.accentGoldSoft,
+                borderRadius: BorderRadius.circular(AppRadius.card),
+                border: Border.all(color: AppColors.borderGold),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.trending_up_rounded, color: AppColors.accentGold, size: 18),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'High demand in your area • Stay online for instant matching',
+                      style: TextStyle(color: AppColors.accentGold, fontSize: 12, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+
             FixCard(
               tone: FixCardTone.elevated,
               semanticLabel: 'Availability ${online ? 'online' : 'offline'}',

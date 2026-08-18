@@ -90,7 +90,7 @@ export class EnvironmentVariables {
 
   @IsNumber()
   @Min(1)
-  @Max(1_000)
+  // @Max(1_000)
   @IsOptional()
   LOCATION_MAX_ACCURACY_METERS: number = 100;
 

@@ -120,6 +120,7 @@ class ProviderController extends ChangeNotifier {
     final client = realtime;
     if (client == null || job.status != 'EN_ROUTE') return;
     await client.subscribeBooking(job.id);
+    await client.sendPresence(true);
     await client.sendLocationConsent(
       bookingId: job.id,
       granted: granted,
@@ -138,6 +139,7 @@ class ProviderController extends ChangeNotifier {
     final sequence = (_locationSequences[job.id] ?? 0) + 1;
     _locationSequences[job.id] = sequence;
     await client.subscribeBooking(job.id);
+    await client.sendPresence(true);
     await client.sendLocation(
       bookingId: job.id,
       sequence: sequence,

@@ -58,10 +58,19 @@ class RealtimeClient extends ChangeNotifier {
   String? _bookingId;
   bool _closed = false;
   int _retries = 0;
+  Completer<void>? _readyCompleter;
 
   Stream<RealtimeProjection> get projections => _projections.stream;
 
   Future<void> subscribeBooking(String bookingId) async {
+    if (_bookingId == bookingId) {
+      if (_readyCompleter?.isCompleted == false) {
+        try {
+          await _readyCompleter!.future;
+        } catch (_) {}
+      }
+      return;
+    }
     _bookingId = bookingId;
     _closed = false;
     await _connect();
@@ -110,6 +119,7 @@ class RealtimeClient extends ChangeNotifier {
       }
       _socket = socket;
       _retries = 0;
+      _readyCompleter = Completer<void>();
       await socket.send(
         jsonEncode({'type': 'authenticate', 'accessToken': token}),
       );
@@ -120,6 +130,7 @@ class RealtimeClient extends ChangeNotifier {
         cancelOnError: true,
       );
       notifyListeners();
+      await _readyCompleter!.future.timeout(const Duration(seconds: 5));
     } catch (_) {
       _handleDisconnect();
     }
@@ -130,14 +141,19 @@ class RealtimeClient extends ChangeNotifier {
     try {
       final decoded = jsonDecode(raw);
       if (decoded is! Map) return;
-      if (decoded['type'] == 'ready' && _bookingId != null) {
-        unawaited(
-          _send({
-            'type': 'subscribe',
-            'channel': 'booking',
-            'resourceId': _bookingId,
-          }),
-        );
+      if (decoded['type'] == 'ready') {
+        if (_readyCompleter?.isCompleted == false) {
+          _readyCompleter!.complete();
+        }
+        if (_bookingId != null) {
+          unawaited(
+            _send({
+              'type': 'subscribe',
+              'channel': 'booking',
+              'resourceId': _bookingId,
+            }),
+          );
+        }
       }
       if (decoded['type'] != 'booking.projection-updated.v1') return;
       final data = decoded['data'];
@@ -152,6 +168,9 @@ class RealtimeClient extends ChangeNotifier {
   void _handleDisconnect() {
     if (_closed) return;
     _socket = null;
+    if (_readyCompleter?.isCompleted == false) {
+      _readyCompleter!.completeError(Exception('Disconnected'));
+    }
     notifyListeners();
     final delay = Duration(milliseconds: 500 * (1 << _retries.clamp(0, 4)));
     _retries += 1;
@@ -161,9 +180,7 @@ class RealtimeClient extends ChangeNotifier {
 
   Future<void> _send(Map<String, Object?> message) async {
     final socket = _socket;
-    if (socket == null) {
-      throw const SocketException('Realtime connection unavailable');
-    }
+    if (socket == null) return;
     await socket.send(jsonEncode(message));
   }
 

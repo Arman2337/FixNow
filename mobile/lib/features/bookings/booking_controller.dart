@@ -46,7 +46,8 @@ class BookingController extends ChangeNotifier {
   Future<void> _subscribeToActiveBooking() async {
     final active = bookings.where(
       (item) =>
-          const {'ASSIGNED', 'EN_ROUTE', 'IN_PROGRESS'}.contains(item.status),
+          const {'REQUESTED', 'ASSIGNED', 'EN_ROUTE', 'IN_PROGRESS'}
+              .contains(item.status),
     );
     if (active.isEmpty) return;
     await realtime?.subscribeBooking(active.first.id);
@@ -92,6 +93,7 @@ class BookingController extends ChangeNotifier {
     bookings = [booking, ...bookings.where((item) => item.id != booking.id)];
     status = BookingListStatus.ready;
     notifyListeners();
+    unawaited(_subscribeToActiveBooking());
   }
 
   Future<CustomerBooking> cancel(CustomerBooking booking, String reason) async {

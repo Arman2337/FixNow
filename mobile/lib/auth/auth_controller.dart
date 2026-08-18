@@ -250,6 +250,13 @@ class AuthController extends ChangeNotifier {
     }
   }
 
+  void clearError() {
+    if (errorMessage != null) {
+      errorMessage = null;
+      notifyListeners();
+    }
+  }
+
   void _setStatus(AuthStatus next) {
     status = next;
     notifyListeners();

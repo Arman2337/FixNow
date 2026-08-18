@@ -31,18 +31,18 @@ Only these statuses are valid. A task cannot be completed while required validat
 
 # Project Progress
 
-Total Tasks: 93
+Total Tasks: 95
 Completed: 68
 In Progress: 1
-Blocked: 0
-Pending: 23
+Blocked: 1
+Pending: 24
 Cancelled: 1
 Current Phase: Phase 7 — Real-Time & Location
 Next Recommended Task: FN-050 — Implement Admin Complaints and Analytics Views
 
 # Current Work
 
-Active Tasks: FN-075 — Implement Customer Help and Support Experience
+Active Tasks: FN-075 — Implement Customer Help and Support Experience; FN-095 — Add Customer Live Map Projection and Background Booking Reconciliation
 
 # Decision Log
 
@@ -3495,5 +3495,110 @@ FN-085 was correctly cancelled after the observed booking error proved to be a m
 ### Completion Record
 Completed By: Codex
 Completed Date: 2026-08-15
+Commit:
+PR:
+
+## FN-094 — Run Two-Device Mobile Realtime Acceptance
+Status: Blocked
+Priority: P0 — Critical
+Area: Mobile / Backend / Realtime / Local Development / Quality
+Depends On: FN-084, FN-086, FN-088, FN-089, FN-092, FN-093
+Branch: test/physical-device-e2e
+
+### Objective
+Prove the connected local marketplace flow across independent customer and provider app sessions, including registration/OTP, booking assignment, live location, real-time status delivery, and the documented local API configuration.
+
+### Scope
+- Configure an isolated loopback API, database, Redis, local OTP bypass, and two mobile sessions without exposing secrets or using shared services.
+- Exercise fresh customer and provider registration and OTP verification.
+- Exercise simultaneous customer/provider booking flow, provider acceptance and `EN_ROUTE` update, and customer receipt without opening Bookings or manually refreshing.
+- Verify a fresh provider GPS point projects to the assigned customer's live map, and run the available mobile automated validation.
+
+### Do Not
+- Do not use real identities, external SMTP, production/staging services, or shared databases.
+- Do not weaken authorization, consent, location freshness, or privacy controls for test convenience.
+- Do not claim a physical two-device result unless both sessions are independently observed.
+
+### Acceptance Criteria
+- [x] Local API configuration is repeatable, loopback-only, and healthy.
+- [ ] Fresh customer and provider registration/OTP flow works with synthetic identities.
+- [ ] Two independent mobile sessions complete booking, provider acceptance, and `EN_ROUTE` status delivery without manual customer refresh.
+- [ ] A fresh consented provider GPS point renders only for the assigned customer while tracking is authorized.
+- [ ] Mobile automated checks and physical-device evidence are recorded truthfully.
+
+### Validation
+```bash
+cd mobile && flutter analyze && flutter test && flutter build apk --debug
+cd backend && npm run lint && npm test -- --runInBand && npm run test:integration && npm run build
+git diff --check
+```
+
+### Files / Areas
+```text
+PROJECT_TASKS.md docs/quality/ docs/testing/ mobile/ backend/
+```
+
+### Notes
+User explicitly requested that this acceptance work remain on `test/physical-device-e2e`; it therefore does not create the branch otherwise prescribed by a task entry.
+
+Local environment evidence: the existing loopback-only `fixnow-dev-postgres` (55432) and `fixnow-dev-redis` (56379) containers were restored without deleting data; the API started at port 3300 and `/api/v1/health/readiness` returned HTTP 200. Flutter analysis passed, all 70 Flutter tests passed, the development debug APK built, backend non-mutating lint passed, all 221 backend unit tests passed, and the backend build passed.
+
+Source inspection proved that the current customer tracking experience exposes only location availability text, not a map or coordinate projection; no map dependency is present. It also subscribes only after a customer opens an individual tracking screen, so the requested no-navigation status update has no customer-home subscription. One physical Android device (A059) is connected, so a two-device simultaneous observation cannot be made.
+
+### Blocker
+The requested map projection and customer-wide realtime status behavior are not implemented, and only one independently usable mobile device/session is available.
+
+### Required To Unblock
+Implement FN-095 (including the approved map-provider key/configuration path), then connect a second independently usable Android/iOS device or emulator for the physical simultaneous test.
+
+### Completion Record
+Completed By:
+Completed Date:
+Commit:
+PR:
+
+## FN-095 — Add Customer Live Map Projection and Background Booking Reconciliation
+Status: In Progress
+Priority: P0 — Critical
+Area: Mobile / Realtime / Tracking / Maps
+Depends On: FN-089
+Branch: feat/customer-live-map-and-realtime
+
+### Objective
+Render authorized fresh provider location on the assigned customer's live map and reconcile booking-status projections while the customer remains outside Bookings or the individual tracking screen.
+
+### Scope
+- Select and configure the ADR-0012 map adapter with a non-secret local development key path.
+- Carry authorized provider coordinates through the existing booking projection only while the active-tracking policy permits them.
+- Subscribe/reconcile active customer bookings at an application-owned boundary and update customer-visible active status without a manual refresh.
+- Add privacy, freshness, authorization, reconnect, and map-rendering coverage.
+
+### Do Not
+- Do not display coordinates, a map marker, or a freshness claim when the location is stale, unavailable, unauthorized, or the booking is no longer in the legal tracking state.
+- Do not introduce a map vendor, SDK, billing account, or credential without explicit approval and the documented configuration path.
+
+### Acceptance Criteria
+- [ ] Assigned customers see only a fresh authorized provider marker on a live map.
+- [ ] Customer-visible active booking status updates without opening Bookings or manually refreshing.
+- [ ] Reconnect and stale/consent/lifecycle invalidation return the UI to an honest unavailable state.
+- [ ] Automated and connected two-session validation pass.
+
+### Validation
+```bash
+cd mobile && flutter analyze && flutter test && flutter build apk --debug
+cd backend && npm test -- --runInBand && npm run test:integration && npm run build
+```
+
+### Files / Areas
+```text
+mobile/lib/features/tracking/ mobile/lib/features/realtime/ mobile/lib/app/ mobile/test/ backend/src/realtime/ backend/src/location/ docs/
+```
+
+### Notes
+Discovered by FN-094 source inspection while attempting the requested two-device physical acceptance test.
+
+### Completion Record
+Completed By:
+Completed Date:
 Commit:
 PR:

@@ -45,7 +45,9 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
             children: [
               Text(
                 widget.isRegistration ? 'I want to join as' : 'Sign in as',
-                style: Theme.of(context).textTheme.headlineLarge,
+                style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                  color: AppColors.cream,
+                ),
               ),
               const SizedBox(height: AppSpacing.sm),
               Text(
@@ -72,7 +74,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                     setState(() => _selected = AccountRole.providerApplicant),
               ),
               const SizedBox(height: AppSpacing.xxl),
-              FixButton(
+              FixPrimaryButton(
                 label: 'Continue',
                 icon: Icons.arrow_forward_rounded,
                 onPressed: () => widget.onContinue(_selected),

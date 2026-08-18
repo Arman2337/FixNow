@@ -13,6 +13,15 @@ abstract final class AppColors {
   static const primarySoft = Color(0xFF153D31);
   static const onPrimary = Color(0xFF04120D);
 
+  static const accentGold = Color(0xFFE5B869);
+  static const accentGoldHover = Color(0xFFF0CA85);
+  static const accentGoldSoft = Color(0xFF2D2516);
+  static const onAccentGold = Color(0xFF1F1604);
+
+  static const cream = Color(0xFFFAF8F5);
+  static const creamMuted = Color(0xFFE8E4DC);
+  static const surfaceCream = Color(0xFFF3ECE0);
+
   static const textPrimary = Color(0xFFF5FBF8);
   static const textSecondary = Color(0xFFB5C8C1);
   static const textMuted = Color(0xFF82978F);
@@ -20,6 +29,7 @@ abstract final class AppColors {
 
   static const borderDefault = Color(0xFF274139);
   static const borderStrong = Color(0xFF3B5C51);
+  static const borderGold = Color(0xFF5C4825);
   static const focus = Color(0xFF79F0C4);
 
   static const success = Color(0xFF45E0A8);

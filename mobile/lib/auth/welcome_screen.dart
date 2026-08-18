@@ -1,4 +1,5 @@
 import 'package:fixnow_mobile/design_system/app_colors.dart';
+import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_page_frame.dart';
@@ -33,7 +34,7 @@ class WelcomeScreen extends StatelessWidget {
                     alignment: Alignment.centerLeft,
                     child: FixBrandMark(),
                   ),
-                  SizedBox(height: constraints.maxHeight < 700 ? 56 : 104),
+                  SizedBox(height: constraints.maxHeight < 700 ? 40 : 80),
                   Container(
                     width: 72,
                     height: 72,
@@ -42,6 +43,13 @@ class WelcomeScreen extends StatelessWidget {
                       color: AppColors.primarySoft,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(color: AppColors.borderStrong),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x33000000),
+                          blurRadius: 16,
+                          offset: Offset(0, 6),
+                        ),
+                      ],
                     ),
                     child: const Icon(
                       Icons.bolt_rounded,
@@ -52,7 +60,10 @@ class WelcomeScreen extends StatelessWidget {
                   const SizedBox(height: AppSpacing.xxl),
                   Text(
                     'Trusted help.\nWhen you need it.',
-                    style: Theme.of(context).textTheme.displayLarge,
+                    style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                      color: AppColors.cream,
+                      height: 1.15,
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   Text(
@@ -60,6 +71,16 @@ class WelcomeScreen extends StatelessWidget {
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       color: AppColors.textSecondary,
                     ),
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+                  Wrap(
+                    spacing: AppSpacing.sm,
+                    runSpacing: AppSpacing.sm,
+                    children: [
+                      _buildTrustPill(Icons.verified_user_rounded, 'Verified Pros'),
+                      _buildTrustPill(Icons.timer_outlined, '12-min Avg ETA'),
+                      _buildTrustPill(Icons.shield_outlined, '30-Day Warranty'),
+                    ],
                   ),
                   const SizedBox(height: AppSpacing.xxxl),
                   FixButton(label: 'Get started', onPressed: onGetStarted),
@@ -77,4 +98,30 @@ class WelcomeScreen extends StatelessWidget {
       ),
     ),
   );
+
+  Widget _buildTrustPill(IconData icon, String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceSecondary,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        border: Border.all(color: AppColors.borderDefault),
+      ),
+      child: Wrap(
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 4,
+        children: [
+          Icon(icon, size: 13, color: AppColors.accentGold),
+          Text(
+            text,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

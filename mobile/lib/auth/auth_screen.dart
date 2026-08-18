@@ -36,10 +36,23 @@ class _AuthScreenState extends State<AuthScreen> {
   void initState() {
     super.initState();
     _register = widget.initialRegister;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      widget.controller.clearError();
+    });
+    _email.addListener(_onInputChanged);
+    _password.addListener(_onInputChanged);
+  }
+
+  void _onInputChanged() {
+    if (widget.controller.errorMessage != null) {
+      widget.controller.clearError();
+    }
   }
 
   @override
   void dispose() {
+    _email.removeListener(_onInputChanged);
+    _password.removeListener(_onInputChanged);
     _email.dispose();
     _password.dispose();
     super.dispose();
@@ -246,7 +259,10 @@ class _AuthScreenState extends State<AuthScreen> {
                           variant: FixButtonVariant.tertiary,
                           onPressed: loading
                               ? null
-                              : () => setState(() => _register = !_register),
+                              : () {
+                                  widget.controller.clearError();
+                                  setState(() => _register = !_register);
+                                },
                         ),
                       ],
                     ),

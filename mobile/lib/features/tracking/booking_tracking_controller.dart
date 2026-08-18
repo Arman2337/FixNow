@@ -49,8 +49,38 @@ class BookingTrackingController extends ChangeNotifier {
       },
       estimatedMinutes: ((data['eta'] as Map?)?['estimatedMinutes'] as num?)
           ?.toInt(),
+      providerLocation: _providerLocation(data),
     );
     await applyRealtime(next);
+  }
+
+  ProviderMapLocation? _providerLocation(Map<String, Object?> data) {
+    if (data['locationAvailability'] != 'live') return null;
+    final location = data['location'];
+    if (location is! Map) return null;
+    final latitude = location['latitude'];
+    final longitude = location['longitude'];
+    final accuracy = location['accuracyMeters'];
+    final capturedAt = DateTime.tryParse(
+      location['capturedAt']?.toString() ?? '',
+    );
+    final receivedAt = DateTime.tryParse(
+      location['receivedAt']?.toString() ?? '',
+    );
+    if (latitude is! num ||
+        longitude is! num ||
+        accuracy is! num ||
+        capturedAt == null ||
+        receivedAt == null) {
+      return null;
+    }
+    return ProviderMapLocation(
+      latitude: latitude.toDouble(),
+      longitude: longitude.toDouble(),
+      accuracyMeters: accuracy.toDouble(),
+      capturedAt: capturedAt,
+      receivedAt: receivedAt,
+    );
   }
 
   Future<void> reconnect() => loadSnapshot();

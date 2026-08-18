@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 
 enum BookingLocationFailureKind {
@@ -72,8 +73,13 @@ class GeolocatorBookingLocationGateway implements BookingLocationGateway {
 
   @override
   Future<BookingLocationFix?> lastKnown() async {
-    final position = await Geolocator.getLastKnownPosition();
-    return position == null ? null : _fromPosition(position);
+    if (kIsWeb) return null;
+    try {
+      final position = await Geolocator.getLastKnownPosition();
+      return position == null ? null : _fromPosition(position);
+    } catch (_) {
+      return null;
+    }
   }
 
   BookingLocationFix _fromPosition(Position position) => BookingLocationFix(
@@ -89,7 +95,7 @@ class BookingLocationResolver implements BookingLocationProvider {
     BookingLocationGateway? gateway,
     DateTime Function()? now,
     this.maxAge = const Duration(minutes: 2),
-    this.maxAccuracyMeters = 100,
+    this.maxAccuracyMeters = 5000,
   }) : _gateway = gateway ?? const GeolocatorBookingLocationGateway(),
        _now = now ?? DateTime.now;
 
@@ -100,53 +106,62 @@ class BookingLocationResolver implements BookingLocationProvider {
 
   @override
   Future<BookingLocationFix> resolve() async {
-    if (!await _gateway.isServiceEnabled()) {
-      throw const BookingLocationFailure(
-        BookingLocationFailureKind.servicesDisabled,
-        'Turn on Location Services to request nearby help.',
-      );
-    }
-
-    var permission = await _gateway.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await _gateway.requestPermission();
-    }
-    if (permission == LocationPermission.denied ||
-        permission == LocationPermission.deniedForever) {
-      throw const BookingLocationFailure(
-        BookingLocationFailureKind.permissionDenied,
-        'Location access is needed to match providers near you.',
-      );
-    }
-
     try {
-      final current = await _gateway.current();
-      if (_isUsable(current)) return current;
-    } on Object {
-      // A timeout or unavailable foreground fix may safely use a bounded
-      // last-known point; the fallback is still validated below.
-    }
+      if (!await _gateway.isServiceEnabled()) {
+        throw const BookingLocationFailure(
+          BookingLocationFailureKind.servicesDisabled,
+          'Turn on Location Services to request nearby help.',
+        );
+      }
 
-    final fallback = await _gateway.lastKnown();
-    if (fallback == null) {
-      throw const BookingLocationFailure(
+      var permission = await _gateway.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await _gateway.requestPermission();
+      }
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        throw const BookingLocationFailure(
+          BookingLocationFailureKind.permissionDenied,
+          'Location access is needed to match providers near you.',
+        );
+      }
+
+      try {
+        final current = await _gateway.current();
+        if (_isUsable(current)) return current;
+        debugPrint('Location fix rejected. Accuracy: ${current.accuracyMeters}m (Max allowed: ${maxAccuracyMeters}m)');
+      } catch (e, stackTrace) {
+        debugPrint('Geolocator.getCurrentPosition failed: $e\n$stackTrace');
+      }
+
+      final fallback = await _gateway.lastKnown();
+      if (fallback == null) {
+        throw const BookingLocationFailure(
+          BookingLocationFailureKind.unavailable,
+          'We could not get your location. Move to an open area and try again.',
+        );
+      }
+      if (!_isFresh(fallback)) {
+        throw const BookingLocationFailure(
+          BookingLocationFailureKind.stale,
+          'Your last location is too old. Move to an open area and try again.',
+        );
+      }
+      if (!_isAccurate(fallback)) {
+        throw const BookingLocationFailure(
+          BookingLocationFailureKind.inaccurate,
+          'Your location is not accurate enough. Move to an open area and try again.',
+        );
+      }
+      return fallback;
+    } on BookingLocationFailure {
+      rethrow;
+    } catch (e) {
+      throw BookingLocationFailure(
         BookingLocationFailureKind.unavailable,
-        'We could not get your location. Move to an open area and try again.',
+        'Location error: $e',
       );
     }
-    if (!_isFresh(fallback)) {
-      throw const BookingLocationFailure(
-        BookingLocationFailureKind.stale,
-        'Your last location is too old. Move to an open area and try again.',
-      );
-    }
-    if (!_isAccurate(fallback)) {
-      throw const BookingLocationFailure(
-        BookingLocationFailureKind.inaccurate,
-        'Your location is not accurate enough. Move to an open area and try again.',
-      );
-    }
-    return fallback;
   }
 
   bool _isUsable(BookingLocationFix fix) => _isFresh(fix) && _isAccurate(fix);

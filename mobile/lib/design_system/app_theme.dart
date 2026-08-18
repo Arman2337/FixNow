@@ -184,7 +184,7 @@ abstract final class AppTheme {
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(
-            top: Radius.circular(AppRadius.large),
+            top: Radius.circular(AppRadius.bottomSheet),
           ),
         ),
       ),

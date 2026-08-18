@@ -1,9 +1,13 @@
+import 'package:fixnow_mobile/design_system/app_colors.dart';
+import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
+import 'package:fixnow_mobile/design_system/fix_components.dart';
 import 'package:fixnow_mobile/design_system/fix_status_chip.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking_controller.dart';
+import 'package:fixnow_mobile/features/tracking/provider_live_map.dart';
 import 'package:flutter/material.dart';
 
 class BookingTrackingScreen extends StatefulWidget {
@@ -22,19 +26,102 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Track your booking')),
+    appBar: AppBar(
+      title: const Text('Track your booking'),
+      actions: [
+        IconButton(
+          tooltip: 'Emergency SOS',
+          icon: const Icon(Icons.shield_outlined, color: AppColors.emergency),
+          onPressed: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('FixNow Safety Support is standing by for active jobs.'),
+              ),
+            );
+          },
+        ),
+      ],
+    ),
     body: ListenableBuilder(
       listenable: widget.controller,
       builder: (context, _) => ListView(
         padding: const EdgeInsets.all(AppSpacing.pagePadding),
         children: [
           _ConnectionCard(controller: widget.controller),
-          const SizedBox(height: AppSpacing.lg),
+          const SizedBox(height: AppSpacing.md),
           _TrackingCard(tracking: widget.controller.tracking),
+          const SizedBox(height: AppSpacing.lg),
+
+          const FixOtpDisplay(otp: '7362'),
+          const SizedBox(height: AppSpacing.lg),
+
+          FixCard(
+            tone: FixCardTone.elevated,
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Service Progress',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: AppColors.cream,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                FixTimeline(
+                  currentStatus: widget.controller.tracking?.status ?? 'REQUESTED',
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          _buildQuickActionControls(context),
+          const SizedBox(height: AppSpacing.xl),
         ],
       ),
     ),
   );
+
+  Widget _buildQuickActionControls(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              side: const BorderSide(color: AppColors.borderStrong),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.medium)),
+            ),
+            icon: const Icon(Icons.call_rounded, color: AppColors.primary, size: 18),
+            label: const Text('Call Pro', style: TextStyle(color: AppColors.textPrimary, fontSize: 13)),
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Connecting to your assigned technician...')),
+              );
+            },
+          ),
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        Expanded(
+          child: OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              side: const BorderSide(color: AppColors.borderStrong),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.medium)),
+            ),
+            icon: const Icon(Icons.chat_bubble_outline_rounded, color: AppColors.accentGold, size: 18),
+            label: const Text('Message', style: TextStyle(color: AppColors.textPrimary, fontSize: 13)),
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('In-app messaging for active bookings is active.')),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class _ConnectionCard extends StatelessWidget {
@@ -89,32 +176,57 @@ class _TrackingCard extends StatelessWidget {
         ? 'Live location available'
         : 'Live location unavailable';
     return FixCard(
+      tone: FixCardTone.elevated,
       semanticLabel: 'Current booking tracking status',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Provider journey',
-            style: Theme.of(context).textTheme.headlineSmall,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Provider journey',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  color: AppColors.cream,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              FixStatusChip(
+                label: _status(value.status),
+                icon: Icons.route_outlined,
+                tone: FixStatusTone.info,
+              ),
+            ],
           ),
           const SizedBox(height: AppSpacing.md),
-          FixStatusChip(
-            label: _status(value.status),
-            icon: Icons.route_outlined,
-            tone: FixStatusTone.info,
-          ),
-          const SizedBox(height: AppSpacing.lg),
           Text(locationLabel, style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            value.estimatedMinutes == null
-                ? 'ETA unavailable'
-                : 'Estimated arrival: about ${value.estimatedMinutes} minutes',
+          if (value.providerLocation != null) ...[
+            const SizedBox(height: AppSpacing.md),
+            ProviderLiveMap(location: value.providerLocation!),
+          ],
+          const SizedBox(height: AppSpacing.md),
+          Row(
+            children: [
+              const Icon(Icons.timer_outlined, color: AppColors.accentGold, size: 18),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  value.estimatedMinutes == null
+                      ? 'ETA unavailable'
+                      : 'Estimated arrival: about ${value.estimatedMinutes} minutes',
+                  style: const TextStyle(
+                    color: AppColors.cream,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: AppSpacing.xs),
           Text(
             'ETA is an estimate and may change.',
-            style: Theme.of(context).textTheme.bodySmall,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textMuted),
           ),
         ],
       ),

@@ -32,8 +32,8 @@ Only these statuses are valid. A task cannot be completed while required validat
 # Project Progress
 
 Total Tasks: 95
-Completed: 68
-In Progress: 1
+Completed: 69
+In Progress: 0
 Blocked: 1
 Pending: 24
 Cancelled: 1
@@ -42,7 +42,7 @@ Next Recommended Task: FN-050 — Implement Admin Complaints and Analytics Views
 
 # Current Work
 
-Active Tasks: FN-075 — Implement Customer Help and Support Experience; FN-095 — Add Customer Live Map Projection and Background Booking Reconciliation
+Active Tasks: FN-075 — Implement Customer Help and Support Experience
 
 # Decision Log
 
@@ -3558,7 +3558,7 @@ Commit:
 PR:
 
 ## FN-095 — Add Customer Live Map Projection and Background Booking Reconciliation
-Status: In Progress
+Status: ✅ Completed
 Priority: P0 — Critical
 Area: Mobile / Realtime / Tracking / Maps
 Depends On: FN-089
@@ -3578,10 +3578,10 @@ Render authorized fresh provider location on the assigned customer's live map an
 - Do not introduce a map vendor, SDK, billing account, or credential without explicit approval and the documented configuration path.
 
 ### Acceptance Criteria
-- [ ] Assigned customers see only a fresh authorized provider marker on a live map.
-- [ ] Customer-visible active booking status updates without opening Bookings or manually refreshing.
-- [ ] Reconnect and stale/consent/lifecycle invalidation return the UI to an honest unavailable state.
-- [ ] Automated and connected two-session validation pass.
+- [x] Assigned customers see only a fresh authorized provider marker on a live map.
+- [x] Customer-visible active booking status updates without opening Bookings or manually refreshing.
+- [x] Reconnect and stale/consent/lifecycle invalidation return the UI to an honest unavailable state.
+- [x] Automated and connected two-session validation pass.
 
 ### Validation
 ```bash
@@ -3598,7 +3598,7 @@ mobile/lib/features/tracking/ mobile/lib/features/realtime/ mobile/lib/app/ mobi
 Discovered by FN-094 source inspection while attempting the requested two-device physical acceptance test.
 
 ### Completion Record
-Completed By:
-Completed Date:
-Commit:
-PR:
+Completed By: Antigravity
+Completed Date: 2026-08-19
+Commit: 4a9aa2b
+PR: Pending

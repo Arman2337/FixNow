@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:geolocator/geolocator.dart';
 
 enum LocationPermissionState {
   unknown,
@@ -21,23 +21,25 @@ class PlatformLocationPermissionGateway implements LocationPermissionGateway {
 
   @override
   Future<LocationPermissionState> check() async =>
-      _map(await Permission.locationWhenInUse.status);
+      _map(await Geolocator.checkPermission());
 
   @override
   Future<LocationPermissionState> request() async =>
-      _map(await Permission.locationWhenInUse.request());
+      _map(await Geolocator.requestPermission());
 
   @override
-  Future<bool> openSettings() => openAppSettings();
+  Future<bool> openSettings() => Geolocator.openAppSettings();
 
-  LocationPermissionState _map(PermissionStatus status) {
-    if (status.isGranted || status.isLimited) {
+  LocationPermissionState _map(LocationPermission status) {
+    if (status == LocationPermission.whileInUse || status == LocationPermission.always) {
       return LocationPermissionState.granted;
     }
-    if (status.isPermanentlyDenied || status.isRestricted) {
+    if (status == LocationPermission.deniedForever) {
       return LocationPermissionState.permanentlyDenied;
     }
-    if (status.isDenied) return LocationPermissionState.denied;
+    if (status == LocationPermission.denied) {
+      return LocationPermissionState.denied;
+    }
     return LocationPermissionState.unavailable;
   }
 }

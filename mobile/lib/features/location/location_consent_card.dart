@@ -19,7 +19,9 @@ class _LocationConsentCardState extends State<LocationConsentCard> {
   @override
   void initState() {
     super.initState();
-    widget.controller.check();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) widget.controller.check();
+    });
   }
 
   @override

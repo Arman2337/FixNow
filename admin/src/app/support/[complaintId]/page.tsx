@@ -5,7 +5,7 @@ import { AdminShell } from "@/components/admin-shell";
 import { env } from "@/config/env";
 import { requireManagementResult } from "@/features/management-api";
 import { updateComplaintStatusAction } from "@/features/operations/actions";
-import { getComplaint } from "@/features/operations/api";
+import { getComplaint, getUser } from "@/features/operations/api";
 import { StatusBadge } from "@/features/status-badge";
 
 const labels: Record<string, string> = { 
@@ -24,6 +24,14 @@ export default async function ComplaintDetailPage({ params, searchParams }: { pa
   if (!response.ok && response.status === 404) notFound();
   const complaint = await requireManagementResult(response);
   const { result } = await searchParams;
+
+  const [submitterRes, targetRes] = await Promise.all([
+    getUser(complaint.submitterId),
+    complaint.targetId ? getUser(complaint.targetId) : Promise.resolve(null),
+  ]);
+
+  const submitter = submitterRes?.ok ? submitterRes.value : null;
+  const target = targetRes?.ok ? targetRes.value : null;
   
   const canIntervene = session.session.roles.some((role) => role === "support_agent" || role === "trust_safety_reviewer" || role === "operations_administrator");
   
@@ -51,16 +59,18 @@ export default async function ComplaintDetailPage({ params, searchParams }: { pa
         <h2 id="summary" className="m-0 text-xl font-semibold">Summary</h2>
         <dl className="mt-4 grid gap-4 sm:grid-cols-2">
           <div>
-            <dt className="text-sm text-[var(--color-text-muted)]">Submitter ID</dt>
-            <dd className="m-0 break-all font-mono text-sm">{complaint.submitterId}</dd>
+            <dt className="text-sm text-[var(--color-text-muted)]">Submitter</dt>
+            <dd className="m-0 text-sm font-semibold">{submitter ? `${submitter.name} (${submitter.email})` : complaint.submitterId}</dd>
+            {submitter && <dd className="m-0 mt-1 break-all font-mono text-xs text-[var(--color-text-muted)]">{complaint.submitterId}</dd>}
           </div>
           <div>
             <dt className="text-sm text-[var(--color-text-muted)]">Target Role</dt>
             <dd className="m-0 break-all font-mono text-sm">{complaint.targetRole}</dd>
           </div>
           <div>
-            <dt className="text-sm text-[var(--color-text-muted)]">Target ID</dt>
-            <dd className="m-0 break-all font-mono text-sm">{complaint.targetId ?? "N/A"}</dd>
+            <dt className="text-sm text-[var(--color-text-muted)]">Target Identity</dt>
+            <dd className="m-0 text-sm font-semibold">{target ? `${target.name} (${target.email})` : complaint.targetId ?? "N/A"}</dd>
+            {target && <dd className="m-0 mt-1 break-all font-mono text-xs text-[var(--color-text-muted)]">{complaint.targetId}</dd>}
           </div>
           <div>
             <dt className="text-sm text-[var(--color-text-muted)]">Booking ID</dt>

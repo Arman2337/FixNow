@@ -7,3 +7,6 @@ export type BookingPage = { items: readonly BookingSummary[]; nextCursor: string
 export type ComplaintStatus = 'OPEN' | 'IN_REVIEW' | 'ESCALATED' | 'RESOLVED' | 'CLOSED';
 export type ComplaintEvidence = { id: string; uploadedBy: string; fileUrl: string; fileType: string; description?: string; createdAt: string; };
 export type Complaint = { id: string; submitterId: string; targetRole: 'PROVIDER' | 'CUSTOMER' | 'PLATFORM'; targetId?: string; bookingId?: string; category: string; description: string; status: ComplaintStatus; resolutionNotes?: string; resolvedAt?: string; resolvedBy?: string; createdAt: string; updatedAt: string; evidence: ComplaintEvidence[]; };
+
+export type UserDetail = { id: string; email: string; name: string; status: string; roles: string[]; createdAt: string; updatedAt: string; };
+export type AnalyticsResponse = { bookings: { total: number; completed: number; cancelled: number; pending: number; }; providers: { total: number; active: number; verified: number; pendingVerification: number; }; services: { topCategories: { id: string; name: string; count: number }[]; }; emergencies: { activeRequests: number; totalRequests: number; }; };

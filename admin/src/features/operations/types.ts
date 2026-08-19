@@ -4,3 +4,6 @@ export type BookingSummary = { id: string; customerId: string; providerId: strin
 export type BookingEvent = { id: string; actorUserId: string; fromStatus: BookingStatus | null; toStatus: BookingStatus; reason: string | null; bookingVersion: number; createdAt: string };
 export type BookingDetail = BookingSummary & { events: readonly BookingEvent[] };
 export type BookingPage = { items: readonly BookingSummary[]; nextCursor: string | null };
+export type ComplaintStatus = 'OPEN' | 'IN_REVIEW' | 'ESCALATED' | 'RESOLVED' | 'CLOSED';
+export type ComplaintEvidence = { id: string; uploadedBy: string; fileUrl: string; fileType: string; description?: string; createdAt: string; };
+export type Complaint = { id: string; submitterId: string; targetRole: 'PROVIDER' | 'CUSTOMER' | 'PLATFORM'; targetId?: string; bookingId?: string; category: string; description: string; status: ComplaintStatus; resolutionNotes?: string; resolvedAt?: string; resolvedBy?: string; createdAt: string; updatedAt: string; evidence: ComplaintEvidence[]; };

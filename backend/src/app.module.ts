@@ -17,6 +17,7 @@ import { BookingsModule } from './bookings/bookings.module';
 import { MatchingModule } from './matching/matching.module';
 import { RealtimeModule } from './realtime/realtime.module';
 import { AdminModule } from './admin/admin.module';
+import { ComplaintsModule } from './support/complaints/complaints.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { AdminModule } from './admin/admin.module';
     MatchingModule,
     RealtimeModule,
     AdminModule,
+    ComplaintsModule,
   ],
   controllers: [AppController],
   providers: [

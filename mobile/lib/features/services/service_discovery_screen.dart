@@ -10,6 +10,7 @@ import 'package:fixnow_mobile/features/location/location_consent_card.dart';
 import 'package:fixnow_mobile/features/location/location_consent_controller.dart';
 import 'package:fixnow_mobile/features/services/service_category.dart';
 import 'package:fixnow_mobile/features/services/service_discovery_controller.dart';
+import 'package:fixnow_mobile/features/bookings/booking_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
@@ -20,11 +21,13 @@ class ServiceDiscoveryScreen extends StatefulWidget {
   const ServiceDiscoveryScreen({
     required this.controller,
     required this.locationController,
+    this.bookingsController,
     this.onCategorySelected,
     super.key,
   });
   final ServiceDiscoveryController controller;
   final LocationConsentController locationController;
+  final BookingController? bookingsController;
   final ValueChanged<ServiceCategory>? onCategorySelected;
 
   @override
@@ -62,7 +65,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
           timeLimit: Duration(seconds: 15),
         ),
       );
-      
+
       if (kIsWeb) {
         // Geocoding package doesn't support web by default without a web plugin.
         // We fallback to a generic message if it fails on web.
@@ -200,6 +203,8 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
           children: [
             _buildCustomerHeader(context),
             const SizedBox(height: AppSpacing.lg),
+            _buildActiveBookingCard(),
+            const SizedBox(height: AppSpacing.lg),
 
             if (isOfflineOrError) ...[
               ..._content(context),
@@ -284,6 +289,80 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
       );
     },
   );
+
+  Widget _buildActiveBookingCard() {
+    if (widget.bookingsController == null) return const SizedBox.shrink();
+    return ListenableBuilder(
+      listenable: widget.bookingsController!,
+      builder: (context, _) {
+        final active = widget.bookingsController!.bookings.where(
+          (b) => const {'REQUESTED', 'ASSIGNED', 'EN_ROUTE', 'IN_PROGRESS'}.contains(b.status)
+        ).firstOrNull;
+        if (active == null) return const SizedBox.shrink();
+
+        String title = '';
+        IconData icon = Icons.info_outline;
+        Color color = AppColors.primary;
+
+        switch (active.status) {
+          case 'REQUESTED':
+            title = 'Finding a professional...';
+            icon = Icons.search_rounded;
+            break;
+          case 'ASSIGNED':
+            title = 'Professional accepted your request';
+            icon = Icons.check_circle_outline;
+            break;
+          case 'EN_ROUTE':
+            title = 'Your professional is on the way';
+            icon = Icons.directions_car_rounded;
+            break;
+          case 'IN_PROGRESS':
+            title = 'Service is in progress';
+            icon = Icons.build_rounded;
+            break;
+        }
+
+        return FixCard(
+          tone: FixCardTone.elevated,
+          semanticLabel: 'Active booking status: $title',
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: AppColors.primarySoft,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: color),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      active.description,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   Widget _buildCustomerHeader(BuildContext context) {
     return ListenableBuilder(

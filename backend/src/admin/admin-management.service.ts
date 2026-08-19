@@ -10,6 +10,7 @@ import { UserRoleEntity } from '../users/user-role.entity';
 import { ProviderApplicationEntity } from '../providers/provider-application.entity';
 import { ProviderProfileEntity } from '../providers/provider-profile.entity';
 import { ProviderVerificationEventEntity } from '../providers/verification/provider-verification-event.entity';
+import { ComplaintsService } from '../support/complaints/complaints.service';
 import type {
   AdminPageQueryDto,
   ProviderApplicationPageQueryDto,
@@ -30,7 +31,16 @@ export class AdminManagementService {
     private readonly profiles: Repository<ProviderProfileEntity>,
     @InjectRepository(ProviderVerificationEventEntity)
     private readonly events: Repository<ProviderVerificationEventEntity>,
+    private readonly complaintsService: ComplaintsService,
   ) {}
+
+  async listComplaints(adminId: string) {
+    return this.complaintsService.getComplaints(adminId, true);
+  }
+
+  async getComplaintDetail(id: string, adminId: string) {
+    return this.complaintsService.getComplaintById(id, adminId, true);
+  }
 
   async listUsers(query: AdminPageQueryDto) {
     const cursor = this.decodeCursor(query.cursor);

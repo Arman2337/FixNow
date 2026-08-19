@@ -32,7 +32,12 @@ import 'package:fixnow_mobile/features/provider/provider_controller.dart';
 import 'package:fixnow_mobile/features/provider/provider_home_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_jobs_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_onboarding_screen.dart';
+import 'package:fixnow_mobile/features/support/complaint_list_screen.dart';
+import 'package:fixnow_mobile/features/support/submit_complaint_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_repository.dart';
+import 'package:fixnow_mobile/features/support/complaints_controller.dart';
+import 'package:fixnow_mobile/features/support/complaints_repository.dart';
+
 import 'package:fixnow_mobile/features/realtime/realtime_client.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking_controller.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking_screen.dart';
@@ -56,7 +61,7 @@ class FixNowApp extends StatefulWidget {
   State<FixNowApp> createState() => _FixNowAppState();
 }
 
-class _FixNowAppState extends State<FixNowApp> {
+class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
   late final ApiTransport _api;
   late final AuthController _auth;
   late final CustomerProfileController _profile;
@@ -64,6 +69,7 @@ class _FixNowAppState extends State<FixNowApp> {
   late final LocationConsentController _location;
   late final BookingController _bookings;
   late final ProviderController _provider;
+  late final ComplaintsController _complaints;
   _AuthEntryStep _authEntryStep = _AuthEntryStep.welcome;
   bool _registrationIntent = false;
   AccountRole _selectedRole = AccountRole.customer;
@@ -71,6 +77,11 @@ class _FixNowAppState extends State<FixNowApp> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _initializeData();
+  }
+
+  void _initializeData() {
     final api =
         widget.apiTransport ??
         ApiClient(baseUri: ApiConfig.baseUriFor(widget.environment));
@@ -103,12 +114,14 @@ class _FixNowAppState extends State<FixNowApp> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _auth.dispose();
     _profile.dispose();
     _discovery.dispose();
     _location.dispose();
     _bookings.dispose();
     _provider.dispose();
+    _complaints.dispose();
     super.dispose();
   }
 
@@ -167,7 +180,16 @@ class _FixNowAppState extends State<FixNowApp> {
             }
             return ProviderOnboardingScreen(
               controller: _provider,
-              onSignOut: _signOut,
+              onSupportCases: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => ComplaintListScreen(
+                        controller: _complaints,
+                      ),
+                    ),
+                  );
+                },
+                onSignOut: _signOut,
             );
           }
           if (_auth.session?.role == AccountRole.verifiedProvider) {
@@ -188,6 +210,15 @@ class _FixNowAppState extends State<FixNowApp> {
               ),
               providerProfile: ProviderOnboardingScreen(
                 controller: _provider,
+                onSupportCases: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => ComplaintListScreen(
+                        controller: _complaints,
+                      ),
+                    ),
+                  );
+                },
                 onSignOut: _signOut,
               ),
             );
@@ -197,6 +228,7 @@ class _FixNowAppState extends State<FixNowApp> {
             customerHome: ServiceDiscoveryScreen(
               controller: _discovery,
               locationController: _location,
+              bookingsController: _bookings,
               onCategorySelected: (category) async {
                 final created = await Navigator.of(context).push<bool>(
                   MaterialPageRoute(
@@ -219,7 +251,16 @@ class _FixNowAppState extends State<FixNowApp> {
             ),
             customerProfile: CustomerProfileScreen(
               controller: _profile,
-              onSignOut: _signOut,
+              onSupportCases: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => ComplaintListScreen(
+                        controller: _complaints,
+                      ),
+                    ),
+                  );
+                },
+                onSignOut: _signOut,
             ),
             customerBookings: CustomerBookingsScreen(
               controller: _bookings,
@@ -239,28 +280,49 @@ class _FixNowAppState extends State<FixNowApp> {
   });
 
   Widget _bookingDestination(CustomerBooking booking) {
-    final active = {
-      'ASSIGNED',
-      'EN_ROUTE',
-      'IN_PROGRESS',
-    }.contains(booking.status);
-    if (!active) {
-      return BookingDetailScreen(
-        booking: booking,
-        onCancel: const {'REQUESTED', 'ASSIGNED'}.contains(booking.status)
-            ? (reason) => _bookings.cancel(booking, reason)
-            : null,
-      );
-    }
-    final tracking = BookingTrackingController(
-      bookingId: booking.id,
-      source: ApiBookingTrackingSource(
-        api: _api,
-        accessToken: _auth.validAccessToken,
-      ),
-      realtime: _createRealtimeClient(),
+    return ListenableBuilder(
+      listenable: _bookings,
+      builder: (context, _) {
+        final currentBooking = _bookings.bookings.firstWhere(
+          (b) => b.id == booking.id,
+          orElse: () => booking,
+        );
+        final active = {
+          'ASSIGNED',
+          'EN_ROUTE',
+          'IN_PROGRESS',
+        }.contains(currentBooking.status);
+        if (!active) {
+          return BookingDetailScreen(
+            booking: currentBooking,
+            onReportIssue: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => SubmitComplaintScreen(
+                      controller: _complaints,
+                      bookingId: currentBooking.id,
+                      targetRole: 'PROVIDER',
+                      targetId: null,
+                    ),
+                  ),
+                );
+              },
+              onCancel: const {'REQUESTED', 'ASSIGNED'}.contains(currentBooking.status)
+                ? (reason) => _bookings.cancel(currentBooking, reason)
+                : null,
+          );
+        }
+        final tracking = BookingTrackingController(
+          bookingId: currentBooking.id,
+          source: ApiBookingTrackingSource(
+            api: _api,
+            accessToken: _auth.validAccessToken,
+          ),
+          realtime: _createRealtimeClient(),
+        );
+        return BookingTrackingScreen(controller: tracking);
+      },
     );
-    return BookingTrackingScreen(controller: tracking);
   }
 
   RealtimeClient? _createRealtimeClient() {

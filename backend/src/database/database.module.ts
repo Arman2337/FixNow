@@ -9,7 +9,7 @@ export function createDatabaseOptions(
     type: 'postgres',
     url: configService.get<string>('DATABASE_URL'),
     autoLoadEntities: true,
-    synchronize: false,
+    synchronize: true,
     migrationsRun: false,
   };
 }

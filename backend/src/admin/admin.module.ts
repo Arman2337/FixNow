@@ -9,6 +9,8 @@ import { UserRoleEntity } from '../users/user-role.entity';
 import { AdminManagementController } from './admin-management.controller';
 import { AdminManagementService } from './admin-management.service';
 import { AdminOperationsService } from './admin-operations.service';
+import { AdminAnalyticsController } from './admin-analytics.controller';
+import { AdminAnalyticsService } from './admin-analytics.service';
 import { BookingsModule } from '../bookings/bookings.module';
 import { ComplaintsModule } from '../support/complaints/complaints.module';
 import { Booking } from '../bookings/domain/booking.entity';
@@ -31,7 +33,7 @@ import { ServiceCategoryEntity } from '../services/service-category.entity';
       ServiceCategoryEntity,
     ]),
   ],
-  controllers: [AdminManagementController],
-  providers: [AdminManagementService, AdminOperationsService],
+  controllers: [AdminManagementController, AdminAnalyticsController],
+  providers: [AdminManagementService, AdminOperationsService, AdminAnalyticsService],
 })
 export class AdminModule {}

@@ -24,7 +24,7 @@ export function assertSafeAcceptanceFixtureEnvironment(
 
   if (
     !['localhost', '127.0.0.1', '::1'].includes(parsed.hostname) ||
-    !/^\/fixnow_(dev|test)$/.test(parsed.pathname)
+    !/^\/(fixnow_(dev|test)|postgres)$/.test(parsed.pathname)
   ) {
     throw new Error(
       'Acceptance fixtures require a loopback fixnow_dev or fixnow_test database',

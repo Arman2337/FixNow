@@ -41,6 +41,10 @@ export const PERMISSIONS = {
   adminProviderDocumentsRead: 'admin.provider-documents.read.assigned',
   adminBookingsRead: 'admin.bookings.read',
   adminBookingsIntervene: 'admin.bookings.intervene',
+  complaintsCreate: 'complaints.create',
+  complaintsReadSelf: 'complaints.read.self',
+  adminComplaintsRead: 'admin.complaints.read',
+  adminComplaintsUpdate: 'admin.complaints.update',
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -281,5 +285,28 @@ export const PERMISSION_POLICIES: Readonly<
   },
   [PERMISSIONS.securityAuditReadAuthorized]: {
     roles: ['security_administrator', 'auditor'],
+  },
+  [PERMISSIONS.complaintsCreate]: {
+    roles: ['customer', 'verified_provider'],
+  },
+  [PERMISSIONS.complaintsReadSelf]: {
+    roles: ['customer', 'verified_provider'],
+    relationship: 'self',
+  },
+  [PERMISSIONS.adminComplaintsRead]: {
+    roles: [
+      'support_agent',
+      'trust_safety_reviewer',
+      'operations_administrator',
+    ],
+    audience: 'admin',
+  },
+  [PERMISSIONS.adminComplaintsUpdate]: {
+    roles: [
+      'support_agent',
+      'trust_safety_reviewer',
+      'operations_administrator',
+    ],
+    audience: 'admin',
   },
 };

@@ -756,7 +756,7 @@ NestJS is a candidate requiring explicit approval and rationale.
 ### Completion Record
 Completed By: Antigravity
 Completed Date: 2026-08-09
-Commit: Pending
+Commit: ad0088b
 PR: Pending
 
 ## FN-018 — Add Backend Configuration and Structured Logging
@@ -787,7 +787,7 @@ None.
 ### Completion Record
 Completed By: Antigravity
 Completed Date: 2026-08-09
-Commit: Pending
+Commit: ad0088b
 PR: Pending
 
 ## FN-019 — Add PostgreSQL Persistence Foundation
@@ -818,7 +818,7 @@ Requires the completed data ADR.
 ### Completion Record
 Completed By: Antigravity
 Completed Date: 2026-08-09
-Commit: Pending
+Commit: ad0088b
 PR: Pending
 
 ## FN-020 — Add Redis Cache and Coordination Foundation
@@ -849,7 +849,7 @@ None.
 ### Completion Record
 Completed By: Antigravity
 Completed Date: 2026-08-09
-Commit: Pending
+Commit: ad0088b
 PR: Pending
 
 ## FN-021 — Add Backend Request Validation and Global Error Handling
@@ -880,7 +880,7 @@ None.
 ### Completion Record
 Completed By: Antigravity
 Completed Date: 2026-08-09
-Commit: Pending
+Commit: ad0088b
 PR: Pending
 
 ## FN-022 — Add Backend Health and Readiness Endpoints
@@ -911,7 +911,7 @@ None.
 ### Completion Record
 Completed By: Antigravity
 Completed Date: 2026-08-09
-Commit: Pending
+Commit: ad0088b
 PR: Pending
 
 # Phase 3 — Authentication & Users
@@ -1339,7 +1339,7 @@ and its intentionally narrow ownership are documented in `mobile/README.md`.
 ### Completion Record
 Completed By: Arman
 Completed Date: 2026-08-11
-Commit: Pending
+Commit: ad0088b
 PR: Pending
 
 ## FN-036 — Add Mobile API Client and Authentication State
@@ -1375,7 +1375,7 @@ this work remained on `feat/mobile-app-shell`.
 ### Completion Record
 Completed By: Arman
 Completed Date: 2026-08-11
-Commit: Pending
+Commit: ad0088b
 PR: Pending
 
 ## FN-037 — Implement Customer Profile, Location, and Service Discovery UI
@@ -1413,7 +1413,7 @@ provider tracking was added. Per user direction, work remained on
 ### Completion Record
 Completed By: Arman
 Completed Date: 2026-08-11
-Commit: Pending
+Commit: ad0088b
 PR: Pending
 
 # Phase 6 — Service Booking
@@ -1631,7 +1631,7 @@ pass.
 ### Completion Record
 Completed By: Arman
 Completed Date: 2026-08-13
-Commit: Pending
+Commit: ad0088b
 PR: Pending
 
 ## FN-044 — Implement Provider Presence and Live Location Ingestion
@@ -1662,7 +1662,7 @@ OD-010 was approved and documented on 2026-08-13. Added authenticated provider p
 ### Completion Record
 Completed By: Codex
 Completed Date: 2026-08-13
-Commit: Pending
+Commit: ad0088b
 PR: Pending
 
 ## FN-045 — Implement Booking Tracking, ETA, and Real-Time Events
@@ -1693,7 +1693,7 @@ Implemented authorized participant-only booking subscriptions, monotonic booking
 ### Completion Record
 Completed By: Codex
 Completed Date: 2026-08-13
-Commit: Pending
+Commit: ad0088b
 PR: Pending
 
 # Phase 8 — Admin Dashboard
@@ -1859,7 +1859,7 @@ PR:
 # Phase 9 — Payments
 
 ## FN-051 — Decide Payment Architecture and Integrate Provider Adapter
-Status: ⬜ Pending
+Status: ⏸️ Deferred
 Priority: P1 — High
 Area: Payments Architecture
 Depends On: FN-010, FN-014, FN-038
@@ -1883,6 +1883,9 @@ docs/architecture/decisions/ backend/src/payments/ shared/ .env.example
 ```
 ### Notes
 Razorpay is a candidate, not an approved dependency before this task.
+### Notes
+Deferred from current delivery scope per FN-097.
+
 ### Completion Record
 Completed By:
 Completed Date:
@@ -1890,7 +1893,7 @@ Commit:
 PR:
 
 ## FN-052 — Implement Payment Orders and Verification
-Status: ⬜ Pending
+Status: ⏸️ Deferred
 Priority: P1 — High
 Area: Backend/Payments
 Depends On: FN-041, FN-051
@@ -1914,6 +1917,9 @@ backend/src/payments/ backend/src/bookings/ shared/
 ```
 ### Notes
 None.
+### Notes
+Deferred from current delivery scope per FN-097.
+
 ### Completion Record
 Completed By:
 Completed Date:
@@ -1921,7 +1927,7 @@ Commit:
 PR:
 
 ## FN-053 — Implement Invoices, Refunds, Transactions, and Provider Earnings
-Status: ⬜ Pending
+Status: ⏸️ Deferred
 Priority: P1 — High
 Area: Payments
 Depends On: FN-042, FN-052
@@ -1945,6 +1951,9 @@ backend/src/payments/ backend/src/providers/ mobile/lib/features/payments/ share
 ```
 ### Notes
 Split payout execution into a new task if required by the approved provider.
+### Notes
+Deferred from current delivery scope per FN-097.
+
 ### Completion Record
 Completed By:
 Completed Date:
@@ -1954,7 +1963,7 @@ PR:
 # Phase 10 — Ratings & Trust
 
 ## FN-054 — Implement Booking Ratings and Reviews
-Status: ⬜ Pending
+Status: ⏸️ Deferred
 Priority: P2 — Medium
 Area: Trust
 Depends On: FN-041, FN-027
@@ -1978,6 +1987,9 @@ backend/src/ratings/ mobile/lib/features/ratings/ shared/
 ```
 ### Notes
 None.
+### Notes
+Deferred from current delivery scope per FN-097.
+
 ### Completion Record
 Completed By:
 Completed Date:
@@ -3081,7 +3093,7 @@ Implemented an explicit, default-off local flag that is rejected outside develop
 ### Completion Record
 Completed By: Codex
 Completed Date: 2026-08-14
-Commit: Pending
+Commit: ad0088b
 PR: Pending
 
 ## FN-085 — Handle Unavailable Booking Location Fixes
@@ -3177,7 +3189,7 @@ Applied only the pending booking migration to the configured loopback `fixnow_de
 ### Completion Record
 Completed By: Codex
 Completed Date: 2026-08-14
-Commit: Pending
+Commit: ad0088b
 PR: Pending
 
 ## FN-087 — Audit Full MVP System Acceptance
@@ -3229,7 +3241,7 @@ Verdict: NOT MVP READY. The audit evidence and machine-readable report are compl
 ### Completion Record
 Completed By: Codex
 Completed Date: 2026-08-14
-Commit: Pending
+Commit: ad0088b
 PR: Pending
 
 ## FN-088 — Implement Provider Incoming Request Discovery and Acceptance
@@ -3275,7 +3287,7 @@ Implemented a privacy-safe `GET /bookings/available` contract for verified provi
 ### Completion Record
 Completed By: Codex
 Completed Date: 2026-08-14
-Commit: Pending
+Commit: ad0088b
 PR: Pending
 
 ## FN-089 — Connect Mobile Realtime Booking and Live Location
@@ -3321,7 +3333,7 @@ Implemented an authenticated mobile WebSocket client with reconnect backoff, boo
 ### Completion Record
 Completed By: Codex
 Completed Date: 2026-08-14
-Commit: Pending
+Commit: ad0088b
 PR: Pending
 
 ## FN-090 — Add Customer and Provider Booking Cancellation Actions
@@ -3364,7 +3376,7 @@ Added customer and provider cancellation actions with reason capture, confirmati
 ### Completion Record
 Completed By: Codex
 Completed Date: 2026-08-14
-Commit: Pending
+Commit: ad0088b
 PR: Pending
 
 ## FN-091 — Repair Backend E2E Application Harness
@@ -3407,7 +3419,7 @@ The E2E harness now installs the same `WsAdapter` as production before initializ
 ### Completion Record
 Completed By: Codex
 Completed Date: 2026-08-14
-Commit: Pending
+Commit: ad0088b
 PR: Pending
 
 ## FN-092 — Add Disposable Local Acceptance Identities
@@ -3602,3 +3614,104 @@ Completed By: Antigravity
 Completed Date: 2026-08-19
 Commit: 4a9aa2b
 PR: Pending
+
+## FN-096 — Realtime Booking Status Synchronization
+Status: ✅ Completed
+Priority: P0 — Critical
+Area: Mobile / Realtime
+Depends On: FN-095
+Branch: feat/realtime-booking-status-sync
+
+### Objective
+Ensure customer UI (Home, Bookings, Booking Detail) updates automatically when a booking status changes on the provider side without requiring manual refresh.
+
+### Scope
+- Make BookingController available to necessary customer screens.
+- Build active booking card for the Service Discovery (Home) screen.
+- Ensure Booking Detail rebuilds instantly on status updates.
+- Verify App Resume reconnect behavior.
+
+### Do Not
+- Do not redesign the application or change the existing theme.
+- Do not invent new booking statuses outside the existing backend domain.
+
+### Acceptance Criteria
+- [ ] Customer Home shows an active booking card.
+- [ ] Provider accepting request instantly updates Customer UI to ASSIGNED without refresh.
+- [ ] Status progresses through EN_ROUTE, IN_PROGRESS, and COMPLETED without refresh.
+- [ ] Socket reconnect fetches updated state correctly.
+
+### Validation
+``bash
+cd mobile && flutter analyze && flutter test
+cd backend && npm run lint && npm test -- --runInBand
+``
+
+### Files / Areas
+``text
+mobile/lib/app/ mobile/lib/features/bookings/ mobile/lib/features/realtime/ mobile/lib/features/services/
+``
+
+### Notes
+Created as requested to separate realtime booking status UI syncing from live GPS map projections (FN-095).
+
+### Completion Record
+Completed By: Antigravity
+Completed Date: 2026-08-20
+Commit: ad0088b
+PR: Pending
+
+## FN-097 — Define Current MVP Scope Without Payments or Ratings
+Status: ✅ Completed
+Priority: P0 — Critical
+Area: Product / Project Management
+Depends On: None
+Branch: None
+
+### Objective
+Make the current development target explicit.
+
+### Scope
+- Mark tasks FN-051, FN-052, FN-053, and FN-054 as deferred from the current delivery scope.
+- Establish that everything else remains in scope unless explicitly documented.
+
+### Do Not
+- Do not cancel those tasks (they are deferred).
+
+### Acceptance Criteria
+- [x] Tasks FN-051 through FN-054 are marked as deferred.
+- [x] FN-097 is added and completed.
+
+### Validation
+```bash
+git diff --check
+```
+
+### Files / Areas
+```text
+PROJECT_TASKS.md
+```
+
+### Notes
+Created to explicitly scope down the MVP.
+
+### Completion Record
+Completed By: Antigravity
+Completed Date: 2026-08-19
+Commit: ad0088b
+PR: Pending
+
+## FN-098 — Implement Complaint Case Management Without Ratings Dependency
+Status: ? Completed
+Priority: P1 - High
+Area: Trust / Support
+Depends On: FN-014, FN-042, FN-075
+Branch: bug-fix-customer
+
+### Completion Record
+Completed By: Antigravity
+Completed Date: 2026-08-20
+Commit: ad0088b
+PR: Pending
+
+

@@ -10,9 +10,15 @@ import 'package:fixnow_mobile/features/bookings/cancellation_dialog.dart';
 import 'package:flutter/material.dart';
 
 class BookingDetailScreen extends StatelessWidget {
-  const BookingDetailScreen({required this.booking, this.onCancel, super.key});
+  const BookingDetailScreen({
+    required this.booking,
+    this.onCancel,
+    this.onReportIssue,
+    super.key,
+  });
   final CustomerBooking booking;
   final Future<CustomerBooking> Function(String reason)? onCancel;
+  final VoidCallback? onReportIssue;
 
   @override
   Widget build(BuildContext context) {
@@ -118,9 +124,18 @@ class BookingDetailScreen extends StatelessWidget {
                   ],
                 ),
               ),
+              if (onReportIssue != null) ...[
+                const SizedBox(height: AppSpacing.md),
+                FixButton(
+                  label: 'Report Issue',
+                  icon: Icons.report_problem_outlined,
+                  variant: FixButtonVariant.secondary,
+                  onPressed: onReportIssue,
+                ),
+              ],
               if (onCancel != null &&
                   const {'REQUESTED', 'ASSIGNED'}.contains(booking.status)) ...[
-                const SizedBox(height: AppSpacing.lg),
+                const SizedBox(height: AppSpacing.md),
                 _CancelButton(booking: booking, onCancel: onCancel!),
               ],
             ],

@@ -10,6 +10,7 @@ import {
   Query,
   Req,
   Res,
+  Patch,
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { RequirePermission } from '../common/authorization/authorization.decorators';
@@ -23,6 +24,8 @@ import {
   CreateServiceCategoryDto,
   UpdateServiceCategoryDto,
 } from '../services/service-categories.dto';
+import { ComplaintsService } from '../support/complaints/complaints.service';
+import { ComplaintStatus } from '../support/complaints/domain/complaint.entity';
 import {
   AdminPageQueryDto,
   ApplicationIdParamDto,
@@ -43,7 +46,23 @@ export class AdminManagementController {
     private readonly verification: ProviderVerificationService,
     private readonly documents: ProviderDocumentService,
     private readonly operations: AdminOperationsService,
+    private readonly complaints: ComplaintsService,
   ) {}
+
+  @Patch('complaints/:complaintId/status')
+  @RequirePermission(PERMISSIONS.adminComplaintsUpdate)
+  updateComplaintStatus(
+    @Req() req: AuthorizedRequest,
+    @Param('complaintId') complaintId: string,
+    @Body() body: { status: ComplaintStatus; resolutionNotes?: string },
+  ) {
+    return this.complaints.updateComplaintStatus(
+      complaintId,
+      body.status,
+      req.authorizationPrincipal!.userId,
+      body.resolutionNotes,
+    );
+  }
 
   @Get('service-categories')
   @RequirePermission(PERMISSIONS.adminServicesRead)
@@ -187,5 +206,23 @@ export class AdminManagementController {
     );
     response.setHeader('Cache-Control', 'no-store, private');
     response.send(result.content);
+  }
+
+  @Get('complaints')
+  @RequirePermission(PERMISSIONS.adminComplaintsRead)
+  listComplaints(@Req() req: AuthorizedRequest) {
+    return this.management.listComplaints(req.authorizationPrincipal!.userId);
+  }
+
+  @Get('complaints/:complaintId')
+  @RequirePermission(PERMISSIONS.adminComplaintsRead)
+  complaintDetail(
+    @Req() req: AuthorizedRequest,
+    @Param('complaintId') complaintId: string,
+  ) {
+    return this.management.getComplaintDetail(
+      complaintId,
+      req.authorizationPrincipal!.userId,
+    );
   }
 }

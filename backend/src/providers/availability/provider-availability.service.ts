@@ -25,7 +25,10 @@ export class ProviderAvailabilityService {
     await this.assertVerified(this.dataSource.manager, userId, false);
     return this.dataSource.transaction(async (manager) => {
       const repository = manager.getRepository(ProviderAvailabilityEntity);
-      let entity = await repository.findOne({ where: { userId }, lock: { mode: 'pessimistic_write' } });
+      let entity = await repository.findOne({
+        where: { userId },
+        lock: { mode: 'pessimistic_write' },
+      });
       if (!entity) {
         entity = await repository.save(
           repository.create({
@@ -36,7 +39,7 @@ export class ProviderAvailabilityService {
             status: ProviderAvailabilityStatus.Offline,
             statusExpiresAt: null,
             version: 0,
-          })
+          }),
         );
       }
       return this.toResponse(entity);

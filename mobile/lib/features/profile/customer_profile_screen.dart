@@ -11,10 +11,13 @@ class CustomerProfileScreen extends StatefulWidget {
   const CustomerProfileScreen({
     required this.controller,
     this.onSignOut,
+    this.onSupportCases,
     super.key,
   });
+
   final CustomerProfileController controller;
-  final Future<void> Function()? onSignOut;
+  final VoidCallback? onSignOut;
+  final VoidCallback? onSupportCases;
 
   @override
   State<CustomerProfileScreen> createState() => _CustomerProfileScreenState();
@@ -174,8 +177,17 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                 ),
               ),
             ),
+          if (widget.onSupportCases != null) ...[
+            const SizedBox(height: AppSpacing.lg),
+            FixButton(
+              label: 'Support Cases',
+              icon: Icons.support_agent_outlined,
+              variant: FixButtonVariant.secondary,
+              onPressed: widget.onSupportCases,
+            ),
+          ],
           if (widget.onSignOut != null) ...[
-            const SizedBox(height: AppSpacing.xl),
+            const SizedBox(height: AppSpacing.lg),
             FixButton(
               label: 'Sign out',
               icon: Icons.logout_rounded,

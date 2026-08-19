@@ -9,6 +9,7 @@ const navigation = [
   { label: "Providers", href: "/providers", roles: ["provider_reviewer", "operations_administrator", "auditor"] },
   { label: "Services", href: "/services", roles: ["service_catalog_manager", "operations_administrator", "auditor"] },
   { label: "Bookings", href: "/bookings", roles: ["support_agent", "trust_safety_reviewer", "operations_administrator", "auditor"] },
+  { label: "Support", href: "/support", roles: ["support_agent", "trust_safety_reviewer", "operations_administrator", "auditor"] },
   { label: "Access", href: "", roles: ["security_administrator", "auditor"] },
 ] as const;
 

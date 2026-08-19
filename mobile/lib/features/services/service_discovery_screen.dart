@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
@@ -9,17 +10,24 @@ import 'package:fixnow_mobile/features/location/location_consent_card.dart';
 import 'package:fixnow_mobile/features/location/location_consent_controller.dart';
 import 'package:fixnow_mobile/features/services/service_category.dart';
 import 'package:fixnow_mobile/features/services/service_discovery_controller.dart';
+import 'package:fixnow_mobile/features/bookings/booking_controller.dart';
 import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:http/http.dart' as http;
 
 class ServiceDiscoveryScreen extends StatefulWidget {
   const ServiceDiscoveryScreen({
     required this.controller,
     required this.locationController,
+    this.bookingsController,
     this.onCategorySelected,
     super.key,
   });
   final ServiceDiscoveryController controller;
   final LocationConsentController locationController;
+  final BookingController? bookingsController;
   final ValueChanged<ServiceCategory>? onCategorySelected;
 
   @override
@@ -27,10 +35,89 @@ class ServiceDiscoveryScreen extends StatefulWidget {
 }
 
 class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
+  String? _locationName;
+
   @override
   void initState() {
     super.initState();
     widget.controller.load();
+    widget.locationController.addListener(_onLocationStateChanged);
+    _onLocationStateChanged();
+  }
+
+  @override
+  void dispose() {
+    widget.locationController.removeListener(_onLocationStateChanged);
+    super.dispose();
+  }
+
+  void _onLocationStateChanged() {
+    if (widget.locationController.state == LocationPermissionState.granted && _locationName == null) {
+      _fetchLocationName();
+    }
+  }
+
+  Future<void> _fetchLocationName() async {
+    try {
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.low,
+          timeLimit: Duration(seconds: 15),
+        ),
+      );
+
+      if (kIsWeb) {
+        // Geocoding package doesn't support web by default without a web plugin.
+        // We fallback to a generic message if it fails on web.
+        try {
+          final placemarks = await Geocoding().placemarkFromCoordinates(position.latitude, position.longitude);
+          if (placemarks.isNotEmpty) {
+            _updateLocationName(placemarks.first);
+            return;
+          }
+        } catch (_) {
+          try {
+            final uri = Uri.parse('https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${position.latitude}&longitude=${position.longitude}&localityLanguage=en');
+            final response = await http.get(uri);
+            if (response.statusCode == 200) {
+              final data = jsonDecode(response.body);
+              final city = data['city'] ?? data['locality'];
+              final state = data['principalSubdivision'] ?? data['countryName'];
+              if (mounted && city != null && state != null && city.toString().isNotEmpty) {
+                setState(() {
+                  _locationName = '$city, $state';
+                });
+                return;
+              }
+            }
+          } catch (e) {
+            debugPrint('Web geocoding fallback failed: $e');
+          }
+          if (mounted) {
+            setState(() {
+              _locationName = 'Location Found';
+            });
+          }
+        }
+      } else {
+        final placemarks = await Geocoding().placemarkFromCoordinates(position.latitude, position.longitude);
+        if (placemarks.isNotEmpty) {
+          _updateLocationName(placemarks.first);
+        }
+      }
+    } catch (e) {
+      debugPrint('Failed to fetch/geocode location: $e');
+    }
+  }
+
+  void _updateLocationName(Placemark place) {
+    final city = place.locality ?? place.subAdministrativeArea ?? place.administrativeArea;
+    final state = place.administrativeArea ?? place.country;
+    if (mounted && city != null && state != null) {
+      setState(() {
+        _locationName = '$city, $state';
+      });
+    }
   }
 
   void _handleQuickService(String slug, String name) {
@@ -43,10 +130,9 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
         widget.onCategorySelected!(match);
         return;
       }
-      if (widget.onCategorySelected != null) {
-        widget.onCategorySelected!(widget.controller.categories.first);
-        return;
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$name service is currently unavailable.')),
+      );
     }
   }
 
@@ -116,6 +202,8 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
           padding: const EdgeInsets.all(AppSpacing.pagePadding),
           children: [
             _buildCustomerHeader(context),
+            const SizedBox(height: AppSpacing.lg),
+            _buildActiveBookingCard(),
             const SizedBox(height: AppSpacing.lg),
 
             if (isOfflineOrError) ...[
@@ -202,66 +290,158 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
     },
   );
 
-  Widget _buildCustomerHeader(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildActiveBookingCard() {
+    if (widget.bookingsController == null) return const SizedBox.shrink();
+    return ListenableBuilder(
+      listenable: widget.bookingsController!,
+      builder: (context, _) {
+        final active = widget.bookingsController!.bookings.where(
+          (b) => const {'REQUESTED', 'ASSIGNED', 'EN_ROUTE', 'IN_PROGRESS'}.contains(b.status)
+        ).firstOrNull;
+        if (active == null) return const SizedBox.shrink();
+
+        String title = '';
+        IconData icon = Icons.info_outline;
+        Color color = AppColors.primary;
+
+        switch (active.status) {
+          case 'REQUESTED':
+            title = 'Finding a professional...';
+            icon = Icons.search_rounded;
+            break;
+          case 'ASSIGNED':
+            title = 'Professional accepted your request';
+            icon = Icons.check_circle_outline;
+            break;
+          case 'EN_ROUTE':
+            title = 'Your professional is on the way';
+            icon = Icons.directions_car_rounded;
+            break;
+          case 'IN_PROGRESS':
+            title = 'Service is in progress';
+            icon = Icons.build_rounded;
+            break;
+        }
+
+        return FixCard(
+          tone: FixCardTone.elevated,
+          semanticLabel: 'Active booking status: $title',
+          child: Row(
             children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.location_on_rounded, color: AppColors.accentGold, size: 16),
-                  const SizedBox(width: 4),
-                  Flexible(
-                    child: Text(
-                      'Ahmedabad, Gujarat',
+              Container(
+                width: 44,
+                height: 44,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: AppColors.primarySoft,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: color),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      active.description,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTypography.caption.copyWith(
-                        color: AppColors.accentGold,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.accentGold, size: 16),
-                ],
-              ),
-              const SizedBox(height: 4),
-              RichText(
-                text: TextSpan(
-                  style: AppTypography.heading2.copyWith(color: AppColors.cream),
-                  children: const [
-                    TextSpan(text: 'Right help. '),
-                    TextSpan(
-                      text: 'Right now. 👋',
-                      style: TextStyle(color: AppColors.primary),
+                      style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ],
                 ),
               ),
             ],
           ),
-        ),
-        const FixAvatar(
-          name: 'Arman',
-          size: 44,
-          isVerified: true,
-        ),
-      ],
+        );
+      },
+    );
+  }
+
+  Widget _buildCustomerHeader(BuildContext context) {
+    return ListenableBuilder(
+      listenable: widget.locationController,
+      builder: (context, _) {
+        final isGranted = widget.locationController.state == LocationPermissionState.granted;
+        final locationText = isGranted ? (_locationName ?? 'Locating...') : 'Enable Location';
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  InkWell(
+                    onTap: () {
+                      if (!isGranted) {
+                        widget.locationController.request();
+                      }
+                    },
+                    borderRadius: BorderRadius.circular(4),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.location_on_rounded, color: AppColors.accentGold, size: 16),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              locationText,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTypography.caption.copyWith(
+                                color: AppColors.accentGold,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.accentGold, size: 16),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  RichText(
+                    text: TextSpan(
+                      style: AppTypography.heading2.copyWith(color: AppColors.cream),
+                      children: const [
+                        TextSpan(text: 'Right help. '),
+                        TextSpan(
+                          text: 'Right now. 👋',
+                          style: TextStyle(color: AppColors.primary),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const FixAvatar(
+              name: 'Arman',
+              size: 44,
+              isVerified: true,
+            ),
+          ],
+        );
+      },
     );
   }
 
   Widget _buildQuickServicesSection(BuildContext context) {
     final quickItems = [
       (Icons.plumbing_rounded, 'Plumber', 'plumbing'),
-      (Icons.electrical_services_rounded, 'Electrician', 'electrical_services'),
-      (Icons.kitchen_rounded, 'Appliance Pro', 'appliances'),
-      (Icons.ac_unit_rounded, 'AC Expert', 'ac_unit'),
+      (Icons.electrical_services_rounded, 'Electrician', 'electrical'),
+      (Icons.kitchen_rounded, 'Appliance Pro', 'appliance-repair'),
+      (Icons.ac_unit_rounded, 'AC Expert', 'hvac'),
       (Icons.carpenter_rounded, 'Carpenter', 'carpentry'),
-      (Icons.format_paint_rounded, 'Painter', 'painting'),
+      (Icons.cleaning_services_rounded, 'Cleaning', 'cleaning'),
     ];
 
     return Column(

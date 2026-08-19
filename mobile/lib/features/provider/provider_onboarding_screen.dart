@@ -14,10 +14,12 @@ class ProviderOnboardingScreen extends StatelessWidget {
   const ProviderOnboardingScreen({
     required this.controller,
     required this.onSignOut,
+    this.onSupportCases,
     super.key,
   });
   final ProviderController controller;
   final VoidCallback onSignOut;
+  final VoidCallback? onSupportCases;
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -103,6 +105,14 @@ class ProviderOnboardingScreen extends StatelessWidget {
                       );
                     },
                   ),
+                  if (onSupportCases != null) ...[
+                    const SizedBox(height: AppSpacing.md),
+                    FixButton(
+                      label: 'Support Cases',
+                      onPressed: onSupportCases,
+                      variant: FixButtonVariant.secondary,
+                    ),
+                  ],
                   const SizedBox(height: AppSpacing.md),
                   FixButton(
                     label: 'Sign out',

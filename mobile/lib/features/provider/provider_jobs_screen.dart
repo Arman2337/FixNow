@@ -8,6 +8,7 @@ import 'package:fixnow_mobile/features/bookings/booking.dart';
 import 'package:fixnow_mobile/features/bookings/cancellation_dialog.dart';
 import 'package:fixnow_mobile/features/provider/provider_controller.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class ProviderJobsScreen extends StatelessWidget {
   const ProviderJobsScreen({
@@ -114,7 +115,14 @@ class _JobCard extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.xs),
             Text(
-              'Job ${job.id.substring(0, 8).toUpperCase()}',
+              _category(job.serviceCategoryId),
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                color: AppColors.textOnDarkSecondary,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              'Requested ${_date(job.createdAt)} · Job #${_shortId(job.id)}',
               style: Theme.of(
                 context,
               ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
@@ -130,11 +138,15 @@ class _JobCard extends StatelessWidget {
                     return;
                   }
                   final otp = await _requestServiceStartOtp(context);
-                  if (otp != null) await controller.verifyOtpAndStartJob(job, otp);
+                  if (otp != null) {
+                    await controller.verifyOtpAndStartJob(job, otp);
+                  }
                 },
               ),
             ],
             if (!readOnly && job.status == 'EN_ROUTE') ...[
+              const SizedBox(height: AppSpacing.md),
+              _LiveTrackingBlock(job: job, controller: controller),
               const SizedBox(height: AppSpacing.md),
               FixButton(
                 label: controller.locationSharing[job.id] == true
@@ -159,19 +171,6 @@ class _JobCard extends StatelessWidget {
                     ? null
                     : () => controller.publishCurrentLocation(job),
               ),
-              if (controller.locationPublished[job.id] == true) ...[
-                const SizedBox(height: AppSpacing.sm),
-                const Row(
-                  children: [
-                    Icon(Icons.check_circle_rounded, color: AppColors.success, size: 18),
-                    SizedBox(width: AppSpacing.xs),
-                    Text(
-                      'Live location sent to the customer.',
-                      style: TextStyle(color: AppColors.textOnDarkSecondary),
-                    ),
-                  ],
-                ),
-              ],
               if (controller.actionError case final message?) ...[
                 const SizedBox(height: AppSpacing.sm),
                 Text(message, style: const TextStyle(color: AppColors.danger)),
@@ -189,88 +188,204 @@ class _JobCard extends StatelessWidget {
   }
 }
 
+String _category(String value) => value
+    .replaceAll('_', ' ')
+    .split(' ')
+    .where((word) => word.isNotEmpty)
+    .map((word) => '${word[0].toUpperCase()}${word.substring(1)}')
+    .join(' ');
+
+String _shortId(String value) {
+  final compact = value.replaceAll('-', '');
+  final short = compact.length <= 8 ? compact : compact.substring(0, 8);
+  return short.toUpperCase();
+}
+
+String _date(DateTime value) => '${value.day}/${value.month}/${value.year}';
+
+class _LiveTrackingBlock extends StatelessWidget {
+  const _LiveTrackingBlock({required this.job, required this.controller});
+
+  final CustomerBooking job;
+  final ProviderController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final sharing = controller.locationSharing[job.id] == true;
+    final published = controller.locationPublished[job.id] == true;
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.backgroundSecondary,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.borderStrong),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'LIVE TRACKING',
+            style: TextStyle(
+              color: AppColors.textOnDarkSecondary,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Row(
+            children: [
+              Icon(
+                sharing
+                    ? Icons.location_on_rounded
+                    : Icons.location_off_outlined,
+                color: sharing
+                    ? AppColors.success
+                    : AppColors.textOnDarkSecondary,
+                size: 20,
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  sharing
+                      ? 'Location sharing active'
+                      : 'Location sharing is off',
+                  style: const TextStyle(
+                    color: AppColors.textOnDarkPrimary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            published
+                ? 'Location shared successfully. Send an update when your position changes.'
+                : sharing
+                ? 'The customer can follow your arrival after your first update.'
+                : 'Share your location while travelling so the customer can follow your arrival.',
+            style: const TextStyle(color: AppColors.textOnDarkSecondary),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 Future<String?> _requestServiceStartOtp(BuildContext context) async {
   final input = TextEditingController();
-  return showDialog<String>(
+  final result = await showDialog<String>(
     context: context,
-    builder: (dialogContext) => Dialog(
-      backgroundColor: AppColors.backgroundSecondary,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: const BorderSide(color: AppColors.borderStrong),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.xl),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Icon(Icons.verified_user_rounded, color: AppColors.accentGold, size: 32),
-            const SizedBox(height: AppSpacing.sm),
-            const Text(
-              'Verify service-start OTP',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.textOnDarkPrimary, fontSize: 22, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            const Text(
-              'Ask the customer for their 4-digit code after you arrive.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.textOnDarkSecondary),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            TextField(
-              controller: input,
-              autofocus: true,
-              keyboardType: TextInputType.number,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: AppColors.inputText,
-                fontSize: 24,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 8,
+    builder: (dialogContext) => StatefulBuilder(
+      builder: (context, setDialogState) => Dialog(
+        backgroundColor: AppColors.backgroundSecondary,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: AppColors.borderStrong),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.xl),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Icon(
+                Icons.verified_user_rounded,
+                color: AppColors.accentGold,
+                size: 32,
               ),
-              maxLength: 4,
-              decoration: const InputDecoration(
-                labelText: 'Customer OTP',
-                hintText: '• • • •',
-                helperText: 'The customer can find this on their tracking screen.',
-                counterText: '',
-                filled: true,
-                fillColor: AppColors.surfacePrimary,
-                labelStyle: TextStyle(color: AppColors.inputLabel),
-                hintStyle: TextStyle(color: AppColors.inputHint, letterSpacing: 4),
-                helperStyle: TextStyle(color: AppColors.textOnDarkSecondary),
+              const SizedBox(height: AppSpacing.sm),
+              const Text(
+                'Verify customer OTP',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: AppColors.textOnDarkPrimary,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            Row(
-              children: [
-                Expanded(
-                  child: TextButton(
-                    onPressed: () => Navigator.pop(dialogContext),
-                    child: const Text('Cancel'),
+              const SizedBox(height: AppSpacing.xs),
+              const Text(
+                'Ask the customer for the 4-digit code shown in their FixNow booking.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: AppColors.textOnDarkSecondary),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              const Text(
+                'Customer OTP',
+                style: TextStyle(
+                  color: AppColors.textOnDarkPrimary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              TextField(
+                controller: input,
+                autofocus: true,
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                onChanged: (_) => setDialogState(() {}),
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: AppColors.inputText,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 8,
+                ),
+                maxLength: 4,
+                decoration: const InputDecoration(
+                  hintText: '• • • •',
+                  counterText: '',
+                  hintStyle: TextStyle(
+                    color: AppColors.inputHint,
+                    letterSpacing: 4,
                   ),
                 ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: FilledButton(
-                    onPressed: () {
-                      final otp = input.text.trim();
-                      if (RegExp(r'^\d{4}$').hasMatch(otp)) {
-                        Navigator.pop(dialogContext, otp);
-                      }
-                    },
-                    child: const Text('Verify & start'),
-                  ),
+              ),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Text(
+                  '${input.text.length}/4 digits',
+                  style: const TextStyle(color: AppColors.textOnDarkSecondary),
                 ),
-              ],
-            ),
-          ],
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              const Text(
+                'Never start work before the customer code is verified.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: AppColors.textOnDarkSecondary),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(dialogContext),
+                      child: const Text('Cancel'),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: RegExp(r'^\d{4}$').hasMatch(input.text.trim())
+                          ? () {
+                              final otp = input.text.trim();
+                              Navigator.pop(dialogContext, otp);
+                            }
+                          : null,
+                      child: const Text('Verify & start'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     ),
   );
+  input.dispose();
+  return result;
 }
 
 class _CancelJobButton extends StatefulWidget {

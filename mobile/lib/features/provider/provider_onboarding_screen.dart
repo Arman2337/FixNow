@@ -45,6 +45,14 @@ class ProviderOnboardingScreen extends StatelessWidget {
               controller.application?.status ??
               ProviderApplicationStatus.unverified;
           final copy = _copy(status);
+          final profileComplete = controller.profile != null;
+          final skillsComplete = controller.skills.isNotEmpty;
+          final documentsComplete = controller.documents.isNotEmpty;
+          final completedSteps = [
+            profileComplete,
+            skillsComplete,
+            documentsComplete,
+          ].where((complete) => complete).length;
           return SingleChildScrollView(
             padding: const EdgeInsets.all(AppSpacing.xl),
             child: FixPageFrame(
@@ -78,23 +86,31 @@ class ProviderOnboardingScreen extends StatelessWidget {
                     ),
                   ],
                   const SizedBox(height: AppSpacing.xxl),
+                  _SetupProgress(completedSteps: completedSteps),
+                  const SizedBox(height: AppSpacing.lg),
                   _Step(
+                    step: 1,
                     title: 'Professional profile',
-                    complete: controller.profile != null,
-                    detail: controller.profile == null
+                    complete: profileComplete,
+                    detail: !profileComplete
                         ? 'Name, bio and service radius are required.'
                         : controller.profile!.displayName,
                   ),
-                  const _Step(
+                  _Step(
+                    step: 2,
                     title: 'Services and skills',
-                    complete: false,
-                    detail: 'Add only services you are qualified to provide.',
+                    complete: skillsComplete,
+                    detail: skillsComplete
+                        ? '${controller.skills.length} service ${controller.skills.length == 1 ? 'selected' : 'services selected'}.'
+                        : 'Add only services you are qualified to provide.',
                   ),
-                  const _Step(
+                  _Step(
+                    step: 3,
                     title: 'Identity documents',
-                    complete: false,
-                    detail:
-                        'Private upload is available after profile setup; files are never shown publicly.',
+                    complete: documentsComplete,
+                    detail: documentsComplete
+                        ? '${controller.documents.length} private ${controller.documents.length == 1 ? 'document uploaded' : 'documents uploaded'}.'
+                        : 'Private upload is available after profile setup; files are never shown publicly.',
                   ),
                   const SizedBox(height: AppSpacing.xxl),
                   FixButton(
@@ -148,8 +164,8 @@ class ProviderOnboardingScreen extends StatelessWidget {
       'Verified',
       Icons.verified_rounded,
       FixStatusTone.success,
-      'Your provider account is approved',
-      'Sign in again to refresh your verified-provider access and open the workspace.',
+      "You're verified!",
+      'Your FixNow provider account has been approved. You can now go online and receive eligible requests.',
     ),
     ProviderApplicationStatus.rejected => (
       'Not approved',
@@ -177,10 +193,12 @@ class ProviderOnboardingScreen extends StatelessWidget {
 
 class _Step extends StatelessWidget {
   const _Step({
+    required this.step,
     required this.title,
     required this.complete,
     required this.detail,
   });
+  final int step;
   final String title;
   final bool complete;
   final String detail;
@@ -191,11 +209,24 @@ class _Step extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            complete
-                ? Icons.check_circle_rounded
-                : Icons.radio_button_unchecked_rounded,
-            color: complete ? AppColors.success : AppColors.textMuted,
+          CircleAvatar(
+            radius: 16,
+            backgroundColor: complete
+                ? AppColors.success
+                : AppColors.backgroundSecondary,
+            child: complete
+                ? const Icon(
+                    Icons.check_rounded,
+                    size: 18,
+                    color: AppColors.textOnDarkPrimary,
+                  )
+                : Text(
+                    '$step',
+                    style: const TextStyle(
+                      color: AppColors.textOnDarkSecondary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
           ),
           const SizedBox(width: AppSpacing.md),
           Expanded(
@@ -220,6 +251,48 @@ class _Step extends StatelessWidget {
           ),
         ],
       ),
+    ),
+  );
+}
+
+class _SetupProgress extends StatelessWidget {
+  const _SetupProgress({required this.completedSteps});
+
+  final int completedSteps;
+
+  @override
+  Widget build(BuildContext context) => FixCard(
+    tone: FixCardTone.secondary,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Setup progress',
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(color: AppColors.textOnSurface),
+            ),
+            Text(
+              '$completedSteps of 3 complete',
+              style: const TextStyle(
+                color: AppColors.textOnSurfaceSecondary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.md),
+        LinearProgressIndicator(
+          value: completedSteps / 3,
+          minHeight: 8,
+          borderRadius: BorderRadius.circular(8),
+          color: AppColors.success,
+          backgroundColor: AppColors.borderDefault,
+        ),
+      ],
     ),
   );
 }

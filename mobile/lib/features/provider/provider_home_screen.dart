@@ -45,12 +45,15 @@ class ProviderHomeScreen extends StatelessWidget {
               eyebrow: 'PROVIDER WORKSPACE',
               title: 'Ready for your next job?',
               description:
-                  'Manage availability and only the work assigned to your account.',
+                  'Manage your availability and respond to work assigned to you.',
             ),
             const SizedBox(height: AppSpacing.md),
 
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.sm,
+              ),
               decoration: BoxDecoration(
                 color: AppColors.accentGoldSoft,
                 borderRadius: BorderRadius.circular(AppRadius.card),
@@ -58,12 +61,20 @@ class ProviderHomeScreen extends StatelessWidget {
               ),
               child: const Row(
                 children: [
-                  Icon(Icons.trending_up_rounded, color: AppColors.accentGold, size: 18),
+                  Icon(
+                    Icons.trending_up_rounded,
+                    color: AppColors.accentGold,
+                    size: 18,
+                  ),
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'High demand in your area • Stay online for instant matching',
-                      style: TextStyle(color: AppColors.accentGold, fontSize: 12, fontWeight: FontWeight.w600),
+                      'High demand nearby · stay online for faster matching',
+                      style: TextStyle(
+                        color: AppColors.accentGold,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ],
@@ -77,36 +88,35 @@ class ProviderHomeScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  FixStatusChip(
-                    label: online ? 'Online' : 'Offline',
-                    icon: online
-                        ? Icons.online_prediction_rounded
-                        : Icons.offline_bolt_rounded,
-                    tone: online
-                        ? FixStatusTone.success
-                        : FixStatusTone.neutral,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: FixStatusChip(
+                          label: online ? 'Online' : 'Offline',
+                          icon: online
+                              ? Icons.online_prediction_rounded
+                              : Icons.offline_bolt_rounded,
+                          tone: online
+                              ? FixStatusTone.success
+                              : FixStatusTone.neutral,
+                        ),
+                      ),
+                      Switch.adaptive(
+                        value: online,
+                        onChanged: availability == null
+                            ? null
+                            : (value) => controller.updateStatus(
+                                value ? 'online' : 'offline',
+                              ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: AppSpacing.md),
+                  const SizedBox(height: AppSpacing.sm),
                   Text(
                     online
-                        ? 'You can receive eligible assignments.'
-                        : 'You will not receive new assignments.',
+                        ? 'Matching eligible requests in your service area.'
+                        : 'Go online to receive eligible requests nearby.',
                     style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  FixButton(
-                    label: online ? 'Go offline' : 'Go online',
-                    icon: online
-                        ? Icons.pause_rounded
-                        : Icons.play_arrow_rounded,
-                    variant: online
-                        ? FixButtonVariant.secondary
-                        : FixButtonVariant.primary,
-                    onPressed: availability == null
-                        ? null
-                        : () => controller.updateStatus(
-                            online ? 'offline' : 'online',
-                          ),
                   ),
                 ],
               ),
@@ -149,19 +159,30 @@ class ProviderHomeScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: AppSpacing.xxl),
-            Text(
-              'Incoming requests',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: AppColors.textOnDarkPrimary,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            FixButton(
-              label: 'Refresh requests',
-              icon: Icons.refresh_rounded,
-              variant: FixButtonVariant.secondary,
-              isLoading: controller.refreshingRequests,
-              onPressed: controller.refreshRequests,
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Incoming requests',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: AppColors.textOnDarkPrimary,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'Refresh requests',
+                  onPressed: controller.refreshingRequests
+                      ? null
+                      : controller.refreshRequests,
+                  icon: controller.refreshingRequests
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.refresh_rounded),
+                ),
+              ],
             ),
             const SizedBox(height: AppSpacing.md),
             if (controller.actionError case final message?)
@@ -178,11 +199,27 @@ class ProviderHomeScreen extends StatelessWidget {
               ),
             if (controller.requests.isEmpty)
               const FixCard(
-                child: Row(
+                semanticLabel: 'No incoming requests',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.inbox_outlined, color: AppColors.textMuted),
-                    SizedBox(width: AppSpacing.md),
-                    Expanded(child: Text('No eligible requests right now.')),
+                    Icon(
+                      Icons.inbox_outlined,
+                      color: AppColors.textOnSurfaceMuted,
+                    ),
+                    SizedBox(height: AppSpacing.md),
+                    Text(
+                      'No new requests',
+                      style: TextStyle(
+                        color: AppColors.textOnSurface,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    SizedBox(height: AppSpacing.xs),
+                    Text(
+                      'Eligible nearby jobs will appear here while you are online.',
+                      style: TextStyle(color: AppColors.textOnSurfaceSecondary),
+                    ),
                   ],
                 ),
               )
@@ -203,12 +240,23 @@ class ProviderHomeScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: AppSpacing.md),
                         Text(
+                          request.serviceCategoryId.replaceAll('_', ' '),
+                          style: Theme.of(context).textTheme.labelLarge,
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(
                           request.description,
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                         const SizedBox(height: AppSpacing.xs),
                         Text(
                           '${request.distanceKm.toStringAsFixed(1)} km away',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: AppColors.textSecondary),
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(
+                          'Requested ${_requestTime(request.createdAt)}',
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(color: AppColors.textSecondary),
                         ),
@@ -242,7 +290,7 @@ class ProviderHomeScreen extends StatelessWidget {
                     SizedBox(width: AppSpacing.md),
                     Expanded(
                       child: Text(
-                        'No active assigned jobs. New work is not fabricated in this view.',
+                        'No active jobs. New assignments will appear here.',
                       ),
                     ),
                   ],
@@ -266,6 +314,11 @@ class ProviderHomeScreen extends StatelessWidget {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(
+                          job.serviceCategoryId.replaceAll('_', ' '),
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
                         const SizedBox(height: AppSpacing.sm),
                         Text(
                           'Job ${job.id.substring(0, 8).toUpperCase()}',
@@ -281,4 +334,7 @@ class ProviderHomeScreen extends StatelessWidget {
       );
     },
   );
+
+  static String _requestTime(DateTime value) =>
+      '${value.day}/${value.month} · ${value.hour.toString().padLeft(2, '0')}:${value.minute.toString().padLeft(2, '0')}';
 }

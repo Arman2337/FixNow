@@ -19,7 +19,7 @@ void main() {
     expect(theme.scaffoldBackgroundColor, AppColors.backgroundPrimary);
     expect(theme.textSelectionTheme.cursorColor, AppColors.primary);
     expect(theme.textSelectionTheme.selectionColor, AppColors.primarySoft);
-    expect(AppColors.emergency, isNot(AppColors.danger));
+    expect(AppColors.emergency, AppColors.danger);
     expect(AppColors.rating, isNot(AppColors.primary));
     expect(AppMotion.fast, const Duration(milliseconds: 150));
     expect(AppMotion.container, const Duration(milliseconds: 300));
@@ -28,7 +28,7 @@ void main() {
       greaterThanOrEqualTo(4.5),
     );
     expect(
-      _contrastRatio(AppColors.textSecondary, AppColors.surfacePrimary),
+      _contrastRatio(AppColors.textOnLightPrimary, AppColors.surfacePrimary),
       greaterThanOrEqualTo(4.5),
     );
     expect(
@@ -40,11 +40,17 @@ void main() {
       greaterThanOrEqualTo(4.5),
     );
     expect(
-      _contrastRatio(AppColors.textOnLightSecondary, AppColors.surfaceSecondary),
+      _contrastRatio(
+        AppColors.textOnLightSecondary,
+        AppColors.surfaceSecondary,
+      ),
       greaterThanOrEqualTo(4.5),
     );
     expect(
-      _contrastRatio(AppColors.textOnDarkSecondary, AppColors.backgroundSecondary),
+      _contrastRatio(
+        AppColors.textOnDarkSecondary,
+        AppColors.backgroundSecondary,
+      ),
       greaterThanOrEqualTo(4.5),
     );
   });

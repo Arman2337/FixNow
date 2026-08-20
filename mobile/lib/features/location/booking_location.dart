@@ -95,7 +95,7 @@ class BookingLocationResolver implements BookingLocationProvider {
     BookingLocationGateway? gateway,
     DateTime Function()? now,
     this.maxAge = const Duration(minutes: 2),
-    this.maxAccuracyMeters = 5000,
+    this.maxAccuracyMeters = 100,
   }) : _gateway = gateway ?? const GeolocatorBookingLocationGateway(),
        _now = now ?? DateTime.now;
 
@@ -129,10 +129,7 @@ class BookingLocationResolver implements BookingLocationProvider {
       try {
         final current = await _gateway.current();
         if (_isUsable(current)) return current;
-        debugPrint('Location fix rejected. Accuracy: ${current.accuracyMeters}m (Max allowed: ${maxAccuracyMeters}m)');
-      } catch (e, stackTrace) {
-        debugPrint('Geolocator.getCurrentPosition failed: $e\n$stackTrace');
-      }
+      } catch (_) {}
 
       final fallback = await _gateway.lastKnown();
       if (fallback == null) {

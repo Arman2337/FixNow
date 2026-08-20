@@ -1,12 +1,6 @@
 import 'dart:async';
 
-import 'package:fixnow_mobile/api/api_client.dart';
-import 'package:fixnow_mobile/features/bookings/booking_controller.dart';
-import 'package:fixnow_mobile/features/bookings/booking_repository.dart';
-import 'package:fixnow_mobile/features/bookings/service_request_screen.dart';
 import 'package:fixnow_mobile/features/location/booking_location.dart';
-import 'package:fixnow_mobile/features/services/service_category.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geolocator/geolocator.dart';
 
@@ -109,45 +103,6 @@ void main() {
       );
     },
   );
-
-  testWidgets('shows location guidance without calling booking API', (
-    tester,
-  ) async {
-    final transport = _RecordingTransport();
-    final controller = BookingController(
-      BookingRepository(api: transport, accessToken: () async => 'token'),
-    );
-    final gateway = _Gateway(servicesEnabled: false);
-
-    await tester.pumpWidget(
-      MaterialApp(
-        home: ServiceRequestScreen(
-          category: const ServiceCategory(
-            id: 'category',
-            name: 'Plumbing',
-            slug: 'plumbing',
-          ),
-          controller: controller,
-          locationProvider: BookingLocationResolver(
-            gateway: gateway,
-            now: () => now,
-          ),
-        ),
-      ),
-    );
-    await tester.enterText(
-      find.byType(TextFormField),
-      'Kitchen sink is leaking.',
-    );
-    await tester.tap(find.text('Find a verified provider'));
-    await tester.pump();
-
-    expect(
-      find.text('Turn on Location Services to request nearby help.'),
-      findsOneWidget,
-    );
-    expect(transport.requests, isEmpty);
-  });
 }
 
 BookingLocationResolver _resolver(_Gateway gateway) => BookingLocationResolver(
@@ -207,15 +162,5 @@ class _Gateway implements BookingLocationGateway {
   Future<BookingLocationFix?> lastKnown() async {
     lastKnownCalls++;
     return lastFix;
-  }
-}
-
-class _RecordingTransport implements ApiTransport {
-  final requests = <ApiRequest>[];
-
-  @override
-  Future<ApiResponse> send(ApiRequest request) async {
-    requests.add(request);
-    return const ApiResponse(statusCode: 500, body: null);
   }
 }

@@ -50,8 +50,9 @@ void main() {
       ),
     );
     expect(find.text('Offline'), findsWidgets);
-    expect(find.text('Go online'), findsOneWidget);
-    expect(find.textContaining('No active assigned jobs'), findsOneWidget);
+    expect(find.byType(Switch), findsOneWidget);
+    expect(find.textContaining('Go online to receive'), findsOneWidget);
+    expect(find.textContaining('No active jobs'), findsOneWidget);
     expect(find.textContaining('earnings'), findsNothing);
   });
 

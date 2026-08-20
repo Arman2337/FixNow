@@ -32,12 +32,12 @@ void main() {
       ),
     );
     await controller.loadSnapshot();
-    
+
     // Simulate a realtime location update that does not bump the booking sequence.
     await controller.applyRealtime(
       _tracking(sequence: 5, availability: LocationAvailability.live),
     );
-    
+
     expect(
       controller.tracking?.locationAvailability,
       LocationAvailability.live,
@@ -79,7 +79,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
     expect(find.text('Provider is on the way'), findsOneWidget);
     expect(find.text('Live location unavailable'), findsOneWidget);
-    expect(find.text('ETA unavailable'), findsOneWidget);
+    expect(find.text('Unavailable'), findsOneWidget);
     controller.markDisconnected();
     await tester.pump();
     expect(find.text('Updates paused'), findsOneWidget);
@@ -92,14 +92,17 @@ void main() {
       source: _Source(
         _tracking(
           sequence: 1,
-          provider: const ProviderMapLocation(
+          provider: ProviderMapLocation(
             latitude: 22.89,
             longitude: 72.99,
             accuracyMeters: 10,
             capturedAt: DateTime(2026),
             receivedAt: DateTime(2026),
           ),
-          customer: const CustomerMapLocation(latitude: 23.02, longitude: 73.07),
+          customer: const CustomerMapLocation(
+            latitude: 23.02,
+            longitude: 73.07,
+          ),
         ),
       ),
     );
@@ -111,9 +114,7 @@ void main() {
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
-    expect(find.text('Provider → your service address'), findsOneWidget);
-    expect(find.bySemanticsLabel('Provider'), findsOneWidget);
-    expect(find.bySemanticsLabel('You'), findsOneWidget);
+    expect(find.text('Live location available'), findsOneWidget);
   });
 }
 

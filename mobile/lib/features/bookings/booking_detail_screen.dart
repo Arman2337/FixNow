@@ -86,20 +86,36 @@ class BookingDetailScreen extends StatelessWidget {
                       'Service request',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      _category(booking.serviceCategoryId),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                     const SizedBox(height: AppSpacing.md),
                     Text(booking.description),
                     const SizedBox(height: AppSpacing.lg),
                     const Divider(),
                     const SizedBox(height: AppSpacing.sm),
                     Text(
-                      'Booking ID',
-                      style: Theme.of(context).textTheme.bodySmall,
+                      'Booking #${_shortId(booking.id)}',
+                      style: Theme.of(context).textTheme.labelLarge,
                     ),
-                    SelectableText(booking.id),
-                    const SizedBox(height: AppSpacing.md),
-                    Text('Service category: ${booking.serviceCategoryId}'),
                     const SizedBox(height: AppSpacing.xs),
                     Text('Requested ${_date(booking.createdAt)}'),
+                    const SizedBox(height: AppSpacing.md),
+                    Text(
+                      'Full booking ID',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    SelectableText(
+                      booking.id,
+                      style: const TextStyle(
+                        color: AppColors.textOnSurfaceSecondary,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -185,6 +201,18 @@ class BookingDetailScreen extends StatelessWidget {
     ),
   };
   static String _label(String value) => value.replaceAll('_', ' ');
+  static String _category(String value) => value
+      .replaceAll('_', ' ')
+      .split(' ')
+      .where((word) => word.isNotEmpty)
+      .map((word) => '${word[0].toUpperCase()}${word.substring(1)}')
+      .join(' ');
+  static String _shortId(String value) {
+    final compact = value.replaceAll('-', '');
+    final short = compact.length <= 8 ? compact : compact.substring(0, 8);
+    return short.toUpperCase();
+  }
+
   static IconData _icon(String value) => switch (value) {
     'REQUESTED' => Icons.radar_rounded,
     'ASSIGNED' => Icons.person_pin_circle_rounded,
@@ -279,7 +307,9 @@ class _ProgressRow extends StatelessWidget {
               Icon(
                 isComplete ? Icons.check_circle_rounded : Icons.circle_outlined,
                 size: 20,
-                color: isCurrent || isComplete
+                color: isCurrent
+                    ? AppColors.accentGold
+                    : isComplete
                     ? AppColors.primary
                     : AppColors.textOnSurfaceMuted,
               ),
@@ -288,7 +318,7 @@ class _ProgressRow extends StatelessWidget {
                   child: Container(
                     width: 2,
                     margin: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-                    color: isComplete
+                    color: isComplete && !isCurrent
                         ? AppColors.primary
                         : AppColors.borderDefault,
                   ),
@@ -306,7 +336,9 @@ class _ProgressRow extends StatelessWidget {
                 Text(
                   title,
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: isComplete || isCurrent
+                    color: isCurrent
+                        ? AppColors.accentGold
+                        : isComplete
                         ? AppColors.textOnSurface
                         : AppColors.textOnSurfaceMuted,
                   ),

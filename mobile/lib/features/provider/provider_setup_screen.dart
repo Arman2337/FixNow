@@ -196,7 +196,8 @@ class _ProviderSetupScreenState extends State<ProviderSetupScreen> {
                   maxLength: 1000,
                   maxLines: 4,
                   decoration: const InputDecoration(
-                    hintText: 'Describe your experience and the work you provide',
+                    hintText:
+                        'Describe your experience and the work you provide',
                   ),
                 ),
                 const SizedBox(height: AppSpacing.lg),
@@ -226,9 +227,8 @@ class _ProviderSetupScreenState extends State<ProviderSetupScreen> {
                     children: [
                       Text(
                         'Service-area center',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: AppColors.textOnSurface,
-                        ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(color: AppColors.textOnSurface),
                       ),
                       const SizedBox(height: AppSpacing.xs),
                       Text(
@@ -373,8 +373,8 @@ class _FormFieldLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Text(
     label,
-    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-      color: AppColors.textSecondary,
-    ),
+    style: Theme.of(
+      context,
+    ).textTheme.labelLarge?.copyWith(color: AppColors.textOnDarkSecondary),
   );
 }

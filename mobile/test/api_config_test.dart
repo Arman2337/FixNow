@@ -6,7 +6,7 @@ void main() {
   test('uses the local API default in development', () {
     expect(
       ApiConfig.baseUriFor(AppEnvironment.development),
-      Uri.parse('http://127.0.0.1:3000/api/v1/'),
+      Uri.parse('http://127.0.0.1:8080/api/v1/'),
     );
   });
 

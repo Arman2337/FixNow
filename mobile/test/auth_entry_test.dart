@@ -15,10 +15,12 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Trusted help.\nWhen you need it.'), findsOneWidget);
-    await tester.tap(find.text('Get started'));
+    final getStarted = find.text('Get started');
+    await tester.ensureVisible(getStarted);
+    await tester.tap(getStarted);
     await tester.pumpAndSettle();
 
-    expect(find.text('I want to join as'), findsOneWidget);
+    expect(find.text('How would you like to continue?'), findsOneWidget);
     expect(find.text('Customer'), findsOneWidget);
     expect(find.text('Service provider'), findsOneWidget);
 
@@ -35,7 +37,9 @@ void main() {
     await tester.pumpWidget(_app());
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Get started'));
+    final getStarted = find.text('Get started');
+    await tester.ensureVisible(getStarted);
+    await tester.tap(getStarted);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Service provider'));
     await tester.tap(find.text('Continue'));

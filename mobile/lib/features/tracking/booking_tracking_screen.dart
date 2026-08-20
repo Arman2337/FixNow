@@ -36,7 +36,9 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
           onPressed: () {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('FixNow Safety Support is standing by for active jobs.'),
+                content: Text(
+                  'FixNow Safety Support is standing by for active jobs.',
+                ),
               ),
             );
           },
@@ -73,7 +75,8 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
                 ),
                 const SizedBox(height: AppSpacing.md),
                 FixTimeline(
-                  currentStatus: widget.controller.tracking?.status ?? 'REQUESTED',
+                  currentStatus:
+                      widget.controller.tracking?.status ?? 'REQUESTED',
                 ),
               ],
             ),
@@ -94,13 +97,24 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 12),
               side: const BorderSide(color: AppColors.borderStrong),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.medium)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.medium),
+              ),
             ),
-            icon: const Icon(Icons.call_rounded, color: AppColors.primary, size: 18),
-            label: const Text('Call Pro', style: TextStyle(color: AppColors.textPrimary, fontSize: 13)),
+            icon: const Icon(
+              Icons.call_rounded,
+              color: AppColors.primary,
+              size: 18,
+            ),
+            label: const Text(
+              'Call Pro',
+              style: TextStyle(color: AppColors.textPrimary, fontSize: 13),
+            ),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Connecting to your assigned technician...')),
+                const SnackBar(
+                  content: Text('Connecting to your assigned technician...'),
+                ),
               );
             },
           ),
@@ -111,13 +125,26 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 12),
               side: const BorderSide(color: AppColors.borderStrong),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.medium)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.medium),
+              ),
             ),
-            icon: const Icon(Icons.chat_bubble_outline_rounded, color: AppColors.accentGold, size: 18),
-            label: const Text('Message', style: TextStyle(color: AppColors.textPrimary, fontSize: 13)),
+            icon: const Icon(
+              Icons.chat_bubble_outline_rounded,
+              color: AppColors.accentGold,
+              size: 18,
+            ),
+            label: const Text(
+              'Message',
+              style: TextStyle(color: AppColors.textPrimary, fontSize: 13),
+            ),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('In-app messaging for active bookings is active.')),
+                const SnackBar(
+                  content: Text(
+                    'In-app messaging for active bookings is active.',
+                  ),
+                ),
               );
             },
           ),
@@ -222,28 +249,37 @@ class _TrackingCard extends StatelessWidget {
             ],
           ],
           const SizedBox(height: AppSpacing.md),
-          Row(
+          const Row(
             children: [
-              const Icon(Icons.timer_outlined, color: AppColors.accentGold, size: 18),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  value.estimatedMinutes == null
-                      ? 'ETA unavailable'
-                      : 'Estimated arrival: about ${value.estimatedMinutes} minutes',
-                  style: const TextStyle(
-                    color: AppColors.cream,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
+              Icon(Icons.timer_outlined, color: AppColors.accentGold, size: 18),
+              SizedBox(width: 6),
+              Text(
+                'Estimated arrival',
+                style: TextStyle(
+                  color: AppColors.textOnDarkSecondary,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            'ETA is an estimate and may change.',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textMuted),
+            value.estimatedMinutes == null
+                ? 'Unavailable'
+                : '${value.estimatedMinutes} min',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              color: AppColors.cream,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            value.providerLocation == null
+                ? 'ETA is an estimate and may change.'
+                : 'Location updated ${_updatedAt(value.providerLocation!.receivedAt)}.',
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColors.textMuted),
           ),
         ],
       ),
@@ -257,6 +293,14 @@ class _TrackingCard extends StatelessWidget {
     'CANCELLED' => 'Booking cancelled',
     _ => 'Booking updated',
   };
+
+  static String _updatedAt(DateTime value) {
+    final local = value.toLocal();
+    final hour = local.hour % 12 == 0 ? 12 : local.hour % 12;
+    final minute = local.minute.toString().padLeft(2, '0');
+    final suffix = local.hour >= 12 ? 'PM' : 'AM';
+    return 'at $hour:$minute $suffix';
+  }
 }
 
 class _JourneySummary extends StatelessWidget {
@@ -293,7 +337,7 @@ class _JourneySummary extends StatelessWidget {
               customer == null
                   ? 'Provider location is live. Your booking location is unavailable.'
                   : tracking.route == null
-                  ? 'Provider → your service address'
+                  ? 'Provider to your service address'
                   : 'Driving route to your service address',
               style: const TextStyle(
                 color: AppColors.textOnDarkPrimary,

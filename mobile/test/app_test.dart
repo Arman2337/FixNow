@@ -46,7 +46,7 @@ void main() {
 
     expect(find.textContaining('tracked product task'), findsNothing);
     expect(
-      find.textContaining('contact local emergency services'),
+      find.textContaining('contact local authorities immediately'),
       findsOneWidget,
     );
   });

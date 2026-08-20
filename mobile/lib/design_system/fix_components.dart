@@ -71,10 +71,7 @@ class FixTextField extends StatelessWidget {
           enabled: enabled,
           readOnly: readOnly,
           onTap: onTap,
-          style: const TextStyle(
-            color: AppColors.textOnSurface,
-            fontSize: 15,
-          ),
+          style: const TextStyle(color: AppColors.textOnSurface, fontSize: 15),
           decoration: InputDecoration(
             hintText: hintText,
             prefixIcon: prefixIcon,
@@ -128,28 +125,44 @@ class FixSearchField extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
       child: Row(
         children: [
-          const Icon(Icons.search_rounded, color: AppColors.textMuted, size: 22),
+          const Icon(
+            Icons.search_rounded,
+            color: AppColors.textMuted,
+            size: 22,
+          ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: TextField(
               controller: controller,
               onChanged: onChanged,
               onSubmitted: onSubmitted,
-              style: const TextStyle(color: AppColors.textOnSurface, fontSize: 14),
+              style: const TextStyle(
+                color: AppColors.textOnSurface,
+                fontSize: 14,
+              ),
               decoration: InputDecoration(
                 hintText: hintText,
-                hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 14),
+                hintStyle: const TextStyle(
+                  color: AppColors.textMuted,
+                  fontSize: 14,
+                ),
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,
                 isDense: true,
-                contentPadding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: AppSpacing.md,
+                ),
               ),
             ),
           ),
           if (onMicPressed != null) ...[
             IconButton(
-              icon: const Icon(Icons.mic_rounded, color: AppColors.accentGold, size: 20),
+              icon: const Icon(
+                Icons.mic_rounded,
+                color: AppColors.accentGold,
+                size: 20,
+              ),
               onPressed: onMicPressed,
               splashRadius: 20,
             ),
@@ -191,7 +204,9 @@ class FixSectionHeader extends StatelessWidget {
               child: Text(
                 title,
                 style: useSerif
-                    ? AppTypography.heading3.copyWith(color: AppColors.textPrimary)
+                    ? AppTypography.heading3.copyWith(
+                        color: AppColors.textPrimary,
+                      )
                     : const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
@@ -245,7 +260,13 @@ class FixAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final initials = (name != null && name!.trim().isNotEmpty)
-        ? name!.trim().split(' ').map((e) => e.isNotEmpty ? e[0] : '').take(2).join().toUpperCase()
+        ? name!
+              .trim()
+              .split(' ')
+              .map((e) => e.isNotEmpty ? e[0] : '')
+              .take(2)
+              .join()
+              .toUpperCase()
         : 'FX';
 
     return Stack(
@@ -413,7 +434,10 @@ class FixEmergencyBanner extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
                   foregroundColor: AppColors.emergency,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 6,
+                  ),
                   minimumSize: const Size(0, 34),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppRadius.small),
@@ -460,7 +484,7 @@ class FixAiPromptCard extends StatelessWidget {
               color: Color(0x33000000),
               blurRadius: 12,
               offset: Offset(0, 4),
-            )
+            ),
           ],
         ),
         child: Column(
@@ -470,7 +494,10 @@ class FixAiPromptCard extends StatelessWidget {
               children: [
                 Flexible(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.accentGoldSoft,
                       borderRadius: BorderRadius.circular(AppRadius.small),
@@ -479,7 +506,11 @@ class FixAiPromptCard extends StatelessWidget {
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.auto_awesome_rounded, color: AppColors.accentGold, size: 14),
+                        Icon(
+                          Icons.auto_awesome_rounded,
+                          color: AppColors.accentGold,
+                          size: 14,
+                        ),
                         SizedBox(width: 4),
                         Flexible(
                           child: Text(
@@ -498,7 +529,11 @@ class FixAiPromptCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
-                const Icon(Icons.mic_rounded, color: AppColors.accentGold, size: 20),
+                const Icon(
+                  Icons.mic_rounded,
+                  color: AppColors.accentGold,
+                  size: 20,
+                ),
               ],
             ),
             const SizedBox(height: AppSpacing.md),
@@ -519,10 +554,7 @@ class FixAiPromptCard extends StatelessWidget {
 
 /// 7-Stage Service Lifecycle Timeline
 class FixTimeline extends StatelessWidget {
-  const FixTimeline({
-    required this.currentStatus,
-    super.key,
-  });
+  const FixTimeline({required this.currentStatus, super.key});
 
   final String currentStatus;
 
@@ -610,14 +642,20 @@ class _TimelineStep extends StatelessWidget {
                     border: Border.all(color: dotBorder, width: 2),
                   ),
                   child: isCompleted
-                      ? const Icon(Icons.check, size: 10, color: AppColors.onPrimary)
+                      ? const Icon(
+                          Icons.check,
+                          size: 10,
+                          color: AppColors.onPrimary,
+                        )
                       : null,
                 ),
                 if (!isLast)
                   Expanded(
                     child: Container(
                       width: 2,
-                      color: isCompleted ? AppColors.primary : AppColors.borderDefault,
+                      color: isCompleted
+                          ? AppColors.primary
+                          : AppColors.borderDefault,
                     ),
                   ),
               ],
@@ -635,7 +673,9 @@ class _TimelineStep extends StatelessWidget {
                     style: TextStyle(
                       color: isCurrent
                           ? AppColors.accentGold
-                          : (isCompleted ? AppColors.textPrimary : AppColors.textMuted),
+                          : (isCompleted
+                                ? AppColors.textPrimary
+                                : AppColors.textMuted),
                       fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w600,
                       fontSize: 14,
                     ),
@@ -644,7 +684,9 @@ class _TimelineStep extends StatelessWidget {
                   Text(
                     subtitle,
                     style: TextStyle(
-                      color: isCurrent ? AppColors.textSecondary : AppColors.textMuted,
+                      color: isCurrent
+                          ? AppColors.textSecondary
+                          : AppColors.textMuted,
                       fontSize: 12,
                     ),
                   ),
@@ -660,10 +702,7 @@ class _TimelineStep extends StatelessWidget {
 
 /// OTP Code Display Box for Service Start
 class FixOtpDisplay extends StatelessWidget {
-  const FixOtpDisplay({
-    this.otp = '7362',
-    super.key,
-  });
+  const FixOtpDisplay({this.otp = '7362', super.key});
 
   final String otp;
 
@@ -680,10 +719,14 @@ class FixOtpDisplay extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.shield_rounded, color: AppColors.accentGold, size: 18),
+              const Icon(
+                Icons.shield_rounded,
+                color: AppColors.accentGold,
+                size: 18,
+              ),
               const SizedBox(width: 6),
               Text(
-                'SERVICE START OTP',
+                'SERVICE START CODE',
                 style: AppTypography.caption.copyWith(
                   color: AppColors.accentGold,
                   fontWeight: FontWeight.w700,
@@ -821,11 +864,7 @@ class FixInvoiceCard extends StatelessWidget {
 }
 
 class _InvoiceRow extends StatelessWidget {
-  const _InvoiceRow({
-    required this.label,
-    required this.amount,
-    this.color,
-  });
+  const _InvoiceRow({required this.label, required this.amount, this.color});
 
   final String label;
   final String amount;
@@ -838,7 +877,13 @@ class _InvoiceRow extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+          Text(
+            label,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 13,
+            ),
+          ),
           Text(
             amount,
             style: TextStyle(

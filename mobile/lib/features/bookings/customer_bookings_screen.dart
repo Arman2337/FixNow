@@ -8,6 +8,8 @@ import 'package:fixnow_mobile/features/bookings/booking.dart';
 import 'package:fixnow_mobile/features/bookings/booking_controller.dart';
 import 'package:flutter/material.dart';
 
+enum _BookingFilter { active, completed, cancelled }
+
 class CustomerBookingsScreen extends StatefulWidget {
   const CustomerBookingsScreen({
     required this.controller,
@@ -21,6 +23,8 @@ class CustomerBookingsScreen extends StatefulWidget {
 }
 
 class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
+  _BookingFilter _filter = _BookingFilter.active;
+
   @override
   void initState() {
     super.initState();
@@ -42,6 +46,19 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
             description: 'Track active requests and review completed work.',
           ),
           const SizedBox(height: AppSpacing.xxl),
+          if (widget.controller.status == BookingListStatus.ready) ...[
+            _BookingFilterBar(
+              selected: _filter,
+              onSelected: (value) => setState(() => _filter = value),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            _BookingSummary(
+              activeCount: widget.controller.bookings
+                  .where((booking) => _isActive(booking.status))
+                  .length,
+            ),
+            const SizedBox(height: AppSpacing.lg),
+          ],
           ...switch (widget.controller.status) {
             BookingListStatus.initial || BookingListStatus.loading => const [
               Center(
@@ -66,22 +83,121 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
               ),
             ],
             BookingListStatus.ready =>
-              widget.controller.bookings
-                  .map(
-                    (booking) => Padding(
-                      padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                      child: _BookingCard(
-                        booking: booking,
-                        onTap: widget.onBookingSelected == null
-                            ? null
-                            : () => widget.onBookingSelected!(booking),
-                      ),
-                    ),
-                  )
-                  .toList(),
+              _filteredBookings().isEmpty
+                  ? [_EmptyBookings(filter: _filter)]
+                  : _filteredBookings()
+                        .map(
+                          (booking) => Padding(
+                            padding: const EdgeInsets.only(
+                              bottom: AppSpacing.md,
+                            ),
+                            child: _BookingCard(
+                              booking: booking,
+                              onTap: widget.onBookingSelected == null
+                                  ? null
+                                  : () => widget.onBookingSelected!(booking),
+                            ),
+                          ),
+                        )
+                        .toList(),
           },
         ],
       ),
+    ),
+  );
+
+  bool _matchesFilter(String status) => switch (_filter) {
+    _BookingFilter.active => _isActive(status),
+    _BookingFilter.completed => status == 'COMPLETED',
+    _BookingFilter.cancelled => status == 'CANCELLED',
+  };
+
+  static bool _isActive(String status) => const {
+    'REQUESTED',
+    'ASSIGNED',
+    'EN_ROUTE',
+    'IN_PROGRESS',
+  }.contains(status);
+
+  List<CustomerBooking> _filteredBookings() => widget.controller.bookings
+      .where((booking) => _matchesFilter(booking.status))
+      .toList();
+}
+
+class _BookingFilterBar extends StatelessWidget {
+  const _BookingFilterBar({required this.selected, required this.onSelected});
+
+  final _BookingFilter selected;
+  final ValueChanged<_BookingFilter> onSelected;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    label: 'Booking filter',
+    child: Wrap(
+      spacing: AppSpacing.sm,
+      runSpacing: AppSpacing.sm,
+      children: [
+        for (final filter in _BookingFilter.values)
+          ChoiceChip(
+            label: Text(_label(filter)),
+            selected: selected == filter,
+            onSelected: (_) => onSelected(filter),
+            selectedColor: AppColors.primarySoft,
+            backgroundColor: AppColors.surfacePrimary,
+            side: BorderSide(
+              color: selected == filter
+                  ? AppColors.primary
+                  : AppColors.borderDefault,
+            ),
+            labelStyle: TextStyle(
+              color: selected == filter
+                  ? AppColors.primary
+                  : AppColors.textOnSurface,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+      ],
+    ),
+  );
+
+  static String _label(_BookingFilter value) => switch (value) {
+    _BookingFilter.active => 'Active',
+    _BookingFilter.completed => 'Completed',
+    _BookingFilter.cancelled => 'Cancelled',
+  };
+}
+
+class _BookingSummary extends StatelessWidget {
+  const _BookingSummary({required this.activeCount});
+  final int activeCount;
+
+  @override
+  Widget build(BuildContext context) => FixCard(
+    tone: FixCardTone.elevated,
+    semanticLabel: '$activeCount active bookings',
+    child: Row(
+      children: [
+        Container(
+          width: 44,
+          height: 44,
+          alignment: Alignment.center,
+          decoration: const BoxDecoration(
+            color: AppColors.primarySoft,
+            borderRadius: BorderRadius.all(Radius.circular(12)),
+          ),
+          child: const Icon(Icons.route_rounded, color: AppColors.primary),
+        ),
+        const SizedBox(width: AppSpacing.md),
+        Expanded(
+          child: Text(
+            activeCount == 0
+                ? 'No active bookings right now'
+                : '$activeCount active ${activeCount == 1 ? 'booking' : 'bookings'}',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+        ),
+        const Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary),
+      ],
     ),
   );
 }
@@ -215,7 +331,8 @@ class _BookingCard extends StatelessWidget {
 }
 
 class _EmptyBookings extends StatelessWidget {
-  const _EmptyBookings();
+  const _EmptyBookings({this.filter});
+  final _BookingFilter? filter;
   @override
   Widget build(BuildContext context) => FixCard(
     semanticLabel: 'No bookings yet',
@@ -227,12 +344,27 @@ class _EmptyBookings extends StatelessWidget {
           color: Theme.of(context).colorScheme.primary,
         ),
         const SizedBox(height: AppSpacing.md),
-        Text('No bookings yet', style: Theme.of(context).textTheme.titleMedium),
+        Text(
+          filter == null
+              ? 'No bookings yet'
+              : 'No ${_filterLabel(filter!)} bookings',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
         const SizedBox(height: AppSpacing.sm),
-        const Text('Choose a service from Home to request trusted local help.'),
+        Text(
+          filter == null
+              ? 'Choose a service from Home to request trusted local help.'
+              : 'Choose another filter to review a different part of your service history.',
+        ),
       ],
     ),
   );
+
+  static String _filterLabel(_BookingFilter value) => switch (value) {
+    _BookingFilter.active => 'active',
+    _BookingFilter.completed => 'completed',
+    _BookingFilter.cancelled => 'cancelled',
+  };
 }
 
 class _Failure extends StatelessWidget {

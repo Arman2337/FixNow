@@ -52,7 +52,8 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
   }
 
   void _onLocationStateChanged() {
-    if (widget.locationController.state == LocationPermissionState.granted && _locationName == null) {
+    if (widget.locationController.state == LocationPermissionState.granted &&
+        _locationName == null) {
       _fetchLocationName();
     }
   }
@@ -70,20 +71,28 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
         // Geocoding package doesn't support web by default without a web plugin.
         // We fallback to a generic message if it fails on web.
         try {
-          final placemarks = await Geocoding().placemarkFromCoordinates(position.latitude, position.longitude);
+          final placemarks = await Geocoding().placemarkFromCoordinates(
+            position.latitude,
+            position.longitude,
+          );
           if (placemarks.isNotEmpty) {
             _updateLocationName(placemarks.first);
             return;
           }
         } catch (_) {
           try {
-            final uri = Uri.parse('https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${position.latitude}&longitude=${position.longitude}&localityLanguage=en');
+            final uri = Uri.parse(
+              'https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${position.latitude}&longitude=${position.longitude}&localityLanguage=en',
+            );
             final response = await http.get(uri);
             if (response.statusCode == 200) {
               final data = jsonDecode(response.body);
               final city = data['city'] ?? data['locality'];
               final state = data['principalSubdivision'] ?? data['countryName'];
-              if (mounted && city != null && state != null && city.toString().isNotEmpty) {
+              if (mounted &&
+                  city != null &&
+                  state != null &&
+                  city.toString().isNotEmpty) {
                 setState(() {
                   _locationName = '$city, $state';
                 });
@@ -100,7 +109,10 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
           }
         }
       } else {
-        final placemarks = await Geocoding().placemarkFromCoordinates(position.latitude, position.longitude);
+        final placemarks = await Geocoding().placemarkFromCoordinates(
+          position.latitude,
+          position.longitude,
+        );
         if (placemarks.isNotEmpty) {
           _updateLocationName(placemarks.first);
         }
@@ -111,7 +123,10 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
   }
 
   void _updateLocationName(Placemark place) {
-    final city = place.locality ?? place.subAdministrativeArea ?? place.administrativeArea;
+    final city =
+        place.locality ??
+        place.subAdministrativeArea ??
+        place.administrativeArea;
     final state = place.administrativeArea ?? place.country;
     if (mounted && city != null && state != null) {
       setState(() {
@@ -122,10 +137,13 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
 
   void _handleQuickService(String slug, String name) {
     if (widget.controller.categories.isNotEmpty) {
-      final match = widget.controller.categories.where(
-        (c) => c.slug.toLowerCase() == slug.toLowerCase() ||
-               c.name.toLowerCase().contains(name.toLowerCase()),
-      ).firstOrNull;
+      final match = widget.controller.categories
+          .where(
+            (c) =>
+                c.slug.toLowerCase() == slug.toLowerCase() ||
+                c.name.toLowerCase().contains(name.toLowerCase()),
+          )
+          .firstOrNull;
       if (match != null && widget.onCategorySelected != null) {
         widget.onCategorySelected!(match);
         return;
@@ -141,7 +159,9 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surfaceElevated,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.large)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.large),
+        ),
         title: const Row(
           children: [
             Icon(Icons.emergency_rounded, color: AppColors.emergency),
@@ -160,14 +180,20 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
             SizedBox(height: AppSpacing.md),
             Text(
               'Helpline: +91 800 349 6691\nDispatched in average 12 minutes.',
-              style: TextStyle(color: AppColors.cream, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                color: AppColors.cream,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Close', style: TextStyle(color: AppColors.textSecondary)),
+            child: const Text(
+              'Close',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -177,7 +203,9 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
             onPressed: () {
               Navigator.of(ctx).pop();
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Connecting to 24/7 Emergency Dispatch...')),
+                const SnackBar(
+                  content: Text('Connecting to 24/7 Emergency Dispatch...'),
+                ),
               );
             },
             child: const Text('Call Dispatch'),
@@ -191,7 +219,8 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: widget.controller,
     builder: (context, _) {
-      final isOfflineOrError = widget.controller.status == DiscoveryStatus.offline ||
+      final isOfflineOrError =
+          widget.controller.status == DiscoveryStatus.offline ||
           widget.controller.status == DiscoveryStatus.error ||
           widget.controller.status == DiscoveryStatus.empty;
 
@@ -203,23 +232,22 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
           children: [
             _buildCustomerHeader(context),
             const SizedBox(height: AppSpacing.lg),
-            _buildActiveBookingCard(),
-            const SizedBox(height: AppSpacing.lg),
 
             if (isOfflineOrError) ...[
               ..._content(context),
               const SizedBox(height: AppSpacing.xl),
               LocationConsentCard(controller: widget.locationController),
             ] else ...[
-              FixEmergencyBanner(
-                onCallNow: _showEmergencyContactDialog,
-              ),
+              FixEmergencyBanner(onCallNow: _showEmergencyContactDialog),
               const SizedBox(height: AppSpacing.md),
 
               FixAiPromptCard(
                 onTap: () {
-                  if (widget.controller.categories.isNotEmpty && widget.onCategorySelected != null) {
-                    widget.onCategorySelected!(widget.controller.categories.first);
+                  if (widget.controller.categories.isNotEmpty &&
+                      widget.onCategorySelected != null) {
+                    widget.onCategorySelected!(
+                      widget.controller.categories.first,
+                    );
                   }
                 },
               ),
@@ -228,6 +256,30 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
               _buildQuickServicesSection(context),
               const SizedBox(height: AppSpacing.xl),
 
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: Semantics(
+                      header: true,
+                      child: Text(
+                        'Popular services',
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    'Verified categories',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.md),
+              ..._content(context),
+
+              const SizedBox(height: AppSpacing.xxl),
+              _buildTrustAndSafetySection(context),
+              const SizedBox(height: AppSpacing.lg),
               const FixCard(
                 tone: FixCardTone.elevated,
                 semanticLabel: 'Verified professional matching',
@@ -255,33 +307,9 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                 ),
               ),
               const SizedBox(height: AppSpacing.lg),
-
               LocationConsentCard(controller: widget.locationController),
-              const SizedBox(height: AppSpacing.xl),
-
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Expanded(
-                    child: Semantics(
-                      header: true,
-                      child: Text(
-                        'Popular services',
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      ),
-                    ),
-                  ),
-                  Text(
-                    'Verified categories',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.md),
-              ..._content(context),
-
-              const SizedBox(height: AppSpacing.xxl),
-              _buildTrustAndSafetySection(context),
+              const SizedBox(height: AppSpacing.lg),
+              _buildActiveBookingCard(),
               const SizedBox(height: AppSpacing.xl),
             ],
           ],
@@ -295,9 +323,16 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
     return ListenableBuilder(
       listenable: widget.bookingsController!,
       builder: (context, _) {
-        final active = widget.bookingsController!.bookings.where(
-          (b) => const {'REQUESTED', 'ASSIGNED', 'EN_ROUTE', 'IN_PROGRESS'}.contains(b.status)
-        ).firstOrNull;
+        final active = widget.bookingsController!.bookings
+            .where(
+              (b) => const {
+                'REQUESTED',
+                'ASSIGNED',
+                'EN_ROUTE',
+                'IN_PROGRESS',
+              }.contains(b.status),
+            )
+            .firstOrNull;
         if (active == null) return const SizedBox.shrink();
 
         String title = '';
@@ -343,10 +378,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      title,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
+                    Text(title, style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: AppSpacing.xs),
                     Text(
                       active.description,
@@ -368,8 +400,11 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
     return ListenableBuilder(
       listenable: widget.locationController,
       builder: (context, _) {
-        final isGranted = widget.locationController.state == LocationPermissionState.granted;
-        final locationText = isGranted ? (_locationName ?? 'Locating...') : 'Enable Location';
+        final isGranted =
+            widget.locationController.state == LocationPermissionState.granted;
+        final locationText = isGranted
+            ? (_locationName ?? 'Locating...')
+            : 'Enable Location';
         return Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -389,7 +424,11 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.location_on_rounded, color: AppColors.accentGold, size: 16),
+                          const Icon(
+                            Icons.location_on_rounded,
+                            color: AppColors.accentGold,
+                            size: 16,
+                          ),
                           const SizedBox(width: 4),
                           Flexible(
                             child: Text(
@@ -402,7 +441,11 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                               ),
                             ),
                           ),
-                          const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.accentGold, size: 16),
+                          const Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            color: AppColors.accentGold,
+                            size: 16,
+                          ),
                         ],
                       ),
                     ),
@@ -410,11 +453,13 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                   const SizedBox(height: 4),
                   RichText(
                     text: TextSpan(
-                      style: AppTypography.heading2.copyWith(color: AppColors.cream),
+                      style: AppTypography.heading2.copyWith(
+                        color: AppColors.cream,
+                      ),
                       children: const [
                         TextSpan(text: 'Right help. '),
                         TextSpan(
-                          text: 'Right now. 👋',
+                          text: 'Right now.',
                           style: TextStyle(color: AppColors.primary),
                         ),
                       ],
@@ -423,11 +468,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                 ],
               ),
             ),
-            const FixAvatar(
-              name: 'Arman',
-              size: 44,
-              isVerified: true,
-            ),
+            const FixAvatar(name: 'Arman', size: 44, isVerified: true),
           ],
         );
       },
@@ -531,7 +572,8 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
               child: _buildTrustCard(
                 icon: Icons.currency_rupee_rounded,
                 title: 'Fixed Pricing',
-                description: 'Transparent upfront estimates with no hidden fees',
+                description:
+                    'Transparent upfront estimates with no hidden fees',
               ),
             ),
           ],

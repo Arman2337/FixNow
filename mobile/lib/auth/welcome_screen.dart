@@ -36,25 +36,41 @@ class WelcomeScreen extends StatelessWidget {
                   ),
                   SizedBox(height: constraints.maxHeight < 700 ? 40 : 80),
                   Container(
-                    width: 72,
-                    height: 72,
-                    alignment: Alignment.center,
+                    padding: const EdgeInsets.all(AppSpacing.lg),
                     decoration: BoxDecoration(
-                      color: AppColors.primarySoft,
-                      borderRadius: BorderRadius.circular(20),
+                      color: AppColors.backgroundSecondary,
+                      borderRadius: AppRadius.cardBorder,
                       border: Border.all(color: AppColors.borderStrong),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0x33000000),
-                          blurRadius: 16,
-                          offset: Offset(0, 6),
+                    ),
+                    child: const Row(
+                      children: [
+                        _WelcomeHeroIcon(),
+                        SizedBox(width: AppSpacing.md),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Help that keeps you informed',
+                                style: TextStyle(
+                                  color: AppColors.textPrimary,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              SizedBox(height: AppSpacing.xs),
+                              Text(
+                                'Request, match, and track a trusted professional in one place.',
+                                style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 13,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
-                    ),
-                    child: const Icon(
-                      Icons.bolt_rounded,
-                      size: 36,
-                      color: AppColors.primary,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xxl),
@@ -67,7 +83,7 @@ class WelcomeScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   Text(
-                    'Book reliable local professionals and follow every service update with confidence.',
+                    'Book reliable local professionals, see clear updates, and stay in control from request to completion.',
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       color: AppColors.textSecondary,
                     ),
@@ -77,9 +93,12 @@ class WelcomeScreen extends StatelessWidget {
                     spacing: AppSpacing.sm,
                     runSpacing: AppSpacing.sm,
                     children: [
-                      _buildTrustPill(Icons.verified_user_rounded, 'Verified Pros'),
-                      _buildTrustPill(Icons.timer_outlined, '12-min Avg ETA'),
-                      _buildTrustPill(Icons.shield_outlined, '30-Day Warranty'),
+                      _buildTrustPill(
+                        Icons.verified_user_rounded,
+                        'Verified professionals',
+                      ),
+                      _buildTrustPill(Icons.route_outlined, 'Live job updates'),
+                      _buildTrustPill(Icons.shield_outlined, 'Work-start OTP'),
                     ],
                   ),
                   const SizedBox(height: AppSpacing.xxxl),
@@ -124,4 +143,31 @@ class WelcomeScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+class _WelcomeHeroIcon extends StatelessWidget {
+  const _WelcomeHeroIcon();
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: 52,
+    height: 52,
+    alignment: Alignment.center,
+    decoration: BoxDecoration(
+      color: AppColors.primary,
+      borderRadius: BorderRadius.circular(AppRadius.medium),
+      boxShadow: const [
+        BoxShadow(
+          color: Color(0x33000000),
+          blurRadius: 14,
+          offset: Offset(0, 5),
+        ),
+      ],
+    ),
+    child: const Icon(
+      Icons.home_repair_service_rounded,
+      size: 28,
+      color: AppColors.onPrimary,
+    ),
+  );
 }

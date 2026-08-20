@@ -1,6 +1,5 @@
 import 'package:fixnow_mobile/api/api_client.dart';
 import 'package:fixnow_mobile/design_system/app_colors.dart';
-import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
@@ -9,8 +8,6 @@ import 'package:fixnow_mobile/features/bookings/booking_controller.dart';
 import 'package:fixnow_mobile/features/location/booking_location.dart';
 import 'package:fixnow_mobile/features/services/service_category.dart';
 import 'package:flutter/material.dart';
-
-enum ServiceUrgency { normal, urgent, emergency }
 
 class ServiceRequestScreen extends StatefulWidget {
   const ServiceRequestScreen({
@@ -30,7 +27,6 @@ class ServiceRequestScreen extends StatefulWidget {
 class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
   final _formKey = GlobalKey<FormState>();
   final _details = TextEditingController();
-  ServiceUrgency _urgency = ServiceUrgency.normal;
   bool _submitting = false;
   String? _error;
 
@@ -68,7 +64,9 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
     } on BookingLocationFailure catch (error) {
       setState(() => _error = error.message);
     } on ApiException catch (error) {
-      debugPrint('ApiException during request creation: ${error.kind} - ${error.message}');
+      debugPrint(
+        'ApiException during request creation: ${error.kind} - ${error.message}',
+      );
       setState(
         () => _error = error.kind == ApiFailureKind.offline
             ? 'You are offline. Reconnect and try again.'
@@ -117,50 +115,91 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
             ),
             const SizedBox(height: AppSpacing.lg),
 
-            Form(
-              key: _formKey,
-              autovalidateMode: AutovalidateMode.onUserInteraction,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'What needs fixing?',
-                    style: TextStyle(
-                      color: AppColors.textOnDarkSecondary,
-                      fontWeight: FontWeight.w600,
+            FixCard(
+              tone: FixCardTone.secondary,
+              semanticLabel: 'Describe your service request',
+              child: Form(
+                key: _formKey,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Tell us what needs fixing',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: AppColors.textOnSurface,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.xs),
-                  TextFormField(
-                    controller: _details,
-                    style: const TextStyle(color: AppColors.inputText),
-                    cursorColor: AppColors.primary,
-                    enabled: !_submitting,
-                    minLines: 3,
-                    maxLines: 6,
-                    maxLength: 500,
-                    textCapitalization: TextCapitalization.sentences,
-                    decoration: const InputDecoration(
-                      hintText:
-                          'Describe the issue (e.g. pipe leak, low pressure, installation)...',
+                    const SizedBox(height: AppSpacing.xs),
+                    const Text(
+                      'Clear details help the right professional prepare before they accept.',
+                      style: TextStyle(color: AppColors.textOnSurfaceSecondary),
                     ),
-                    validator: (value) => (value?.trim().length ?? 0) < 10
-                        ? 'Add at least 10 characters so the provider can prepare.'
-                        : null,
-                  ),
-                ],
+                    const SizedBox(height: AppSpacing.lg),
+                    const Text(
+                      'Issue details',
+                      style: TextStyle(
+                        color: AppColors.textOnSurface,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    TextFormField(
+                      controller: _details,
+                      style: const TextStyle(color: AppColors.inputText),
+                      cursorColor: AppColors.primary,
+                      enabled: !_submitting,
+                      minLines: 3,
+                      maxLines: 6,
+                      maxLength: 500,
+                      textCapitalization: TextCapitalization.sentences,
+                      decoration: const InputDecoration(
+                        hintText:
+                            'For example: a pipe is leaking under the sink and water pressure is low.',
+                      ),
+                      validator: (value) => (value?.trim().length ?? 0) < 10
+                          ? 'Add at least 10 characters so the provider can prepare.'
+                          : null,
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    const Text(
+                      'Add a quick detail',
+                      style: TextStyle(
+                        color: AppColors.textOnSurfaceSecondary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Wrap(
+                      spacing: AppSpacing.sm,
+                      runSpacing: AppSpacing.sm,
+                      children: [
+                        _buildChip('Leak or water damage'),
+                        _buildChip('Needs urgent attention'),
+                        _buildChip('Installation or replacement'),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: AppSpacing.md),
 
             const Row(
               children: [
-                Icon(Icons.location_on_outlined, size: 20, color: AppColors.accentGold),
+                Icon(
+                  Icons.location_on_outlined,
+                  size: 20,
+                  color: AppColors.accentGold,
+                ),
                 SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
                     'Your current location is captured only when you submit.',
-                    style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 13,
+                    ),
                   ),
                 ),
               ],
@@ -193,60 +232,12 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
       label: Text(label),
       backgroundColor: AppColors.surfaceSecondary,
       side: const BorderSide(color: AppColors.borderDefault),
-      labelStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
-      onPressed: () => _addSuggestion(label),
-    );
-  }
-
-  Widget _buildUrgencyCard({
-    required ServiceUrgency urgency,
-    required String title,
-    required String time,
-    required IconData icon,
-    bool isEmergency = false,
-  }) {
-    final selected = _urgency == urgency;
-    final activeColor = isEmergency ? AppColors.emergency : AppColors.primary;
-    final bgColor = selected
-        ? (isEmergency ? AppColors.emergencySoft : AppColors.primarySoft)
-        : AppColors.surfacePrimary;
-    final borderColor = selected ? activeColor : AppColors.borderDefault;
-
-    return InkWell(
-      onTap: () => setState(() => _urgency = urgency),
-      borderRadius: BorderRadius.circular(AppRadius.card),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(AppRadius.card),
-          border: Border.all(color: borderColor, width: selected ? 1.5 : 1),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: selected ? activeColor : AppColors.textSecondary, size: 20),
-            const SizedBox(height: 4),
-            Text(
-              title,
-              style: TextStyle(
-                color: selected
-                    ? activeColor
-                    : AppColors.textOnLightPrimary,
-                fontWeight: FontWeight.w700,
-                fontSize: 13,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              time,
-              style: TextStyle(
-                color: selected ? activeColor : AppColors.textOnLightMuted,
-                fontSize: 11,
-              ),
-            ),
-          ],
-        ),
+      labelStyle: const TextStyle(
+        color: AppColors.textOnSurface,
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
       ),
+      onPressed: () => _addSuggestion(label),
     );
   }
 }

@@ -14,9 +14,12 @@ import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:fixnow_mobile/design_system/app_theme.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 
-class MockGeolocatorPlatform extends GeolocatorPlatform with MockPlatformInterfaceMixin {
+class MockGeolocatorPlatform extends GeolocatorPlatform
+    with MockPlatformInterfaceMixin {
   @override
-  Future<Position> getCurrentPosition({LocationSettings? locationSettings}) async {
+  Future<Position> getCurrentPosition({
+    LocationSettings? locationSettings,
+  }) async {
     return Position(
       longitude: 72.5714,
       latitude: 23.0225,
@@ -108,7 +111,6 @@ void main() {
     expect(find.bySemanticsLabel('Plumbing service category'), findsOneWidget);
     expect(find.text('Leaks and pipe repairs'), findsOneWidget);
     expect(find.byIcon(Icons.plumbing_outlined), findsOneWidget);
-    expect(find.byType(Card), findsNWidgets(3));
   });
 
   testWidgets('shows offline recovery and retries', (tester) async {
@@ -140,7 +142,9 @@ void main() {
     expect(find.text('No services available'), findsOneWidget);
     expect(repository.calls, 2);
   });
-  testWidgets('quick services selects matching category or shows unavailable', (tester) async {
+  testWidgets('quick services selects matching category or shows unavailable', (
+    tester,
+  ) async {
     final discovery = ServiceDiscoveryController(
       FakeCategories([
         const ServiceCategory(
@@ -155,7 +159,7 @@ void main() {
     final location = LocationConsentController(
       FakeLocationGateway(LocationPermissionState.granted),
     );
-    
+
     ServiceCategory? selectedCategory;
 
     await tester.pumpWidget(
@@ -182,14 +186,19 @@ void main() {
     await tester.tap(find.text('Electrician'));
     await tester.pumpAndSettle();
     expect(selectedCategory, isNull);
-    expect(find.text('Electrician service is currently unavailable.'), findsOneWidget);
+    expect(
+      find.text('Electrician service is currently unavailable.'),
+      findsOneWidget,
+    );
   });
 
-  testWidgets('tapping location requests permission when not granted', (tester) async {
+  testWidgets('tapping location requests permission when not granted', (
+    tester,
+  ) async {
     final gateway = FakeLocationGateway(LocationPermissionState.denied);
     final location = LocationConsentController(gateway);
     final discovery = ServiceDiscoveryController(FakeCategories([]));
-    
+
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.dark,
@@ -204,10 +213,10 @@ void main() {
     await tester.pump();
 
     expect(find.text('Enable Location'), findsOneWidget);
-    
+
     await tester.tap(find.text('Enable Location'));
     await tester.pump();
-    
+
     expect(gateway.requestCalled, isTrue);
   });
 }
@@ -223,6 +232,7 @@ class FakeLocationGateway implements LocationPermissionGateway {
     requestCalled = true;
     return state;
   }
+
   @override
   Future<bool> openSettings() async => true;
 }

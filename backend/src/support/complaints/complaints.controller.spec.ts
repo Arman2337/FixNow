@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ComplaintsController } from './complaints.controller';
 import { ComplaintsService } from './complaints.service';
 import {
-  ComplaintStatus,
   ComplaintTargetRole,
 } from './domain/complaint.entity';
 import { AuthorizationGuard } from '../../common/authorization/authorization.guard';

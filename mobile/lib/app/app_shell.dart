@@ -13,6 +13,7 @@ class AppShell extends StatefulWidget {
     this.customerHome,
     this.customerProfile,
     this.customerBookings,
+    this.customerHelp,
     this.providerHome,
     this.providerJobs,
     this.providerHistory,
@@ -25,6 +26,7 @@ class AppShell extends StatefulWidget {
   final Widget? customerHome;
   final Widget? customerProfile;
   final Widget? customerBookings;
+  final Widget? customerHelp;
   final Widget? providerHome;
   final Widget? providerJobs;
   final Widget? providerHistory;
@@ -87,6 +89,10 @@ class _AppShellState extends State<AppShell> {
                         index == 1 &&
                         widget.customerBookings != null)
                       widget.customerBookings!
+                    else if (widget.role == AppShellRole.customer &&
+                        index == 2 &&
+                        widget.customerHelp != null)
+                      widget.customerHelp!
                     else if (widget.role == AppShellRole.customer &&
                         index == 3 &&
                         widget.customerProfile != null)

@@ -34,6 +34,10 @@ import { ServiceCategoryEntity } from '../services/service-category.entity';
     ]),
   ],
   controllers: [AdminManagementController, AdminAnalyticsController],
-  providers: [AdminManagementService, AdminOperationsService, AdminAnalyticsService],
+  providers: [
+    AdminManagementService,
+    AdminOperationsService,
+    AdminAnalyticsService,
+  ],
 })
 export class AdminModule {}

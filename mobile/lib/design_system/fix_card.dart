@@ -62,7 +62,10 @@ class FixCard extends StatelessWidget {
       ),
       child: IconTheme(
         data: IconThemeData(color: foreground),
-        child: DefaultTextStyle.merge(
+        // A light card sits inside the app's dark theme. Use a complete
+        // DefaultTextStyle rather than merging with the page's white default;
+        // otherwise plain Text widgets can inherit white text on this surface.
+        child: DefaultTextStyle(
           style: TextStyle(color: foreground),
           child: Padding(padding: padding, child: child),
         ),

@@ -69,6 +69,16 @@ export class AcceptBookingDto {
   expectedVersion: number;
 }
 
+export class VerifyServiceStartOtpDto {
+  @IsString()
+  @Matches(/^\d{4}$/)
+  otp: string;
+
+  @IsInt()
+  @Min(1)
+  expectedVersion: number;
+}
+
 export class BookingHistoryQueryDto {
   @IsOptional()
   @Type(() => Number)

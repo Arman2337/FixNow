@@ -18,6 +18,7 @@ import {
   CancelBookingDto,
   BookingHistoryQueryDto,
   AcceptBookingDto,
+  VerifyServiceStartOtpDto,
   AvailableBookingQueryDto,
 } from './bookings.dto';
 import { RequireOwnPermission } from '../common/authorization/authorization.decorators';
@@ -96,6 +97,34 @@ export class BookingsController {
     return {
       booking: presentBooking(booking),
     };
+  }
+
+  @Post(':id/service-start-otp')
+  @RequireOwnPermission(PERMISSIONS.bookingHistoryReadSelf)
+  async serviceStartOtp(
+    @Param('id') bookingId: string,
+    @Req() req: AuthorizedRequest,
+  ): Promise<{ otp: string }> {
+    return this.bookingsService.getServiceStartOtp(
+      bookingId,
+      req.authorizationPrincipal!.userId,
+    );
+  }
+
+  @Post(':id/start-service')
+  @RequireOwnPermission(PERMISSIONS.bookingUpdateStatus)
+  async startService(
+    @Param('id') bookingId: string,
+    @Req() req: AuthorizedRequest,
+    @Body() dto: VerifyServiceStartOtpDto,
+  ): Promise<BookingResponse> {
+    const booking = await this.bookingsService.verifyOtpAndStartService(
+      bookingId,
+      req.authorizationPrincipal!.userId,
+      dto.otp,
+      dto.expectedVersion,
+    );
+    return { booking: presentBooking(booking) };
   }
 
   @Post(':id/cancel')

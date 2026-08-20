@@ -394,7 +394,7 @@ class _MapPin extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
           decoration: BoxDecoration(
             color: AppColors.backgroundPrimary.withValues(alpha: 0.9),
-            borderRadius: AppRadius.pill,
+            borderRadius: BorderRadius.circular(AppRadius.pill),
           ),
           child: Text(
             caption,

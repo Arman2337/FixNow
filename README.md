@@ -35,7 +35,8 @@ This single command will:
 - Check and start your native PostgreSQL service.
 - Start a Bun reverse proxy on port `8080` (with live CORS and request logging).
 - Boot the NestJS backend in watch mode on port `3300`.
-- Launch the Flutter mobile app automatically.
+- Launch the Flutter web app at `http://localhost:51354` by default.
+- Start the existing local Redis container automatically when Docker Desktop is running; otherwise the backend uses its local cache fallback.
 
 *(See [docs/development/bun-dev-workflow.md](docs/development/bun-dev-workflow.md) for more details on proxy ports and backend-only execution).*
 

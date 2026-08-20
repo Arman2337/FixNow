@@ -721,7 +721,7 @@ class FixOtpDisplay extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.md),
           const Text(
-            'Share this OTP with the professional only after they arrive.\nWork will start only after OTP verification.',
+            'Keep this code private. Share it with the professional only after they arrive.\nWork starts only after they verify it.',
             textAlign: TextAlign.center,
             style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
           ),

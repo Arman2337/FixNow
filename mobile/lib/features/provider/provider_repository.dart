@@ -271,6 +271,23 @@ class ProviderRepository {
     return CustomerBooking.fromJson(_map(body['booking']));
   }
 
+  Future<CustomerBooking> verifyOtpAndStartJob(
+    CustomerBooking job,
+    String otp,
+  ) async {
+    final body = _map(
+      (await _api.send(
+        ApiRequest(
+          method: ApiMethod.post,
+          path: 'bookings/${job.id}/start-service',
+          bearerToken: await _token(),
+          body: {'otp': otp, 'expectedVersion': job.version},
+        ),
+      )).body,
+    );
+    return CustomerBooking.fromJson(_map(body['booking']));
+  }
+
   Future<CustomerBooking> cancelJob(CustomerBooking job, String reason) async {
     final body = _map(
       (await _api.send(

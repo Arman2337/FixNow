@@ -172,19 +172,23 @@ class _ProviderSetupScreenState extends State<ProviderSetupScreen> {
                       'Only information required for service eligibility and coverage is collected.',
                 ),
                 const SizedBox(height: AppSpacing.xl),
+                _FormFieldLabel('Professional display name'),
+                const SizedBox(height: AppSpacing.sm),
                 TextFormField(
                   controller: _name,
                   style: const TextStyle(color: AppColors.inputText),
                   cursorColor: AppColors.primary,
                   decoration: const InputDecoration(
-                    labelText: 'Professional display name',
+                    hintText: 'Your business name',
                     prefixIcon: Icon(Icons.badge_outlined),
                   ),
                   validator: (value) => (value?.trim().length ?? 0) < 2
                       ? 'Enter at least 2 characters.'
                       : null,
                 ),
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: AppSpacing.lg),
+                _FormFieldLabel('Professional summary'),
+                const SizedBox(height: AppSpacing.sm),
                 TextFormField(
                   controller: _bio,
                   style: const TextStyle(color: AppColors.inputText),
@@ -192,18 +196,19 @@ class _ProviderSetupScreenState extends State<ProviderSetupScreen> {
                   maxLength: 1000,
                   maxLines: 4,
                   decoration: const InputDecoration(
-                    labelText: 'Professional summary',
-                    alignLabelWithHint: true,
+                    hintText: 'Describe your experience and the work you provide',
                   ),
                 ),
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: AppSpacing.lg),
+                _FormFieldLabel('Service radius (km)'),
+                const SizedBox(height: AppSpacing.sm),
                 TextFormField(
                   controller: _radius,
                   style: const TextStyle(color: AppColors.inputText),
                   cursorColor: AppColors.primary,
                   keyboardType: TextInputType.number,
                   decoration: const InputDecoration(
-                    labelText: 'Service radius (km)',
+                    hintText: 'For example, 25',
                     prefixIcon: Icon(Icons.radar_rounded),
                   ),
                   validator: (value) {
@@ -221,7 +226,9 @@ class _ProviderSetupScreenState extends State<ProviderSetupScreen> {
                     children: [
                       Text(
                         'Service-area center',
-                        style: Theme.of(context).textTheme.titleMedium,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: AppColors.textOnSurface,
+                        ),
                       ),
                       const SizedBox(height: AppSpacing.xs),
                       Text(
@@ -229,7 +236,7 @@ class _ProviderSetupScreenState extends State<ProviderSetupScreen> {
                             ? 'Not set'
                             : 'Location set securely. Exact coordinates are not displayed.',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.textSecondary,
+                          color: AppColors.textOnSurfaceSecondary,
                         ),
                       ),
                       const SizedBox(height: AppSpacing.md),
@@ -354,6 +361,20 @@ class _ProviderSetupScreenState extends State<ProviderSetupScreen> {
           ),
         ),
       ),
+    ),
+  );
+}
+
+class _FormFieldLabel extends StatelessWidget {
+  const _FormFieldLabel(this.label);
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Text(
+    label,
+    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+      color: AppColors.textSecondary,
     ),
   );
 }

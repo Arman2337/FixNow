@@ -31,6 +31,11 @@ export const ACCEPTANCE_IDENTITIES = {
     email: 'fixnow.acceptance.reviewer@local.test',
     password: 'FixNow-local-reviewer-2026!',
   },
+  operationsAdmin: {
+    id: '10000000-0000-4000-8000-000000000005',
+    email: 'fixnow.acceptance.admin@local.test',
+    password: 'FixNow-local-admin-2026!',
+  },
 } as const;
 
 export const assertSafeFixtureEnvironment = assertSafeAcceptanceFixtureEnvironment;
@@ -70,6 +75,7 @@ async function seed(client: PoolClient): Promise<void> {
   await ensureRole(client, 'provider_applicant', 'Unverified provider applicant');
   await ensureRole(client, 'verified_provider', 'Approved provider');
   await ensureRole(client, 'provider_reviewer', 'Provider verification reviewer');
+  await ensureRole(client, 'operations_administrator', 'Operations administrator');
   const category = await client.query<{ id: string }>(
     'SELECT "id" FROM "service_categories" WHERE "slug" = $1',
     ['plumbing'],
@@ -78,6 +84,11 @@ async function seed(client: PoolClient): Promise<void> {
   const categoryId = category.rows[0].id;
 
   await createIdentity(client, ACCEPTANCE_IDENTITIES.reviewer, 'provider_reviewer');
+  await createIdentity(
+    client,
+    ACCEPTANCE_IDENTITIES.operationsAdmin,
+    'operations_administrator',
+  );
   await createIdentity(client, ACCEPTANCE_IDENTITIES.customerA, 'customer');
   await createIdentity(client, ACCEPTANCE_IDENTITIES.providerA, 'verified_provider');
   await createIdentity(client, ACCEPTANCE_IDENTITIES.providerB, 'verified_provider');
@@ -155,20 +166,24 @@ async function createIdentity(
   await client.query(
     `INSERT INTO "user_roles" ("user_id", "role_id", "assigned_by_user_id", "reason")
      VALUES ($1, $2, $3, 'Local acceptance fixture')`,
-    [userId, roleRow.rows[0].id, role === 'provider_reviewer' ? null : ACCEPTANCE_IDENTITIES.reviewer.id],
+    [
+      userId,
+      roleRow.rows[0].id,
+      role === 'provider_reviewer' || role === 'operations_administrator'
+          ? null
+          : ACCEPTANCE_IDENTITIES.reviewer.id,
+    ],
   );
-  if (role !== 'provider_reviewer') {
+  if (role === 'verified_provider') {
     const applicant = await client.query<{ id: string }>(
       'SELECT "id" FROM "roles" WHERE "code" = $1',
       ['provider_applicant'],
     );
-    if (role === 'verified_provider') {
-      await client.query(
-        `INSERT INTO "user_roles" ("user_id", "role_id", "assigned_by_user_id", "reason")
-         VALUES ($1, $2, $3, 'Local acceptance fixture')`,
-        [userId, applicant.rows[0].id, ACCEPTANCE_IDENTITIES.reviewer.id],
-      );
-    }
+    await client.query(
+      `INSERT INTO "user_roles" ("user_id", "role_id", "assigned_by_user_id", "reason")
+       VALUES ($1, $2, $3, 'Local acceptance fixture')`,
+      [userId, applicant.rows[0].id, ACCEPTANCE_IDENTITIES.reviewer.id],
+    );
   }
 }
 

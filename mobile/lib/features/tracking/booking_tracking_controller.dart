@@ -52,6 +52,9 @@ class BookingTrackingController extends ChangeNotifier {
       providerLocation: _providerLocation(data),
       customerLocation: tracking?.customerLocation,
       route: _route(data),
+      serviceStartOtp: data['status'] == 'EN_ROUTE'
+          ? tracking?.serviceStartOtp
+          : null,
     );
     await applyRealtime(next);
   }

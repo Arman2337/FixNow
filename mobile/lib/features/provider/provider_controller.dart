@@ -140,6 +140,20 @@ class ProviderController extends ChangeNotifier {
     }
   }
 
+  Future<void> verifyOtpAndStartJob(CustomerBooking job, String otp) async {
+    actionError = null;
+    notifyListeners();
+    try {
+      final updated = await repository.verifyOtpAndStartJob(job, otp);
+      jobs = jobs.map((item) => item.id == updated.id ? updated : item).toList();
+    } on ApiException catch (error) {
+      actionError = error.statusCode == 403
+          ? 'That OTP is incorrect. Ask the customer for the current service-start OTP.'
+          : 'Service could not start. Check the OTP and try again.';
+    }
+    notifyListeners();
+  }
+
   Future<void> publishCurrentLocation(CustomerBooking job) async {
     final client = realtime;
     if (client == null || job.status != 'EN_ROUTE' ||

@@ -53,8 +53,10 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
           _TrackingCard(tracking: widget.controller.tracking),
           const SizedBox(height: AppSpacing.lg),
 
-          const FixOtpDisplay(otp: '7362'),
-          const SizedBox(height: AppSpacing.lg),
+          if (widget.controller.tracking?.serviceStartOtp case final otp?) ...[
+            FixOtpDisplay(otp: otp),
+            const SizedBox(height: AppSpacing.lg),
+          ],
 
           FixCard(
             tone: FixCardTone.elevated,

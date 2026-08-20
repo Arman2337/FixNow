@@ -13,6 +13,7 @@ class BookingController extends ChangeNotifier {
   final BookingRepository _repository;
   final RealtimeClient? realtime;
   StreamSubscription<RealtimeProjection>? _projectionSubscription;
+  Timer? _reconciliationTimer;
   BookingListStatus status = BookingListStatus.initial;
   List<CustomerBooking> bookings = const [];
 
@@ -41,6 +42,40 @@ class BookingController extends ChangeNotifier {
     if (realtime == null || _projectionSubscription != null) return;
     _projectionSubscription = realtime!.projections.listen(_applyProjection);
     await _subscribeToActiveBooking();
+    _reconciliationTimer ??= Timer.periodic(
+      const Duration(seconds: 5),
+      (_) => unawaited(_reconcileActiveBookings()),
+    );
+  }
+
+  Future<void> _reconcileActiveBookings() async {
+    if (!bookings.any(
+      (booking) => const {'REQUESTED', 'ASSIGNED', 'EN_ROUTE', 'IN_PROGRESS'}
+          .contains(booking.status),
+    )) {
+      return;
+    }
+    try {
+      final latest = await _repository.history();
+      if (_sameBookings(latest, bookings)) return;
+      bookings = latest;
+      status = latest.isEmpty ? BookingListStatus.empty : BookingListStatus.ready;
+      notifyListeners();
+      await _subscribeToActiveBooking();
+    } on ApiException {
+      // Keep rendering the last authoritative booking state while realtime
+      // reconnects; a background retry must never replace the page with error UI.
+    }
+  }
+
+  static bool _sameBookings(List<CustomerBooking> first, List<CustomerBooking> second) {
+    if (first.length != second.length) return false;
+    for (var index = 0; index < first.length; index += 1) {
+      if (first[index].id != second[index].id ||
+          first[index].version != second[index].version ||
+          first[index].status != second[index].status) return false;
+    }
+    return true;
   }
 
   Future<void> _subscribeToActiveBooking() async {
@@ -107,6 +142,7 @@ class BookingController extends ChangeNotifier {
 
   @override
   void dispose() {
+    _reconciliationTimer?.cancel();
     unawaited(_projectionSubscription?.cancel());
     realtime?.dispose();
     super.dispose();

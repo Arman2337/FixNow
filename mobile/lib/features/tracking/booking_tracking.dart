@@ -50,6 +50,7 @@ class BookingTracking {
     this.providerLocation,
     this.customerLocation,
     this.route,
+    this.serviceStartOtp,
   });
 
   final String bookingId;
@@ -60,6 +61,7 @@ class BookingTracking {
   final ProviderMapLocation? providerLocation;
   final CustomerMapLocation? customerLocation;
   final DrivingRoute? route;
+  final String? serviceStartOtp;
 }
 
 abstract interface class BookingTrackingSource {

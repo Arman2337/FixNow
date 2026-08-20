@@ -113,7 +113,9 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
                   decoration: const BoxDecoration(
                     color: AppColors.surface,
-                    borderRadius: BorderRadius.all(Radius.circular(AppRadius.large)),
+                    borderRadius: BorderRadius.all(
+                      Radius.circular(AppRadius.large),
+                    ),
                     border: Border.fromBorderSide(
                       BorderSide(color: AppColors.border),
                     ),
@@ -127,155 +129,173 @@ class _AuthScreenState extends State<AuthScreen> {
                       ),
                     ),
                     child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const FixBrandMark(),
-                        const SizedBox(height: AppSpacing.xl),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppSpacing.md,
-                              vertical: AppSpacing.sm,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.primarySoft,
-                              borderRadius: BorderRadius.circular(
-                                AppRadius.pill,
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const FixBrandMark(),
+                          const SizedBox(height: AppSpacing.xl),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSpacing.md,
+                                vertical: AppSpacing.sm,
                               ),
-                            ),
-                            child: Text(
-                              widget.role == AccountRole.customer
-                                  ? 'CUSTOMER'
-                                  : 'SERVICE PROVIDER',
-                              style: Theme.of(context).textTheme.labelSmall
-                                  ?.copyWith(
-                                    color: AppColors.primary,
-                                    fontWeight: FontWeight.w700,
-                                    letterSpacing: 1,
-                                  ),
+                              decoration: BoxDecoration(
+                                color: AppColors.primarySoft,
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.pill,
+                                ),
+                              ),
+                              child: Text(
+                                widget.role == AccountRole.customer
+                                    ? 'CUSTOMER'
+                                    : 'SERVICE PROVIDER',
+                                style: Theme.of(context).textTheme.labelSmall
+                                    ?.copyWith(
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 1,
+                                    ),
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: AppSpacing.xl),
-                        Text(
-                          _register ? 'CREATE ACCOUNT' : 'SECURE ACCESS',
-                          style: Theme.of(context).textTheme.labelSmall
-                              ?.copyWith(
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 1.1,
-                              ),
-                        ),
-                        const SizedBox(height: AppSpacing.sm),
-                        Text(
-                          _register ? 'Create your account' : 'Welcome back',
-                          style: Theme.of(context).textTheme.headlineLarge
-                              ?.copyWith(color: AppColors.textOnLightPrimary),
-                        ),
-                        const SizedBox(height: AppSpacing.sm),
-                        Text(
-                          _register
-                              ? widget.role == AccountRole.customer
-                                    ? 'Book trusted local help and follow every update.'
-                                    : 'Create your professional account. Verification is required before receiving work.'
-                              : widget.role == AccountRole.customer
-                              ? 'Sign in to request and track trusted help.'
-                              : 'Sign in to continue your professional setup.',
-                          style: Theme.of(context).textTheme.bodyLarge
-                              ?.copyWith(
-                                color: AppColors.textOnLightSecondary,
-                              ),
-                        ),
-                        const SizedBox(height: AppSpacing.xxl),
-                        TextFormField(
-                          controller: _email,
-                          enabled: !loading,
-                          keyboardType: TextInputType.emailAddress,
-                          autofillHints: const [AutofillHints.email],
-                          textInputAction: TextInputAction.next,
-                          style: const TextStyle(color: AppColors.inputText),
-                          decoration: const InputDecoration(
-                            labelText: 'Email address',
-                            prefixIcon: Icon(Icons.mail_outline),
+                          const SizedBox(height: AppSpacing.xl),
+                          Text(
+                            _register ? 'CREATE ACCOUNT' : 'SECURE ACCESS',
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 1.1,
+                                ),
                           ),
-                          validator: (value) =>
-                              RegExp(
-                                r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
-                              ).hasMatch(value?.trim() ?? '')
-                              ? null
-                              : 'Enter a valid email address.',
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                        TextFormField(
-                          controller: _password,
-                          enabled: !loading,
-                          obscureText: _obscure,
-                          autofillHints: _register
-                              ? const [AutofillHints.newPassword]
-                              : const [AutofillHints.password],
-                          textInputAction: TextInputAction.done,
-                          onFieldSubmitted: (_) => _submit(),
-                          style: const TextStyle(color: AppColors.inputText),
-                          decoration: InputDecoration(
-                            labelText: 'Password',
-                            helperText: _register
-                                ? 'Use at least 12 characters.'
+                          const SizedBox(height: AppSpacing.sm),
+                          Text(
+                            _register ? 'Create your account' : 'Welcome back',
+                            style: Theme.of(context).textTheme.headlineLarge
+                                ?.copyWith(color: AppColors.textOnLightPrimary),
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          Text(
+                            _register
+                                ? widget.role == AccountRole.customer
+                                      ? 'Book trusted local help and follow every update.'
+                                      : 'Create your professional account. Verification is required before receiving work.'
+                                : widget.role == AccountRole.customer
+                                ? 'Sign in to request and track trusted help.'
+                                : 'Sign in to continue your professional setup.',
+                            style: Theme.of(context).textTheme.bodyLarge
+                                ?.copyWith(
+                                  color: AppColors.textOnLightSecondary,
+                                ),
+                          ),
+                          const SizedBox(height: AppSpacing.xxl),
+                          const Text(
+                            'Email address',
+                            style: TextStyle(
+                              color: AppColors.textOnLightPrimary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          TextFormField(
+                            controller: _email,
+                            enabled: !loading,
+                            keyboardType: TextInputType.emailAddress,
+                            autofillHints: const [AutofillHints.email],
+                            textInputAction: TextInputAction.next,
+                            style: const TextStyle(color: AppColors.inputText),
+                            decoration: const InputDecoration(
+                              hintText: 'name@example.com',
+                              prefixIcon: Icon(Icons.mail_outline),
+                            ),
+                            validator: (value) =>
+                                RegExp(
+                                  r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                                ).hasMatch(value?.trim() ?? '')
+                                ? null
+                                : 'Enter a valid email address.',
+                          ),
+                          const SizedBox(height: AppSpacing.lg),
+                          const Text(
+                            'Password',
+                            style: TextStyle(
+                              color: AppColors.textOnLightPrimary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          TextFormField(
+                            controller: _password,
+                            enabled: !loading,
+                            obscureText: _obscure,
+                            autofillHints: _register
+                                ? const [AutofillHints.newPassword]
+                                : const [AutofillHints.password],
+                            textInputAction: TextInputAction.done,
+                            onFieldSubmitted: (_) => _submit(),
+                            style: const TextStyle(color: AppColors.inputText),
+                            decoration: InputDecoration(
+                              helperText: _register
+                                  ? 'Use at least 12 characters.'
+                                  : null,
+                              prefixIcon: const Icon(Icons.lock_outline),
+                              suffixIcon: IconButton(
+                                tooltip: _obscure
+                                    ? 'Show password'
+                                    : 'Hide password',
+                                onPressed: () =>
+                                    setState(() => _obscure = !_obscure),
+                                icon: Icon(
+                                  _obscure
+                                      ? Icons.visibility_outlined
+                                      : Icons.visibility_off_outlined,
+                                ),
+                              ),
+                            ),
+                            validator: (value) => (value?.length ?? 0) < 12
+                                ? 'Password must be at least 12 characters.'
                                 : null,
-                            prefixIcon: const Icon(Icons.lock_outline),
-                            suffixIcon: IconButton(
-                              tooltip: _obscure
-                                  ? 'Show password'
-                                  : 'Hide password',
-                              onPressed: () =>
-                                  setState(() => _obscure = !_obscure),
-                              icon: Icon(
-                                _obscure
-                                    ? Icons.visibility_outlined
-                                    : Icons.visibility_off_outlined,
-                              ),
-                            ),
                           ),
-                          validator: (value) => (value?.length ?? 0) < 12
-                              ? 'Password must be at least 12 characters.'
-                              : null,
-                        ),
-                        if (widget.controller.errorMessage
-                            case final message?) ...[
-                          const SizedBox(height: AppSpacing.md),
-                          Semantics(
-                            liveRegion: true,
-                            child: Text(
-                              message,
-                              style: TextStyle(
-                                color: Theme.of(context).colorScheme.error,
+                          if (widget.controller.errorMessage
+                              case final message?) ...[
+                            const SizedBox(height: AppSpacing.md),
+                            Semantics(
+                              liveRegion: true,
+                              child: Text(
+                                message,
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.error,
+                                ),
                               ),
                             ),
+                          ],
+                          const SizedBox(height: AppSpacing.xl),
+                          FixButton(
+                            label: _register ? 'Create account' : 'Sign in',
+                            icon: _register
+                                ? Icons.arrow_forward_rounded
+                                : Icons.login_rounded,
+                            onPressed: _submit,
+                            isLoading: loading,
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          FixButton(
+                            label: _register
+                                ? 'Already have an account? Sign in'
+                                : 'New to FixNow? Create account',
+                            variant: FixButtonVariant.tertiary,
+                            onPressed: loading
+                                ? null
+                                : () {
+                                    widget.controller.clearError();
+                                    setState(() => _register = !_register);
+                                  },
                           ),
                         ],
-                        const SizedBox(height: AppSpacing.xl),
-                        FixButton(
-                          label: _register ? 'Create account' : 'Sign in',
-                          onPressed: _submit,
-                          isLoading: loading,
-                        ),
-                        const SizedBox(height: AppSpacing.sm),
-                        FixButton(
-                          label: _register
-                              ? 'Already have an account? Sign in'
-                              : 'New to FixNow? Create account',
-                          variant: FixButtonVariant.tertiary,
-                          onPressed: loading
-                              ? null
-                              : () {
-                                  widget.controller.clearError();
-                                  setState(() => _register = !_register);
-                                },
-                        ),
-                      ],
-                    ),
+                      ),
                     ),
                   ),
                 ),

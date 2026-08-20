@@ -44,7 +44,10 @@ class BookingDetailScreen extends StatelessWidget {
                   children: [
                     Icon(panel.icon, color: panel.color, size: 48),
                     const SizedBox(height: AppSpacing.lg),
-                    Text(panel.title, style: Theme.of(context).textTheme.headlineSmall),
+                    Text(
+                      panel.title,
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
                     const SizedBox(height: AppSpacing.sm),
                     Text(
                       panel.description,
@@ -71,6 +74,8 @@ class BookingDetailScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: AppSpacing.xl),
+              _BookingProgress(status: booking.status),
+              const SizedBox(height: AppSpacing.lg),
               FixCard(
                 tone: FixCardTone.elevated,
                 semanticLabel: 'Booking request details',
@@ -85,12 +90,15 @@ class BookingDetailScreen extends StatelessWidget {
                     Text(booking.description),
                     const SizedBox(height: AppSpacing.lg),
                     const Divider(),
+                    const SizedBox(height: AppSpacing.sm),
                     Text(
                       'Booking ID',
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                     SelectableText(booking.id),
                     const SizedBox(height: AppSpacing.md),
+                    Text('Service category: ${booking.serviceCategoryId}'),
+                    const SizedBox(height: AppSpacing.xs),
                     Text('Requested ${_date(booking.createdAt)}'),
                   ],
                 ),
@@ -147,13 +155,15 @@ class BookingDetailScreen extends StatelessWidget {
       icon: Icons.radar_rounded,
       color: AppColors.primary,
       title: 'Matching in progress',
-      description: 'Provider details appear only after an eligible professional accepts.',
+      description:
+          'Provider details appear only after an eligible professional accepts.',
     ),
     'ASSIGNED' || 'EN_ROUTE' || 'IN_PROGRESS' => (
       icon: Icons.route_rounded,
       color: AppColors.primary,
       title: 'Live map unavailable',
-      description: 'A map will appear when an assigned provider shares an authorized current location.',
+      description:
+          'A map will appear when an assigned provider shares an authorized current location.',
     ),
     'COMPLETED' => (
       icon: Icons.check_circle_rounded,
@@ -192,6 +202,129 @@ class BookingDetailScreen extends StatelessWidget {
   };
   static String _date(DateTime value) =>
       '${value.day}/${value.month}/${value.year}';
+}
+
+class _BookingProgress extends StatelessWidget {
+  const _BookingProgress({required this.status});
+  final String status;
+
+  @override
+  Widget build(BuildContext context) {
+    final current = switch (status) {
+      'REQUESTED' => 0,
+      'ASSIGNED' => 1,
+      'EN_ROUTE' => 2,
+      'IN_PROGRESS' => 3,
+      'COMPLETED' => 4,
+      _ => -1,
+    };
+    const stages = [
+      ('Requested', 'We are matching eligible professionals'),
+      ('Accepted', 'A professional confirmed the booking'),
+      ('On the way', 'Your professional is travelling to you'),
+      ('Work started', 'The service is in progress'),
+      ('Completed', 'The job has been marked complete'),
+    ];
+
+    return FixCard(
+      semanticLabel: 'Booking progress',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Service progress',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(color: AppColors.textOnSurface),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          for (var index = 0; index < stages.length; index++)
+            _ProgressRow(
+              title: stages[index].$1,
+              description: stages[index].$2,
+              isComplete: current >= index,
+              isCurrent: current == index,
+              isLast: index == stages.length - 1,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProgressRow extends StatelessWidget {
+  const _ProgressRow({
+    required this.title,
+    required this.description,
+    required this.isComplete,
+    required this.isCurrent,
+    required this.isLast,
+  });
+
+  final String title;
+  final String description;
+  final bool isComplete;
+  final bool isCurrent;
+  final bool isLast;
+
+  @override
+  Widget build(BuildContext context) => IntrinsicHeight(
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SizedBox(
+          width: 28,
+          child: Column(
+            children: [
+              Icon(
+                isComplete ? Icons.check_circle_rounded : Icons.circle_outlined,
+                size: 20,
+                color: isCurrent || isComplete
+                    ? AppColors.primary
+                    : AppColors.textOnSurfaceMuted,
+              ),
+              if (!isLast)
+                Expanded(
+                  child: Container(
+                    width: 2,
+                    margin: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+                    color: isComplete
+                        ? AppColors.primary
+                        : AppColors.borderDefault,
+                  ),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: isComplete || isCurrent
+                        ? AppColors.textOnSurface
+                        : AppColors.textOnSurfaceMuted,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  description,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.textOnSurfaceSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class _CancelButton extends StatefulWidget {

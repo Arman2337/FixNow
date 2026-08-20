@@ -44,14 +44,18 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                widget.isRegistration ? 'I want to join as' : 'Sign in as',
-                style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                  color: AppColors.cream,
-                ),
+                widget.isRegistration
+                    ? 'How would you like to continue?'
+                    : 'Choose your sign-in',
+                style: Theme.of(
+                  context,
+                ).textTheme.headlineLarge?.copyWith(color: AppColors.cream),
               ),
               const SizedBox(height: AppSpacing.sm),
               Text(
-                'Choose the experience that matches your account.',
+                widget.isRegistration
+                    ? 'Choose the role that matches how you will use FixNow.'
+                    : 'Select the account type you want to access.',
                 style: Theme.of(
                   context,
                 ).textTheme.bodyLarge?.copyWith(color: AppColors.textSecondary),
@@ -59,7 +63,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
               const SizedBox(height: AppSpacing.xxl),
               _RoleCard(
                 title: 'Customer',
-                description: 'Book trusted services for your home',
+                description: 'Request trusted help and track every job update',
                 icon: Icons.home_rounded,
                 selected: _selected == AccountRole.customer,
                 onTap: () => setState(() => _selected = AccountRole.customer),
@@ -67,7 +71,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
               const SizedBox(height: AppSpacing.lg),
               _RoleCard(
                 title: 'Service provider',
-                description: 'Offer professional services and earn',
+                description: 'Offer verified services and manage your work',
                 icon: Icons.handyman_rounded,
                 selected: _selected == AccountRole.providerApplicant,
                 onTap: () =>
@@ -134,9 +138,7 @@ class _RoleCard extends StatelessWidget {
                 ),
                 child: Icon(
                   icon,
-                  color: selected
-                      ? AppColors.onPrimary
-                      : AppColors.primary,
+                  color: selected ? AppColors.onPrimary : AppColors.primary,
                 ),
               ),
               const SizedBox(width: AppSpacing.lg),

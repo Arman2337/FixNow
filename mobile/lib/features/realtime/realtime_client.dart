@@ -61,7 +61,9 @@ class RealtimeClient extends ChangeNotifier {
   String? _bookingId;
   bool _closed = false;
   int _retries = 0;
+  int _requestSequence = 0;
   Completer<void>? _readyCompleter;
+  final Map<String, Completer<void>> _pendingAcks = {};
 
   Stream<RealtimeProjection> get projections => _projections.stream;
 
@@ -79,14 +81,15 @@ class RealtimeClient extends ChangeNotifier {
     await _connect();
   }
 
-  Future<void> sendPresence(bool online) =>
-      _send({'type': 'presence-update', 'online': online});
+  Future<void> sendPresence(bool online) => _sendWithAck(
+    {'type': 'presence-update', 'online': online},
+  );
 
   Future<void> sendLocationConsent({
     required String bookingId,
     required bool granted,
     required String noticeVersion,
-  }) => _send({
+  }) => _sendWithAck({
     'type': 'location-consent',
     'bookingId': bookingId,
     'granted': granted,
@@ -100,7 +103,7 @@ class RealtimeClient extends ChangeNotifier {
     required double latitude,
     required double longitude,
     required double accuracyMeters,
-  }) => _send({
+  }) => _sendWithAck({
     'type': 'location-update',
     'bookingId': bookingId,
     'sequence': sequence,
@@ -166,6 +169,7 @@ class RealtimeClient extends ChangeNotifier {
           );
         }
       }
+      _completeAcknowledgement(decoded);
       if (decoded['type'] != 'booking.projection-updated.v1') return;
       final data = decoded['data'];
       if (data is Map) {
@@ -198,6 +202,35 @@ class RealtimeClient extends ChangeNotifier {
     await socket.send(jsonEncode(message));
   }
 
+  Future<void> _sendWithAck(Map<String, Object?> message) async {
+    final requestId = 'mobile-${++_requestSequence}';
+    final acknowledgement = Completer<void>();
+    _pendingAcks[requestId] = acknowledgement;
+    try {
+      await _send({...message, 'requestId': requestId});
+      await acknowledgement.future.timeout(const Duration(seconds: 5));
+    } finally {
+      _pendingAcks.remove(requestId);
+    }
+  }
+
+  void _completeAcknowledgement(Map decoded) {
+    final requestId = decoded['requestId'];
+    if (requestId is! String) return;
+    final acknowledgement = _pendingAcks[requestId];
+    if (acknowledgement == null || acknowledgement.isCompleted) return;
+    final type = decoded['type'];
+    if (type == 'presence-ack' ||
+        type == 'location-consent-ack' ||
+        type == 'location-ack') {
+      acknowledgement.complete();
+    } else if (type == 'location-denied' || type == 'error') {
+      acknowledgement.completeError(
+        StateError(decoded['code']?.toString() ?? 'Realtime request denied'),
+      );
+    }
+  }
+
   @override
   void dispose() {
     _closed = true;
@@ -205,6 +238,12 @@ class RealtimeClient extends ChangeNotifier {
     unawaited(_subscription?.cancel());
     unawaited(_socket?.close());
     unawaited(_projections.close());
+    for (final acknowledgement in _pendingAcks.values) {
+      if (!acknowledgement.isCompleted) {
+        acknowledgement.completeError(StateError('Realtime client closed'));
+      }
+    }
+    _pendingAcks.clear();
     super.dispose();
   }
 }

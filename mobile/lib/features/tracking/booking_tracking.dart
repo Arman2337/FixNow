@@ -18,6 +18,28 @@ class ProviderMapLocation {
   final DateTime receivedAt;
 }
 
+/// The destination selected by the customer when the booking was created.
+/// This is intentionally separate from the provider's live location: it is a
+/// booking detail, not a fresh device-location reading.
+class CustomerMapLocation {
+  const CustomerMapLocation({required this.latitude, required this.longitude});
+
+  final double latitude;
+  final double longitude;
+}
+
+class DrivingRoute {
+  const DrivingRoute({
+    required this.distanceMeters,
+    required this.durationSeconds,
+    required this.coordinates,
+  });
+
+  final double distanceMeters;
+  final int durationSeconds;
+  final List<CustomerMapLocation> coordinates;
+}
+
 class BookingTracking {
   const BookingTracking({
     required this.bookingId,
@@ -26,6 +48,9 @@ class BookingTracking {
     required this.locationAvailability,
     this.estimatedMinutes,
     this.providerLocation,
+    this.customerLocation,
+    this.route,
+    this.serviceStartOtp,
   });
 
   final String bookingId;
@@ -34,6 +59,9 @@ class BookingTracking {
   final LocationAvailability locationAvailability;
   final int? estimatedMinutes;
   final ProviderMapLocation? providerLocation;
+  final CustomerMapLocation? customerLocation;
+  final DrivingRoute? route;
+  final String? serviceStartOtp;
 }
 
 abstract interface class BookingTrackingSource {

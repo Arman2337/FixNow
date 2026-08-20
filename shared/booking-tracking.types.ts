@@ -18,4 +18,9 @@ export interface BookingTrackingProjection {
     calculatedAt: string;
     source: string;
   } | null;
+  route: {
+    distanceMeters: number;
+    durationSeconds: number;
+    coordinates: Array<[longitude: number, latitude: number]>;
+  } | null;
 }

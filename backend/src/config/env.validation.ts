@@ -118,6 +118,10 @@ export class EnvironmentVariables {
   @IsString()
   @IsOptional()
   SMTP_FROM?: string;
+
+  @IsString()
+  @IsOptional()
+  OPENROUTESERVICE_API_KEY?: string;
 }
 
 export function validate(config: Record<string, unknown>) {

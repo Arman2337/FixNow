@@ -17,6 +17,8 @@ void main() {
     expect(theme.colorScheme.error, AppColors.danger);
     expect(theme.colorScheme.surface, AppColors.surfacePrimary);
     expect(theme.scaffoldBackgroundColor, AppColors.backgroundPrimary);
+    expect(theme.textSelectionTheme.cursorColor, AppColors.primary);
+    expect(theme.textSelectionTheme.selectionColor, AppColors.primarySoft);
     expect(AppColors.emergency, isNot(AppColors.danger));
     expect(AppColors.rating, isNot(AppColors.primary));
     expect(AppMotion.fast, const Duration(milliseconds: 150));
@@ -31,6 +33,18 @@ void main() {
     );
     expect(
       _contrastRatio(AppColors.onPrimary, AppColors.primary),
+      greaterThanOrEqualTo(4.5),
+    );
+    expect(
+      _contrastRatio(AppColors.textOnLightPrimary, AppColors.surfacePrimary),
+      greaterThanOrEqualTo(4.5),
+    );
+    expect(
+      _contrastRatio(AppColors.textOnLightSecondary, AppColors.surfaceSecondary),
+      greaterThanOrEqualTo(4.5),
+    );
+    expect(
+      _contrastRatio(AppColors.textOnDarkSecondary, AppColors.backgroundSecondary),
       greaterThanOrEqualTo(4.5),
     );
   });
@@ -75,6 +89,29 @@ void main() {
     expect(find.bySemanticsLabel('Booking summary'), findsOneWidget);
     expect(find.bySemanticsLabel('Status: Available'), findsOneWidget);
     semantics.dispose();
+  });
+
+  testWidgets('light information cards use a dark readable foreground', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.dark,
+        home: const Scaffold(
+          body: FixCard(
+            semanticLabel: 'Request details',
+            child: Text('Request details'),
+          ),
+        ),
+      ),
+    );
+
+    final text = tester.widget<Text>(find.text('Request details'));
+    expect(text.style?.color, isNull);
+    final defaultStyle = DefaultTextStyle.of(
+      tester.element(find.text('Request details')),
+    );
+    expect(defaultStyle.style.color, AppColors.textOnSurface);
   });
 
   testWidgets('shared empty, offline, and skeleton states are accessible', (

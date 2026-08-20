@@ -6,7 +6,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
-import { createHash } from 'crypto';
+import { createHash, createHmac, timingSafeEqual } from 'crypto';
+import { ConfigService } from '@nestjs/config';
 import { DataSource, EntityManager, IsNull, QueryFailedError } from 'typeorm';
 import { BookingStatus } from '../../../shared/booking-lifecycle.types';
 import { CreateBookingDto } from './bookings.dto';
@@ -37,6 +38,7 @@ export class BookingsService {
     private readonly matchingService: MatchingService,
     private readonly locationService?: LocationService,
     private readonly bookingProjections?: BookingProjectionService,
+    private readonly config?: ConfigService,
   ) {}
 
   async create(
@@ -151,7 +153,6 @@ export class BookingsService {
     if (
       ![
         BookingStatus.EN_ROUTE,
-        BookingStatus.IN_PROGRESS,
         BookingStatus.COMPLETED,
       ].includes(status)
     ) {
@@ -215,6 +216,28 @@ export class BookingsService {
     );
     await this.locationService?.invalidateBooking(bookingId);
     await this.bookingProjections?.publishUnavailable(booking);
+    return booking;
+  }
+
+  async getServiceStartOtp(bookingId: string, customerId: string): Promise<{ otp: string }> {
+    const booking = await this.dataSource.getRepository(Booking).findOneBy({ id: bookingId });
+    if (!booking) throw new NotFoundException('Booking not found');
+    if (booking.customerId !== customerId) throw new ForbiddenException('Only the customer can view this service OTP');
+    if (booking.status !== BookingStatus.EN_ROUTE) throw new ConflictException('The service OTP is available after the provider is en route');
+    return { otp: this.serviceStartOtp(booking) };
+  }
+
+  async verifyOtpAndStartService(bookingId: string, providerId: string, otp: string, expectedVersion: number): Promise<Booking> {
+    const booking = await this.transition(bookingId, providerId, expectedVersion, (candidate) => {
+      if (candidate.providerId !== providerId) throw new ForbiddenException('You are not assigned to this booking');
+      if (candidate.status !== BookingStatus.EN_ROUTE) throw new ConflictException('Service can start only after the provider is en route');
+      const expected = Buffer.from(this.serviceStartOtp(candidate));
+      const actual = Buffer.from(otp);
+      if (expected.length !== actual.length || !timingSafeEqual(expected, actual)) throw new ForbiddenException('The service start OTP is incorrect');
+      candidate.transitionTo(BookingStatus.IN_PROGRESS);
+    });
+    await this.locationService?.invalidateBooking(bookingId);
+    await this.bookingProjections?.publishBooking(booking);
     return booking;
   }
 
@@ -423,6 +446,16 @@ export class BookingsService {
         error instanceof Error ? error.message : 'Invalid booking transition',
       );
     }
+  }
+
+  private serviceStartOtp(booking: Booking): string {
+    const secret = this.config?.get<string>('OTP_SECRET');
+    if (!secret) throw new Error('OTP_SECRET is not configured');
+    const value = createHmac('sha256', secret)
+      .update(`service-start:${booking.id}:${booking.enRouteAt?.toISOString() ?? ''}`)
+      .digest()
+      .readUInt32BE(0);
+    return (value % 10000).toString().padStart(4, '0');
   }
 
   private normalizeCreateInput(input: CreateBookingDto) {

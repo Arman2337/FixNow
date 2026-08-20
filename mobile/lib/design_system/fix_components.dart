@@ -52,7 +52,7 @@ class FixTextField extends StatelessWidget {
         Text(
           label,
           style: const TextStyle(
-            color: AppColors.textSecondary,
+            color: AppColors.textOnSurfaceSecondary,
             fontSize: 13,
             fontWeight: FontWeight.w600,
             letterSpacing: 0.2,
@@ -72,7 +72,7 @@ class FixTextField extends StatelessWidget {
           readOnly: readOnly,
           onTap: onTap,
           style: const TextStyle(
-            color: AppColors.textPrimary,
+            color: AppColors.textOnSurface,
             fontSize: 15,
           ),
           decoration: InputDecoration(
@@ -135,7 +135,7 @@ class FixSearchField extends StatelessWidget {
               controller: controller,
               onChanged: onChanged,
               onSubmitted: onSubmitted,
-              style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
+              style: const TextStyle(color: AppColors.textOnSurface, fontSize: 14),
               decoration: InputDecoration(
                 hintText: hintText,
                 hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 14),
@@ -317,7 +317,7 @@ class FixRating extends StatelessWidget {
         Text(
           rating.toStringAsFixed(1),
           style: TextStyle(
-            color: AppColors.textPrimary,
+            color: AppColors.textOnLightPrimary,
             fontWeight: FontWeight.w700,
             fontSize: fontSize,
           ),
@@ -392,7 +392,7 @@ class FixEmergencyBanner extends StatelessWidget {
                         Text(
                           title,
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: AppColors.textOnSurface,
                             fontWeight: FontWeight.w700,
                             fontSize: 15,
                           ),
@@ -400,7 +400,7 @@ class FixEmergencyBanner extends StatelessWidget {
                         Text(
                           subtitle,
                           style: const TextStyle(
-                            color: Color(0xFFFCA5A5),
+                            color: AppColors.textOnSurfaceSecondary,
                             fontSize: 12,
                           ),
                         ),
@@ -710,7 +710,7 @@ class FixOtpDisplay extends StatelessWidget {
                   child: Text(
                     digit,
                     style: const TextStyle(
-                      color: AppColors.cream,
+                      color: AppColors.textOnLightPrimary,
                       fontSize: 24,
                       fontWeight: FontWeight.w700,
                     ),
@@ -721,7 +721,7 @@ class FixOtpDisplay extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.md),
           const Text(
-            'Share this OTP with the professional only after they arrive.\nWork will start only after OTP verification.',
+            'Keep this code private. Share it with the professional only after they arrive.\nWork starts only after they verify it.',
             textAlign: TextAlign.center,
             style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
           ),

@@ -1,3 +1,4 @@
+import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:flutter/material.dart';
@@ -10,6 +11,8 @@ Future<String?> showCancellationDialog(BuildContext context) async {
       title: const Text('Cancel booking?'),
       content: TextField(
         controller: reason,
+        style: const TextStyle(color: AppColors.inputText),
+        cursorColor: AppColors.primary,
         autofocus: true,
         maxLines: 3,
         maxLength: 500,

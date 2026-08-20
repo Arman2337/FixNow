@@ -45,13 +45,23 @@ void main() {
       connector: _FakeConnector(socket),
     );
     await client.subscribeBooking('booking-1');
-    await client.sendPresence(true);
-    await client.sendLocationConsent(
+    final presence = client.sendPresence(true);
+    socket.emit({
+      'type': 'presence-ack',
+      'requestId': (jsonDecode(socket.sent[2]) as Map)['requestId'],
+    });
+    await presence;
+    final consent = client.sendLocationConsent(
       bookingId: 'booking-1',
       granted: true,
       noticeVersion: '2026-08-13',
     );
-    await client.sendLocation(
+    socket.emit({
+      'type': 'location-consent-ack',
+      'requestId': (jsonDecode(socket.sent[3]) as Map)['requestId'],
+    });
+    await consent;
+    final location = client.sendLocation(
       bookingId: 'booking-1',
       sequence: 1,
       capturedAt: DateTime.utc(2026, 8, 14),
@@ -59,6 +69,11 @@ void main() {
       longitude: 73.1,
       accuracyMeters: 10,
     );
+    socket.emit({
+      'type': 'location-ack',
+      'requestId': (jsonDecode(socket.sent[4]) as Map)['requestId'],
+    });
+    await location;
     expect(socket.sent, hasLength(5));
     expect(jsonDecode(socket.sent[2])['type'], 'presence-update');
     expect(jsonDecode(socket.sent[3])['type'], 'location-consent');

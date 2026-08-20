@@ -5,6 +5,7 @@ import 'package:fixnow_mobile/design_system/fix_bottom_navigation.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
 import 'package:fixnow_mobile/design_system/fix_page_frame.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class AppShell extends StatefulWidget {
   const AppShell({
@@ -13,6 +14,7 @@ class AppShell extends StatefulWidget {
     this.customerHome,
     this.customerProfile,
     this.customerBookings,
+    this.customerHelp,
     this.providerHome,
     this.providerJobs,
     this.providerHistory,
@@ -25,6 +27,7 @@ class AppShell extends StatefulWidget {
   final Widget? customerHome;
   final Widget? customerProfile;
   final Widget? customerBookings;
+  final Widget? customerHelp;
   final Widget? providerHome;
   final Widget? providerJobs;
   final Widget? providerHistory;
@@ -35,6 +38,7 @@ class AppShell extends StatefulWidget {
 }
 
 class _AppShellState extends State<AppShell> {
+  static const _storage = FlutterSecureStorage();
   late AppShellController _controller;
   late bool _ownsController;
 
@@ -42,7 +46,23 @@ class _AppShellState extends State<AppShell> {
   void initState() {
     super.initState();
     _setController(widget.controller);
+    _restoreSelectedDestination();
   }
+
+  String get _storageKey => 'fixnow.navigation.${widget.role.name}';
+
+  Future<void> _restoreSelectedDestination() async {
+    final saved = await _storage.read(key: _storageKey);
+    final index = int.tryParse(saved ?? '');
+    if (!mounted || index == null) return;
+    _controller.selectDestination(
+      index,
+      destinationCount: AppNavigation.forRole(widget.role).length,
+    );
+  }
+
+  Future<void> _saveSelectedDestination(int index) =>
+      _storage.write(key: _storageKey, value: '$index');
 
   @override
   void didUpdateWidget(AppShell oldWidget) {
@@ -88,6 +108,10 @@ class _AppShellState extends State<AppShell> {
                         widget.customerBookings != null)
                       widget.customerBookings!
                     else if (widget.role == AppShellRole.customer &&
+                        index == 2 &&
+                        widget.customerHelp != null)
+                      widget.customerHelp!
+                    else if (widget.role == AppShellRole.customer &&
                         index == 3 &&
                         widget.customerProfile != null)
                       widget.customerProfile!
@@ -123,6 +147,7 @@ class _AppShellState extends State<AppShell> {
                   index,
                   destinationCount: destinations.length,
                 );
+                _saveSelectedDestination(index);
               },
             ),
           ),

@@ -3,6 +3,7 @@ import { spawn, spawnSync, type Subprocess } from "bun";
 const args = process.argv.slice(2);
 const isBackendOnly = args.includes("--backend-only") || args.includes("--no-flutter");
 const isProxyOnly = args.includes("--proxy-only");
+const flutterWebPort = process.env.FLUTTER_WEB_PORT || "51354";
 
 console.log(`\x1b[36m
   ╔══════════════════════════════════════════════════════════════════╗
@@ -54,6 +55,48 @@ function checkPostgres() {
   }
 }
 
+// Redis is disposable local infrastructure.  When Docker Desktop is already
+// running, Compose can start the existing Redis-only service idempotently.
+// Do not try to launch Docker Desktop itself: it is a user-managed GUI service
+// and may be unavailable on a developer's machine.
+function checkRedis() {
+  console.log("🧠 \x1b[1mChecking local Redis...\x1b[0m");
+  try {
+    const dockerCheck = spawnSync({
+      cmd: ["docker", "version", "--format", "{{.Server.Version}}"],
+      stdout: "pipe",
+      stderr: "pipe",
+    });
+
+    if (dockerCheck.exitCode !== 0 || !dockerCheck.stdout.toString().trim()) {
+      console.log("   \x1b[33mℹ Docker Desktop is not running; backend will use its local cache fallback.\x1b[0m");
+      return;
+    }
+
+    const redisStart = spawnSync({
+      cmd: [
+        "docker",
+        "compose",
+        "-f",
+        "infrastructure/local/docker-compose.yml",
+        "up",
+        "-d",
+        "redis",
+      ],
+      stdout: "pipe",
+      stderr: "pipe",
+    });
+
+    if (redisStart.exitCode === 0) {
+      console.log("   \x1b[32m✔ Redis is ready on localhost:6379.\x1b[0m");
+    } else {
+      console.log("   \x1b[33mℹ Redis could not be started; backend will use its local cache fallback.\x1b[0m");
+    }
+  } catch {
+    console.log("   \x1b[33mℹ Docker is unavailable; backend will use its local cache fallback.\x1b[0m");
+  }
+}
+
 // 2. Setup ADB Port Forwarding for Connected Devices
 function setupAdb() {
   try {
@@ -79,6 +122,7 @@ function setupAdb() {
 
 async function start() {
   checkPostgres();
+  checkRedis();
   setupAdb();
 
   // 3. Start Bun Reverse Proxy
@@ -112,10 +156,20 @@ async function start() {
 
   // 5. Start Flutter Mobile (if not --backend-only)
   if (!isBackendOnly) {
-    console.log("📱 \x1b[1mLaunching Flutter Mobile App...\x1b[0m");
+    console.log("🌐 \x1b[1mLaunching Flutter Web App...\x1b[0m");
+    console.log(`   \x1b[32mOpen http://localhost:${flutterWebPort}\x1b[0m`);
     console.log("   \x1b[90mTip: Run with 'bun dev --backend-only' to only run backend + proxy.\x1b[0m\n");
     const flutterProc = spawn({
-      cmd: [flutterCmd, "run"],
+      cmd: [
+        flutterCmd,
+        "run",
+        "-d",
+        "chrome",
+        "--web-hostname",
+        "localhost",
+        "--web-port",
+        flutterWebPort,
+      ],
       cwd: "mobile",
       stdin: "inherit",
       stdout: "inherit",

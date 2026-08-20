@@ -1,3 +1,4 @@
+import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
@@ -123,7 +124,11 @@ class _BookingCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       requested ? 'Finding a provider' : _label(booking.status),
-                      style: Theme.of(context).textTheme.titleMedium,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: requested
+                            ? AppColors.textOnDarkPrimary
+                            : AppColors.textOnLightPrimary,
+                      ),
                     ),
                   ),
                   FixStatusChip(
@@ -155,14 +160,20 @@ class _BookingCard extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.verified_user_outlined, size: 18),
+                    const Icon(
+                      Icons.verified_user_outlined,
+                      color: AppColors.iconOnLight,
+                      size: 18,
+                    ),
                     const SizedBox(width: AppSpacing.sm),
                     Expanded(
                       child: Text(
                         requested
                             ? 'Open to eligible verified providers'
                             : 'Created ${_date(booking.createdAt)}',
-                        style: Theme.of(context).textTheme.bodySmall,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.textOnLightSecondary,
+                        ),
                       ),
                     ),
                   ],

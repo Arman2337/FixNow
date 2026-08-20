@@ -37,6 +37,7 @@ import 'package:fixnow_mobile/features/support/submit_complaint_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_repository.dart';
 import 'package:fixnow_mobile/features/support/complaints_controller.dart';
 import 'package:fixnow_mobile/features/support/complaints_repository.dart';
+import 'package:fixnow_mobile/features/support/customer_help_screen.dart';
 
 import 'package:fixnow_mobile/features/realtime/realtime_client.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking_controller.dart';
@@ -108,6 +109,9 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
     _provider = ProviderController(
       ProviderRepository(api: api, accessToken: _auth.validAccessToken),
       realtime: _createRealtimeClient(),
+    );
+    _complaints = ComplaintsController(
+      ComplaintsRepository(api),
     );
     _auth.restore();
   }
@@ -267,6 +271,9 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
               onBookingSelected: (booking) => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => _bookingDestination(booking)),
               ),
+            ),
+            customerHelp: CustomerHelpScreen(
+              controller: _complaints,
             ),
           );
         },

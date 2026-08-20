@@ -130,7 +130,7 @@ class AvailableProvidersSheet extends StatelessWidget {
                         Text(
                           name,
                           style: const TextStyle(
-                            color: AppColors.cream,
+                            color: AppColors.textOnLightPrimary,
                             fontWeight: FontWeight.w700,
                             fontSize: 15,
                           ),
@@ -297,7 +297,7 @@ class BookingConfirmedDialog extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text('Professional', style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
-                      Text(providerName, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
+                      Text(providerName, style: const TextStyle(color: AppColors.textOnLightPrimary, fontWeight: FontWeight.w600)),
                     ],
                   ),
                   const SizedBox(height: 6),
@@ -442,7 +442,7 @@ class JobCompletedDialog extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: const TextStyle(color: AppColors.textMuted, fontSize: 12)),
-          Text(value, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 13)),
+          Text(value, style: const TextStyle(color: AppColors.textOnLightPrimary, fontWeight: FontWeight.w600, fontSize: 13)),
         ],
       ),
     );
@@ -558,7 +558,7 @@ class _ReviewRatingDialogState extends State<ReviewRatingDialog> {
             TextField(
               controller: _comment,
               maxLines: 3,
-              style: const TextStyle(color: AppColors.textPrimary, fontSize: 13),
+              style: const TextStyle(color: AppColors.textOnLightPrimary, fontSize: 13),
               decoration: const InputDecoration(
                 hintText: 'Add an optional note about the repair quality...',
               ),

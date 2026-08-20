@@ -22,7 +22,7 @@ class FixStatusChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final (foreground, background) = switch (tone) {
       FixStatusTone.neutral => (
-        AppColors.textSecondary,
+        AppColors.textOnLightSecondary,
         AppColors.surfaceSecondary,
       ),
       FixStatusTone.success => (AppColors.success, AppColors.successSoft),

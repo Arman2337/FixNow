@@ -38,11 +38,34 @@ class ApiBookingTrackingSource implements BookingTrackingSource {
         )
         .cast<CustomerBooking>()
         .firstWhere((item) => item.id == bookingId);
+    String? serviceStartOtp;
+    if (booking.status == 'EN_ROUTE') {
+      final otpResponse = await api.send(
+        ApiRequest(
+          method: ApiMethod.post,
+          path: 'bookings/$bookingId/service-start-otp',
+          bearerToken: token,
+        ),
+      );
+      final body = otpResponse.body;
+      final value = body is Map ? body['otp'] : null;
+      if (value is String && RegExp(r'^\d{4}$').hasMatch(value)) {
+        serviceStartOtp = value;
+      }
+    }
     return BookingTracking(
       bookingId: booking.id,
       status: booking.status,
       sequence: booking.version,
       locationAvailability: LocationAvailability.unavailable,
+      customerLocation:
+          booking.locationLatitude != null && booking.locationLongitude != null
+          ? CustomerMapLocation(
+              latitude: booking.locationLatitude!,
+              longitude: booking.locationLongitude!,
+            )
+          : null,
+      serviceStartOtp: serviceStartOtp,
     );
   }
 }

@@ -69,7 +69,13 @@ class ProviderOnboardingScreen extends StatelessWidget {
                   ),
                   if (controller.application?.reason case final reason?) ...[
                     const SizedBox(height: AppSpacing.lg),
-                    FixCard(tone: FixCardTone.secondary, child: Text(reason)),
+                    FixCard(
+                      tone: FixCardTone.secondary,
+                      child: Text(
+                        reason,
+                        style: const TextStyle(color: AppColors.textOnSurface),
+                      ),
+                    ),
                   ],
                   const SizedBox(height: AppSpacing.xxl),
                   _Step(
@@ -196,9 +202,19 @@ class _Step extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: Theme.of(context).textTheme.titleMedium),
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: AppColors.textOnSurface,
+                  ),
+                ),
                 const SizedBox(height: AppSpacing.xs),
-                Text(detail, style: Theme.of(context).textTheme.bodySmall),
+                Text(
+                  detail,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.textOnSurfaceSecondary,
+                  ),
+                ),
               ],
             ),
           ),

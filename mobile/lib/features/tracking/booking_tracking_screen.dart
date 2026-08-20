@@ -9,6 +9,7 @@ import 'package:fixnow_mobile/features/tracking/booking_tracking.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking_controller.dart';
 import 'package:fixnow_mobile/features/tracking/provider_live_map.dart';
 import 'package:flutter/material.dart';
+import 'package:latlong2/latlong.dart';
 
 class BookingTrackingScreen extends StatefulWidget {
   const BookingTrackingScreen({required this.controller, super.key});
@@ -52,8 +53,10 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
           _TrackingCard(tracking: widget.controller.tracking),
           const SizedBox(height: AppSpacing.lg),
 
-          const FixOtpDisplay(otp: '7362'),
-          const SizedBox(height: AppSpacing.lg),
+          if (widget.controller.tracking?.serviceStartOtp case final otp?) ...[
+            FixOtpDisplay(otp: otp),
+            const SizedBox(height: AppSpacing.lg),
+          ],
 
           FixCard(
             tone: FixCardTone.elevated,
@@ -142,7 +145,9 @@ class _ConnectionCard extends StatelessWidget {
         children: [
           Text(
             loading ? 'Refreshing updates' : 'Updates paused',
-            style: Theme.of(context).textTheme.titleMedium,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: AppColors.textOnLightPrimary,
+            ),
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
@@ -202,7 +207,19 @@ class _TrackingCard extends StatelessWidget {
           Text(locationLabel, style: Theme.of(context).textTheme.titleMedium),
           if (value.providerLocation != null) ...[
             const SizedBox(height: AppSpacing.md),
-            ProviderLiveMap(location: value.providerLocation!),
+            ProviderLiveMap(
+              providerLocation: value.providerLocation!,
+              customerLocation: value.customerLocation,
+              route: value.route,
+              estimatedMinutes: value.estimatedMinutes,
+              distanceKm: value.route == null
+                  ? null
+                  : value.route!.distanceMeters / 1000,
+            ),
+            if (value.route == null) ...[
+              const SizedBox(height: AppSpacing.md),
+              _JourneySummary(tracking: value),
+            ],
           ],
           const SizedBox(height: AppSpacing.md),
           Row(
@@ -240,4 +257,60 @@ class _TrackingCard extends StatelessWidget {
     'CANCELLED' => 'Booking cancelled',
     _ => 'Booking updated',
   };
+}
+
+class _JourneySummary extends StatelessWidget {
+  const _JourneySummary({required this.tracking});
+
+  final BookingTracking tracking;
+
+  @override
+  Widget build(BuildContext context) {
+    final provider = tracking.providerLocation;
+    final customer = tracking.customerLocation;
+    final distanceKm = tracking.route != null
+        ? tracking.route!.distanceMeters / 1000
+        : provider != null && customer != null
+        ? const Distance().as(
+            LengthUnit.Kilometer,
+            LatLng(provider.latitude, provider.longitude),
+            LatLng(customer.latitude, customer.longitude),
+          )
+        : null;
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.backgroundPrimary,
+        borderRadius: AppRadius.buttonBorder,
+        border: Border.all(color: AppColors.borderDefault),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.route_rounded, color: AppColors.primary),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Text(
+              customer == null
+                  ? 'Provider location is live. Your booking location is unavailable.'
+                  : tracking.route == null
+                  ? 'Provider → your service address'
+                  : 'Driving route to your service address',
+              style: const TextStyle(
+                color: AppColors.textOnDarkPrimary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          if (distanceKm != null)
+            Text(
+              '${distanceKm.toStringAsFixed(1)} km',
+              style: const TextStyle(
+                color: AppColors.textOnDarkSecondary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 }

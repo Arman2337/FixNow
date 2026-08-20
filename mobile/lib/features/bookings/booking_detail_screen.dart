@@ -22,11 +22,7 @@ class BookingDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final active = const {
-      'ASSIGNED',
-      'EN_ROUTE',
-      'IN_PROGRESS',
-    }.contains(booking.status);
+    final panel = _statusPanel(booking.status);
     return Scaffold(
       appBar: AppBar(title: const Text('Booking details')),
       body: SafeArea(
@@ -46,21 +42,12 @@ class BookingDetailScreen extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      active ? Icons.route_rounded : Icons.radar_rounded,
-                      color: AppColors.primary,
-                      size: 48,
-                    ),
+                    Icon(panel.icon, color: panel.color, size: 48),
                     const SizedBox(height: AppSpacing.lg),
-                    Text(
-                      active ? 'Live map unavailable' : 'Matching in progress',
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
+                    Text(panel.title, style: Theme.of(context).textTheme.headlineSmall),
                     const SizedBox(height: AppSpacing.sm),
                     Text(
-                      active
-                          ? 'A map will appear when an assigned provider shares an authorized current location.'
-                          : 'Provider details appear only after an eligible professional accepts.',
+                      panel.description,
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: AppColors.textSecondary,
@@ -153,6 +140,39 @@ class BookingDetailScreen extends StatelessWidget {
     'COMPLETED' => 'Service completed',
     'CANCELLED' => 'Booking cancelled',
     _ => 'Booking update',
+  };
+  static ({IconData icon, Color color, String title, String description})
+  _statusPanel(String value) => switch (value) {
+    'REQUESTED' => (
+      icon: Icons.radar_rounded,
+      color: AppColors.primary,
+      title: 'Matching in progress',
+      description: 'Provider details appear only after an eligible professional accepts.',
+    ),
+    'ASSIGNED' || 'EN_ROUTE' || 'IN_PROGRESS' => (
+      icon: Icons.route_rounded,
+      color: AppColors.primary,
+      title: 'Live map unavailable',
+      description: 'A map will appear when an assigned provider shares an authorized current location.',
+    ),
+    'COMPLETED' => (
+      icon: Icons.check_circle_rounded,
+      color: AppColors.success,
+      title: 'Service completed',
+      description: 'This booking is complete. Thank you for using FixNow.',
+    ),
+    'CANCELLED' => (
+      icon: Icons.cancel_rounded,
+      color: AppColors.danger,
+      title: 'Booking cancelled',
+      description: 'This booking is no longer active.',
+    ),
+    _ => (
+      icon: Icons.info_outline_rounded,
+      color: AppColors.primary,
+      title: 'Booking update',
+      description: 'The latest booking status is shown below.',
+    ),
   };
   static String _label(String value) => value.replaceAll('_', ' ');
   static IconData _icon(String value) => switch (value) {

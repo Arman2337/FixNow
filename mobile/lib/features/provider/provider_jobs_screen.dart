@@ -89,7 +89,7 @@ class _JobCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final action = switch (job.status) {
       'ASSIGNED' => ('Start journey', Icons.route_rounded),
-      'EN_ROUTE' => ('Start work', Icons.home_repair_service_rounded),
+      'EN_ROUTE' => ('Verify OTP to start', Icons.lock_open_rounded),
       'IN_PROGRESS' => ('Complete job', Icons.task_alt_rounded),
       _ => null,
     };
@@ -124,7 +124,14 @@ class _JobCard extends StatelessWidget {
               FixButton(
                 label: action.$1,
                 icon: action.$2,
-                onPressed: () => controller.advanceJob(job),
+                onPressed: () async {
+                  if (job.status != 'EN_ROUTE') {
+                    await controller.advanceJob(job);
+                    return;
+                  }
+                  final otp = await _requestServiceStartOtp(context);
+                  if (otp != null) await controller.verifyOtpAndStartJob(job, otp);
+                },
               ),
             ],
             if (!readOnly && job.status == 'EN_ROUTE') ...[
@@ -142,11 +149,33 @@ class _JobCard extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.sm),
               FixButton(
-                label: 'Send current location',
+                label: controller.isPublishingLocation(job.id)
+                    ? 'Sending location...'
+                    : 'Send current location',
                 icon: Icons.location_searching_rounded,
                 variant: FixButtonVariant.tertiary,
-                onPressed: () => controller.publishCurrentLocation(job),
+                isLoading: controller.isPublishingLocation(job.id),
+                onPressed: controller.isPublishingLocation(job.id)
+                    ? null
+                    : () => controller.publishCurrentLocation(job),
               ),
+              if (controller.locationPublished[job.id] == true) ...[
+                const SizedBox(height: AppSpacing.sm),
+                const Row(
+                  children: [
+                    Icon(Icons.check_circle_rounded, color: AppColors.success, size: 18),
+                    SizedBox(width: AppSpacing.xs),
+                    Text(
+                      'Live location sent to the customer.',
+                      style: TextStyle(color: AppColors.textOnDarkSecondary),
+                    ),
+                  ],
+                ),
+              ],
+              if (controller.actionError case final message?) ...[
+                const SizedBox(height: AppSpacing.sm),
+                Text(message, style: const TextStyle(color: AppColors.danger)),
+              ],
             ],
             if (!readOnly &&
                 const {'ASSIGNED', 'EN_ROUTE'}.contains(job.status)) ...[
@@ -158,6 +187,90 @@ class _JobCard extends StatelessWidget {
       ),
     );
   }
+}
+
+Future<String?> _requestServiceStartOtp(BuildContext context) async {
+  final input = TextEditingController();
+  return showDialog<String>(
+    context: context,
+    builder: (dialogContext) => Dialog(
+      backgroundColor: AppColors.backgroundSecondary,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: const BorderSide(color: AppColors.borderStrong),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.xl),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Icon(Icons.verified_user_rounded, color: AppColors.accentGold, size: 32),
+            const SizedBox(height: AppSpacing.sm),
+            const Text(
+              'Verify service-start OTP',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.textOnDarkPrimary, fontSize: 22, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            const Text(
+              'Ask the customer for their 4-digit code after you arrive.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.textOnDarkSecondary),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            TextField(
+              controller: input,
+              autofocus: true,
+              keyboardType: TextInputType.number,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: AppColors.inputText,
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 8,
+              ),
+              maxLength: 4,
+              decoration: const InputDecoration(
+                labelText: 'Customer OTP',
+                hintText: '• • • •',
+                helperText: 'The customer can find this on their tracking screen.',
+                counterText: '',
+                filled: true,
+                fillColor: AppColors.surfacePrimary,
+                labelStyle: TextStyle(color: AppColors.inputLabel),
+                hintStyle: TextStyle(color: AppColors.inputHint, letterSpacing: 4),
+                helperStyle: TextStyle(color: AppColors.textOnDarkSecondary),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(dialogContext),
+                    child: const Text('Cancel'),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: FilledButton(
+                    onPressed: () {
+                      final otp = input.text.trim();
+                      if (RegExp(r'^\d{4}$').hasMatch(otp)) {
+                        Navigator.pop(dialogContext, otp);
+                      }
+                    },
+                    child: const Text('Verify & start'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 }
 
 class _CancelJobButton extends StatefulWidget {

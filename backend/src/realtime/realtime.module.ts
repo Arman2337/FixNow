@@ -8,6 +8,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Booking } from '../bookings/domain/booking.entity';
 import { BookingProjectionService } from './booking-projection.service';
 import { BoundedFallbackEtaAdapter, EtaAdapter } from './eta-adapter';
+import { OpenRouteServiceAdapter, RouteAdapter } from './route-adapter';
 
 @Module({
   imports: [AuthModule, LocationModule, TypeOrmModule.forFeature([Booking])],
@@ -17,7 +18,9 @@ import { BoundedFallbackEtaAdapter, EtaAdapter } from './eta-adapter';
     RealtimeTelemetryService,
     BookingProjectionService,
     BoundedFallbackEtaAdapter,
+    OpenRouteServiceAdapter,
     { provide: EtaAdapter, useExisting: BoundedFallbackEtaAdapter },
+    { provide: RouteAdapter, useExisting: OpenRouteServiceAdapter },
   ],
   exports: [RealtimeTelemetryService, BookingProjectionService],
 })

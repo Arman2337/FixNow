@@ -4,6 +4,7 @@ import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/app_shadows.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
+import 'package:fixnow_mobile/design_system/app_typography.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_page_frame.dart';
 import 'package:flutter/material.dart';
@@ -110,19 +111,22 @@ class _AuthScreenState extends State<AuthScreen> {
                         ? AppSpacing.xxl
                         : AppSpacing.lg,
                   ),
-                  decoration: constraints.maxWidth >= 600
-                      ? const BoxDecoration(
-                          color: AppColors.surface,
-                          borderRadius: AppRadius.large == 20
-                              ? BorderRadius.all(Radius.circular(20))
-                              : BorderRadius.zero,
-                          border: Border.fromBorderSide(
-                            BorderSide(color: AppColors.border),
-                          ),
-                          boxShadow: AppShadows.floating,
-                        )
-                      : null,
-                  child: Form(
+                  decoration: const BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.all(Radius.circular(AppRadius.large)),
+                    border: Border.fromBorderSide(
+                      BorderSide(color: AppColors.border),
+                    ),
+                    boxShadow: AppShadows.floating,
+                  ),
+                  child: Theme(
+                    data: Theme.of(context).copyWith(
+                      textTheme: AppTypography.textTheme(
+                        AppColors.textOnLightPrimary,
+                        AppColors.textOnLightSecondary,
+                      ),
+                    ),
+                    child: Form(
                     key: _formKey,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -168,7 +172,8 @@ class _AuthScreenState extends State<AuthScreen> {
                         const SizedBox(height: AppSpacing.sm),
                         Text(
                           _register ? 'Create your account' : 'Welcome back',
-                          style: Theme.of(context).textTheme.headlineLarge,
+                          style: Theme.of(context).textTheme.headlineLarge
+                              ?.copyWith(color: AppColors.textOnLightPrimary),
                         ),
                         const SizedBox(height: AppSpacing.sm),
                         Text(
@@ -179,7 +184,10 @@ class _AuthScreenState extends State<AuthScreen> {
                               : widget.role == AccountRole.customer
                               ? 'Sign in to request and track trusted help.'
                               : 'Sign in to continue your professional setup.',
-                          style: Theme.of(context).textTheme.bodyLarge,
+                          style: Theme.of(context).textTheme.bodyLarge
+                              ?.copyWith(
+                                color: AppColors.textOnLightSecondary,
+                              ),
                         ),
                         const SizedBox(height: AppSpacing.xxl),
                         TextFormField(
@@ -188,6 +196,7 @@ class _AuthScreenState extends State<AuthScreen> {
                           keyboardType: TextInputType.emailAddress,
                           autofillHints: const [AutofillHints.email],
                           textInputAction: TextInputAction.next,
+                          style: const TextStyle(color: AppColors.inputText),
                           decoration: const InputDecoration(
                             labelText: 'Email address',
                             prefixIcon: Icon(Icons.mail_outline),
@@ -209,6 +218,7 @@ class _AuthScreenState extends State<AuthScreen> {
                               : const [AutofillHints.password],
                           textInputAction: TextInputAction.done,
                           onFieldSubmitted: (_) => _submit(),
+                          style: const TextStyle(color: AppColors.inputText),
                           decoration: InputDecoration(
                             labelText: 'Password',
                             helperText: _register
@@ -265,6 +275,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                 },
                         ),
                       ],
+                    ),
                     ),
                   ),
                 ),

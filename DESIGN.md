@@ -12,7 +12,7 @@ FixNow combines **Uber-like immediacy + TaskRabbit-like provider trust + Urban C
 - Provider trust means professional profiles, verification context, ratings, completed-job evidence, skills, availability, and useful comparison.
 - Service discovery means understandable categories, clear service details, transparent indicative pricing, and a short booking path.
 
-These products are references for interaction principles, not templates. Do not reproduce their branding, layouts, copy, illustrations, icons, trade dress, or component geometry. FixNow must remain recognizable as an original premium utility platform: deep navy/near-black surfaces, an emerald/mint identity, compact trust-rich cards, and map-first active-service experiences.
+These products are references for interaction principles, not templates. Do not reproduce their branding, layouts, copy, illustrations, icons, trade dress, or component geometry. FixNow must remain recognizable as an original premium utility platform: deep navy framing, bright white information surfaces, cobalt actions, compact trust-rich cards, and map-first active-service experiences.
 
 Design decisions follow this order:
 
@@ -61,40 +61,32 @@ The voice is direct, respectful, and reassuring. Never sound playful during risk
 
 Use three layers: primitive values, semantic roles, then component tokens. Application code consumes semantic or component tokens, never raw hex values. The following premium dark theme is the approved mobile baseline and requires contrast validation in implementation.
 
-### Premium dark semantic tokens
+### Approved navy and cobalt semantic tokens
 
 | Token | Value | Use |
 | --- | --- | --- |
-| `color.backgroundPrimary` | `#07110F` | Main authenticated app background. |
-| `color.backgroundSecondary` | `#0A1714` | Secondary page region and map fallback. |
-| `color.surfacePrimary` | `#10201C` | Cards, sheets, dialogs, and inputs. |
-| `color.surfaceSecondary` | `#152923` | Grouped sections and muted controls. |
-| `color.surfaceElevated` | `#1B332C` | Floating panels, tracking sheets, and emphasized cards. |
-| `color.accentGold` | `#E5B869` | Signature brand gold accent, ratings, and highlights. |
-| `color.accentGoldSoft` | `#2D2516` | Warm gold tinted container surfaces. |
-| `color.cream` | `#FAF8F5` | Soft cream / warm white high-contrast headings. |
-| `color.primary` | `#45E0A8` | Main CTA, selected navigation, and interactive emphasis. |
-| `color.primaryPressed` | `#29BC88` | Pressed/active feedback. |
-| `color.primarySoft` | `#153D31` | Selected rows and restrained emerald containers. |
-| `color.onPrimary` | `#04120D` | Content on primary fills. |
-| `color.textPrimary` | `#F5FBF8` | Headings and primary body text. |
-| `color.textSecondary` | `#B5C8C1` | Supporting text and metadata. |
-| `color.textMuted` | `#82978F` | Low-emphasis, non-critical metadata. |
-| `color.textDisabled` | `#62736D` | Disabled content; never required readable information. |
-| `color.borderDefault` | `#274139` | Standard dividers and component borders. |
-| `color.borderStrong` | `#3B5C51` | Focus-adjacent and emphasized boundaries. |
-| `color.borderGold` | `#5C4825` | Gold accent card borders. |
-| `color.focus` | `#79F0C4` | Visible focus rings. |
-| `color.success` | `#45E0A8` | Successful or available state; context and labels remain required. |
-| `color.warning` | `#F2B84B` | Caution, delay, or attention required. |
-| `color.danger` | `#F06A6A` | Validation failure and destructive actions. |
-| `color.info` | `#78B7FF` | Neutral operational information. |
-| `color.emergency` | `#E14B55` | Genuine urgent escalation/SOS only. |
-| `color.verified` | `#45E0A8` | Verified identity badge with explanatory label. |
-| `color.rating` | `#F2C45C` | Rating iconography only, never general decoration. |
-| `color.scrim` | `rgba(0, 7, 5, 0.64)` | Modal/sheet scrim. |
+| `color.backgroundPrimary` | `#081020` | Main authenticated app background. |
+| `color.backgroundSecondary` | `#14213D` | Secondary page region and map fallback. |
+| `color.surfacePrimary` | `#F7F7FA` | Default information cards and inputs. |
+| `color.surfaceSecondary` | `#E2E6EF` | Grouped sections and muted controls. |
+| `color.surfaceElevated` | `#14213D` | Navy panels requiring a light foreground. |
+| `color.primary` | `#2857F5` | Main CTA, selected navigation, and interactive emphasis. |
+| `color.primaryPressed` | `#1E43C9` | Pressed/active feedback. |
+| `color.primarySoft` | `#DDE7FF` | Selected rows and restrained blue containers. |
+| `color.onPrimary` | `#FFFFFF` | Content on primary fills. |
+| `color.textPrimary` | `#FFFFFF` | Text on navy framing and elevated panels. |
+| `color.textOnSurface` | `#172035` | Text on white/cream surfaces. |
+| `color.textOnSurfaceSecondary` | `#596579` | Supporting text on white/cream surfaces. |
+| `color.borderDefault` | `#D5DAE5` | Standard dividers and component borders. |
+| `color.focus` | `#4E8CFF` | Visible focus rings. |
+| `color.success` | `#1F9D68` | Verified, success, or online state only. |
+| `color.warning` | `#F59E0B` | Caution, delay, or urgency. |
+| `color.danger` | `#FF4D4F` | Validation failure and destructive actions. |
+| `color.info` | `#4E8CFF` | Neutral operational information. |
+| `color.emergency` | `#FF4D4F` | Genuine urgent escalation/SOS only. |
+| `color.scrim` | `rgba(8, 16, 32, 0.70)` | Modal/sheet scrim. |
 
-`danger` covers errors and destructive actions. `emergency` is a separately governed role for an immediate safety escalation; neither is decorative. Green means verified success or current availability, not merely “good-looking.” Amber means caution or waiting, never failure.
+`danger` covers errors and destructive actions. `emergency` is a separately governed role for an immediate safety escalation; neither is decorative. Green means verified success or current availability, not merely “good-looking.” Amber means caution or waiting, never failure. A component must use its surface's foreground token: light text/icons on navy surfaces and dark text/icons on white/cream surfaces.
 
 The authenticated customer and provider experience uses this premium dark system by default. Authentication entry may use a controlled dark-to-surface composition, but must remain part of the same visual language. Any future light theme must override semantic tokens rather than screen components and requires independent contrast and visual validation. Dark implementation must test WCAG contrast, OLED smearing, map legibility, photographs, disabled states, and elevation boundaries; it is not approved by color substitution alone.
 

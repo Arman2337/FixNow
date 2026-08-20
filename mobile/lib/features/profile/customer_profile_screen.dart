@@ -126,19 +126,28 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                         Expanded(
                           child: Text(
                             'Personal details',
-                            style: Theme.of(context).textTheme.titleMedium,
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(color: AppColors.textOnSurface),
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: AppSpacing.xl),
+                    Text(
+                      'Display name',
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: AppColors.textOnSurface,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
                     TextFormField(
                       controller: _nameController,
+                      style: const TextStyle(color: AppColors.inputText),
+                      cursorColor: AppColors.primary,
                       maxLength: 80,
                       autofillHints: const [AutofillHints.name],
                       textInputAction: TextInputAction.done,
                       decoration: const InputDecoration(
-                        labelText: 'Display name',
                         hintText: 'How should we address you?',
                       ),
                       validator: (value) {

@@ -1,3 +1,4 @@
+import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_components.dart';
@@ -97,12 +98,25 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
                 const SizedBox(height: AppSpacing.lg),
                 DropdownButtonFormField<String>(
                   value: _selectedCategory,
+                  dropdownColor: AppColors.surfacePrimary,
+                  style: const TextStyle(color: AppColors.inputText),
+                  iconEnabledColor: AppColors.inputIcon,
                   decoration: const InputDecoration(
                     labelText: 'Category',
                     border: OutlineInputBorder(),
                   ),
                   items: _categories
-                      .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                      .map(
+                        (c) => DropdownMenuItem(
+                          value: c,
+                          child: Text(
+                            c,
+                            style: const TextStyle(
+                              color: AppColors.inputText,
+                            ),
+                          ),
+                        ),
+                      )
                       .toList(),
                   onChanged: isSubmitting
                       ? null
@@ -114,12 +128,20 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
                   validator: (val) => val == null ? 'Please select a category' : null,
                 ),
                 const SizedBox(height: AppSpacing.md),
+                const Text(
+                  'Description',
+                  style: TextStyle(
+                    color: AppColors.textOnDarkSecondary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
                 TextFormField(
                   controller: _descriptionController,
+                  style: const TextStyle(color: AppColors.inputText),
+                  cursorColor: AppColors.primary,
                   decoration: const InputDecoration(
-                    labelText: 'Description',
-                    border: OutlineInputBorder(),
-                    alignLabelWithHint: true,
+                    hintText: 'Describe what happened and how we can help.',
                   ),
                   maxLines: 5,
                   enabled: !isSubmitting,

@@ -1,8 +1,10 @@
 import 'package:fixnow_mobile/auth/auth_controller.dart';
 import 'package:fixnow_mobile/auth/local_auth_config.dart';
+import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_page_frame.dart';
+import 'package:fixnow_mobile/design_system/fix_card.dart';
 import 'package:flutter/material.dart';
 
 class VerificationScreen extends StatefulWidget {
@@ -40,7 +42,8 @@ class _VerificationScreenState extends State<VerificationScreen> {
               padding: const EdgeInsets.all(AppSpacing.pagePadding),
               child: FixPageFrame(
                 maxWidth: 460,
-                child: Form(
+                child: FixCard(
+                  child: Form(
                   key: _formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -70,6 +73,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                         keyboardType: TextInputType.number,
                         maxLength: 6,
                         textInputAction: TextInputAction.done,
+                        style: const TextStyle(color: AppColors.inputText),
                         decoration: const InputDecoration(
                           labelText: 'Verification code',
                           prefixIcon: Icon(Icons.pin_outlined),
@@ -116,6 +120,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                         variant: FixButtonVariant.tertiary,
                       ),
                     ],
+                  ),
                   ),
                 ),
               ),

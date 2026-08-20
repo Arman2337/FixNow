@@ -120,22 +120,35 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
             Form(
               key: _formKey,
               autovalidateMode: AutovalidateMode.onUserInteraction,
-              child: TextFormField(
-                controller: _details,
-                enabled: !_submitting,
-                minLines: 3,
-                maxLines: 6,
-                maxLength: 500,
-                textCapitalization: TextCapitalization.sentences,
-                decoration: const InputDecoration(
-                  labelText: 'What needs fixing?',
-                  hintText:
-                      'Describe the issue (e.g. pipe leak, low pressure, installation)...',
-                  alignLabelWithHint: true,
-                ),
-                validator: (value) => (value?.trim().length ?? 0) < 10
-                    ? 'Add at least 10 characters so the provider can prepare.'
-                    : null,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'What needs fixing?',
+                    style: TextStyle(
+                      color: AppColors.textOnDarkSecondary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  TextFormField(
+                    controller: _details,
+                    style: const TextStyle(color: AppColors.inputText),
+                    cursorColor: AppColors.primary,
+                    enabled: !_submitting,
+                    minLines: 3,
+                    maxLines: 6,
+                    maxLength: 500,
+                    textCapitalization: TextCapitalization.sentences,
+                    decoration: const InputDecoration(
+                      hintText:
+                          'Describe the issue (e.g. pipe leak, low pressure, installation)...',
+                    ),
+                    validator: (value) => (value?.trim().length ?? 0) < 10
+                        ? 'Add at least 10 characters so the provider can prepare.'
+                        : null,
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: AppSpacing.md),
@@ -216,7 +229,9 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
             Text(
               title,
               style: TextStyle(
-                color: selected ? AppColors.cream : AppColors.textPrimary,
+                color: selected
+                    ? activeColor
+                    : AppColors.textOnLightPrimary,
                 fontWeight: FontWeight.w700,
                 fontSize: 13,
               ),
@@ -225,7 +240,7 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
             Text(
               time,
               style: TextStyle(
-                color: selected ? activeColor : AppColors.textMuted,
+                color: selected ? activeColor : AppColors.textOnLightMuted,
                 fontSize: 11,
               ),
             ),

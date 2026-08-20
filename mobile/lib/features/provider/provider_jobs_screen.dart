@@ -142,11 +142,33 @@ class _JobCard extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.sm),
               FixButton(
-                label: 'Send current location',
+                label: controller.isPublishingLocation(job.id)
+                    ? 'Sending location...'
+                    : 'Send current location',
                 icon: Icons.location_searching_rounded,
                 variant: FixButtonVariant.tertiary,
-                onPressed: () => controller.publishCurrentLocation(job),
+                isLoading: controller.isPublishingLocation(job.id),
+                onPressed: controller.isPublishingLocation(job.id)
+                    ? null
+                    : () => controller.publishCurrentLocation(job),
               ),
+              if (controller.locationPublished[job.id] == true) ...[
+                const SizedBox(height: AppSpacing.sm),
+                const Row(
+                  children: [
+                    Icon(Icons.check_circle_rounded, color: AppColors.success, size: 18),
+                    SizedBox(width: AppSpacing.xs),
+                    Text(
+                      'Live location sent to the customer.',
+                      style: TextStyle(color: AppColors.textOnDarkSecondary),
+                    ),
+                  ],
+                ),
+              ],
+              if (controller.actionError case final message?) ...[
+                const SizedBox(height: AppSpacing.sm),
+                Text(message, style: const TextStyle(color: AppColors.danger)),
+              ],
             ],
             if (!readOnly &&
                 const {'ASSIGNED', 'EN_ROUTE'}.contains(job.status)) ...[

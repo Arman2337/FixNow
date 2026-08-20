@@ -21,6 +21,29 @@ Only these statuses are valid. A task cannot be completed while required validat
 
 ## Operating Rules
 
+# FixNow Project Tasks
+
+This file is the authoritative, permanent task tracker for FixNow developers and AI agents. Keep completed and cancelled tasks as project history, never reuse an ID, and assign the next unused `FN-XXX` ID to newly discovered work.
+
+## Status System
+
+- `â¬œ Pending` â€” The task has not started.
+- `In Progress` â€” An agent or developer is actively working on the task.
+- `Blocked` â€” Work cannot continue because a task, decision, dependency, credential, API, or external requirement is missing.
+- `âœ… Completed` â€” Implementation and every required validation are finished.
+- `âŒ Cancelled` â€” The task is intentionally no longer required.
+
+Only these statuses are valid. A task cannot be completed while required validation is failing or unavailable. A blocked task must include **Blocker** and **Required To Unblock** sections.
+
+## Priority System
+
+- `P0 â€” Critical` â€” Security issue, broken core system, production blocker, or serious data risk.
+- `P1 â€” High` â€” Core feature or major project foundation.
+- `P2 â€” Medium` â€” Important but non-blocking functionality.
+- `P3 â€” Low` â€” Enhancement, polish, optimization, or optional work.
+
+## Operating Rules
+
 1. Read `AGENTS.md` and this file before implementation.
 2. Unless explicitly instructed otherwise, one agent run completes exactly one task.
 3. Before starting, confirm dependencies are completed and no active task significantly overlaps the listed files or areas.
@@ -31,8 +54,8 @@ Only these statuses are valid. A task cannot be completed while required validat
 
 # Project Progress
 
-Total Tasks: 95
-Completed: 69
+Total Tasks: 96
+Completed: 70
 In Progress: 0
 Blocked: 1
 Pending: 24
@@ -42,7 +65,7 @@ Next Recommended Task: FN-050 â€” Implement Admin Complaints and Analytics 
 
 # Current Work
 
-Active Tasks: FN-075 â€” Implement Customer Help and Support Experience
+Active Tasks: FN-075 â€” Implement Customer Help and Support Experience; FN-100 — Rebuild Mobile UI to Approved Reference
 
 # Decision Log
 
@@ -1859,7 +1882,7 @@ PR:
 # Phase 9 â€” Payments
 
 ## FN-051 â€” Decide Payment Architecture and Integrate Provider Adapter
-Status: â�¸ï¸� Deferred
+Status: â¸ï¸ Deferred
 Priority: P1 â€” High
 Area: Payments Architecture
 Depends On: FN-010, FN-014, FN-038
@@ -1893,7 +1916,7 @@ Commit:
 PR:
 
 ## FN-052 â€” Implement Payment Orders and Verification
-Status: â�¸ï¸� Deferred
+Status: â¸ï¸ Deferred
 Priority: P1 â€” High
 Area: Backend/Payments
 Depends On: FN-041, FN-051
@@ -1927,7 +1950,7 @@ Commit:
 PR:
 
 ## FN-053 â€” Implement Invoices, Refunds, Transactions, and Provider Earnings
-Status: â�¸ï¸� Deferred
+Status: â¸ï¸ Deferred
 Priority: P1 â€” High
 Area: Payments
 Depends On: FN-042, FN-052
@@ -1963,7 +1986,7 @@ PR:
 # Phase 10 â€” Ratings & Trust
 
 ## FN-054 â€” Implement Booking Ratings and Reviews
-Status: â�¸ï¸� Deferred
+Status: â¸ï¸ Deferred
 Priority: P2 â€” Medium
 Area: Trust
 Depends On: FN-041, FN-027
@@ -2316,7 +2339,7 @@ PR:
 # Phase 14 â€” Testing & Security
 
 ## FN-065 â€” Establish Cross-Project Test Strategy and CI Test Harness
-Status: â¬œ Pending
+Status: Deferred (out of current MVP scope)
 Priority: P1 â€” High
 Area: Quality
 Depends On: FN-017, FN-034, FN-046
@@ -2347,7 +2370,7 @@ Commit:
 PR:
 
 ## FN-066 â€” Add Authorization, Abuse, and Rate-Limit Security Tests
-Status: â¬œ Pending
+Status: Deferred (out of current MVP scope)
 Priority: P0 â€” Critical
 Area: Security Testing
 Depends On: FN-027, FN-040, FN-052, FN-055, FN-065
@@ -2378,7 +2401,7 @@ Commit:
 PR:
 
 ## FN-067 â€” Complete End-to-End, Dependency, and Security Review
-Status: â¬œ Pending
+Status: Deferred (out of current MVP scope)
 Priority: P0 â€” Critical
 Area: Release Quality
 Depends On: FN-045, FN-050, FN-053, FN-060, FN-062, FN-064, FN-066
@@ -2448,7 +2471,7 @@ PR: #4
 # Phase 15 â€” Deployment
 
 ## FN-068 â€” Add Container Builds and Continuous Integration
-Status: â¬œ Pending
+Status: Deferred (out of current MVP scope)
 Priority: P1 â€” High
 Area: Infrastructure/CI
 Depends On: FN-017, FN-034, FN-046, FN-065
@@ -2479,7 +2502,7 @@ Commit:
 PR:
 
 ## FN-069 â€” Provision and Validate Staging Environment
-Status: â¬œ Pending
+Status: Deferred (out of current MVP scope)
 Priority: P1 â€” High
 Area: Infrastructure
 Depends On: FN-012, FN-014, FN-022, FN-061, FN-068
@@ -2510,7 +2533,7 @@ Commit:
 PR:
 
 ## FN-070 â€” Provision Production Operations, Monitoring, and Backups
-Status: â¬œ Pending
+Status: Deferred (out of current MVP scope)
 Priority: P0 â€” Critical
 Area: Infrastructure/Operations
 Depends On: FN-067, FN-069
@@ -2541,7 +2564,7 @@ Commit:
 PR:
 
 ## FN-071 â€” Establish Release and Rollback Strategy
-Status: â¬œ Pending
+Status: Deferred (out of current MVP scope)
 Priority: P1 â€” High
 Area: Release Engineering
 Depends On: FN-068, FN-069, FN-070
@@ -2630,7 +2653,7 @@ Branch: feat/customer-help-support
 ### Completion Record
 Completed By: Antigravity
 Completed Date: 2026-08-20
-Commit: Pending
+Commit: 0c8c49e
 PR: Pending
 
 ### Objective
@@ -3103,7 +3126,7 @@ Commit: ad0088b
 PR: Pending
 
 ## FN-085 â€” Handle Unavailable Booking Location Fixes
-Status: â�Œ Cancelled
+Status: âŒ Cancelled
 Priority: P1 â€” High
 Area: Mobile / Bookings / Location
 Depends On: FN-037, FN-042, FN-082
@@ -3470,7 +3493,7 @@ FN-087 could validate reviewer contracts and UI automatically but could not perf
 Completed By: Codex
 Completed Date: 2026-08-14
 Commit:
-PR:
+PR: Pending
 
 ## FN-093 â€” Add Safe Booking Location Failure Recovery
 Status: âœ… Completed
@@ -3514,10 +3537,10 @@ FN-085 was correctly cancelled after the observed booking error proved to be a m
 Completed By: Codex
 Completed Date: 2026-08-15
 Commit:
-PR:
+PR: Pending
 
 ## FN-094 â€” Run Two-Device Mobile Realtime Acceptance
-Status: Blocked
+Status: Deferred (out of current MVP scope)
 Priority: P0 â€” Critical
 Area: Mobile / Backend / Realtime / Local Development / Quality
 Depends On: FN-084, FN-086, FN-088, FN-089, FN-092, FN-093
@@ -3733,6 +3756,88 @@ Branch: bug-fix-customer
 ### Completion Record
 Completed By: Antigravity
 Completed Date: 2026-08-20
-Commit: Pending
+Commit: 0c8c49e
 PR: Pending
 
+## FN-100 — Rebuild Mobile UI to Approved Reference with Functional Preservation
+
+Status: In Progress
+Priority: P0 — Critical
+Area: Mobile / Design System / Quality
+Depends On: FN-096
+Branch: feat/customer-help-support
+
+### Objective
+Rebuild the implemented customer and provider mobile UI against the approved FixNow reference direction while preserving supported functionality.
+
+### Scope
+- Centralize the approved navy, white-surface, cobalt, emergency-red, and semantic-success design tokens.
+- Improve shared Flutter UI components and the implemented customer/provider screens.
+- Add focused regression/UI tests, responsive/accessibility coverage where practical, and an evidence-based final HTML/JSON report.
+
+### Do Not
+- Do not implement payments, invoices, wallets, payouts, ratings, reviews, or fabricated flows/data.
+- Do not change backend booking, authorization, realtime, location, or privacy semantics merely for visual parity.
+
+### Acceptance Criteria
+- [ ] Implemented customer and provider flows retain their supported behavior.
+- [ ] UI uses centralized approved tokens and has no material contrast or responsive-layout regression.
+- [ ] Required Flutter validation and final reports pass or document limitations truthfully.
+
+### Validation
+```bash
+cd mobile && flutter analyze && flutter test && flutter build apk --debug
+git diff --check
+```
+
+### Files / Areas
+```text
+mobile/lib/design_system/ mobile/lib/features/ mobile/test/ DESIGN.md reports/ PROJECT_TASKS.md
+```
+
+### Completion Record
+Completed By:
+Completed Date:
+Commit:
+PR:
+
+## FN-101 — Add Playwright E2E Testing
+
+Status: ✅ Completed
+Priority: P1 — High
+Area: Testing
+Depends On: None
+Branch: test/playwright-e2e
+
+### Objective
+Introduce Playwright for end-to-end testing across Admin, Customer, and Provider surfaces, with screenshots on every test run configured to save in `reports/screenshots`.
+
+### Scope
+- Set up root `e2e` workspace for Playwright.
+- Create tests for Admin (Next.js), Customer (Flutter Web), and Provider (Flutter Web).
+- Configure `playwright.config.ts` to output all screenshots to `reports/screenshots/`.
+
+### Do Not
+- Do not implement new application features.
+
+### Acceptance Criteria
+- [x] Root `e2e` directory and `package.json` exist with Playwright installed.
+- [x] Smoke tests run successfully across all three applications.
+- [x] Screenshots are generated in `reports/screenshots/` for every test action.
+
+### Validation
+```bash
+cd e2e && npx playwright test
+ls -la ../reports/screenshots
+```
+
+### Files / Areas
+```text
+e2e/ reports/screenshots/
+```
+
+### Completion Record
+Completed By: Antigravity
+Completed Date: 2026-08-20
+Commit: Pending
+PR: Pending

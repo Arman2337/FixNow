@@ -43,6 +43,13 @@ class ApiBookingTrackingSource implements BookingTrackingSource {
       status: booking.status,
       sequence: booking.version,
       locationAvailability: LocationAvailability.unavailable,
+      customerLocation:
+          booking.locationLatitude != null && booking.locationLongitude != null
+          ? CustomerMapLocation(
+              latitude: booking.locationLatitude!,
+              longitude: booking.locationLongitude!,
+            )
+          : null,
     );
   }
 }

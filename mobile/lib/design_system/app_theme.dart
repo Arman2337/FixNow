@@ -11,20 +11,20 @@ abstract final class AppTheme {
       primary: AppColors.primary,
       onPrimary: AppColors.onPrimary,
       primaryContainer: AppColors.primarySoft,
-      onPrimaryContainer: AppColors.textPrimary,
+      onPrimaryContainer: AppColors.textOnLightPrimary,
       secondary: AppColors.info,
       onSecondary: AppColors.backgroundPrimary,
       secondaryContainer: AppColors.infoSoft,
-      onSecondaryContainer: AppColors.textPrimary,
+      onSecondaryContainer: AppColors.textOnLightPrimary,
       error: AppColors.danger,
       onError: AppColors.backgroundPrimary,
       errorContainer: AppColors.dangerSoft,
-      onErrorContainer: AppColors.textPrimary,
+      onErrorContainer: AppColors.textOnLightPrimary,
       surface: AppColors.surfacePrimary,
-      onSurface: AppColors.textPrimary,
+      onSurface: AppColors.textOnLightPrimary,
       surfaceContainer: AppColors.surfaceSecondary,
       surfaceContainerHigh: AppColors.surfaceElevated,
-      onSurfaceVariant: AppColors.textSecondary,
+      onSurfaceVariant: AppColors.textOnLightSecondary,
       outline: AppColors.borderDefault,
       outlineVariant: AppColors.borderStrong,
       scrim: AppColors.scrim,
@@ -42,6 +42,11 @@ abstract final class AppTheme {
       scaffoldBackgroundColor: AppColors.backgroundPrimary,
       textTheme: textTheme,
       focusColor: AppColors.focus,
+      textSelectionTheme: const TextSelectionThemeData(
+        cursorColor: AppColors.primary,
+        selectionColor: AppColors.primarySoft,
+        selectionHandleColor: AppColors.primary,
+      ),
       disabledColor: AppColors.textDisabled,
       splashFactory: InkRipple.splashFactory,
       visualDensity: VisualDensity.standard,
@@ -97,11 +102,11 @@ abstract final class AppTheme {
       inputDecorationTheme: const InputDecorationTheme(
         filled: true,
         fillColor: AppColors.surfacePrimary,
-        labelStyle: TextStyle(color: AppColors.textSecondary),
-        hintStyle: TextStyle(color: AppColors.textMuted),
-        helperStyle: TextStyle(color: AppColors.textMuted),
-        prefixIconColor: AppColors.textSecondary,
-        suffixIconColor: AppColors.textSecondary,
+        labelStyle: TextStyle(color: AppColors.inputLabel),
+        hintStyle: TextStyle(color: AppColors.inputHint),
+        helperStyle: TextStyle(color: AppColors.inputHint),
+        prefixIconColor: AppColors.inputIcon,
+        suffixIconColor: AppColors.inputIcon,
         contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         border: OutlineInputBorder(
           borderRadius: AppRadius.inputBorder,
@@ -143,14 +148,14 @@ abstract final class AppTheme {
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           final color = states.contains(WidgetState.selected)
               ? AppColors.primary
-              : AppColors.textSecondary;
+              : AppColors.textOnSurfaceSecondary;
           return AppTypography.caption.copyWith(color: color);
         }),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           return IconThemeData(
             color: states.contains(WidgetState.selected)
                 ? AppColors.primary
-                : AppColors.textSecondary,
+                : AppColors.textOnSurfaceSecondary,
             size: 24,
           );
         }),

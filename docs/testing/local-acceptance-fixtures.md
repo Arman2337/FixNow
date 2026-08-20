@@ -36,9 +36,10 @@ Synthetic credentials:
 | Provider B | `fixnow.acceptance.provider-b@local.test` | `FixNow-local-provider-b-2026!` |
 | Reviewer | `fixnow.acceptance.reviewer@local.test` | `FixNow-local-reviewer-2026!` |
 
-Provider A is approved, verified, skilled for Plumbing, online, and positioned
-near the local acceptance coordinates. Provider B is also verified and online
-but positioned outside Provider A's service scenario for negative matching
-tests. The reviewer has only the `provider_reviewer` role and cannot approve
-their own provider application. No real identity documents or personal data
-are created.
+Provider A is approved, verified, skilled for Plumbing, online, and based in
+Kathlal, Gujarat (22.8982000, 72.9928000) with a 25 km service radius.
+Provider B is also verified and online but based in Nadiad, Gujarat
+(22.7000010, 72.8700030) with a 5 km service radius, preserving an
+outside-service-area matching case. The reviewer has only the
+`provider_reviewer` role and cannot approve their own provider application. No
+real identity documents or personal data are created.

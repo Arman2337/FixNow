@@ -6,12 +6,14 @@ import type { Booking } from '../bookings/domain/booking.entity';
 import type { CachedProviderLocation } from '../location/location.types';
 import { RealtimeConnectionRegistry } from './realtime-connection-registry.service';
 import { EtaAdapter } from './eta-adapter';
+import { RouteAdapter } from './route-adapter';
 
 @Injectable()
 export class BookingProjectionService {
   constructor(
     private readonly registry: RealtimeConnectionRegistry,
     private readonly eta: EtaAdapter,
+    private readonly routes: RouteAdapter,
   ) {}
 
   publishBooking(booking: Booking): Promise<void> {
@@ -35,13 +37,26 @@ export class BookingProjectionService {
     availability: BookingTrackingProjection['locationAvailability'],
   ): Promise<void> {
     const occurredAt = new Date().toISOString();
-    const estimate = location
-      ? await this.eta.estimate({
+    const route = location
+      ? await this.routes.route({
           providerLatitude: location.latitude,
           providerLongitude: location.longitude,
           destinationLatitude: Number(booking.locationLat),
           destinationLongitude: Number(booking.locationLng),
         })
+      : null;
+    const estimate = location
+      ? route
+        ? {
+            estimatedMinutes: Math.max(1, Math.ceil(route.durationSeconds / 60)),
+            source: 'openrouteservice-driving',
+          }
+        : await this.eta.estimate({
+            providerLatitude: location.latitude,
+            providerLongitude: location.longitude,
+            destinationLatitude: Number(booking.locationLat),
+            destinationLongitude: Number(booking.locationLng),
+          })
       : null;
     const data: BookingTrackingProjection = {
       bookingId: booking.id,
@@ -59,6 +74,7 @@ export class BookingProjectionService {
         : null,
       locationAvailability: availability,
       eta: estimate ? { ...estimate, calculatedAt: occurredAt } : null,
+      route,
     };
     for (const [client, state] of this.registry.entries()) {
       if (client.readyState !== WebSocket.OPEN) continue;

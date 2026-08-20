@@ -490,7 +490,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                     Text(
                       item.$2,
                       style: const TextStyle(
-                        color: AppColors.textPrimary,
+                        color: AppColors.textOnLightPrimary,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
@@ -580,7 +580,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
           Text(
             title,
             style: const TextStyle(
-              color: AppColors.cream,
+              color: AppColors.textOnLightPrimary,
               fontWeight: FontWeight.w700,
               fontSize: 13,
             ),
@@ -589,7 +589,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
           Text(
             description,
             style: const TextStyle(
-              color: AppColors.textMuted,
+              color: AppColors.textOnLightSecondary,
               fontSize: 11,
             ),
           ),
@@ -643,7 +643,8 @@ class _CategoryList extends StatelessWidget {
   final ValueChanged<ServiceCategory>? onSelected;
 
   @override
-  Widget build(BuildContext context) => Card(
+  Widget build(BuildContext context) => FixCard(
+    padding: EdgeInsets.zero,
     child: Column(
       children: [
         for (var index = 0; index < categories.length; index += 1) ...[

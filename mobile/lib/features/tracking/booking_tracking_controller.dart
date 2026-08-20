@@ -50,6 +50,8 @@ class BookingTrackingController extends ChangeNotifier {
       estimatedMinutes: ((data['eta'] as Map?)?['estimatedMinutes'] as num?)
           ?.toInt(),
       providerLocation: _providerLocation(data),
+      customerLocation: tracking?.customerLocation,
+      route: _route(data),
     );
     await applyRealtime(next);
   }
@@ -80,6 +82,34 @@ class BookingTrackingController extends ChangeNotifier {
       accuracyMeters: accuracy.toDouble(),
       capturedAt: capturedAt,
       receivedAt: receivedAt,
+    );
+  }
+
+  DrivingRoute? _route(Map<String, Object?> data) {
+    final route = data['route'];
+    if (route is! Map) return null;
+    final distance = route['distanceMeters'];
+    final duration = route['durationSeconds'];
+    final rawCoordinates = route['coordinates'];
+    if (distance is! num || duration is! num || rawCoordinates is! List) {
+      return null;
+    }
+    final coordinates = rawCoordinates
+        .whereType<List>()
+        .where((point) =>
+            point.length >= 2 && point[0] is num && point[1] is num)
+        .map(
+          (point) => CustomerMapLocation(
+            longitude: (point[0] as num).toDouble(),
+            latitude: (point[1] as num).toDouble(),
+          ),
+        )
+        .toList();
+    if (coordinates.length < 2) return null;
+    return DrivingRoute(
+      distanceMeters: distance.toDouble(),
+      durationSeconds: duration.toInt(),
+      coordinates: coordinates,
     );
   }
 

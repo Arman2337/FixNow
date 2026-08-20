@@ -75,7 +75,8 @@ void main() {
         home: BookingTrackingScreen(controller: controller),
       ),
     );
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
     expect(find.text('Provider is on the way'), findsOneWidget);
     expect(find.text('Live location unavailable'), findsOneWidget);
     expect(find.text('ETA unavailable'), findsOneWidget);
@@ -84,18 +85,52 @@ void main() {
     expect(find.text('Updates paused'), findsOneWidget);
     expect(find.text('Try again'), findsOneWidget);
   });
+
+  testWidgets('labels both ends of a live provider journey', (tester) async {
+    final controller = BookingTrackingController(
+      bookingId: 'booking-1',
+      source: _Source(
+        _tracking(
+          sequence: 1,
+          provider: const ProviderMapLocation(
+            latitude: 22.89,
+            longitude: 72.99,
+            accuracyMeters: 10,
+            capturedAt: DateTime(2026),
+            receivedAt: DateTime(2026),
+          ),
+          customer: const CustomerMapLocation(latitude: 23.02, longitude: 73.07),
+        ),
+      ),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.dark,
+        home: BookingTrackingScreen(controller: controller),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.text('Provider → your service address'), findsOneWidget);
+    expect(find.bySemanticsLabel('Provider'), findsOneWidget);
+    expect(find.bySemanticsLabel('You'), findsOneWidget);
+  });
 }
 
 BookingTracking _tracking({
   required int sequence,
   LocationAvailability availability = LocationAvailability.live,
   int? eta = 12,
+  ProviderMapLocation? provider,
+  CustomerMapLocation? customer,
 }) => BookingTracking(
   bookingId: 'booking-1',
   status: 'EN_ROUTE',
   sequence: sequence,
   locationAvailability: availability,
   estimatedMinutes: eta,
+  providerLocation: provider,
+  customerLocation: customer,
 );
 
 class _Source implements BookingTrackingSource {

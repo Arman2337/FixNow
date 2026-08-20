@@ -61,7 +61,7 @@ class FixButton extends StatelessWidget {
       FixButtonVariant.secondary => OutlinedButton(
         style: OutlinedButton.styleFrom(
           minimumSize: Size(expand ? double.infinity : 48, height),
-          foregroundColor: AppColors.textPrimary,
+          foregroundColor: AppColors.primary,
           side: const BorderSide(color: AppColors.borderStrong),
           shape: const RoundedRectangleBorder(
             borderRadius: AppRadius.buttonBorder,

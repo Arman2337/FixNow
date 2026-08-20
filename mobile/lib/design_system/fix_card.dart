@@ -1,6 +1,7 @@
 import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/app_colors.dart';
+import 'package:fixnow_mobile/design_system/app_typography.dart';
 import 'package:flutter/material.dart';
 
 enum FixCardTone { standard, secondary, elevated, emergency, gold, cream }
@@ -27,6 +28,10 @@ class FixCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final usesLightSurface = switch (tone) {
+      FixCardTone.standard || FixCardTone.secondary || FixCardTone.cream || FixCardTone.gold || FixCardTone.emergency => true,
+      FixCardTone.elevated => false,
+    };
     final bgColor = switch (tone) {
       FixCardTone.standard => AppColors.surfacePrimary,
       FixCardTone.secondary => AppColors.surfaceSecondary,
@@ -44,9 +49,24 @@ class FixCard extends StatelessWidget {
 
     final radius = borderRadius ?? AppRadius.cardBorder;
 
-    final content = Padding(
-      padding: padding,
-      child: child,
+    final foreground = usesLightSurface
+        ? AppColors.textOnSurface
+        : AppColors.textPrimary;
+    final supporting = usesLightSurface
+        ? AppColors.textOnSurfaceSecondary
+        : AppColors.textSecondary;
+
+    final content = Theme(
+      data: Theme.of(context).copyWith(
+        textTheme: AppTypography.textTheme(foreground, supporting),
+      ),
+      child: IconTheme(
+        data: IconThemeData(color: foreground),
+        child: DefaultTextStyle.merge(
+          style: TextStyle(color: foreground),
+          child: Padding(padding: padding, child: child),
+        ),
+      ),
     );
 
     final card = Card(

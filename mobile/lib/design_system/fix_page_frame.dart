@@ -3,7 +3,7 @@ import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:flutter/material.dart';
 
 class FixPageFrame extends StatelessWidget {
-  const FixPageFrame({required this.child, this.maxWidth = 760, super.key});
+  const FixPageFrame({required this.child, this.maxWidth = 480, super.key});
 
   final Widget child;
   final double maxWidth;

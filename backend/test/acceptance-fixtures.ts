@@ -95,8 +95,8 @@ async function seed(client: PoolClient): Promise<void> {
   await client.query(
     `INSERT INTO "provider_profiles"
       ("user_id", "display_name", "bio", "service_radius_km", "base_latitude", "base_longitude")
-     VALUES ($1, 'Acceptance Provider A', 'Synthetic local fixture', 25, 22.3072, 73.1812),
-            ($2, 'Acceptance Provider B', 'Synthetic local fixture', 5, 28.6139, 77.2090)
+     VALUES ($1, 'Acceptance Provider A', 'Synthetic local fixture', 25, 22.8982000, 72.9928000),
+            ($2, 'Acceptance Provider B', 'Synthetic local fixture', 5, 22.7000010, 72.8700030)
      ON CONFLICT ("user_id") DO UPDATE SET "display_name" = EXCLUDED."display_name",
        "service_radius_km" = EXCLUDED."service_radius_km", "base_latitude" = EXCLUDED."base_latitude",
        "base_longitude" = EXCLUDED."base_longitude"`,

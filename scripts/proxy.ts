@@ -41,7 +41,7 @@ const server = Bun.serve({
       console.log(`\x1b[35m[WS UPGRADE]\x1b[0m ${url.pathname}${url.search} -> ${targetWsUrl}`);
 
       const success = server.upgrade(req, {
-        data: { targetWsUrl },
+        data: { targetWsUrl, pendingMessages: [] as string[] },
       });
       if (success) return undefined;
     }
@@ -128,12 +128,18 @@ const server = Bun.serve({
 
   websocket: {
     open(ws) {
-      const { targetWsUrl } = ws.data as { targetWsUrl: string };
+      const { targetWsUrl, pendingMessages } = ws.data as {
+        targetWsUrl: string;
+        pendingMessages: string[];
+      };
       const backendWs = new WebSocket(targetWsUrl);
       (ws as any).backendWs = backendWs;
 
       backendWs.onopen = () => {
         console.log(`\x1b[32m[WS CONNECTED]\x1b[0m Connected to backend WS`);
+        for (const message of pendingMessages.splice(0)) {
+          backendWs.send(message);
+        }
       };
 
       backendWs.onmessage = (event) => {
@@ -153,6 +159,11 @@ const server = Bun.serve({
       const backendWs = (ws as any).backendWs as WebSocket | undefined;
       if (backendWs && backendWs.readyState === WebSocket.OPEN) {
         backendWs.send(message);
+      } else {
+        const data = ws.data as { pendingMessages: string[] };
+        data.pendingMessages.push(
+          typeof message === "string" ? message : message.toString(),
+        );
       }
     },
     close(ws) {

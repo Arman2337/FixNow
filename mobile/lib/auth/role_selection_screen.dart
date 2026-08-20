@@ -136,7 +136,7 @@ class _RoleCard extends StatelessWidget {
                   icon,
                   color: selected
                       ? AppColors.onPrimary
-                      : AppColors.textSecondary,
+                      : AppColors.primary,
                 ),
               ),
               const SizedBox(width: AppSpacing.lg),
@@ -144,12 +144,17 @@ class _RoleCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: Theme.of(context).textTheme.titleMedium),
+                    Text(
+                      title,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: AppColors.selectedLightCardText,
+                      ),
+                    ),
                     const SizedBox(height: AppSpacing.xs),
                     Text(
                       description,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.textSecondary,
+                        color: AppColors.selectedLightCardSecondaryText,
                       ),
                     ),
                   ],

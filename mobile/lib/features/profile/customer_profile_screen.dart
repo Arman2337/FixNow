@@ -134,6 +134,8 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                     const SizedBox(height: AppSpacing.xl),
                     TextFormField(
                       controller: _nameController,
+                      style: const TextStyle(color: AppColors.inputText),
+                      cursorColor: AppColors.primary,
                       maxLength: 80,
                       autofillHints: const [AutofillHints.name],
                       textInputAction: TextInputAction.done,

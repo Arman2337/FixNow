@@ -119,7 +119,9 @@ class ProviderHomeScreen extends StatelessWidget {
                 children: [
                   Text(
                     'Working schedule',
-                    style: Theme.of(context).textTheme.titleMedium,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: AppColors.textOnLightPrimary,
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
@@ -127,7 +129,7 @@ class ProviderHomeScreen extends StatelessWidget {
                         ? 'No recurring hours set.'
                         : 'Monday to Friday, 09:00–17:00 ${availability?.timeZone}',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: AppColors.textOnLightSecondary,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.md),
@@ -149,7 +151,9 @@ class ProviderHomeScreen extends StatelessWidget {
             const SizedBox(height: AppSpacing.xxl),
             Text(
               'Incoming requests',
-              style: Theme.of(context).textTheme.titleLarge,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: AppColors.textOnDarkPrimary,
+              ),
             ),
             const SizedBox(height: AppSpacing.md),
             FixButton(
@@ -222,7 +226,9 @@ class ProviderHomeScreen extends StatelessWidget {
             const SizedBox(height: AppSpacing.xxl),
             Text(
               'Assigned work',
-              style: Theme.of(context).textTheme.titleLarge,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: AppColors.textOnDarkPrimary,
+              ),
             ),
             const SizedBox(height: AppSpacing.md),
             if (active.isEmpty)

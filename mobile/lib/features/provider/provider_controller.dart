@@ -23,6 +23,8 @@ class ProviderController extends ChangeNotifier {
   List<Map<String, Object?>> categories = const [];
   String? errorMessage;
   String? actionError;
+  final Map<String, bool> locationPublished = {};
+  final Set<String> _publishingLocation = {};
   bool refreshingRequests = false;
   final Map<String, int> _locationSequences = {};
   final Map<String, bool> locationSharing = {};
@@ -119,41 +121,46 @@ class ProviderController extends ChangeNotifier {
   Future<void> setLocationConsent(CustomerBooking job, bool granted) async {
     final client = realtime;
     if (client == null || job.status != 'EN_ROUTE') return;
-    await client.subscribeBooking(job.id);
-    await client.sendPresence(true);
-    await client.sendLocationConsent(
-      bookingId: job.id,
-      granted: granted,
-      noticeVersion: '2026-08-13',
-    );
-    locationSharing[job.id] = granted;
-    notifyListeners();
+    actionError = null;
+    try {
+      await client.subscribeBooking(job.id);
+      await client.sendPresence(true);
+      await client.sendLocationConsent(
+        bookingId: job.id,
+        granted: granted,
+        noticeVersion: '2026-08-13',
+      );
+      locationSharing[job.id] = granted;
+      if (!granted) locationPublished.remove(job.id);
+      notifyListeners();
+      if (granted) await publishCurrentLocation(job);
+    } catch (_) {
+      actionError = 'Location sharing could not start. Check that you are online and try again.';
+      notifyListeners();
+    }
   }
 
   Future<void> publishCurrentLocation(CustomerBooking job) async {
     final client = realtime;
-    if (client == null || job.status != 'EN_ROUTE') {
-      print('publishCurrentLocation aborted: client is null or job not EN_ROUTE');
+    if (client == null || job.status != 'EN_ROUTE' ||
+        _publishingLocation.contains(job.id)) {
       return;
     }
-    
+
+    actionError = null;
+    _publishingLocation.add(job.id);
+    notifyListeners();
     try {
-      print('Requesting current position from browser...');
       final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
       );
-      print('Position obtained: ${position.latitude}, ${position.longitude}');
 
       final sequence = (_locationSequences[job.id] ?? 0) + 1;
       _locationSequences[job.id] = sequence;
-      
-      print('Connecting and subscribing to booking ${job.id}...');
       await client.subscribeBooking(job.id);
-      
-      print('Sending presence...');
       await client.sendPresence(true);
-      
-      print('Sending location update...');
       await client.sendLocation(
         bookingId: job.id,
         sequence: sequence,
@@ -162,12 +169,30 @@ class ProviderController extends ChangeNotifier {
         longitude: position.longitude,
         accuracyMeters: position.accuracy,
       );
-      print('Location update completely sent!');
-    } catch (e, stack) {
-      print('Error in publishCurrentLocation: $e');
-      print(stack);
+      locationPublished[job.id] = true;
+    } on StateError catch (error) {
+      actionError = _locationError(error.message.toString());
+    } catch (_) {
+      actionError =
+          'Your current location could not be sent. Allow browser location access and try again.';
+    } finally {
+      _publishingLocation.remove(job.id);
+      notifyListeners();
     }
   }
+
+  bool isPublishingLocation(String bookingId) =>
+      _publishingLocation.contains(bookingId);
+
+  static String _locationError(String code) => switch (code) {
+    'stale-or-rate-limited' =>
+      'Location is already live. Wait 10 seconds before sending another update.',
+    'not-authorized' =>
+      'Location sharing needs an online provider and an active EN ROUTE job.',
+    'invalid-location' =>
+      'The browser location was not accurate enough. Try again after updating location.',
+    _ => 'Your current location could not be sent. Try again.',
+  };
 
   Future<void> acceptRequest(ProviderRequest request) async {
     actionError = null;

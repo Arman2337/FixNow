@@ -174,6 +174,8 @@ class _ProviderSetupScreenState extends State<ProviderSetupScreen> {
                 const SizedBox(height: AppSpacing.xl),
                 TextFormField(
                   controller: _name,
+                  style: const TextStyle(color: AppColors.inputText),
+                  cursorColor: AppColors.primary,
                   decoration: const InputDecoration(
                     labelText: 'Professional display name',
                     prefixIcon: Icon(Icons.badge_outlined),
@@ -185,6 +187,8 @@ class _ProviderSetupScreenState extends State<ProviderSetupScreen> {
                 const SizedBox(height: AppSpacing.md),
                 TextFormField(
                   controller: _bio,
+                  style: const TextStyle(color: AppColors.inputText),
+                  cursorColor: AppColors.primary,
                   maxLength: 1000,
                   maxLines: 4,
                   decoration: const InputDecoration(
@@ -195,6 +199,8 @@ class _ProviderSetupScreenState extends State<ProviderSetupScreen> {
                 const SizedBox(height: AppSpacing.md),
                 TextFormField(
                   controller: _radius,
+                  style: const TextStyle(color: AppColors.inputText),
+                  cursorColor: AppColors.primary,
                   keyboardType: TextInputType.number,
                   decoration: const InputDecoration(
                     labelText: 'Service radius (km)',

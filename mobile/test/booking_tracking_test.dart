@@ -44,6 +44,44 @@ void main() {
     );
   });
 
+  test(
+    'keeps a newer live projection after reconciling a sequence gap',
+    () async {
+      final source = _Source(
+        _tracking(sequence: 1, availability: LocationAvailability.unavailable),
+      );
+      final controller = BookingTrackingController(
+        bookingId: 'booking-1',
+        source: source,
+      );
+      await controller.loadSnapshot();
+
+      final provider = ProviderMapLocation(
+        latitude: 22.8982,
+        longitude: 72.9928,
+        accuracyMeters: 15,
+        capturedAt: DateTime(2026, 8, 21, 11, 31),
+        receivedAt: DateTime(2026, 8, 21, 11, 34),
+      );
+      source.value = _tracking(
+        sequence: 2,
+        availability: LocationAvailability.unavailable,
+      );
+
+      await controller.applyRealtime(
+        _tracking(sequence: 3, provider: provider),
+      );
+
+      expect(controller.tracking?.sequence, 3);
+      expect(
+        controller.tracking?.locationAvailability,
+        LocationAvailability.live,
+      );
+      expect(controller.tracking?.providerLocation, provider);
+      expect(source.calls, 2);
+    },
+  );
+
   test('preserves last status and reports offline on disconnect', () async {
     final controller = BookingTrackingController(
       bookingId: 'booking-1',

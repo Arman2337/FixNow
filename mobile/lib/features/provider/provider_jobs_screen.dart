@@ -201,7 +201,10 @@ String _shortId(String value) {
   return short.toUpperCase();
 }
 
-String _date(DateTime value) => '${value.day}/${value.month}/${value.year}';
+String _date(DateTime value) {
+  final local = value.toLocal();
+  return '${local.day}/${local.month}/${local.year}';
+}
 
 class _LiveTrackingBlock extends StatelessWidget {
   const _LiveTrackingBlock({required this.job, required this.controller});

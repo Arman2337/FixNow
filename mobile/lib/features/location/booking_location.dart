@@ -64,10 +64,16 @@ class GeolocatorBookingLocationGateway implements BookingLocationGateway {
   @override
   Future<BookingLocationFix> current() async => _fromPosition(
     await Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        timeLimit: Duration(seconds: 15),
-      ),
+      locationSettings: kIsWeb
+          ? WebSettings(
+              accuracy: LocationAccuracy.high,
+              timeLimit: const Duration(seconds: 15),
+              maximumAge: const Duration(minutes: 2),
+            )
+          : const LocationSettings(
+              accuracy: LocationAccuracy.high,
+              timeLimit: Duration(seconds: 15),
+            ),
     ),
   );
 
@@ -94,14 +100,21 @@ class BookingLocationResolver implements BookingLocationProvider {
   BookingLocationResolver({
     BookingLocationGateway? gateway,
     DateTime Function()? now,
+    bool? isWeb,
+    this.initialFix,
     this.maxAge = const Duration(minutes: 2),
+    this.initialFixMaxAge = const Duration(minutes: 30),
     this.maxAccuracyMeters = 100,
   }) : _gateway = gateway ?? const GeolocatorBookingLocationGateway(),
-       _now = now ?? DateTime.now;
+       _now = now ?? DateTime.now,
+       _isWeb = isWeb ?? kIsWeb;
 
   final BookingLocationGateway _gateway;
   final DateTime Function() _now;
+  final bool _isWeb;
+  final BookingLocationFix? initialFix;
   final Duration maxAge;
+  final Duration initialFixMaxAge;
   final double maxAccuracyMeters;
 
   @override
@@ -126,6 +139,11 @@ class BookingLocationResolver implements BookingLocationProvider {
         );
       }
 
+      if (initialFix case final fix?
+          when _isUsable(fix, maxFixAge: initialFixMaxAge)) {
+        return fix;
+      }
+
       try {
         final current = await _gateway.current();
         if (_isUsable(current)) return current;
@@ -133,9 +151,11 @@ class BookingLocationResolver implements BookingLocationProvider {
 
       final fallback = await _gateway.lastKnown();
       if (fallback == null) {
-        throw const BookingLocationFailure(
+        throw BookingLocationFailure(
           BookingLocationFailureKind.unavailable,
-          'We could not get your location. Move to an open area and try again.',
+          _isWeb
+              ? 'Your browser could not provide a precise location. Choose your service location on the map to continue.'
+              : 'We could not get your location. Move to an open area and try again.',
         );
       }
       if (!_isFresh(fallback)) {
@@ -161,11 +181,12 @@ class BookingLocationResolver implements BookingLocationProvider {
     }
   }
 
-  bool _isUsable(BookingLocationFix fix) => _isFresh(fix) && _isAccurate(fix);
+  bool _isUsable(BookingLocationFix fix, {Duration? maxFixAge}) =>
+      _isFresh(fix, maxFixAge: maxFixAge) && _isAccurate(fix);
 
-  bool _isFresh(BookingLocationFix fix) {
+  bool _isFresh(BookingLocationFix fix, {Duration? maxFixAge}) {
     final age = _now().toUtc().difference(fix.timestamp.toUtc());
-    return age >= Duration.zero && age <= maxAge;
+    return age >= Duration.zero && age <= (maxFixAge ?? maxAge);
   }
 
   bool _isAccurate(BookingLocationFix fix) =>

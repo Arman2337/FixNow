@@ -8,6 +8,7 @@ import 'package:fixnow_mobile/design_system/fix_card.dart';
 import 'package:fixnow_mobile/design_system/fix_components.dart';
 import 'package:fixnow_mobile/features/location/location_consent_card.dart';
 import 'package:fixnow_mobile/features/location/location_consent_controller.dart';
+import 'package:fixnow_mobile/features/location/booking_location.dart';
 import 'package:fixnow_mobile/features/services/service_category.dart';
 import 'package:fixnow_mobile/features/services/service_discovery_controller.dart';
 import 'package:fixnow_mobile/features/bookings/booking_controller.dart';
@@ -28,7 +29,7 @@ class ServiceDiscoveryScreen extends StatefulWidget {
   final ServiceDiscoveryController controller;
   final LocationConsentController locationController;
   final BookingController? bookingsController;
-  final ValueChanged<ServiceCategory>? onCategorySelected;
+  final void Function(ServiceCategory, BookingLocationFix?)? onCategorySelected;
 
   @override
   State<ServiceDiscoveryScreen> createState() => _ServiceDiscoveryScreenState();
@@ -36,6 +37,7 @@ class ServiceDiscoveryScreen extends StatefulWidget {
 
 class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
   String? _locationName;
+  BookingLocationFix? _bookingLocation;
 
   @override
   void initState() {
@@ -61,20 +63,34 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
   Future<void> _fetchLocationName() async {
     try {
       final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.low,
-          timeLimit: Duration(seconds: 15),
-        ),
+        locationSettings: kIsWeb
+            ? WebSettings(
+                accuracy: LocationAccuracy.low,
+                timeLimit: Duration(seconds: 5),
+                maximumAge: Duration(minutes: 5),
+              )
+            : const LocationSettings(
+                accuracy: LocationAccuracy.low,
+                timeLimit: Duration(seconds: 5),
+              ),
       );
+      _bookingLocation = BookingLocationFix(
+        latitude: position.latitude,
+        longitude: position.longitude,
+        accuracyMeters: position.accuracy,
+        timestamp: position.timestamp,
+      );
+      if (mounted) {
+        setState(() => _locationName = 'Location found');
+      }
 
       if (kIsWeb) {
         // Geocoding package doesn't support web by default without a web plugin.
         // We fallback to a generic message if it fails on web.
         try {
-          final placemarks = await Geocoding().placemarkFromCoordinates(
-            position.latitude,
-            position.longitude,
-          );
+          final placemarks = await Geocoding()
+              .placemarkFromCoordinates(position.latitude, position.longitude)
+              .timeout(const Duration(seconds: 3));
           if (placemarks.isNotEmpty) {
             _updateLocationName(placemarks.first);
             return;
@@ -84,7 +100,9 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
             final uri = Uri.parse(
               'https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${position.latitude}&longitude=${position.longitude}&localityLanguage=en',
             );
-            final response = await http.get(uri);
+            final response = await http
+                .get(uri)
+                .timeout(const Duration(seconds: 3));
             if (response.statusCode == 200) {
               final data = jsonDecode(response.body);
               final city = data['city'] ?? data['locality'];
@@ -109,10 +127,9 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
           }
         }
       } else {
-        final placemarks = await Geocoding().placemarkFromCoordinates(
-          position.latitude,
-          position.longitude,
-        );
+        final placemarks = await Geocoding()
+            .placemarkFromCoordinates(position.latitude, position.longitude)
+            .timeout(const Duration(seconds: 3));
         if (placemarks.isNotEmpty) {
           _updateLocationName(placemarks.first);
         }
@@ -145,7 +162,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
           )
           .firstOrNull;
       if (match != null && widget.onCategorySelected != null) {
-        widget.onCategorySelected!(match);
+        _selectCategory(match);
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
@@ -245,9 +262,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                 onTap: () {
                   if (widget.controller.categories.isNotEmpty &&
                       widget.onCategorySelected != null) {
-                    widget.onCategorySelected!(
-                      widget.controller.categories.first,
-                    );
+                    _selectCategory(widget.controller.categories.first);
                   }
                 },
               ),
@@ -673,10 +688,13 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
         DiscoveryStatus.ready => [
           _CategoryList(
             categories: widget.controller.categories,
-            onSelected: widget.onCategorySelected,
+            onSelected: _selectCategory,
           ),
         ],
       };
+
+  void _selectCategory(ServiceCategory category) =>
+      widget.onCategorySelected?.call(category, _bookingLocation);
 }
 
 class _CategoryList extends StatelessWidget {

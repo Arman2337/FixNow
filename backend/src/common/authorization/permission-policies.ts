@@ -42,6 +42,7 @@ export const PERMISSIONS = {
   adminBookingsRead: 'admin.bookings.read',
   adminBookingsIntervene: 'admin.bookings.intervene',
   complaintsCreate: 'complaints.create',
+  aiRecommendationCreate: 'ai.recommendation.create',
   complaintsReadSelf: 'complaints.read.self',
   adminComplaintsRead: 'admin.complaints.read',
   adminComplaintsUpdate: 'admin.complaints.update',
@@ -288,6 +289,10 @@ export const PERMISSION_POLICIES: Readonly<
   },
   [PERMISSIONS.complaintsCreate]: {
     roles: ['customer', 'verified_provider'],
+  },
+  [PERMISSIONS.aiRecommendationCreate]: {
+    roles: ['customer'],
+    relationship: 'self',
   },
   [PERMISSIONS.complaintsReadSelf]: {
     roles: ['customer', 'verified_provider'],

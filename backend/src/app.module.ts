@@ -18,6 +18,7 @@ import { MatchingModule } from './matching/matching.module';
 import { RealtimeModule } from './realtime/realtime.module';
 import { AdminModule } from './admin/admin.module';
 import { ComplaintsModule } from './support/complaints/complaints.module';
+import { AiModule } from './ai/ai.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { ComplaintsModule } from './support/complaints/complaints.module';
     RealtimeModule,
     AdminModule,
     ComplaintsModule,
+    AiModule,
   ],
   controllers: [AppController],
   providers: [

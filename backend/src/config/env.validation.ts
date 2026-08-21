@@ -23,6 +23,11 @@ export enum BooleanString {
   True = 'true',
 }
 
+export enum AiProviderName {
+  Disabled = 'disabled',
+  Fake = 'fake',
+}
+
 export class EnvironmentVariables {
   @IsEnum(Environment)
   @IsOptional()
@@ -122,6 +127,43 @@ export class EnvironmentVariables {
   @IsString()
   @IsOptional()
   OPENROUTESERVICE_API_KEY?: string;
+
+  @IsEnum(BooleanString)
+  @IsOptional()
+  AI_ENABLED: BooleanString = BooleanString.False;
+
+  @IsEnum(AiProviderName)
+  @IsOptional()
+  AI_PROVIDER: AiProviderName = AiProviderName.Disabled;
+
+  @IsString()
+  @MinLength(1)
+  @IsOptional()
+  AI_MODEL: string = 'not-configured';
+
+  @IsInt()
+  @Min(100)
+  @Max(30_000)
+  @IsOptional()
+  AI_TIMEOUT_MS: number = 3_000;
+
+  @IsInt()
+  @Min(1)
+  @Max(2_048)
+  @IsOptional()
+  AI_MAX_OUTPUT_TOKENS: number = 256;
+
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  @IsOptional()
+  AI_REQUEST_RATE_LIMIT: number = 10;
+
+  @IsInt()
+  @Min(1_000)
+  @Max(3_600_000)
+  @IsOptional()
+  AI_REQUEST_RATE_WINDOW_MS: number = 60_000;
 }
 
 export function validate(config: Record<string, unknown>) {
@@ -139,6 +181,7 @@ export function validate(config: Record<string, unknown>) {
   validateRealtimeOrigins(validatedConfig);
   validateWebOrigins(validatedConfig);
   validateLocalOtpBypass(validatedConfig);
+  validateAiConfiguration(validatedConfig);
   if (
     validatedConfig.LOCATION_CACHE_TTL_MS >
     validatedConfig.LOCATION_STALE_AFTER_MS
@@ -148,6 +191,21 @@ export function validate(config: Record<string, unknown>) {
     );
   }
   return validatedConfig;
+}
+
+function validateAiConfiguration(config: EnvironmentVariables): void {
+  if (
+    config.AI_ENABLED === BooleanString.True &&
+    config.AI_PROVIDER === AiProviderName.Disabled
+  ) {
+    throw new Error('AI_ENABLED requires a supported AI_PROVIDER');
+  }
+  if (
+    config.NODE_ENV === Environment.Production &&
+    config.AI_PROVIDER === AiProviderName.Fake
+  ) {
+    throw new Error('AI_PROVIDER=fake is prohibited in production');
+  }
 }
 
 function validateLocalOtpBypass(config: EnvironmentVariables): void {

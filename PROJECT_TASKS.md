@@ -55,18 +55,18 @@ Only these statuses are valid. A task cannot be completed while required validat
 # Project Progress
 
 Total Tasks: 101
-Completed: 77
+Completed: 80
 In Progress: 0
 Blocked: 5
-Pending: 6
-Deferred: 12
+Pending: 2
+Deferred: 13
 Cancelled: 1
-Current Phase: P0/P1 completion and approval gates
-Next Recommended Task: Resolve the P1 approval and dependency blockers for FN-055 and FN-061 through FN-064.
+Current Phase: Ratings and reviews delivery
+Next Recommended Task: FN-054 — Implement Booking Ratings and Reviews.
 
 # Current Work
 
-No active implementation task. Do not begin P2 work while the recorded P1 approval and dependency blockers remain.
+None.
 
 # Current Product Completion Scope
 
@@ -74,7 +74,7 @@ This master completion run treats the following as the approved current product 
 
 - Customer and provider experiences; authentication and verification; services; booking lifecycle and matching; realtime and live location; service-start OTP; help and complaints; approved emergency and notification behavior; approved AI behavior; security; testing; responsive behavior; accessibility; and operational admin tools.
 
-Deferred from current product completion scope: payments, payment gateway/orders, invoices, refunds, wallet, provider payouts, ratings, reviews, and review moderation. These roadmap items remain in the permanent task history but do not block current-scope completion.
+Deferred from current product completion scope: payments, payment gateway/orders, invoices, refunds, wallet, provider payouts, and financial/payment-dependent functionality. Ratings, reviews, and review moderation are back in current development scope. These roadmap items remain in the permanent task history but do not block current-scope completion.
 
 # Master Run Reconciliation — 2026-08-21
 
@@ -92,7 +92,7 @@ Material architecture decisions belong in [`docs/architecture/decisions/`](docs/
 
 ## FN-001 â€” Initialize Git Repository
 
-Status: âœ… Completed
+Status: ✅ Completed
 Priority: P1 â€” High
 Area: Repository
 Depends On: None
@@ -131,7 +131,7 @@ PR: Pending
 
 ## FN-002 â€” Establish Agent Development Rules
 
-Status: âœ… Completed
+Status: ✅ Completed
 Priority: P1 â€” High
 Area: Repository
 Depends On: FN-001
@@ -687,7 +687,7 @@ PR: #1
 
 ## FN-016 â€” Define AI Governance and Evaluation Architecture
 
-Status: â¬œ Pending
+Status: ✅ Completed
 Priority: P2 â€” Medium
 Area: AI Architecture
 Depends On: FN-010, FN-014
@@ -703,7 +703,7 @@ Define allowed AI uses, provider selection criteria, data controls, evaluation, 
 - Do not integrate models or upload private data.
 
 ### Acceptance Criteria
-- [ ] AI risks, metrics, failure handling, and approval gates are documented.
+- [x] AI risks, metrics, failure handling, and approval gates are documented in ADR-0014 and `docs/ai/governance-and-evaluation-architecture.md`.
 
 ### Validation
 ```bash
@@ -716,13 +716,15 @@ docs/architecture/decisions/ docs/ai/ ai/
 ```
 
 ### Notes
-None.
+- ADR-0014 establishes an advisory-only, provider-neutral boundary. It forbids autonomous booking, assignment, emergency dispatch, catalog invention, and sensitive external data processing.
+- The policy defines catalog grounding against active service categories, structured-output/schema validation, confidence/clarification/abstention handling, safety escalation, privacy/redaction, provider gates, evaluation, rollout flags, kill switch, monitoring, cost limits, and human oversight.
+- No model, SDK, endpoint, provider, prompt, or external AI call was implemented. FN-056 is the next recommended AI task and remains pending.
 
 ### Completion Record
-Completed By:
-Completed Date:
-Commit:
-PR:
+Completed By: Codex
+Completed Date: 2026-08-21
+Commit: Pending
+PR: Pending
 
 ## FN-072 â€” Establish Authoritative UI/UX Design System
 
@@ -1901,7 +1903,7 @@ PR: Pending
 # Phase 9 â€” Payments
 
 ## FN-051 â€” Decide Payment Architecture and Integrate Provider Adapter
-Status: â¸ï¸ Deferred
+Status: Deferred (out of current MVP scope)
 Priority: P1 â€” High
 Area: Payments Architecture
 Depends On: FN-010, FN-014, FN-038
@@ -2005,7 +2007,7 @@ PR:
 # Phase 10 â€” Ratings & Trust
 
 ## FN-054 â€” Implement Booking Ratings and Reviews
-Status: â¸ï¸ Deferred
+Status: ⬜ Pending
 Priority: P2 â€” Medium
 Area: Trust
 Depends On: FN-041, FN-027
@@ -2030,7 +2032,7 @@ backend/src/ratings/ mobile/lib/features/ratings/ shared/
 ### Notes
 None.
 ### Notes
-Deferred from current delivery scope per FN-097.
+Reactivated for current development scope by the 2026-08-21 roadmap decision. Do not begin implementation until explicitly selected.
 
 ### Completion Record
 Completed By:
@@ -2064,9 +2066,9 @@ backend/src/complaints/ backend/src/trust/ docs/security/ shared/
 ### Notes
 AI fraud assistance remains separate in FN-060.
 ### Blocker
-FN-054 (ratings and reviews) is explicitly deferred from the approved current product scope, but remains a declared dependency for the appeal hooks in this task.
+FN-054 (ratings and reviews) is now pending but remains incomplete; it is a declared dependency for the appeal hooks in this task.
 ### Required To Unblock
-Approve removing or replacing the FN-054 dependency, or bring the ratings/reviews scope back into the current delivery plan.
+Complete FN-054, then re-evaluate the remaining FN-055 dependencies and approval requirements.
 ### Completion Record
 Completed By:
 Completed Date:
@@ -2076,7 +2078,7 @@ PR:
 # Phase 11 â€” AI
 
 ## FN-056 â€” Initialize Governed AI Service Foundation
-Status: â¬œ Pending
+Status: ✅ Completed
 Priority: P2 â€” Medium
 Area: AI
 Depends On: FN-016, FN-017
@@ -2089,7 +2091,7 @@ Create the approved model-facing service boundary, evaluation harness, configura
 ### Do Not
 - Do not send sensitive data or permit model output to cause direct side effects.
 ### Acceptance Criteria
-- [ ] Configuration, timeout, malformed output, redaction, budget, and fallback tests pass.
+- [x] Configuration, timeout, malformed output, redaction, budget/rate limit, and deterministic fallback tests pass.
 ### Validation
 ```bash
 # Run AI lint/type/tests and evaluation smoke tests without live secrets.
@@ -2099,15 +2101,17 @@ Create the approved model-facing service boundary, evaluation harness, configura
 ai/ backend/src/ai/ docs/ai/ .env.example
 ```
 ### Notes
-No live provider calls in default tests.
+- Added a disabled-by-default, provider-neutral backend AI boundary with deterministic fake/disabled providers, structured JSON validation, input allow-listing/redaction, bounded timeout/cancellation, metadata-only logging, and per-user rate limits.
+- No live provider, SDK, controller, customer-facing recommendation, or external AI call was added. Production rejects the fake provider at startup.
+- Validation passed: `npm run lint`, `npm test -- --runInBand` (52 suites / 236 tests), `npm run build`, and `git diff --check`.
 ### Completion Record
-Completed By:
-Completed Date:
-Commit:
-PR:
+Completed By: Codex
+Completed Date: 2026-08-21
+Commit: Pending
+PR: Pending
 
 ## FN-057 â€” Implement Issue Classification and Service Recommendation
-Status: â¬œ Pending
+Status: ✅ Completed
 Priority: P2 â€” Medium
 Area: AI
 Depends On: FN-029, FN-056
@@ -2120,7 +2124,7 @@ Classify customer issue text and recommend existing service categories with conf
 ### Do Not
 - Do not invent categories or automatically create bookings.
 ### Acceptance Criteria
-- [ ] Quality thresholds, adversarial input, abstention, latency, cost, and schema tests pass.
+- [x] Active-category grounding, adversarial input, clarification/abstention, malformed-output fallback, safe API behavior, and mobile handoff are implemented and fully validated with the deterministic provider.
 ### Validation
 ```bash
 # Run AI checks and the versioned classification/recommendation evaluation suite.
@@ -2130,15 +2134,20 @@ Classify customer issue text and recommend existing service categories with conf
 ai/src/classification/ ai/evals/ backend/src/ai/ shared/
 ```
 ### Notes
-None.
+- Added a customer-authenticated advisory endpoint, active catalog grounding, deterministic classification fixtures, confidence-aware recommendation, clarification, no-match, unavailable, and safety paths.
+- The mobile Ask FixNow AI screen routes an explicitly accepted category to the existing service-request screen; no AI endpoint creates a booking, request, assignment, or dispatch.
+- Dedicated controller/guard tests prove that only an authenticated customer reaches the advisory service; provider, administrator, and inactive-account authorization outcomes are denied before invocation.
+- Service tests prove active-category grounding, invalid-category rejection, conservative safety/no-match behavior, malformed-output fallback, and prompt-injection confinement. The advisory service has no booking, matching, provider assignment, or dispatch dependency.
+- Focused mobile tests cover disabled initial input, loading/deduplication, recommendation reason/safety/navigation, clarification, no-match browse fallback, and friendly unavailable/retry UI without raw API errors.
+- Required validation passed on 2026-08-21: backend lint/test/build; Flutter analyze (7 pre-existing/info findings, no errors)/test/debug APK; `git diff --check`.
 ### Completion Record
-Completed By:
-Completed Date:
-Commit:
-PR:
+Completed By: Codex
+Completed Date: 2026-08-21
+Commit: Pending
+PR: Pending
 
 ## FN-058 â€” Implement Voice Input and Translation Assistance
-Status: â¬œ Pending
+Status: Deferred (out of current MVP scope)
 Priority: P2 â€” Medium
 Area: AI/Mobile
 Depends On: FN-036, FN-056, FN-057
@@ -2161,7 +2170,13 @@ Transcribe and translate user input with consent, review, and safe fallback.
 ai/src/voice/ ai/src/translation/ mobile/lib/features/assistant/ shared/
 ```
 ### Notes
-None.
+- Implemented the assistive mobile voice boundary with explicit microphone permission handling, listening/processing/error states, editable transcript review, explicit confirmation before FN-057, no raw-audio persistence, and deterministic tests.
+- The default speech gateway is deliberately unavailable and the default translation gateway is English-only. Neither makes an external call or stores audio/transcripts.
+- A real recognizer and non-English translation require an approved backend-governed provider, data-processing/privacy review, configured supported-language set, and deterministic adapter coverage. No unapproved plugin, vendor, credential, or direct Flutter-to-provider call was added.
+
+### Deferral Rationale
+
+Voice and translation provider/model selection is intentionally postponed for additional research into Hugging Face, Azure, Google, open-source/local models, pricing, privacy, language support, and production suitability. Production voice and translation remain disabled until explicitly approved.
 ### Completion Record
 Completed By:
 Completed Date:
@@ -2169,7 +2184,7 @@ Commit:
 PR:
 
 ## FN-059 â€” Implement Image Issue Analysis
-Status: â¬œ Pending
+Status: Deferred (out of current MVP scope)
 Priority: P2 â€” Medium
 Area: AI
 Depends On: FN-031, FN-056, FN-057
@@ -2192,7 +2207,7 @@ Analyze consented issue images for advisory category and safety cues.
 ai/src/vision/ ai/evals/ backend/src/storage/ mobile/lib/features/assistant/
 ```
 ### Notes
-None.
+- Image issue-analysis provider/model selection is intentionally postponed for additional research into vision models, privacy, customer-image data handling, retention, pricing, accuracy, and production suitability. No vision SDK, credential, external image transfer, or unfinished customer control is enabled.
 ### Completion Record
 Completed By:
 Completed Date:
@@ -2200,7 +2215,7 @@ Commit:
 PR:
 
 ## FN-060 â€” Implement Price Estimation and Fraud Signal Assistance
-Status: â¬œ Pending
+Status: ⬜ Pending
 Priority: P2 â€” Medium
 Area: AI/Trust
 Depends On: FN-053, FN-055, FN-056

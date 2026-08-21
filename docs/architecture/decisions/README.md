@@ -18,6 +18,8 @@ Start with [`0000-template.md`](0000-template.md).
 
 ## Records
 
+- [ADR-0014: Adopt advisory AI governance and a provider-neutral boundary](0014-adopt-advisory-ai-governance.md) — Accepted
+
 - [ADR-0001: Adopt a versioned JSON HTTP API](0001-adopt-versioned-json-http-api.md) — Accepted
 - [ADR-0002: Use PostgreSQL as the transactional system of record](0002-use-postgresql-system-of-record.md) — Accepted
 - [ADR-0003: Use Redis for ephemeral cache and coordination](0003-use-redis-ephemeral-cache.md) — Accepted

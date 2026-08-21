@@ -92,6 +92,8 @@ See [`admin/README.md`](admin/README.md) for environment configuration and valid
 
 ## Documentation
 
+- [AI governance and evaluation architecture](docs/ai/governance-and-evaluation-architecture.md)
+
 - [Backend setup and API notes](backend/README.md)
 - [Local provider-document services](infrastructure/local/README.md)
 - [Architecture](docs/architecture/README.md)

@@ -129,4 +129,21 @@ describe('Environment Validation', () => {
       }),
     ).toThrow('LOCATION_CACHE_TTL_MS must not exceed LOCATION_STALE_AFTER_MS');
   });
+
+  it('fails closed for unsupported or unsafe AI provider configuration', () => {
+    const base = {
+      DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/test',
+      REDIS_URL: 'redis://localhost:6379',
+      JWT_SECRET: 'test-only-jwt-secret-at-least-32-characters',
+      OTP_SECRET: 'test-only-otp-secret-at-least-32-characters',
+    };
+
+    expect(() => validate({ ...base, AI_ENABLED: 'true' })).toThrow(
+      'AI_ENABLED requires a supported AI_PROVIDER',
+    );
+    expect(() => validate({ ...base, AI_PROVIDER: 'unknown' })).toThrow();
+    expect(() =>
+      validate({ ...base, NODE_ENV: 'production', AI_PROVIDER: 'fake' }),
+    ).toThrow('AI_PROVIDER=fake is prohibited in production');
+  });
 });

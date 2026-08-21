@@ -150,12 +150,7 @@ export class BookingsService {
     status: BookingStatus,
     expectedVersion: number,
   ): Promise<Booking> {
-    if (
-      ![
-        BookingStatus.EN_ROUTE,
-        BookingStatus.COMPLETED,
-      ].includes(status)
-    ) {
+    if (![BookingStatus.EN_ROUTE, BookingStatus.COMPLETED].includes(status)) {
       throw new BadRequestException('Unsupported provider status command');
     }
     const booking = await this.transition(
@@ -219,23 +214,52 @@ export class BookingsService {
     return booking;
   }
 
-  async getServiceStartOtp(bookingId: string, customerId: string): Promise<{ otp: string }> {
-    const booking = await this.dataSource.getRepository(Booking).findOneBy({ id: bookingId });
+  async getServiceStartOtp(
+    bookingId: string,
+    customerId: string,
+  ): Promise<{ otp: string }> {
+    const booking = await this.dataSource
+      .getRepository(Booking)
+      .findOneBy({ id: bookingId });
     if (!booking) throw new NotFoundException('Booking not found');
-    if (booking.customerId !== customerId) throw new ForbiddenException('Only the customer can view this service OTP');
-    if (booking.status !== BookingStatus.EN_ROUTE) throw new ConflictException('The service OTP is available after the provider is en route');
+    if (booking.customerId !== customerId)
+      throw new ForbiddenException(
+        'Only the customer can view this service OTP',
+      );
+    if (booking.status !== BookingStatus.EN_ROUTE)
+      throw new ConflictException(
+        'The service OTP is available after the provider is en route',
+      );
     return { otp: this.serviceStartOtp(booking) };
   }
 
-  async verifyOtpAndStartService(bookingId: string, providerId: string, otp: string, expectedVersion: number): Promise<Booking> {
-    const booking = await this.transition(bookingId, providerId, expectedVersion, (candidate) => {
-      if (candidate.providerId !== providerId) throw new ForbiddenException('You are not assigned to this booking');
-      if (candidate.status !== BookingStatus.EN_ROUTE) throw new ConflictException('Service can start only after the provider is en route');
-      const expected = Buffer.from(this.serviceStartOtp(candidate));
-      const actual = Buffer.from(otp);
-      if (expected.length !== actual.length || !timingSafeEqual(expected, actual)) throw new ForbiddenException('The service start OTP is incorrect');
-      candidate.transitionTo(BookingStatus.IN_PROGRESS);
-    });
+  async verifyOtpAndStartService(
+    bookingId: string,
+    providerId: string,
+    otp: string,
+    expectedVersion: number,
+  ): Promise<Booking> {
+    const booking = await this.transition(
+      bookingId,
+      providerId,
+      expectedVersion,
+      (candidate) => {
+        if (candidate.providerId !== providerId)
+          throw new ForbiddenException('You are not assigned to this booking');
+        if (candidate.status !== BookingStatus.EN_ROUTE)
+          throw new ConflictException(
+            'Service can start only after the provider is en route',
+          );
+        const expected = Buffer.from(this.serviceStartOtp(candidate));
+        const actual = Buffer.from(otp);
+        if (
+          expected.length !== actual.length ||
+          !timingSafeEqual(expected, actual)
+        )
+          throw new ForbiddenException('The service start OTP is incorrect');
+        candidate.transitionTo(BookingStatus.IN_PROGRESS);
+      },
+    );
     await this.locationService?.invalidateBooking(bookingId);
     await this.bookingProjections?.publishBooking(booking);
     return booking;
@@ -452,7 +476,9 @@ export class BookingsService {
     const secret = this.config?.get<string>('OTP_SECRET');
     if (!secret) throw new Error('OTP_SECRET is not configured');
     const value = createHmac('sha256', secret)
-      .update(`service-start:${booking.id}:${booking.enRouteAt?.toISOString() ?? ''}`)
+      .update(
+        `service-start:${booking.id}:${booking.enRouteAt?.toISOString() ?? ''}`,
+      )
       .digest()
       .readUInt32BE(0);
     return (value % 10000).toString().padStart(4, '0');

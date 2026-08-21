@@ -65,6 +65,24 @@ Next Recommended Task: FN-050 â€” Implement Admin Complaints and Analytics 
 
 # Current Work
 
+Master run active tasks: `FN-100` — Rebuild Mobile UI to Approved Reference with Functional Preservation; `FN-050` — Implement Admin Complaints and Operational Analytics Views.
+
+# Current Product Completion Scope
+
+This master completion run treats the following as the approved current product scope:
+
+- Customer and provider experiences; authentication and verification; services; booking lifecycle and matching; realtime and live location; service-start OTP; help and complaints; approved emergency and notification behavior; approved AI behavior; security; testing; responsive behavior; accessibility; and operational admin tools.
+
+Deferred from current product completion scope: payments, payment gateway/orders, invoices, refunds, wallet, provider payouts, ratings, reviews, and review moderation. These roadmap items remain in the permanent task history but do not block current-scope completion.
+
+# Master Run Reconciliation — 2026-08-21
+
+- `FN-100` already owns the confirmed mobile information gaps: customer complaint detail, provider incoming-request context, provider readiness, and the remaining customer/provider information hierarchy work.
+- `FN-050` already owns the confirmed admin operations gaps: support-case detail and operational analytics. Its dependency is corrected to the completed current-scope complaint workflow `FN-098`; payment analytics remains explicitly deferred.
+- `FN-049` already contains a functional service-catalog workspace in source. The earlier placeholder finding is stale and no duplicate corrective task is required.
+- Customer Home active-booking prioritization and the Admin overview attention metrics are already implemented in source. They will be re-verified during the final re-audit rather than duplicated.
+- The Admin Access placeholder is not present in the current role-aware navigation and no fake access-management screen will be introduced.
+
 Active Tasks: FN-075 â€” Implement Customer Help and Support Experience; FN-100 — Rebuild Mobile UI to Approved Reference
 
 # Decision Log
@@ -1849,10 +1867,10 @@ Commit: 759f403
 PR: #16
 
 ## FN-050 â€” Implement Admin Complaints and Analytics Views
-Status: â¬œ Pending
+Status: In Progress
 Priority: P2 â€” Medium
 Area: Admin
-Depends On: FN-047, FN-055
+Depends On: FN-047, FN-098
 Branch: feat/admin-complaints-analytics
 
 ### Objective

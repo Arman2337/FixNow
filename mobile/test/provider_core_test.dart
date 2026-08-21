@@ -84,8 +84,15 @@ void main() {
     );
 
     expect(find.text('Incoming requests'), findsOneWidget);
+    expect(find.text('Category 1'), findsOneWidget);
     expect(find.text('Kitchen sink leak'), findsOneWidget);
-    expect(find.text('1.2 km away'), findsOneWidget);
+    expect(find.text('About 1.2 km away'), findsOneWidget);
+    expect(
+      find.text(
+        'Customer address and contact details appear only after you accept.',
+      ),
+      findsOneWidget,
+    );
     expect(find.text('Accept request'), findsOneWidget);
   });
 }

@@ -38,7 +38,9 @@ export class OpenRouteServiceAdapter implements RouteAdapter {
         },
       );
       if (!response.ok) return null;
-      return parseOpenRouteServiceRoute(await response.json());
+      return parseOpenRouteServiceRoute(
+        JSON.parse(await response.text()) as unknown,
+      );
     } catch {
       // A route must never block the live-location projection. The bounded ETA
       // remains available when the optional external service is unavailable.
@@ -47,27 +49,50 @@ export class OpenRouteServiceAdapter implements RouteAdapter {
   }
 }
 
-export function parseOpenRouteServiceRoute(value: unknown): DrivingRoute | null {
+export function parseOpenRouteServiceRoute(
+  value: unknown,
+): DrivingRoute | null {
   if (!value || typeof value !== 'object') return null;
   const record = value as Record<string, unknown>;
   const features = record.features;
   if (!Array.isArray(features) || features.length === 0) return null;
-  const feature = features[0];
+  const feature: unknown = features[0] as unknown;
   if (!feature || typeof feature !== 'object') return null;
   const featureRecord = feature as Record<string, unknown>;
   const properties = featureRecord.properties;
   const geometry = featureRecord.geometry;
-  if (!properties || typeof properties !== 'object' || !geometry || typeof geometry !== 'object') return null;
+  if (
+    !properties ||
+    typeof properties !== 'object' ||
+    !geometry ||
+    typeof geometry !== 'object'
+  )
+    return null;
   const summary = (properties as Record<string, unknown>).summary;
   const rawCoordinates = (geometry as Record<string, unknown>).coordinates;
-  if (!summary || typeof summary !== 'object' || !Array.isArray(rawCoordinates)) return null;
+  if (!summary || typeof summary !== 'object' || !Array.isArray(rawCoordinates))
+    return null;
   const distance = (summary as Record<string, unknown>).distance;
   const duration = (summary as Record<string, unknown>).duration;
-  if (typeof distance !== 'number' || typeof duration !== 'number' || distance <= 0 || duration <= 0) return null;
-  const coordinates = rawCoordinates.flatMap((point): Array<[number, number]> => {
-    if (!Array.isArray(point) || point.length < 2 || typeof point[0] !== 'number' || typeof point[1] !== 'number') return [];
-    return [[point[0], point[1]]];
-  });
+  if (
+    typeof distance !== 'number' ||
+    typeof duration !== 'number' ||
+    distance <= 0 ||
+    duration <= 0
+  )
+    return null;
+  const coordinates = rawCoordinates.flatMap(
+    (point): Array<[number, number]> => {
+      if (
+        !Array.isArray(point) ||
+        point.length < 2 ||
+        typeof point[0] !== 'number' ||
+        typeof point[1] !== 'number'
+      )
+        return [];
+      return [[point[0], point[1]]];
+    },
+  );
   if (coordinates.length < 2) return null;
   return {
     distanceMeters: distance,
@@ -82,7 +107,8 @@ function sampleCoordinates(
   const maximumPoints = 80;
   if (coordinates.length <= maximumPoints) return coordinates;
   const step = (coordinates.length - 1) / (maximumPoints - 1);
-  return Array.from({ length: maximumPoints }, (_, index) =>
-    coordinates[Math.round(index * step)],
+  return Array.from(
+    { length: maximumPoints },
+    (_, index) => coordinates[Math.round(index * step)],
   );
 }

@@ -9,6 +9,23 @@ import 'package:fixnow_mobile/design_system/fix_status_chip.dart';
 import 'package:fixnow_mobile/features/provider/provider_controller.dart';
 import 'package:flutter/material.dart';
 
+String providerServiceName(
+  List<Map<String, Object?>> categories,
+  String categoryId,
+) {
+  for (final category in categories) {
+    if (category['id'] == categoryId) {
+      final name = category['name']?.toString().trim();
+      if (name != null && name.isNotEmpty) return name;
+    }
+  }
+  return categoryId
+      .split(RegExp('[-_]'))
+      .where((word) => word.isNotEmpty)
+      .map((word) => '${word[0].toUpperCase()}${word.substring(1)}')
+      .join(' ');
+}
+
 class ProviderHomeScreen extends StatelessWidget {
   const ProviderHomeScreen({required this.controller, super.key});
   final ProviderController controller;
@@ -224,8 +241,12 @@ class ProviderHomeScreen extends StatelessWidget {
                 ),
               )
             else
-              ...controller.requests.map(
-                (request) => Padding(
+              ...controller.requests.map((request) {
+                final serviceName = providerServiceName(
+                  controller.categories,
+                  request.serviceCategoryId,
+                );
+                return Padding(
                   padding: const EdgeInsets.only(bottom: AppSpacing.md),
                   child: FixCard(
                     tone: FixCardTone.elevated,
@@ -234,13 +255,13 @@ class ProviderHomeScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         const FixStatusChip(
-                          label: 'REQUESTED',
+                          label: 'New request',
                           icon: Icons.radar_rounded,
                           tone: FixStatusTone.warning,
                         ),
                         const SizedBox(height: AppSpacing.md),
                         Text(
-                          request.serviceCategoryId.replaceAll('_', ' '),
+                          serviceName,
                           style: Theme.of(context).textTheme.labelLarge,
                         ),
                         const SizedBox(height: AppSpacing.xs),
@@ -250,13 +271,19 @@ class ProviderHomeScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: AppSpacing.xs),
                         Text(
-                          '${request.distanceKm.toStringAsFixed(1)} km away',
+                          'About ${request.distanceKm.toStringAsFixed(1)} km away',
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(color: AppColors.textSecondary),
                         ),
                         const SizedBox(height: AppSpacing.xs),
                         Text(
                           'Requested ${_requestTime(request.createdAt)}',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: AppColors.textSecondary),
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(
+                          'Customer address and contact details appear only after you accept.',
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(color: AppColors.textSecondary),
                         ),
@@ -269,8 +296,8 @@ class ProviderHomeScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                ),
-              ),
+                );
+              }),
             const SizedBox(height: AppSpacing.xxl),
             Text(
               'Assigned work',

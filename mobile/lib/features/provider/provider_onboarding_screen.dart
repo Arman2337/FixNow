@@ -47,7 +47,10 @@ class ProviderOnboardingScreen extends StatelessWidget {
           final copy = _copy(status);
           final profileComplete = controller.profile != null;
           final skillsComplete = controller.skills.isNotEmpty;
-          final documentsComplete = controller.documents.isNotEmpty;
+          final reviewedDocuments = controller.documents
+              .where((document) => document.status.toUpperCase() == 'APPROVED')
+              .length;
+          final documentsComplete = reviewedDocuments > 0;
           final completedSteps = [
             profileComplete,
             skillsComplete,
@@ -109,8 +112,8 @@ class ProviderOnboardingScreen extends StatelessWidget {
                     title: 'Identity documents',
                     complete: documentsComplete,
                     detail: documentsComplete
-                        ? '${controller.documents.length} private ${controller.documents.length == 1 ? 'document uploaded' : 'documents uploaded'}.'
-                        : 'Private upload is available after profile setup; files are never shown publicly.',
+                        ? '$reviewedDocuments private ${reviewedDocuments == 1 ? 'document approved' : 'documents approved'}.'
+                        : _documentDetail(controller.documents),
                   ),
                   const SizedBox(height: AppSpacing.xxl),
                   FixButton(
@@ -189,6 +192,17 @@ class ProviderOnboardingScreen extends StatelessWidget {
       'Complete supported profile, services, coverage, and private document steps before review.',
     ),
   };
+
+  static String _documentDetail(List<ProviderDocument> documents) {
+    if (documents.isEmpty) {
+      return 'Private upload is available after profile setup; files are never shown publicly.';
+    }
+    final statuses = documents
+        .map((document) => document.status.toLowerCase().replaceAll('_', ' '))
+        .toSet()
+        .join(', ');
+    return '${documents.length} private ${documents.length == 1 ? 'document' : 'documents'} submitted ($statuses).';
+  }
 }
 
 class _Step extends StatelessWidget {

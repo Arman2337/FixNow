@@ -7,7 +7,7 @@ import {
   ComplaintTargetRole,
 } from './domain/complaint.entity';
 import { ComplaintEvidence } from './domain/complaint-evidence.entity';
-import { NotFoundException, ForbiddenException } from '@nestjs/common';
+import { ForbiddenException } from '@nestjs/common';
 
 describe('ComplaintsService', () => {
   let service: ComplaintsService;

@@ -73,7 +73,7 @@ export class AdminAnalyticsService {
       .groupBy('booking.service_category_id')
       .orderBy('count', 'DESC')
       .limit(5)
-      .getRawMany();
+      .getRawMany<{ categoryId: string; count: string }>();
 
     const topCategories = await Promise.all(
       topCategoryRows.map(async (row) => {

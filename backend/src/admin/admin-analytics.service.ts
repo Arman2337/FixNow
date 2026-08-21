@@ -8,6 +8,7 @@ import { BookingStatus } from '../../../shared/booking-lifecycle.types';
 import { ProviderOnboardingStatus } from '../providers/provider-onboarding-status';
 
 export interface AnalyticsResponse {
+  generatedAt: string;
   bookings: {
     total: number;
     completed: number;
@@ -121,6 +122,7 @@ export class AdminAnalyticsService {
     }
 
     return {
+      generatedAt: new Date().toISOString(),
       bookings: {
         total: totalBookings,
         completed: completedBookings,

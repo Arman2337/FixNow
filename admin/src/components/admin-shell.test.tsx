@@ -9,7 +9,8 @@ describe("AdminShell", () => {
     expect(markup).toContain('aria-label="Admin navigation"');
     expect(markup).toContain('aria-current="page"');
     expect(markup).toContain('href="/providers"');
-    expect(markup).toContain("Authentication and administrative workflows are not enabled yet.");
+    expect(markup).toContain("Role-based access is active");
+    expect(markup).toContain("The navigation shows 2 modules available");
     expect(markup).toContain("Sign out");
     expect(markup).toContain("Providers");
     expect(markup).not.toContain("Access</a>");

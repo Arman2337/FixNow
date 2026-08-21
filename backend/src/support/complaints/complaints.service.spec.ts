@@ -98,6 +98,28 @@ describe('ComplaintsService', () => {
     expect(result.id).toBe('comp-1');
   });
 
+  it('loads evidence only for an authorized complaint detail lookup', async () => {
+    const evidence = {
+      id: 'evidence-1',
+      fileType: 'image/png',
+      fileUrl: 'https://example.test/evidence-1',
+    };
+    mockComplaintRepository.findOne.mockResolvedValue({
+      id: 'comp-1',
+      submitterId: 'user-1',
+      targetId: 'user-2',
+      evidence: [evidence],
+    });
+
+    await expect(
+      service.getComplaintById('comp-1', 'admin-1', true),
+    ).resolves.toMatchObject({ evidence: [evidence] });
+    expect(mockComplaintRepository.findOne).toHaveBeenCalledWith({
+      where: { id: 'comp-1' },
+      relations: { evidence: true },
+    });
+  });
+
   it('should update complaint status and add resolution notes', async () => {
     mockComplaintRepository.findOne.mockResolvedValue({
       id: 'comp-1',

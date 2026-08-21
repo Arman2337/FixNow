@@ -5,7 +5,9 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   VersionColumn,
+  OneToMany,
 } from 'typeorm';
+import { ComplaintEvidence } from './complaint-evidence.entity';
 
 export enum ComplaintStatus {
   OPEN = 'OPEN',
@@ -69,4 +71,7 @@ export class Complaint {
 
   @VersionColumn()
   version: number;
+
+  @OneToMany(() => ComplaintEvidence, (evidence) => evidence.complaint)
+  evidence: ComplaintEvidence[];
 }

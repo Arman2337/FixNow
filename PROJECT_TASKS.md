@@ -54,18 +54,19 @@ Only these statuses are valid. A task cannot be completed while required validat
 
 # Project Progress
 
-Total Tasks: 96
-Completed: 70
+Total Tasks: 101
+Completed: 77
 In Progress: 0
-Blocked: 1
-Pending: 24
+Blocked: 5
+Pending: 6
+Deferred: 12
 Cancelled: 1
-Current Phase: Phase 7 â€” Real-Time & Location
-Next Recommended Task: FN-050 â€” Implement Admin Complaints and Analytics Views
+Current Phase: P0/P1 completion and approval gates
+Next Recommended Task: Resolve the P1 approval and dependency blockers for FN-055 and FN-061 through FN-064.
 
 # Current Work
 
-Master run active tasks: `FN-100` — Rebuild Mobile UI to Approved Reference with Functional Preservation; `FN-050` — Implement Admin Complaints and Operational Analytics Views.
+No active implementation task. Do not begin P2 work while the recorded P1 approval and dependency blockers remain.
 
 # Current Product Completion Scope
 
@@ -77,13 +78,11 @@ Deferred from current product completion scope: payments, payment gateway/orders
 
 # Master Run Reconciliation — 2026-08-21
 
-- `FN-100` already owns the confirmed mobile information gaps: customer complaint detail, provider incoming-request context, provider readiness, and the remaining customer/provider information hierarchy work.
+- `FN-100` addressed the confirmed mobile information gaps: customer complaint detail, provider incoming-request context, provider readiness, and customer/provider information hierarchy. Automated validation completed on 2026-08-21. Manual two-session browser evidence on 2026-08-21 verified the realtime lifecycle and authorized live GPS map projection.
 - `FN-050` already owns the confirmed admin operations gaps: support-case detail and operational analytics. Its dependency is corrected to the completed current-scope complaint workflow `FN-098`; payment analytics remains explicitly deferred.
 - `FN-049` already contains a functional service-catalog workspace in source. The earlier placeholder finding is stale and no duplicate corrective task is required.
 - Customer Home active-booking prioritization and the Admin overview attention metrics are already implemented in source. They will be re-verified during the final re-audit rather than duplicated.
 - The Admin Access placeholder is not present in the current role-aware navigation and no fake access-management screen will be introduced.
-
-Active Tasks: FN-075 â€” Implement Customer Help and Support Experience; FN-100 — Rebuild Mobile UI to Approved Reference
 
 # Decision Log
 
@@ -1867,7 +1866,7 @@ Commit: 759f403
 PR: #16
 
 ## FN-050 â€” Implement Admin Complaints and Analytics Views
-Status: In Progress
+Status: ✅ Completed
 Priority: P2 â€” Medium
 Area: Admin
 Depends On: FN-047, FN-098
@@ -1880,7 +1879,7 @@ Support complaint operations and privacy-safe operational analytics.
 ### Do Not
 - Do not expose unrestricted raw personal data or misleading metrics.
 ### Acceptance Criteria
-- [ ] Permissions, redaction, filtering, audit, empty state, and accessibility tests pass.
+- [x] Permissions, redaction, filtering, audit, empty state, and accessibility tests pass.
 ### Validation
 ```bash
 # Run admin checks and relevant backend analytics tests.
@@ -1891,11 +1890,13 @@ admin/src/features/complaints/ admin/src/features/analytics/ backend/src/admin/
 ```
 ### Notes
 Payment analytics should appear only after payment tasks complete.
+
+The admin complaint queue supports accessible filtering and an honest empty state. Authorized complaint detail now loads only its related evidence, while queue listings remain evidence-free. Administrative permissions, minimized user projections/redaction, complaint status ownership and resolution notes, and authorization audit coverage are exercised by the backend suite. Analytics now returns and displays an explicit snapshot timestamp and uses priority-category wording rather than claiming an unimplemented emergency-dispatch workflow.
 ### Completion Record
-Completed By:
-Completed Date:
-Commit:
-PR:
+Completed By: Codex
+Completed Date: 2026-08-21
+Commit: Pending
+PR: Pending
 
 # Phase 9 â€” Payments
 
@@ -2038,7 +2039,7 @@ Commit:
 PR:
 
 ## FN-055 â€” Implement Complaints, Quality Metrics, and Fraud Rules
-Status: â¬œ Pending
+Status: Blocked
 Priority: P1 â€” High
 Area: Trust/Safety
 Depends On: FN-014, FN-042, FN-054
@@ -2062,6 +2063,10 @@ backend/src/complaints/ backend/src/trust/ docs/security/ shared/
 ```
 ### Notes
 AI fraud assistance remains separate in FN-060.
+### Blocker
+FN-054 (ratings and reviews) is explicitly deferred from the approved current product scope, but remains a declared dependency for the appeal hooks in this task.
+### Required To Unblock
+Approve removing or replacing the FN-054 dependency, or bring the ratings/reviews scope back into the current delivery plan.
 ### Completion Record
 Completed By:
 Completed Date:
@@ -2228,7 +2233,7 @@ PR:
 # Phase 12 â€” Notifications
 
 ## FN-061 â€” Add Push Notification Infrastructure
-Status: â¬œ Pending
+Status: Blocked
 Priority: P1 â€” High
 Area: Notifications
 Depends On: FN-015, FN-018, FN-034
@@ -2252,6 +2257,10 @@ backend/src/notifications/ mobile/lib/notifications/ infrastructure/ .env.exampl
 ```
 ### Notes
 FCM is a candidate requiring approval and configuration.
+### Blocker
+No push provider, credentials, or provider ADR/configuration has been approved. Introducing one would be a new hosted dependency and is outside the authorized current-scope work.
+### Required To Unblock
+Approve a push provider and its configuration/ADR, then provide non-production credentials through the approved secret-management path.
 ### Completion Record
 Completed By:
 Completed Date:
@@ -2259,7 +2268,7 @@ Commit:
 PR:
 
 ## FN-062 â€” Implement Booking, Provider, Reminder, and Emergency Notifications
-Status: â¬œ Pending
+Status: Blocked
 Priority: P1 â€” High
 Area: Notifications
 Depends On: FN-041, FN-061, FN-063
@@ -2283,6 +2292,10 @@ backend/src/notifications/ backend/src/bookings/ mobile/lib/notifications/
 ```
 ### Notes
 Emergency alerts may override quiet hours only under the approved policy.
+### Blocker
+FN-061 (push infrastructure) and FN-063 (emergency dispatch policy) are blocked, so notification delivery, quiet-hour exceptions, and emergency templates cannot be implemented safely.
+### Required To Unblock
+Complete or explicitly authorize the prerequisites for FN-061 and FN-063.
 ### Completion Record
 Completed By:
 Completed Date:
@@ -2292,7 +2305,7 @@ PR:
 # Phase 13 â€” Emergency System
 
 ## FN-063 â€” Implement Emergency Request and Priority Dispatch
-Status: â¬œ Pending
+Status: Blocked
 Priority: P1 â€” High
 Area: Emergency/Backend
 Depends On: FN-014, FN-040, FN-041
@@ -2316,6 +2329,10 @@ backend/src/emergency/ backend/src/matching/ backend/src/bookings/ docs/safety/
 ```
 ### Notes
 Legal/product review is required before completion.
+### Blocker
+The required legal and product review has not approved the emergency eligibility, escalation, abuse-control, and public-safety wording.
+### Required To Unblock
+Record the approved emergency policy and safety guidance, including the no-provider fallback and public-emergency disclaimer.
 ### Completion Record
 Completed By:
 Completed Date:
@@ -2323,7 +2340,7 @@ Commit:
 PR:
 
 ## FN-064 â€” Implement SOS UX and Safety Guidance
-Status: â¬œ Pending
+Status: Blocked
 Priority: P1 â€” High
 Area: Emergency/Mobile
 Depends On: FN-037, FN-063
@@ -2348,6 +2365,10 @@ mobile/lib/features/emergency/ docs/safety/
 ```
 ### Notes
 None.
+### Blocker
+FN-063 is blocked pending legal/product approval, so the SOS flow cannot safely promise dispatch behavior or define its cancellation and fallback states.
+### Required To Unblock
+Complete FN-063 with approved safety policy and dispatch behavior.
 ### Completion Record
 Completed By:
 Completed Date:
@@ -3604,11 +3625,13 @@ Local environment evidence: the existing loopback-only `fixnow-dev-postgres` (55
 
 Source inspection proved that the current customer tracking experience exposes only location availability text, not a map or coordinate projection; no map dependency is present. It also subscribes only after a customer opens an individual tracking screen, so the requested no-navigation status update has no customer-home subscription. One physical Android device (A059) is connected, so a two-device simultaneous observation cannot be made.
 
+Manual runtime evidence, 2026-08-21: the user independently observed a Customer session in normal Chrome and a Provider session in Incognito/separate browser. Provider acceptance and the `ASSIGNED` → `EN_ROUTE` → `IN_PROGRESS` → `COMPLETED` lifecycle updated the Customer session without refresh. With provider live-location sharing enabled and browser location simulation changing the provider coordinates, the authorized Customer live map reflected the changed position. This verifies the current realtime and live-GPS product behavior; it does not claim fresh registration/OTP or two native-device evidence.
+
 ### Blocker
-The requested map projection and customer-wide realtime status behavior are not implemented, and only one independently usable mobile device/session is available.
+The original deferred task's fresh registration/OTP and two native-mobile-device evidence were not captured in the 2026-08-21 browser-session run.
 
 ### Required To Unblock
-Implement FN-095 (including the approved map-provider key/configuration path), then connect a second independently usable Android/iOS device or emulator for the physical simultaneous test.
+Run fresh registration/OTP on two independently observed Android/iOS sessions if the deferred native-device acceptance task is resumed.
 
 ### Completion Record
 Completed By:
@@ -3656,6 +3679,8 @@ mobile/lib/features/tracking/ mobile/lib/features/realtime/ mobile/lib/app/ mobi
 ### Notes
 Discovered by FN-094 source inspection while attempting the requested two-device physical acceptance test.
 
+Manual runtime evidence, 2026-08-21: a Customer normal-Chrome session and Provider Incognito/separate-browser session remained synchronized without refresh. The Customer live map reflected a new simulated provider coordinate after the Provider shared live location. This satisfies the connected two-session validation for the current supported browser flow.
+
 ### Completion Record
 Completed By: Antigravity
 Completed Date: 2026-08-19
@@ -3683,10 +3708,10 @@ Ensure customer UI (Home, Bookings, Booking Detail) updates automatically when a
 - Do not invent new booking statuses outside the existing backend domain.
 
 ### Acceptance Criteria
-- [ ] Customer Home shows an active booking card.
-- [ ] Provider accepting request instantly updates Customer UI to ASSIGNED without refresh.
-- [ ] Status progresses through EN_ROUTE, IN_PROGRESS, and COMPLETED without refresh.
-- [ ] Socket reconnect fetches updated state correctly.
+- [x] Customer Home shows an active booking card.
+- [x] Provider accepting request instantly updates Customer UI to ASSIGNED without refresh.
+- [x] Status progresses through EN_ROUTE, IN_PROGRESS, and COMPLETED without refresh.
+- [x] Socket reconnect fetches updated state correctly.
 
 ### Validation
 ``bash
@@ -3701,6 +3726,8 @@ mobile/lib/app/ mobile/lib/features/bookings/ mobile/lib/features/realtime/ mobi
 
 ### Notes
 Created as requested to separate realtime booking status UI syncing from live GPS map projections (FN-095).
+
+Manual runtime evidence, 2026-08-21: the Customer normal-Chrome and Provider Incognito/separate-browser sessions verified acceptance plus `ASSIGNED` → `EN_ROUTE` → `IN_PROGRESS` → `COMPLETED` updates without a Customer refresh. Automated coverage remains the evidence for reconnect reconciliation.
 
 ### Completion Record
 Completed By: Antigravity
@@ -3779,7 +3806,7 @@ PR: Pending
 
 ## FN-100 — Rebuild Mobile UI to Approved Reference with Functional Preservation
 
-Status: In Progress
+Status: ✅ Completed
 Priority: P0 — Critical
 Area: Mobile / Design System / Quality
 Depends On: FN-096
@@ -3798,9 +3825,9 @@ Rebuild the implemented customer and provider mobile UI against the approved Fix
 - Do not change backend booking, authorization, realtime, location, or privacy semantics merely for visual parity.
 
 ### Acceptance Criteria
-- [ ] Implemented customer and provider flows retain their supported behavior.
-- [ ] UI uses centralized approved tokens and has no material contrast or responsive-layout regression.
-- [ ] Required Flutter validation and final reports pass or document limitations truthfully.
+- [x] Implemented customer and provider flows retain their supported behavior.
+- [x] UI uses centralized approved tokens and has no material contrast or responsive-layout regression.
+- [x] Required Flutter validation and final reports pass or document limitations truthfully.
 
 ### Validation
 ```bash
@@ -3814,10 +3841,10 @@ mobile/lib/design_system/ mobile/lib/features/ mobile/test/ DESIGN.md reports/ P
 ```
 
 ### Completion Record
-Completed By:
-Completed Date:
-Commit:
-PR:
+Completed By: Codex
+Completed Date: 2026-08-21
+Commit: Pending
+PR: Pending
 
 ## FN-101 — Add Playwright E2E Testing
 

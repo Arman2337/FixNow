@@ -20,7 +20,8 @@ export default async function AnalyticsPage() {
       <header className="border-b border-[var(--color-border-default)] pb-6">
         <p className="m-0 text-sm font-semibold text-[var(--color-primary)]">Operations</p>
         <h1 className="mt-2 mb-0 text-3xl font-semibold tracking-tight">Platform Analytics</h1>
-        <p className="mt-2 text-[var(--color-text-muted)]">Real-time operational metrics for bookings, providers, and emergencies.</p>
+        <p className="mt-2 text-[var(--color-text-muted)]">Operational counts from the latest API snapshot. Payments, ratings, and reviews are not included.</p>
+        <p className="mt-2 text-sm text-[var(--color-text-muted)]">Snapshot generated {new Date(analytics.generatedAt).toLocaleString()}.</p>
       </header>
 
       <div className="mt-8 grid gap-8">
@@ -71,17 +72,17 @@ export default async function AnalyticsPage() {
           </div>
         </section>
 
-        {/* Emergencies & Services */}
+        {/* Priority categories and services */}
         <div className="grid gap-8 sm:grid-cols-2">
-          <section aria-labelledby="emergencies-heading">
-            <h2 id="emergencies-heading" className="text-xl font-semibold mb-4">Emergency Dispatch</h2>
+          <section aria-labelledby="priority-categories-heading">
+            <h2 id="priority-categories-heading" className="text-xl font-semibold mb-4">Priority-category activity</h2>
             <div className="grid gap-4">
               <div className="rounded-2xl border border-[var(--color-border-strong)] bg-red-50 dark:bg-red-950/20 p-5">
-                <p className="text-sm font-semibold text-red-700 dark:text-red-400">Active Emergency Requests</p>
+                <p className="text-sm font-semibold text-red-700 dark:text-red-400">Active priority-category requests</p>
                 <p className="mt-2 text-4xl font-bold text-red-700 dark:text-red-400">{analytics.emergencies.activeRequests}</p>
               </div>
               <div className="rounded-2xl border border-[var(--color-border-default)] bg-[var(--color-surface-primary)] p-5">
-                <p className="text-sm text-[var(--color-text-muted)]">Historical Emergencies (All-time)</p>
+                <p className="text-sm text-[var(--color-text-muted)]">Priority-category requests (all time)</p>
                 <p className="mt-2 text-2xl font-semibold">{analytics.emergencies.totalRequests}</p>
               </div>
             </div>

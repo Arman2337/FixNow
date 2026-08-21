@@ -31,7 +31,9 @@ export class ComplaintEvidence {
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 
-  @ManyToOne(() => Complaint, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Complaint, (complaint) => complaint.evidence, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'complaint_id' })
   complaint: Complaint;
 }

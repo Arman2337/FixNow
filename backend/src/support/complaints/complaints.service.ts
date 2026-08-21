@@ -57,6 +57,7 @@ export class ComplaintsService {
   ): Promise<Complaint> {
     const complaint = await this.complaintsRepository.findOne({
       where: { id },
+      relations: { evidence: true },
     });
 
     if (!complaint) {

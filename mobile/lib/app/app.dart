@@ -71,6 +71,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
   late final BookingController _bookings;
   late final ProviderController _provider;
   late final ComplaintsController _complaints;
+  final Map<String, BookingTrackingController> _trackingControllers = {};
   _AuthEntryStep _authEntryStep = _AuthEntryStep.welcome;
   bool _registrationIntent = false;
   AccountRole _selectedRole = AccountRole.customer;
@@ -126,6 +127,9 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
     _bookings.dispose();
     _provider.dispose();
     _complaints.dispose();
+    for (final controller in _trackingControllers.values) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
@@ -233,12 +237,13 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
               controller: _discovery,
               locationController: _location,
               bookingsController: _bookings,
-              onCategorySelected: (category) async {
+              onCategorySelected: (category, location) async {
                 final created = await Navigator.of(context).push<bool>(
                   MaterialPageRoute(
                     builder: (_) => ServiceRequestScreen(
                       category: category,
                       controller: _bookings,
+                      initialLocation: location,
                     ),
                   ),
                 );
@@ -314,18 +319,21 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
                   ),
                 );
               },
-              onCancel: const {'REQUESTED', 'ASSIGNED'}.contains(currentBooking.status)
+            onCancel: const {'REQUESTED', 'ASSIGNED'}.contains(currentBooking.status)
                 ? (reason) => _bookings.cancel(currentBooking, reason)
                 : null,
           );
         }
-        final tracking = BookingTrackingController(
-          bookingId: currentBooking.id,
-          source: ApiBookingTrackingSource(
-            api: _api,
-            accessToken: _auth.validAccessToken,
+        final tracking = _trackingControllers.putIfAbsent(
+          currentBooking.id,
+          () => BookingTrackingController(
+            bookingId: currentBooking.id,
+            source: ApiBookingTrackingSource(
+              api: _api,
+              accessToken: _auth.validAccessToken,
+            ),
+            realtime: _createRealtimeClient(),
           ),
-          realtime: _createRealtimeClient(),
         );
         return BookingTrackingScreen(controller: tracking);
       },

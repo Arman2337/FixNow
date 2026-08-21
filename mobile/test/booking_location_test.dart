@@ -34,6 +34,44 @@ void main() {
     },
   );
 
+  test('uses a fresh Home fix before requesting location again', () async {
+    final gateway = _Gateway(currentError: TimeoutException('no fix'));
+    final homeFix = _fix(
+      now.subtract(const Duration(seconds: 30)),
+      latitude: 2,
+    );
+
+    final result = await BookingLocationResolver(
+      gateway: gateway,
+      now: () => now,
+      initialFix: homeFix,
+    ).resolve();
+
+    expect(result.latitude, 2);
+    expect(gateway.currentCalls, 0);
+    expect(gateway.lastKnownCalls, 0);
+  });
+
+  test(
+    'uses a recent Home fix when the browser cannot provide a new fix',
+    () async {
+      final gateway = _Gateway(currentError: TimeoutException('no fix'));
+      final homeFix = _fix(
+        now.subtract(const Duration(minutes: 20)),
+        latitude: 2,
+      );
+
+      final result = await BookingLocationResolver(
+        gateway: gateway,
+        now: () => now,
+        initialFix: homeFix,
+      ).resolve();
+
+      expect(result.latitude, 2);
+      expect(gateway.currentCalls, 0);
+    },
+  );
+
   test('rejects disabled services and does not request a fix', () async {
     final gateway = _Gateway(servicesEnabled: false);
 
@@ -62,6 +100,23 @@ void main() {
     await expectLater(
       _resolver(gateway).resolve(),
       throwsA(_failure(BookingLocationFailureKind.unavailable)),
+    );
+  });
+
+  test('gives browser-specific guidance when no fix is available', () async {
+    final gateway = _Gateway(currentError: TimeoutException('no fix'));
+
+    await expectLater(
+      _resolver(gateway, isWeb: true).resolve(),
+      throwsA(
+        predicate<Object?>(
+          (value) =>
+              value is BookingLocationFailure &&
+              value.kind == BookingLocationFailureKind.unavailable &&
+              value.message ==
+                  'Your browser could not provide a precise location. Choose your service location on the map to continue.',
+        ),
+      ),
     );
   });
 
@@ -105,10 +160,12 @@ void main() {
   );
 }
 
-BookingLocationResolver _resolver(_Gateway gateway) => BookingLocationResolver(
-  gateway: gateway,
-  now: () => DateTime.utc(2026, 8, 15, 10),
-);
+BookingLocationResolver _resolver(_Gateway gateway, {bool? isWeb}) =>
+    BookingLocationResolver(
+      gateway: gateway,
+      now: () => DateTime.utc(2026, 8, 15, 10),
+      isWeb: isWeb,
+    );
 
 BookingLocationFix _fix(
   DateTime timestamp, {

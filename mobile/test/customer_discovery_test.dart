@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:fixnow_mobile/api/api_client.dart';
 import 'package:fixnow_mobile/features/location/location_consent_card.dart';
 import 'package:fixnow_mobile/features/location/location_consent_controller.dart';
+import 'package:fixnow_mobile/features/location/booking_location.dart';
 import 'package:fixnow_mobile/features/services/service_category.dart';
 import 'package:fixnow_mobile/features/services/service_discovery_controller.dart';
 import 'package:fixnow_mobile/features/services/service_discovery_screen.dart';
@@ -89,6 +90,7 @@ void main() {
     final location = LocationConsentController(
       FakeLocationGateway(LocationPermissionState.granted),
     );
+    await location.check();
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.dark,
@@ -100,7 +102,7 @@ void main() {
         ),
       ),
     );
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     await tester.scrollUntilVisible(
       find.text('Plumbing'),
@@ -159,8 +161,10 @@ void main() {
     final location = LocationConsentController(
       FakeLocationGateway(LocationPermissionState.granted),
     );
+    await location.check();
 
     ServiceCategory? selectedCategory;
+    BookingLocationFix? selectedLocation;
 
     await tester.pumpWidget(
       MaterialApp(
@@ -169,7 +173,10 @@ void main() {
           body: ServiceDiscoveryScreen(
             controller: discovery,
             locationController: location,
-            onCategorySelected: (c) => selectedCategory = c,
+            onCategorySelected: (category, location) {
+              selectedCategory = category;
+              selectedLocation = location;
+            },
           ),
         ),
       ),
@@ -180,6 +187,7 @@ void main() {
     await tester.tap(find.text('Plumber'));
     await tester.pump();
     expect(selectedCategory?.slug, 'plumbing');
+    expect(selectedLocation, isNotNull);
 
     // Tap Electrician (unavailable)
     selectedCategory = null;

@@ -126,8 +126,19 @@ class BookingTrackingController extends ChangeNotifier {
     }
     if (current != null && next.sequence > current.sequence + 1) {
       await loadSnapshot();
+      final reconciled = tracking;
+      // The HTTP booking snapshot deliberately does not include provider
+      // location, route, or ETA. Keep a newer websocket projection after the
+      // snapshot so a sequence gap cannot erase an already received journey.
+      if (reconciled == null || next.sequence >= reconciled.sequence) {
+        _applyTracking(next);
+      }
       return;
     }
+    _applyTracking(next);
+  }
+
+  void _applyTracking(BookingTracking next) {
     tracking = next;
     connection = TrackingConnection.live;
     message = null;

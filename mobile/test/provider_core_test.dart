@@ -86,6 +86,15 @@ void main() {
     expect(find.text('Incoming requests'), findsOneWidget);
     expect(find.text('Kitchen sink leak'), findsOneWidget);
     expect(find.text('1.2 km away'), findsOneWidget);
+    final localRequestTime = DateTime.utc(2026, 8, 14).toLocal();
+    expect(
+      find.text(
+        'Requested ${localRequestTime.day}/${localRequestTime.month} · '
+        '${localRequestTime.hour.toString().padLeft(2, '0')}:'
+        '${localRequestTime.minute.toString().padLeft(2, '0')}',
+      ),
+      findsOneWidget,
+    );
     expect(find.text('Accept request'), findsOneWidget);
   });
 }

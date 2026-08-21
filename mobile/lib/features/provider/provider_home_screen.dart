@@ -335,6 +335,8 @@ class ProviderHomeScreen extends StatelessWidget {
     },
   );
 
-  static String _requestTime(DateTime value) =>
-      '${value.day}/${value.month} · ${value.hour.toString().padLeft(2, '0')}:${value.minute.toString().padLeft(2, '0')}';
+  static String _requestTime(DateTime value) {
+    final local = value.toLocal();
+    return '${local.day}/${local.month} · ${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
+  }
 }

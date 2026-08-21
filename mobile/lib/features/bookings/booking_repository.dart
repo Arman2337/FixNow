@@ -1,5 +1,6 @@
 import 'package:fixnow_mobile/api/api_client.dart';
 import 'package:fixnow_mobile/features/bookings/booking.dart';
+import 'package:fixnow_mobile/features/ratings/booking_review.dart';
 
 class BookingRepository {
   BookingRepository({
@@ -98,6 +99,55 @@ class BookingRepository {
       );
     }
     return CustomerBooking.fromJson(Map<String, Object?>.from(raw));
+  }
+
+  Future<BookingReview?> reviewFor(String bookingId) async {
+    final response = await _api.send(
+      ApiRequest(
+        method: ApiMethod.get,
+        path: 'bookings/$bookingId/review',
+        bearerToken: await _token(),
+      ),
+    );
+    final body = response.body is Map<String, dynamic>
+        ? response.body! as Map<String, dynamic>
+        : null;
+    final raw = body?['review'];
+    if (raw == null) return null;
+    if (raw is! Map)
+      throw const ApiException(
+        ApiFailureKind.invalidResponse,
+        'The review response was invalid.',
+      );
+    return BookingReview.fromJson(Map<String, Object?>.from(raw));
+  }
+
+  Future<BookingReview> createReview({
+    required String bookingId,
+    required int rating,
+    required String reviewText,
+  }) async {
+    final response = await _api.send(
+      ApiRequest(
+        method: ApiMethod.post,
+        path: 'bookings/$bookingId/review',
+        bearerToken: await _token(),
+        body: {
+          'rating': rating,
+          if (reviewText.trim().isNotEmpty) 'reviewText': reviewText.trim(),
+        },
+      ),
+    );
+    final body = response.body is Map<String, dynamic>
+        ? response.body! as Map<String, dynamic>
+        : null;
+    final raw = body?['review'];
+    if (raw is! Map)
+      throw const ApiException(
+        ApiFailureKind.invalidResponse,
+        'The review response was invalid.',
+      );
+    return BookingReview.fromJson(Map<String, Object?>.from(raw));
   }
 
   Future<String> _token() async {

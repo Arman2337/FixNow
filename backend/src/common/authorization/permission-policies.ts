@@ -31,6 +31,11 @@ export const PERMISSIONS = {
   bookingUpdateStatus: 'bookings.update.status',
   bookingCancelSelf: 'bookings.cancel.self',
   bookingHistoryReadSelf: 'bookings.history.read.self',
+  reviewCreateSelf: 'ratings.review.create.self',
+  reviewReadBooking: 'ratings.review.read.booking',
+  reviewModerate: 'ratings.review.moderate',
+  trustSignalsRead: 'trust.signals.read',
+  trustSignalsUpdate: 'trust.signals.update',
   realtimeConnect: 'realtime.connect',
   realtimeSubscribeSelf: 'realtime.subscribe.self',
   roleGrantAuthorized: 'access.role.grant.authorized',
@@ -258,6 +263,26 @@ export const PERMISSION_POLICIES: Readonly<
   [PERMISSIONS.bookingHistoryReadSelf]: {
     roles: ['customer', 'verified_provider'],
     relationship: 'self',
+  },
+  [PERMISSIONS.reviewCreateSelf]: {
+    roles: ['customer'],
+    relationship: 'self',
+  },
+  [PERMISSIONS.reviewReadBooking]: {
+    roles: ['customer', 'verified_provider'],
+    relationship: 'self',
+  },
+  [PERMISSIONS.reviewModerate]: {
+    roles: ['trust_safety_reviewer', 'operations_administrator'],
+    audience: 'admin',
+  },
+  [PERMISSIONS.trustSignalsRead]: {
+    roles: ['trust_safety_reviewer', 'operations_administrator'],
+    audience: 'admin',
+  },
+  [PERMISSIONS.trustSignalsUpdate]: {
+    roles: ['trust_safety_reviewer', 'operations_administrator'],
+    audience: 'admin',
   },
   [PERMISSIONS.adminBookingsRead]: {
     roles: [

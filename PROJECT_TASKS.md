@@ -55,18 +55,18 @@ Only these statuses are valid. A task cannot be completed while required validat
 # Project Progress
 
 Total Tasks: 101
-Completed: 80
-In Progress: 0
-Blocked: 5
+Completed: 81
+In Progress: 1
+Blocked: 4
 Pending: 2
 Deferred: 13
 Cancelled: 1
 Current Phase: Ratings and reviews delivery
-Next Recommended Task: FN-054 — Implement Booking Ratings and Reviews.
+Next Recommended Task: FN-055 — Implement Complaints, Quality Metrics, and Fraud Rules.
 
 # Current Work
 
-None.
+- FN-055 — Implement Complaints, Quality Metrics, and Fraud Rules (feat/provider-ui-polish; user-directed branch exception)
 
 # Current Product Completion Scope
 
@@ -2007,7 +2007,7 @@ PR:
 # Phase 10 â€” Ratings & Trust
 
 ## FN-054 â€” Implement Booking Ratings and Reviews
-Status: ⬜ Pending
+Status: Completed
 Priority: P2 â€” Medium
 Area: Trust
 Depends On: FN-041, FN-027
@@ -2020,7 +2020,7 @@ Allow eligible booking participants to submit bounded ratings and reviews.
 ### Do Not
 - Do not accept reviews without a qualifying completed booking.
 ### Acceptance Criteria
-- [ ] Eligibility, duplicate, ownership, moderation, aggregation, and privacy tests pass.
+- [x] Eligibility, duplicate, ownership, moderation, aggregation, and privacy tests pass.
 ### Validation
 ```bash
 # Run backend checks plus rating/review tests and relevant mobile tests.
@@ -2035,13 +2035,13 @@ None.
 Reactivated for current development scope by the 2026-08-21 roadmap decision. Do not begin implementation until explicitly selected.
 
 ### Completion Record
-Completed By:
-Completed Date:
-Commit:
-PR:
+Completed By: Codex
+Completed Date: 2026-08-21
+Commit: Pending
+PR: Pending
 
 ## FN-055 â€” Implement Complaints, Quality Metrics, and Fraud Rules
-Status: Blocked
+Status: In Progress
 Priority: P1 â€” High
 Area: Trust/Safety
 Depends On: FN-014, FN-042, FN-054
@@ -2065,10 +2065,8 @@ backend/src/complaints/ backend/src/trust/ docs/security/ shared/
 ```
 ### Notes
 AI fraud assistance remains separate in FN-060.
-### Blocker
-FN-054 (ratings and reviews) is now pending but remains incomplete; it is a declared dependency for the appeal hooks in this task.
-### Required To Unblock
-Complete FN-054, then re-evaluate the remaining FN-055 dependencies and approval requirements.
+### Unblocking Record
+Unblocked after FN-054 completed on 2026-08-21. Do not begin automatically.
 ### Completion Record
 Completed By:
 Completed Date:

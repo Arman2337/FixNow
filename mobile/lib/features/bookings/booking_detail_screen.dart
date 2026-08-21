@@ -7,6 +7,8 @@ import 'package:fixnow_mobile/design_system/fix_page_frame.dart';
 import 'package:fixnow_mobile/design_system/fix_status_chip.dart';
 import 'package:fixnow_mobile/features/bookings/booking.dart';
 import 'package:fixnow_mobile/features/bookings/cancellation_dialog.dart';
+import 'package:fixnow_mobile/features/bookings/booking_repository.dart';
+import 'package:fixnow_mobile/features/ratings/booking_review_panel.dart';
 import 'package:flutter/material.dart';
 
 class BookingDetailScreen extends StatelessWidget {
@@ -14,11 +16,13 @@ class BookingDetailScreen extends StatelessWidget {
     required this.booking,
     this.onCancel,
     this.onReportIssue,
+    this.reviewRepository,
     super.key,
   });
   final CustomerBooking booking;
   final Future<CustomerBooking> Function(String reason)? onCancel;
   final VoidCallback? onReportIssue;
+  final BookingRepository? reviewRepository;
 
   @override
   Widget build(BuildContext context) {
@@ -142,6 +146,14 @@ class BookingDetailScreen extends StatelessWidget {
                   icon: Icons.report_problem_outlined,
                   variant: FixButtonVariant.secondary,
                   onPressed: onReportIssue,
+                ),
+              ],
+              if (booking.status == 'COMPLETED' &&
+                  reviewRepository != null) ...[
+                const SizedBox(height: AppSpacing.md),
+                BookingReviewPanel(
+                  booking: booking,
+                  repository: reviewRepository!,
                 ),
               ],
               if (onCancel != null &&

@@ -19,6 +19,8 @@ import { RealtimeModule } from './realtime/realtime.module';
 import { AdminModule } from './admin/admin.module';
 import { ComplaintsModule } from './support/complaints/complaints.module';
 import { AiModule } from './ai/ai.module';
+import { RatingsModule } from './ratings/ratings.module';
+import { TrustModule } from './trust/trust.module';
 
 @Module({
   imports: [
@@ -38,6 +40,8 @@ import { AiModule } from './ai/ai.module';
     AdminModule,
     ComplaintsModule,
     AiModule,
+    RatingsModule,
+    TrustModule,
   ],
   controllers: [AppController],
   providers: [

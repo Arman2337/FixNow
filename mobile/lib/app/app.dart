@@ -324,6 +324,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
             onCancel: const {'REQUESTED', 'ASSIGNED'}.contains(currentBooking.status)
                 ? (reason) => _bookings.cancel(currentBooking, reason)
                 : null,
+            reviewRepository: _bookings.repository,
           );
         }
         final tracking = _trackingControllers.putIfAbsent(

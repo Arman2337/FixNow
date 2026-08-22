@@ -10,6 +10,13 @@ export enum TrustSignalStatus {
   DISMISSED = 'DISMISSED',
 }
 
+export enum AppealStatus {
+  NONE = 'NONE',
+  PENDING = 'PENDING',
+  GRANTED = 'GRANTED',
+  DENIED = 'DENIED',
+}
+
 export interface ProviderQualityMetricsContract {
   completedBookingCount: number;
   cancelledBookingCount: number;

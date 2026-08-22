@@ -7,6 +7,7 @@ import {
   ComplaintTargetRole,
 } from './domain/complaint.entity';
 import { ComplaintEvidence } from './domain/complaint-evidence.entity';
+import { ComplaintAudit } from './domain/complaint-audit.entity';
 import { ForbiddenException } from '@nestjs/common';
 
 describe('ComplaintsService', () => {
@@ -24,6 +25,11 @@ describe('ComplaintsService', () => {
     save: jest.fn(),
   };
 
+  const mockAuditRepository = {
+    create: jest.fn(),
+    save: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -35,6 +41,10 @@ describe('ComplaintsService', () => {
         {
           provide: getRepositoryToken(ComplaintEvidence),
           useValue: mockEvidenceRepository,
+        },
+        {
+          provide: getRepositoryToken(ComplaintAudit),
+          useValue: mockAuditRepository,
         },
       ],
     }).compile();

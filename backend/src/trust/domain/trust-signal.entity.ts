@@ -10,6 +10,7 @@ import {
 import {
   TrustSignalSeverity,
   TrustSignalStatus,
+  AppealStatus,
 } from '../../../../shared/trust.types';
 
 @Entity('trust_signals')
@@ -49,4 +50,18 @@ export class TrustSignal {
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
   updatedAt: Date;
   @VersionColumn() version: number;
+
+  @Column({
+    type: 'enum',
+    enum: AppealStatus,
+    enumName: 'appeal_status',
+    default: AppealStatus.NONE,
+  })
+  appealStatus: AppealStatus;
+
+  @Column('text', { name: 'appeal_reason', nullable: true })
+  appealReason: string | null;
+
+  @Column('text', { name: 'appeal_resolution', nullable: true })
+  appealResolution: string | null;
 }

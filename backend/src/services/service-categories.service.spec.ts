@@ -165,7 +165,11 @@ describe('ServiceCategoriesService', () => {
 
       const result = await service.create(createDto);
 
-      expect(repository.create).toHaveBeenCalledWith(createDto);
+      expect(repository.create).toHaveBeenCalledWith({
+        ...createDto,
+        priceAmount: null,
+        priceCurrency: null,
+      });
       expect(repository.save).toHaveBeenCalledWith(mockCategory);
       expect(result).toEqual(mockCategory);
     });
@@ -251,5 +255,87 @@ describe('ServiceCategoriesService', () => {
       );
       expect(result).toEqual([mockCategory]);
     });
+  });
+});
+
+describe('ServiceCategoriesService pricing', () => {
+  let service: ServiceCategoriesService;
+  let repository: {
+    create: jest.Mock;
+    save: jest.Mock;
+    findOne: jest.Mock;
+  };
+
+  const baseCategory = () => ({
+    id: 'cat-1',
+    name: 'AC Service',
+    slug: 'ac-service',
+    description: null,
+    iconName: null,
+    displayOrder: 1,
+    isActive: true,
+    isEmergency: false,
+    priceAmount: null,
+    priceCurrency: null,
+    providerSkills: [],
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+
+  beforeEach(() => {
+    repository = {
+      create: jest.fn(<T extends object>(value: T): T => value),
+      save: jest.fn(<T extends object>(entity: T): Promise<T> =>
+        Promise.resolve(entity),
+      ),
+      findOne: jest.fn().mockResolvedValue(baseCategory()),
+    };
+    service = new ServiceCategoriesService(repository as never);
+  });
+
+  it('creates a category with a published price', async () => {
+    const dto: CreateServiceCategoryDto = {
+      name: 'AC Service',
+      slug: 'ac-service',
+      pricing: { amountMinor: 49900, currency: 'INR' },
+    };
+    const result = await service.create(dto);
+    expect(result.priceAmount).toBe(49900);
+    expect(result.priceCurrency).toBe('INR');
+  });
+
+  it('creates a price-on-request category when pricing is absent', async () => {
+    const result = await service.create({ name: 'Plumbing', slug: 'plumbing' });
+    expect(result.priceAmount).toBeNull();
+    expect(result.priceCurrency).toBeNull();
+  });
+
+  it('sets pricing on update', async () => {
+    const result = await service.update('cat-1', {
+      pricing: { amountMinor: 79900, currency: 'INR' },
+    });
+    expect(result.priceAmount).toBe(79900);
+    expect(result.priceCurrency).toBe('INR');
+  });
+
+  it('clears pricing back to price-on-request with explicit null', async () => {
+    const existing = baseCategory();
+    existing.priceAmount = 49900;
+    existing.priceCurrency = 'INR';
+    repository.findOne.mockResolvedValue(existing);
+    const result = await service.update('cat-1', { pricing: null });
+    expect(result.priceAmount).toBeNull();
+    expect(result.priceCurrency).toBeNull();
+  });
+
+  it('leaves pricing untouched when the field is absent from the update', async () => {
+    const existing = baseCategory();
+    existing.priceAmount = 49900;
+    existing.priceCurrency = 'INR';
+    repository.findOne.mockResolvedValue(existing);
+    const result = await service.update('cat-1', { name: 'Renamed' });
+    expect(result.name).toBe('Renamed');
+    expect(result.priceAmount).toBe(49900);
+    expect(result.priceCurrency).toBe('INR');
   });
 });

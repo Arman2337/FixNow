@@ -238,3 +238,13 @@ exposes invalidation semantics for that projection.
 cache TTL cannot exceed the stale threshold. Presence TTL, consent TTL, maximum
 accepted accuracy, and notice version are also centralized in validated
 configuration. These values must remain within the approved OD-010 policy.
+
+## Push notification devices (FN-061)
+
+Push delivery is governed by `PUSH_PROVIDER`: `disabled` (default), `fake` (tests and local
+development only; rejected in production), or `fcm`. The `fcm` provider requires
+`FCM_CREDENTIALS_FILE` pointing at an untracked Firebase service-account JSON. Devices are
+registered through the authenticated `PUT /api/v1/notifications/push/devices` endpoint with a
+bounded, write-only FCM token; tokens are reassigned when the same installation signs in as a
+different account and are removed when FCM reports them unregistered. Delivery payloads stay
+lock-screen-safe: identifiers and generic wording only, never personal data.

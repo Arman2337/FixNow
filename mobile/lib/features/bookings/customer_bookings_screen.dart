@@ -6,6 +6,7 @@ import 'package:fixnow_mobile/design_system/fix_page_frame.dart';
 import 'package:fixnow_mobile/design_system/fix_status_chip.dart';
 import 'package:fixnow_mobile/features/bookings/booking.dart';
 import 'package:fixnow_mobile/features/bookings/booking_controller.dart';
+import 'package:fixnow_mobile/features/bookings/recurring_schedule.dart';
 import 'package:flutter/material.dart';
 
 enum _BookingFilter { active, completed, cancelled }
@@ -14,10 +15,22 @@ class CustomerBookingsScreen extends StatefulWidget {
   const CustomerBookingsScreen({
     required this.controller,
     this.onBookingSelected,
+    this.onBookAgain,
+    this.schedulesController,
+    this.onOccurrenceConfirmed,
     super.key,
   });
   final BookingController controller;
   final ValueChanged<CustomerBooking>? onBookingSelected;
+
+  /// FN-112: repeating-service management; null hides the section.
+  final SchedulesController? schedulesController;
+
+  /// Called after a schedule occurrence becomes a real booking.
+  final VoidCallback? onOccurrenceConfirmed;
+
+  /// Opens a prefilled request for a completed booking; null hides the action.
+  final ValueChanged<CustomerBooking>? onBookAgain;
   @override
   State<CustomerBookingsScreen> createState() => _CustomerBookingsScreenState();
 }
@@ -46,6 +59,11 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
             description: 'Track active requests and review completed work.',
           ),
           const SizedBox(height: AppSpacing.xxl),
+          if (widget.schedulesController != null)
+            _SchedulesSection(
+              controller: widget.schedulesController!,
+              onOccurrenceConfirmed: widget.onOccurrenceConfirmed,
+            ),
           if (widget.controller.status == BookingListStatus.ready) ...[
             _BookingFilterBar(
               selected: _filter,
@@ -96,6 +114,11 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
                               onTap: widget.onBookingSelected == null
                                   ? null
                                   : () => widget.onBookingSelected!(booking),
+                              onBookAgain:
+                                  widget.onBookAgain != null &&
+                                      booking.status == 'COMPLETED'
+                                  ? () => widget.onBookAgain!(booking)
+                                  : null,
                             ),
                           ),
                         )
@@ -203,9 +226,14 @@ class _BookingSummary extends StatelessWidget {
 }
 
 class _BookingCard extends StatelessWidget {
-  const _BookingCard({required this.booking, required this.onTap});
+  const _BookingCard({
+    required this.booking,
+    required this.onTap,
+    this.onBookAgain,
+  });
   final CustomerBooking booking;
   final VoidCallback? onTap;
+  final VoidCallback? onBookAgain;
   @override
   Widget build(BuildContext context) {
     final requested = booking.status == 'REQUESTED';
@@ -310,6 +338,17 @@ class _BookingCard extends StatelessWidget {
                   ],
                 ),
               ],
+              if (onBookAgain != null) ...[
+                const SizedBox(height: AppSpacing.xs),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: onBookAgain,
+                    icon: const Icon(Icons.refresh_rounded, size: 18),
+                    label: const Text('Book again'),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -394,4 +433,201 @@ class _Failure extends StatelessWidget {
       ],
     ),
   );
+}
+
+/// FN-112: repeating services with manage controls. Each upcoming visit is
+/// booked only when the customer confirms it.
+class _SchedulesSection extends StatefulWidget {
+  const _SchedulesSection({required this.controller, this.onOccurrenceConfirmed});
+  final SchedulesController controller;
+
+  /// Called after a confirmed occurrence becomes a real booking.
+  final VoidCallback? onOccurrenceConfirmed;
+
+  @override
+  State<_SchedulesSection> createState() => _SchedulesSectionState();
+}
+
+class _SchedulesSectionState extends State<_SchedulesSection> {
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.load();
+  }
+
+  @override
+  Widget build(BuildContext context) => ListenableBuilder(
+    listenable: widget.controller,
+    builder: (context, _) {
+      final controller = widget.controller;
+      return switch (controller.status) {
+        SchedulesStatus.initial ||
+        SchedulesStatus.loading => const Padding(
+          padding: EdgeInsets.only(bottom: AppSpacing.lg),
+          child: Center(
+            child: CircularProgressIndicator(
+              semanticsLabel: 'Loading repeating services',
+            ),
+          ),
+        ),
+        SchedulesStatus.empty => const SizedBox.shrink(),
+        SchedulesStatus.offline || SchedulesStatus.error => Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+          child: FixCard(
+            semanticLabel: 'Repeating services unavailable',
+            child: Row(
+              children: [
+                Expanded(child: Text('Repeating services are unavailable.')),
+                TextButton(
+                  onPressed: controller.working ? null : controller.load,
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          ),
+        ),
+        SchedulesStatus.ready => Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Repeating services',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            for (final schedule in controller.schedules)
+              Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                child: _ScheduleCard(
+                  schedule: schedule,
+                  controller: controller,
+                  onConfirmed: widget.onOccurrenceConfirmed,
+                ),
+              ),
+          ],
+        ),
+      };
+    },
+  );
+}
+
+class _ScheduleCard extends StatelessWidget {
+  const _ScheduleCard({
+    required this.schedule,
+    required this.controller,
+    this.onConfirmed,
+  });
+  final RecurringSchedule schedule;
+  final SchedulesController controller;
+  final VoidCallback? onConfirmed;
+
+  @override
+  Widget build(BuildContext context) {
+    String? nextVisit;
+    final next = schedule.nextOccurrenceAt;
+    if (schedule.isActive && next != null) {
+      nextVisit =
+          '${next.day}/${next.month}/${next.year} '
+          '${next.hour.toString().padLeft(2, '0')}:${next.minute.toString().padLeft(2, '0')}';
+    }
+    return FixCard(
+      tone: schedule.isActive ? FixCardTone.elevated : FixCardTone.standard,
+      semanticLabel: 'Repeating ${schedule.cadence == 'WEEKLY' ? 'weekly' : 'monthly'} service',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.event_repeat_rounded,
+                  color: Theme.of(context).colorScheme.primary),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  schedule.cadence == 'WEEKLY'
+                      ? 'Every week'
+                      : 'Every month',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ),
+              if (!schedule.isActive)
+                FixStatusChip(
+                  label: 'Paused',
+                  icon: Icons.pause_circle_outline_rounded,
+                  tone: FixStatusTone.neutral,
+                ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            schedule.description,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            switch ((schedule.isActive, nextVisit)) {
+              (true, final visit?) => 'Next visit: $visit — confirm to book it.',
+              _ => 'Paused. Resume to see your next visit.',
+            },
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          if (controller.errorMessage case final message?)
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.xs),
+              child: Text(
+                message,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ),
+          const SizedBox(height: AppSpacing.md),
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.xs,
+            children: [
+              if (schedule.isActive)
+                FixButton(
+                  label: 'Confirm visit',
+                  icon: Icons.check_circle_outline_rounded,
+                  isLoading: controller.working,
+                  onPressed: () async {
+                    final bookingId = await controller.confirm(schedule);
+                    if (bookingId != null) onConfirmed?.call();
+                  },
+                ),
+              if (schedule.isActive)
+                FixButton(
+                  label: 'Pause',
+                  icon: Icons.pause_circle_outline_rounded,
+                  variant: FixButtonVariant.secondary,
+                  isLoading: controller.working,
+                  onPressed: () =>
+                      controller.updateStatus(schedule, 'pause'),
+                ),
+              if (!schedule.isActive)
+                FixButton(
+                  label: 'Resume',
+                  icon: Icons.play_circle_outline_rounded,
+                  variant: FixButtonVariant.secondary,
+                  isLoading: controller.working,
+                  onPressed: () =>
+                      controller.updateStatus(schedule, 'resume'),
+                ),
+              TextButton(
+                onPressed: controller.working
+                    ? null
+                    : () => controller.updateStatus(schedule, 'cancel'),
+                child: const Text('Stop repeating'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }

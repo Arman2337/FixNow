@@ -81,9 +81,8 @@ class RealtimeClient extends ChangeNotifier {
     await _connect();
   }
 
-  Future<void> sendPresence(bool online) => _sendWithAck(
-    {'type': 'presence-update', 'online': online},
-  );
+  Future<void> sendPresence(bool online) =>
+      _sendWithAck({'type': 'presence-update', 'online': online});
 
   Future<void> sendLocationConsent({
     required String bookingId,
@@ -132,26 +131,22 @@ class RealtimeClient extends ChangeNotifier {
       _subscription = socket.messages.listen(
         _onMessage,
         onDone: () {
-          print('WS CLOSED: onDone');
           _handleDisconnect();
         },
-        onError: (e) {
-          print('WS ERROR: $e');
+        onError: (_) {
           _handleDisconnect();
         },
         cancelOnError: true,
       );
       notifyListeners();
       await _readyCompleter!.future.timeout(const Duration(seconds: 5));
-    } catch (e) {
-      print('WS CONNECT ERROR: $e');
+    } catch (_) {
       _handleDisconnect();
     }
   }
 
   void _onMessage(dynamic raw) {
     if (raw is! String) return;
-    print('WS RECV: $raw');
     try {
       final decoded = jsonDecode(raw);
       if (decoded is! Map) return;
@@ -196,7 +191,6 @@ class RealtimeClient extends ChangeNotifier {
   Future<void> _send(Map<String, Object?> message) async {
     final socket = _socket;
     if (socket == null) {
-      print('WS DROPPED MESSAGE: socket is null! Message: ${message['type']}');
       return;
     }
     await socket.send(jsonEncode(message));

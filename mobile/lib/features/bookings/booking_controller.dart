@@ -11,6 +11,7 @@ enum BookingListStatus { initial, loading, ready, empty, offline, error }
 class BookingController extends ChangeNotifier {
   BookingController(this._repository, {this.realtime});
   final BookingRepository _repository;
+  BookingRepository get repository => _repository;
   final RealtimeClient? realtime;
   StreamSubscription<RealtimeProjection>? _projectionSubscription;
   Timer? _reconciliationTimer;
@@ -50,8 +51,12 @@ class BookingController extends ChangeNotifier {
 
   Future<void> _reconcileActiveBookings() async {
     if (!bookings.any(
-      (booking) => const {'REQUESTED', 'ASSIGNED', 'EN_ROUTE', 'IN_PROGRESS'}
-          .contains(booking.status),
+      (booking) => const {
+        'REQUESTED',
+        'ASSIGNED',
+        'EN_ROUTE',
+        'IN_PROGRESS',
+      }.contains(booking.status),
     )) {
       return;
     }
@@ -59,7 +64,9 @@ class BookingController extends ChangeNotifier {
       final latest = await _repository.history();
       if (_sameBookings(latest, bookings)) return;
       bookings = latest;
-      status = latest.isEmpty ? BookingListStatus.empty : BookingListStatus.ready;
+      status = latest.isEmpty
+          ? BookingListStatus.empty
+          : BookingListStatus.ready;
       notifyListeners();
       await _subscribeToActiveBooking();
     } on ApiException {
@@ -68,21 +75,28 @@ class BookingController extends ChangeNotifier {
     }
   }
 
-  static bool _sameBookings(List<CustomerBooking> first, List<CustomerBooking> second) {
+  static bool _sameBookings(
+    List<CustomerBooking> first,
+    List<CustomerBooking> second,
+  ) {
     if (first.length != second.length) return false;
     for (var index = 0; index < first.length; index += 1) {
       if (first[index].id != second[index].id ||
           first[index].version != second[index].version ||
-          first[index].status != second[index].status) return false;
+          first[index].status != second[index].status)
+        return false;
     }
     return true;
   }
 
   Future<void> _subscribeToActiveBooking() async {
     final active = bookings.where(
-      (item) =>
-          const {'REQUESTED', 'ASSIGNED', 'EN_ROUTE', 'IN_PROGRESS'}
-              .contains(item.status),
+      (item) => const {
+        'REQUESTED',
+        'ASSIGNED',
+        'EN_ROUTE',
+        'IN_PROGRESS',
+      }.contains(item.status),
     );
     if (active.isEmpty) return;
     await realtime?.subscribeBooking(active.first.id);

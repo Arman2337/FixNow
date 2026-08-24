@@ -97,6 +97,11 @@ Deferring these prevents a foundation commit from silently locking the project i
 
 Create a numbered ADR in [`decisions/`](decisions/) for material choices. Copy [`0000-template.md`](decisions/0000-template.md), assign the next number, and keep superseded records for historical context.
 
+## AI governance
+
+- [AI governance and evaluation architecture](../ai/governance-and-evaluation-architecture.md)
+- [ADR-0014: Advisory AI governance and provider-neutral boundary](decisions/0014-adopt-advisory-ai-governance.md)
+
 ## Contract conventions
 
 - [API conventions](api-conventions.md)

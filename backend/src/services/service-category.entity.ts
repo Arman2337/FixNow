@@ -1,4 +1,5 @@
 import {
+  Check,
   Column,
   CreateDateColumn,
   Entity,
@@ -9,9 +10,35 @@ import {
 import { ProviderSkillEntity } from '../providers/provider-skill.entity';
 
 @Entity({ name: 'service_categories' })
+@Check(
+  'CHK_service_categories_pricing_pair',
+  '(price_amount IS NULL AND price_currency IS NULL) OR (price_amount IS NOT NULL AND price_currency IS NOT NULL)',
+)
 export class ServiceCategoryEntity {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
+
+  /**
+   * Optional admin-published flat base price in minor currency units
+   * (paise for INR). Null on both fields means "price on request"; the
+   * table-level check constraint keeps the pair consistent.
+   */
+  @Column({ name: 'price_amount', type: 'integer', nullable: true })
+  priceAmount!: number | null;
+
+  @Column({
+    name: 'price_currency',
+    type: 'varchar',
+    length: 3,
+    nullable: true,
+  })
+  priceCurrency!: string | null;
+
+  /** API-facing view; null means "price on request". */
+  get pricing(): { amountMinor: number; currency: string } | null {
+    if (this.priceAmount === null || this.priceCurrency === null) return null;
+    return { amountMinor: this.priceAmount, currency: this.priceCurrency };
+  }
 
   @Column({ type: 'varchar', length: 255, unique: true })
   name!: string;

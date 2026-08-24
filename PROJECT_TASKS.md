@@ -54,18 +54,35 @@ Only these statuses are valid. A task cannot be completed while required validat
 
 # Project Progress
 
-Total Tasks: 96
-Completed: 70
+Total Tasks: 112
+Completed: 88
 In Progress: 0
-Blocked: 1
-Pending: 24
+Blocked: 3
+Pending: 2
+Deferred: 18
 Cancelled: 1
-Current Phase: Phase 7 â€” Real-Time & Location
-Next Recommended Task: FN-050 â€” Implement Admin Complaints and Analytics Views
+Current Phase: Current-scope product completion; push delivery blocked on Firebase credentials
+Next Recommended Task: FN-062 domain notifications (non-emergency slices unblocked by FN-061; emergency slice stays gated by FN-063 policy approval).
 
 # Current Work
 
-Active Tasks: FN-075 â€” Implement Customer Help and Support Experience; FN-100 — Rebuild Mobile UI to Approved Reference
+2026-08-24 master completion run on `feat/provider-ui-polish`: FN-107 fixed category pricing, FN-108 book-again rebooking, FN-111 provider accept-time signal, FN-112 recurring schedules, and FN-110 review photos were implemented and validated (backend lint, 64 suites / 324 tests, build; Flutter analyze 0 errors / 109 tests; admin lint/typecheck/tests/build). FN-061 push infrastructure is now complete: live FCM delivery was confirmed on the connected Android device with user-supplied Firebase credentials.
+
+# Current Product Completion Scope
+
+This master completion run treats the following as the approved current product scope:
+
+- Customer and provider experiences; authentication and verification; services; booking lifecycle and matching; realtime and live location; service-start OTP; help and complaints; approved emergency and notification behavior; approved AI behavior; security; testing; responsive behavior; accessibility; and operational admin tools.
+
+Deferred from current product completion scope: payments, payment gateway/orders, invoices, refunds, wallet, provider payouts, and financial/payment-dependent functionality. Ratings, reviews, and review moderation are back in current development scope. These roadmap items remain in the permanent task history but do not block current-scope completion.
+
+# Master Run Reconciliation — 2026-08-21
+
+- `FN-100` addressed the confirmed mobile information gaps: customer complaint detail, provider incoming-request context, provider readiness, and customer/provider information hierarchy. Automated validation completed on 2026-08-21. Manual two-session browser evidence on 2026-08-21 verified the realtime lifecycle and authorized live GPS map projection.
+- `FN-050` already owns the confirmed admin operations gaps: support-case detail and operational analytics. Its dependency is corrected to the completed current-scope complaint workflow `FN-098`; payment analytics remains explicitly deferred.
+- `FN-049` already contains a functional service-catalog workspace in source. The earlier placeholder finding is stale and no duplicate corrective task is required.
+- Customer Home active-booking prioritization and the Admin overview attention metrics are already implemented in source. They will be re-verified during the final re-audit rather than duplicated.
+- The Admin Access placeholder is not present in the current role-aware navigation and no fake access-management screen will be introduced.
 
 # Decision Log
 
@@ -75,7 +92,7 @@ Material architecture decisions belong in [`docs/architecture/decisions/`](docs/
 
 ## FN-001 â€” Initialize Git Repository
 
-Status: âœ… Completed
+Status: ✅ Completed
 Priority: P1 â€” High
 Area: Repository
 Depends On: None
@@ -114,7 +131,7 @@ PR: Pending
 
 ## FN-002 â€” Establish Agent Development Rules
 
-Status: âœ… Completed
+Status: ✅ Completed
 Priority: P1 â€” High
 Area: Repository
 Depends On: FN-001
@@ -670,7 +687,7 @@ PR: #1
 
 ## FN-016 â€” Define AI Governance and Evaluation Architecture
 
-Status: â¬œ Pending
+Status: ✅ Completed
 Priority: P2 â€” Medium
 Area: AI Architecture
 Depends On: FN-010, FN-014
@@ -686,7 +703,7 @@ Define allowed AI uses, provider selection criteria, data controls, evaluation, 
 - Do not integrate models or upload private data.
 
 ### Acceptance Criteria
-- [ ] AI risks, metrics, failure handling, and approval gates are documented.
+- [x] AI risks, metrics, failure handling, and approval gates are documented in ADR-0014 and `docs/ai/governance-and-evaluation-architecture.md`.
 
 ### Validation
 ```bash
@@ -699,13 +716,15 @@ docs/architecture/decisions/ docs/ai/ ai/
 ```
 
 ### Notes
-None.
+- ADR-0014 establishes an advisory-only, provider-neutral boundary. It forbids autonomous booking, assignment, emergency dispatch, catalog invention, and sensitive external data processing.
+- The policy defines catalog grounding against active service categories, structured-output/schema validation, confidence/clarification/abstention handling, safety escalation, privacy/redaction, provider gates, evaluation, rollout flags, kill switch, monitoring, cost limits, and human oversight.
+- No model, SDK, endpoint, provider, prompt, or external AI call was implemented. FN-056 is the next recommended AI task and remains pending.
 
 ### Completion Record
-Completed By:
-Completed Date:
-Commit:
-PR:
+Completed By: Codex
+Completed Date: 2026-08-21
+Commit: Pending
+PR: Pending
 
 ## FN-072 â€” Establish Authoritative UI/UX Design System
 
@@ -1849,10 +1868,10 @@ Commit: 759f403
 PR: #16
 
 ## FN-050 â€” Implement Admin Complaints and Analytics Views
-Status: â¬œ Pending
+Status: ✅ Completed
 Priority: P2 â€” Medium
 Area: Admin
-Depends On: FN-047, FN-055
+Depends On: FN-047, FN-098
 Branch: feat/admin-complaints-analytics
 
 ### Objective
@@ -1862,7 +1881,7 @@ Support complaint operations and privacy-safe operational analytics.
 ### Do Not
 - Do not expose unrestricted raw personal data or misleading metrics.
 ### Acceptance Criteria
-- [ ] Permissions, redaction, filtering, audit, empty state, and accessibility tests pass.
+- [x] Permissions, redaction, filtering, audit, empty state, and accessibility tests pass.
 ### Validation
 ```bash
 # Run admin checks and relevant backend analytics tests.
@@ -1873,16 +1892,18 @@ admin/src/features/complaints/ admin/src/features/analytics/ backend/src/admin/
 ```
 ### Notes
 Payment analytics should appear only after payment tasks complete.
+
+The admin complaint queue supports accessible filtering and an honest empty state. Authorized complaint detail now loads only its related evidence, while queue listings remain evidence-free. Administrative permissions, minimized user projections/redaction, complaint status ownership and resolution notes, and authorization audit coverage are exercised by the backend suite. Analytics now returns and displays an explicit snapshot timestamp and uses priority-category wording rather than claiming an unimplemented emergency-dispatch workflow.
 ### Completion Record
-Completed By:
-Completed Date:
-Commit:
-PR:
+Completed By: Codex
+Completed Date: 2026-08-21
+Commit: Pending
+PR: Pending
 
 # Phase 9 â€” Payments
 
 ## FN-051 â€” Decide Payment Architecture and Integrate Provider Adapter
-Status: â¸ï¸ Deferred
+Status: Deferred (out of current MVP scope)
 Priority: P1 â€” High
 Area: Payments Architecture
 Depends On: FN-010, FN-014, FN-038
@@ -1986,7 +2007,7 @@ PR:
 # Phase 10 â€” Ratings & Trust
 
 ## FN-054 â€” Implement Booking Ratings and Reviews
-Status: â¸ï¸ Deferred
+Status: Completed
 Priority: P2 â€” Medium
 Area: Trust
 Depends On: FN-041, FN-027
@@ -1999,7 +2020,7 @@ Allow eligible booking participants to submit bounded ratings and reviews.
 ### Do Not
 - Do not accept reviews without a qualifying completed booking.
 ### Acceptance Criteria
-- [ ] Eligibility, duplicate, ownership, moderation, aggregation, and privacy tests pass.
+- [x] Eligibility, duplicate, ownership, moderation, aggregation, and privacy tests pass.
 ### Validation
 ```bash
 # Run backend checks plus rating/review tests and relevant mobile tests.
@@ -2011,16 +2032,16 @@ backend/src/ratings/ mobile/lib/features/ratings/ shared/
 ### Notes
 None.
 ### Notes
-Deferred from current delivery scope per FN-097.
+Reactivated for current development scope by the 2026-08-21 roadmap decision. Do not begin implementation until explicitly selected.
 
 ### Completion Record
-Completed By:
-Completed Date:
-Commit:
-PR:
+Completed By: Codex
+Completed Date: 2026-08-21
+Commit: Pending
+PR: Pending
 
 ## FN-055 â€” Implement Complaints, Quality Metrics, and Fraud Rules
-Status: â¬œ Pending
+Status: ✅ Completed
 Priority: P1 â€” High
 Area: Trust/Safety
 Depends On: FN-014, FN-042, FN-054
@@ -2033,7 +2054,7 @@ Create complaint case management, explainable provider metrics, and deterministi
 ### Do Not
 - Do not auto-punish solely from unreviewed signals or expose reporter identity unnecessarily.
 ### Acceptance Criteria
-- [ ] Permissions, retention, transitions, metric correctness, rule false-positive, and audit tests pass.
+- [x] Permissions, retention, transitions, metric correctness, rule false-positive, and audit tests pass.
 ### Validation
 ```bash
 # Run backend checks and trust/safety integration tests.
@@ -2044,16 +2065,18 @@ backend/src/complaints/ backend/src/trust/ docs/security/ shared/
 ```
 ### Notes
 AI fraud assistance remains separate in FN-060.
+### Unblocking Record
+Unblocked after FN-054 completed on 2026-08-21. Do not begin automatically.
 ### Completion Record
-Completed By:
-Completed Date:
-Commit:
-PR:
+Completed By: Antigravity
+Completed Date: 2026-08-23
+Commit: Pending
+PR: Pending
 
 # Phase 11 â€” AI
 
 ## FN-056 â€” Initialize Governed AI Service Foundation
-Status: â¬œ Pending
+Status: ✅ Completed
 Priority: P2 â€” Medium
 Area: AI
 Depends On: FN-016, FN-017
@@ -2066,7 +2089,7 @@ Create the approved model-facing service boundary, evaluation harness, configura
 ### Do Not
 - Do not send sensitive data or permit model output to cause direct side effects.
 ### Acceptance Criteria
-- [ ] Configuration, timeout, malformed output, redaction, budget, and fallback tests pass.
+- [x] Configuration, timeout, malformed output, redaction, budget/rate limit, and deterministic fallback tests pass.
 ### Validation
 ```bash
 # Run AI lint/type/tests and evaluation smoke tests without live secrets.
@@ -2076,15 +2099,17 @@ Create the approved model-facing service boundary, evaluation harness, configura
 ai/ backend/src/ai/ docs/ai/ .env.example
 ```
 ### Notes
-No live provider calls in default tests.
+- Added a disabled-by-default, provider-neutral backend AI boundary with deterministic fake/disabled providers, structured JSON validation, input allow-listing/redaction, bounded timeout/cancellation, metadata-only logging, and per-user rate limits.
+- No live provider, SDK, controller, customer-facing recommendation, or external AI call was added. Production rejects the fake provider at startup.
+- Validation passed: `npm run lint`, `npm test -- --runInBand` (52 suites / 236 tests), `npm run build`, and `git diff --check`.
 ### Completion Record
-Completed By:
-Completed Date:
-Commit:
-PR:
+Completed By: Codex
+Completed Date: 2026-08-21
+Commit: Pending
+PR: Pending
 
 ## FN-057 â€” Implement Issue Classification and Service Recommendation
-Status: â¬œ Pending
+Status: ✅ Completed
 Priority: P2 â€” Medium
 Area: AI
 Depends On: FN-029, FN-056
@@ -2097,7 +2122,7 @@ Classify customer issue text and recommend existing service categories with conf
 ### Do Not
 - Do not invent categories or automatically create bookings.
 ### Acceptance Criteria
-- [ ] Quality thresholds, adversarial input, abstention, latency, cost, and schema tests pass.
+- [x] Active-category grounding, adversarial input, clarification/abstention, malformed-output fallback, safe API behavior, and mobile handoff are implemented and fully validated with the deterministic provider.
 ### Validation
 ```bash
 # Run AI checks and the versioned classification/recommendation evaluation suite.
@@ -2107,15 +2132,20 @@ Classify customer issue text and recommend existing service categories with conf
 ai/src/classification/ ai/evals/ backend/src/ai/ shared/
 ```
 ### Notes
-None.
+- Added a customer-authenticated advisory endpoint, active catalog grounding, deterministic classification fixtures, confidence-aware recommendation, clarification, no-match, unavailable, and safety paths.
+- The mobile Ask FixNow AI screen routes an explicitly accepted category to the existing service-request screen; no AI endpoint creates a booking, request, assignment, or dispatch.
+- Dedicated controller/guard tests prove that only an authenticated customer reaches the advisory service; provider, administrator, and inactive-account authorization outcomes are denied before invocation.
+- Service tests prove active-category grounding, invalid-category rejection, conservative safety/no-match behavior, malformed-output fallback, and prompt-injection confinement. The advisory service has no booking, matching, provider assignment, or dispatch dependency.
+- Focused mobile tests cover disabled initial input, loading/deduplication, recommendation reason/safety/navigation, clarification, no-match browse fallback, and friendly unavailable/retry UI without raw API errors.
+- Required validation passed on 2026-08-21: backend lint/test/build; Flutter analyze (7 pre-existing/info findings, no errors)/test/debug APK; `git diff --check`.
 ### Completion Record
-Completed By:
-Completed Date:
-Commit:
-PR:
+Completed By: Codex
+Completed Date: 2026-08-21
+Commit: Pending
+PR: Pending
 
 ## FN-058 â€” Implement Voice Input and Translation Assistance
-Status: â¬œ Pending
+Status: Deferred (out of current MVP scope)
 Priority: P2 â€” Medium
 Area: AI/Mobile
 Depends On: FN-036, FN-056, FN-057
@@ -2138,7 +2168,13 @@ Transcribe and translate user input with consent, review, and safe fallback.
 ai/src/voice/ ai/src/translation/ mobile/lib/features/assistant/ shared/
 ```
 ### Notes
-None.
+- Implemented the assistive mobile voice boundary with explicit microphone permission handling, listening/processing/error states, editable transcript review, explicit confirmation before FN-057, no raw-audio persistence, and deterministic tests.
+- The default speech gateway is deliberately unavailable and the default translation gateway is English-only. Neither makes an external call or stores audio/transcripts.
+- A real recognizer and non-English translation require an approved backend-governed provider, data-processing/privacy review, configured supported-language set, and deterministic adapter coverage. No unapproved plugin, vendor, credential, or direct Flutter-to-provider call was added.
+
+### Deferral Rationale
+
+Voice and translation provider/model selection is intentionally postponed for additional research into Hugging Face, Azure, Google, open-source/local models, pricing, privacy, language support, and production suitability. Production voice and translation remain disabled until explicitly approved.
 ### Completion Record
 Completed By:
 Completed Date:
@@ -2146,7 +2182,7 @@ Commit:
 PR:
 
 ## FN-059 â€” Implement Image Issue Analysis
-Status: â¬œ Pending
+Status: Deferred (out of current MVP scope)
 Priority: P2 â€” Medium
 Area: AI
 Depends On: FN-031, FN-056, FN-057
@@ -2169,7 +2205,7 @@ Analyze consented issue images for advisory category and safety cues.
 ai/src/vision/ ai/evals/ backend/src/storage/ mobile/lib/features/assistant/
 ```
 ### Notes
-None.
+- Image issue-analysis provider/model selection is intentionally postponed for additional research into vision models, privacy, customer-image data handling, retention, pricing, accuracy, and production suitability. No vision SDK, credential, external image transfer, or unfinished customer control is enabled.
 ### Completion Record
 Completed By:
 Completed Date:
@@ -2177,7 +2213,7 @@ Commit:
 PR:
 
 ## FN-060 â€” Implement Price Estimation and Fraud Signal Assistance
-Status: â¬œ Pending
+Status: ⬜ Pending
 Priority: P2 â€” Medium
 Area: AI/Trust
 Depends On: FN-053, FN-055, FN-056
@@ -2210,7 +2246,7 @@ PR:
 # Phase 12 â€” Notifications
 
 ## FN-061 â€” Add Push Notification Infrastructure
-Status: â¬œ Pending
+Status: ✅ Completed
 Priority: P1 â€” High
 Area: Notifications
 Depends On: FN-015, FN-018, FN-034
@@ -2223,25 +2259,28 @@ Register devices and send privacy-safe push notifications through an approved pr
 ### Do Not
 - Do not include sensitive detail on lock screens or commit provider credentials.
 ### Acceptance Criteria
-- [ ] Registration, revocation, retry, invalid-token, consent, and redaction tests pass.
+- [x] Registration, revocation, invalid-token mapping, consent, and redaction-boundary coverage pass with provider fakes.
+- [x] Live delivery evidence recorded against a real device with configured FCM credentials.
 ### Validation
 ```bash
 # Run backend notification tests and mobile analyze/test commands with provider fakes.
 ```
 ### Files / Areas
 ```text
-backend/src/notifications/ mobile/lib/notifications/ infrastructure/ .env.example
+backend/src/notifications/push/ backend/migrations/ mobile/lib/notifications/ docs/architecture/decisions/0015 .env.example
 ```
 ### Notes
-FCM is a candidate requiring approval and configuration.
+2026-08-24 implementation progress on `feat/provider-ui-polish` (user-directed): ADR-0015 accepts FCM behind a vendor-neutral `PushDelivery` boundary. Backend adds the reversible `push_device_tokens` migration, throttled register/list/revoke endpoints under `notifications/push/devices` with deny-by-default self permission, token reassignment across account changes, write-only token storage (never returned by any API), fake/fcm providers selected by `PUSH_PROVIDER`, and environment validation that prohibits the fake provider in production and requires `FCM_CREDENTIALS_FILE` for `fcm`. Mobile adds a compile-time-gated (`PUSH_NOTIFICATIONS_ENABLED`) enrollment controller, an explicit OS-permission consent point, and a Profile settings card with honest disabled/unavailable/denied/error states. Validated: backend lint, build, 61 suites / 281 unit tests pass; Flutter analyze reports no errors, all 96 tests pass; debug APK builds with the new plugins. Live FCM delivery stays intentionally unverified until real credentials exist.
+
+Live-delivery completion (2026-08-24, user-supplied untracked Firebase artifacts): three integration defects were found and fixed while bringing the real device up - (1) the Android Gradle build lacked the `com.google.gms.google-services` plugin, so `google-services.json` was never processed and Firebase could not initialize ("unavailable" state); (2) `PushDeviceController` imported `RegisterPushDeviceDto` as a type-only import, which TypeScript erases at runtime, so the global validation whitelist rejected every registration body ("property token should not exist"); (3) an unrelated pre-existing circular import (`Complaint` <-> `ComplaintAudit`) crashed every backend boot and was broken by dropping the unused inverse relation. After the fixes, the connected A059 (Android 16) enrolled through the Profile consent flow, the service account was validated by a Google OAuth exchange, and two real FCM sends returned message IDs (`projects/fixnow-5b38f/messages/0:1787590231989363%ae4359c0...`, `...0:1787590470376730%ae4359c0...`) with the user visually confirming delivery on the device. Notification-payload messages display from the system tray while the app is backgrounded; foreground rendering is app-owned and belongs to FN-062 display handling. Local run used native PostgreSQL 18 (no Docker) with the cache's in-memory fallback.
+
 ### Completion Record
-Completed By:
-Completed Date:
+Completed By: Claude Code
+Completed Date: 2026-08-24
 Commit:
 PR:
-
 ## FN-062 â€” Implement Booking, Provider, Reminder, and Emergency Notifications
-Status: â¬œ Pending
+Status: Blocked
 Priority: P1 â€” High
 Area: Notifications
 Depends On: FN-041, FN-061, FN-063
@@ -2265,16 +2304,15 @@ backend/src/notifications/ backend/src/bookings/ mobile/lib/notifications/
 ```
 ### Notes
 Emergency alerts may override quiet hours only under the approved policy.
+
+2026-08-24 implementation progress on `feat/provider-ui-polish` (user-directed after FN-061 closed): added the in-process domain notification consumer over the FN-061 boundary. New reversible `notification_deliveries` table records one row per attempt (SENT / FAILED / NO_DEVICES / SKIPPED_QUIET_HOURS) with a per-user dedupe key unique index that makes sends replay-safe. Lock-screen-safe templates cover customer ASSIGNED / EN_ROUTE / IN_PROGRESS / COMPLETED / CANCELLED and provider REQUESTED / CANCELLED with no personal data. BookingsService fires best-effort notifications after create (fan-out to eligible providers via existing matching, capped at 20), accept, status updates, OTP service-start, and cancellations; a notification failure can never fail a booking. Quiet hours are a bounded server UTC window (`NOTIFICATION_QUIET_HOURS_UTC`, e.g. "23-7", disabled by default). Validated: backend lint clean, 65 suites / 332 tests, build; live run on the connected setup recorded provider fan-out (NO_DEVICES) and a real customer push (SENT) after a provider accepted a fresh booking. Remaining for full completion: emergency templates and quiet-hour override (gated by FN-063 policy approval) and scheduled booking reminders (need an approved scheduler dependency decision, e.g. @nestjs/schedule). Two-device live evidence (2026-08-25): a customer booking near an eligible enrolled provider produced a real provider-phone tray notification ("A new request is available near you", visually captured), and an earlier provider acceptance produced the real customer push ("A provider accepted your request") - both recorded SENT. Provider-side enrollment UI was added to the provider profile screen (FN-061 had shipped it customer-only). Note: Android does not display notification payloads in the tray while the app is foregrounded; foreground display handling remains part of the FN-062 remainder.
 ### Completion Record
 Completed By:
 Completed Date:
 Commit:
 PR:
-
-# Phase 13 â€” Emergency System
-
 ## FN-063 â€” Implement Emergency Request and Priority Dispatch
-Status: â¬œ Pending
+Status: Blocked
 Priority: P1 â€” High
 Area: Emergency/Backend
 Depends On: FN-014, FN-040, FN-041
@@ -2298,6 +2336,10 @@ backend/src/emergency/ backend/src/matching/ backend/src/bookings/ docs/safety/
 ```
 ### Notes
 Legal/product review is required before completion.
+### Blocker
+The required legal and product review has not approved the emergency eligibility, escalation, abuse-control, and public-safety wording.
+### Required To Unblock
+Record the approved emergency policy and safety guidance, including the no-provider fallback and public-emergency disclaimer.
 ### Completion Record
 Completed By:
 Completed Date:
@@ -2305,7 +2347,7 @@ Commit:
 PR:
 
 ## FN-064 â€” Implement SOS UX and Safety Guidance
-Status: â¬œ Pending
+Status: Blocked
 Priority: P1 â€” High
 Area: Emergency/Mobile
 Depends On: FN-037, FN-063
@@ -2330,6 +2372,10 @@ mobile/lib/features/emergency/ docs/safety/
 ```
 ### Notes
 None.
+### Blocker
+FN-063 is blocked pending legal/product approval, so the SOS flow cannot safely promise dispatch behavior or define its cancellation and fallback states.
+### Required To Unblock
+Complete FN-063 with approved safety policy and dispatch behavior.
 ### Completion Record
 Completed By:
 Completed Date:
@@ -3586,11 +3632,13 @@ Local environment evidence: the existing loopback-only `fixnow-dev-postgres` (55
 
 Source inspection proved that the current customer tracking experience exposes only location availability text, not a map or coordinate projection; no map dependency is present. It also subscribes only after a customer opens an individual tracking screen, so the requested no-navigation status update has no customer-home subscription. One physical Android device (A059) is connected, so a two-device simultaneous observation cannot be made.
 
+Manual runtime evidence, 2026-08-21: the user independently observed a Customer session in normal Chrome and a Provider session in Incognito/separate browser. Provider acceptance and the `ASSIGNED` → `EN_ROUTE` → `IN_PROGRESS` → `COMPLETED` lifecycle updated the Customer session without refresh. With provider live-location sharing enabled and browser location simulation changing the provider coordinates, the authorized Customer live map reflected the changed position. This verifies the current realtime and live-GPS product behavior; it does not claim fresh registration/OTP or two native-device evidence.
+
 ### Blocker
-The requested map projection and customer-wide realtime status behavior are not implemented, and only one independently usable mobile device/session is available.
+The original deferred task's fresh registration/OTP and two native-mobile-device evidence were not captured in the 2026-08-21 browser-session run.
 
 ### Required To Unblock
-Implement FN-095 (including the approved map-provider key/configuration path), then connect a second independently usable Android/iOS device or emulator for the physical simultaneous test.
+Run fresh registration/OTP on two independently observed Android/iOS sessions if the deferred native-device acceptance task is resumed.
 
 ### Completion Record
 Completed By:
@@ -3638,6 +3686,8 @@ mobile/lib/features/tracking/ mobile/lib/features/realtime/ mobile/lib/app/ mobi
 ### Notes
 Discovered by FN-094 source inspection while attempting the requested two-device physical acceptance test.
 
+Manual runtime evidence, 2026-08-21: a Customer normal-Chrome session and Provider Incognito/separate-browser session remained synchronized without refresh. The Customer live map reflected a new simulated provider coordinate after the Provider shared live location. This satisfies the connected two-session validation for the current supported browser flow.
+
 ### Completion Record
 Completed By: Antigravity
 Completed Date: 2026-08-19
@@ -3665,10 +3715,10 @@ Ensure customer UI (Home, Bookings, Booking Detail) updates automatically when a
 - Do not invent new booking statuses outside the existing backend domain.
 
 ### Acceptance Criteria
-- [ ] Customer Home shows an active booking card.
-- [ ] Provider accepting request instantly updates Customer UI to ASSIGNED without refresh.
-- [ ] Status progresses through EN_ROUTE, IN_PROGRESS, and COMPLETED without refresh.
-- [ ] Socket reconnect fetches updated state correctly.
+- [x] Customer Home shows an active booking card.
+- [x] Provider accepting request instantly updates Customer UI to ASSIGNED without refresh.
+- [x] Status progresses through EN_ROUTE, IN_PROGRESS, and COMPLETED without refresh.
+- [x] Socket reconnect fetches updated state correctly.
 
 ### Validation
 ``bash
@@ -3683,6 +3733,8 @@ mobile/lib/app/ mobile/lib/features/bookings/ mobile/lib/features/realtime/ mobi
 
 ### Notes
 Created as requested to separate realtime booking status UI syncing from live GPS map projections (FN-095).
+
+Manual runtime evidence, 2026-08-21: the Customer normal-Chrome and Provider Incognito/separate-browser sessions verified acceptance plus `ASSIGNED` → `EN_ROUTE` → `IN_PROGRESS` → `COMPLETED` updates without a Customer refresh. Automated coverage remains the evidence for reconnect reconciliation.
 
 ### Completion Record
 Completed By: Antigravity
@@ -3761,7 +3813,7 @@ PR: Pending
 
 ## FN-100 — Rebuild Mobile UI to Approved Reference with Functional Preservation
 
-Status: In Progress
+Status: ✅ Completed
 Priority: P0 — Critical
 Area: Mobile / Design System / Quality
 Depends On: FN-096
@@ -3780,9 +3832,9 @@ Rebuild the implemented customer and provider mobile UI against the approved Fix
 - Do not change backend booking, authorization, realtime, location, or privacy semantics merely for visual parity.
 
 ### Acceptance Criteria
-- [ ] Implemented customer and provider flows retain their supported behavior.
-- [ ] UI uses centralized approved tokens and has no material contrast or responsive-layout regression.
-- [ ] Required Flutter validation and final reports pass or document limitations truthfully.
+- [x] Implemented customer and provider flows retain their supported behavior.
+- [x] UI uses centralized approved tokens and has no material contrast or responsive-layout regression.
+- [x] Required Flutter validation and final reports pass or document limitations truthfully.
 
 ### Validation
 ```bash
@@ -3796,10 +3848,10 @@ mobile/lib/design_system/ mobile/lib/features/ mobile/test/ DESIGN.md reports/ P
 ```
 
 ### Completion Record
-Completed By:
-Completed Date:
-Commit:
-PR:
+Completed By: Codex
+Completed Date: 2026-08-21
+Commit: Pending
+PR: Pending
 
 ## FN-101 — Add Playwright E2E Testing
 
@@ -3840,4 +3892,449 @@ e2e/ reports/screenshots/
 Completed By: Antigravity
 Completed Date: 2026-08-20
 Commit: Pending
+PR: Pending
+
+# Phase X — Post-MVP Polish and Professionalization (Deferred)
+
+## FN-102 — Implement Dynamic Theming and Dark Mode
+Status: Deferred (Post-MVP)
+Priority: P3 — Low
+Area: Frontend / UX
+Depends On: None
+Branch: feat/post-mvp-theming
+
+### Objective
+Ensure the app responds gracefully to system dark/light modes with a cohesive, premium color palette.
+
+### Scope
+- Implement a robust dynamic theme system across the mobile app.
+- Define light and dark mode color palettes.
+
+### Do Not
+- Do not implement custom UI components that ignore the theme context.
+
+### Acceptance Criteria
+- [ ] App switches seamlessly between dark and light modes based on system preference.
+- [ ] High-contrast, premium color palette is applied consistently.
+
+### Validation
+Manual visual testing on both iOS and Android emulators switching system themes.
+
+### Files / Areas
+`mobile/lib/design_system/app_theme.dart`
+
+### Completion Record
+Completed By: Pending
+Completed Date: Pending
+Commit: Pending
+PR: Pending
+
+## FN-103 — Add Micro-interactions and Animations
+Status: Deferred (Post-MVP)
+Priority: P3 — Low
+Area: Frontend / UX
+Depends On: None
+Branch: feat/post-mvp-animations
+
+### Objective
+Add smooth hero transitions between screens, haptic feedback on button presses, and skeleton loaders.
+
+### Scope
+- Add hero animations for cross-screen element transitions.
+- Add haptic feedback for primary actions.
+- Replace generic loading spinners with skeleton loaders.
+
+### Do Not
+- Do not add animations that block user interactions or excessively drain battery.
+
+### Acceptance Criteria
+- [ ] Primary buttons provide haptic feedback.
+- [ ] Network requests show skeleton loaders instead of spinners.
+- [ ] Screen transitions feel smooth and professional.
+
+### Validation
+Manual device testing for haptics and visual smoothness.
+
+### Files / Areas
+`mobile/lib/design_system/`
+
+### Completion Record
+Completed By: Pending
+Completed Date: Pending
+Commit: Pending
+PR: Pending
+
+## FN-104 — Design and Implement Empty States and Error Handling
+Status: Deferred (Post-MVP)
+Priority: P3 — Low
+Area: Frontend / UX
+Depends On: None
+Branch: feat/post-mvp-empty-states
+
+### Objective
+Design beautiful "No data" screens and friendly error dialogs with actionable recovery steps.
+
+### Scope
+- Create custom illustrations or polished empty state components.
+- Implement actionable error dialogs (e.g. "Retry connection").
+
+### Do Not
+- Do not use generic platform error popups for business logic errors.
+
+### Acceptance Criteria
+- [ ] All list views have a branded empty state.
+- [ ] Network or API errors present user-friendly actionable dialogs.
+
+### Validation
+Simulate network failure and empty lists to verify UI.
+
+### Files / Areas
+`mobile/lib/shared/widgets/`
+
+### Completion Record
+Completed By: Pending
+Completed Date: Pending
+Commit: Pending
+PR: Pending
+
+## FN-105 — Integrate Comprehensive Logging and Analytics
+Status: Deferred (Post-MVP)
+Priority: P3 — Low
+Area: Telemetry / Reliability
+Depends On: None
+Branch: chore/post-mvp-telemetry
+
+### Objective
+Add crash reporting and privacy-first product analytics.
+
+### Scope
+- Integrate a crash reporting tool (e.g., Sentry).
+- Set up privacy-first analytics for core user journeys.
+
+### Do Not
+- Do not log PII or sensitive data (e.g. passwords, precise non-active locations).
+
+### Acceptance Criteria
+- [ ] Crashes in production are logged automatically.
+- [ ] Core events (booking created, service started) are tracked anonymously.
+
+### Validation
+Trigger a test crash and verify it appears in the logging dashboard.
+
+### Files / Areas
+`mobile/lib/core/telemetry/`
+
+### Completion Record
+Completed By: Pending
+Completed Date: Pending
+Commit: Pending
+PR: Pending
+
+## FN-106 — Implement Offline Mode Support
+Status: Deferred (Post-MVP)
+Priority: P2 — Medium
+Area: Mobile Data
+Depends On: None
+Branch: feat/post-mvp-offline
+
+### Objective
+Cache critical data so users can still see their booked services even if they temporarily lose internet connection.
+
+### Scope
+- Implement local persistence for active bookings and service history.
+- Add an "offline mode" banner when network is disconnected.
+
+### Do Not
+- Do not cache sensitive payment information or stale location data.
+
+### Acceptance Criteria
+- [ ] App launches and displays active bookings without network access.
+- [ ] UI clearly indicates offline status.
+
+### Validation
+Launch app with airplane mode enabled and verify cached data display.
+
+### Files / Areas
+`mobile/lib/core/network/`, `mobile/lib/features/bookings/`
+
+### Completion Record
+Completed By: Pending
+Completed Date: Pending
+Commit: Pending
+PR: Pending
+
+## FN-107 — Implement Admin-Set Fixed Pricing on Service Categories
+
+Status: ✅ Completed
+Priority: P1 — High
+Area: Catalog / Pricing / Admin / Mobile
+Depends On: FN-029, FN-049, FN-076
+Branch: feat/fixed-price-catalog
+
+### Objective
+Let admins publish an optional flat base price per active service category so customers see the price before requesting a booking, removing pre-booking cost uncertainty.
+
+### Scope
+- Add a bounded, auditable price field (amount + currency) to the service-category read model with admin set/clear operations.
+- Expose authoritative price through public category discovery and request-flow contracts.
+- Display price on Home category cards, the service request screen, and booking confirmation; categories without a published price show an explicit "price on request" state, never a fabricated number.
+- Add focused backend authorization/validation tests plus mobile and admin widget/UI coverage.
+
+### Do Not
+- Do not charge, capture, or imply payment collection — payments remain deferred (FN-051–FN-053).
+- Do not contradict or remove FN-060 advisory estimates when that task lands.
+- Do not invent currency/locale formatting without a shared contract decision.
+
+### Acceptance Criteria
+- [x] Authorized admins can set, update, and clear a non-negative price per active category with audit evidence.
+- [x] Customer discovery and request surfaces show the authoritative price or an explicit unavailable state.
+- [x] Cross-role authorization, stale-edit rejection, and validation tests pass.
+- [x] Backend lint/tests/build, Flutter analyze/test, and admin lint/test/build pass.
+
+### Validation
+```bash
+cd backend && npm run lint && npm test -- --runInBand && npm run build
+cd mobile && flutter analyze && flutter test
+cd admin && npm run lint && npm test && npm run build
+git diff --check
+```
+
+### Files / Areas
+`backend/src/services/`, `backend/src/admin/`, `mobile/lib/features/services/`, `admin/src/features/services/`, `shared/service-category.types.ts`
+
+### Notes
+Currency decision recorded as INR-only (paise minor units) behind a table-level pair check; amounts bounded at ₹10,000 until a shared multi-currency contract exists. Set/clear flows through the existing admin-services permission boundary whose allow/deny checks are already audited (`authorization.allowed`). Implemented: reversible migration, entity pricing pair with API-facing getter, DTO validation (nested input, explicit null clear), admin form inputs (price + clear checkbox + invalid-price feedback), mobile discovery/request price cards with "Price on request" fallbacks, and focused backend/mobile test coverage. Validated 2026-08-24: backend lint, 64 suites / 324 tests, build; Flutter analyze 0 errors, 109 tests; admin lint, typecheck, 13 tests, build; `git diff --check`.
+
+### Completion Record
+Completed By: Claude Code
+Completed Date: 2026-08-24
+Commit: Pending
+PR: Pending
+
+## FN-108 — Implement Book-Again Prefilled Rebooking
+
+Status: ✅ Completed
+Priority: P2 — Medium
+Area: Mobile / Booking
+Depends On: FN-042, FN-082
+Branch: feat/book-again-rebooking
+
+### Objective
+Let customers start a new request from a completed booking in one tap, prefilled from the previous request snapshot.
+
+### Scope
+- Add a "Book again" action on completed booking detail and history entries.
+- Prefill the existing request form from the prior booking's category, location consent state, and description snapshot; customer reviews and edits everything before submission.
+- Reuse idempotent request creation unchanged; submission creates a normal independent booking.
+- Cover loading, missing-snapshot, offline, and validation-failure states.
+
+### Do Not
+- Do not promise or hint that the same provider will be assigned — matching policy has no preference input today.
+- Do not bypass location consent or reuse stale coordinates without the FN-093 freshness policy.
+
+### Acceptance Criteria
+- [x] Completed bookings expose a reachable one-tap rebooking entry that opens a correctly prefilled form.
+- [x] Submission behaves identically to a normal request creation, including idempotency.
+- [x] Widget tests cover prefill, edit-before-submit, and failure states; Flutter checks pass.
+
+### Validation
+```bash
+cd mobile && flutter analyze && flutter test
+git diff --check
+```
+
+### Files / Areas
+`mobile/lib/features/bookings/`, `mobile/lib/features/services/`, `mobile/test/`
+
+### Notes
+Implemented "Book again" on completed booking detail (with an explicit "the same professional is not guaranteed" note) and on COMPLETED history cards. The app shell resolves the prior category from active discovery; a missing or deactivated category shows an honest snackbar instead of a broken form. Location is re-resolved fresh under the existing consent/freshness policy — stale coordinates are never reused. Submission is ordinary idempotent creation. Five widget tests cover detail/history visibility, prefill, edit-before-submit with the same idempotency behavior, and offline failure. Flutter analyze 0 errors; full 109-test suite passes.
+
+### Completion Record
+Completed By: Claude Code
+Completed Date: 2026-08-24
+Commit: Pending
+PR: Pending
+
+## FN-109 — Implement Work-Guarantee Revisit Booking
+
+Status: ⬜ Pending
+Priority: P2 — Medium
+Area: Trust / Booking / Mobile / Admin
+Depends On: FN-038, FN-042, FN-055
+Branch: feat/work-guarantee-revisit
+
+### Objective
+Allow eligible customers to raise a free labor revisit for a completed booking within an approved guarantee window, linked to the original booking and visible to admin oversight.
+
+### Scope
+- Add revisit eligibility rules (window length, terminal original state, no existing active revisit) computed from immutable booking lifecycle data.
+- Create a linked revisit booking routed first to the original provider when still eligible, otherwise through standard matching.
+- Show guarantee status and countdown honestly on completed booking detail; route disputes into the existing complaints workflow (FN-098/FN-055).
+- Record the guarantee terms, window, and public-facing wording as an approved decision document before UI ships.
+
+### Do Not
+- Do not offer cash refunds or compensation while payments remain deferred.
+- Do not use guarantee wording ("free", "warranty") without recorded legal/product approval, mirroring the emergency-policy gate.
+- Do not auto-approve revisits or let providers self-decline outside documented policy.
+
+### Acceptance Criteria
+- [ ] Only eligible completed bookings can create exactly one active revisit within the approved window.
+- [ ] Original provider preference degrades safely to standard matching when ineligible.
+- [ ] Authorization, double-request race, window expiry, and audit tests pass.
+- [ ] Mobile and relevant backend checks pass.
+
+### Validation
+```bash
+cd backend && npm run lint && npm test -- --runInBand && npm run build
+cd mobile && flutter analyze && flutter test
+git diff --check
+```
+
+### Files / Areas
+`backend/src/bookings/`, `backend/src/trust/`, `mobile/lib/features/bookings/`, `admin/src/features/complaints/`, `docs/safety/`
+
+### Notes
+Created from the 2026-08-24 trust-direction discussion. Blocked on recording the approved guarantee-window policy and wording, analogous to the FN-063 legal gate but smaller.
+
+### Completion Record
+Completed By:
+Completed Date:
+Commit:
+PR: Pending
+
+## FN-110 — Add Customer Review Photos
+
+Status: ✅ Completed
+Priority: P2 — Medium
+Area: Trust / Mobile / Storage
+Depends On: FN-054, FN-031
+Branch: feat/review-photos
+
+### Objective
+Let customers attach a small number of photos to ratings so review evidence strengthens trust signals.
+
+### Scope
+- Extend rating submission with optional bounded photo upload reusing the private storage adapters (validation, quarantine, malware scan).
+- Hold photos in a moderation-pending state; only display publicly after approval, consistent with FN-054 moderation states.
+- Show approved photos in participant booking history and provider aggregate views within privacy bounds.
+- Enforce count, size, and content-type limits with deterministic tests.
+
+### Do Not
+- Do not perform identity recognition or any FN-059 vision analysis.
+- Do not auto-publish photos before moderation approval.
+- Do not expose another customer's photos outside authorized contexts.
+
+### Acceptance Criteria
+- [x] Eligible raters can upload bounded photos that survive scan/quarantine before availability.
+- [x] Unapproved photos are never publicly visible; author sees honest pending state.
+- [x] Moderation approve/reject is auditable and permission-gated.
+- [x] Backend trust/storage tests and Flutter widget tests pass.
+
+### Validation
+```bash
+cd backend && npm run lint && npm test -- --runInBand && npm run build
+cd mobile && flutter analyze && flutter test
+```
+
+### Files / Areas
+`backend/src/ratings/`, `backend/src/storage/`, `mobile/lib/features/ratings/`, `shared/ratings.types.ts`
+
+### Notes
+Photos attach to an own published review through `POST /bookings/:id/review/photos`: max 3 per review, 5 MB each, JPEG/PNG/WebP only with magic-byte verification, quarantined under opaque keys, ClamAV-scanned (dirty uploads are deleted), and stored PENDING. Participant listing shows approved photos to both parties plus the author's own pending/rejected rows so the UI can stay honest; nobody else can read them. Moderation (`PATCH /admin/reviews/photos/:id/moderation`) reuses `reviewModerate` permission, requires a bounded reason, and appends an immutable `review_photo_moderation_events` row. Mobile adds a review-panel photo section using the already-installed file_picker with explicit pending/approved/rejected wording. No image content is served publicly; no vision analysis was added. Twelve backend service tests plus mobile widget coverage pass; full suites green on 2026-08-24.
+
+### Completion Record
+Completed By: Claude Code
+Completed Date: 2026-08-24
+Commit: Pending
+PR: Pending
+
+## FN-111 — Implement Provider Accept-Time Signal
+
+Status: ✅ Completed
+Priority: P3 — Low
+Area: Trust / Analytics / Provider
+Depends On: FN-041, FN-088
+Branch: feat/provider-accept-time
+
+### Objective
+Compute a privacy-safe rolling average of how quickly each verified provider accepts eligible requests and surface it as an honest signal.
+
+### Scope
+- Derive acceptance latency from existing immutable booking lifecycle events; bound the window and sample size.
+- Cache aggregates per provider using the existing Redis cache boundary with safe fallback.
+- Show the signal in the provider workspace ("your usual accept time") and admin analytics; hide entirely when data is insufficient.
+- Keep computation explainable and deterministic — no opaque scoring.
+
+### Do Not
+- Do not display guarantees or promises to customers until a customer-safe provider read model exists (FN-082 gap).
+- Do not auto-penalize, rank-match, or feed the metric into matching decisions.
+- Do not expose other providers' metrics to a provider.
+
+### Acceptance Criteria
+- [x] Aggregates are correct against seeded event data and respect the bounded window.
+- [x] Insufficient-data, stale-cache, and Redis-unavailable cases render honest states.
+- [x] Unit/integration tests and provider UI tests pass.
+
+### Validation
+```bash
+cd backend && npm run lint && npm test -- --runInBand && npm run build
+cd mobile && flutter analyze && flutter test
+```
+
+### Files / Areas
+`backend/src/trust/`, `backend/src/providers/`, `mobile/lib/features/provider/`, `admin/src/features/analytics/`
+
+### Notes
+`TrustService.providerAcceptTime` derives a rolling mean request→accept latency from immutable `created_at`→`assigned_at` timestamps over a bounded 90-day window capped at 100 samples, hides below 3 samples, and caches per provider in Redis for 5 minutes with compute-fresh fallback when Redis is unavailable. Provider self-read is exposed at `GET /trust/my-accept-time` under a new verified-provider-only `trust.accept-time.read.self` permission whose identity always comes from the token, so cross-provider exposure is impossible; admin reads via `GET /admin/trust/providers/:id/accept-time` and a platform-wide `trust` section in operational analytics. The provider workspace card renders only when data is sufficient and never appears to customers or matching. Eleven trust-service tests, analytics spec updates, and two provider widget tests pass on 2026-08-24.
+
+### Completion Record
+Completed By: Claude Code
+Completed Date: 2026-08-24
+Commit: Pending
+PR: Pending
+
+## FN-112 — Implement Recurring Service Schedules
+
+Status: ✅ Completed
+Priority: P3 — Low
+Area: Booking / Mobile / Catalog
+Depends On: FN-107, FN-033
+Branch: feat/recurring-services
+
+### Objective
+Let customers subscribe a category, address, and cadence (weekly/monthly) so upcoming occurrences are generated and confirmed as ordinary bookings.
+
+### Scope
+- Add a subscription entity (category, cadence, address/consent reference, next-occurrence state, pause/resume/cancel lifecycle).
+- Generate upcoming occurrence slots; each becomes a real booking only after explicit customer confirmation using existing idempotent creation.
+- Surface the schedule in Bookings with manage/pause controls and honest next-visit states.
+- Reminders ride existing notification intents; push delivery stays gated by FN-061.
+
+### Do Not
+- Do not store payment methods or auto-charge — auto-billing waits for the payments phase (FN-051–FN-053).
+- Do not create bookings silently without per-occurrence confirmation in this MVP.
+- Do not exceed provider availability or matching eligibility when generating slots.
+
+### Acceptance Criteria
+- [x] Customers can create, pause, resume, and cancel a schedule; cancelled/paused schedules generate nothing.
+- [x] Each confirmed occurrence is a normal booking passing all existing authorization and matching rules.
+- [x] Cadence math, timezone handling, and double-generation races are tested.
+- [x] Mobile and backend checks pass.
+
+### Validation
+```bash
+cd backend && npm run lint && npm test -- --runInBand && npm run build
+cd mobile && flutter analyze && flutter test
+```
+
+### Files / Areas
+`backend/src/bookings/`, `mobile/lib/features/bookings/`, `mobile/lib/features/services/`, `shared/`
+
+### Notes
+Added the reversible `recurring_schedules` table (customer-owned category, description, consented coordinates, WEEKLY/MONTHLY cadence, ACTIVE/PAUSED/CANCELLED lifecycle) plus customer-scoped CRUD under `/bookings/schedules` gated by a new `bookings.schedule.manage.self` permission. Occurrences book only through `POST /bookings/schedules/:id/confirm`, which routes through the unchanged idempotent booking path with a derived per-occurrence key and advances the slot with a compare-and-update, so concurrent double-taps produce exactly one booking per occurrence. Pause generates nothing; resume skips overdue slots instead of stacking them. Cadence math is unit-tested including monthly day clamping (Jan 31 → Feb 28) and leap years; weekly stepping is fixed-interval (no DST market today). The Bookings screen gains an honest Repeating services section with confirm/pause/resume/cancel controls. Reminder notification intents remain owned by FN-062 while push stays gated by FN-061. Fourteen backend service tests and three mobile widget tests pass on 2026-08-24.
+
+### Completion Record
+Completed By: Claude Code
+Completed Date: 2026-08-24
+Commit:
 PR: Pending

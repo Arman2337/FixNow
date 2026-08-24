@@ -61,6 +61,8 @@ import { ProviderApplicationController } from './provider-application.controller
     { provide: MALWARE_SCANNER, useExisting: ClamAvMalwareScanner },
   ],
   exports: [
+    PRIVATE_OBJECT_STORAGE,
+    MALWARE_SCANNER,
     ProviderSkillsService,
     ProviderProfileService,
     ProviderDocumentService,

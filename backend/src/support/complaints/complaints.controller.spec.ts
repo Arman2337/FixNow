@@ -1,10 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ComplaintsController } from './complaints.controller';
 import { ComplaintsService } from './complaints.service';
-import {
-  ComplaintTargetRole,
-} from './domain/complaint.entity';
+import { ComplaintTargetRole } from './domain/complaint.entity';
 import { AuthorizationGuard } from '../../common/authorization/authorization.guard';
+import type { AuthorizedRequest } from '../../common/authorization/authorization.guard';
 
 describe('ComplaintsController', () => {
   let controller: ComplaintsController;
@@ -35,9 +34,9 @@ describe('ComplaintsController', () => {
   });
 
   it('should call createComplaint on service', async () => {
-    const req: any = {
+    const req = {
       authorizationPrincipal: { userId: 'user-1', roles: ['customer'] },
-    };
+    } as unknown as AuthorizedRequest;
     const dto = {
       targetRole: ComplaintTargetRole.PROVIDER,
       category: 'Test',
@@ -50,23 +49,18 @@ describe('ComplaintsController', () => {
     );
   });
 
-  it('should pass isAdmin flag to getComplaints based on role', async () => {
-    const req1: any = {
+  it("lists only the caller's cases through the self-service endpoint", async () => {
+    const req1 = {
       authorizationPrincipal: { userId: 'user-1', roles: ['customer'] },
-    };
+    } as unknown as AuthorizedRequest;
     await controller.getComplaints(req1);
     expect(mockComplaintsService.getComplaints).toHaveBeenCalledWith(
       'user-1',
       false,
     );
 
-    const req2: any = {
-      authorizationPrincipal: { userId: 'admin-1', roles: ['support_agent'] },
-    };
-    await controller.getComplaints(req2);
-    expect(mockComplaintsService.getComplaints).toHaveBeenCalledWith(
-      'admin-1',
-      true,
-    );
+    // Administrative case access is intentionally provided by the separate
+    // management API; this self-service endpoint never broadens scope from a
+    // role supplied by a request object.
   });
 });

@@ -17,6 +17,8 @@ import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
+import 'package:fixnow_mobile/features/ai/ai_recommendation_repository.dart';
+import 'package:fixnow_mobile/features/ai/ai_recommendation_screen.dart';
 
 class ServiceDiscoveryScreen extends StatefulWidget {
   const ServiceDiscoveryScreen({
@@ -24,12 +26,14 @@ class ServiceDiscoveryScreen extends StatefulWidget {
     required this.locationController,
     this.bookingsController,
     this.onCategorySelected,
+    this.aiRepository,
     super.key,
   });
   final ServiceDiscoveryController controller;
   final LocationConsentController locationController;
   final BookingController? bookingsController;
   final void Function(ServiceCategory, BookingLocationFix?)? onCategorySelected;
+  final AiRecommendationRepository? aiRepository;
 
   @override
   State<ServiceDiscoveryScreen> createState() => _ServiceDiscoveryScreenState();
@@ -259,12 +263,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
               const SizedBox(height: AppSpacing.md),
 
               FixAiPromptCard(
-                onTap: () {
-                  if (widget.controller.categories.isNotEmpty &&
-                      widget.onCategorySelected != null) {
-                    _selectCategory(widget.controller.categories.first);
-                  }
-                },
+                onTap: _openAi,
               ),
               const SizedBox(height: AppSpacing.xl),
 
@@ -695,6 +694,19 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
 
   void _selectCategory(ServiceCategory category) =>
       widget.onCategorySelected?.call(category, _bookingLocation);
+
+  Future<void> _openAi() async {
+    if (widget.aiRepository == null) return;
+    final category = await Navigator.of(context).push<ServiceCategory>(
+      MaterialPageRoute(
+        builder: (_) => AiRecommendationScreen(
+          repository: widget.aiRepository!,
+          categories: widget.controller.categories,
+        ),
+      ),
+    );
+    if (category != null && mounted) _selectCategory(category);
+  }
 }
 
 class _CategoryList extends StatelessWidget {
@@ -779,6 +791,16 @@ class _CategoryRow extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
+              Text(
+                category.pricing?.displayLabel ?? 'Price on request',
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: category.pricing == null
+                      ? Theme.of(context).colorScheme.onSurfaceVariant
+                      : AppColors.primary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.xs),
               const Icon(Icons.chevron_right_rounded),
             ],
           ),

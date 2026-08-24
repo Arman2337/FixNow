@@ -18,6 +18,10 @@ import { MatchingModule } from './matching/matching.module';
 import { RealtimeModule } from './realtime/realtime.module';
 import { AdminModule } from './admin/admin.module';
 import { ComplaintsModule } from './support/complaints/complaints.module';
+import { AiModule } from './ai/ai.module';
+import { RatingsModule } from './ratings/ratings.module';
+import { TrustModule } from './trust/trust.module';
+import { PushModule } from './notifications/push/push.module';
 
 @Module({
   imports: [
@@ -36,6 +40,10 @@ import { ComplaintsModule } from './support/complaints/complaints.module';
     RealtimeModule,
     AdminModule,
     ComplaintsModule,
+    AiModule,
+    RatingsModule,
+    TrustModule,
+    PushModule,
   ],
   controllers: [AppController],
   providers: [

@@ -7,7 +7,8 @@ import {
   ComplaintTargetRole,
 } from './domain/complaint.entity';
 import { ComplaintEvidence } from './domain/complaint-evidence.entity';
-import { NotFoundException, ForbiddenException } from '@nestjs/common';
+import { ComplaintAudit } from './domain/complaint-audit.entity';
+import { ForbiddenException } from '@nestjs/common';
 
 describe('ComplaintsService', () => {
   let service: ComplaintsService;
@@ -24,6 +25,11 @@ describe('ComplaintsService', () => {
     save: jest.fn(),
   };
 
+  const mockAuditRepository = {
+    create: jest.fn(),
+    save: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -35,6 +41,10 @@ describe('ComplaintsService', () => {
         {
           provide: getRepositoryToken(ComplaintEvidence),
           useValue: mockEvidenceRepository,
+        },
+        {
+          provide: getRepositoryToken(ComplaintAudit),
+          useValue: mockAuditRepository,
         },
       ],
     }).compile();
@@ -96,6 +106,28 @@ describe('ComplaintsService', () => {
 
     const result = await service.getComplaintById('comp-1', 'admin-1', true);
     expect(result.id).toBe('comp-1');
+  });
+
+  it('loads evidence only for an authorized complaint detail lookup', async () => {
+    const evidence = {
+      id: 'evidence-1',
+      fileType: 'image/png',
+      fileUrl: 'https://example.test/evidence-1',
+    };
+    mockComplaintRepository.findOne.mockResolvedValue({
+      id: 'comp-1',
+      submitterId: 'user-1',
+      targetId: 'user-2',
+      evidence: [evidence],
+    });
+
+    await expect(
+      service.getComplaintById('comp-1', 'admin-1', true),
+    ).resolves.toMatchObject({ evidence: [evidence] });
+    expect(mockComplaintRepository.findOne).toHaveBeenCalledWith({
+      where: { id: 'comp-1' },
+      relations: { evidence: true },
+    });
   });
 
   it('should update complaint status and add resolution notes', async () => {

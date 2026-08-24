@@ -6,8 +6,10 @@ import { ProviderApplicationEntity } from '../providers/provider-application.ent
 import { ServiceCategoryEntity } from '../services/service-category.entity';
 import { BookingStatus } from '../../../shared/booking-lifecycle.types';
 import { ProviderOnboardingStatus } from '../providers/provider-onboarding-status';
+import { TRUST_RULES } from '../trust/trust.service';
 
 export interface AnalyticsResponse {
+  generatedAt: string;
   bookings: {
     total: number;
     completed: number;
@@ -26,6 +28,12 @@ export interface AnalyticsResponse {
   emergencies: {
     activeRequests: number;
     totalRequests: number;
+  };
+  /** FN-111: platform-wide rolling accept-time signal, hidden when thin. */
+  trust: {
+    averageAcceptMinutes: number | null;
+    sampleSize: number;
+    windowDays: number;
   };
 }
 
@@ -73,7 +81,7 @@ export class AdminAnalyticsService {
       .groupBy('booking.service_category_id')
       .orderBy('count', 'DESC')
       .limit(5)
-      .getRawMany();
+      .getRawMany<{ categoryId: string; count: string }>();
 
     const topCategories = await Promise.all(
       topCategoryRows.map(async (row) => {
@@ -120,7 +128,28 @@ export class AdminAnalyticsService {
       totalEmergencyRequests = await qbTotal.getCount();
     }
 
+    const acceptWindowStart = new Date();
+    acceptWindowStart.setUTCDate(
+      acceptWindowStart.getUTCDate() - TRUST_RULES.acceptTimeWindowDays,
+    );
+    const acceptRow = await this.bookings
+      .createQueryBuilder('booking')
+      .select('COUNT(booking.id)', 'sample')
+      .addSelect(
+        'AVG(EXTRACT(EPOCH FROM (booking.assigned_at - booking.created_at)) / 60)',
+        'avgMinutes',
+      )
+      .where('booking.assigned_at IS NOT NULL')
+      .andWhere('booking.created_at > :acceptWindowStart', {
+        acceptWindowStart,
+      })
+      .getRawOne<{ sample: string; avgMinutes: string | null }>();
+    const acceptSample = parseInt(acceptRow?.sample ?? '0', 10);
+    const parsedAcceptMinutes =
+      acceptRow?.avgMinutes == null ? null : parseFloat(acceptRow.avgMinutes);
+
     return {
+      generatedAt: new Date().toISOString(),
       bookings: {
         total: totalBookings,
         completed: completedBookings,
@@ -139,6 +168,16 @@ export class AdminAnalyticsService {
       emergencies: {
         activeRequests: activeEmergencyRequests,
         totalRequests: totalEmergencyRequests,
+      },
+      trust: {
+        averageAcceptMinutes:
+          acceptSample >= TRUST_RULES.acceptTimeMinSamples &&
+          parsedAcceptMinutes != null &&
+          Number.isFinite(parsedAcceptMinutes)
+            ? Math.round(parsedAcceptMinutes)
+            : null,
+        sampleSize: acceptSample,
+        windowDays: TRUST_RULES.acceptTimeWindowDays,
       },
     };
   }

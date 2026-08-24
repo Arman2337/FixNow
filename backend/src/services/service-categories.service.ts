@@ -71,7 +71,12 @@ export class ServiceCategoriesService {
   async create(
     createDto: CreateServiceCategoryDto,
   ): Promise<ServiceCategoryEntity> {
-    const category = this.serviceCategoryRepository.create(createDto);
+    const { pricing, ...rest } = createDto;
+    const category = this.serviceCategoryRepository.create({
+      ...rest,
+      priceAmount: pricing?.amountMinor ?? null,
+      priceCurrency: pricing?.currency ?? null,
+    });
     return this.serviceCategoryRepository.save(category);
   }
 
@@ -80,7 +85,14 @@ export class ServiceCategoriesService {
     updateDto: UpdateServiceCategoryDto,
   ): Promise<ServiceCategoryEntity> {
     const category = await this.findById(id);
-    Object.assign(category, updateDto);
+    const { pricing, ...rest } = updateDto;
+    Object.assign(category, rest);
+    if (pricing !== undefined) {
+      // Absent leaves pricing unchanged; null clears back to "price on
+      // request"; an object sets or replaces the published price.
+      category.priceAmount = pricing ? pricing.amountMinor : null;
+      category.priceCurrency = pricing ? pricing.currency : null;
+    }
     return this.serviceCategoryRepository.save(category);
   }
 

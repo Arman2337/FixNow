@@ -1,0 +1,62 @@
+{
+  "title": "FixNow current-scope completion report",
+  "generatedAt": "2026-08-21",
+  "method": "Static source audit and automated validation, supplemented by user-provided manual runtime evidence from independent Customer normal-Chrome and Provider Incognito/separate-browser sessions on 2026-08-21.",
+  "scope": {
+    "excluded": ["Payments", "Invoices", "Refunds", "Wallet", "Provider payouts", "Ratings", "Reviews"]
+  },
+  "summary": {
+    "currentScopeCompletion": 82,
+    "customer": 84,
+    "provider": 81,
+    "admin": 78,
+    "backend": 88,
+    "realtime": "PASS",
+    "liveGps": "PASS",
+    "p0Remaining": 0,
+    "p1Remaining": 5,
+    "blocked": 5
+  },
+  "projectTasks": {
+    "summary": {"total": 101, "completed": 77, "pending": 6, "inProgress": 0, "blocked": 5, "deferred": 12, "cancelled": 1},
+    "activeTasks": [],
+    "completedCurrentScope": ["FN-100 — Mobile UI rebuild and evidence report", "FN-050 — Admin complaints and operational analytics"],
+    "p1Blocked": [
+      "FN-055 — declared dependency FN-054 is deferred with ratings/reviews.",
+      "FN-061 — approved push provider, ADR, and configuration are required.",
+      "FN-062 — depends on blocked FN-061 and FN-063.",
+      "FN-063 — legal/product emergency-policy approval is required.",
+      "FN-064 — depends on blocked FN-063."
+    ]
+  },
+  "implemented": {
+    "customer": ["Active booking prioritization", "Support case detail with authoritative status and timestamps", "Booking tracking source, map state, and safe fallback"],
+    "provider": ["Incoming request service, issue, distance, request time, and privacy boundary", "Readiness/availability and assigned-work context", "Live-location sharing controls and status"],
+    "admin": ["Support queue and case detail with booking link and authorized actions", "Functional service-category management", "Timestamped operational analytics snapshot without payments, ratings, or review data"]
+  },
+  "realtimeGps": {
+    "customerProviderRealtime": "PASS",
+    "liveGps": "PASS",
+    "sourceCoverage": "Booking projection, sequence reconciliation, reconnect behavior, map-state rendering, and safe location fallback are covered by source and automated tests.",
+    "manualEvidence": "Provider acceptance and ASSIGNED → EN_ROUTE → IN_PROGRESS → COMPLETED updated the Customer session without refresh. Provider live-location sharing and simulated coordinate changes were reflected on the authorized Customer live map.",
+    "evidenceBoundary": "This is browser-session evidence. Fresh registration/OTP and two native-device acceptance were not claimed."
+  },
+  "validation": [
+    ["mobile/flutter analyze", "PASS WITH 7 INFO FINDINGS", "No analyzer errors."],
+    ["mobile/flutter test", "PASS", "79 tests passed."],
+    ["mobile/flutter build apk --debug", "PASS", "Debug APK built."],
+    ["backend/npm run lint", "PASS", "Completed."],
+    ["backend/npm test -- --runInBand", "PASS", "Full suite passed after analytics snapshot coverage was added."],
+    ["backend/npm run build", "PASS", "Nest build completed."],
+    ["admin/npm run lint", "PASS", "Completed."],
+    ["admin/npm run build", "PASS", "Next.js production build completed."],
+    ["git diff --check", "PASS", "No whitespace errors."]
+  ],
+  "remaining": {
+    "p0": [],
+    "p1": [],
+    "blocked": ["FN-055", "FN-061", "FN-062", "FN-063", "FN-064"],
+    "notVerified": ["Device/browser responsive and accessibility walkthrough"],
+    "deferred": ["Payments", "Invoices", "Refunds", "Wallet", "Provider payouts", "Ratings", "Reviews"]
+  }
+}

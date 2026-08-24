@@ -1,0 +1,174 @@
+{"kind":"deck","id":"pr/3xc3yb","name":"Deck"}
+{"kind":"layout","layoutId":"6ee605db-c0fb-497b-ad72-249fbfada375","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"9c1b0056-ee57-4878-a780-71a793d6de6e","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/n5d5za","slide":1,"title":"PROJECT OVERVIEW","textShapes":5}
+{"kind":"shape","id":"sh/sjyt0n2l","slide":1,"bbox":[0,0,760,720]}
+{"kind":"shape","id":"sh/tkru9sj6","slide":1,"bbox":[445,0,350,720]}
+{"kind":"textbox","id":"sh/itgbudkj","slide":1,"text":"PROJECT OVERVIEW","textPreview":"PROJECT OVERVIEW","textChars":16,"textLines":1,"bbox":[72,70,250,22]}
+{"kind":"textbox","id":"sh/jupc3i14","slide":1,"text":"Help arrives\nwhen it matters.","textPreview":"Help arrives | when it matters.","textChars":29,"textLines":2,"bbox":[72,115,570,168]}
+{"kind":"textbox","id":"sh/kvytwn2p","slide":1,"text":"FixNow connects customers with nearby, verified service professionals through a trusted, real-time experience.","textPreview":"FixNow connects customers with nearby, verified service professionals through a trusted, real-time experience.","textChars":110,"textLines":1,"bbox":[72,308,495,78]}
+{"kind":"shape","id":"sh/5w7u5sja","slide":1,"bbox":[72,548,300,56]}
+{"kind":"textbox","id":"sh/apwbqdkn","slide":1,"text":"Customer • Provider • Operations","textPreview":"Customer • Provider • Operations","textChars":32,"textLines":1,"bbox":[92,566,260,25]}
+{"kind":"textbox","id":"sh/vq5czi18","slide":1,"text":"2026","textPreview":"2026","textChars":4,"textLines":1,"bbox":[72,662,140,20]}
+{"kind":"image","id":"im/ix0j6x87","slide":1,"name":"","alt":"Illustration of a local service professional arriving to help a customer","bbox":[545,0,735,720]}
+{"kind":"notes","id":"nt/n5d5za","slide":1,"text":""}
+{"kind":"slide","id":"sl/m6wwzi","slide":2,"title":"THE CHALLENGE","textShapes":12}
+{"kind":"textbox","id":"sh/q1sjatgz","slide":2,"text":"THE CHALLENGE","textPreview":"THE CHALLENGE","textChars":13,"textLines":1,"bbox":[72,48,260,22]}
+{"kind":"textbox","id":"sh/d4j258fq","slide":2,"text":"Local service needs are urgent — but finding help is often uncertain.","textPreview":"Local service needs are urgent — but finding help is often uncertain.","textChars":69,"textLines":1,"bbox":[72,82,1010,62]}
+{"kind":"textbox","id":"sh/c3a1w3y5","slide":2,"text":"Customers need clarity and confidence; qualified providers need a fair, efficient path to work.","textPreview":"Customers need clarity and confidence; qualified providers need a fair, efficient path to work.","textChars":95,"textLines":1,"bbox":[72,151,980,48]}
+{"kind":"shape","id":"sh/z61k7ixg","slide":2,"bbox":[72,275,16,16]}
+{"kind":"textbox","id":"sh/y5sjydgb","slide":2,"text":"Discovery is fragmented","textPreview":"Discovery is fragmented","textChars":23,"textLines":1,"bbox":[72,320,300,56]}
+{"kind":"textbox","id":"sh/l83298fm","slide":2,"text":"People waste time searching, comparing, and calling when the need is immediate.","textPreview":"People waste time searching, comparing, and calling when the need is immediate.","textChars":79,"textLines":1,"bbox":[72,390,300,84]}
+{"kind":"shape","id":"sh/07u103y1","slide":2,"bbox":[450,275,16,16]}
+{"kind":"textbox","id":"sh/nulkbixs","slide":2,"text":"Trust is hard to verify","textPreview":"Trust is hard to verify","textChars":23,"textLines":1,"bbox":[450,320,300,56]}
+{"kind":"textbox","id":"sh/m9cj2dg7","slide":2,"text":"Availability alone does not confirm the right provider, eligibility, or accountability.","textPreview":"Availability alone does not confirm the right provider, eligibility, or accountability.","textChars":87,"textLines":1,"bbox":[450,390,300,84]}
+{"kind":"shape","id":"sh/cvmpkbax","slide":2,"bbox":[828,275,16,16]}
+{"kind":"textbox","id":"sh/dgvqtgbi","slide":2,"text":"Progress is invisible","textPreview":"Progress is invisible","textChars":21,"textLines":1,"bbox":[828,320,300,56]}
+{"kind":"textbox","id":"sh/qt47i1s7","slide":2,"text":"Once a request is made, customers need honest updates — not uncertainty.","textPreview":"Once a request is made, customers need honest updates — not uncertainty.","textChars":72,"textLines":1,"bbox":[828,390,300,84]}
+{"kind":"shape","id":"sh/rudor6tc","slide":2,"bbox":[72,564,1136,74]}
+{"kind":"textbox","id":"sh/0jmpoba9","slide":2,"text":"FixNow is designed to turn a stressful search into a guided, accountable service journey.","textPreview":"FixNow is designed to turn a stressful search into a guided, accountable service journey.","textChars":89,"textLines":1,"bbox":[100,587,1050,26]}
+{"kind":"shape","id":"sh/1kfqxgbu","slide":2,"bbox":[72,676,1136,1]}
+{"kind":"textbox","id":"sh/eh47mls3","slide":2,"text":"FIXNOW  /  PROJECT OVERVIEW","textPreview":"FIXNOW  /  PROJECT OVERVIEW","textChars":27,"textLines":1,"bbox":[72,688,300,18]}
+{"kind":"textbox","id":"sh/zid8vqto","slide":2,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[1155,686,53,18]}
+{"kind":"notes","id":"nt/m6wwzi","slide":2,"text":""}
+{"kind":"slide","id":"sl/hcnfc4","slide":3,"title":"THE SOLUTION","textShapes":17}
+{"kind":"textbox","id":"sh/cvatc7e9","slide":3,"text":"THE SOLUTION","textPreview":"THE SOLUTION","textChars":12,"textLines":1,"bbox":[72,48,260,22]}
+{"kind":"textbox","id":"sh/bu1s32do","slide":3,"text":"One connected experience for requesting, delivering, and operating local services.","textPreview":"One connected experience for requesting, delivering, and operating local services.","textChars":82,"textLines":1,"bbox":[72,82,1010,62]}
+{"kind":"shape","id":"sh/qtsbaxw3","slide":3,"bbox":[72,238,1136,294]}
+{"kind":"shape","id":"sh/lk3a9cvq","slide":3,"bbox":[253,386,1027,386]}
+{"kind":"shape","id":"sh/0jutg7e5","slide":3,"bbox":[167,318,88,88]}
+{"kind":"textbox","id":"sh/zils72dk","slide":3,"text":"1","textPreview":"1","textChars":1,"textLines":1,"bbox":[195,345,34,33]}
+{"kind":"textbox","id":"sh/yhsbehwf","slide":3,"text":"Customer","textPreview":"Customer","textChars":8,"textLines":1,"bbox":[114,425,190,28]}
+{"kind":"textbox","id":"sh/9o3udwv2","slide":3,"text":"Discover, request, track","textPreview":"Discover, request, track","textChars":24,"textLines":1,"bbox":[98,462,222,44]}
+{"kind":"shape","id":"sh/8nutkruh","slide":3,"bbox":[452,318,88,88]}
+{"kind":"textbox","id":"sh/mx0vqdob","slide":3,"text":"2","textPreview":"2","textChars":1,"textLines":1,"bbox":[480,345,34,33]}
+{"kind":"textbox","id":"sh/ny9wzipw","slide":3,"text":"FixNow","textPreview":"FixNow","textChars":6,"textLines":1,"bbox":[399,425,190,28]}
+{"kind":"textbox","id":"sh/ozidsn6h","slide":3,"text":"Validate, coordinate, notify","textPreview":"Validate, coordinate, notify","textChars":28,"textLines":1,"bbox":[383,462,222,44]}
+{"kind":"shape","id":"sh/90be1s7m","slide":3,"bbox":[737,318,88,88]}
+{"kind":"textbox","id":"sh/a1kvuxo7","slide":3,"text":"3","textPreview":"3","textChars":1,"textLines":1,"bbox":[765,345,34,33]}
+{"kind":"textbox","id":"sh/b2tw32ps","slide":3,"text":"Provider","textPreview":"Provider","textChars":8,"textLines":1,"bbox":[684,425,190,28]}
+{"kind":"textbox","id":"sh/w32dwn6d","slide":3,"text":"Respond, deliver, update","textPreview":"Respond, deliver, update","textChars":24,"textLines":1,"bbox":[668,462,222,44]}
+{"kind":"shape","id":"sh/x4be5s7y","slide":3,"bbox":[1022,318,88,88]}
+{"kind":"textbox","id":"sh/q5gvito3","slide":3,"text":"4","textPreview":"4","textChars":1,"textLines":1,"bbox":[1050,345,34,33]}
+{"kind":"textbox","id":"sh/r6pcrypo","slide":3,"text":"Operations","textPreview":"Operations","textChars":10,"textLines":1,"bbox":[969,425,190,28]}
+{"kind":"textbox","id":"sh/fa5sju5g","slide":3,"text":"Guide, review, support","textPreview":"Guide, review, support","textChars":22,"textLines":1,"bbox":[953,462,222,44]}
+{"kind":"textbox","id":"sh/u9wbqp4v","slide":3,"text":"Every surface is connected to the same authoritative booking lifecycle.","textPreview":"Every surface is connected to the same authoritative booking lifecycle.","textChars":71,"textLines":1,"bbox":[72,582,850,28]}
+{"kind":"shape","id":"sh/hcnal4nm","slide":3,"bbox":[72,676,1136,1]}
+{"kind":"textbox","id":"sh/gbetszm1","slide":3,"text":"FIXNOW  /  PROJECT OVERVIEW","textPreview":"FIXNOW  /  PROJECT OVERVIEW","textChars":27,"textLines":1,"bbox":[72,688,300,18]}
+{"kind":"textbox","id":"sh/76lsfu54","slide":3,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[1155,686,53,18]}
+{"kind":"notes","id":"nt/hcnfc4","slide":3,"text":""}
+{"kind":"slide","id":"sl/noi010","slide":4,"title":"CUSTOMER EXPERIENCE","textShapes":17}
+{"kind":"textbox","id":"sh/by9crep4","slide":4,"text":"CUSTOMER EXPERIENCE","textPreview":"CUSTOMER EXPERIENCE","textChars":19,"textLines":1,"bbox":[72,48,260,22]}
+{"kind":"textbox","id":"sh/czitkj6p","slide":4,"text":"A clear journey from need to confidence.","textPreview":"A clear journey from need to confidence.","textChars":40,"textLines":1,"bbox":[72,82,1010,62]}
+{"kind":"shape","id":"sh/x0ruto7a","slide":4,"bbox":[72,250,253,230]}
+{"kind":"textbox","id":"sh/y10bmtov","slide":4,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[94,270,42,32]}
+{"kind":"textbox","id":"sh/z2tcvepg","slide":4,"text":"Describe the need","textPreview":"Describe the need","textChars":17,"textLines":1,"bbox":[94,317,205,32]}
+{"kind":"textbox","id":"sh/k32toj6l","slide":4,"text":"Choose a service category and submit the minimum details needed to begin.","textPreview":"Choose a service category and submit the minimum details needed to begin.","textChars":73,"textLines":1,"bbox":[94,361,205,78]}
+{"kind":"shape","id":"sh/l4buxo76","slide":4,"bbox":[366,250,253,230]}
+{"kind":"textbox","id":"sh/m5kbqtor","slide":4,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[388,270,42,32]}
+{"kind":"textbox","id":"sh/76tczypc","slide":4,"text":"Follow the booking","textPreview":"Follow the booking","textChars":18,"textLines":1,"bbox":[388,317,205,32]}
+{"kind":"textbox","id":"sh/fypkbax0","slide":4,"text":"See the current booking state and receive timely, privacy-safe updates.","textPreview":"See the current booking state and receive timely, privacy-safe updates.","textChars":71,"textLines":1,"bbox":[388,361,205,78]}
+{"kind":"shape","id":"sh/uxgji5gf","slide":4,"bbox":[660,250,253,230]}
+{"kind":"textbox","id":"sh/h072dkfq","slide":4,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[682,270,42,32]}
+{"kind":"textbox","id":"sh/gzy1kfy5","slide":4,"text":"Track authorized progress","textPreview":"Track authorized progress","textChars":25,"textLines":1,"bbox":[682,317,205,32]}
+{"kind":"textbox","id":"sh/7u5k7qxo","slide":4,"text":"During an active assignment, view only fresh, permitted provider location.","textPreview":"During an active assignment, view only fresh, permitted provider location.","textChars":74,"textLines":1,"bbox":[682,361,205,78]}
+{"kind":"shape","id":"sh/6twjelg3","slide":4,"bbox":[954,250,253,230]}
+{"kind":"textbox","id":"sh/tw7290fu","slide":4,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[976,270,42,32]}
+{"kind":"textbox","id":"sh/svy1gvy9","slide":4,"text":"Reach a clear outcome","textPreview":"Reach a clear outcome","textChars":21,"textLines":1,"bbox":[976,317,205,32]}
+{"kind":"textbox","id":"sh/rq9kjuxs","slide":4,"text":"The experience reconciles to authoritative service state — even after reconnects.","textPreview":"The experience reconciles to authoritative service state — even after reconnects.","textChars":81,"textLines":1,"bbox":[976,361,205,78]}
+{"kind":"textbox","id":"sh/qp03qpgn","slide":4,"text":"The customer never has to guess what happens next.","textPreview":"The customer never has to guess what happens next.","textChars":50,"textLines":1,"bbox":[72,555,870,40]}
+{"kind":"shape","id":"sh/ml4nit0v","slide":4,"bbox":[72,676,1136,1]}
+{"kind":"textbox","id":"sh/nmd4byh0","slide":4,"text":"FIXNOW  /  PROJECT OVERVIEW","textPreview":"FIXNOW  /  PROJECT OVERVIEW","textChars":27,"textLines":1,"bbox":[72,688,300,18]}
+{"kind":"textbox","id":"sh/onm5k3il","slide":4,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[1155,686,53,18]}
+{"kind":"notes","id":"nt/noi010","slide":4,"text":""}
+{"kind":"slide","id":"sl/56ogd8","slide":5,"title":"PROVIDER EXPERIENCE","textShapes":13}
+{"kind":"textbox","id":"sh/lcb2xszm","slide":5,"text":"PROVIDER EXPERIENCE","textPreview":"PROVIDER EXPERIENCE","textChars":19,"textLines":1,"bbox":[72,48,260,22]}
+{"kind":"textbox","id":"sh/y9kjmxgb","slide":5,"text":"Make it easier for eligible professionals to respond and deliver.","textPreview":"Make it easier for eligible professionals to respond and deliver.","textChars":65,"textLines":1,"bbox":[72,82,1010,62]}
+{"kind":"shape","id":"sh/jatkv2hg","slide":5,"bbox":[72,235,460,314]}
+{"kind":"textbox","id":"sh/8z21s7yd","slide":5,"text":"PROVIDER WORKSPACE","textPreview":"PROVIDER WORKSPACE","textChars":18,"textLines":1,"bbox":[106,274,260,22]}
+{"kind":"textbox","id":"sh/t0b21czy","slide":5,"text":"Right request.\nRight moment.","textPreview":"Right request. | Right moment.","textChars":28,"textLines":2,"bbox":[106,315,340,89]}
+{"kind":"textbox","id":"sh/6xkjqxg7","slide":5,"text":"Role-aware workflows support availability, assignment, status updates, and controlled live-location sharing during active work.","textPreview":"Role-aware workflows support availability, assignment, status updates, and controlled live-location sharing during active work.","textChars":127,"textLines":1,"bbox":[106,427,352,78]}
+{"kind":"shape","id":"sh/7ytkz2hs","slide":5,"bbox":[600,260,14,14]}
+{"kind":"textbox","id":"sh/o3i1g3yt","slide":5,"text":"Eligibility-aware","textPreview":"Eligibility-aware","textChars":17,"textLines":1,"bbox":[638,252,240,25]}
+{"kind":"textbox","id":"sh/94rip8ze","slide":5,"text":"Matching considers current participation rules — not just proximity.","textPreview":"Matching considers current participation rules — not just proximity.","textChars":68,"textLines":1,"bbox":[638,288,458,40]}
+{"kind":"shape","id":"sh/147id0za","slide":5,"bbox":[600,363,14,14]}
+{"kind":"textbox","id":"sh/03yhkvi5","slide":5,"text":"Live, but bounded","textPreview":"Live, but bounded","textChars":17,"textLines":1,"bbox":[638,355,240,25]}
+{"kind":"textbox","id":"sh/z2p0bqhk","slide":5,"text":"Location sharing is purpose-limited, fresh, and revocable.","textPreview":"Location sharing is purpose-limited, fresh, and revocable.","textChars":58,"textLines":1,"bbox":[638,391,458,40]}
+{"kind":"shape","id":"sh/e1gzi50z","slide":5,"bbox":[600,466,14,14]}
+{"kind":"textbox","id":"sh/9srihkzm","slide":5,"text":"Status-led","textPreview":"Status-led","textChars":10,"textLines":1,"bbox":[638,458,240,25]}
+{"kind":"textbox","id":"sh/o7ihofy1","slide":5,"text":"Providers update the service journey as work progresses.","textPreview":"Providers update the service journey as work progresses.","textChars":56,"textLines":1,"bbox":[638,494,458,40]}
+{"kind":"shape","id":"sh/n690fahg","slide":5,"bbox":[72,676,1136,1]}
+{"kind":"textbox","id":"sh/m50zm5gv","slide":5,"text":"FIXNOW  /  PROJECT OVERVIEW","textPreview":"FIXNOW  /  PROJECT OVERVIEW","textChars":27,"textLines":1,"bbox":[72,688,300,18]}
+{"kind":"textbox","id":"sh/xwrilkzi","slide":5,"text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[1155,686,53,18]}
+{"kind":"notes","id":"nt/56ogd8","slide":5,"text":""}
+{"kind":"slide","id":"sl/c2o875","slide":6,"title":"TRUST BY DESIGN","textShapes":12}
+{"kind":"textbox","id":"sh/gfihwry1","slide":6,"text":"TRUST BY DESIGN","textPreview":"TRUST BY DESIGN","textChars":15,"textLines":1,"bbox":[72,48,260,22]}
+{"kind":"textbox","id":"sh/fe903mxg","slide":6,"text":"Safety and privacy are part of the product — not an afterthought.","textPreview":"Safety and privacy are part of the product — not an afterthought.","textChars":65,"textLines":1,"bbox":[72,82,1010,62]}
+{"kind":"shape","id":"sh/ud0zuhgv","slide":6,"bbox":[72,250,553,135]}
+{"kind":"shape","id":"sh/tcry1cfa","slide":6,"bbox":[100,278,12,12]}
+{"kind":"textbox","id":"sh/srihs7yp","slide":6,"text":"Least-privilege access","textPreview":"Least-privilege access","textChars":22,"textLines":1,"bbox":[134,275,420,28]}
+{"kind":"textbox","id":"sh/7q9gz2x4","slide":6,"text":"Roles and permissions are enforced at trusted backend boundaries.","textPreview":"Roles and permissions are enforced at trusted backend boundaries.","textChars":65,"textLines":1,"bbox":[134,316,445,42]}
+{"kind":"shape","id":"sh/6pgzqxgj","slide":6,"bbox":[655,250,553,135]}
+{"kind":"shape","id":"sh/d8bixwfe","slide":6,"bbox":[683,278,12,12]}
+{"kind":"textbox","id":"sh/c72h4be9","slide":6,"text":"Purpose-limited location","textPreview":"Purpose-limited location","textChars":24,"textLines":1,"bbox":[717,275,420,28]}
+{"kind":"textbox","id":"sh/ipgre5gv","slide":6,"text":"Precise location is available only during authorized active service states.","textPreview":"Precise location is available only during authorized active service states.","textChars":75,"textLines":1,"bbox":[717,316,445,42]}
+{"kind":"shape","id":"sh/3qp8nax0","slide":6,"bbox":[72,435,553,135]}
+{"kind":"shape","id":"sh/4ry9gfyl","slide":6,"bbox":[100,463,12,12]}
+{"kind":"textbox","id":"sh/pc7qpkf6","slide":6,"text":"Honest real-time state","textPreview":"Honest real-time state","textChars":22,"textLines":1,"bbox":[134,460,420,28]}
+{"kind":"textbox","id":"sh/ulwra5gj","slide":6,"text":"WebSockets are fast; the backend API remains the source of truth.","textPreview":"WebSockets are fast; the backend API remains the source of truth.","textChars":65,"textLines":1,"bbox":[134,501,445,42]}
+{"kind":"shape","id":"sh/vm58jqx4","slide":6,"bbox":[655,435,553,135]}
+{"kind":"shape","id":"sh/gny9cvyp","slide":6,"bbox":[683,463,12,12]}
+{"kind":"textbox","id":"sh/ho7ql0fa","slide":6,"text":"Auditable operations","textPreview":"Auditable operations","textChars":20,"textLines":1,"bbox":[717,460,420,28]}
+{"kind":"textbox","id":"sh/eh0rmpwn","slide":6,"text":"Security-sensitive and privileged actions can be traced without exposing secrets.","textPreview":"Security-sensitive and privileged actions can be traced without exposing secrets.","textChars":81,"textLines":1,"bbox":[717,501,445,42]}
+{"kind":"shape","id":"sh/zi9svux8","slide":6,"bbox":[72,676,1136,1]}
+{"kind":"textbox","id":"sh/bm1onmdk","slide":6,"text":"FIXNOW  /  PROJECT OVERVIEW","textPreview":"FIXNOW  /  PROJECT OVERVIEW","textChars":27,"textLines":1,"bbox":[72,688,300,18]}
+{"kind":"textbox","id":"sh/a1snehwf","slide":6,"text":"06","textPreview":"06","textChars":2,"textLines":1,"bbox":[1155,686,53,18]}
+{"kind":"notes","id":"nt/c2o875","slide":6,"text":""}
+{"kind":"slide","id":"sl/mfq5rt","slide":7,"title":"TECHNOLOGY FOUNDATION","textShapes":22}
+{"kind":"textbox","id":"sh/rmd43ad8","slide":7,"text":"TECHNOLOGY FOUNDATION","textPreview":"TECHNOLOGY FOUNDATION","textChars":21,"textLines":1,"bbox":[72,48,260,22]}
+{"kind":"textbox","id":"sh/cnm5wfud","slide":7,"text":"A modular, typed architecture built for reliable service operations.","textPreview":"A modular, typed architecture built for reliable service operations.","textChars":68,"textLines":1,"bbox":[72,82,1010,62]}
+{"kind":"shape","id":"sh/d8vm5kvy","slide":7,"bbox":[72,235,340,137]}
+{"kind":"textbox","id":"sh/e94nypcj","slide":7,"text":"MOBILE","textPreview":"MOBILE","textChars":6,"textLines":1,"bbox":[96,255,150,22]}
+{"kind":"textbox","id":"sh/zax47ud4","slide":7,"text":"Flutter + Dart","textPreview":"Flutter + Dart","textChars":14,"textLines":1,"bbox":[96,283,285,28]}
+{"kind":"textbox","id":"sh/0b650zup","slide":7,"text":"One role-aware Android & iOS app","textPreview":"One role-aware Android & iOS app","textChars":32,"textLines":1,"bbox":[96,319,290,29]}
+{"kind":"shape","id":"sh/1cfm94va","slide":7,"bbox":[452,235,340,137]}
+{"kind":"textbox","id":"sh/mdon29cv","slide":7,"text":"BACKEND","textPreview":"BACKEND","textChars":7,"textLines":1,"bbox":[476,255,150,22]}
+{"kind":"textbox","id":"sh/nex4bud0","slide":7,"text":"NestJS + TypeScript","textPreview":"NestJS + TypeScript","textChars":19,"textLines":1,"bbox":[476,283,285,28]}
+{"kind":"textbox","id":"sh/nyxs3mpw","slide":7,"text":"Versioned API and domain services","textPreview":"Versioned API and domain services","textChars":33,"textLines":1,"bbox":[476,319,290,29]}
+{"kind":"shape","id":"sh/mxoruh8b","slide":7,"bbox":[832,235,340,137]}
+{"kind":"textbox","id":"sh/90za5w72","slide":7,"text":"DATA","textPreview":"DATA","textChars":4,"textLines":1,"bbox":[856,255,150,22]}
+{"kind":"textbox","id":"sh/8z69wr6h","slide":7,"text":"PostgreSQL + TypeORM","textPreview":"PostgreSQL + TypeORM","textChars":20,"textLines":1,"bbox":[856,283,285,28]}
+{"kind":"textbox","id":"sh/zaxszmp0","slide":7,"text":"Authoritative records and migrations","textPreview":"Authoritative records and migrations","textChars":36,"textLines":1,"bbox":[856,319,290,29]}
+{"kind":"shape","id":"sh/y9orqh8f","slide":7,"bbox":[72,410,340,137]}
+{"kind":"textbox","id":"sh/lcfa1c7q","slide":7,"text":"REALTIME","textPreview":"REALTIME","textChars":8,"textLines":1,"bbox":[96,430,150,22]}
+{"kind":"textbox","id":"sh/0b69srql","slide":7,"text":"WebSockets + Redis","textPreview":"WebSockets + Redis","textChars":18,"textLines":1,"bbox":[96,458,285,28]}
+{"kind":"textbox","id":"sh/j6hsb6p4","slide":7,"text":"Fast projections and ephemeral state","textPreview":"Fast projections and ephemeral state","textChars":36,"textLines":1,"bbox":[96,494,290,29]}
+{"kind":"shape","id":"sh/i58b21oj","slide":7,"bbox":[452,410,340,137]}
+{"kind":"textbox","id":"sh/e1cva58r","slide":7,"text":"ADMIN","textPreview":"ADMIN","textChars":5,"textLines":1,"bbox":[476,430,150,22]}
+{"kind":"textbox","id":"sh/fmlc3a9c","slide":7,"text":"Next.js + TypeScript","textPreview":"Next.js + TypeScript","textChars":20,"textLines":1,"bbox":[476,458,285,28]}
+{"kind":"textbox","id":"sh/gnudcfqx","slide":7,"text":"Operational web experience","textPreview":"Operational web experience","textChars":26,"textLines":1,"bbox":[476,494,290,29]}
+{"kind":"shape","id":"sh/1o3u5kri","slide":7,"bbox":[832,410,340,137]}
+{"kind":"textbox","id":"sh/2pcvep83","slide":7,"text":"MAPS","textPreview":"MAPS","textChars":4,"textLines":1,"bbox":[856,430,150,22]}
+{"kind":"textbox","id":"sh/3qlw7u98","slide":7,"text":"Google Maps Platform","textPreview":"Google Maps Platform","textChars":20,"textLines":1,"bbox":[856,458,285,28]}
+{"kind":"textbox","id":"sh/oredgfqt","slide":7,"text":"Replaceable adapter for maps & routing","textPreview":"Replaceable adapter for maps & routing","textChars":38,"textLines":1,"bbox":[856,494,290,29]}
+{"kind":"shape","id":"sh/psne9kre","slide":7,"bbox":[72,676,1136,1]}
+{"kind":"textbox","id":"sh/itsv2lsj","slide":7,"text":"FIXNOW  /  PROJECT OVERVIEW","textPreview":"FIXNOW  /  PROJECT OVERVIEW","textChars":27,"textLines":1,"bbox":[72,688,300,18]}
+{"kind":"textbox","id":"sh/ju1cvq94","slide":7,"text":"07","textPreview":"07","textChars":2,"textLines":1,"bbox":[1155,686,53,18]}
+{"kind":"notes","id":"nt/mfq5rt","slide":7,"text":""}
+{"kind":"slide","id":"sl/8zczq1","slide":8,"title":"THE FIXNOW PROMISE","textShapes":11}
+{"kind":"textbox","id":"sh/doja54re","slide":8,"text":"THE FIXNOW PROMISE","textPreview":"THE FIXNOW PROMISE","textChars":18,"textLines":1,"bbox":[72,86,300,22]}
+{"kind":"textbox","id":"sh/qlsraps3","slide":8,"text":"A more dependable\nway to get help.","textPreview":"A more dependable | way to get help.","textChars":34,"textLines":2,"bbox":[72,132,700,128]}
+{"kind":"textbox","id":"sh/rm1s3u9o","slide":8,"text":"FixNow brings together people, trusted workflows, and real-time coordination so local services feel clear, safe, and in control.","textPreview":"FixNow brings together people, trusted workflows, and real-time coordination so local services feel clear, safe, and in control.","textChars":128,"textLines":1,"bbox":[72,296,620,86]}
+{"kind":"shape","id":"sh/4ja98zax","slide":8,"bbox":[798,105,336,336]}
+{"kind":"shape","id":"sh/pkjq14ri","slide":8,"bbox":[832,158,13,13]}
+{"kind":"textbox","id":"sh/2h8r6psr","slide":8,"text":"CLEAR","textPreview":"CLEAR","textChars":5,"textLines":1,"bbox":[862,151,220,21]}
+{"kind":"textbox","id":"sh/3i18zu9c","slide":8,"text":"Know what happens next.","textPreview":"Know what happens next.","textChars":23,"textLines":1,"bbox":[862,181,220,25]}
+{"kind":"shape","id":"sh/ofu9kja1","slide":8,"bbox":[832,253,13,13]}
+{"kind":"textbox","id":"sh/9g3adorm","slide":8,"text":"TRUSTED","textPreview":"TRUSTED","textChars":7,"textLines":1,"bbox":[862,246,220,21]}
+{"kind":"textbox","id":"sh/xk3ulc32","slide":8,"text":"Access and data stay controlled.","textPreview":"Access and data stay controlled.","textChars":32,"textLines":1,"bbox":[862,276,220,25]}
+{"kind":"shape","id":"sh/wjuts72h","slide":8,"bbox":[832,348,13,13]}
+{"kind":"textbox","id":"sh/vi1cjmlw","slide":8,"text":"CONNECTED","textPreview":"CONNECTED","textChars":9,"textLines":1,"bbox":[862,341,220,21]}
+{"kind":"textbox","id":"sh/ahsbqhkr","slide":8,"text":"The experience stays in sync.","textPreview":"The experience stays in sync.","textChars":29,"textLines":1,"bbox":[862,371,220,25]}
+{"kind":"textbox","id":"sh/9gjuhc36","slide":8,"text":"FixNow","textPreview":"FixNow","textChars":6,"textLines":1,"bbox":[72,657,180,24]}
+{"kind":"textbox","id":"sh/8fato72l","slide":8,"text":"Project Overview  •  2026","textPreview":"Project Overview  •  2026","textChars":25,"textLines":1,"bbox":[952,660,256,18]}
+{"kind":"notes","id":"nt/8zczq1","slide":8,"text":""}

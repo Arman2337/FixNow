@@ -153,3 +153,30 @@ class ProviderRequest {
     );
   }
 }
+
+/// FN-111: rolling accept-time signal. [averageAcceptMinutes] is null until
+/// enough accepted jobs exist; callers must hide the card entirely then.
+class ProviderAcceptTime {
+  const ProviderAcceptTime({
+    required this.averageAcceptMinutes,
+    required this.sampleSize,
+    required this.windowDays,
+  });
+  final int? averageAcceptMinutes;
+  final int sampleSize;
+  final int windowDays;
+
+  factory ProviderAcceptTime.fromJson(Map<String, Object?> json) {
+    final average = json['averageAcceptMinutes'];
+    final sampleSize = json['sampleSize'];
+    final windowDays = json['windowDays'];
+    if (sampleSize is! int || windowDays is! int) {
+      throw const FormatException();
+    }
+    return ProviderAcceptTime(
+      averageAcceptMinutes: average is int ? average : null,
+      sampleSize: sampleSize,
+      windowDays: windowDays,
+    );
+  }
+}

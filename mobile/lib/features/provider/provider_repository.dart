@@ -33,6 +33,24 @@ class ProviderRepository {
         ),
       );
 
+  /// FN-111: the caller's own rolling accept-time signal; null average means
+  /// FixNow does not yet have enough accepted jobs to show it honestly.
+  Future<ProviderAcceptTime?> acceptTime() async {
+    try {
+      final response = await _api.send(
+        ApiRequest(
+          method: ApiMethod.get,
+          path: 'trust/my-accept-time',
+          bearerToken: await _token(),
+        ),
+      );
+      return ProviderAcceptTime.fromJson(_map(response.body));
+    } on ApiException catch (error) {
+      if (error.statusCode == 404) return null;
+      rethrow;
+    }
+  }
+
   Future<ProviderProfile?> profile() async {
     try {
       final response = await _api.send(

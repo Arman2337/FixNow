@@ -7,11 +7,33 @@ import 'package:fixnow_mobile/design_system/fix_page_frame.dart';
 import 'package:fixnow_mobile/design_system/fix_state_views.dart';
 import 'package:fixnow_mobile/design_system/fix_status_chip.dart';
 import 'package:fixnow_mobile/features/provider/provider_controller.dart';
+import 'package:fixnow_mobile/features/provider/provider_models.dart';
 import 'package:flutter/material.dart';
 
+String providerServiceName(
+  List<Map<String, Object?>> categories,
+  String categoryId,
+) {
+  for (final category in categories) {
+    if (category['id'] == categoryId) {
+      final name = category['name']?.toString().trim();
+      if (name != null && name.isNotEmpty) return name;
+    }
+  }
+  return categoryId
+      .split(RegExp('[-_]'))
+      .where((word) => word.isNotEmpty)
+      .map((word) => '${word[0].toUpperCase()}${word.substring(1)}')
+      .join(' ');
+}
+
 class ProviderHomeScreen extends StatelessWidget {
-  const ProviderHomeScreen({required this.controller, super.key});
+  const ProviderHomeScreen({required this.controller, this.loadAcceptTime, super.key});
   final ProviderController controller;
+
+  /// FN-111: loads this provider's rolling accept-time signal; null hides
+  /// the card entirely (including failures and insufficient data).
+  final Future<ProviderAcceptTime?> Function()? loadAcceptTime;
 
   @override
   Widget build(BuildContext context) => ListenableBuilder(
@@ -122,6 +144,9 @@ class ProviderHomeScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: AppSpacing.md),
+            if (loadAcceptTime != null)
+              _AcceptTimeCard(load: loadAcceptTime!),
+            const SizedBox(height: AppSpacing.md),
             FixCard(
               semanticLabel: 'Working schedule',
               child: Column(
@@ -224,8 +249,12 @@ class ProviderHomeScreen extends StatelessWidget {
                 ),
               )
             else
-              ...controller.requests.map(
-                (request) => Padding(
+              ...controller.requests.map((request) {
+                final serviceName = providerServiceName(
+                  controller.categories,
+                  request.serviceCategoryId,
+                );
+                return Padding(
                   padding: const EdgeInsets.only(bottom: AppSpacing.md),
                   child: FixCard(
                     tone: FixCardTone.elevated,
@@ -234,13 +263,13 @@ class ProviderHomeScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         const FixStatusChip(
-                          label: 'REQUESTED',
+                          label: 'New request',
                           icon: Icons.radar_rounded,
                           tone: FixStatusTone.warning,
                         ),
                         const SizedBox(height: AppSpacing.md),
                         Text(
-                          request.serviceCategoryId.replaceAll('_', ' '),
+                          serviceName,
                           style: Theme.of(context).textTheme.labelLarge,
                         ),
                         const SizedBox(height: AppSpacing.xs),
@@ -250,13 +279,19 @@ class ProviderHomeScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: AppSpacing.xs),
                         Text(
-                          '${request.distanceKm.toStringAsFixed(1)} km away',
+                          'About ${request.distanceKm.toStringAsFixed(1)} km away',
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(color: AppColors.textSecondary),
                         ),
                         const SizedBox(height: AppSpacing.xs),
                         Text(
                           'Requested ${_requestTime(request.createdAt)}',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: AppColors.textSecondary),
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(
+                          'Customer address and contact details appear only after you accept.',
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(color: AppColors.textSecondary),
                         ),
@@ -269,8 +304,8 @@ class ProviderHomeScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                ),
-              ),
+                );
+              }),
             const SizedBox(height: AppSpacing.xxl),
             Text(
               'Assigned work',
@@ -339,4 +374,48 @@ class ProviderHomeScreen extends StatelessWidget {
     final local = value.toLocal();
     return '${local.day}/${local.month} · ${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
   }
+}
+
+/// FN-111: honest "your usual accept time" signal. Renders nothing while
+/// loading, on failure, or when FixNow lacks enough accepted jobs.
+class _AcceptTimeCard extends StatefulWidget {
+  const _AcceptTimeCard({required this.load});
+  final Future<ProviderAcceptTime?> Function() load;
+
+  @override
+  State<_AcceptTimeCard> createState() => _AcceptTimeCardState();
+}
+
+class _AcceptTimeCardState extends State<_AcceptTimeCard> {
+  late final Future<ProviderAcceptTime?> _future = widget.load();
+
+  @override
+  Widget build(BuildContext context) => FutureBuilder<ProviderAcceptTime?>(
+    future: _future,
+    builder: (context, snapshot) {
+      final signal = snapshot.data;
+      if (signal?.averageAcceptMinutes is! int) {
+        return const SizedBox.shrink();
+      }
+      final minutes = signal!.averageAcceptMinutes!;
+      return FixCard(
+        tone: FixCardTone.secondary,
+        semanticLabel: 'Your usual accept time',
+        child: Row(
+          children: [
+            const Icon(Icons.timer_outlined, color: AppColors.primary),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Text(
+                'Your usual accept time is about $minutes min, from '
+                '${signal.sampleSize} accepted jobs in the last '
+                '${signal.windowDays} days.',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ),
+          ],
+        ),
+      );
+    },
+  );
 }

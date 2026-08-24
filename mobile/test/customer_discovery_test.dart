@@ -84,6 +84,10 @@ void main() {
           slug: 'plumbing',
           description: 'Leaks and pipe repairs',
           iconName: 'plumbing',
+          pricing: ServiceCategoryPricing(
+            amountMinor: 49900,
+            currency: 'INR',
+          ),
         ),
       ]),
     );
@@ -113,6 +117,66 @@ void main() {
     expect(find.bySemanticsLabel('Plumbing service category'), findsOneWidget);
     expect(find.text('Leaks and pipe repairs'), findsOneWidget);
     expect(find.byIcon(Icons.plumbing_outlined), findsOneWidget);
+    expect(find.text('₹499'), findsOneWidget);
+  });
+
+  testWidgets('categories without a published price show price on request', (
+    tester,
+  ) async {
+    final discovery = ServiceDiscoveryController(
+      FakeCategories([
+        const ServiceCategory(
+          id: '1',
+          name: 'Cleaning',
+          slug: 'cleaning',
+        ),
+      ]),
+    );
+    final location = LocationConsentController(
+      FakeLocationGateway(LocationPermissionState.denied),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.dark,
+        home: Scaffold(
+          body: ServiceDiscoveryScreen(
+            controller: discovery,
+            locationController: location,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('Price on request'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('Price on request'), findsOneWidget);
+  });
+
+  test('pricing parses bounded API payloads and renders rupee labels', () {
+    final price = ServiceCategoryPricing.fromJson({
+      'amountMinor': 49999,
+      'currency': 'INR',
+    });
+    expect(price.displayLabel, '₹499.99');
+    expect(
+      const ServiceCategoryPricing(amountMinor: 49900, currency: 'INR')
+          .displayLabel,
+      '₹499',
+    );
+
+    expect(() => ServiceCategoryPricing.fromJson(<String, dynamic>{}),
+        throwsFormatException);
+    expect(
+      () => ServiceCategoryPricing.fromJson({
+        'amountMinor': '499',
+        'currency': 'INR',
+      }),
+      throwsFormatException,
+    );
   });
 
   testWidgets('shows offline recovery and retries', (tester) async {

@@ -48,7 +48,10 @@ export class BookingProjectionService {
     const estimate = location
       ? route
         ? {
-            estimatedMinutes: Math.max(1, Math.ceil(route.durationSeconds / 60)),
+            estimatedMinutes: Math.max(
+              1,
+              Math.ceil(route.durationSeconds / 60),
+            ),
             source: 'openrouteservice-driving',
           }
         : await this.eta.estimate({

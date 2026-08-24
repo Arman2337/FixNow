@@ -16,6 +16,7 @@ import { Booking } from './domain/booking.entity';
 import { MatchingService } from '../matching/matching.service';
 import { LocationService } from '../location/location.service';
 import { BookingProjectionService } from '../realtime/booking-projection.service';
+import { DomainNotificationService } from '../notifications/domain/domain-notification.service';
 
 export interface BookingHistoryPage {
   bookings: Booking[];
@@ -39,7 +40,17 @@ export class BookingsService {
     private readonly locationService?: LocationService,
     private readonly bookingProjections?: BookingProjectionService,
     private readonly config?: ConfigService,
+    private readonly domainNotifications?: DomainNotificationService,
   ) {}
+
+  /** FN-062: push is best-effort; a notification failure never fails a booking. */
+  private async notifySafely(notify: () => Promise<void>): Promise<void> {
+    try {
+      await notify();
+    } catch {
+      // Delivery attempts are recorded by the notification service.
+    }
+  }
 
   async create(
     userId: string,
@@ -59,7 +70,7 @@ export class BookingsService {
     if (existing) return this.resolveIdempotentReplay(existing, fingerprint);
 
     try {
-      return await this.dataSource.transaction(async (manager) => {
+      const created = await this.dataSource.transaction(async (manager) => {
         const bookingRepository = manager.getRepository(Booking);
         const booking = bookingRepository.create({
           customerId: userId,
@@ -93,6 +104,20 @@ export class BookingsService {
         );
         return saved;
       });
+      await this.notifySafely(async () => {
+        if (!this.domainNotifications) return;
+        const eligible = await this.matchingService.findEligibleProviders(
+          created.locationLat!,
+          created.locationLng!,
+          created.serviceCategoryId,
+          50,
+        );
+        await this.domainNotifications.notifyProvidersOfAvailableRequest(
+          created,
+          eligible.map(({ providerId }) => providerId),
+        );
+      });
+      return created;
     } catch (error: unknown) {
       if (!this.isUniqueViolation(error)) throw error;
       const concurrent = await this.dataSource
@@ -141,6 +166,13 @@ export class BookingsService {
       },
     );
     await this.bookingProjections?.publishBooking(booking);
+    await this.notifySafely(() =>
+      this.domainNotifications!.notifyBookingEvent(
+        booking,
+        'customer',
+        BookingStatus.ASSIGNED,
+      ),
+    );
     return booking;
   }
 
@@ -150,12 +182,7 @@ export class BookingsService {
     status: BookingStatus,
     expectedVersion: number,
   ): Promise<Booking> {
-    if (
-      ![
-        BookingStatus.EN_ROUTE,
-        BookingStatus.COMPLETED,
-      ].includes(status)
-    ) {
+    if (![BookingStatus.EN_ROUTE, BookingStatus.COMPLETED].includes(status)) {
       throw new BadRequestException('Unsupported provider status command');
     }
     const booking = await this.transition(
@@ -176,6 +203,9 @@ export class BookingsService {
       await this.locationService?.invalidateBooking(bookingId);
     }
     await this.bookingProjections?.publishBooking(booking);
+    await this.notifySafely(() =>
+      this.domainNotifications!.notifyBookingEvent(booking, 'customer', status),
+    );
     return booking;
   }
 
@@ -216,28 +246,71 @@ export class BookingsService {
     );
     await this.locationService?.invalidateBooking(bookingId);
     await this.bookingProjections?.publishUnavailable(booking);
+    await this.notifySafely(() =>
+      this.domainNotifications!.notifyBookingEvent(
+        booking,
+        'customer',
+        BookingStatus.CANCELLED,
+      ),
+    );
     return booking;
   }
 
-  async getServiceStartOtp(bookingId: string, customerId: string): Promise<{ otp: string }> {
-    const booking = await this.dataSource.getRepository(Booking).findOneBy({ id: bookingId });
+  async getServiceStartOtp(
+    bookingId: string,
+    customerId: string,
+  ): Promise<{ otp: string }> {
+    const booking = await this.dataSource
+      .getRepository(Booking)
+      .findOneBy({ id: bookingId });
     if (!booking) throw new NotFoundException('Booking not found');
-    if (booking.customerId !== customerId) throw new ForbiddenException('Only the customer can view this service OTP');
-    if (booking.status !== BookingStatus.EN_ROUTE) throw new ConflictException('The service OTP is available after the provider is en route');
+    if (booking.customerId !== customerId)
+      throw new ForbiddenException(
+        'Only the customer can view this service OTP',
+      );
+    if (booking.status !== BookingStatus.EN_ROUTE)
+      throw new ConflictException(
+        'The service OTP is available after the provider is en route',
+      );
     return { otp: this.serviceStartOtp(booking) };
   }
 
-  async verifyOtpAndStartService(bookingId: string, providerId: string, otp: string, expectedVersion: number): Promise<Booking> {
-    const booking = await this.transition(bookingId, providerId, expectedVersion, (candidate) => {
-      if (candidate.providerId !== providerId) throw new ForbiddenException('You are not assigned to this booking');
-      if (candidate.status !== BookingStatus.EN_ROUTE) throw new ConflictException('Service can start only after the provider is en route');
-      const expected = Buffer.from(this.serviceStartOtp(candidate));
-      const actual = Buffer.from(otp);
-      if (expected.length !== actual.length || !timingSafeEqual(expected, actual)) throw new ForbiddenException('The service start OTP is incorrect');
-      candidate.transitionTo(BookingStatus.IN_PROGRESS);
-    });
+  async verifyOtpAndStartService(
+    bookingId: string,
+    providerId: string,
+    otp: string,
+    expectedVersion: number,
+  ): Promise<Booking> {
+    const booking = await this.transition(
+      bookingId,
+      providerId,
+      expectedVersion,
+      (candidate) => {
+        if (candidate.providerId !== providerId)
+          throw new ForbiddenException('You are not assigned to this booking');
+        if (candidate.status !== BookingStatus.EN_ROUTE)
+          throw new ConflictException(
+            'Service can start only after the provider is en route',
+          );
+        const expected = Buffer.from(this.serviceStartOtp(candidate));
+        const actual = Buffer.from(otp);
+        if (
+          expected.length !== actual.length ||
+          !timingSafeEqual(expected, actual)
+        )
+          throw new ForbiddenException('The service start OTP is incorrect');
+        candidate.transitionTo(BookingStatus.IN_PROGRESS);
+      },
+    );
     await this.locationService?.invalidateBooking(bookingId);
     await this.bookingProjections?.publishBooking(booking);
+    await this.notifySafely(() =>
+      this.domainNotifications!.notifyBookingEvent(
+        booking,
+        'customer',
+        BookingStatus.IN_PROGRESS,
+      ),
+    );
     return booking;
   }
 
@@ -452,7 +525,9 @@ export class BookingsService {
     const secret = this.config?.get<string>('OTP_SECRET');
     if (!secret) throw new Error('OTP_SECRET is not configured');
     const value = createHmac('sha256', secret)
-      .update(`service-start:${booking.id}:${booking.enRouteAt?.toISOString() ?? ''}`)
+      .update(
+        `service-start:${booking.id}:${booking.enRouteAt?.toISOString() ?? ''}`,
+      )
       .digest()
       .readUInt32BE(0);
     return (value % 10000).toString().padStart(4, '0');

@@ -17,12 +17,17 @@ class ServiceRequestScreen extends StatefulWidget {
     required this.controller,
     this.locationProvider,
     this.initialLocation,
+    this.initialDescription,
     super.key,
   });
   final ServiceCategory category;
   final BookingController controller;
   final BookingLocationProvider? locationProvider;
   final BookingLocationFix? initialLocation;
+
+  /// Prefill from a previous booking ("Book again"); always reviewable and
+  /// editable before submission.
+  final String? initialDescription;
 
   @override
   State<ServiceRequestScreen> createState() => _ServiceRequestScreenState();
@@ -34,6 +39,12 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
   bool _submitting = false;
   String? _error;
   BookingLocationFix? _confirmedLocation;
+
+  @override
+  void initState() {
+    super.initState();
+    _details.text = widget.initialDescription ?? '';
+  }
 
   @override
   void dispose() {
@@ -121,6 +132,54 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
                   Expanded(
                     child: Text(
                       'Your request is shared only with eligible providers. A provider is assigned after they accept it.',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+
+            FixCard(
+              tone: FixCardTone.elevated,
+              semanticLabel: 'Base service price',
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.sell_outlined,
+                    color: widget.category.pricing == null
+                        ? Theme.of(context).colorScheme.onSurfaceVariant
+                        : AppColors.primary,
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Base price',
+                          style: Theme.of(context).textTheme.labelMedium
+                              ?.copyWith(
+                                color:
+                                    Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
+                              ),
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(
+                          widget.category.pricing?.displayLabel ??
+                              'Price on request',
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        if (widget.category.pricing != null) ...[
+                          const SizedBox(height: AppSpacing.xs),
+                          Text(
+                            'Final quote is confirmed by the provider after inspection.',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                 ],

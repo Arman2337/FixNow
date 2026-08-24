@@ -26,11 +26,17 @@ export const PERMISSIONS = {
   adminSkillsVerify: 'admin.skills.verify',
   adminSkillsDelete: 'admin.skills.delete',
   bookingCreateSelf: 'bookings.request.create.self',
+  bookingScheduleManageSelf: 'bookings.schedule.manage.self',
   bookingAccept: 'bookings.accept',
   bookingAvailableRead: 'bookings.available.read',
   bookingUpdateStatus: 'bookings.update.status',
   bookingCancelSelf: 'bookings.cancel.self',
   bookingHistoryReadSelf: 'bookings.history.read.self',
+  reviewCreateSelf: 'ratings.review.create.self',
+  reviewReadBooking: 'ratings.review.read.booking',
+  reviewModerate: 'ratings.review.moderate',
+  trustSignalsRead: 'trust.signals.read',
+  trustSignalsUpdate: 'trust.signals.update',
   realtimeConnect: 'realtime.connect',
   realtimeSubscribeSelf: 'realtime.subscribe.self',
   roleGrantAuthorized: 'access.role.grant.authorized',
@@ -41,7 +47,10 @@ export const PERMISSIONS = {
   adminProviderDocumentsRead: 'admin.provider-documents.read.assigned',
   adminBookingsRead: 'admin.bookings.read',
   adminBookingsIntervene: 'admin.bookings.intervene',
+  pushTokenManageSelf: 'notifications.push.token.manage.self',
+  trustAcceptTimeReadSelf: 'trust.accept-time.read.self',
   complaintsCreate: 'complaints.create',
+  aiRecommendationCreate: 'ai.recommendation.create',
   complaintsReadSelf: 'complaints.read.self',
   adminComplaintsRead: 'admin.complaints.read',
   adminComplaintsUpdate: 'admin.complaints.update',
@@ -239,6 +248,11 @@ export const PERMISSION_POLICIES: Readonly<
     roles: ['customer'],
     relationship: 'self',
   },
+  [PERMISSIONS.bookingScheduleManageSelf]: {
+    roles: ['customer'],
+    audience: 'mobile',
+    relationship: 'self',
+  },
   [PERMISSIONS.bookingAccept]: {
     roles: ['verified_provider'],
   },
@@ -257,6 +271,26 @@ export const PERMISSION_POLICIES: Readonly<
   [PERMISSIONS.bookingHistoryReadSelf]: {
     roles: ['customer', 'verified_provider'],
     relationship: 'self',
+  },
+  [PERMISSIONS.reviewCreateSelf]: {
+    roles: ['customer'],
+    relationship: 'self',
+  },
+  [PERMISSIONS.reviewReadBooking]: {
+    roles: ['customer', 'verified_provider'],
+    relationship: 'self',
+  },
+  [PERMISSIONS.reviewModerate]: {
+    roles: ['trust_safety_reviewer', 'operations_administrator'],
+    audience: 'admin',
+  },
+  [PERMISSIONS.trustSignalsRead]: {
+    roles: ['trust_safety_reviewer', 'operations_administrator'],
+    audience: 'admin',
+  },
+  [PERMISSIONS.trustSignalsUpdate]: {
+    roles: ['trust_safety_reviewer', 'operations_administrator'],
+    audience: 'admin',
   },
   [PERMISSIONS.adminBookingsRead]: {
     roles: [
@@ -289,8 +323,21 @@ export const PERMISSION_POLICIES: Readonly<
   [PERMISSIONS.complaintsCreate]: {
     roles: ['customer', 'verified_provider'],
   },
+  [PERMISSIONS.aiRecommendationCreate]: {
+    roles: ['customer'],
+    relationship: 'self',
+  },
   [PERMISSIONS.complaintsReadSelf]: {
     roles: ['customer', 'verified_provider'],
+    relationship: 'self',
+  },
+  [PERMISSIONS.pushTokenManageSelf]: {
+    roles: allHumanRoles,
+    relationship: 'self',
+  },
+  [PERMISSIONS.trustAcceptTimeReadSelf]: {
+    roles: ['verified_provider'],
+    audience: 'mobile',
     relationship: 'self',
   },
   [PERMISSIONS.adminComplaintsRead]: {

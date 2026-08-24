@@ -9,7 +9,9 @@ export function createDatabaseOptions(
     type: 'postgres',
     url: configService.get<string>('DATABASE_URL'),
     autoLoadEntities: true,
-    synchronize: true,
+    // Schema changes are run through reviewed migrations. Never let a running
+    // application mutate a database schema automatically.
+    synchronize: false,
     migrationsRun: false,
   };
 }

@@ -5,17 +5,21 @@ import 'package:fixnow_mobile/design_system/fix_card.dart';
 import 'package:fixnow_mobile/design_system/fix_status_chip.dart';
 import 'package:fixnow_mobile/design_system/fix_page_frame.dart';
 import 'package:fixnow_mobile/features/profile/customer_profile_controller.dart';
+import 'package:fixnow_mobile/notifications/push_enrollment.dart';
+import 'package:fixnow_mobile/notifications/push_settings_card.dart';
 import 'package:flutter/material.dart';
 
 class CustomerProfileScreen extends StatefulWidget {
   const CustomerProfileScreen({
     required this.controller,
+    this.pushController,
     this.onSignOut,
     this.onSupportCases,
     super.key,
   });
 
   final CustomerProfileController controller;
+  final PushEnrollmentController? pushController;
   final VoidCallback? onSignOut;
   final VoidCallback? onSupportCases;
 
@@ -186,6 +190,10 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                 ),
               ),
             ),
+          if (widget.pushController != null) ...[
+            const SizedBox(height: AppSpacing.lg),
+            PushSettingsCard(controller: widget.pushController!),
+          ],
           if (widget.onSupportCases != null) ...[
             const SizedBox(height: AppSpacing.lg),
             FixButton(

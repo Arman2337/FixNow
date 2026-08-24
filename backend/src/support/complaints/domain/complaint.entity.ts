@@ -5,7 +5,10 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   VersionColumn,
+  OneToMany,
 } from 'typeorm';
+import { ComplaintEvidence } from './complaint-evidence.entity';
+import { AppealStatus } from '../../../../../shared/trust.types';
 
 export enum ComplaintStatus {
   OPEN = 'OPEN',
@@ -69,4 +72,20 @@ export class Complaint {
 
   @VersionColumn()
   version: number;
+
+  @OneToMany(() => ComplaintEvidence, (evidence) => evidence.complaint)
+  evidence: ComplaintEvidence[];
+
+  @Column({
+    type: 'enum',
+    enum: AppealStatus,
+    default: AppealStatus.NONE,
+  })
+  appealStatus: AppealStatus;
+
+  @Column('text', { name: 'appeal_reason', nullable: true })
+  appealReason: string | null;
+
+  @Column('text', { name: 'appeal_resolution', nullable: true })
+  appealResolution: string | null;
 }

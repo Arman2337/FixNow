@@ -1,5 +1,8 @@
 import 'package:fixnow_mobile/api/api_client.dart';
 import 'package:fixnow_mobile/features/bookings/booking.dart';
+import 'package:fixnow_mobile/features/bookings/recurring_schedule.dart';
+import 'package:fixnow_mobile/features/ratings/booking_review.dart';
+import 'package:fixnow_mobile/features/ratings/review_photo.dart';
 
 class BookingRepository {
   BookingRepository({
@@ -98,6 +101,142 @@ class BookingRepository {
       );
     }
     return CustomerBooking.fromJson(Map<String, Object?>.from(raw));
+  }
+
+  /// FN-110 review photos.
+  Future<List<ReviewPhoto>> reviewPhotos(String bookingId) async {
+    final response = await _api.send(
+      ApiRequest(
+        method: ApiMethod.get,
+        path: 'bookings/$bookingId/review/photos',
+        bearerToken: await _token(),
+      ),
+    );
+    final items = response.body;
+    if (items is! List) return const [];
+    return items
+        .map(
+          (item) => ReviewPhoto.fromJson(Map<String, Object?>.from(item as Map)),
+        )
+        .toList(growable: false);
+  }
+
+  Future<void> attachReviewPhoto({
+    required String bookingId,
+    required String contentType,
+    required List<int> bytes,
+  }) async {
+    final api = _api;
+    if (api is! ApiClient) {
+      throw const ApiException(
+        ApiFailureKind.invalidResponse,
+        'Photo upload is unavailable.',
+      );
+    }
+    await api.uploadFile(
+      path: 'bookings/$bookingId/review/photos',
+      bearerToken: await _token(),
+      fieldName: 'photo',
+      fileName: 'review-photo',
+      contentType: contentType,
+      bytes: bytes,
+    );
+  }
+
+  /// FN-112 recurring schedules.
+  Future<List<RecurringSchedule>> schedules() async {
+    final response = await _api.send(
+      ApiRequest(
+        method: ApiMethod.get,
+        path: 'bookings/schedules',
+        bearerToken: await _token(),
+      ),
+    );
+    final items = response.body;
+    if (items is! List) {
+      throw const ApiException(
+        ApiFailureKind.invalidResponse,
+        'The repeating services list was invalid.',
+      );
+    }
+    return items
+        .map((item) => RecurringSchedule.fromJson(Map<String, Object?>.from(item as Map)))
+        .toList(growable: false);
+  }
+
+  Future<Map<String, Object?>> confirmSchedule(String scheduleId) async {
+    final response = await _api.send(
+      ApiRequest(
+        method: ApiMethod.post,
+        path: 'bookings/schedules/$scheduleId/confirm',
+        bearerToken: await _token(),
+      ),
+    );
+    return Map<String, Object?>.from(response.body as Map);
+  }
+
+  Future<Map<String, Object?>> scheduleAction(
+    String scheduleId,
+    String action,
+  ) async {
+    final response = await _api.send(
+      ApiRequest(
+        method: ApiMethod.patch,
+        path: 'bookings/schedules/$scheduleId/status',
+        bearerToken: await _token(),
+        body: {'action': action},
+      ),
+    );
+    return Map<String, Object?>.from(response.body as Map);
+  }
+
+  Future<BookingReview?> reviewFor(String bookingId) async {
+    final response = await _api.send(
+      ApiRequest(
+        method: ApiMethod.get,
+        path: 'bookings/$bookingId/review',
+        bearerToken: await _token(),
+      ),
+    );
+    final body = response.body is Map<String, dynamic>
+        ? response.body! as Map<String, dynamic>
+        : null;
+    final raw = body?['review'];
+    if (raw == null) return null;
+    if (raw is! Map)
+      throw const ApiException(
+        ApiFailureKind.invalidResponse,
+        'The review response was invalid.',
+      );
+    return BookingReview.fromJson(Map<String, Object?>.from(raw));
+  }
+
+  Future<BookingReview> createReview({
+    required String bookingId,
+    required int rating,
+    required String reviewText,
+  }) async {
+    final response = await _api.send(
+      ApiRequest(
+        method: ApiMethod.post,
+        path: 'bookings/$bookingId/review',
+        bearerToken: await _token(),
+        body: {
+          'rating': rating,
+          if (reviewText.trim().isNotEmpty) 'reviewText': reviewText.trim(),
+        },
+      ),
+    );
+    final body = response.body is Map<String, dynamic>
+        ? response.body! as Map<String, dynamic>
+        : null;
+    final raw = body?['review'];
+    if (raw is! Map)
+      throw const ApiException(
+        ApiFailureKind.invalidResponse,
+        'The review response was invalid.',
+      );
+    return BookingReview.fromJson(Map<String, Object?>.from(raw));
   }
 
   Future<String> _token() async {

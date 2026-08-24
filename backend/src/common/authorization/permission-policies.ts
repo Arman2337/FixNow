@@ -27,6 +27,7 @@ export const PERMISSIONS = {
   adminSkillsDelete: 'admin.skills.delete',
   bookingCreateSelf: 'bookings.request.create.self',
   bookingScheduleManageSelf: 'bookings.schedule.manage.self',
+  paymentOrderManageSelf: 'payments.order.manage.self',
   bookingAccept: 'bookings.accept',
   bookingAvailableRead: 'bookings.available.read',
   bookingUpdateStatus: 'bookings.update.status',
@@ -337,6 +338,11 @@ export const PERMISSION_POLICIES: Readonly<
   },
   [PERMISSIONS.trustAcceptTimeReadSelf]: {
     roles: ['verified_provider'],
+    audience: 'mobile',
+    relationship: 'self',
+  },
+  [PERMISSIONS.paymentOrderManageSelf]: {
+    roles: ['customer'],
     audience: 'mobile',
     relationship: 'self',
   },

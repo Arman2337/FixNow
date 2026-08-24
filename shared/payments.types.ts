@@ -26,3 +26,15 @@ export interface VerifyCheckoutParams {
   gatewayPaymentId: string;
   signature: string;
 }
+
+export type PaymentOrderStatus = 'CREATED' | 'PAID' | 'FAILED' | 'CANCELLED';
+
+export interface PaymentOrderContract {
+  id: string;
+  bookingId: string;
+  amountMinor: number;
+  currency: string;
+  status: PaymentOrderStatus;
+  gatewayOrderId: string;
+  createdAt: string;
+}

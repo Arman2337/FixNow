@@ -1951,7 +1951,7 @@ Create booking-bound payment orders and verify idempotent provider outcomes.
 ### Do Not
 - Do not trust client payment success or duplicate charges.
 ### Acceptance Criteria
-- [ ] Signature, replay, amount, booking ownership, race, and reconciliation tests pass.
+- [x] Signature, replay, amount, booking ownership, race, and reconciliation tests pass.
 ### Validation
 ```bash
 # Run backend checks and payment sandbox integration tests.
@@ -1965,12 +1965,13 @@ None.
 ### Notes
 Deferred from current delivery scope per FN-097.
 
-### Completion Record
-Completed By:
-Completed Date:
-Commit:
-PR:
+Completed on `feat/payment-foundation` immediately after FN-051. Added the reversible `payment_orders` + `payment_events` schema: booking-bound orders keyed by a unique booking-scoped receipt (idempotent creation, race-safe via the unique constraint), reconciliation states CREATED/PAID/FAILED/CANCELLED, and an immutable audit event table whose (order, event, payload-digest) unique index makes webhook replays no-ops. Amounts snapshot the category's published price at order time; price-on-request categories refuse payment instead of inventing amounts, and only REQUESTED/ASSIGNED bookings are payable. Endpoints: POST /payments/orders, GET /payments/orders/booking/:id, POST /payments/orders/verify (Checkout handshake), POST /payments/webhook (public route whose authentication IS the timing-safe HMAC over the raw body; rawBody enabled at bootstrap). Captured amounts must match the internal order exactly - mismatches are recorded and never applied. A new customer-scoped `payments.order.manage.self` permission gates the customer routes. Validated 2026-08-25: backend lint clean, 366 tests, build; live E2E on the local stack with the fake gateway recorded order creation, idempotent replay, a valid capture flipping the order to PAID, forged-signature 403, tampered-amount rejection, and webhook replay dedupe (duplicate:true). Razorpay live verification activates when the owner supplies test-mode keys.
 
+### Completion Record
+Completed By: Claude Code
+Completed Date: 2026-08-25
+Commit: 05f42fb
+PR:
 ## FN-053 â€” Implement Invoices, Refunds, Transactions, and Provider Earnings
 Status: â¸ï¸ Deferred
 Priority: P1 â€” High

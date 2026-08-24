@@ -8,6 +8,8 @@ import 'package:fixnow_mobile/design_system/fix_status_chip.dart';
 import 'package:fixnow_mobile/features/provider/provider_controller.dart';
 import 'package:fixnow_mobile/features/provider/provider_models.dart';
 import 'package:fixnow_mobile/features/provider/provider_setup_screen.dart';
+import 'package:fixnow_mobile/notifications/push_enrollment.dart';
+import 'package:fixnow_mobile/notifications/push_settings_card.dart';
 import 'package:flutter/material.dart';
 
 class ProviderOnboardingScreen extends StatelessWidget {
@@ -15,11 +17,16 @@ class ProviderOnboardingScreen extends StatelessWidget {
     required this.controller,
     required this.onSignOut,
     this.onSupportCases,
+    this.pushController,
     super.key,
   });
   final ProviderController controller;
   final VoidCallback onSignOut;
   final VoidCallback? onSupportCases;
+
+  /// FN-062: lets providers enroll for incoming-job pushes; null hides the
+  /// section.
+  final PushEnrollmentController? pushController;
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -90,6 +97,10 @@ class ProviderOnboardingScreen extends StatelessWidget {
                   ],
                   const SizedBox(height: AppSpacing.xxl),
                   _SetupProgress(completedSteps: completedSteps),
+                  if (pushController != null) ...[
+                    const SizedBox(height: AppSpacing.lg),
+                    PushSettingsCard(controller: pushController!),
+                  ],
                   const SizedBox(height: AppSpacing.lg),
                   _Step(
                     step: 1,

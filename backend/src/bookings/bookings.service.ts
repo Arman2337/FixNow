@@ -16,6 +16,7 @@ import { Booking } from './domain/booking.entity';
 import { MatchingService } from '../matching/matching.service';
 import { LocationService } from '../location/location.service';
 import { BookingProjectionService } from '../realtime/booking-projection.service';
+import { DomainNotificationService } from '../notifications/domain/domain-notification.service';
 
 export interface BookingHistoryPage {
   bookings: Booking[];
@@ -39,7 +40,17 @@ export class BookingsService {
     private readonly locationService?: LocationService,
     private readonly bookingProjections?: BookingProjectionService,
     private readonly config?: ConfigService,
+    private readonly domainNotifications?: DomainNotificationService,
   ) {}
+
+  /** FN-062: push is best-effort; a notification failure never fails a booking. */
+  private async notifySafely(notify: () => Promise<void>): Promise<void> {
+    try {
+      await notify();
+    } catch {
+      // Delivery attempts are recorded by the notification service.
+    }
+  }
 
   async create(
     userId: string,
@@ -59,7 +70,7 @@ export class BookingsService {
     if (existing) return this.resolveIdempotentReplay(existing, fingerprint);
 
     try {
-      return await this.dataSource.transaction(async (manager) => {
+      const created = await this.dataSource.transaction(async (manager) => {
         const bookingRepository = manager.getRepository(Booking);
         const booking = bookingRepository.create({
           customerId: userId,
@@ -93,6 +104,20 @@ export class BookingsService {
         );
         return saved;
       });
+      await this.notifySafely(async () => {
+        if (!this.domainNotifications) return;
+        const eligible = await this.matchingService.findEligibleProviders(
+          created.locationLat!,
+          created.locationLng!,
+          created.serviceCategoryId,
+          50,
+        );
+        await this.domainNotifications.notifyProvidersOfAvailableRequest(
+          created,
+          eligible.map(({ providerId }) => providerId),
+        );
+      });
+      return created;
     } catch (error: unknown) {
       if (!this.isUniqueViolation(error)) throw error;
       const concurrent = await this.dataSource
@@ -141,6 +166,13 @@ export class BookingsService {
       },
     );
     await this.bookingProjections?.publishBooking(booking);
+    await this.notifySafely(() =>
+      this.domainNotifications!.notifyBookingEvent(
+        booking,
+        'customer',
+        BookingStatus.ASSIGNED,
+      ),
+    );
     return booking;
   }
 
@@ -171,6 +203,9 @@ export class BookingsService {
       await this.locationService?.invalidateBooking(bookingId);
     }
     await this.bookingProjections?.publishBooking(booking);
+    await this.notifySafely(() =>
+      this.domainNotifications!.notifyBookingEvent(booking, 'customer', status),
+    );
     return booking;
   }
 
@@ -211,6 +246,13 @@ export class BookingsService {
     );
     await this.locationService?.invalidateBooking(bookingId);
     await this.bookingProjections?.publishUnavailable(booking);
+    await this.notifySafely(() =>
+      this.domainNotifications!.notifyBookingEvent(
+        booking,
+        'customer',
+        BookingStatus.CANCELLED,
+      ),
+    );
     return booking;
   }
 
@@ -262,6 +304,13 @@ export class BookingsService {
     );
     await this.locationService?.invalidateBooking(bookingId);
     await this.bookingProjections?.publishBooking(booking);
+    await this.notifySafely(() =>
+      this.domainNotifications!.notifyBookingEvent(
+        booking,
+        'customer',
+        BookingStatus.IN_PROGRESS,
+      ),
+    );
     return booking;
   }
 

@@ -2304,18 +2304,13 @@ backend/src/notifications/ backend/src/bookings/ mobile/lib/notifications/
 ```
 ### Notes
 Emergency alerts may override quiet hours only under the approved policy.
-### Blocker
-FN-061 (push infrastructure) and FN-063 (emergency dispatch policy) are blocked, so notification delivery, quiet-hour exceptions, and emergency templates cannot be implemented safely.
-### Required To Unblock
-Complete or explicitly authorize the prerequisites for FN-061 and FN-063.
+
+2026-08-24 implementation progress on `feat/provider-ui-polish` (user-directed after FN-061 closed): added the in-process domain notification consumer over the FN-061 boundary. New reversible `notification_deliveries` table records one row per attempt (SENT / FAILED / NO_DEVICES / SKIPPED_QUIET_HOURS) with a per-user dedupe key unique index that makes sends replay-safe. Lock-screen-safe templates cover customer ASSIGNED / EN_ROUTE / IN_PROGRESS / COMPLETED / CANCELLED and provider REQUESTED / CANCELLED with no personal data. BookingsService fires best-effort notifications after create (fan-out to eligible providers via existing matching, capped at 20), accept, status updates, OTP service-start, and cancellations; a notification failure can never fail a booking. Quiet hours are a bounded server UTC window (`NOTIFICATION_QUIET_HOURS_UTC`, e.g. "23-7", disabled by default). Validated: backend lint clean, 65 suites / 332 tests, build; live run on the connected setup recorded provider fan-out (NO_DEVICES) and a real customer push (SENT) after a provider accepted a fresh booking. Remaining for full completion: emergency templates and quiet-hour override (gated by FN-063 policy approval) and scheduled booking reminders (need an approved scheduler dependency decision, e.g. @nestjs/schedule). Two-device live evidence (2026-08-25): a customer booking near an eligible enrolled provider produced a real provider-phone tray notification ("A new request is available near you", visually captured), and an earlier provider acceptance produced the real customer push ("A provider accepted your request") - both recorded SENT. Provider-side enrollment UI was added to the provider profile screen (FN-061 had shipped it customer-only). Note: Android does not display notification payloads in the tray while the app is foregrounded; foreground display handling remains part of the FN-062 remainder.
 ### Completion Record
 Completed By:
 Completed Date:
 Commit:
 PR:
-
-# Phase 13 â€” Emergency System
-
 ## FN-063 â€” Implement Emergency Request and Priority Dispatch
 Status: Blocked
 Priority: P1 â€” High

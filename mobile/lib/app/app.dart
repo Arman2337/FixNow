@@ -203,6 +203,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
             }
             return ProviderOnboardingScreen(
               controller: _provider,
+              pushController: _push,
               onSupportCases: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
@@ -243,6 +244,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
               ),
               providerProfile: ProviderOnboardingScreen(
                 controller: _provider,
+                pushController: _push,
                 onSupportCases: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(

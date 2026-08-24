@@ -37,7 +37,7 @@ export class PaymentOrders1786520700000 implements MigrationInterface {
         "order_id" uuid NOT NULL,
         "event_type" varchar(64) NOT NULL,
         "payload_digest" char(64) NOT NULL,
-        "actor" varchar(24) NOT NULL,
+        "actor" varchar(64) NOT NULL,
         "created_at" timestamptz NOT NULL DEFAULT now(),
         CONSTRAINT "PK_payment_events" PRIMARY KEY ("id")
       )

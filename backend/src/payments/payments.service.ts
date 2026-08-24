@@ -19,6 +19,8 @@ import {
   PaymentOrderStatus,
 } from './domain/payment-order.entity';
 import { PaymentEvent } from './domain/payment-event.entity';
+import { Refund } from './domain/refund.entity';
+import { Invoice } from './domain/invoice.entity';
 import type {
   CreatePaymentOrderRequest,
   VerifyCheckoutParams,
@@ -252,11 +254,205 @@ export class PaymentsService {
         .update(`${order.gatewayOrderId}|${gatewayPaymentId ?? ''}`)
         .digest('hex'),
     );
+    await this.ensureInvoice(order.id);
     return this.present({
       ...order,
       status: PaymentOrderStatus.PAID,
       gatewayPaymentId,
     });
+  }
+
+  /**
+   * FN-053: exactly one invoice per paid order. The number comes from a
+   * database sequence, so concurrent PAID transitions can never collide.
+   */
+  private async ensureInvoice(orderId: string): Promise<void> {
+    const invoices = this.dataSource.getRepository(Invoice);
+    const existing = await invoices.findOneBy({ paymentOrderId: orderId });
+    if (existing) return;
+    const issuedAt = new Date();
+    const rows = await this.dataSource.query(
+      `SELECT nextval('invoice_number_seq') AS nextval`,
+    );
+    const invoiceNumber = `FN-${issuedAt.getUTCFullYear()}-${(
+      rows[0]?.nextval ?? '0'
+    ).padStart(6, '0')}`;
+    try {
+      await invoices.insert(
+        invoices.create({ paymentOrderId: orderId, invoiceNumber, issuedAt }),
+      );
+    } catch (error: unknown) {
+      if (!this.isUniqueViolation(error)) throw error;
+      // A concurrent finalisation of the same order won the invoice race.
+    }
+  }
+
+  /** Customer-visible invoice for an own paid order. */
+  async getInvoice(
+    customerId: string,
+    orderId: string,
+  ): Promise<{
+    invoiceNumber: string;
+    issuedAt: string;
+    amountMinor: number;
+    currency: string;
+    status: string;
+  }> {
+    const order = await this.ownedOrder(customerId, orderId);
+    if (order.status !== PaymentOrderStatus.PAID) {
+      throw new ConflictException('Invoices exist only for paid payments');
+    }
+    const invoice = await this.dataSource
+      .getRepository(Invoice)
+      .findOneByOrFail({ paymentOrderId: order.id });
+    return {
+      invoiceNumber: invoice.invoiceNumber,
+      issuedAt: invoice.issuedAt.toISOString(),
+      amountMinor: order.amountMinor,
+      currency: order.currency,
+      status: order.status,
+    };
+  }
+
+  /**
+   * FN-053: controlled refunds against a PAID order. Partial refunds are
+   * allowed; the lifetime refund total can never exceed the paid amount.
+   * Idempotent per caller-supplied request key.
+   */
+  async refundOrder(
+    actorId: string,
+    orderId: string,
+    input: { amountMinor?: number; reason: string; requestKey?: string },
+  ): Promise<{
+    id: string;
+    gatewayRefundId: string;
+    amountMinor: number;
+    status: string;
+  }> {
+    if (input.requestKey) {
+      const existing = await this.dataSource
+        .getRepository(Refund)
+        .findOneBy({ requestKey: input.requestKey });
+      if (existing) {
+        return {
+          id: existing.id,
+          gatewayRefundId: existing.gatewayRefundId,
+          amountMinor: existing.amountMinor,
+          status: existing.status,
+        };
+      }
+    }
+    const order = await this.orders.findOneByOrFail({ id: orderId });
+    if (order.status !== PaymentOrderStatus.PAID || !order.gatewayPaymentId) {
+      throw new ConflictException('Only paid payments can be refunded');
+    }
+    if (!input.reason.trim() || input.reason.length > 200) {
+      throw new BadRequestException('A bounded refund reason is required');
+    }
+    const alreadyRefunded = await this.refundedTotal(order.id);
+    const amountMinor = input.amountMinor ?? order.amountMinor;
+    if (
+      !Number.isInteger(amountMinor) ||
+      amountMinor <= 0 ||
+      alreadyRefunded + amountMinor > order.amountMinor
+    ) {
+      throw new ConflictException(
+        'Refund exceeds the refundable balance for this payment',
+      );
+    }
+    const gatewayRefund = await this.gateway.createRefund({
+      gatewayPaymentId: order.gatewayPaymentId,
+      amountMinor,
+      requestKey: input.requestKey,
+    });
+    try {
+      const saved = await this.dataSource.getRepository(Refund).save(
+        this.dataSource.getRepository(Refund).create({
+          paymentOrderId: order.id,
+          gatewayRefundId: gatewayRefund.gatewayRefundId,
+          requestKey: input.requestKey ?? null,
+          amountMinor,
+          currency: order.currency,
+          status: 'PROCESSED',
+          reason: input.reason.trim(),
+          createdBy: actorId,
+        }),
+      );
+      await this.appendEvent(
+        order.id,
+        'refund.created',
+        actorId,
+        createHash('sha256')
+          .update(gatewayRefund.gatewayRefundId)
+          .digest('hex'),
+      );
+      return {
+        id: saved.id,
+        gatewayRefundId: saved.gatewayRefundId,
+        amountMinor: saved.amountMinor,
+        status: saved.status,
+      };
+    } catch (error: unknown) {
+      if (this.isUniqueViolation(error)) {
+        // Lost the idempotency race; the first refund stands.
+        const raced = await this.dataSource
+          .getRepository(Refund)
+          .findOneByOrFail({ gatewayRefundId: gatewayRefund.gatewayRefundId });
+        return {
+          id: raced.id,
+          gatewayRefundId: raced.gatewayRefundId,
+          amountMinor: raced.amountMinor,
+          status: raced.status,
+        };
+      }
+      throw error;
+    }
+  }
+
+  private async refundedTotal(paymentOrderId: string): Promise<number> {
+    const rows = await this.dataSource.query(
+      `SELECT COALESCE(SUM(amount_minor), 0) AS total FROM refunds WHERE payment_order_id = $1`,
+      [paymentOrderId],
+    );
+    return parseInt(rows[0]?.total ?? '0', 10);
+  }
+
+  /**
+   * FN-053: honest provider earnings ledger derived from paid orders minus
+   * refunds. This records money flows; it does NOT represent payouts, which
+   * no provider supports yet (ADR-0016).
+   */
+  async providerEarnings(providerId: string): Promise<{
+    grossMinor: number;
+    refundedMinor: number;
+    netMinor: number;
+    paidOrderCount: number;
+    note: string;
+  }> {
+    const grossRows = await this.dataSource.query(
+      `SELECT COALESCE(SUM(o.amount_minor), 0) AS gross, COUNT(*)::int AS count
+       FROM payment_orders o
+       JOIN bookings b ON b.id = o.booking_id
+       WHERE b.provider_id = $1 AND o.status = 'PAID'`,
+      [providerId],
+    );
+    const refundedRows = await this.dataSource.query(
+      `SELECT COALESCE(SUM(r.amount_minor), 0) AS total
+       FROM refunds r
+       JOIN payment_orders o ON o.id = r.payment_order_id
+       JOIN bookings b ON b.id = o.booking_id
+       WHERE b.provider_id = $1 AND o.status = 'PAID'`,
+      [providerId],
+    );
+    const grossMinor = parseInt(grossRows[0]?.gross ?? '0', 10);
+    const refundedMinor = parseInt(refundedRows[0]?.total ?? '0', 10);
+    return {
+      grossMinor,
+      refundedMinor,
+      netMinor: grossMinor - refundedMinor,
+      paidOrderCount: grossRows[0]?.count ?? 0,
+      note: 'Records of completed payments. Payouts are not available yet.',
+    };
   }
 
   private async appendEvent(

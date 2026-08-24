@@ -1986,7 +1986,7 @@ Provide immutable transaction history, invoices, controlled refunds, and provide
 ### Do Not
 - Do not mutate settled history or claim payout capabilities not supported by the provider.
 ### Acceptance Criteria
-- [ ] Precision, partial/full refund, idempotency, permission, invoice, and earnings tests pass.
+- [x] Precision, partial/full refund, idempotency, permission, invoice, and earnings tests pass.
 ### Validation
 ```bash
 # Run backend checks and payment operations integration tests.
@@ -2000,12 +2000,13 @@ Split payout execution into a new task if required by the approved provider.
 ### Notes
 Deferred from current delivery scope per FN-097.
 
+Completed on `feat/payment-foundation` immediately after FN-052. Added the reversible payment-ledger schema: `refunds` (gateway refund id unique, caller request-key idempotency, integer-paise partial/full amounts, bounded reason) and `invoices` (one per paid order, sequential FN-YYYY-NNNNNN numbers from a database sequence so concurrent finalisations never collide). The gateway boundary gained `createRefund` (Razorpay REST refunds endpoint; deterministic fake). Refunds are a staff action under a new admin-audience `payments.refund.create` permission (support_agent, operations_administrator) with an Idempotency-Key header; lifetime refunds can never exceed the paid amount and unpaid orders cannot be refunded. Invoices generate exactly once when an order turns PAID and are customer-readable under `payments.invoice.read.self`. Provider earnings (`GET /providers/me/earnings` under `provider.earnings.read.self`) derive an honest gross/refunded/net ledger from paid orders joined to assigned bookings and explicitly state that payouts are not available yet (ADR-0016). A live E2E run recorded a full refund, double-refund protection, invoice FN-2026-000001 generated on capture, and provider earnings of net ₹499. Mobile invoice/earnings screens remain follow-up UI work. Validated 2026-08-25: backend lint clean, 371 tests, build.
+
 ### Completion Record
-Completed By:
-Completed Date:
+Completed By: Claude Code
+Completed Date: 2026-08-25
 Commit:
 PR:
-
 # Phase 10 â€” Ratings & Trust
 
 ## FN-054 â€” Implement Booking Ratings and Reviews

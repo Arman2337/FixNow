@@ -29,7 +29,7 @@ export class PaymentEvent {
   @Column('char', { name: 'payload_digest', length: 64 })
   payloadDigest!: string;
 
-  @Column('varchar', { length: 24 })
+  @Column('varchar', { length: 64 })
   actor!: string;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })

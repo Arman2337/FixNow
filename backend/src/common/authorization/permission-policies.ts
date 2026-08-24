@@ -28,6 +28,9 @@ export const PERMISSIONS = {
   bookingCreateSelf: 'bookings.request.create.self',
   bookingScheduleManageSelf: 'bookings.schedule.manage.self',
   paymentOrderManageSelf: 'payments.order.manage.self',
+  paymentRefundCreate: 'payments.refund.create',
+  paymentInvoiceReadSelf: 'payments.invoice.read.self',
+  providerEarningsReadSelf: 'provider.earnings.read.self',
   bookingAccept: 'bookings.accept',
   bookingAvailableRead: 'bookings.available.read',
   bookingUpdateStatus: 'bookings.update.status',
@@ -343,6 +346,20 @@ export const PERMISSION_POLICIES: Readonly<
   },
   [PERMISSIONS.paymentOrderManageSelf]: {
     roles: ['customer'],
+    audience: 'mobile',
+    relationship: 'self',
+  },
+  [PERMISSIONS.paymentRefundCreate]: {
+    roles: ['support_agent', 'operations_administrator'],
+    audience: 'admin',
+  },
+  [PERMISSIONS.paymentInvoiceReadSelf]: {
+    roles: ['customer'],
+    audience: 'mobile',
+    relationship: 'self',
+  },
+  [PERMISSIONS.providerEarningsReadSelf]: {
+    roles: ['verified_provider'],
     audience: 'mobile',
     relationship: 'self',
   },

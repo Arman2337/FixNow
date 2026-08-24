@@ -8,7 +8,11 @@ import {
 } from './payment-gateway';
 import { PaymentOrder } from './domain/payment-order.entity';
 import { PaymentEvent } from './domain/payment-event.entity';
+import { Refund } from './domain/refund.entity';
+import { Invoice } from './domain/invoice.entity';
 import { PaymentsController } from './payments.controller';
+import { PaymentsAdminController } from './payments-admin.controller';
+import { ProviderEarningsController } from './provider-earnings.controller';
 import { PaymentsService } from './payments.service';
 
 export enum PaymentProviderName {
@@ -17,8 +21,14 @@ export enum PaymentProviderName {
 }
 
 @Module({
-  imports: [TypeOrmModule.forFeature([PaymentOrder, PaymentEvent])],
-  controllers: [PaymentsController],
+  imports: [
+    TypeOrmModule.forFeature([PaymentOrder, PaymentEvent, Refund, Invoice]),
+  ],
+  controllers: [
+    PaymentsController,
+    PaymentsAdminController,
+    ProviderEarningsController,
+  ],
   providers: [
     FakePaymentGateway,
     RazorpayPaymentGateway,

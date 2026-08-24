@@ -51,6 +51,19 @@ export class PaymentsController {
     );
   }
 
+  /** FN-053: the invoice generated when this payment was paid. */
+  @Get('invoices/:orderId')
+  @RequireOwnPermission(PERMISSIONS.paymentInvoiceReadSelf)
+  async invoice(
+    @Param('orderId') orderId: string,
+    @Req() request: AuthorizedRequest,
+  ) {
+    return await this.payments.getInvoice(
+      request.authorizationPrincipal!.userId,
+      orderId,
+    );
+  }
+
   /** Customer-side Checkout handshake verification. */
   @Post('orders/verify')
   @RequireOwnPermission(PERMISSIONS.paymentOrderManageSelf)

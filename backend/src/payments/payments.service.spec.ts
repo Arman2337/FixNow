@@ -12,6 +12,8 @@ import {
   PaymentOrder,
   PaymentOrderStatus,
 } from './domain/payment-order.entity';
+import { Invoice } from './domain/invoice.entity';
+import { Refund } from './domain/refund.entity';
 import { PaymentsService } from './payments.service';
 
 const uniqueError = () =>
@@ -30,14 +32,36 @@ describe('PaymentsService', () => {
     insert: jest.fn().mockResolvedValue(undefined),
     create: jest.fn(<T extends object>(value: T): T => value),
   };
+  const invoiceRepo = {
+    findOneBy: jest.fn().mockResolvedValue(null),
+    findOneByOrFail: jest.fn().mockResolvedValue({
+      invoiceNumber: 'FN-2026-000001',
+      issuedAt: new Date('2026-08-25T00:00:00Z'),
+    }),
+    insert: jest.fn().mockResolvedValue(undefined),
+    create: jest.fn(<T extends object>(value: T): T => value),
+  };
+  const refundRepo = {
+    findOneBy: jest.fn().mockResolvedValue(null),
+    findOneByOrFail: jest.fn(),
+    save: jest.fn((value) =>
+      Promise.resolve({ id: 'refund-1', status: 'PROCESSED', ...value }),
+    ),
+    create: jest.fn(<T extends object>(value: T): T => value),
+  };
   const dataSource = {
     getRepository: jest.fn((entity: unknown) =>
       entity === Booking
         ? bookingRepo
         : entity === ServiceCategoryEntity
           ? categoryRepo
-          : eventRepo,
+          : entity === Invoice
+            ? invoiceRepo
+            : entity === Refund
+              ? refundRepo
+              : eventRepo,
     ),
+    query: jest.fn(),
   };
   const orders = {
     findOneBy: jest.fn().mockResolvedValue(null),
@@ -98,10 +122,21 @@ describe('PaymentsService', () => {
     jest.clearAllMocks();
     eventRepo.findOneBy.mockResolvedValue(null);
     eventRepo.insert.mockResolvedValue(undefined);
+    invoiceRepo.findOneBy.mockResolvedValue(null);
+    refundRepo.findOneBy.mockResolvedValue(null);
     orders.update.mockResolvedValue({ affected: 1 });
     bookingRepo.findOneBy.mockResolvedValue(ownedBooking());
     categoryRepo.findOneBy.mockResolvedValue(pricedCategory());
     orders.findOneBy.mockResolvedValue(null);
+    dataSource.query.mockImplementation((sql: string) => {
+      if (sql.includes('SUM(o.amount_minor)')) {
+        return Promise.resolve([{ gross: '49900', count: 1 }]);
+      }
+      if (sql.includes('FROM refunds')) {
+        return Promise.resolve([{ total: '0' }]);
+      }
+      return Promise.resolve([{ total: '9900' }]);
+    });
   });
 
   describe('createForBooking', () => {
@@ -280,6 +315,82 @@ describe('PaymentsService', () => {
       const body = capturedBody('order_unknown');
       const result = await service.processWebhook(body, sign(body));
       expect(result).toEqual({ handled: false });
+    });
+  });
+
+  describe('providerEarnings', () => {
+    it('nets paid orders minus refunds and states the no-payout note', async () => {
+      dataSource.query
+        .mockResolvedValueOnce([{ gross: '49900', count: 1 }])
+        .mockResolvedValueOnce([{ total: '9900' }]);
+      const result = await service.providerEarnings(otherUserId);
+      expect(result).toEqual({
+        grossMinor: 49900,
+        refundedMinor: 9900,
+        netMinor: 40000,
+        paidOrderCount: 1,
+        note: expect.stringContaining('Payouts are not available yet'),
+      });
+    });
+  });
+
+  describe('refundOrder', () => {
+    const paidOrder = () =>
+      savedOrder({
+        status: PaymentOrderStatus.PAID,
+        gatewayPaymentId: 'pay_5',
+      });
+
+    it('issues a full refund against a paid order', async () => {
+      orders.findOneByOrFail.mockResolvedValue(paidOrder());
+      const refund = await service.refundOrder('staff-1', savedOrder().id, {
+        reason: 'Service cancelled by support',
+      });
+      expect(refund.amountMinor).toBe(49900);
+      expect(refund.gatewayRefundId).toMatch(/^rfnd_fake_/);
+      expect(gateway.refunds).toHaveLength(1);
+      expect(eventRepo.insert).toHaveBeenCalled();
+    });
+
+    it('supports partial refunds and rejects exceeding the balance', async () => {
+      orders.findOneByOrFail.mockResolvedValue(paidOrder());
+      const partial = await service.refundOrder('staff-1', savedOrder().id, {
+        amountMinor: 10000,
+        reason: 'Goodwill partial refund',
+      });
+      expect(partial.amountMinor).toBe(10000);
+
+      dataSource.query.mockResolvedValue([{ total: '49900' }]);
+      await expect(
+        service.refundOrder('staff-1', savedOrder().id, {
+          amountMinor: 1,
+          reason: 'over the balance',
+        }),
+      ).rejects.toBeInstanceOf(ConflictException);
+    });
+
+    it('is idempotent per request key without a second gateway call', async () => {
+      refundRepo.findOneBy.mockResolvedValue({
+        id: 'refund-1',
+        gatewayRefundId: 'rfnd_fake_existing',
+        amountMinor: 49900,
+        status: 'PROCESSED',
+      });
+      const refund = await service.refundOrder('staff-1', savedOrder().id, {
+        reason: 'retry of the same request',
+        requestKey: 'idem-key-001',
+      });
+      expect(refund.gatewayRefundId).toBe('rfnd_fake_existing');
+      expect(gateway.refunds).toHaveLength(0);
+    });
+
+    it('refuses refunds on unpaid orders', async () => {
+      orders.findOneByOrFail.mockResolvedValue(savedOrder()); // CREATED
+      await expect(
+        service.refundOrder('staff-1', savedOrder().id, {
+          reason: 'too early',
+        }),
+      ).rejects.toBeInstanceOf(ConflictException);
     });
   });
 

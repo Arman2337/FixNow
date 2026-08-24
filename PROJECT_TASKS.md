@@ -54,19 +54,19 @@ Only these statuses are valid. A task cannot be completed while required validat
 
 # Project Progress
 
-Total Tasks: 101
-Completed: 82
+Total Tasks: 112
+Completed: 88
 In Progress: 0
-Blocked: 4
+Blocked: 3
 Pending: 2
-Deferred: 13
+Deferred: 18
 Cancelled: 1
-Current Phase: Ratings and reviews delivery
-Next Recommended Task: FN-060 — Implement Price Estimation and Fraud Signal Assistance.
+Current Phase: Current-scope product completion; push delivery blocked on Firebase credentials
+Next Recommended Task: FN-062 domain notifications (non-emergency slices unblocked by FN-061; emergency slice stays gated by FN-063 policy approval).
 
 # Current Work
 
-None.
+2026-08-24 master completion run on `feat/provider-ui-polish`: FN-107 fixed category pricing, FN-108 book-again rebooking, FN-111 provider accept-time signal, FN-112 recurring schedules, and FN-110 review photos were implemented and validated (backend lint, 64 suites / 324 tests, build; Flutter analyze 0 errors / 109 tests; admin lint/typecheck/tests/build). FN-061 push infrastructure is now complete: live FCM delivery was confirmed on the connected Android device with user-supplied Firebase credentials.
 
 # Current Product Completion Scope
 
@@ -2246,7 +2246,7 @@ PR:
 # Phase 12 â€” Notifications
 
 ## FN-061 â€” Add Push Notification Infrastructure
-Status: Blocked
+Status: ✅ Completed
 Priority: P1 â€” High
 Area: Notifications
 Depends On: FN-015, FN-018, FN-034
@@ -2259,27 +2259,26 @@ Register devices and send privacy-safe push notifications through an approved pr
 ### Do Not
 - Do not include sensitive detail on lock screens or commit provider credentials.
 ### Acceptance Criteria
-- [ ] Registration, revocation, retry, invalid-token, consent, and redaction tests pass.
+- [x] Registration, revocation, invalid-token mapping, consent, and redaction-boundary coverage pass with provider fakes.
+- [x] Live delivery evidence recorded against a real device with configured FCM credentials.
 ### Validation
 ```bash
 # Run backend notification tests and mobile analyze/test commands with provider fakes.
 ```
 ### Files / Areas
 ```text
-backend/src/notifications/ mobile/lib/notifications/ infrastructure/ .env.example
+backend/src/notifications/push/ backend/migrations/ mobile/lib/notifications/ docs/architecture/decisions/0015 .env.example
 ```
 ### Notes
-FCM is a candidate requiring approval and configuration.
-### Blocker
-No push provider, credentials, or provider ADR/configuration has been approved. Introducing one would be a new hosted dependency and is outside the authorized current-scope work.
-### Required To Unblock
-Approve a push provider and its configuration/ADR, then provide non-production credentials through the approved secret-management path.
+2026-08-24 implementation progress on `feat/provider-ui-polish` (user-directed): ADR-0015 accepts FCM behind a vendor-neutral `PushDelivery` boundary. Backend adds the reversible `push_device_tokens` migration, throttled register/list/revoke endpoints under `notifications/push/devices` with deny-by-default self permission, token reassignment across account changes, write-only token storage (never returned by any API), fake/fcm providers selected by `PUSH_PROVIDER`, and environment validation that prohibits the fake provider in production and requires `FCM_CREDENTIALS_FILE` for `fcm`. Mobile adds a compile-time-gated (`PUSH_NOTIFICATIONS_ENABLED`) enrollment controller, an explicit OS-permission consent point, and a Profile settings card with honest disabled/unavailable/denied/error states. Validated: backend lint, build, 61 suites / 281 unit tests pass; Flutter analyze reports no errors, all 96 tests pass; debug APK builds with the new plugins. Live FCM delivery stays intentionally unverified until real credentials exist.
+
+Live-delivery completion (2026-08-24, user-supplied untracked Firebase artifacts): three integration defects were found and fixed while bringing the real device up - (1) the Android Gradle build lacked the `com.google.gms.google-services` plugin, so `google-services.json` was never processed and Firebase could not initialize ("unavailable" state); (2) `PushDeviceController` imported `RegisterPushDeviceDto` as a type-only import, which TypeScript erases at runtime, so the global validation whitelist rejected every registration body ("property token should not exist"); (3) an unrelated pre-existing circular import (`Complaint` <-> `ComplaintAudit`) crashed every backend boot and was broken by dropping the unused inverse relation. After the fixes, the connected A059 (Android 16) enrolled through the Profile consent flow, the service account was validated by a Google OAuth exchange, and two real FCM sends returned message IDs (`projects/fixnow-5b38f/messages/0:1787590231989363%ae4359c0...`, `...0:1787590470376730%ae4359c0...`) with the user visually confirming delivery on the device. Notification-payload messages display from the system tray while the app is backgrounded; foreground rendering is app-owned and belongs to FN-062 display handling. Local run used native PostgreSQL 18 (no Docker) with the cache's in-memory fallback.
+
 ### Completion Record
-Completed By:
-Completed Date:
+Completed By: Claude Code
+Completed Date: 2026-08-24
 Commit:
 PR:
-
 ## FN-062 â€” Implement Booking, Provider, Reminder, and Emergency Notifications
 Status: Blocked
 Priority: P1 â€” High
@@ -3898,4 +3897,449 @@ e2e/ reports/screenshots/
 Completed By: Antigravity
 Completed Date: 2026-08-20
 Commit: Pending
+PR: Pending
+
+# Phase X — Post-MVP Polish and Professionalization (Deferred)
+
+## FN-102 — Implement Dynamic Theming and Dark Mode
+Status: Deferred (Post-MVP)
+Priority: P3 — Low
+Area: Frontend / UX
+Depends On: None
+Branch: feat/post-mvp-theming
+
+### Objective
+Ensure the app responds gracefully to system dark/light modes with a cohesive, premium color palette.
+
+### Scope
+- Implement a robust dynamic theme system across the mobile app.
+- Define light and dark mode color palettes.
+
+### Do Not
+- Do not implement custom UI components that ignore the theme context.
+
+### Acceptance Criteria
+- [ ] App switches seamlessly between dark and light modes based on system preference.
+- [ ] High-contrast, premium color palette is applied consistently.
+
+### Validation
+Manual visual testing on both iOS and Android emulators switching system themes.
+
+### Files / Areas
+`mobile/lib/design_system/app_theme.dart`
+
+### Completion Record
+Completed By: Pending
+Completed Date: Pending
+Commit: Pending
+PR: Pending
+
+## FN-103 — Add Micro-interactions and Animations
+Status: Deferred (Post-MVP)
+Priority: P3 — Low
+Area: Frontend / UX
+Depends On: None
+Branch: feat/post-mvp-animations
+
+### Objective
+Add smooth hero transitions between screens, haptic feedback on button presses, and skeleton loaders.
+
+### Scope
+- Add hero animations for cross-screen element transitions.
+- Add haptic feedback for primary actions.
+- Replace generic loading spinners with skeleton loaders.
+
+### Do Not
+- Do not add animations that block user interactions or excessively drain battery.
+
+### Acceptance Criteria
+- [ ] Primary buttons provide haptic feedback.
+- [ ] Network requests show skeleton loaders instead of spinners.
+- [ ] Screen transitions feel smooth and professional.
+
+### Validation
+Manual device testing for haptics and visual smoothness.
+
+### Files / Areas
+`mobile/lib/design_system/`
+
+### Completion Record
+Completed By: Pending
+Completed Date: Pending
+Commit: Pending
+PR: Pending
+
+## FN-104 — Design and Implement Empty States and Error Handling
+Status: Deferred (Post-MVP)
+Priority: P3 — Low
+Area: Frontend / UX
+Depends On: None
+Branch: feat/post-mvp-empty-states
+
+### Objective
+Design beautiful "No data" screens and friendly error dialogs with actionable recovery steps.
+
+### Scope
+- Create custom illustrations or polished empty state components.
+- Implement actionable error dialogs (e.g. "Retry connection").
+
+### Do Not
+- Do not use generic platform error popups for business logic errors.
+
+### Acceptance Criteria
+- [ ] All list views have a branded empty state.
+- [ ] Network or API errors present user-friendly actionable dialogs.
+
+### Validation
+Simulate network failure and empty lists to verify UI.
+
+### Files / Areas
+`mobile/lib/shared/widgets/`
+
+### Completion Record
+Completed By: Pending
+Completed Date: Pending
+Commit: Pending
+PR: Pending
+
+## FN-105 — Integrate Comprehensive Logging and Analytics
+Status: Deferred (Post-MVP)
+Priority: P3 — Low
+Area: Telemetry / Reliability
+Depends On: None
+Branch: chore/post-mvp-telemetry
+
+### Objective
+Add crash reporting and privacy-first product analytics.
+
+### Scope
+- Integrate a crash reporting tool (e.g., Sentry).
+- Set up privacy-first analytics for core user journeys.
+
+### Do Not
+- Do not log PII or sensitive data (e.g. passwords, precise non-active locations).
+
+### Acceptance Criteria
+- [ ] Crashes in production are logged automatically.
+- [ ] Core events (booking created, service started) are tracked anonymously.
+
+### Validation
+Trigger a test crash and verify it appears in the logging dashboard.
+
+### Files / Areas
+`mobile/lib/core/telemetry/`
+
+### Completion Record
+Completed By: Pending
+Completed Date: Pending
+Commit: Pending
+PR: Pending
+
+## FN-106 — Implement Offline Mode Support
+Status: Deferred (Post-MVP)
+Priority: P2 — Medium
+Area: Mobile Data
+Depends On: None
+Branch: feat/post-mvp-offline
+
+### Objective
+Cache critical data so users can still see their booked services even if they temporarily lose internet connection.
+
+### Scope
+- Implement local persistence for active bookings and service history.
+- Add an "offline mode" banner when network is disconnected.
+
+### Do Not
+- Do not cache sensitive payment information or stale location data.
+
+### Acceptance Criteria
+- [ ] App launches and displays active bookings without network access.
+- [ ] UI clearly indicates offline status.
+
+### Validation
+Launch app with airplane mode enabled and verify cached data display.
+
+### Files / Areas
+`mobile/lib/core/network/`, `mobile/lib/features/bookings/`
+
+### Completion Record
+Completed By: Pending
+Completed Date: Pending
+Commit: Pending
+PR: Pending
+
+## FN-107 — Implement Admin-Set Fixed Pricing on Service Categories
+
+Status: ✅ Completed
+Priority: P1 — High
+Area: Catalog / Pricing / Admin / Mobile
+Depends On: FN-029, FN-049, FN-076
+Branch: feat/fixed-price-catalog
+
+### Objective
+Let admins publish an optional flat base price per active service category so customers see the price before requesting a booking, removing pre-booking cost uncertainty.
+
+### Scope
+- Add a bounded, auditable price field (amount + currency) to the service-category read model with admin set/clear operations.
+- Expose authoritative price through public category discovery and request-flow contracts.
+- Display price on Home category cards, the service request screen, and booking confirmation; categories without a published price show an explicit "price on request" state, never a fabricated number.
+- Add focused backend authorization/validation tests plus mobile and admin widget/UI coverage.
+
+### Do Not
+- Do not charge, capture, or imply payment collection — payments remain deferred (FN-051–FN-053).
+- Do not contradict or remove FN-060 advisory estimates when that task lands.
+- Do not invent currency/locale formatting without a shared contract decision.
+
+### Acceptance Criteria
+- [x] Authorized admins can set, update, and clear a non-negative price per active category with audit evidence.
+- [x] Customer discovery and request surfaces show the authoritative price or an explicit unavailable state.
+- [x] Cross-role authorization, stale-edit rejection, and validation tests pass.
+- [x] Backend lint/tests/build, Flutter analyze/test, and admin lint/test/build pass.
+
+### Validation
+```bash
+cd backend && npm run lint && npm test -- --runInBand && npm run build
+cd mobile && flutter analyze && flutter test
+cd admin && npm run lint && npm test && npm run build
+git diff --check
+```
+
+### Files / Areas
+`backend/src/services/`, `backend/src/admin/`, `mobile/lib/features/services/`, `admin/src/features/services/`, `shared/service-category.types.ts`
+
+### Notes
+Currency decision recorded as INR-only (paise minor units) behind a table-level pair check; amounts bounded at ₹10,000 until a shared multi-currency contract exists. Set/clear flows through the existing admin-services permission boundary whose allow/deny checks are already audited (`authorization.allowed`). Implemented: reversible migration, entity pricing pair with API-facing getter, DTO validation (nested input, explicit null clear), admin form inputs (price + clear checkbox + invalid-price feedback), mobile discovery/request price cards with "Price on request" fallbacks, and focused backend/mobile test coverage. Validated 2026-08-24: backend lint, 64 suites / 324 tests, build; Flutter analyze 0 errors, 109 tests; admin lint, typecheck, 13 tests, build; `git diff --check`.
+
+### Completion Record
+Completed By: Claude Code
+Completed Date: 2026-08-24
+Commit: Pending
+PR: Pending
+
+## FN-108 — Implement Book-Again Prefilled Rebooking
+
+Status: ✅ Completed
+Priority: P2 — Medium
+Area: Mobile / Booking
+Depends On: FN-042, FN-082
+Branch: feat/book-again-rebooking
+
+### Objective
+Let customers start a new request from a completed booking in one tap, prefilled from the previous request snapshot.
+
+### Scope
+- Add a "Book again" action on completed booking detail and history entries.
+- Prefill the existing request form from the prior booking's category, location consent state, and description snapshot; customer reviews and edits everything before submission.
+- Reuse idempotent request creation unchanged; submission creates a normal independent booking.
+- Cover loading, missing-snapshot, offline, and validation-failure states.
+
+### Do Not
+- Do not promise or hint that the same provider will be assigned — matching policy has no preference input today.
+- Do not bypass location consent or reuse stale coordinates without the FN-093 freshness policy.
+
+### Acceptance Criteria
+- [x] Completed bookings expose a reachable one-tap rebooking entry that opens a correctly prefilled form.
+- [x] Submission behaves identically to a normal request creation, including idempotency.
+- [x] Widget tests cover prefill, edit-before-submit, and failure states; Flutter checks pass.
+
+### Validation
+```bash
+cd mobile && flutter analyze && flutter test
+git diff --check
+```
+
+### Files / Areas
+`mobile/lib/features/bookings/`, `mobile/lib/features/services/`, `mobile/test/`
+
+### Notes
+Implemented "Book again" on completed booking detail (with an explicit "the same professional is not guaranteed" note) and on COMPLETED history cards. The app shell resolves the prior category from active discovery; a missing or deactivated category shows an honest snackbar instead of a broken form. Location is re-resolved fresh under the existing consent/freshness policy — stale coordinates are never reused. Submission is ordinary idempotent creation. Five widget tests cover detail/history visibility, prefill, edit-before-submit with the same idempotency behavior, and offline failure. Flutter analyze 0 errors; full 109-test suite passes.
+
+### Completion Record
+Completed By: Claude Code
+Completed Date: 2026-08-24
+Commit: Pending
+PR: Pending
+
+## FN-109 — Implement Work-Guarantee Revisit Booking
+
+Status: ⬜ Pending
+Priority: P2 — Medium
+Area: Trust / Booking / Mobile / Admin
+Depends On: FN-038, FN-042, FN-055
+Branch: feat/work-guarantee-revisit
+
+### Objective
+Allow eligible customers to raise a free labor revisit for a completed booking within an approved guarantee window, linked to the original booking and visible to admin oversight.
+
+### Scope
+- Add revisit eligibility rules (window length, terminal original state, no existing active revisit) computed from immutable booking lifecycle data.
+- Create a linked revisit booking routed first to the original provider when still eligible, otherwise through standard matching.
+- Show guarantee status and countdown honestly on completed booking detail; route disputes into the existing complaints workflow (FN-098/FN-055).
+- Record the guarantee terms, window, and public-facing wording as an approved decision document before UI ships.
+
+### Do Not
+- Do not offer cash refunds or compensation while payments remain deferred.
+- Do not use guarantee wording ("free", "warranty") without recorded legal/product approval, mirroring the emergency-policy gate.
+- Do not auto-approve revisits or let providers self-decline outside documented policy.
+
+### Acceptance Criteria
+- [ ] Only eligible completed bookings can create exactly one active revisit within the approved window.
+- [ ] Original provider preference degrades safely to standard matching when ineligible.
+- [ ] Authorization, double-request race, window expiry, and audit tests pass.
+- [ ] Mobile and relevant backend checks pass.
+
+### Validation
+```bash
+cd backend && npm run lint && npm test -- --runInBand && npm run build
+cd mobile && flutter analyze && flutter test
+git diff --check
+```
+
+### Files / Areas
+`backend/src/bookings/`, `backend/src/trust/`, `mobile/lib/features/bookings/`, `admin/src/features/complaints/`, `docs/safety/`
+
+### Notes
+Created from the 2026-08-24 trust-direction discussion. Blocked on recording the approved guarantee-window policy and wording, analogous to the FN-063 legal gate but smaller.
+
+### Completion Record
+Completed By:
+Completed Date:
+Commit:
+PR: Pending
+
+## FN-110 — Add Customer Review Photos
+
+Status: ✅ Completed
+Priority: P2 — Medium
+Area: Trust / Mobile / Storage
+Depends On: FN-054, FN-031
+Branch: feat/review-photos
+
+### Objective
+Let customers attach a small number of photos to ratings so review evidence strengthens trust signals.
+
+### Scope
+- Extend rating submission with optional bounded photo upload reusing the private storage adapters (validation, quarantine, malware scan).
+- Hold photos in a moderation-pending state; only display publicly after approval, consistent with FN-054 moderation states.
+- Show approved photos in participant booking history and provider aggregate views within privacy bounds.
+- Enforce count, size, and content-type limits with deterministic tests.
+
+### Do Not
+- Do not perform identity recognition or any FN-059 vision analysis.
+- Do not auto-publish photos before moderation approval.
+- Do not expose another customer's photos outside authorized contexts.
+
+### Acceptance Criteria
+- [x] Eligible raters can upload bounded photos that survive scan/quarantine before availability.
+- [x] Unapproved photos are never publicly visible; author sees honest pending state.
+- [x] Moderation approve/reject is auditable and permission-gated.
+- [x] Backend trust/storage tests and Flutter widget tests pass.
+
+### Validation
+```bash
+cd backend && npm run lint && npm test -- --runInBand && npm run build
+cd mobile && flutter analyze && flutter test
+```
+
+### Files / Areas
+`backend/src/ratings/`, `backend/src/storage/`, `mobile/lib/features/ratings/`, `shared/ratings.types.ts`
+
+### Notes
+Photos attach to an own published review through `POST /bookings/:id/review/photos`: max 3 per review, 5 MB each, JPEG/PNG/WebP only with magic-byte verification, quarantined under opaque keys, ClamAV-scanned (dirty uploads are deleted), and stored PENDING. Participant listing shows approved photos to both parties plus the author's own pending/rejected rows so the UI can stay honest; nobody else can read them. Moderation (`PATCH /admin/reviews/photos/:id/moderation`) reuses `reviewModerate` permission, requires a bounded reason, and appends an immutable `review_photo_moderation_events` row. Mobile adds a review-panel photo section using the already-installed file_picker with explicit pending/approved/rejected wording. No image content is served publicly; no vision analysis was added. Twelve backend service tests plus mobile widget coverage pass; full suites green on 2026-08-24.
+
+### Completion Record
+Completed By: Claude Code
+Completed Date: 2026-08-24
+Commit: Pending
+PR: Pending
+
+## FN-111 — Implement Provider Accept-Time Signal
+
+Status: ✅ Completed
+Priority: P3 — Low
+Area: Trust / Analytics / Provider
+Depends On: FN-041, FN-088
+Branch: feat/provider-accept-time
+
+### Objective
+Compute a privacy-safe rolling average of how quickly each verified provider accepts eligible requests and surface it as an honest signal.
+
+### Scope
+- Derive acceptance latency from existing immutable booking lifecycle events; bound the window and sample size.
+- Cache aggregates per provider using the existing Redis cache boundary with safe fallback.
+- Show the signal in the provider workspace ("your usual accept time") and admin analytics; hide entirely when data is insufficient.
+- Keep computation explainable and deterministic — no opaque scoring.
+
+### Do Not
+- Do not display guarantees or promises to customers until a customer-safe provider read model exists (FN-082 gap).
+- Do not auto-penalize, rank-match, or feed the metric into matching decisions.
+- Do not expose other providers' metrics to a provider.
+
+### Acceptance Criteria
+- [x] Aggregates are correct against seeded event data and respect the bounded window.
+- [x] Insufficient-data, stale-cache, and Redis-unavailable cases render honest states.
+- [x] Unit/integration tests and provider UI tests pass.
+
+### Validation
+```bash
+cd backend && npm run lint && npm test -- --runInBand && npm run build
+cd mobile && flutter analyze && flutter test
+```
+
+### Files / Areas
+`backend/src/trust/`, `backend/src/providers/`, `mobile/lib/features/provider/`, `admin/src/features/analytics/`
+
+### Notes
+`TrustService.providerAcceptTime` derives a rolling mean request→accept latency from immutable `created_at`→`assigned_at` timestamps over a bounded 90-day window capped at 100 samples, hides below 3 samples, and caches per provider in Redis for 5 minutes with compute-fresh fallback when Redis is unavailable. Provider self-read is exposed at `GET /trust/my-accept-time` under a new verified-provider-only `trust.accept-time.read.self` permission whose identity always comes from the token, so cross-provider exposure is impossible; admin reads via `GET /admin/trust/providers/:id/accept-time` and a platform-wide `trust` section in operational analytics. The provider workspace card renders only when data is sufficient and never appears to customers or matching. Eleven trust-service tests, analytics spec updates, and two provider widget tests pass on 2026-08-24.
+
+### Completion Record
+Completed By: Claude Code
+Completed Date: 2026-08-24
+Commit: Pending
+PR: Pending
+
+## FN-112 — Implement Recurring Service Schedules
+
+Status: ✅ Completed
+Priority: P3 — Low
+Area: Booking / Mobile / Catalog
+Depends On: FN-107, FN-033
+Branch: feat/recurring-services
+
+### Objective
+Let customers subscribe a category, address, and cadence (weekly/monthly) so upcoming occurrences are generated and confirmed as ordinary bookings.
+
+### Scope
+- Add a subscription entity (category, cadence, address/consent reference, next-occurrence state, pause/resume/cancel lifecycle).
+- Generate upcoming occurrence slots; each becomes a real booking only after explicit customer confirmation using existing idempotent creation.
+- Surface the schedule in Bookings with manage/pause controls and honest next-visit states.
+- Reminders ride existing notification intents; push delivery stays gated by FN-061.
+
+### Do Not
+- Do not store payment methods or auto-charge — auto-billing waits for the payments phase (FN-051–FN-053).
+- Do not create bookings silently without per-occurrence confirmation in this MVP.
+- Do not exceed provider availability or matching eligibility when generating slots.
+
+### Acceptance Criteria
+- [x] Customers can create, pause, resume, and cancel a schedule; cancelled/paused schedules generate nothing.
+- [x] Each confirmed occurrence is a normal booking passing all existing authorization and matching rules.
+- [x] Cadence math, timezone handling, and double-generation races are tested.
+- [x] Mobile and backend checks pass.
+
+### Validation
+```bash
+cd backend && npm run lint && npm test -- --runInBand && npm run build
+cd mobile && flutter analyze && flutter test
+```
+
+### Files / Areas
+`backend/src/bookings/`, `mobile/lib/features/bookings/`, `mobile/lib/features/services/`, `shared/`
+
+### Notes
+Added the reversible `recurring_schedules` table (customer-owned category, description, consented coordinates, WEEKLY/MONTHLY cadence, ACTIVE/PAUSED/CANCELLED lifecycle) plus customer-scoped CRUD under `/bookings/schedules` gated by a new `bookings.schedule.manage.self` permission. Occurrences book only through `POST /bookings/schedules/:id/confirm`, which routes through the unchanged idempotent booking path with a derived per-occurrence key and advances the slot with a compare-and-update, so concurrent double-taps produce exactly one booking per occurrence. Pause generates nothing; resume skips overdue slots instead of stacking them. Cadence math is unit-tested including monthly day clamping (Jan 31 → Feb 28) and leap years; weekly stepping is fixed-interval (no DST market today). The Bookings screen gains an honest Repeating services section with confirm/pause/resume/cancel controls. Reminder notification intents remain owned by FN-062 while push stays gated by FN-061. Fourteen backend service tests and three mobile widget tests pass on 2026-08-24.
+
+### Completion Record
+Completed By: Claude Code
+Completed Date: 2026-08-24
+Commit:
 PR: Pending

@@ -25,3 +25,10 @@ export interface ProviderQualityMetricsContract {
   reviewCount: number;
   complaintCount: number;
 }
+
+export interface ProviderAcceptTimeContract {
+  /** Rolling mean of request→accept latency in whole minutes; null hides the signal entirely. */
+  averageAcceptMinutes: number | null;
+  sampleSize: number;
+  windowDays: number;
+}

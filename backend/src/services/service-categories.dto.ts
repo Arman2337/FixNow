@@ -1,13 +1,30 @@
 import {
   IsBoolean,
+  IsIn,
+  IsInt,
   IsOptional,
   IsString,
-  IsInt,
   Min,
   Max,
   Length,
+  ValidateNested,
 } from 'class-validator';
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
+
+/**
+ * Admin-published flat base price for a category. Amount is in minor
+ * currency units (paise for INR). Only INR is accepted until an approved
+ * decision widens the supported set.
+ */
+export class CategoryPricingInput {
+  @IsInt()
+  @Min(0)
+  @Max(10_000_00)
+  amountMinor!: number;
+
+  @IsIn(['INR'])
+  currency!: 'INR';
+}
 
 export class ServiceCategoryQueryDto {
   @IsOptional()
@@ -52,6 +69,12 @@ export class CreateServiceCategoryDto {
   @IsOptional()
   @IsBoolean()
   isEmergency?: boolean;
+
+  /** Absent leaves the category without a published price. */
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CategoryPricingInput)
+  pricing?: CategoryPricingInput;
 }
 
 export class UpdateServiceCategoryDto {
@@ -87,6 +110,15 @@ export class UpdateServiceCategoryDto {
   @IsOptional()
   @IsBoolean()
   isEmergency?: boolean;
+
+  /**
+   * Absent leaves pricing unchanged; `null` clears it back to "price on
+   * request"; an object sets or replaces it.
+   */
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CategoryPricingInput)
+  pricing?: CategoryPricingInput | null;
 }
 
 export class ServiceCategoryResponseDto {
@@ -105,6 +137,8 @@ export class ServiceCategoryResponseDto {
   isActive!: boolean;
 
   isEmergency!: boolean;
+
+  pricing!: { amountMinor: number; currency: string } | null;
 
   createdAt!: Date;
 

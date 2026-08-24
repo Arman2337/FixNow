@@ -28,6 +28,12 @@ export enum AiProviderName {
   Fake = 'fake',
 }
 
+export enum PushProviderName {
+  Disabled = 'disabled',
+  Fake = 'fake',
+  Fcm = 'fcm',
+}
+
 export class EnvironmentVariables {
   @IsEnum(Environment)
   @IsOptional()
@@ -164,6 +170,14 @@ export class EnvironmentVariables {
   @Max(3_600_000)
   @IsOptional()
   AI_REQUEST_RATE_WINDOW_MS: number = 60_000;
+
+  @IsEnum(PushProviderName)
+  @IsOptional()
+  PUSH_PROVIDER: PushProviderName = PushProviderName.Disabled;
+
+  @IsString()
+  @IsOptional()
+  FCM_CREDENTIALS_FILE?: string;
 }
 
 export function validate(config: Record<string, unknown>) {
@@ -182,6 +196,7 @@ export function validate(config: Record<string, unknown>) {
   validateWebOrigins(validatedConfig);
   validateLocalOtpBypass(validatedConfig);
   validateAiConfiguration(validatedConfig);
+  validatePushConfiguration(validatedConfig);
   if (
     validatedConfig.LOCATION_CACHE_TTL_MS >
     validatedConfig.LOCATION_STALE_AFTER_MS
@@ -206,6 +221,31 @@ function validateAiConfiguration(config: EnvironmentVariables): void {
   ) {
     throw new Error('AI_PROVIDER=fake is prohibited in production');
   }
+}
+
+function validatePushConfiguration(config: EnvironmentVariables): void {
+  if (
+    config.PUSH_PROVIDER === PushProviderName.Disabled ||
+    config.PUSH_PROVIDER === undefined
+  ) {
+    return;
+  }
+  if (
+    config.NODE_ENV === Environment.Production &&
+    config.PUSH_PROVIDER === PushProviderName.Fake
+  ) {
+    throw new Error('PUSH_PROVIDER=fake is prohibited in production');
+  }
+  if (config.PUSH_PROVIDER === PushProviderName.Fcm) {
+    if (!config.FCM_CREDENTIALS_FILE) {
+      throw new Error(
+        'PUSH_PROVIDER=fcm requires FCM_CREDENTIALS_FILE pointing at an untracked service-account JSON',
+      );
+    }
+    return;
+  }
+  // The fake provider is meaningful only outside production, which the
+  // earlier check already enforces.
 }
 
 function validateLocalOtpBypass(config: EnvironmentVariables): void {

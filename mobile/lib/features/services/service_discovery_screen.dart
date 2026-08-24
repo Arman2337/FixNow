@@ -791,6 +791,16 @@ class _CategoryRow extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
+              Text(
+                category.pricing?.displayLabel ?? 'Price on request',
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: category.pricing == null
+                      ? Theme.of(context).colorScheme.onSurfaceVariant
+                      : AppColors.primary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.xs),
               const Icon(Icons.chevron_right_rounded),
             ],
           ),

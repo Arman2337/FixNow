@@ -21,6 +21,7 @@ import { ComplaintsModule } from './support/complaints/complaints.module';
 import { AiModule } from './ai/ai.module';
 import { RatingsModule } from './ratings/ratings.module';
 import { TrustModule } from './trust/trust.module';
+import { PushModule } from './notifications/push/push.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { TrustModule } from './trust/trust.module';
     AiModule,
     RatingsModule,
     TrustModule,
+    PushModule,
   ],
   controllers: [AppController],
   providers: [

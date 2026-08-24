@@ -8,7 +8,6 @@ import {
   OneToMany,
 } from 'typeorm';
 import { ComplaintEvidence } from './complaint-evidence.entity';
-import { ComplaintAudit } from './complaint-audit.entity';
 import { AppealStatus } from '../../../../../shared/trust.types';
 
 export enum ComplaintStatus {
@@ -89,7 +88,4 @@ export class Complaint {
 
   @Column('text', { name: 'appeal_resolution', nullable: true })
   appealResolution: string | null;
-
-  @OneToMany(() => ComplaintAudit, (audit) => audit.complaint)
-  audits: ComplaintAudit[];
 }

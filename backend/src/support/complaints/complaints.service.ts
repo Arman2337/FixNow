@@ -76,7 +76,11 @@ export class ComplaintsService {
       throw new ForbiddenException('You do not have access to this complaint');
     }
 
-    if (!isAdmin && complaint.targetId === userId && complaint.submitterId !== userId) {
+    if (
+      !isAdmin &&
+      complaint.targetId === userId &&
+      complaint.submitterId !== userId
+    ) {
       // Redact submitter identity to prevent retaliation
       complaint.submitterId = 'REDACTED';
     }
@@ -98,7 +102,7 @@ export class ComplaintsService {
     }
 
     if (!isAdmin) {
-      complaints.forEach(complaint => {
+      complaints.forEach((complaint) => {
         if (complaint.targetId === userId && complaint.submitterId !== userId) {
           complaint.submitterId = 'REDACTED';
         }
@@ -149,13 +153,17 @@ export class ComplaintsService {
     actorId: string,
     reason: string,
   ): Promise<Complaint> {
-    const complaint = await this.complaintsRepository.findOne({ where: { id } });
+    const complaint = await this.complaintsRepository.findOne({
+      where: { id },
+    });
     if (!complaint) {
       throw new NotFoundException(`Complaint with ID ${id} not found`);
     }
 
     if (complaint.targetId !== actorId && complaint.submitterId !== actorId) {
-      throw new ForbiddenException('Only parties involved can appeal this complaint');
+      throw new ForbiddenException(
+        'Only parties involved can appeal this complaint',
+      );
     }
 
     complaint.appealStatus = AppealStatus.PENDING;

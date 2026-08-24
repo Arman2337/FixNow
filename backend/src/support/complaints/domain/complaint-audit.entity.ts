@@ -40,9 +40,7 @@ export class ComplaintAudit {
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 
-  @ManyToOne(() => Complaint, (complaint) => complaint.audits, {
-    onDelete: 'CASCADE',
-  })
+  @ManyToOne(() => Complaint, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'complaint_id' })
   complaint: Complaint;
 }

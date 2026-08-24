@@ -1,9 +1,17 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  Inject,
+} from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MoreThan, Repository } from 'typeorm';
+import { IsNull, MoreThan, Not, Repository } from 'typeorm';
 import { BookingStatus } from '../../../shared/booking-lifecycle.types';
 import { ReviewModerationStatus } from '../../../shared/ratings.types';
 import {
+  ProviderAcceptTimeContract,
   ProviderQualityMetricsContract,
   TrustSignalSeverity,
   TrustSignalStatus,
@@ -19,6 +27,11 @@ export const TRUST_RULES = {
   cancellationThreshold: 3,
   complaintWindowDays: 30,
   complaintThreshold: 2,
+  /** FN-111: bounded rolling accept-time aggregate. */
+  acceptTimeWindowDays: 90,
+  acceptTimeMinSamples: 3,
+  acceptTimeSampleCap: 100,
+  acceptTimeCacheTtlMs: 300_000,
 } as const;
 
 @Injectable()
@@ -31,7 +44,69 @@ export class TrustService {
     private readonly complaints: Repository<Complaint>,
     @InjectRepository(TrustSignal)
     private readonly signals: Repository<TrustSignal>,
+    @Inject(CACHE_MANAGER) private readonly cache: Cache,
   ) {}
+
+  /**
+   * FN-111: explainable rolling mean of request→accept latency for one
+   * provider, derived only from immutable lifecycle timestamps. Hidden
+   * (null average) below the minimum sample size; never feeds matching.
+   */
+  async providerAcceptTime(
+    providerId: string,
+    now = new Date(),
+  ): Promise<ProviderAcceptTimeContract> {
+    const cacheKey = `trust:accept-time:${providerId}`;
+    try {
+      const cached = await this.cache.get<ProviderAcceptTimeContract>(cacheKey);
+      if (cached) return cached;
+    } catch {
+      // Redis unavailable: compute fresh rather than failing the signal.
+    }
+    const windowStart = new Date(now);
+    windowStart.setUTCDate(
+      windowStart.getUTCDate() - TRUST_RULES.acceptTimeWindowDays,
+    );
+    const accepted = await this.bookings.find({
+      where: {
+        providerId,
+        assignedAt: Not(IsNull()),
+        createdAt: MoreThan(windowStart),
+      },
+      select: { createdAt: true, assignedAt: true },
+      order: { assignedAt: 'DESC' },
+      take: TRUST_RULES.acceptTimeSampleCap,
+    });
+    const latenciesMinutes = accepted
+      .map(
+        (booking) =>
+          booking.assignedAt!.getTime() - booking.createdAt.getTime(),
+      )
+      .filter((milliseconds) => milliseconds >= 0)
+      .map((milliseconds) => milliseconds / 60_000);
+    const sufficient =
+      latenciesMinutes.length >= TRUST_RULES.acceptTimeMinSamples;
+    const contract: ProviderAcceptTimeContract = {
+      averageAcceptMinutes: sufficient
+        ? Math.round(
+            latenciesMinutes.reduce((sum, value) => sum + value, 0) /
+              latenciesMinutes.length,
+          )
+        : null,
+      sampleSize: latenciesMinutes.length,
+      windowDays: TRUST_RULES.acceptTimeWindowDays,
+    };
+    try {
+      await this.cache.set(
+        cacheKey,
+        contract,
+        TRUST_RULES.acceptTimeCacheTtlMs,
+      );
+    } catch {
+      // Cache write failures are non-fatal; the next read recomputes.
+    }
+    return contract;
+  }
 
   async providerMetrics(
     providerId: string,
@@ -172,7 +247,9 @@ export class TrustService {
     }
 
     if (signal.subjectId !== actorId) {
-      throw new ForbiddenException('Only the subject can appeal this trust signal');
+      throw new ForbiddenException(
+        'Only the subject can appeal this trust signal',
+      );
     }
 
     signal.appealStatus = AppealStatus.PENDING;

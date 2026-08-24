@@ -14,11 +14,13 @@ describe('TrustService', () => {
     find: jest.fn(),
     findOneByOrFail: jest.fn(),
   };
+  const cache = { get: jest.fn(), set: jest.fn() };
   const service = new TrustService(
     bookings as never,
     reviews as never,
     complaints as never,
     signals as never,
+    cache as never,
   );
 
   beforeEach(() => jest.clearAllMocks());
@@ -62,4 +64,80 @@ describe('TrustService', () => {
       expect(signals.save).not.toHaveBeenCalled();
     },
   );
+
+  describe('providerAcceptTime', () => {
+    const accepted = (minutesAgo: number, latencyMinutes: number) => ({
+      createdAt: new Date(now.getTime() - minutesAgo * 60_000),
+      assignedAt: new Date(
+        now.getTime() - (minutesAgo - latencyMinutes) * 60_000,
+      ),
+    });
+
+    it('computes the explainable rolling mean over bounded samples', async () => {
+      bookings.find.mockResolvedValue([
+        accepted(600, 30),
+        accepted(500, 20),
+        accepted(400, 10),
+        accepted(300, 25),
+      ]);
+      await expect(
+        service.providerAcceptTime(providerId, now),
+      ).resolves.toEqual({
+        averageAcceptMinutes: 21,
+        sampleSize: 4,
+        windowDays: 90,
+      });
+    });
+
+    it.each([0, 1, 2])(
+      'hides the signal below the minimum sample size (%s samples)',
+      async (samples) => {
+        bookings.find.mockResolvedValue(
+          Array.from({ length: samples }, (_, index) =>
+            accepted(600 - index, 15),
+          ),
+        );
+        await expect(
+          service.providerAcceptTime(providerId, now),
+        ).resolves.toEqual({
+          averageAcceptMinutes: null,
+          sampleSize: samples,
+          windowDays: 90,
+        });
+      },
+    );
+
+    it('serves a fresh aggregate when the cache read fails', async () => {
+      cache.get.mockRejectedValue(new Error('redis down'));
+      bookings.find.mockResolvedValue([
+        accepted(600, 10),
+        accepted(500, 10),
+        accepted(400, 10),
+      ]);
+      await expect(
+        service.providerAcceptTime(providerId, now),
+      ).resolves.toEqual({
+        averageAcceptMinutes: 10,
+        sampleSize: 3,
+        windowDays: 90,
+      });
+      expect(cache.set).toHaveBeenCalled();
+    });
+
+    it('short-circuits on a cached aggregate without touching bookings', async () => {
+      cache.get.mockResolvedValue({
+        averageAcceptMinutes: 12,
+        sampleSize: 9,
+        windowDays: 90,
+      });
+      await expect(
+        service.providerAcceptTime(providerId, now),
+      ).resolves.toEqual({
+        averageAcceptMinutes: 12,
+        sampleSize: 9,
+        windowDays: 90,
+      });
+      expect(bookings.find).not.toHaveBeenCalled();
+    });
+  });
 });

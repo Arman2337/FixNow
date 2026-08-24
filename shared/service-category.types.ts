@@ -7,6 +7,7 @@ export interface ServiceCategory {
   displayOrder: number;
   isActive: boolean;
   isEmergency: boolean;
+  pricing: ServiceCategoryPricing | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -24,9 +25,12 @@ export interface CreateServiceCategoryRequest {
   displayOrder?: number;
   isActive?: boolean;
   isEmergency?: boolean;
+  pricing?: CategoryPricingInput;
 }
 
 export interface UpdateServiceCategoryRequest {
+  /** Absent leaves pricing unchanged; null clears to "price on request". */
+  pricing?: CategoryPricingInput | null;
   name?: string;
   slug?: string;
   description?: string;
@@ -34,4 +38,14 @@ export interface UpdateServiceCategoryRequest {
   displayOrder?: number;
   isActive?: boolean;
   isEmergency?: boolean;
+}
+export interface ServiceCategoryPricing {
+  /** Minor currency units (paise for INR). Non-negative. */
+  amountMinor: number;
+  currency: string;
+}
+
+export interface CategoryPricingInput {
+  amountMinor: number;
+  currency: string;
 }

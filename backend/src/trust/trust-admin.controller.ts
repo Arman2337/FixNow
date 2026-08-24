@@ -18,6 +18,11 @@ export class TrustAdminController {
   metrics(@Param('providerId') providerId: string) {
     return this.trust.providerMetrics(providerId);
   }
+  @Get('providers/:providerId/accept-time')
+  @RequirePermission(PERMISSIONS.trustSignalsRead)
+  acceptTime(@Param('providerId') providerId: string) {
+    return this.trust.providerAcceptTime(providerId);
+  }
   @Get('signals')
   @RequirePermission(PERMISSIONS.trustSignalsRead)
   signals() {

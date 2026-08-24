@@ -51,6 +51,58 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('How was your experience?'), findsNothing);
   });
+
+  testWidgets('review photos show honest moderation states', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(800, 1400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.dark,
+        home: BookingDetailScreen(
+          booking: _booking('COMPLETED'),
+          reviewRepository: BookingRepository(
+            api: const _PhotoTransport(),
+            accessToken: () async => 'token',
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Awaiting a moderation check before it is shown'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('Add photo'), findsOneWidget);
+  });
+}
+
+class _PhotoTransport implements ApiTransport {
+  const _PhotoTransport();
+  @override
+  Future<ApiResponse> send(ApiRequest request) async {
+    if (request.path.endsWith('/photos')) {
+      return ApiResponse(
+        statusCode: 200,
+        body: [
+          {'id': 'photo-1', 'status': 'PENDING'},
+          {'id': 'photo-2', 'status': 'APPROVED'},
+        ],
+      );
+    }
+    return ApiResponse(
+      statusCode: 200,
+      body: {
+        'review': {
+          'id': 'review-1',
+          'rating': 4,
+          'reviewText': 'Solid work.',
+          'moderationStatus': 'PUBLISHED',
+          'createdAt': '2026-08-21T00:00:00.000Z',
+        },
+      },
+    );
+  }
 }
 
 CustomerBooking _booking(String status) => CustomerBooking(

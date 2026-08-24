@@ -98,7 +98,7 @@ function checkRedis() {
 }
 
 // 2. Setup ADB Port Forwarding for Connected Devices
-function setupAdb() {
+function setupAdb(): boolean {
   try {
     const adbCheck = spawnSync({
       cmd: ["adb", "devices"],
@@ -114,16 +114,18 @@ function setupAdb() {
       spawnSync({ cmd: ["adb", "reverse", "tcp:3300", "tcp:3300"] });
       spawnSync({ cmd: ["adb", "reverse", "tcp:8080", "tcp:8080"] });
       console.log("   \x1b[32m✔ Forwarded tcp:3300 and tcp:8080 to connected Android device.\x1b[0m");
+      return true;
     }
   } catch {
     // adb not installed or not in PATH, skip silently
   }
+  return false;
 }
 
 async function start() {
   checkPostgres();
   checkRedis();
-  setupAdb();
+  const hasDevice = setupAdb();
 
   // 3. Start Bun Reverse Proxy
   console.log("\n⚡ \x1b[1mStarting Bun Reverse Proxy (Port 8080 -> 3300)...\x1b[0m");
@@ -156,20 +158,22 @@ async function start() {
 
   // 5. Start Flutter Mobile (if not --backend-only)
   if (!isBackendOnly) {
-    console.log("🌐 \x1b[1mLaunching Flutter Web App...\x1b[0m");
-    console.log(`   \x1b[32mOpen http://localhost:${flutterWebPort}\x1b[0m`);
+    const flutterArgs = ["run"];
+    if (hasDevice) {
+      console.log("📱 \x1b[1mLaunching Flutter Mobile App on attached device...\x1b[0m");
+    } else {
+      console.log("🌐 \x1b[1mLaunching Flutter Web App...\x1b[0m");
+      console.log(`   \x1b[32mOpen http://localhost:${flutterWebPort}\x1b[0m`);
+      flutterArgs.push(
+        "-d", "chrome",
+        "--web-hostname", "localhost",
+        "--web-port", flutterWebPort
+      );
+    }
     console.log("   \x1b[90mTip: Run with 'bun dev --backend-only' to only run backend + proxy.\x1b[0m\n");
+
     const flutterProc = spawn({
-      cmd: [
-        flutterCmd,
-        "run",
-        "-d",
-        "chrome",
-        "--web-hostname",
-        "localhost",
-        "--web-port",
-        flutterWebPort,
-      ],
+      cmd: [flutterCmd, ...flutterArgs],
       cwd: "mobile",
       stdin: "inherit",
       stdout: "inherit",

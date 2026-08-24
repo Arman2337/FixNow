@@ -26,6 +26,7 @@ export const PERMISSIONS = {
   adminSkillsVerify: 'admin.skills.verify',
   adminSkillsDelete: 'admin.skills.delete',
   bookingCreateSelf: 'bookings.request.create.self',
+  bookingScheduleManageSelf: 'bookings.schedule.manage.self',
   bookingAccept: 'bookings.accept',
   bookingAvailableRead: 'bookings.available.read',
   bookingUpdateStatus: 'bookings.update.status',
@@ -46,6 +47,8 @@ export const PERMISSIONS = {
   adminProviderDocumentsRead: 'admin.provider-documents.read.assigned',
   adminBookingsRead: 'admin.bookings.read',
   adminBookingsIntervene: 'admin.bookings.intervene',
+  pushTokenManageSelf: 'notifications.push.token.manage.self',
+  trustAcceptTimeReadSelf: 'trust.accept-time.read.self',
   complaintsCreate: 'complaints.create',
   aiRecommendationCreate: 'ai.recommendation.create',
   complaintsReadSelf: 'complaints.read.self',
@@ -245,6 +248,11 @@ export const PERMISSION_POLICIES: Readonly<
     roles: ['customer'],
     relationship: 'self',
   },
+  [PERMISSIONS.bookingScheduleManageSelf]: {
+    roles: ['customer'],
+    audience: 'mobile',
+    relationship: 'self',
+  },
   [PERMISSIONS.bookingAccept]: {
     roles: ['verified_provider'],
   },
@@ -321,6 +329,15 @@ export const PERMISSION_POLICIES: Readonly<
   },
   [PERMISSIONS.complaintsReadSelf]: {
     roles: ['customer', 'verified_provider'],
+    relationship: 'self',
+  },
+  [PERMISSIONS.pushTokenManageSelf]: {
+    roles: allHumanRoles,
+    relationship: 'self',
+  },
+  [PERMISSIONS.trustAcceptTimeReadSelf]: {
+    roles: ['verified_provider'],
+    audience: 'mobile',
     relationship: 'self',
   },
   [PERMISSIONS.adminComplaintsRead]: {

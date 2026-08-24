@@ -6,12 +6,13 @@ import { Complaint } from '../support/complaints/domain/complaint.entity';
 import { TrustSignal } from './domain/trust-signal.entity';
 import { TrustService } from './trust.service';
 import { TrustAdminController } from './trust-admin.controller';
+import { TrustController } from './trust.controller';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Booking, BookingReview, Complaint, TrustSignal]),
   ],
-  controllers: [TrustAdminController],
+  controllers: [TrustAdminController, TrustController],
   providers: [TrustService],
   exports: [TrustService, TypeOrmModule],
 })

@@ -6,6 +6,8 @@ import 'package:fixnow_mobile/design_system/fix_card.dart';
 import 'package:fixnow_mobile/features/bookings/booking.dart';
 import 'package:fixnow_mobile/features/bookings/booking_repository.dart';
 import 'package:fixnow_mobile/features/ratings/booking_review.dart';
+import 'package:fixnow_mobile/features/ratings/review_photo.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 class BookingReviewPanel extends StatefulWidget {
@@ -24,10 +26,67 @@ class BookingReviewPanel extends StatefulWidget {
 class _BookingReviewPanelState extends State<BookingReviewPanel> {
   final _text = TextEditingController();
   BookingReview? _review;
+  List<ReviewPhoto> _photos = const [];
   int? _rating;
   bool _loading = true;
   bool _submitting = false;
+  bool _photoBusy = false;
   String? _error;
+  String? _photoError;
+
+  Future<void> _reloadPhotos() async {
+    try {
+      final photos = await widget.repository.reviewPhotos(widget.booking.id);
+      if (mounted) setState(() => _photos = photos);
+    } catch (_) {
+      // The photo section keeps its last honest state on refresh failure.
+    }
+  }
+
+  /// FN-110: pick and attach up to three bounded review photos.
+  Future<void> _attachPhoto() async {
+    if (_photoBusy) return;
+    setState(() => _photoBusy = true);
+    try {
+      final result = await FilePicker.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: const ['jpg', 'jpeg', 'png', 'webp'],
+        withData: true,
+      );
+      final file = result?.files.single;
+      if (file?.bytes == null) return;
+      final extension = file!.extension?.toLowerCase();
+      if (file.bytes!.lengthInBytes > 5 * 1024 * 1024) {
+        if (mounted) {
+          setState(
+            () => _photoError =
+                'That photo is over 5 MB. Choose a smaller one.',
+          );
+        }
+        return;
+      }
+      final contentType = switch (extension) {
+        'png' => 'image/png',
+        'webp' => 'image/webp',
+        _ => 'image/jpeg',
+      };
+      await widget.repository.attachReviewPhoto(
+        bookingId: widget.booking.id,
+        contentType: contentType,
+        bytes: file.bytes!,
+      );
+      await _reloadPhotos();
+    } catch (_) {
+      if (mounted) {
+        setState(
+          () => _photoError =
+              'The photo could not be added. Use a JPG, PNG, or WebP under 5 MB.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _photoBusy = false);
+    }
+  }
 
   @override
   void initState() {
@@ -48,9 +107,13 @@ class _BookingReviewPanelState extends State<BookingReviewPanel> {
     });
     try {
       final review = await widget.repository.reviewFor(widget.booking.id);
+      final photos = review == null
+          ? const <ReviewPhoto>[]
+          : await widget.repository.reviewPhotos(widget.booking.id);
       if (mounted)
         setState(() {
           _review = review;
+          _photos = photos;
           _loading = false;
         });
     } on ApiException catch (error) {
@@ -135,6 +198,16 @@ class _BookingReviewPanelState extends State<BookingReviewPanel> {
               const SizedBox(height: AppSpacing.sm),
               Text(text),
             ],
+            ...[
+              const SizedBox(height: AppSpacing.md),
+              _ReviewPhotosSection(
+                photos: _photos,
+                photoBusy: _photoBusy,
+                photoError: _photoError,
+                onChanged: _reloadPhotos,
+                onAttach: _attachPhoto,
+              ),
+            ],
           ],
         ),
       );
@@ -201,6 +274,73 @@ class _BookingReviewPanelState extends State<BookingReviewPanel> {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// FN-110: bounded review-photo attachment with honest moderation states.
+/// Photos are never publicly visible until moderation approves them.
+class _ReviewPhotosSection extends StatelessWidget {
+  const _ReviewPhotosSection({
+    required this.photos,
+    required this.photoBusy,
+    required this.photoError,
+    required this.onChanged,
+    required this.onAttach,
+  });
+  final List<ReviewPhoto> photos;
+  final bool photoBusy;
+  final String? photoError;
+  final VoidCallback onChanged;
+  final VoidCallback onAttach;
+
+  @override
+  Widget build(BuildContext context) {
+    final canAdd = photos.length < 3 && photoBusy == false;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Photos (optional)', style: Theme.of(context).textTheme.labelLarge),
+        const SizedBox(height: AppSpacing.xs),
+        for (final photo in photos)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+            child: Row(
+              children: [
+                Icon(
+                  switch (photo.status) {
+                    'APPROVED' => Icons.check_circle_outline_rounded,
+                    'REJECTED' => Icons.cancel_outlined,
+                    _ => Icons.hourglass_top_rounded,
+                  },
+                  size: 18,
+                  color: AppColors.textSecondary,
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Text(
+                    switch (photo.status) {
+                      'APPROVED' => 'Visible on your review',
+                      'REJECTED' => 'Not published after moderation',
+                      _ => 'Awaiting a moderation check before it is shown',
+                    },
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        if (photoError case final message?) Text(message),
+        if (canAdd)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: onAttach,
+              icon: const Icon(Icons.add_photo_alternate_outlined, size: 18),
+              label: const Text('Add photo'),
+            ),
+          ),
+      ],
     );
   }
 }

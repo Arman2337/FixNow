@@ -104,6 +104,68 @@ void main() {
     );
     expect(find.text('Accept request'), findsOneWidget);
   });
+
+  testWidgets('shows the usual accept-time signal when data is sufficient', (
+    tester,
+  ) async {
+    final controller = _loadedVerifiedController();
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData.dark(),
+        home: Scaffold(
+          body: ProviderHomeScreen(
+            controller: controller,
+            loadAcceptTime: () async => const ProviderAcceptTime(
+              averageAcceptMinutes: 21,
+              sampleSize: 9,
+              windowDays: 90,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.textContaining('about 21 min'), findsOneWidget);
+    expect(find.textContaining('9 accepted jobs'), findsOneWidget);
+    expect(find.bySemanticsLabel('Your usual accept time'), findsOneWidget);
+  });
+
+  testWidgets('hides the accept-time card entirely when data is insufficient', (
+    tester,
+  ) async {
+    final controller = _loadedVerifiedController();
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData.dark(),
+        home: Scaffold(
+          body: ProviderHomeScreen(
+            controller: controller,
+            loadAcceptTime: () async => const ProviderAcceptTime(
+              averageAcceptMinutes: null,
+              sampleSize: 1,
+              windowDays: 90,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.bySemanticsLabel('Your usual accept time'), findsNothing);
+    expect(find.textContaining('usual accept time'), findsNothing);
+  });
+}
+
+ProviderController _loadedVerifiedController() {
+  final controller = ProviderController(
+    ProviderRepository(
+      api: _ProviderTransport(verified: true),
+      accessToken: () async => 'token',
+    ),
+  );
+  controller.load(verified: true);
+  return controller;
 }
 
 class _ProviderTransport implements ApiTransport {

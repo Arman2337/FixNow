@@ -14,6 +14,7 @@ describe('AdminAnalyticsService', () => {
     where: jest.fn().mockReturnThis(),
     andWhere: jest.fn().mockReturnThis(),
     getRawMany: jest.fn(),
+    getRawOne: jest.fn(),
     getCount: jest.fn(),
   };
   const bookings = {
@@ -55,6 +56,10 @@ describe('AdminAnalyticsService', () => {
     (services.find as jest.Mock).mockResolvedValue([
       { id: 'priority-service' },
     ]);
+    bookingQueryBuilder.getRawOne.mockResolvedValue({
+      sample: '4',
+      avgMinutes: '12.5',
+    });
   });
 
   it('returns a timestamped, non-financial operational snapshot', async () => {
@@ -70,8 +75,19 @@ describe('AdminAnalyticsService', () => {
         ],
       },
       emergencies: { activeRequests: 1, totalRequests: 7 },
+      trust: { averageAcceptMinutes: 13, sampleSize: 4, windowDays: 90 },
     });
 
     jest.useRealTimers();
+  });
+
+  it('hides the accept-time signal below the minimum sample size', async () => {
+    bookingQueryBuilder.getRawOne.mockResolvedValue({
+      sample: '2',
+      avgMinutes: '9',
+    });
+    await expect(service.getOperationalAnalytics()).resolves.toMatchObject({
+      trust: { averageAcceptMinutes: null, sampleSize: 2, windowDays: 90 },
+    });
   });
 });

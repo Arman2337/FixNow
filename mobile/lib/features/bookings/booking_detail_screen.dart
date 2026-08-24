@@ -17,12 +17,16 @@ class BookingDetailScreen extends StatelessWidget {
     this.onCancel,
     this.onReportIssue,
     this.reviewRepository,
+    this.onBookAgain,
     super.key,
   });
   final CustomerBooking booking;
   final Future<CustomerBooking> Function(String reason)? onCancel;
   final VoidCallback? onReportIssue;
   final BookingRepository? reviewRepository;
+
+  /// Opens a prefilled request for a completed booking; null hides the action.
+  final VoidCallback? onBookAgain;
 
   @override
   Widget build(BuildContext context) {
@@ -146,6 +150,21 @@ class BookingDetailScreen extends StatelessWidget {
                   icon: Icons.report_problem_outlined,
                   variant: FixButtonVariant.secondary,
                   onPressed: onReportIssue,
+                ),
+              ],
+              if (booking.status == 'COMPLETED' && onBookAgain != null) ...[
+                const SizedBox(height: AppSpacing.md),
+                FixButton(
+                  label: 'Book again',
+                  icon: Icons.refresh_rounded,
+                  onPressed: onBookAgain,
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  'Your request details are prefilled for review. Matching selects an eligible professional; the same one is not guaranteed.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.textOnSurfaceSecondary,
+                  ),
                 ),
               ],
               if (booking.status == 'COMPLETED' &&

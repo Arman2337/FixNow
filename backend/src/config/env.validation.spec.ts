@@ -147,3 +147,42 @@ describe('Environment Validation', () => {
     ).toThrow('AI_PROVIDER=fake is prohibited in production');
   });
 });
+
+describe('Push notification configuration', () => {
+  const base = {
+    DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/test',
+    REDIS_URL: 'redis://localhost:6379',
+    JWT_SECRET: 'test-only-jwt-secret-at-least-32-characters',
+    OTP_SECRET: 'test-only-otp-secret-at-least-32-characters',
+  };
+
+  it('defaults to the disabled push provider', () => {
+    expect(validate(base).PUSH_PROVIDER).toBe('disabled');
+  });
+
+  it('rejects an invalid push provider value', () => {
+    expect(() => validate({ ...base, PUSH_PROVIDER: 'apns' })).toThrow();
+  });
+
+  it('prohibits the fake provider in production', () => {
+    expect(() =>
+      validate({ ...base, NODE_ENV: 'production', PUSH_PROVIDER: 'fake' }),
+    ).toThrow(/fake is prohibited/);
+  });
+
+  it('requires a credential file for the fcm provider', () => {
+    expect(() =>
+      validate({
+        ...base,
+        NODE_ENV: 'development',
+        PUSH_PROVIDER: 'fcm',
+      }),
+    ).toThrow(/FCM_CREDENTIALS_FILE/);
+    const configured = validate({
+      ...base,
+      PUSH_PROVIDER: 'fcm',
+      FCM_CREDENTIALS_FILE: '/untracked/local/service-account.json',
+    });
+    expect(configured.PUSH_PROVIDER).toBe('fcm');
+  });
+});

@@ -1903,7 +1903,7 @@ PR: Pending
 # Phase 9 â€” Payments
 
 ## FN-051 â€” Decide Payment Architecture and Integrate Provider Adapter
-Status: Deferred (out of current MVP scope)
+Status: ✅ Completed
 Priority: P1 â€” High
 Area: Payments Architecture
 Depends On: FN-010, FN-014, FN-038
@@ -1916,7 +1916,7 @@ Approve a payment provider and add an isolated, configured adapter with webhook 
 ### Do Not
 - Do not use live credentials or store prohibited card data.
 ### Acceptance Criteria
-- [ ] ADR, signature validation, configuration, money precision, and adapter tests pass.
+- [x] ADR, signature validation, configuration, money precision, and adapter tests pass.
 ### Validation
 ```bash
 # Run backend checks and payment-adapter contract tests with sandbox fixtures.
@@ -1930,12 +1930,13 @@ Razorpay is a candidate, not an approved dependency before this task.
 ### Notes
 Deferred from current delivery scope per FN-097.
 
+Reactivated by the 2026-08-25 product decision and completed on `feat/payment-foundation`. ADR-0016 accepts Razorpay behind a vendor-neutral `PaymentGateway` boundary in `backend/src/payments/`, following the push/SMTP/AI adapter pattern: no Razorpay SDK (thin REST client over the Orders API with basic auth and Node fetch), integer-paise INR-only money mirroring FN-107, timing-safe HMAC-SHA256 verification for both webhook bodies and the Checkout `order_id|payment_id` handshake, environment-only credentials (`RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` / `RAZORPAY_WEBHOOK_SECRET`), a deterministic fake gateway prohibited in production, and lazy credential resolution so fake-mode boots never require Razorpay configuration. Environment validation rejects fake-in-production and incomplete Razorpay setups. No card data, no live keys, and no order persistence (schema lands with FN-052). Validated 2026-08-25: backend lint clean, 349 tests (including deterministic HMAC fixtures, tampering rejection, REST-surface auth/body assertions, and configuration boundary cases), production build. Live Razorpay test-mode verification by the owner remains the recorded next step before FN-052.
+
 ### Completion Record
-Completed By:
-Completed Date:
+Completed By: Claude Code
+Completed Date: 2026-08-25
 Commit:
 PR:
-
 ## FN-052 â€” Implement Payment Orders and Verification
 Status: â¸ï¸ Deferred
 Priority: P1 â€” High

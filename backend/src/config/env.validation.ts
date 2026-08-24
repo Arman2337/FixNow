@@ -28,6 +28,11 @@ export enum AiProviderName {
   Fake = 'fake',
 }
 
+export enum PaymentProviderName {
+  Fake = 'fake',
+  Razorpay = 'razorpay',
+}
+
 export enum PushProviderName {
   Disabled = 'disabled',
   Fake = 'fake',
@@ -178,6 +183,22 @@ export class EnvironmentVariables {
   @IsString()
   @IsOptional()
   FCM_CREDENTIALS_FILE?: string;
+
+  @IsEnum(PaymentProviderName)
+  @IsOptional()
+  PAYMENT_PROVIDER: PaymentProviderName = PaymentProviderName.Fake;
+
+  @IsString()
+  @IsOptional()
+  RAZORPAY_KEY_ID?: string;
+
+  @IsString()
+  @IsOptional()
+  RAZORPAY_KEY_SECRET?: string;
+
+  @IsString()
+  @IsOptional()
+  RAZORPAY_WEBHOOK_SECRET?: string;
 }
 
 export function validate(config: Record<string, unknown>) {
@@ -197,6 +218,7 @@ export function validate(config: Record<string, unknown>) {
   validateLocalOtpBypass(validatedConfig);
   validateAiConfiguration(validatedConfig);
   validatePushConfiguration(validatedConfig);
+  validatePaymentConfiguration(validatedConfig);
   if (
     validatedConfig.LOCATION_CACHE_TTL_MS >
     validatedConfig.LOCATION_STALE_AFTER_MS
@@ -246,6 +268,31 @@ function validatePushConfiguration(config: EnvironmentVariables): void {
   }
   // The fake provider is meaningful only outside production, which the
   // earlier check already enforces.
+}
+
+function validatePaymentConfiguration(config: EnvironmentVariables): void {
+  if (config.PAYMENT_PROVIDER === PaymentProviderName.Fake) {
+    if (config.NODE_ENV === Environment.Production) {
+      throw new Error('PAYMENT_PROVIDER=fake is prohibited in production');
+    }
+    return;
+  }
+  if (config.PAYMENT_PROVIDER === PaymentProviderName.Razorpay) {
+    const missing = (
+      [
+        'RAZORPAY_KEY_ID',
+        'RAZORPAY_KEY_SECRET',
+        'RAZORPAY_WEBHOOK_SECRET',
+      ] as const
+    ).filter((name) => !config[name]);
+    if (missing.length > 0) {
+      throw new Error(
+        `PAYMENT_PROVIDER=razorpay requires ${missing.join(', ')}`,
+      );
+    }
+    return;
+  }
+  throw new Error('PAYMENT_PROVIDER must be one of: fake, razorpay');
 }
 
 function validateLocalOtpBypass(config: EnvironmentVariables): void {

@@ -186,3 +186,43 @@ describe('Push notification configuration', () => {
     expect(configured.PUSH_PROVIDER).toBe('fcm');
   });
 });
+
+describe('Payment configuration', () => {
+  const base = {
+    DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/test',
+    REDIS_URL: 'redis://localhost:6379',
+    JWT_SECRET: 'test-only-jwt-secret-at-least-32-characters',
+    OTP_SECRET: 'test-only-otp-secret-at-least-32-characters',
+  };
+
+  it('defaults to the fake provider outside production', () => {
+    expect(validate(base).PAYMENT_PROVIDER).toBe('fake');
+  });
+
+  it('prohibits the fake provider in production', () => {
+    expect(() =>
+      validate({ ...base, NODE_ENV: 'production', PAYMENT_PROVIDER: 'fake' }),
+    ).toThrow('PAYMENT_PROVIDER=fake is prohibited in production');
+  });
+
+  it('rejects unsupported provider values', () => {
+    expect(() => validate({ ...base, PAYMENT_PROVIDER: 'stripe' })).toThrow(
+      /PAYMENT_PROVIDER/,
+    );
+  });
+
+  it('requires all three Razorpay credentials for the razorpay provider', () => {
+    const withKeys = {
+      ...base,
+      PAYMENT_PROVIDER: 'razorpay',
+      RAZORPAY_KEY_ID: 'rzp_test_x',
+      RAZORPAY_KEY_SECRET: 'secret',
+      RAZORPAY_WEBHOOK_SECRET: 'webhook-secret',
+    };
+    expect(validate(withKeys).PAYMENT_PROVIDER).toBe('razorpay');
+
+    const partial: Record<string, string | undefined> = { ...withKeys };
+    partial.RAZORPAY_WEBHOOK_SECRET = undefined;
+    expect(() => validate(partial)).toThrow(/RAZORPAY_WEBHOOK_SECRET/);
+  });
+});

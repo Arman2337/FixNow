@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:fixnow_mobile/design_system/app_motion.dart';
@@ -240,24 +241,24 @@ class FixScaleIn extends StatefulWidget {
 
 class _FixScaleInState extends State<FixScaleIn>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _controller = AnimationController(
-    vsync: this,
-    duration: widget.duration,
-  );
-  late final Animation<double> _scale = Tween<double>(
-    begin: widget.from,
-    end: 1.0,
-  ).animate(
-    CurvedAnimation(parent: _controller, curve: AppMotion.celebrateCurve),
-  );
+  // Controllers are created eagerly in initState: a lazily-initialised
+  // ticker can otherwise first come to life inside dispose(), after the
+  // element has been deactivated (crash on TickerMode lookup).
+  late final AnimationController _controller;
+  late final Animation<double> _scale;
+  Timer? _startDelay;
 
   @override
   void initState() {
     super.initState();
+    _controller = AnimationController(vsync: this, duration: widget.duration);
+    _scale = Tween<double>(begin: widget.from, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: AppMotion.celebrateCurve),
+    );
     if (widget.delay == Duration.zero) {
       _controller.forward();
     } else {
-      Future<void>.delayed(widget.delay, () {
+      _startDelay = Timer(widget.delay, () {
         if (mounted) _controller.forward();
       });
     }
@@ -265,6 +266,7 @@ class _FixScaleInState extends State<FixScaleIn>
 
   @override
   void dispose() {
+    _startDelay?.cancel();
     _controller.dispose();
     super.dispose();
   }
@@ -300,23 +302,21 @@ class FixFadeSlideIn extends StatefulWidget {
 
 class _FixFadeSlideInState extends State<FixFadeSlideIn>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _controller = AnimationController(
-    vsync: this,
-    duration: widget.duration,
-  );
-  late final Animation<double> _fade = CurvedAnimation(
-    parent: _controller,
-    curve: AppMotion.enterCurve,
-  );
-  late final Animation<Offset> _slide = Tween<Offset>(
-    begin: Offset(0, widget.offsetY),
-    end: Offset.zero,
-  ).animate(_fade);
+  // Eager creation — see _FixScaleInState.
+  late final AnimationController _controller;
+  late final Animation<double> _fade;
+  late final Animation<Offset> _slide;
   Timer? _startDelay;
 
   @override
   void initState() {
     super.initState();
+    _controller = AnimationController(vsync: this, duration: widget.duration);
+    _fade = CurvedAnimation(parent: _controller, curve: AppMotion.enterCurve);
+    _slide = Tween<Offset>(
+      begin: Offset(0, widget.offsetY),
+      end: Offset.zero,
+    ).animate(_fade);
     if (widget.delay == Duration.zero) {
       _controller.forward();
     } else {
@@ -411,10 +411,14 @@ class FixAnimatedStar extends StatefulWidget {
 
 class _FixAnimatedStarState extends State<FixAnimatedStar>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _controller = AnimationController(
-    vsync: this,
-    duration: AppMotion.emphasis,
-  );
+  // Eager creation — see _FixScaleInState.
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: AppMotion.emphasis);
+  }
 
   @override
   void didUpdateWidget(covariant FixAnimatedStar oldWidget) {

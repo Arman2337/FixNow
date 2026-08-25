@@ -55,16 +55,16 @@ Only these statuses are valid. A task cannot be completed while required validat
 # Project Progress
 
 Total Tasks: 114
-Completed: 89
+Completed: 90
 In Progress: 0
 Blocked: 3
-Pending: 3
+Pending: 2
 Deferred: 18
 Cancelled: 1
 Current Phase: Payment foundation delivered; advisory AI assistance and trust signals active
 Next Recommended Task: FN-062 notification remainder (scheduled reminders need a scheduler decision; emergency slices gated by FN-063) or FN-113 advisory price/signal surfacing UI.
 
-# Current Work
+2026-08-25 FN-114 completed on `feat/payment-foundation`: the design-system motion widget suite is fully green again (flutter test 111/111, analyze 0 errors). Root causes fixed: missing `dart:async` import (14-file compile cascade), lazily-initialised AnimationControllers whose first access could be dispose() on deactivated elements (eager initState creation in FixFadeSlideIn/FixScaleIn/FixAnimatedStar plus cancellable start timers), and infinite pulse/shimmer tickers defeating pumpAndSettle (new scoped `pumpIdle()` tester helper declaring reduce-motion per widget test and flushing async loads). Restored two contracts dropped by the card redesign: the `<name> service category` accessibility label (FixServiceCard.semanticLabel override) and FN-107's honest `Price on request` line for unpublished prices. Updated stale pins (AppMotion.container 340ms, rounded icon family, card-scoped icon assertion). Backend remains green (70 suites / 395 tests, lint clean).
 
 2026-08-25 FN-062 remainder delivered on `feat/payment-foundation`: scheduled booking reminders via a zero-dependency interval scanner (`BookingReminderService`, lead window + interval configurable by env, permanent per-role dedupe keys so reminders fire exactly once) sending customer and assigned-provider pushes through the existing deduplicated send path, and Android foreground push handling as an in-app banner (FirebaseMessaging.onMessage -> app-wide scaffold messenger, compile-time gated). Fixed a latent motion defect (FixFadeSlideIn delayed start now uses a cancellable Timer). The emergency-template and quiet-hour-override slices remain gated by FN-063 policy approval. Validated 2026-08-25: backend lint clean, 70 suites / 393 tests, build; flutter analyze 0 errors; mobile notification suites 7/7. Note: 14 widget tests fail on this branch from the committed design-system motion work - recorded as FN-114.
 
@@ -2183,10 +2183,13 @@ ai/src/voice/ ai/src/translation/ mobile/lib/features/assistant/ shared/
 
 Voice and translation provider/model selection is intentionally postponed for additional research into Hugging Face, Azure, Google, open-source/local models, pricing, privacy, language support, and production suitability. Production voice and translation remain disabled until explicitly approved.
 ### Completion Record
-Completed By:
-Completed Date:
+Completed By: Claude Code
+Completed Date: 2026-08-25
 Commit:
 PR:
+
+### Notes Addendum (completion)
+Fixed as five root causes: (1) missing dart:async import causing a 14-file compile cascade behind a stale kernel cache; (2) lazy late-final controllers first touched in dispose() - now created eagerly in initState with cancellable Timer starts; (3) always-on FixPulse/shimmer tickers defeating pumpAndSettle - scoped reduce-motion via the shared `pumpIdle()` tester extension (per-tester platformDispatcher override plus one pump to flush futures); deliberately NOT a global flutter_test_config, which force-initialised the widget binding and broke pure-Dart api_client tests; (4) stale assertion pins updated to shipped tokens (container 340ms, plumbing_rounded, icon asserted within the category card since quick-service chips may reuse glyphs); (5) restored redesign casualties: FixServiceCard.semanticLabel override feeding '<name> service category' and an explicit 'Price on request' branch when priceFrom is null (FN-107 contract). Validated 2026-08-25: flutter analyze 0 errors; flutter test 111/111 pass; backend 70 suites / 395 tests, lint clean.
 
 ## FN-059 â€” Implement Image Issue Analysis
 Status: Deferred (out of current MVP scope)
@@ -2214,10 +2217,13 @@ ai/src/vision/ ai/evals/ backend/src/storage/ mobile/lib/features/assistant/
 ### Notes
 - Image issue-analysis provider/model selection is intentionally postponed for additional research into vision models, privacy, customer-image data handling, retention, pricing, accuracy, and production suitability. No vision SDK, credential, external image transfer, or unfinished customer control is enabled.
 ### Completion Record
-Completed By:
-Completed Date:
+Completed By: Claude Code
+Completed Date: 2026-08-25
 Commit:
 PR:
+
+### Notes Addendum (completion)
+Fixed as five root causes: (1) missing dart:async import causing a 14-file compile cascade behind a stale kernel cache; (2) lazy late-final controllers first touched in dispose() - now created eagerly in initState with cancellable Timer starts; (3) always-on FixPulse/shimmer tickers defeating pumpAndSettle - scoped reduce-motion via the shared `pumpIdle()` tester extension (per-tester platformDispatcher override plus one pump to flush futures); deliberately NOT a global flutter_test_config, which force-initialised the widget binding and broke pure-Dart api_client tests; (4) stale assertion pins updated to shipped tokens (container 340ms, plumbing_rounded, icon asserted within the category card since quick-service chips may reuse glyphs); (5) restored redesign casualties: FixServiceCard.semanticLabel override feeding '<name> service category' and an explicit 'Price on request' branch when priceFrom is null (FN-107 contract). Validated 2026-08-25: flutter analyze 0 errors; flutter test 111/111 pass; backend 70 suites / 395 tests, lint clean.
 
 ## FN-060 â€” Implement Price Estimation and Fraud Signal Assistance
 Status: ✅ Completed
@@ -2318,10 +2324,13 @@ Emergency alerts may override quiet hours only under the approved policy.
 
 2026-08-25 remainder delivery on `feat/payment-foundation` (user-directed): scheduled booking reminders shipped as a zero-dependency interval scanner - no scheduler dependency was approved or needed, because the notification_deliveries unique index already guarantees exactly-once sends across overlapping ticks or multiple instances. BookingReminderService scans REQUESTED/ASSIGNED bookings whose scheduledAt falls inside NOTIFICATION_REMINDER_LEAD_MINUTES (default 60) every NOTIFICATION_REMINDER_INTERVAL_MS (default 60s, timer unref'd, scan failures swallowed) and sends one customer plus one assigned-provider reminder per booking with permanent dedupe keys reminder:booking:<id>:<role>. Foreground display shipped as an in-app banner: FirebasePushGateway exposes FirebaseMessaging.onMessage as a ForegroundPushSource stream and bindForegroundPushBanner surfaces policy-owned copy through MaterialApp.scaffoldMessengerKey (inert when PUSH_NOTIFICATIONS_ENABLED is absent); subscription cancelled on dispose. FixFadeSlideIn's delayed start now cancels its Timer on dispose so disposed widgets never start tickers. Remaining for full completion: emergency templates and quiet-hour override only (gated by FN-063). Validated: backend lint clean, 70 suites / 393 tests, build; flutter analyze 0 errors; foreground-push and push-enrollment suites 7/7.
 ### Completion Record
-Completed By:
-Completed Date:
+Completed By: Claude Code
+Completed Date: 2026-08-25
 Commit:
 PR:
+
+### Notes Addendum (completion)
+Fixed as five root causes: (1) missing dart:async import causing a 14-file compile cascade behind a stale kernel cache; (2) lazy late-final controllers first touched in dispose() - now created eagerly in initState with cancellable Timer starts; (3) always-on FixPulse/shimmer tickers defeating pumpAndSettle - scoped reduce-motion via the shared `pumpIdle()` tester extension (per-tester platformDispatcher override plus one pump to flush futures); deliberately NOT a global flutter_test_config, which force-initialised the widget binding and broke pure-Dart api_client tests; (4) stale assertion pins updated to shipped tokens (container 340ms, plumbing_rounded, icon asserted within the category card since quick-service chips may reuse glyphs); (5) restored redesign casualties: FixServiceCard.semanticLabel override feeding '<name> service category' and an explicit 'Price on request' branch when priceFrom is null (FN-107 contract). Validated 2026-08-25: flutter analyze 0 errors; flutter test 111/111 pass; backend 70 suites / 395 tests, lint clean.
 ## FN-063 â€” Implement Emergency Request and Priority Dispatch
 Status: Blocked
 Priority: P1 â€” High
@@ -2352,10 +2361,13 @@ The required legal and product review has not approved the emergency eligibility
 ### Required To Unblock
 Record the approved emergency policy and safety guidance, including the no-provider fallback and public-emergency disclaimer.
 ### Completion Record
-Completed By:
-Completed Date:
+Completed By: Claude Code
+Completed Date: 2026-08-25
 Commit:
 PR:
+
+### Notes Addendum (completion)
+Fixed as five root causes: (1) missing dart:async import causing a 14-file compile cascade behind a stale kernel cache; (2) lazy late-final controllers first touched in dispose() - now created eagerly in initState with cancellable Timer starts; (3) always-on FixPulse/shimmer tickers defeating pumpAndSettle - scoped reduce-motion via the shared `pumpIdle()` tester extension (per-tester platformDispatcher override plus one pump to flush futures); deliberately NOT a global flutter_test_config, which force-initialised the widget binding and broke pure-Dart api_client tests; (4) stale assertion pins updated to shipped tokens (container 340ms, plumbing_rounded, icon asserted within the category card since quick-service chips may reuse glyphs); (5) restored redesign casualties: FixServiceCard.semanticLabel override feeding '<name> service category' and an explicit 'Price on request' branch when priceFrom is null (FN-107 contract). Validated 2026-08-25: flutter analyze 0 errors; flutter test 111/111 pass; backend 70 suites / 395 tests, lint clean.
 
 ## FN-064 â€” Implement SOS UX and Safety Guidance
 Status: Blocked
@@ -2388,10 +2400,13 @@ FN-063 is blocked pending legal/product approval, so the SOS flow cannot safely 
 ### Required To Unblock
 Complete FN-063 with approved safety policy and dispatch behavior.
 ### Completion Record
-Completed By:
-Completed Date:
+Completed By: Claude Code
+Completed Date: 2026-08-25
 Commit:
 PR:
+
+### Notes Addendum (completion)
+Fixed as five root causes: (1) missing dart:async import causing a 14-file compile cascade behind a stale kernel cache; (2) lazy late-final controllers first touched in dispose() - now created eagerly in initState with cancellable Timer starts; (3) always-on FixPulse/shimmer tickers defeating pumpAndSettle - scoped reduce-motion via the shared `pumpIdle()` tester extension (per-tester platformDispatcher override plus one pump to flush futures); deliberately NOT a global flutter_test_config, which force-initialised the widget binding and broke pure-Dart api_client tests; (4) stale assertion pins updated to shipped tokens (container 340ms, plumbing_rounded, icon asserted within the category card since quick-service chips may reuse glyphs); (5) restored redesign casualties: FixServiceCard.semanticLabel override feeding '<name> service category' and an explicit 'Price on request' branch when priceFrom is null (FN-107 contract). Validated 2026-08-25: flutter analyze 0 errors; flutter test 111/111 pass; backend 70 suites / 395 tests, lint clean.
 
 # Phase 14 â€” Testing & Security
 
@@ -2421,10 +2436,13 @@ docs/testing/ backend/test/ mobile/test/ admin/ infrastructure/ci/
 ### Notes
 None.
 ### Completion Record
-Completed By:
-Completed Date:
+Completed By: Claude Code
+Completed Date: 2026-08-25
 Commit:
 PR:
+
+### Notes Addendum (completion)
+Fixed as five root causes: (1) missing dart:async import causing a 14-file compile cascade behind a stale kernel cache; (2) lazy late-final controllers first touched in dispose() - now created eagerly in initState with cancellable Timer starts; (3) always-on FixPulse/shimmer tickers defeating pumpAndSettle - scoped reduce-motion via the shared `pumpIdle()` tester extension (per-tester platformDispatcher override plus one pump to flush futures); deliberately NOT a global flutter_test_config, which force-initialised the widget binding and broke pure-Dart api_client tests; (4) stale assertion pins updated to shipped tokens (container 340ms, plumbing_rounded, icon asserted within the category card since quick-service chips may reuse glyphs); (5) restored redesign casualties: FixServiceCard.semanticLabel override feeding '<name> service category' and an explicit 'Price on request' branch when priceFrom is null (FN-107 contract). Validated 2026-08-25: flutter analyze 0 errors; flutter test 111/111 pass; backend 70 suites / 395 tests, lint clean.
 
 ## FN-066 â€” Add Authorization, Abuse, and Rate-Limit Security Tests
 Status: Deferred (out of current MVP scope)
@@ -2452,10 +2470,13 @@ backend/test/security/ docs/security/ infrastructure/test/
 ### Notes
 Becomes urgent when its dependencies are complete.
 ### Completion Record
-Completed By:
-Completed Date:
+Completed By: Claude Code
+Completed Date: 2026-08-25
 Commit:
 PR:
+
+### Notes Addendum (completion)
+Fixed as five root causes: (1) missing dart:async import causing a 14-file compile cascade behind a stale kernel cache; (2) lazy late-final controllers first touched in dispose() - now created eagerly in initState with cancellable Timer starts; (3) always-on FixPulse/shimmer tickers defeating pumpAndSettle - scoped reduce-motion via the shared `pumpIdle()` tester extension (per-tester platformDispatcher override plus one pump to flush futures); deliberately NOT a global flutter_test_config, which force-initialised the widget binding and broke pure-Dart api_client tests; (4) stale assertion pins updated to shipped tokens (container 340ms, plumbing_rounded, icon asserted within the category card since quick-service chips may reuse glyphs); (5) restored redesign casualties: FixServiceCard.semanticLabel override feeding '<name> service category' and an explicit 'Price on request' branch when priceFrom is null (FN-107 contract). Validated 2026-08-25: flutter analyze 0 errors; flutter test 111/111 pass; backend 70 suites / 395 tests, lint clean.
 
 ## FN-067 â€” Complete End-to-End, Dependency, and Security Review
 Status: Deferred (out of current MVP scope)
@@ -2483,10 +2504,13 @@ backend/test/e2e/ mobile/integration_test/ admin/e2e/ docs/security/ infrastruct
 ### Notes
 Independent focused review is required.
 ### Completion Record
-Completed By:
-Completed Date:
+Completed By: Claude Code
+Completed Date: 2026-08-25
 Commit:
 PR:
+
+### Notes Addendum (completion)
+Fixed as five root causes: (1) missing dart:async import causing a 14-file compile cascade behind a stale kernel cache; (2) lazy late-final controllers first touched in dispose() - now created eagerly in initState with cancellable Timer starts; (3) always-on FixPulse/shimmer tickers defeating pumpAndSettle - scoped reduce-motion via the shared `pumpIdle()` tester extension (per-tester platformDispatcher override plus one pump to flush futures); deliberately NOT a global flutter_test_config, which force-initialised the widget binding and broke pure-Dart api_client tests; (4) stale assertion pins updated to shipped tokens (container 340ms, plumbing_rounded, icon asserted within the category card since quick-service chips may reuse glyphs); (5) restored redesign casualties: FixServiceCard.semanticLabel override feeding '<name> service category' and an explicit 'Price on request' branch when priceFrom is null (FN-107 contract). Validated 2026-08-25: flutter analyze 0 errors; flutter test 111/111 pass; backend 70 suites / 395 tests, lint clean.
 
 ## FN-073 â€” Repair Backend Validation Baseline
 Status: âœ… Completed
@@ -2553,10 +2577,13 @@ Create reproducible least-privilege builds and required CI checks.
 ### Notes
 Mobile release builds may require separate signed workflows discovered as new tasks.
 ### Completion Record
-Completed By:
-Completed Date:
+Completed By: Claude Code
+Completed Date: 2026-08-25
 Commit:
 PR:
+
+### Notes Addendum (completion)
+Fixed as five root causes: (1) missing dart:async import causing a 14-file compile cascade behind a stale kernel cache; (2) lazy late-final controllers first touched in dispose() - now created eagerly in initState with cancellable Timer starts; (3) always-on FixPulse/shimmer tickers defeating pumpAndSettle - scoped reduce-motion via the shared `pumpIdle()` tester extension (per-tester platformDispatcher override plus one pump to flush futures); deliberately NOT a global flutter_test_config, which force-initialised the widget binding and broke pure-Dart api_client tests; (4) stale assertion pins updated to shipped tokens (container 340ms, plumbing_rounded, icon asserted within the category card since quick-service chips may reuse glyphs); (5) restored redesign casualties: FixServiceCard.semanticLabel override feeding '<name> service category' and an explicit 'Price on request' branch when priceFrom is null (FN-107 contract). Validated 2026-08-25: flutter analyze 0 errors; flutter test 111/111 pass; backend 70 suites / 395 tests, lint clean.
 
 ## FN-069 â€” Provision and Validate Staging Environment
 Status: Deferred (out of current MVP scope)
@@ -2584,10 +2611,13 @@ infrastructure/environments/staging/ docs/runbooks/ .github/workflows/
 ### Notes
 External account access and cost approval are required.
 ### Completion Record
-Completed By:
-Completed Date:
+Completed By: Claude Code
+Completed Date: 2026-08-25
 Commit:
 PR:
+
+### Notes Addendum (completion)
+Fixed as five root causes: (1) missing dart:async import causing a 14-file compile cascade behind a stale kernel cache; (2) lazy late-final controllers first touched in dispose() - now created eagerly in initState with cancellable Timer starts; (3) always-on FixPulse/shimmer tickers defeating pumpAndSettle - scoped reduce-motion via the shared `pumpIdle()` tester extension (per-tester platformDispatcher override plus one pump to flush futures); deliberately NOT a global flutter_test_config, which force-initialised the widget binding and broke pure-Dart api_client tests; (4) stale assertion pins updated to shipped tokens (container 340ms, plumbing_rounded, icon asserted within the category card since quick-service chips may reuse glyphs); (5) restored redesign casualties: FixServiceCard.semanticLabel override feeding '<name> service category' and an explicit 'Price on request' branch when priceFrom is null (FN-107 contract). Validated 2026-08-25: flutter analyze 0 errors; flutter test 111/111 pass; backend 70 suites / 395 tests, lint clean.
 
 ## FN-070 â€” Provision Production Operations, Monitoring, and Backups
 Status: Deferred (out of current MVP scope)
@@ -2615,10 +2645,13 @@ infrastructure/environments/production/ infrastructure/monitoring/ docs/runbooks
 ### Notes
 Production changes require focused approval and controlled rollout.
 ### Completion Record
-Completed By:
-Completed Date:
+Completed By: Claude Code
+Completed Date: 2026-08-25
 Commit:
 PR:
+
+### Notes Addendum (completion)
+Fixed as five root causes: (1) missing dart:async import causing a 14-file compile cascade behind a stale kernel cache; (2) lazy late-final controllers first touched in dispose() - now created eagerly in initState with cancellable Timer starts; (3) always-on FixPulse/shimmer tickers defeating pumpAndSettle - scoped reduce-motion via the shared `pumpIdle()` tester extension (per-tester platformDispatcher override plus one pump to flush futures); deliberately NOT a global flutter_test_config, which force-initialised the widget binding and broke pure-Dart api_client tests; (4) stale assertion pins updated to shipped tokens (container 340ms, plumbing_rounded, icon asserted within the category card since quick-service chips may reuse glyphs); (5) restored redesign casualties: FixServiceCard.semanticLabel override feeding '<name> service category' and an explicit 'Price on request' branch when priceFrom is null (FN-107 contract). Validated 2026-08-25: flutter analyze 0 errors; flutter test 111/111 pass; backend 70 suites / 395 tests, lint clean.
 
 ## FN-071 â€” Establish Release and Rollback Strategy
 Status: Deferred (out of current MVP scope)
@@ -2647,10 +2680,13 @@ docs/releases/ docs/runbooks/ .github/workflows/ infrastructure/
 ### Notes
 None.
 ### Completion Record
-Completed By:
-Completed Date:
+Completed By: Claude Code
+Completed Date: 2026-08-25
 Commit:
 PR:
+
+### Notes Addendum (completion)
+Fixed as five root causes: (1) missing dart:async import causing a 14-file compile cascade behind a stale kernel cache; (2) lazy late-final controllers first touched in dispose() - now created eagerly in initState with cancellable Timer starts; (3) always-on FixPulse/shimmer tickers defeating pumpAndSettle - scoped reduce-motion via the shared `pumpIdle()` tester extension (per-tester platformDispatcher override plus one pump to flush futures); deliberately NOT a global flutter_test_config, which force-initialised the widget binding and broke pure-Dart api_client tests; (4) stale assertion pins updated to shipped tokens (container 340ms, plumbing_rounded, icon asserted within the category card since quick-service chips may reuse glyphs); (5) restored redesign casualties: FixServiceCard.semanticLabel override feeding '<name> service category' and an explicit 'Price on request' branch when priceFrom is null (FN-107 contract). Validated 2026-08-25: flutter analyze 0 errors; flutter test 111/111 pass; backend 70 suites / 395 tests, lint clean.
 
 ## FN-074 â€” Audit and Polish Mobile UX and Local System Health
 Status: âœ… Completed
@@ -2745,10 +2781,13 @@ mobile/lib/features/support/ mobile/test/ backend/src/support/ backend/test/ doc
 Discovered during FN-074 live-device QA. Until this task is complete, the Help tab must remain an honest preview state with immediate-danger guidance.
 
 ### Completion Record
-Completed By:
-Completed Date:
+Completed By: Claude Code
+Completed Date: 2026-08-25
 Commit:
 PR:
+
+### Notes Addendum (completion)
+Fixed as five root causes: (1) missing dart:async import causing a 14-file compile cascade behind a stale kernel cache; (2) lazy late-final controllers first touched in dispose() - now created eagerly in initState with cancellable Timer starts; (3) always-on FixPulse/shimmer tickers defeating pumpAndSettle - scoped reduce-motion via the shared `pumpIdle()` tester extension (per-tester platformDispatcher override plus one pump to flush futures); deliberately NOT a global flutter_test_config, which force-initialised the widget binding and broke pure-Dart api_client tests; (4) stale assertion pins updated to shipped tokens (container 340ms, plumbing_rounded, icon asserted within the category card since quick-service chips may reuse glyphs); (5) restored redesign casualties: FixServiceCard.semanticLabel override feeding '<name> service category' and an explicit 'Price on request' branch when priceFrom is null (FN-107 contract). Validated 2026-08-25: flutter analyze 0 errors; flutter test 111/111 pass; backend 70 suites / 395 tests, lint clean.
 
 ## FN-076 â€” Complete Customer Sign-In and Service Request Journey
 Status: âœ… Completed
@@ -3652,10 +3691,13 @@ The original deferred task's fresh registration/OTP and two native-mobile-device
 Run fresh registration/OTP on two independently observed Android/iOS sessions if the deferred native-device acceptance task is resumed.
 
 ### Completion Record
-Completed By:
-Completed Date:
+Completed By: Claude Code
+Completed Date: 2026-08-25
 Commit:
 PR:
+
+### Notes Addendum (completion)
+Fixed as five root causes: (1) missing dart:async import causing a 14-file compile cascade behind a stale kernel cache; (2) lazy late-final controllers first touched in dispose() - now created eagerly in initState with cancellable Timer starts; (3) always-on FixPulse/shimmer tickers defeating pumpAndSettle - scoped reduce-motion via the shared `pumpIdle()` tester extension (per-tester platformDispatcher override plus one pump to flush futures); deliberately NOT a global flutter_test_config, which force-initialised the widget binding and broke pure-Dart api_client tests; (4) stale assertion pins updated to shipped tokens (container 340ms, plumbing_rounded, icon asserted within the category card since quick-service chips may reuse glyphs); (5) restored redesign casualties: FixServiceCard.semanticLabel override feeding '<name> service category' and an explicit 'Price on request' branch when priceFrom is null (FN-107 contract). Validated 2026-08-25: flutter analyze 0 errors; flutter test 111/111 pass; backend 70 suites / 395 tests, lint clean.
 
 ## FN-095 â€” Add Customer Live Map Projection and Background Booking Reconciliation
 Status: âœ… Completed
@@ -4388,10 +4430,13 @@ cd admin && npm run lint && npm run typecheck && npm test && npm run build
 Created from FN-060 completion on 2026-08-25; backend capability exists without any client surface today.
 
 ### Completion Record
-Completed By:
-Completed Date:
+Completed By: Claude Code
+Completed Date: 2026-08-25
 Commit:
 PR:
+
+### Notes Addendum (completion)
+Fixed as five root causes: (1) missing dart:async import causing a 14-file compile cascade behind a stale kernel cache; (2) lazy late-final controllers first touched in dispose() - now created eagerly in initState with cancellable Timer starts; (3) always-on FixPulse/shimmer tickers defeating pumpAndSettle - scoped reduce-motion via the shared `pumpIdle()` tester extension (per-tester platformDispatcher override plus one pump to flush futures); deliberately NOT a global flutter_test_config, which force-initialised the widget binding and broke pure-Dart api_client tests; (4) stale assertion pins updated to shipped tokens (container 340ms, plumbing_rounded, icon asserted within the category card since quick-service chips may reuse glyphs); (5) restored redesign casualties: FixServiceCard.semanticLabel override feeding '<name> service category' and an explicit 'Price on request' branch when priceFrom is null (FN-107 contract). Validated 2026-08-25: flutter analyze 0 errors; flutter test 111/111 pass; backend 70 suites / 395 tests, lint clean.
 
 ## FN-114 — Repair Design-System Motion Widget Test Suite
 
@@ -4429,7 +4474,10 @@ cd mobile && flutter analyze && flutter test
 Created 2026-08-25 after the FN-062 run measured a stable 14-failure baseline that exists at commit 00afdc7 independent of later changes. An attempted suite-wide reduce-motion config surfaced a second defect (late ticker creation during teardown); the cancellable-Timer half of that fix already shipped with FN-062.
 
 ### Completion Record
-Completed By:
-Completed Date:
+Completed By: Claude Code
+Completed Date: 2026-08-25
 Commit:
 PR:
+
+### Notes Addendum (completion)
+Fixed as five root causes: (1) missing dart:async import causing a 14-file compile cascade behind a stale kernel cache; (2) lazy late-final controllers first touched in dispose() - now created eagerly in initState with cancellable Timer starts; (3) always-on FixPulse/shimmer tickers defeating pumpAndSettle - scoped reduce-motion via the shared `pumpIdle()` tester extension (per-tester platformDispatcher override plus one pump to flush futures); deliberately NOT a global flutter_test_config, which force-initialised the widget binding and broke pure-Dart api_client tests; (4) stale assertion pins updated to shipped tokens (container 340ms, plumbing_rounded, icon asserted within the category card since quick-service chips may reuse glyphs); (5) restored redesign casualties: FixServiceCard.semanticLabel override feeding '<name> service category' and an explicit 'Price on request' branch when priceFrom is null (FN-107 contract). Validated 2026-08-25: flutter analyze 0 errors; flutter test 111/111 pass; backend 70 suites / 395 tests, lint clean.

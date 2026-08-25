@@ -14,6 +14,8 @@ import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 import 'package:fixnow_mobile/design_system/app_theme.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
+import 'package:fixnow_mobile/design_system/fix_service_card.dart';
+import 'pump_idle.dart';
 
 class MockGeolocatorPlatform extends GeolocatorPlatform
     with MockPlatformInterfaceMixin {
@@ -106,7 +108,7 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await tester.pumpIdle();
 
     await tester.scrollUntilVisible(
       find.text('Plumbing'),
@@ -116,7 +118,20 @@ void main() {
     expect(find.text('Plumbing'), findsOneWidget);
     expect(find.bySemanticsLabel('Plumbing service category'), findsOneWidget);
     expect(find.text('Leaks and pipe repairs'), findsOneWidget);
-    expect(find.byIcon(Icons.plumbing_outlined), findsOneWidget);
+    // Scope the glyph check to the category card: quick-service chips may
+    // legitimately reuse the same material glyph elsewhere on the screen.
+    final categoryCard = find.ancestor(
+      of: find.bySemanticsLabel('Plumbing service category'),
+      matching: find.byType(FixServiceCard),
+    );
+    expect(categoryCard, findsOneWidget);
+    expect(
+      find.descendant(
+        of: categoryCard,
+        matching: find.byIcon(Icons.plumbing_rounded),
+      ),
+      findsOneWidget,
+    );
     expect(find.text('₹499'), findsOneWidget);
   });
 
@@ -146,7 +161,7 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await tester.pumpIdle();
 
     await tester.scrollUntilVisible(
       find.text('Price on request'),
@@ -256,7 +271,7 @@ void main() {
     // Tap Electrician (unavailable)
     selectedCategory = null;
     await tester.tap(find.text('Electrician'));
-    await tester.pumpAndSettle();
+    await tester.pumpIdle();
     expect(selectedCategory, isNull);
     expect(
       find.text('Electrician service is currently unavailable.'),

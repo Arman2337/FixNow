@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: fixnow-backend
+    env: node
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm run typeorm -- migration:run -d typeorm.config.ts && npm run start:prod
+    plan: free
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3300
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: OTP_SECRET
+        generateValue: true
+      - key: AI_PROVIDER_API_KEY
+        sync: false
+      - key: PROVIDER_DOCUMENT_S3_ACCESS_KEY
+        sync: false
+      - key: PROVIDER_DOCUMENT_S3_SECRET_KEY
+        sync: false
+      - key: OPENROUTESERVICE_API_KEY
+        sync: false

@@ -329,7 +329,7 @@ describe('PaymentsService', () => {
         refundedMinor: 9900,
         netMinor: 40000,
         paidOrderCount: 1,
-        note: expect.stringContaining('Payouts are not available yet'),
+        note: 'Records of completed payments. Payouts are not available yet.',
       });
     });
   });

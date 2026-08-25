@@ -15,12 +15,20 @@ describe('TrustService', () => {
     findOneByOrFail: jest.fn(),
   };
   const cache = { get: jest.fn(), set: jest.fn() };
+  const refundQuery = {
+    innerJoin: () => refundQuery,
+    where: () => refundQuery,
+    andWhere: () => refundQuery,
+    getCount: jest.fn<Promise<number>, []>().mockResolvedValue(0),
+  };
+  const refunds = { createQueryBuilder: () => refundQuery };
   const service = new TrustService(
     bookings as never,
     reviews as never,
     complaints as never,
     signals as never,
     cache as never,
+    refunds as never,
   );
 
   beforeEach(() => jest.clearAllMocks());
@@ -64,6 +72,51 @@ describe('TrustService', () => {
       expect(signals.save).not.toHaveBeenCalled();
     },
   );
+
+  const customerId = '00000000-0000-4000-8000-000000000003';
+
+  it('FN-060 flags a customer at the cancellation threshold with a LOW advisory signal', async () => {
+    bookings.count.mockResolvedValue(3);
+    signals.findOneBy.mockResolvedValue(null);
+    await service.evaluateCustomerCancellationSignal(customerId, now);
+    expect(signals.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        subjectType: 'CUSTOMER',
+        subjectId: customerId,
+        ruleCode: 'customer-cancellation-frequency-v1',
+        severity: 'LOW',
+      }),
+    );
+  });
+
+  it('FN-060 does not flag customers below the cancellation threshold', async () => {
+    bookings.count.mockResolvedValue(2);
+    await expect(
+      service.evaluateCustomerCancellationSignal(customerId, now),
+    ).resolves.toBeNull();
+    expect(signals.save).not.toHaveBeenCalled();
+  });
+
+  it('FN-060 flags a provider once refund frequency reaches the threshold', async () => {
+    refundQuery.getCount.mockResolvedValue(2);
+    signals.findOneBy.mockResolvedValue(null);
+    await service.evaluateProviderRefundSignal(providerId, now);
+    expect(signals.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        subjectType: 'PROVIDER',
+        ruleCode: 'provider-refund-frequency-v1',
+        severity: 'MEDIUM',
+      }),
+    );
+  });
+
+  it('FN-060 stays silent for a single provider refund in the window', async () => {
+    refundQuery.getCount.mockResolvedValue(1);
+    await expect(
+      service.evaluateProviderRefundSignal(providerId, now),
+    ).resolves.toBeNull();
+    expect(signals.save).not.toHaveBeenCalled();
+  });
 
   describe('providerAcceptTime', () => {
     const accepted = (minutesAgo: number, latencyMinutes: number) => ({

@@ -10,6 +10,8 @@ import { ComplaintEvidence } from './domain/complaint-evidence.entity';
 import { ComplaintAudit } from './domain/complaint-audit.entity';
 import { CreateComplaintDto } from './dto/create-complaint.dto';
 import { AppealStatus } from '../../../../shared/trust.types';
+import { ComplaintTargetRole } from './domain/complaint.entity';
+import { TrustService } from '../../trust/trust.service';
 
 @Injectable()
 export class ComplaintsService {
@@ -20,6 +22,7 @@ export class ComplaintsService {
     private readonly evidenceRepository: Repository<ComplaintEvidence>,
     @InjectRepository(ComplaintAudit)
     private readonly auditRepository: Repository<ComplaintAudit>,
+    private readonly trust?: TrustService,
   ) {}
 
   async createComplaint(
@@ -37,6 +40,16 @@ export class ComplaintsService {
     });
 
     const savedComplaint = await this.complaintsRepository.save(complaint);
+
+    // FN-060: review signal recording is best-effort; it can never fail a
+    // complaint submission.
+    if (dto.targetRole === ComplaintTargetRole.PROVIDER && dto.targetId) {
+      try {
+        await this.trust?.evaluateComplaintSignal(dto.targetId);
+      } catch {
+        // Signal evaluation failures are non-fatal by design.
+      }
+    }
 
     if (dto.evidence && dto.evidence.length > 0) {
       const evidenceEntities = dto.evidence.map((ev) =>

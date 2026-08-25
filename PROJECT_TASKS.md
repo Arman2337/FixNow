@@ -54,17 +54,19 @@ Only these statuses are valid. A task cannot be completed while required validat
 
 # Project Progress
 
-Total Tasks: 112
-Completed: 88
+Total Tasks: 113
+Completed: 89
 In Progress: 0
 Blocked: 3
 Pending: 2
 Deferred: 18
 Cancelled: 1
-Current Phase: Current-scope product completion; push delivery blocked on Firebase credentials
-Next Recommended Task: FN-062 domain notifications (non-emergency slices unblocked by FN-061; emergency slice stays gated by FN-063 policy approval).
+Current Phase: Payment foundation delivered; advisory AI assistance and trust signals active
+Next Recommended Task: FN-062 notification remainder (scheduled reminders need a scheduler decision; emergency slices gated by FN-063) or FN-113 advisory price/signal surfacing UI.
 
 # Current Work
+
+2026-08-25 FN-060 completed on `feat/payment-foundation`: deterministic advisory price estimation (`GET /ai/price-estimate`, PUBLISHED/OBSERVED bases, honest PRICE_ON_REQUEST abstention) plus two new trust review signals (`customer-cancellation-frequency-v1`, `provider-refund-frequency-v1`), with all four windowed rules now wired best-effort into booking cancellation, complaint creation, and refund creation flows. Versioned evaluation suite `price-fraud-eval-v1` enforces false-positive, detection, bias, explanation, privacy, uncertainty, money, determinism, and threshold-drift gates. Also cleared pre-existing lint errors in the FN-053 payments code. Validated: backend lint clean, 69 suites / 388 tests, production build, `git diff --check`.
 
 2026-08-24 master completion run on `feat/provider-ui-polish`: FN-107 fixed category pricing, FN-108 book-again rebooking, FN-111 provider accept-time signal, FN-112 recurring schedules, and FN-110 review photos were implemented and validated (backend lint, 64 suites / 324 tests, build; Flutter analyze 0 errors / 109 tests; admin lint/typecheck/tests/build). FN-061 push infrastructure is now complete: live FCM delivery was confirmed on the connected Android device with user-supplied Firebase credentials.
 
@@ -2216,11 +2218,11 @@ Commit:
 PR:
 
 ## FN-060 â€” Implement Price Estimation and Fraud Signal Assistance
-Status: ⬜ Pending
+Status: ✅ Completed
 Priority: P2 â€” Medium
 Area: AI/Trust
 Depends On: FN-053, FN-055, FN-056
-Branch: feat/ai-price-fraud-assistance
+Branch: feat/payment-foundation (user-directed; listed branch not created)
 
 ### Objective
 Provide explainable advisory price ranges and reviewable fraud signals.
@@ -2229,20 +2231,22 @@ Provide explainable advisory price ranges and reviewable fraud signals.
 ### Do Not
 - Do not set final prices or automatically penalize users/providers.
 ### Acceptance Criteria
-- [ ] Bias, drift, uncertainty, explanation, privacy, and false-positive thresholds pass.
+- [x] Bias, drift, uncertainty, explanation, privacy, and false-positive thresholds pass.
 ### Validation
 ```bash
-# Run versioned price and fraud evaluation suites plus policy tests.
+cd backend && npm run lint && npm test -- --runInBand && npm run build
+git diff --check
 ```
 ### Files / Areas
 ```text
 ai/src/pricing/ ai/src/fraud/ ai/evals/ backend/src/trust/
 ```
 ### Notes
-None.
+Completed on `feat/payment-foundation` at user direction. Per ADR-0014 no model participates: price advice is a deterministic read of authoritative data in `backend/src/ai/pricing/` — anchored on the FN-107 published category price (`PUBLISHED`) or, with ≥5 paid orders, an empirical min/median/max band from the FN-052 ledger (`OBSERVED`); "price on request" categories abstain honestly. New customer permission `ai.price-estimate.read.self`. Trust rules gained `customer-cancellation-frequency-v1` (LOW) and `provider-refund-frequency-v1` (MEDIUM), all four windowed rules sharing one dedupe-by-subject/rule/day implementation, now evaluated best-effort in booking cancellation, complaint creation, and refund creation flows (previously the two FN-055 rules had no production trigger). Signals remain human-reviewed via existing admin trust endpoints. The versioned suite `backend/src/ai/evals/price-fraud-eval-v1.spec.ts` pins thresholds and gates false positives, detection, identity-independence (bias), explanation presence, free-text privacy, uncertainty disclosure, integer money, determinism, and drift. Mobile/admin surfacing is recorded as FN-113. Also fixed pre-existing unsafe-any lint errors in the FN-053 payments query code so the validation gate runs clean. Validated 2026-08-25: lint clean, 69 suites / 388 tests pass, production build passes.
+
 ### Completion Record
-Completed By:
-Completed Date:
+Completed By: Claude Code
+Completed Date: 2026-08-25
 Commit:
 PR:
 
@@ -4341,3 +4345,46 @@ Completed By: Claude Code
 Completed Date: 2026-08-24
 Commit:
 PR: Pending
+
+## FN-113 — Surface Advisory Price Estimates and Trust Review Signals in UI
+
+Status: ⬜ Pending
+Priority: P2 — Medium
+Area: Mobile / Admin / AI/Trust
+Depends On: FN-060
+Branch: feat/advisory-surfacing-ui
+
+### Objective
+Expose the FN-060 advisory price estimate to customers and give admins a usable trust-signal review queue.
+
+### Scope
+- Customer service-request flow shows the advisory estimate with its notice, edit/skip always available, and honest PRICE_ON_REQUEST handling.
+- Admin trust screens list OPEN signals (all four rules) with severity, evidence, window, and review/dismiss actions via the existing endpoints.
+- Follow `DESIGN.md` tokens and the FN-057 advisory-UX pattern (suggestion may be wrong; manual flow stays primary).
+
+### Do Not
+- Do not let an estimate pre-fill or alter any booking amount.
+- Do not expose signals to subjects or treat review UI as authorization.
+
+### Acceptance Criteria
+- [ ] Estimate display, abstention, and manual fallback are covered by mobile tests.
+- [ ] Signal queue list/review flows are covered by admin tests.
+- [ ] Mobile and admin checks pass.
+
+### Validation
+```bash
+cd mobile && flutter analyze && flutter test
+cd admin && npm run lint && npm run typecheck && npm test && npm run build
+```
+
+### Files / Areas
+`mobile/lib/features/services/`, `mobile/lib/features/bookings/`, `admin/src/features/trust/`, `backend/src/trust/`, `shared/`
+
+### Notes
+Created from FN-060 completion on 2026-08-25; backend capability exists without any client surface today.
+
+### Completion Record
+Completed By:
+Completed Date:
+Commit:
+PR:

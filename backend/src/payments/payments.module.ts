@@ -14,6 +14,7 @@ import { PaymentsController } from './payments.controller';
 import { PaymentsAdminController } from './payments-admin.controller';
 import { ProviderEarningsController } from './provider-earnings.controller';
 import { PaymentsService } from './payments.service';
+import { TrustModule } from '../trust/trust.module';
 
 export enum PaymentProviderName {
   Fake = 'fake',
@@ -23,6 +24,7 @@ export enum PaymentProviderName {
 @Module({
   imports: [
     TypeOrmModule.forFeature([PaymentOrder, PaymentEvent, Refund, Invoice]),
+    TrustModule,
   ],
   controllers: [
     PaymentsController,

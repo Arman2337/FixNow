@@ -25,6 +25,7 @@ import type {
   CreatePaymentOrderRequest,
   VerifyCheckoutParams,
 } from '../../../shared/payments.types';
+import { TrustService } from '../trust/trust.service';
 
 /** Booking states for which the customer may open a payment. */
 const PAYABLE_BOOKING_STATUSES: readonly string[] = [
@@ -39,6 +40,7 @@ export class PaymentsService {
     @InjectRepository(PaymentOrder)
     private readonly orders: Repository<PaymentOrder>,
     @Inject(PAYMENT_GATEWAY) private readonly gateway: PaymentGateway,
+    private readonly trust?: TrustService,
   ) {}
 
   /**
@@ -271,7 +273,7 @@ export class PaymentsService {
     const existing = await invoices.findOneBy({ paymentOrderId: orderId });
     if (existing) return;
     const issuedAt = new Date();
-    const rows = await this.dataSource.query(
+    const rows = await this.dataSource.query<Array<{ nextval?: string }>>(
       `SELECT nextval('invoice_number_seq') AS nextval`,
     );
     const invoiceNumber = `FN-${issuedAt.getUTCFullYear()}-${(
@@ -386,6 +388,18 @@ export class PaymentsService {
           .update(gatewayRefund.gatewayRefundId)
           .digest('hex'),
       );
+      // FN-060: refund-frequency review signal is best-effort; it can never
+      // fail a recorded refund.
+      try {
+        const booking = await this.dataSource
+          .getRepository(Booking)
+          .findOneBy({ id: order.bookingId });
+        if (booking?.providerId) {
+          await this.trust?.evaluateProviderRefundSignal(booking.providerId);
+        }
+      } catch {
+        // Signal evaluation failures are non-fatal by design.
+      }
       return {
         id: saved.id,
         gatewayRefundId: saved.gatewayRefundId,
@@ -410,7 +424,7 @@ export class PaymentsService {
   }
 
   private async refundedTotal(paymentOrderId: string): Promise<number> {
-    const rows = await this.dataSource.query(
+    const rows = await this.dataSource.query<Array<{ total?: string }>>(
       `SELECT COALESCE(SUM(amount_minor), 0) AS total FROM refunds WHERE payment_order_id = $1`,
       [paymentOrderId],
     );
@@ -429,14 +443,16 @@ export class PaymentsService {
     paidOrderCount: number;
     note: string;
   }> {
-    const grossRows = await this.dataSource.query(
+    const grossRows = await this.dataSource.query<
+      Array<{ gross?: string; count?: number }>
+    >(
       `SELECT COALESCE(SUM(o.amount_minor), 0) AS gross, COUNT(*)::int AS count
        FROM payment_orders o
        JOIN bookings b ON b.id = o.booking_id
        WHERE b.provider_id = $1 AND o.status = 'PAID'`,
       [providerId],
     );
-    const refundedRows = await this.dataSource.query(
+    const refundedRows = await this.dataSource.query<Array<{ total?: string }>>(
       `SELECT COALESCE(SUM(r.amount_minor), 0) AS total
        FROM refunds r
        JOIN payment_orders o ON o.id = r.payment_order_id

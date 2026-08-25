@@ -27,6 +27,10 @@ export const PERMISSIONS = {
   adminSkillsDelete: 'admin.skills.delete',
   bookingCreateSelf: 'bookings.request.create.self',
   bookingScheduleManageSelf: 'bookings.schedule.manage.self',
+  paymentOrderManageSelf: 'payments.order.manage.self',
+  paymentRefundCreate: 'payments.refund.create',
+  paymentInvoiceReadSelf: 'payments.invoice.read.self',
+  providerEarningsReadSelf: 'provider.earnings.read.self',
   bookingAccept: 'bookings.accept',
   bookingAvailableRead: 'bookings.available.read',
   bookingUpdateStatus: 'bookings.update.status',
@@ -51,6 +55,9 @@ export const PERMISSIONS = {
   trustAcceptTimeReadSelf: 'trust.accept-time.read.self',
   complaintsCreate: 'complaints.create',
   aiRecommendationCreate: 'ai.recommendation.create',
+  aiPriceEstimateReadSelf: 'ai.price-estimate.read.self',
+  emergencyCreateSelf: 'emergency.create.self',
+  emergencyDispatchManage: 'emergency.dispatch.manage',
   complaintsReadSelf: 'complaints.read.self',
   adminComplaintsRead: 'admin.complaints.read',
   adminComplaintsUpdate: 'admin.complaints.update',
@@ -327,6 +334,18 @@ export const PERMISSION_POLICIES: Readonly<
     roles: ['customer'],
     relationship: 'self',
   },
+  [PERMISSIONS.aiPriceEstimateReadSelf]: {
+    roles: ['customer'],
+    relationship: 'self',
+  },
+  [PERMISSIONS.emergencyCreateSelf]: {
+    roles: ['customer'],
+    relationship: 'self',
+  },
+  [PERMISSIONS.emergencyDispatchManage]: {
+    roles: ['trust_safety_reviewer', 'operations_administrator'],
+    audience: 'admin',
+  },
   [PERMISSIONS.complaintsReadSelf]: {
     roles: ['customer', 'verified_provider'],
     relationship: 'self',
@@ -336,6 +355,25 @@ export const PERMISSION_POLICIES: Readonly<
     relationship: 'self',
   },
   [PERMISSIONS.trustAcceptTimeReadSelf]: {
+    roles: ['verified_provider'],
+    audience: 'mobile',
+    relationship: 'self',
+  },
+  [PERMISSIONS.paymentOrderManageSelf]: {
+    roles: ['customer'],
+    audience: 'mobile',
+    relationship: 'self',
+  },
+  [PERMISSIONS.paymentRefundCreate]: {
+    roles: ['support_agent', 'operations_administrator'],
+    audience: 'admin',
+  },
+  [PERMISSIONS.paymentInvoiceReadSelf]: {
+    roles: ['customer'],
+    audience: 'mobile',
+    relationship: 'self',
+  },
+  [PERMISSIONS.providerEarningsReadSelf]: {
     roles: ['verified_provider'],
     audience: 'mobile',
     relationship: 'self',

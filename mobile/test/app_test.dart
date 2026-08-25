@@ -7,11 +7,12 @@ import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/features/location/location_consent_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'pump_idle.dart';
 
 void main() {
   testWidgets('renders the customer shell with design tokens', (tester) async {
     await tester.pumpWidget(_testApp(AppEnvironment.development));
-    await tester.pumpAndSettle();
+    await tester.pumpIdle();
 
     final materialApp = tester.widget<MaterialApp>(find.byType(MaterialApp));
     expect(materialApp.theme?.colorScheme.primary, AppColors.primary);
@@ -27,10 +28,10 @@ void main() {
 
   testWidgets('navigates between shell destinations', (tester) async {
     await tester.pumpWidget(_testApp(AppEnvironment.development));
-    await tester.pumpAndSettle();
+    await tester.pumpIdle();
 
     await tester.tap(find.text('Bookings'));
-    await tester.pumpAndSettle();
+    await tester.pumpIdle();
 
     expect(find.text('No bookings yet'), findsOneWidget);
     final navigation = tester.widget<NavigationBar>(find.byType(NavigationBar));
@@ -39,10 +40,10 @@ void main() {
 
   testWidgets('help uses customer-safe preview language', (tester) async {
     await tester.pumpWidget(_testApp(AppEnvironment.development));
-    await tester.pumpAndSettle();
+    await tester.pumpIdle();
 
     await tester.tap(find.text('Help'));
-    await tester.pumpAndSettle();
+    await tester.pumpIdle();
 
     expect(find.textContaining('tracked product task'), findsNothing);
     expect(
@@ -59,18 +60,23 @@ void main() {
 
     await tester.pumpWidget(
       MediaQuery(
-        data: const MediaQueryData(textScaler: TextScaler.linear(2)),
+        data: const MediaQueryData(
+          textScaler: TextScaler.linear(2),
+          // Keep the suite-wide reduce-motion contract; an ambient
+          // MediaQuery otherwise resets it and re-arms looping tickers.
+          disableAnimations: true,
+        ),
         child: _testApp(AppEnvironment.development),
       ),
     );
-    await tester.pumpAndSettle();
+    await tester.pumpIdle();
 
     expect(tester.takeException(), isNull);
   });
 
   testWidgets('hides the debug banner in production', (tester) async {
     await tester.pumpWidget(_testApp(AppEnvironment.production));
-    await tester.pumpAndSettle();
+    await tester.pumpIdle();
 
     expect(find.byType(Banner), findsNothing);
   });

@@ -1,6 +1,7 @@
 import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
+import 'package:fixnow_mobile/design_system/fix_motion.dart';
 import 'package:flutter/material.dart';
 
 enum FixButtonVariant { primary, secondary, tertiary, destructive, emergency, gold }
@@ -11,6 +12,7 @@ class FixButton extends StatelessWidget {
     required this.onPressed,
     this.variant = FixButtonVariant.primary,
     this.icon,
+    this.trailingIcon,
     this.isLoading = false,
     this.height = 52.0,
     this.expand = false,
@@ -20,7 +22,14 @@ class FixButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
   final FixButtonVariant variant;
+
+  /// Optional glyph shown *before* the label.
   final IconData? icon;
+
+  /// Optional glyph shown *after* the label — e.g. a forward arrow on a
+  /// "Book →" call-to-action. Hidden while [isLoading].
+  final IconData? trailingIcon;
+
   final bool isLoading;
   final double height;
   final bool expand;
@@ -42,6 +51,8 @@ class FixButton extends StatelessWidget {
         else if (icon case final value?)
           Icon(value, size: 20),
         Text(label, textAlign: TextAlign.center),
+        if (trailingIcon case final value? when !isLoading)
+          Icon(value, size: 20),
       ],
     );
 
@@ -122,7 +133,9 @@ class FixButton extends StatelessWidget {
     return Semantics(
       button: true,
       enabled: callback != null,
-      child: button,
+      // A gentle press-in scale on top of the Material state layer. Disabled
+      // buttons stay static.
+      child: callback == null ? button : FixPressable(child: button),
     );
   }
 }

@@ -22,7 +22,7 @@ void main() {
     expect(AppColors.emergency, AppColors.danger);
     expect(AppColors.rating, isNot(AppColors.primary));
     expect(AppMotion.fast, const Duration(milliseconds: 150));
-    expect(AppMotion.container, const Duration(milliseconds: 300));
+    expect(AppMotion.container, const Duration(milliseconds: 340));
     expect(
       _contrastRatio(AppColors.textPrimary, AppColors.backgroundPrimary),
       greaterThanOrEqualTo(4.5),

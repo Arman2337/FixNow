@@ -1,8 +1,10 @@
 import 'package:fixnow_mobile/design_system/app_colors.dart';
+import 'package:fixnow_mobile/design_system/app_motion.dart';
 import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/app_typography.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
+import 'package:fixnow_mobile/design_system/fix_motion.dart';
 import 'package:fixnow_mobile/design_system/fix_status_chip.dart';
 import 'package:flutter/material.dart';
 
@@ -294,16 +296,18 @@ class FixAvatar extends StatelessWidget {
           Positioned(
             right: -2,
             bottom: -2,
-            child: Container(
-              padding: const EdgeInsets.all(2),
-              decoration: const BoxDecoration(
-                color: AppColors.backgroundPrimary,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.verified_rounded,
-                color: AppColors.verified,
-                size: badgeSize,
+            child: FixScaleIn(
+              child: Container(
+                padding: const EdgeInsets.all(2),
+                decoration: const BoxDecoration(
+                  color: AppColors.backgroundPrimary,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.verified_rounded,
+                  color: AppColors.verified,
+                  size: badgeSize,
+                ),
               ),
             ),
           ),
@@ -399,10 +403,13 @@ class FixEmergencyBanner extends StatelessWidget {
                       color: AppColors.emergency,
                       borderRadius: BorderRadius.circular(AppRadius.medium),
                     ),
-                    child: const Icon(
-                      Icons.emergency_rounded,
-                      color: Colors.white,
-                      size: 20,
+                    child: const FixPulse(
+                      maxScale: 1.08,
+                      child: Icon(
+                        Icons.emergency_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
                     ),
                   ),
                   const SizedBox(width: AppSpacing.sm),
@@ -633,25 +640,17 @@ class _TimelineStep extends StatelessWidget {
             width: 24,
             child: Column(
               children: [
-                Container(
-                  width: 16,
-                  height: 16,
-                  decoration: BoxDecoration(
-                    color: dotColor,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: dotBorder, width: 2),
-                  ),
-                  child: isCompleted
-                      ? const Icon(
-                          Icons.check,
-                          size: 10,
-                          color: AppColors.onPrimary,
-                        )
-                      : null,
+                _TimelineDot(
+                  color: dotColor,
+                  borderColor: dotBorder,
+                  isCompleted: isCompleted,
+                  isCurrent: isCurrent,
                 ),
                 if (!isLast)
                   Expanded(
-                    child: Container(
+                    child: AnimatedContainer(
+                      duration: AppMotion.emphasis,
+                      curve: AppMotion.standardCurve,
                       width: 2,
                       color: isCompleted
                           ? AppColors.primary
@@ -668,8 +667,9 @@ class _TimelineStep extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    title,
+                  AnimatedDefaultTextStyle(
+                    duration: AppMotion.emphasis,
+                    curve: AppMotion.standardCurve,
                     style: TextStyle(
                       color: isCurrent
                           ? AppColors.accentGold
@@ -679,6 +679,7 @@ class _TimelineStep extends StatelessWidget {
                       fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w600,
                       fontSize: 14,
                     ),
+                    child: Text(title),
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -697,6 +698,45 @@ class _TimelineStep extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+/// Timeline node: an animated dot that recolours as a step progresses. The
+/// current step gets a gentle pulse; a completed step pops its check in.
+class _TimelineDot extends StatelessWidget {
+  const _TimelineDot({
+    required this.color,
+    required this.borderColor,
+    required this.isCompleted,
+    required this.isCurrent,
+  });
+
+  final Color color;
+  final Color borderColor;
+  final bool isCompleted;
+  final bool isCurrent;
+
+  @override
+  Widget build(BuildContext context) {
+    final dot = AnimatedContainer(
+      duration: AppMotion.emphasis,
+      curve: AppMotion.standardCurve,
+      width: 16,
+      height: 16,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+        border: Border.all(color: borderColor, width: 2),
+      ),
+      child: isCompleted
+          ? const FixScaleIn(
+              from: 0.2,
+              child: Icon(Icons.check, size: 10, color: AppColors.onPrimary),
+            )
+          : null,
+    );
+    return isCurrent ? FixPulse(maxScale: 1.25, child: dot) : dot;
   }
 }
 
@@ -842,8 +882,9 @@ class FixInvoiceCard extends StatelessWidget {
                   fontSize: 16,
                 ),
               ),
-              Text(
-                '₹$total',
+              FixCountUp(
+                value: total,
+                prefix: '₹',
                 style: const TextStyle(
                   color: AppColors.accentGold,
                   fontWeight: FontWeight.w800,

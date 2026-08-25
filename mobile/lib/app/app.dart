@@ -41,6 +41,8 @@ import 'package:fixnow_mobile/features/support/complaints_controller.dart';
 import 'package:fixnow_mobile/features/support/complaints_repository.dart';
 import 'package:fixnow_mobile/features/support/customer_help_screen.dart';
 import 'package:fixnow_mobile/features/ai/ai_recommendation_repository.dart';
+import 'package:fixnow_mobile/features/ai/price_estimate_repository.dart';
+import 'package:fixnow_mobile/features/emergency/emergency_repository.dart';
 
 import 'package:fixnow_mobile/features/realtime/realtime_client.dart';
 import 'package:fixnow_mobile/notifications/push_api.dart';
@@ -80,6 +82,12 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
   late final ComplaintsController _complaints;
   late final PushEnrollmentController _push;
   final Map<String, BookingTrackingController> _trackingControllers = {};
+  /// FN-062: app-wide messenger so foreground pushes can surface as banners
+  /// from any screen.
+  final GlobalKey<ScaffoldMessengerState> _messengerKey =
+      GlobalKey<ScaffoldMessengerState>();
+  final FirebasePushGateway _pushGateway = FirebasePushGateway();
+  StreamSubscription<ForegroundPushMessage>? _foregroundPushSub;
   _AuthEntryStep _authEntryStep = _AuthEntryStep.welcome;
   bool _registrationIntent = false;
   AccountRole _selectedRole = AccountRole.customer;
@@ -89,6 +97,10 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _initializeData();
+    _foregroundPushSub = bindForegroundPushBanner(
+      source: _pushGateway,
+      messengerKey: _messengerKey,
+    );
   }
 
   void _initializeData() {
@@ -126,6 +138,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
     );
     _push = PushEnrollmentController(
       api: PushApi(api, accessToken: _auth.validAccessToken),
+      gateway: _pushGateway,
     );
     _auth.restore();
   }
@@ -133,6 +146,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    unawaited(_foregroundPushSub?.cancel());
     _auth.dispose();
     _profile.dispose();
     _discovery.dispose();
@@ -153,6 +167,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'FixNow',
+      scaffoldMessengerKey: _messengerKey,
       theme: AppTheme.dark,
       darkTheme: AppTheme.dark,
       themeMode: ThemeMode.dark,
@@ -264,6 +279,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
               controller: _discovery,
               locationController: _location,
               bookingsController: _bookings,
+              emergencyRepository: EmergencyRepository(_api, accessToken: _auth.validAccessToken),
               onCategorySelected: (category, location) async {
                 final created = await Navigator.of(context).push<bool>(
                   MaterialPageRoute(
@@ -271,6 +287,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
                       category: category,
                       controller: _bookings,
                       initialLocation: location,
+                      estimateRepository: PriceEstimateRepository(_api, accessToken: _auth.validAccessToken),
                     ),
                   ),
                 );
@@ -367,6 +384,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
           category: category,
           controller: _bookings,
           initialDescription: booking.description,
+          estimateRepository: PriceEstimateRepository(_api, accessToken: _auth.validAccessToken),
         ),
       ),
     );

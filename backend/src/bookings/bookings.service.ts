@@ -17,6 +17,7 @@ import { MatchingService } from '../matching/matching.service';
 import { LocationService } from '../location/location.service';
 import { BookingProjectionService } from '../realtime/booking-projection.service';
 import { DomainNotificationService } from '../notifications/domain/domain-notification.service';
+import { TrustService } from '../trust/trust.service';
 
 export interface BookingHistoryPage {
   bookings: Booking[];
@@ -41,6 +42,7 @@ export class BookingsService {
     private readonly bookingProjections?: BookingProjectionService,
     private readonly config?: ConfigService,
     private readonly domainNotifications?: DomainNotificationService,
+    private readonly trust?: TrustService,
   ) {}
 
   /** FN-062: push is best-effort; a notification failure never fails a booking. */
@@ -253,6 +255,16 @@ export class BookingsService {
         BookingStatus.CANCELLED,
       ),
     );
+    // FN-060: trust signal recording is best-effort, like notifications.
+    await this.notifySafely(async () => {
+      await this.trust?.evaluateCustomerCancellationSignal(booking.customerId);
+    });
+    const assignedProviderId = booking.providerId;
+    if (assignedProviderId) {
+      await this.notifySafely(async () => {
+        await this.trust?.evaluateCancellationSignal(assignedProviderId);
+      });
+    }
     return booking;
   }
 

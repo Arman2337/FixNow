@@ -34,6 +34,11 @@ class ServiceCategory {
     this.description,
     this.iconName,
     this.pricing,
+    this.isEmergency = false,
+    this.verifiedProCount = 0,
+    this.onlineProCount = 0,
+    this.rating,
+    this.reviewCount = 0,
   });
   final String id;
   final String name;
@@ -41,6 +46,26 @@ class ServiceCategory {
   final String? description;
   final String? iconName;
   final ServiceCategoryPricing? pricing;
+
+  /// Whether this category is flagged for emergency/priority dispatch on the
+  /// backend (e.g. Locksmith, Emergency Repair). Real data, not a heuristic.
+  final bool isEmergency;
+
+  /// Number of verified providers offering this category who hold an active
+  /// account. Real backend data; 0 until providers register — never a
+  /// placeholder.
+  final int verifiedProCount;
+
+  /// Of the verified providers, how many are online right now (real-time
+  /// presence). 0 when none are live.
+  final int onlineProCount;
+
+  /// Average published-review rating (1–5), or null when the category has no
+  /// reviews yet.
+  final double? rating;
+
+  /// Number of published reviews behind [rating]. 0 when none.
+  final int reviewCount;
 
   factory ServiceCategory.fromJson(Map<String, Object?> json) {
     final id = json['id'];
@@ -60,6 +85,11 @@ class ServiceCategory {
       pricing: json['pricing'] == null
           ? null
           : ServiceCategoryPricing.fromJson(json['pricing']),
+      isEmergency: json['isEmergency'] == true,
+      verifiedProCount: (json['verifiedProCount'] as num?)?.toInt() ?? 0,
+      onlineProCount: (json['onlineProCount'] as num?)?.toInt() ?? 0,
+      rating: (json['rating'] as num?)?.toDouble(),
+      reviewCount: (json['reviewCount'] as num?)?.toInt() ?? 0,
     );
   }
 }

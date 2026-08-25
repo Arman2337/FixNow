@@ -33,31 +33,34 @@ export class ServiceCategoriesController {
   findAll(
     @Query() query: ServiceCategoryQueryDto,
   ): Promise<ServiceCategoryResponseDto[]> {
-    return this.serviceCategoriesService.findAll(query);
+    return this.serviceCategoriesService.findAllWithStats(query);
   }
 
   @Public()
   @Get('active')
   getActiveCategories(): Promise<ServiceCategoryResponseDto[]> {
-    return this.serviceCategoriesService.getActiveCategories();
+    return this.serviceCategoriesService.findAllWithStats({ isActive: true });
   }
 
   @Public()
   @Get('emergency')
   getEmergencyCategories(): Promise<ServiceCategoryResponseDto[]> {
-    return this.serviceCategoriesService.getEmergencyCategories();
+    return this.serviceCategoriesService.findAllWithStats({
+      isActive: true,
+      isEmergency: true,
+    });
   }
 
   @Public()
   @Get(':id')
   findById(@Param('id') id: string): Promise<ServiceCategoryResponseDto> {
-    return this.serviceCategoriesService.findById(id);
+    return this.serviceCategoriesService.findByIdWithStats(id);
   }
 
   @Public()
   @Get('slug/:slug')
   findBySlug(@Param('slug') slug: string): Promise<ServiceCategoryResponseDto> {
-    return this.serviceCategoriesService.findBySlug(slug);
+    return this.serviceCategoriesService.findBySlugWithStats(slug);
   }
 
   @Post()

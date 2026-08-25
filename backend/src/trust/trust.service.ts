@@ -20,6 +20,7 @@ import {
 import { Booking } from '../bookings/domain/booking.entity';
 import { BookingReview } from '../ratings/domain/review.entity';
 import { Complaint } from '../support/complaints/domain/complaint.entity';
+import { Refund } from '../payments/domain/refund.entity';
 import { TrustSignal } from './domain/trust-signal.entity';
 
 export const TRUST_RULES = {
@@ -27,6 +28,15 @@ export const TRUST_RULES = {
   cancellationThreshold: 3,
   complaintWindowDays: 30,
   complaintThreshold: 2,
+  /** FN-060: customer-side cancellation pattern. */
+  customerCancellationWindowDays: 30,
+  customerCancellationThreshold: 3,
+  /** FN-060: refunds recorded against one provider's bookings. */
+  refundWindowDays: 30,
+  refundThreshold: 2,
+  /** FN-063 policy §6.5: repeat emergency use routes to review. */
+  emergencyWindowDays: 7,
+  emergencyThreshold: 3,
   /** FN-111: bounded rolling accept-time aggregate. */
   acceptTimeWindowDays: 90,
   acceptTimeMinSamples: 3,
@@ -45,6 +55,8 @@ export class TrustService {
     @InjectRepository(TrustSignal)
     private readonly signals: Repository<TrustSignal>,
     @Inject(CACHE_MANAGER) private readonly cache: Cache,
+    @InjectRepository(Refund)
+    private readonly refunds: Repository<Refund>,
   ) {}
 
   /**
@@ -144,6 +156,43 @@ export class TrustService {
     };
   }
 
+  /**
+   * FN-055/FN-060 shared shape for windowed-count review signals: one signal
+   * per subject, rule, and day-bucketed window; purely advisory evidence
+   * that always names its bounded window and requires human review.
+   */
+  private async recordWindowedSignal(input: {
+    subjectType: TrustSignal['subjectType'];
+    subjectId: string;
+    ruleCode: string;
+    severity: TrustSignalSeverity;
+    windowDays: number;
+    observedCount: number;
+  }): Promise<TrustSignal | null> {
+    const now = new Date();
+    const key = now.toISOString().slice(0, 10);
+    const existing = await this.signals.findOneBy({
+      subjectType: input.subjectType,
+      subjectId: input.subjectId,
+      ruleCode: input.ruleCode,
+      windowStart: key,
+    });
+    if (existing) return existing;
+    return this.signals.save(
+      this.signals.create({
+        subjectType: input.subjectType,
+        subjectId: input.subjectId,
+        ruleCode: input.ruleCode,
+        windowStart: key,
+        severity: input.severity,
+        evidenceSummary: `${input.observedCount} events matched rule ${input.ruleCode} in the last ${input.windowDays} days. Requires human review.`,
+        status: TrustSignalStatus.OPEN,
+        reviewedBy: null,
+        reviewedAt: null,
+      }),
+    );
+  }
+
   async evaluateCancellationSignal(
     providerId: string,
     now = new Date(),
@@ -160,27 +209,45 @@ export class TrustService {
       },
     });
     if (cancellations < TRUST_RULES.cancellationThreshold) return null;
-    const key = windowStart.toISOString().slice(0, 10);
-    const existing = await this.signals.findOneBy({
+    return this.recordWindowedSignal({
       subjectType: 'PROVIDER',
       subjectId: providerId,
       ruleCode: 'provider-cancellation-frequency-v1',
-      windowStart: key,
+      severity: TrustSignalSeverity.LOW,
+      windowDays: TRUST_RULES.cancellationWindowDays,
+      observedCount: cancellations,
     });
-    if (existing) return existing;
-    return this.signals.save(
-      this.signals.create({
-        subjectType: 'PROVIDER',
-        subjectId: providerId,
-        ruleCode: 'provider-cancellation-frequency-v1',
-        windowStart: key,
-        severity: TrustSignalSeverity.LOW,
-        evidenceSummary: `${cancellations} provider cancellations recorded in the last ${TRUST_RULES.cancellationWindowDays} days. Requires human review.`,
-        status: TrustSignalStatus.OPEN,
-        reviewedBy: null,
-        reviewedAt: null,
-      }),
+  }
+
+  /**
+   * FN-060: mirror of the provider rule on the customer side. Counts
+   * cancellations of the customer's bookings without asserting who
+   * initiated them; evidence stays factual for human review.
+   */
+  async evaluateCustomerCancellationSignal(
+    customerId: string,
+    now = new Date(),
+  ): Promise<TrustSignal | null> {
+    const windowStart = new Date(now);
+    windowStart.setUTCDate(
+      windowStart.getUTCDate() - TRUST_RULES.customerCancellationWindowDays,
     );
+    const cancellations = await this.bookings.count({
+      where: {
+        customerId,
+        status: BookingStatus.CANCELLED,
+        cancelledAt: MoreThan(windowStart),
+      },
+    });
+    if (cancellations < TRUST_RULES.customerCancellationThreshold) return null;
+    return this.recordWindowedSignal({
+      subjectType: 'CUSTOMER',
+      subjectId: customerId,
+      ruleCode: 'customer-cancellation-frequency-v1',
+      severity: TrustSignalSeverity.LOW,
+      windowDays: TRUST_RULES.customerCancellationWindowDays,
+      observedCount: cancellations,
+    });
   }
 
   async listSignals(): Promise<TrustSignal[]> {
@@ -213,27 +280,70 @@ export class TrustService {
       },
     });
     if (complaintsCount < TRUST_RULES.complaintThreshold) return null;
-    const key = windowStart.toISOString().slice(0, 10);
-    const existing = await this.signals.findOneBy({
+    return this.recordWindowedSignal({
       subjectType: 'PROVIDER',
       subjectId: providerId,
       ruleCode: 'provider-complaint-frequency-v1',
-      windowStart: key,
+      severity: TrustSignalSeverity.MEDIUM,
+      windowDays: TRUST_RULES.complaintWindowDays,
+      observedCount: complaintsCount,
     });
-    if (existing) return existing;
-    return this.signals.save(
-      this.signals.create({
-        subjectType: 'PROVIDER',
-        subjectId: providerId,
-        ruleCode: 'provider-complaint-frequency-v1',
-        windowStart: key,
-        severity: TrustSignalSeverity.MEDIUM,
-        evidenceSummary: `${complaintsCount} complaints recorded in the last ${TRUST_RULES.complaintWindowDays} days. Requires human review.`,
-        status: TrustSignalStatus.OPEN,
-        reviewedBy: null,
-        reviewedAt: null,
-      }),
+  }
+
+  /**
+   * FN-063 policy §6.5: repeated emergency use raises a HIGH-severity
+   * advisory signal for human review. The caller supplies the windowed
+   * count because emergency history lives in the dispatch sidecar.
+   */
+  async recordEmergencyFrequencySignal(
+    customerId: string,
+    observedCount: number,
+  ): Promise<TrustSignal | null> {
+    if (observedCount < TRUST_RULES.emergencyThreshold) return null;
+    return this.recordWindowedSignal({
+      subjectType: 'CUSTOMER',
+      subjectId: customerId,
+      ruleCode: 'customer-emergency-frequency-v1',
+      severity: TrustSignalSeverity.HIGH,
+      windowDays: TRUST_RULES.emergencyWindowDays,
+      observedCount,
+    });
+  }
+
+  /**
+   * FN-060: refunds recorded against one provider's bookings. Refunds are
+   * staff-controlled (FN-053); a cluster may indicate quality or dispute
+   * problems and always routes to human review.
+   */
+  async evaluateProviderRefundSignal(
+    providerId: string,
+    now = new Date(),
+  ): Promise<TrustSignal | null> {
+    const windowStart = new Date(now);
+    windowStart.setUTCDate(
+      windowStart.getUTCDate() - TRUST_RULES.refundWindowDays,
     );
+    const refundCount = await this.refunds
+      .createQueryBuilder('refund')
+      .innerJoin(
+        'payment_orders',
+        'order',
+        'order.id = refund.payment_order_id',
+      )
+      .innerJoin('bookings', 'booking', 'booking.id = order.booking_id')
+      .where('booking.provider_id = :providerId', { providerId })
+      .andWhere('refund.status = :status', { status: 'PROCESSED' })
+      .andWhere('refund.created_at > :windowStart', { windowStart })
+      .getCount();
+    if (refundCount < TRUST_RULES.refundThreshold) return null;
+    return this.recordWindowedSignal({
+      subjectType: 'PROVIDER',
+      subjectId: providerId,
+      ruleCode: 'provider-refund-frequency-v1',
+      severity: TrustSignalSeverity.MEDIUM,
+      windowDays: TRUST_RULES.refundWindowDays,
+      observedCount: refundCount,
+    });
   }
 
   async submitSignalAppeal(

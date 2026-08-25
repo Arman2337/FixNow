@@ -12,6 +12,7 @@ import { MatchingModule } from '../matching/matching.module';
 import { LocationModule } from '../location/location.module';
 import { RealtimeModule } from '../realtime/realtime.module';
 import { DomainNotificationsModule } from '../notifications/domain/domain-notifications.module';
+import { TrustModule } from '../trust/trust.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { DomainNotificationsModule } from '../notifications/domain/domain-notifi
     LocationModule,
     RealtimeModule,
     DomainNotificationsModule,
+    TrustModule,
   ],
   controllers: [BookingsController, SchedulesController],
   providers: [BookingsService, SchedulesService],

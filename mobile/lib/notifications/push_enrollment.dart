@@ -1,8 +1,10 @@
+import 'dart:async';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:fixnow_mobile/api/api_client.dart';
 import 'package:fixnow_mobile/notifications/push_api.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 
 /// Compile-time gate. Push stays fully inert (no Firebase calls, no native
 /// configuration requirement) unless the build explicitly enables it.
@@ -17,7 +19,22 @@ abstract interface class PushGateway {
   Future<String?> currentToken();
 }
 
-class FirebasePushGateway implements PushGateway {
+/// A push delivered while the app is open. Android suppresses tray display
+/// for foregrounded apps; the app surfaces these as an in-app banner.
+class ForegroundPushMessage {
+  const ForegroundPushMessage({required this.title, required this.body});
+
+  final String title;
+  final String body;
+}
+
+/// Source of foreground-delivered pushes; separate from [PushGateway] so
+/// enrollment fakes stay unaffected.
+abstract interface class ForegroundPushSource {
+  Stream<ForegroundPushMessage> foregroundMessages();
+}
+
+class FirebasePushGateway implements PushGateway, ForegroundPushSource {
   bool _initialized = false;
 
   @override
@@ -47,6 +64,34 @@ class FirebasePushGateway implements PushGateway {
 
   @override
   Future<String?> currentToken() => FirebaseMessaging.instance.getToken();
+
+  @override
+  Stream<ForegroundPushMessage> foregroundMessages() =>
+      FirebaseMessaging.onMessage.map((message) {
+        final notification = message.notification;
+        return ForegroundPushMessage(
+          title: notification?.title ?? 'FixNow',
+          body: notification?.body ?? '',
+        );
+      });
+}
+
+/// FN-062 remainder: show foreground pushes as an in-app banner through the
+/// app-wide scaffold messenger. Server copy is policy-owned and already
+/// lock-screen-safe, so it is displayed verbatim. Returns the subscription
+/// so the app can cancel it on dispose; never subscribes when push is
+/// compiled out.
+StreamSubscription<ForegroundPushMessage>? bindForegroundPushBanner({
+  required ForegroundPushSource source,
+  required GlobalKey<ScaffoldMessengerState> messengerKey,
+  bool featureEnabled = pushNotificationsEnabled,
+}) {
+  if (!featureEnabled) return null;
+  return source.foregroundMessages().listen((message) {
+    messengerKey.currentState?.showSnackBar(
+      SnackBar(content: Text('${message.title} — ${message.body}')),
+    );
+  });
 }
 
 enum PushEnrollmentStatus {

@@ -33,3 +33,6 @@ Start with [`0000-template.md`](0000-template.md).
 - [ADR-0011: Use email OTP and rotating refresh tokens](0011-use-email-otp-and-rotating-refresh-tokens.md) — Accepted
 - [ADR-0012: Use Google Maps Platform for maps and navigation](0012-use-google-maps-platform.md) — Accepted
 - [ADR-0013: Adopt Next.js for the admin application](0013-adopt-nextjs-admin.md) — Accepted
+- [ADR-0016: Adopt Razorpay as the payment provider](0016-adopt-razorpay-payments.md) — Accepted
+- [ADR-0015: Adopt Firebase Cloud Messaging for push notification delivery](0015-adopt-firebase-cloud-messaging-push.md) — Accepted
+- [ADR-0016: Adopt Razorpay as the payment provider](0016-adopt-razorpay-payments.md) — Accepted

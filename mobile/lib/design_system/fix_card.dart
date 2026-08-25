@@ -2,6 +2,7 @@ import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_typography.dart';
+import 'package:fixnow_mobile/design_system/fix_motion.dart';
 import 'package:flutter/material.dart';
 
 enum FixCardTone { standard, secondary, elevated, emergency, gold, cream }
@@ -92,8 +93,12 @@ class FixCard extends StatelessWidget {
           : content,
     );
 
+    // Tappable cards get a subtle press-in scale to match buttons; static
+    // cards are untouched.
+    final pressable = onTap == null ? card : FixPressable(child: card);
+
     return semanticLabel == null
-        ? card
-        : Semantics(container: true, label: semanticLabel, child: card);
+        ? pressable
+        : Semantics(container: true, label: semanticLabel, child: pressable);
   }
 }

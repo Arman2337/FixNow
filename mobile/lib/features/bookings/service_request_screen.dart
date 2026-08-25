@@ -4,6 +4,7 @@ import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
 import 'package:fixnow_mobile/design_system/fix_page_frame.dart';
+import 'package:fixnow_mobile/features/ai/price_estimate_repository.dart';
 import 'package:fixnow_mobile/features/bookings/booking_controller.dart';
 import 'package:fixnow_mobile/features/location/booking_location.dart';
 import 'package:fixnow_mobile/features/services/service_category.dart';
@@ -18,6 +19,7 @@ class ServiceRequestScreen extends StatefulWidget {
     this.locationProvider,
     this.initialLocation,
     this.initialDescription,
+    this.estimateRepository,
     super.key,
   });
   final ServiceCategory category;
@@ -29,6 +31,10 @@ class ServiceRequestScreen extends StatefulWidget {
   /// editable before submission.
   final String? initialDescription;
 
+  /// FN-113: optional advisory price estimate source. When absent (or when a
+  /// fetch fails) the static published-price card stays as-is.
+  final PriceEstimateRepository? estimateRepository;
+
   @override
   State<ServiceRequestScreen> createState() => _ServiceRequestScreenState();
 }
@@ -39,15 +45,95 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
   bool _submitting = false;
   String? _error;
   BookingLocationFix? _confirmedLocation;
+  PriceEstimateController? _estimate;
 
   @override
   void initState() {
     super.initState();
     _details.text = widget.initialDescription ?? '';
+    final repository = widget.estimateRepository;
+    if (repository != null) {
+      _estimate = PriceEstimateController(repository)
+        ..addListener(_onEstimateChanged)
+        ..load(widget.category.id);
+    }
+  }
+
+  void _onEstimateChanged() {
+    if (mounted) setState(() {});
+  }
+
+  /// FN-113: the price card shows the advisory estimate when one is
+  /// available and otherwise falls back to the static published-price
+  /// content. The estimate never blocks booking and is labelled advisory.
+  Widget _buildPriceContent(BuildContext context) {
+    final estimate = _estimate?.estimate;
+    if (_estimate?.state == PriceEstimateState.ready &&
+        estimate != null &&
+        estimate.kind != PriceEstimateKind.priceOnRequest) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Estimated price',
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            estimate.rangeLabel,
+            style: Theme.of(context).textTheme.titleMedium
+                ?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            estimate.sampleSize == null
+                ? estimate.explanation
+                : '${estimate.explanation} Typically ${estimate.typicalLabel}.',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            'Advisory only — the final charge is confirmed for your booking '
+            'before payment.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.textOnSurfaceSecondary,
+                ),
+          ),
+        ],
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Base price',
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        Text(
+          widget.category.pricing?.displayLabel ?? 'Price on request',
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+        ),
+        if (widget.category.pricing != null) ...[
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            'Final quote is confirmed by the provider after inspection.',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ],
+      ],
+    );
   }
 
   @override
   void dispose() {
+    _estimate?.dispose();
     _details.dispose();
     super.dispose();
   }
@@ -151,37 +237,7 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
                         : AppColors.primary,
                   ),
                   const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Base price',
-                          style: Theme.of(context).textTheme.labelMedium
-                              ?.copyWith(
-                                color:
-                                    Theme.of(
-                                      context,
-                                    ).colorScheme.onSurfaceVariant,
-                              ),
-                        ),
-                        const SizedBox(height: AppSpacing.xs),
-                        Text(
-                          widget.category.pricing?.displayLabel ??
-                              'Price on request',
-                          style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(fontWeight: FontWeight.w700),
-                        ),
-                        if (widget.category.pricing != null) ...[
-                          const SizedBox(height: AppSpacing.xs),
-                          Text(
-                            'Final quote is confirmed by the provider after inspection.',
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
+                  Expanded(child: _buildPriceContent(context)),
                 ],
               ),
             ),

@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "skipLibCheck": true,
+    "incremental": false,
+    "composite": false
+  },
+  "include": [
+    "src/services/service-categories.service.ts",
+    "src/services/service-categories.controller.ts",
+    "src/services/service-categories.dto.ts",
+    "src/services/service-categories.service.spec.ts",
+    "src/services/service-categories.controller.spec.ts"
+  ]
+}

@@ -11,10 +11,12 @@ import { AiService } from './ai.service';
 import { ServicesModule } from '../services/services.module';
 import { IssueRecommendationService } from './issue-recommendation.service';
 import { IssueRecommendationController } from './issue-recommendation.controller';
+import { PriceEstimateService } from './pricing/price-estimate.service';
+import { PriceEstimateController } from './pricing/price-estimate.controller';
 
 @Module({
   imports: [AppLoggerModule, ServicesModule],
-  controllers: [IssueRecommendationController],
+  controllers: [IssueRecommendationController, PriceEstimateController],
   providers: [
     {
       provide: DeterministicAiProvider,
@@ -36,6 +38,7 @@ import { IssueRecommendationController } from './issue-recommendation.controller
     },
     AiService,
     IssueRecommendationService,
+    PriceEstimateService,
   ],
   exports: [AiService],
 })

@@ -1,7 +1,7 @@
 /* Jest repository mocks are intentionally asserted as detached functions. */
 /* eslint-disable @typescript-eslint/unbound-method */
 import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
+import { getDataSourceToken, getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { NotFoundException } from '@nestjs/common';
 import { ServiceCategoriesService } from './service-categories.service';
@@ -15,6 +15,7 @@ import {
 describe('ServiceCategoriesService', () => {
   let service: ServiceCategoriesService;
   let repository: jest.Mocked<Repository<ServiceCategoryEntity>>;
+  let dataSourceQuery: jest.Mock;
 
   const mockCategory: ServiceCategoryEntity = {
     id: 'test-id',
@@ -25,6 +26,9 @@ describe('ServiceCategoriesService', () => {
     displayOrder: 1,
     isActive: true,
     isEmergency: false,
+    priceAmount: null,
+    priceCurrency: null,
+    pricing: null,
     providerSkills: [],
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -46,12 +50,19 @@ describe('ServiceCategoriesService', () => {
       delete: jest.fn(),
     };
 
+    dataSourceQuery = jest.fn().mockResolvedValue([]);
+    const mockDataSource = { query: dataSourceQuery };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ServiceCategoriesService,
         {
           provide: getRepositoryToken(ServiceCategoryEntity),
           useValue: mockRepository,
+        },
+        {
+          provide: getDataSourceToken(),
+          useValue: mockDataSource,
         },
       ],
     }).compile();
@@ -183,7 +194,14 @@ describe('ServiceCategoriesService', () => {
       };
 
       repository.findOne.mockResolvedValue(mockCategory);
-      const updatedCategory = { ...mockCategory, ...updateDto };
+      const updatedCategory: ServiceCategoryEntity = {
+        ...mockCategory,
+        name: 'Updated Service',
+        description: 'Updated Description',
+        // `pricing` is a getter on the entity, so object spread does not carry
+        // it; set it explicitly to satisfy the entity shape.
+        pricing: null,
+      };
       repository.save.mockResolvedValue(updatedCategory);
 
       const result = await service.update('test-id', updateDto);
@@ -256,6 +274,41 @@ describe('ServiceCategoriesService', () => {
       expect(result).toEqual([mockCategory]);
     });
   });
+
+  describe('findAllWithStats', () => {
+    it('maps pricing and real aggregate signals onto the response', async () => {
+      const priced = {
+        ...mockCategory,
+        pricing: { amountMinor: 14900, currency: 'INR' },
+      };
+      mockQueryBuilder.getMany.mockResolvedValue([priced]);
+      dataSourceQuery
+        .mockResolvedValueOnce([{ category_id: 'test-id', count: 5 }])
+        .mockResolvedValueOnce([{ category_id: 'test-id', count: 2 }])
+        .mockResolvedValueOnce([
+          { category_id: 'test-id', rating: 4.5, review_count: 8 },
+        ]);
+
+      const [result] = await service.findAllWithStats({});
+
+      expect(result.pricing).toEqual({ amountMinor: 14900, currency: 'INR' });
+      expect(result.verifiedProCount).toBe(5);
+      expect(result.onlineProCount).toBe(2);
+      expect(result.rating).toBe(4.5);
+      expect(result.reviewCount).toBe(8);
+    });
+
+    it('falls back to zero/null when a category has no real data', async () => {
+      mockQueryBuilder.getMany.mockResolvedValue([mockCategory]);
+
+      const [result] = await service.findAllWithStats({});
+
+      expect(result.verifiedProCount).toBe(0);
+      expect(result.onlineProCount).toBe(0);
+      expect(result.rating).toBeNull();
+      expect(result.reviewCount).toBe(0);
+    });
+  });
 });
 
 describe('ServiceCategoriesService pricing', () => {
@@ -275,8 +328,8 @@ describe('ServiceCategoriesService pricing', () => {
     displayOrder: 1,
     isActive: true,
     isEmergency: false,
-    priceAmount: null,
-    priceCurrency: null,
+    priceAmount: null as number | null,
+    priceCurrency: null as string | null,
     providerSkills: [],
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -290,7 +343,10 @@ describe('ServiceCategoriesService pricing', () => {
       ),
       findOne: jest.fn().mockResolvedValue(baseCategory()),
     };
-    service = new ServiceCategoriesService(repository as never);
+    service = new ServiceCategoriesService(
+      repository as never,
+      { query: jest.fn().mockResolvedValue([]) } as never,
+    );
   });
 
   it('creates a category with a published price', async () => {

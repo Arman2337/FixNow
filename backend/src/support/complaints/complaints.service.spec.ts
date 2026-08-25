@@ -9,9 +9,12 @@ import {
 import { ComplaintEvidence } from './domain/complaint-evidence.entity';
 import { ComplaintAudit } from './domain/complaint-audit.entity';
 import { ForbiddenException } from '@nestjs/common';
+import { TrustService } from '../../trust/trust.service';
 
 describe('ComplaintsService', () => {
   let service: ComplaintsService;
+
+  const mockEvaluateComplaintSignal = jest.fn().mockResolvedValue(null);
 
   const mockComplaintRepository = {
     create: jest.fn(),
@@ -45,6 +48,10 @@ describe('ComplaintsService', () => {
         {
           provide: getRepositoryToken(ComplaintAudit),
           useValue: mockAuditRepository,
+        },
+        {
+          provide: TrustService,
+          useValue: { evaluateComplaintSignal: mockEvaluateComplaintSignal },
         },
       ],
     }).compile();

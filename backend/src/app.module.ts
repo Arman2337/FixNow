@@ -22,6 +22,8 @@ import { AiModule } from './ai/ai.module';
 import { RatingsModule } from './ratings/ratings.module';
 import { TrustModule } from './trust/trust.module';
 import { PushModule } from './notifications/push/push.module';
+import { PaymentsModule } from './payments/payments.module';
+import { EmergencyModule } from './emergency/emergency.module';
 
 @Module({
   imports: [
@@ -44,6 +46,8 @@ import { PushModule } from './notifications/push/push.module';
     RatingsModule,
     TrustModule,
     PushModule,
+    PaymentsModule,
+    EmergencyModule,
   ],
   controllers: [AppController],
   providers: [

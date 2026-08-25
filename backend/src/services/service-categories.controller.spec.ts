@@ -13,6 +13,9 @@ describe('ServiceCategoriesController', () => {
   let controller: ServiceCategoriesController;
   let service: jest.Mocked<ServiceCategoriesService>;
 
+  // A single fixture that is assignable to both the response DTO (returned by
+  // the read endpoints) and the entity (returned by create/update), so it can
+  // back every mocked service method below.
   const mockCategory = {
     id: 'test-id',
     name: 'Test Service',
@@ -22,20 +25,26 @@ describe('ServiceCategoriesController', () => {
     displayOrder: 1,
     isActive: true,
     isEmergency: false,
+    priceAmount: null,
+    priceCurrency: null,
+    providerSkills: [],
+    pricing: null,
+    verifiedProCount: 0,
+    onlineProCount: 0,
+    rating: null,
+    reviewCount: 0,
     createdAt: new Date(),
     updatedAt: new Date(),
   };
 
   beforeEach(async () => {
     const mockService = {
-      findAll: jest.fn(),
-      findById: jest.fn(),
-      findBySlug: jest.fn(),
+      findAllWithStats: jest.fn(),
+      findByIdWithStats: jest.fn(),
+      findBySlugWithStats: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
-      getActiveCategories: jest.fn(),
-      getEmergencyCategories: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -61,55 +70,58 @@ describe('ServiceCategoriesController', () => {
   describe('findAll', () => {
     it('should return all categories', async () => {
       const query: ServiceCategoryQueryDto = { isActive: true };
-      service.findAll.mockResolvedValue([mockCategory]);
+      service.findAllWithStats.mockResolvedValue([mockCategory]);
 
       const result = await controller.findAll(query);
 
-      expect(service.findAll).toHaveBeenCalledWith(query);
+      expect(service.findAllWithStats).toHaveBeenCalledWith(query);
       expect(result).toEqual([mockCategory]);
     });
   });
 
   describe('getActiveCategories', () => {
     it('should return active categories', async () => {
-      service.getActiveCategories.mockResolvedValue([mockCategory]);
+      service.findAllWithStats.mockResolvedValue([mockCategory]);
 
       const result = await controller.getActiveCategories();
 
-      expect(service.getActiveCategories).toHaveBeenCalled();
+      expect(service.findAllWithStats).toHaveBeenCalledWith({ isActive: true });
       expect(result).toEqual([mockCategory]);
     });
   });
 
   describe('getEmergencyCategories', () => {
     it('should return emergency categories', async () => {
-      service.getEmergencyCategories.mockResolvedValue([mockCategory]);
+      service.findAllWithStats.mockResolvedValue([mockCategory]);
 
       const result = await controller.getEmergencyCategories();
 
-      expect(service.getEmergencyCategories).toHaveBeenCalled();
+      expect(service.findAllWithStats).toHaveBeenCalledWith({
+        isActive: true,
+        isEmergency: true,
+      });
       expect(result).toEqual([mockCategory]);
     });
   });
 
   describe('findById', () => {
     it('should return category by ID', async () => {
-      service.findById.mockResolvedValue(mockCategory);
+      service.findByIdWithStats.mockResolvedValue(mockCategory);
 
       const result = await controller.findById('test-id');
 
-      expect(service.findById).toHaveBeenCalledWith('test-id');
+      expect(service.findByIdWithStats).toHaveBeenCalledWith('test-id');
       expect(result).toEqual(mockCategory);
     });
   });
 
   describe('findBySlug', () => {
     it('should return category by slug', async () => {
-      service.findBySlug.mockResolvedValue(mockCategory);
+      service.findBySlugWithStats.mockResolvedValue(mockCategory);
 
       const result = await controller.findBySlug('test-service');
 
-      expect(service.findBySlug).toHaveBeenCalledWith('test-service');
+      expect(service.findBySlugWithStats).toHaveBeenCalledWith('test-service');
       expect(result).toEqual(mockCategory);
     });
   });
@@ -135,7 +147,10 @@ describe('ServiceCategoriesController', () => {
       const updateDto: UpdateServiceCategoryDto = {
         name: 'Updated Service',
       };
-      service.update.mockResolvedValue({ ...mockCategory, ...updateDto });
+      service.update.mockResolvedValue({
+        ...mockCategory,
+        name: 'Updated Service',
+      });
 
       const result = await controller.update('test-id', updateDto);
 

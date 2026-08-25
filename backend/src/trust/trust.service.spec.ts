@@ -110,6 +110,28 @@ describe('TrustService', () => {
     );
   });
 
+  it.each([0, 1, 2])(
+    'FN-063 keeps repeat-emergency use of %s below the review threshold unflagged',
+    async (count) => {
+      await expect(
+        service.recordEmergencyFrequencySignal(customerId, count),
+      ).resolves.toBeNull();
+      expect(signals.save).not.toHaveBeenCalled();
+    },
+  );
+
+  it('FN-063 raises a HIGH customer-emergency-frequency signal at the threshold', async () => {
+    signals.findOneBy.mockResolvedValue(null);
+    await service.recordEmergencyFrequencySignal(customerId, 3);
+    expect(signals.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        subjectType: 'CUSTOMER',
+        ruleCode: 'customer-emergency-frequency-v1',
+        severity: 'HIGH',
+      }),
+    );
+  });
+
   it('FN-060 stays silent for a single provider refund in the window', async () => {
     refundQuery.getCount.mockResolvedValue(1);
     await expect(

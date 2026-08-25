@@ -34,8 +34,11 @@ export class MatchingService {
     locationLng: number,
     serviceCategoryId: string,
     limit = 50,
+    /** FN-063 wave-2 widening: multiplies each provider's own radius. */
+    radiusMultiplier = 1,
   ): Promise<MatchedProvider[]> {
     const boundedLimit = Math.min(Math.max(Math.trunc(limit), 1), 50);
+    const boundedMultiplier = Math.min(Math.max(radiusMultiplier, 1), 4);
     const haversineSql = `
       (6371 * acos(LEAST(1, GREATEST(-1,
         cos(radians(:lat)) *
@@ -74,10 +77,13 @@ export class MatchingService {
       .andWhere('category.is_active = :categoryActive', {
         categoryActive: true,
       })
-      .andWhere(`${haversineSql} <= profile.serviceRadiusKm`, {
-        lat: locationLat,
-        lng: locationLng,
-      })
+      .andWhere(
+        `${haversineSql} <= profile.serviceRadiusKm * ${boundedMultiplier}`,
+        {
+          lat: locationLat,
+          lng: locationLng,
+        },
+      )
       .select('profile.userId', 'providerId')
       .addSelect(haversineSql, 'distanceKm')
       .orderBy('distanceKm', 'ASC')

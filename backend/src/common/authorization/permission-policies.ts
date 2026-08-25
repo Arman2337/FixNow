@@ -56,6 +56,8 @@ export const PERMISSIONS = {
   complaintsCreate: 'complaints.create',
   aiRecommendationCreate: 'ai.recommendation.create',
   aiPriceEstimateReadSelf: 'ai.price-estimate.read.self',
+  emergencyCreateSelf: 'emergency.create.self',
+  emergencyDispatchManage: 'emergency.dispatch.manage',
   complaintsReadSelf: 'complaints.read.self',
   adminComplaintsRead: 'admin.complaints.read',
   adminComplaintsUpdate: 'admin.complaints.update',
@@ -335,6 +337,14 @@ export const PERMISSION_POLICIES: Readonly<
   [PERMISSIONS.aiPriceEstimateReadSelf]: {
     roles: ['customer'],
     relationship: 'self',
+  },
+  [PERMISSIONS.emergencyCreateSelf]: {
+    roles: ['customer'],
+    relationship: 'self',
+  },
+  [PERMISSIONS.emergencyDispatchManage]: {
+    roles: ['trust_safety_reviewer', 'operations_administrator'],
+    audience: 'admin',
   },
   [PERMISSIONS.complaintsReadSelf]: {
     roles: ['customer', 'verified_provider'],

@@ -34,6 +34,9 @@ export const TRUST_RULES = {
   /** FN-060: refunds recorded against one provider's bookings. */
   refundWindowDays: 30,
   refundThreshold: 2,
+  /** FN-063 policy §6.5: repeat emergency use routes to review. */
+  emergencyWindowDays: 7,
+  emergencyThreshold: 3,
   /** FN-111: bounded rolling accept-time aggregate. */
   acceptTimeWindowDays: 90,
   acceptTimeMinSamples: 3,
@@ -284,6 +287,26 @@ export class TrustService {
       severity: TrustSignalSeverity.MEDIUM,
       windowDays: TRUST_RULES.complaintWindowDays,
       observedCount: complaintsCount,
+    });
+  }
+
+  /**
+   * FN-063 policy §6.5: repeated emergency use raises a HIGH-severity
+   * advisory signal for human review. The caller supplies the windowed
+   * count because emergency history lives in the dispatch sidecar.
+   */
+  async recordEmergencyFrequencySignal(
+    customerId: string,
+    observedCount: number,
+  ): Promise<TrustSignal | null> {
+    if (observedCount < TRUST_RULES.emergencyThreshold) return null;
+    return this.recordWindowedSignal({
+      subjectType: 'CUSTOMER',
+      subjectId: customerId,
+      ruleCode: 'customer-emergency-frequency-v1',
+      severity: TrustSignalSeverity.HIGH,
+      windowDays: TRUST_RULES.emergencyWindowDays,
+      observedCount,
     });
   }
 

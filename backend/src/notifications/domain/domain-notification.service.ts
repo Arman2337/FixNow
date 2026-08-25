@@ -52,6 +52,20 @@ export const BOOKING_NOTIFICATION_TEMPLATES: Readonly<
 };
 
 /**
+ * FN-063 emergency templates (policy §8). Copy approved in
+ * docs/safety/emergency-dispatch-policy-v1.md; quiet-hour override applies
+ * to these sends only.
+ */
+export const EMERGENCY_NOTIFICATION_TEMPLATES: Readonly<
+  Record<string, PushNotificationContent>
+> = {
+  'provider:EMERGENCY_REQUEST': {
+    title: 'FixNow — Emergency',
+    body: 'Emergency request near you — open FixNow.',
+  },
+};
+
+/**
  * FN-062: in-process domain notification consumer. Sends deduplicated,
  * lock-screen-safe pushes over the FN-061 delivery boundary and records one
  * delivery row per attempt. Push is never the sole source of truth — the
@@ -115,6 +129,7 @@ export class DomainNotificationService {
     dedupeKey: string,
     content: PushNotificationContent,
     bookingId: string | null = null,
+    options: { bypassQuietHours?: boolean } = {},
   ): Promise<void> {
     const existing = await this.deliveries.findOneBy({
       userId,
@@ -122,7 +137,7 @@ export class DomainNotificationService {
     });
     if (existing) return; // Deduplicated replay.
 
-    if (this.inQuietHours()) {
+    if (!options.bypassQuietHours && this.inQuietHours()) {
       await this.record(
         userId,
         kind,

@@ -182,7 +182,7 @@ class _SweepState extends State<_Sweep> with SingleTickerProviderStateMixin {
         final s2 = centre.clamp(0.0, 1.0);
         final s3 = (centre + band).clamp(0.0, 1.0);
         return ShaderMask(
-          blendMode: BlendMode.srcATOP,
+          blendMode: BlendMode.srcATop,
           shaderCallback: (bounds) => LinearGradient(
             begin: widget.begin,
             end: widget.end,
@@ -312,6 +312,7 @@ class _FixFadeSlideInState extends State<FixFadeSlideIn>
     begin: Offset(0, widget.offsetY),
     end: Offset.zero,
   ).animate(_fade);
+  Timer? _startDelay;
 
   @override
   void initState() {
@@ -319,7 +320,8 @@ class _FixFadeSlideInState extends State<FixFadeSlideIn>
     if (widget.delay == Duration.zero) {
       _controller.forward();
     } else {
-      Future<void>.delayed(widget.delay, () {
+      // A cancellable timer, so a disposed widget never starts its ticker.
+      _startDelay = Timer(widget.delay, () {
         if (mounted) _controller.forward();
       });
     }
@@ -327,6 +329,7 @@ class _FixFadeSlideInState extends State<FixFadeSlideIn>
 
   @override
   void dispose() {
+    _startDelay?.cancel();
     _controller.dispose();
     super.dispose();
   }

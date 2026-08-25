@@ -108,7 +108,7 @@ See [`admin/README.md`](admin/README.md) for environment configuration and valid
 
 ## Status
 
-Foundation phase. The backend, mobile, and admin applications contain validated foundations plus completed tracked capabilities. Later product workflows remain tracked in `PROJECT_TASKS.md`.
+The platform has completed its tracked MVP scope: customer and provider booking journeys with realtime tracking, verification and trust workflows, payments (Razorpay behind a vendor-neutral gateway), governed advisory AI (issue classification and deterministic price estimates), push notifications, complaints and support operations, and the admin workspace including a trust-signal review queue. Remaining work — emergency dispatch policy, notification reminders for emergency slices, and post-MVP enhancements — is tracked in `PROJECT_TASKS.md`.
 
 ## License
 

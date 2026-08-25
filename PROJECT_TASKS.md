@@ -55,10 +55,10 @@ Only these statuses are valid. A task cannot be completed while required validat
 # Project Progress
 
 Total Tasks: 114
-Completed: 90
+Completed: 91
 In Progress: 0
 Blocked: 3
-Pending: 2
+Pending: 1
 Deferred: 18
 Cancelled: 1
 Current Phase: Payment foundation delivered; advisory AI assistance and trust signals active
@@ -4436,48 +4436,4 @@ Commit:
 PR:
 
 ### Notes Addendum (completion)
-Fixed as five root causes: (1) missing dart:async import causing a 14-file compile cascade behind a stale kernel cache; (2) lazy late-final controllers first touched in dispose() - now created eagerly in initState with cancellable Timer starts; (3) always-on FixPulse/shimmer tickers defeating pumpAndSettle - scoped reduce-motion via the shared `pumpIdle()` tester extension (per-tester platformDispatcher override plus one pump to flush futures); deliberately NOT a global flutter_test_config, which force-initialised the widget binding and broke pure-Dart api_client tests; (4) stale assertion pins updated to shipped tokens (container 340ms, plumbing_rounded, icon asserted within the category card since quick-service chips may reuse glyphs); (5) restored redesign casualties: FixServiceCard.semanticLabel override feeding '<name> service category' and an explicit 'Price on request' branch when priceFrom is null (FN-107 contract). Validated 2026-08-25: flutter analyze 0 errors; flutter test 111/111 pass; backend 70 suites / 395 tests, lint clean.
-
-## FN-114 — Repair Design-System Motion Widget Test Suite
-
-Status: ⬜ Pending
-Priority: P1 — High
-Area: Mobile/Design System
-Depends On: None (repairs the committed motion foundation)
-Branch: fix/motion-widget-tests
-
-### Objective
-Make the full `flutter test` suite green on the design-system motion work committed 2026-08-25 (`fix_motion.dart`, `app_motion.dart`, provider card).
-
-### Scope
-- Diagnose and fix the 14 failing widget tests (pumpAndSettle timeouts from always-on FixPulse/shimmer tickers; teardown crashes from late ticker creation).
-- Prefer a test-environment reduce-motion declaration or component-level TickerMode gating over per-test pumping changes.
-- Keep production animation behavior unchanged for users without reduce-motion.
-
-### Do Not
-- Do not delete or weaken assertions to force green.
-- Do not disable ambient motion in production defaults.
-
-### Acceptance Criteria
-- [ ] `flutter test` passes with zero failures.
-- [ ] `flutter analyze` reports no new issues.
-
-### Validation
-```bash
-cd mobile && flutter analyze && flutter test
-```
-
-### Files / Areas
-`mobile/lib/design_system/`, `mobile/test/`
-
-### Notes
-Created 2026-08-25 after the FN-062 run measured a stable 14-failure baseline that exists at commit 00afdc7 independent of later changes. An attempted suite-wide reduce-motion config surfaced a second defect (late ticker creation during teardown); the cancellable-Timer half of that fix already shipped with FN-062.
-
-### Completion Record
-Completed By: Claude Code
-Completed Date: 2026-08-25
-Commit:
-PR:
-
-### Notes Addendum (completion)
-Fixed as five root causes: (1) missing dart:async import causing a 14-file compile cascade behind a stale kernel cache; (2) lazy late-final controllers first touched in dispose() - now created eagerly in initState with cancellable Timer starts; (3) always-on FixPulse/shimmer tickers defeating pumpAndSettle - scoped reduce-motion via the shared `pumpIdle()` tester extension (per-tester platformDispatcher override plus one pump to flush futures); deliberately NOT a global flutter_test_config, which force-initialised the widget binding and broke pure-Dart api_client tests; (4) stale assertion pins updated to shipped tokens (container 340ms, plumbing_rounded, icon asserted within the category card since quick-service chips may reuse glyphs); (5) restored redesign casualties: FixServiceCard.semanticLabel override feeding '<name> service category' and an explicit 'Price on request' branch when priceFrom is null (FN-107 contract). Validated 2026-08-25: flutter analyze 0 errors; flutter test 111/111 pass; backend 70 suites / 395 tests, lint clean.
+Delivered on `feat/payment-foundation` at user direction. Mobile slice: `mobile/lib/features/ai/price_estimate_repository.dart` (model/controller/repository mirroring shared price-estimate contract) wired into both ServiceRequestScreen entry points from app.dart; the existing Base-price card renders ESTIMATE bands (basis-labelled explanation plus advisory notice) and falls back silently to the static published-price content on PRICE_ON_REQUEST, missing repository, or any fetch failure. Widget tests cover observed band, published single point, fetch-failure fallback, and no-repository behaviour. Admin slice: `admin/src/features/trust/{types,api,actions}.ts` plus `/trust` page (severity chips, human-readable rule labels, window/evidence metadata, All/Open filter, per-signal Review/Dismiss forms as server actions with stale/failed result banners) and a Trust navigation entry restricted to trust_safety_reviewer and operations_administrator. Vitest covers empty queue, action rendering, open-only filter, and reviewed rows exposing no decision controls.

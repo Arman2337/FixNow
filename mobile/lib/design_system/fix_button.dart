@@ -12,6 +12,7 @@ class FixButton extends StatelessWidget {
     required this.onPressed,
     this.variant = FixButtonVariant.primary,
     this.icon,
+    this.trailingIcon,
     this.isLoading = false,
     this.height = 52.0,
     this.expand = false,
@@ -21,7 +22,14 @@ class FixButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
   final FixButtonVariant variant;
+
+  /// Optional glyph shown *before* the label.
   final IconData? icon;
+
+  /// Optional glyph shown *after* the label — e.g. a forward arrow on a
+  /// "Book →" call-to-action. Hidden while [isLoading].
+  final IconData? trailingIcon;
+
   final bool isLoading;
   final double height;
   final bool expand;
@@ -43,6 +51,8 @@ class FixButton extends StatelessWidget {
         else if (icon case final value?)
           Icon(value, size: 20),
         Text(label, textAlign: TextAlign.center),
+        if (trailingIcon case final value? when !isLoading)
+          Icon(value, size: 20),
       ],
     );
 

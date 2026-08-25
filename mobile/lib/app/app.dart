@@ -41,6 +41,7 @@ import 'package:fixnow_mobile/features/support/complaints_controller.dart';
 import 'package:fixnow_mobile/features/support/complaints_repository.dart';
 import 'package:fixnow_mobile/features/support/customer_help_screen.dart';
 import 'package:fixnow_mobile/features/ai/ai_recommendation_repository.dart';
+import 'package:fixnow_mobile/features/ai/price_estimate_repository.dart';
 
 import 'package:fixnow_mobile/features/realtime/realtime_client.dart';
 import 'package:fixnow_mobile/notifications/push_api.dart';
@@ -284,6 +285,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
                       category: category,
                       controller: _bookings,
                       initialLocation: location,
+                      estimateRepository: PriceEstimateRepository(_api, accessToken: _auth.validAccessToken),
                     ),
                   ),
                 );
@@ -380,6 +382,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
           category: category,
           controller: _bookings,
           initialDescription: booking.description,
+          estimateRepository: PriceEstimateRepository(_api, accessToken: _auth.validAccessToken),
         ),
       ),
     );

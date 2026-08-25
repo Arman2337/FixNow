@@ -2,6 +2,7 @@ import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
+import 'package:fixnow_mobile/design_system/fix_motion.dart';
 import 'package:flutter/material.dart';
 
 class FixEmptyState extends StatelessWidget {
@@ -99,13 +100,15 @@ class FixSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ExcludeSemantics(
-    child: Container(
-      width: width,
-      height: height,
-      decoration: BoxDecoration(
-        color: AppColors.surfaceSecondary,
-        borderRadius: BorderRadius.circular(AppRadius.small),
-        border: Border.all(color: AppColors.borderDefault),
+    child: FixShimmer(
+      child: Container(
+        width: width,
+        height: height,
+        decoration: BoxDecoration(
+          color: AppColors.surfaceSecondary,
+          borderRadius: BorderRadius.circular(AppRadius.small),
+          border: Border.all(color: AppColors.borderDefault),
+        ),
       ),
     ),
   );

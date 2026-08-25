@@ -1,6 +1,7 @@
 import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
+import 'package:fixnow_mobile/design_system/fix_motion.dart';
 import 'package:flutter/material.dart';
 
 enum FixButtonVariant { primary, secondary, tertiary, destructive, emergency, gold }
@@ -122,7 +123,9 @@ class FixButton extends StatelessWidget {
     return Semantics(
       button: true,
       enabled: callback != null,
-      child: button,
+      // A gentle press-in scale on top of the Material state layer. Disabled
+      // buttons stay static.
+      child: callback == null ? button : FixPressable(child: button),
     );
   }
 }

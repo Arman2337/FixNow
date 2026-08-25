@@ -29,3 +29,34 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  # ---------------------------------------------------------------------------
+  # Bundled brand fonts (Playfair Display + Inter) — TEMPORARILY DISABLED.
+  #
+  # The declarations below are correct and ready, but Flutter refuses to compile
+  # when it can't find a declared .ttf asset, and the binaries are not committed
+  # yet. Until the five .ttf files are added to mobile/assets/fonts/ (see the
+  # README there for exact filenames + OFL download sources), this block stays
+  # commented out so the app builds. In the meantime it runs on the fallback
+  # faces declared in app_typography.dart (Georgia/serif for headings,
+  # Roboto/sans for body).
+  #
+  # TO ENABLE: drop the 5 .ttf files into mobile/assets/fonts/, then uncomment
+  # this block. Family strings MUST match app_typography.dart exactly
+  # ('Playfair Display', 'Inter').
+  # ---------------------------------------------------------------------------
+  # fonts:
+  #   - family: Playfair Display
+  #     fonts:
+  #       - asset: assets/fonts/PlayfairDisplay-SemiBold.ttf
+  #         weight: 600
+  #       - asset: assets/fonts/PlayfairDisplay-Bold.ttf
+  #         weight: 700
+  #   - family: Inter
+  #     fonts:
+  #       - asset: assets/fonts/Inter-Regular.ttf
+  #         weight: 400
+  #       - asset: assets/fonts/Inter-Medium.ttf
+  #         weight: 500
+  #       - asset: assets/fonts/Inter-SemiBold.ttf
+  #         weight: 600

@@ -1,11 +1,13 @@
 import 'dart:convert';
 import 'package:fixnow_mobile/design_system/app_colors.dart';
+import 'package:fixnow_mobile/design_system/app_motion.dart';
 import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/app_typography.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
 import 'package:fixnow_mobile/design_system/fix_components.dart';
+import 'package:fixnow_mobile/design_system/fix_motion.dart';
 import 'package:fixnow_mobile/features/location/location_consent_card.dart';
 import 'package:fixnow_mobile/features/location/location_consent_controller.dart';
 import 'package:fixnow_mobile/features/location/booking_location.dart';
@@ -519,41 +521,51 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
           itemCount: quickItems.length,
           itemBuilder: (context, index) {
             final item = quickItems[index];
-            return InkWell(
-              onTap: () => _handleQuickService(item.$3, item.$2),
-              borderRadius: BorderRadius.circular(AppRadius.card),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppColors.surfacePrimary,
-                  borderRadius: BorderRadius.circular(AppRadius.card),
-                  border: Border.all(color: AppColors.borderDefault),
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: AppColors.primarySoft,
-                        borderRadius: BorderRadius.circular(AppRadius.medium),
+            return FixFadeSlideIn(
+              delay: AppMotion.staggerStep * index,
+              child: InkWell(
+                onTap: () => _handleQuickService(item.$3, item.$2),
+                borderRadius: BorderRadius.circular(AppRadius.card),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.surfacePrimary,
+                    borderRadius: BorderRadius.circular(AppRadius.card),
+                    border: Border.all(color: AppColors.borderDefault),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 8,
+                    horizontal: 6,
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: AppColors.primarySoft,
+                          borderRadius: BorderRadius.circular(AppRadius.medium),
+                        ),
+                        child: Icon(
+                          item.$1,
+                          color: AppColors.primary,
+                          size: 22,
+                        ),
                       ),
-                      child: Icon(item.$1, color: AppColors.primary, size: 22),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      item.$2,
-                      style: const TextStyle(
-                        color: AppColors.textOnLightPrimary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
+                      const SizedBox(height: 6),
+                      Text(
+                        item.$2,
+                        style: const TextStyle(
+                          color: AppColors.textOnLightPrimary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      textAlign: TextAlign.center,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             );
@@ -657,11 +669,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
   List<Widget> _content(BuildContext context) =>
       switch (widget.controller.status) {
         DiscoveryStatus.initial || DiscoveryStatus.loading => const [
-          Center(
-            child: CircularProgressIndicator(
-              semanticsLabel: 'Loading services',
-            ),
-          ),
+          _DiscoverySkeleton(),
         ],
         DiscoveryStatus.empty => [
           _DiscoveryMessage(
@@ -818,12 +826,69 @@ class _CategoryRow extends StatelessWidget {
   };
 }
 
+/// Loading placeholder for the services list. A single shimmer sweeps across a
+/// stack of bars shaped like the real category rows, so the wait reads as
+/// "content is coming" rather than a bare spinner.
+class _DiscoverySkeleton extends StatelessWidget {
+  const _DiscoverySkeleton();
+
+  static Widget _bar(double width, double height, {double radius = 6}) =>
+      Container(
+        width: width,
+        height: height,
+        decoration: BoxDecoration(
+          color: AppColors.surfaceSecondary,
+          borderRadius: BorderRadius.circular(radius),
+        ),
+      );
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    label: 'Loading services',
+    container: true,
+    child: ExcludeSemantics(
+      child: FixShimmer(
+        child: Column(
+          children: [
+            for (var i = 0; i < 5; i++) ...[
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                child: Row(
+                  children: [
+                    _bar(44, 44, radius: AppRadius.medium),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _bar(double.infinity, 14),
+                          const SizedBox(height: AppSpacing.xs),
+                          _bar(160, 12),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    _bar(56, 12),
+                  ],
+                ),
+              ),
+              if (i < 4)
+                const Divider(height: 1, color: AppColors.borderDefault),
+            ],
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
 class _DiscoveryMessage extends StatelessWidget {
   const _DiscoveryMessage({
     required this.title,
     required this.message,
     required this.onRetry,
   });
+
   final String title;
   final String message;
   final VoidCallback onRetry;

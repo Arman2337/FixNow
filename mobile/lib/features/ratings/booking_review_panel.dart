@@ -3,6 +3,7 @@ import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
+import 'package:fixnow_mobile/design_system/fix_motion.dart';
 import 'package:fixnow_mobile/features/bookings/booking.dart';
 import 'package:fixnow_mobile/features/bookings/booking_repository.dart';
 import 'package:fixnow_mobile/features/ratings/booking_review.dart';
@@ -189,10 +190,16 @@ class _BookingReviewPanelState extends State<BookingReviewPanel> {
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: AppSpacing.sm),
-            Text(
-              '${'★' * review.rating}${'☆' * (5 - review.rating)}',
-              semanticsLabel: '${review.rating} out of 5 stars',
-              style: const TextStyle(color: AppColors.accentGold, fontSize: 24),
+            FixScaleIn(
+              from: 0.6,
+              child: Text(
+                '${'★' * review.rating}${'☆' * (5 - review.rating)}',
+                semanticsLabel: '${review.rating} out of 5 stars',
+                style: const TextStyle(
+                  color: AppColors.accentGold,
+                  fontSize: 24,
+                ),
+              ),
             ),
             if (review.reviewText case final text?) ...[
               const SizedBox(height: AppSpacing.sm),
@@ -240,10 +247,10 @@ class _BookingReviewPanelState extends State<BookingReviewPanel> {
                   onPressed: _submitting
                       ? null
                       : () => setState(() => _rating = stars),
-                  icon: Icon(
-                    (_rating ?? 0) >= stars
-                        ? Icons.star_rounded
-                        : Icons.star_outline_rounded,
+                  icon: FixAnimatedStar(
+                    filled: (_rating ?? 0) >= stars,
+                    size: 36,
+                    color: AppColors.accentGold,
                   ),
                 ),
               );

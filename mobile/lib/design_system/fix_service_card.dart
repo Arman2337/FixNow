@@ -40,31 +40,51 @@ class FixServiceCard extends StatelessWidget {
   const FixServiceCard({
     required this.name,
     this.state = FixServiceCardState.available,
+    this.showLiveStrip = true,
     this.description,
     this.icon = Icons.build_rounded,
     this.rating,
     this.reviewCount,
     this.etaText,
     this.prosAvailable = 0,
+    this.verifiedProsCount = 0,
+    this.showProStack = true,
     this.proInitials = const <String>['R', 'S', 'K'],
     this.opensAtText,
     this.priceFrom,
     this.priceCurrency = '₹',
     this.priceNote = 'visit & diagnosis',
+    this.badgeLabel,
+    this.descriptionMaxLines = 1,
     this.primaryActionLabel,
     this.onPrimaryAction,
     this.onTap,
+    this.semanticLabel,
     super.key,
   });
 
   /// Service name, e.g. "Plumbing".
   final String name;
 
+  /// Overrides the composed accessibility label when a caller needs a
+  /// specific contract (e.g. browse lists announce "<name> service category").
+  final String? semanticLabel;
+
   /// Availability state to present.
   final FixServiceCardState state;
 
+  /// Whether to render the live availability strip. Set false when there is no
+  /// real availability data to bind (e.g. a browse list): the card then
+  /// degrades to a calm, honest presentation rather than implying a live pro
+  /// count that isn't backed by data.
+  final bool showLiveStrip;
+
   /// One-line supporting description, e.g. "Leaks, taps, fittings & drainage".
   final String? description;
+
+  /// How many lines of [description] to show before truncating. Browse lists
+  /// pass 2 to surface more of the real category copy; the compact default is 1.
+  final int descriptionMaxLines;
 
   /// Glyph shown in the service tile.
   final IconData icon;
@@ -81,6 +101,17 @@ class FixServiceCard extends StatelessWidget {
   /// How many pros are live nearby — drives the strip text and avatar stack.
   final int prosAvailable;
 
+  /// Stable count of *verified* pros for this service (not necessarily live).
+  /// When the live strip shows but nobody is online right now
+  /// ([prosAvailable] == 0), the strip falls back to a calm "N verified pros"
+  /// line instead of implying live availability. 0 hides that fallback.
+  final int verifiedProsCount;
+
+  /// Whether the live strip may render the sample avatar stack. Callers that
+  /// only know a real *count* (not real pro identities) pass false so the card
+  /// never shows placeholder faces; the dot and count text still render.
+  final bool showProStack;
+
   /// Sample pro initials for the avatar stack (presentational; cycles if the
   /// count exceeds the list length).
   final List<String> proInitials;
@@ -96,6 +127,12 @@ class FixServiceCard extends StatelessWidget {
 
   /// Reassuring sub-line under the price.
   final String priceNote;
+
+  /// Optional priority badge shown in the identity block (e.g. "Emergency" for
+  /// categories the backend flags with `isEmergency`). Rendered as a gold
+  /// priority pill; null hides it. It is honest real-data signalling, distinct
+  /// from the live strip's availability counts.
+  final String? badgeLabel;
 
   /// Overrides the primary button label. Defaults per [state].
   final String? primaryActionLabel;
@@ -119,27 +156,33 @@ class FixServiceCard extends StatelessWidget {
     return FixCard(
       tone: FixCardTone.cream,
       onTap: onTap,
-      semanticLabel: _semanticLabel(),
+      semanticLabel: semanticLabel ?? _semanticLabel(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _TopRow(
             name: name,
             description: description,
+            descriptionMaxLines: descriptionMaxLines,
             icon: icon,
             rating: rating,
             reviewCount: reviewCount,
             etaText: _isAfterHours ? null : etaText,
+            badgeLabel: badgeLabel,
             muted: _isAfterHours,
           ),
           const SizedBox(height: AppSpacing.md),
-          _LiveStrip(
-            state: state,
-            prosAvailable: prosAvailable,
-            proInitials: proInitials,
-            opensAtText: opensAtText,
-          ),
-          const SizedBox(height: AppSpacing.md),
+          if (showLiveStrip) ...[
+            _LiveStrip(
+              state: state,
+              prosAvailable: prosAvailable,
+              verifiedProsCount: verifiedProsCount,
+              showProStack: showProStack,
+              proInitials: proInitials,
+              opensAtText: opensAtText,
+            ),
+            const SizedBox(height: AppSpacing.md),
+          ],
           const Divider(height: 1, thickness: 1, color: AppColors.borderDefault),
           const SizedBox(height: AppSpacing.md),
           _Foot(
@@ -169,7 +212,11 @@ class FixServiceCard extends StatelessWidget {
     }
     switch (state) {
       case FixServiceCardState.available:
-        if (prosAvailable > 0) buffer.write(', $prosAvailable pros available now');
+        if (prosAvailable > 0) {
+          buffer.write(', $prosAvailable pros available now');
+        } else if (verifiedProsCount > 0) {
+          buffer.write(', $verifiedProsCount verified pros');
+        }
       case FixServiceCardState.inDemand:
         buffer.write(', in high demand');
         if (prosAvailable > 0) buffer.write(', $prosAvailable pros nearby');
@@ -186,19 +233,23 @@ class _TopRow extends StatelessWidget {
   const _TopRow({
     required this.name,
     required this.description,
+    required this.descriptionMaxLines,
     required this.icon,
     required this.rating,
     required this.reviewCount,
     required this.etaText,
+    required this.badgeLabel,
     required this.muted,
   });
 
   final String name;
   final String? description;
+  final int descriptionMaxLines;
   final IconData icon;
   final double? rating;
   final int? reviewCount;
   final String? etaText;
+  final String? badgeLabel;
   final bool muted;
 
   @override
@@ -227,11 +278,12 @@ class _TopRow extends StatelessWidget {
                 const SizedBox(height: 3),
                 Text(
                   description!,
-                  maxLines: 1,
+                  maxLines: descriptionMaxLines,
                   overflow: TextOverflow.ellipsis,
                   style: AppTypography.caption.copyWith(
                     color: AppColors.textOnSurfaceSecondary,
                     fontSize: 12.5,
+                    height: descriptionMaxLines > 1 ? 1.35 : null,
                   ),
                 ),
               ],
@@ -243,6 +295,10 @@ class _TopRow extends StatelessWidget {
                   etaText: etaText,
                 ),
               ],
+              if (badgeLabel != null) ...[
+                SizedBox(height: rating != null ? 6 : 8),
+                _PriorityBadge(label: badgeLabel!),
+              ],
             ],
           ),
         ),
@@ -253,6 +309,43 @@ class _TopRow extends StatelessWidget {
           child: _Chevron(),
         ),
       ],
+    );
+  }
+}
+
+/// A small gold "priority" pill for categories the backend flags as emergency.
+/// Gold (not red) so it reads as *help is prioritised here*, matching the
+/// card's cobalt-and-gold language; the dark on-gold text keeps it legible.
+class _PriorityBadge extends StatelessWidget {
+  const _PriorityBadge({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 3),
+      decoration: BoxDecoration(
+        color: AppColors.accentGoldSoft,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        border: Border.all(color: AppColors.borderGold),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.emergency_rounded, size: 12, color: AppColors.onAccentGold),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: AppTypography.caption.copyWith(
+              color: AppColors.onAccentGold,
+              fontWeight: FontWeight.w700,
+              fontSize: 11,
+              letterSpacing: 0.2,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -425,18 +518,36 @@ class _LiveStrip extends StatelessWidget {
   const _LiveStrip({
     required this.state,
     required this.prosAvailable,
+    required this.verifiedProsCount,
+    required this.showProStack,
     required this.proInitials,
     required this.opensAtText,
   });
 
   final FixServiceCardState state;
   final int prosAvailable;
+  final int verifiedProsCount;
+  final bool showProStack;
   final List<String> proInitials;
   final String? opensAtText;
 
+  /// Calm fallback: real verified pros exist for this service, but none are
+  /// live this moment. Rendered muted (verified tick, no pulse, no avatars) so
+  /// it reassures without implying instant availability we can't back up.
+  bool get _verifiedFallback =>
+      state == FixServiceCardState.available &&
+      prosAvailable <= 0 &&
+      verifiedProsCount > 0;
+
   @override
   Widget build(BuildContext context) {
-    final (Color soft, Color border, Color dot) = switch (state) {
+    final (Color soft, Color border, Color dot) = _verifiedFallback
+        ? (
+            AppColors.surfaceCream,
+            AppColors.borderDefault,
+            AppColors.textOnSurfaceSecondary,
+          )
+        : switch (state) {
       FixServiceCardState.available => (
           AppColors.successSoft,
           AppColors.success.withValues(alpha: 0.20),
@@ -454,8 +565,11 @@ class _LiveStrip extends StatelessWidget {
         ),
     };
 
-    final showStack =
-        state != FixServiceCardState.afterHours && prosAvailable > 0;
+    final showStack = showProStack &&
+        !_verifiedFallback &&
+        state != FixServiceCardState.afterHours &&
+        prosAvailable > 0;
+    final pulse = !_verifiedFallback && state != FixServiceCardState.afterHours;
 
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -469,12 +583,16 @@ class _LiveStrip extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _StripDot(
-            color: dot,
-            pulse: state != FixServiceCardState.afterHours,
-          ),
+          if (_verifiedFallback)
+            const Icon(
+              Icons.verified_rounded,
+              size: 15,
+              color: AppColors.textOnSurfaceSecondary,
+            )
+          else
+            _StripDot(color: dot, pulse: pulse),
           const SizedBox(width: AppSpacing.sm),
-          Expanded(child: _stripText()),
+          Expanded(child: _verifiedFallback ? _verifiedText() : _stripText()),
           if (showStack) ...[
             const SizedBox(width: AppSpacing.sm),
             _ProStack(
@@ -485,6 +603,33 @@ class _LiveStrip extends StatelessWidget {
           ],
         ],
       ),
+    );
+  }
+
+  Widget _verifiedText() {
+    return Text.rich(
+      TextSpan(
+        children: [
+          TextSpan(
+            text: '$verifiedProsCount',
+            style: AppTypography.label.copyWith(
+              color: AppColors.textOnSurface,
+              fontWeight: FontWeight.w700,
+              fontSize: 12.5,
+            ),
+          ),
+          TextSpan(
+            text: verifiedProsCount == 1 ? ' verified pro' : ' verified pros',
+            style: AppTypography.label.copyWith(
+              color: AppColors.textOnSurfaceSecondary,
+              fontWeight: FontWeight.w600,
+              fontSize: 12.5,
+            ),
+          ),
+        ],
+      ),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
     );
   }
 
@@ -832,7 +977,49 @@ class _Foot extends StatelessWidget {
             ),
           )
         else
-          const Spacer(),
+          // FN-107 honesty contract: a category without an admin-published
+          // price says so instead of hiding the price line entirely. Styled
+          // with the weight of the priced branch so the foot never looks empty.
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Price on request',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.label.copyWith(
+                    color: AppColors.textOnSurface,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                    height: 1.1,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.verified_rounded,
+                      size: 12,
+                      color: AppColors.success,
+                    ),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        'Confirmed before you book',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.caption.copyWith(
+                          color: AppColors.textOnSurfaceMuted,
+                          fontSize: 10.5,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         const SizedBox(width: AppSpacing.md),
         FixButton(
           label: actionLabel,

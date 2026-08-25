@@ -140,6 +140,24 @@ export class ServiceCategoryResponseDto {
 
   pricing!: { amountMinor: number; currency: string } | null;
 
+  // The four aggregate signals below are always present on the read endpoints
+  // (findAll/getActive/getEmergency/findById/findBySlug), which route through
+  // the stats loader. They are optional because the create/update endpoints
+  // return the freshly-saved category, which has no providers, availability, or
+  // reviews yet — so those responses legitimately omit them.
+
+  /** Verified providers with an active account offering this category. */
+  verifiedProCount?: number;
+
+  /** Of those verified providers, how many are online right now. */
+  onlineProCount?: number;
+
+  /** Average published-review rating (1–5), or null when there are none. */
+  rating?: number | null;
+
+  /** Number of published reviews behind {@link rating}. */
+  reviewCount?: number;
+
   createdAt!: Date;
 
   updatedAt!: Date;

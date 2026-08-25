@@ -8,6 +8,7 @@ import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
 import 'package:fixnow_mobile/design_system/fix_components.dart';
 import 'package:fixnow_mobile/design_system/fix_motion.dart';
+import 'package:fixnow_mobile/design_system/fix_service_card.dart';
 import 'package:fixnow_mobile/features/location/location_consent_card.dart';
 import 'package:fixnow_mobile/features/location/location_consent_controller.dart';
 import 'package:fixnow_mobile/features/location/booking_location.dart';
@@ -723,111 +724,100 @@ class _CategoryList extends StatelessWidget {
   final ValueChanged<ServiceCategory>? onSelected;
 
   @override
-  Widget build(BuildContext context) => FixCard(
-    padding: EdgeInsets.zero,
-    child: Column(
-      children: [
-        for (var index = 0; index < categories.length; index += 1) ...[
-          _CategoryRow(
-            category: categories[index],
-            onTap: onSelected == null
-                ? null
-                : () => onSelected!(categories[index]),
-          ),
-          if (index < categories.length - 1)
-            const Divider(height: 1, indent: 64),
-        ],
-      ],
-    ),
-  );
-}
-
-class _CategoryRow extends StatelessWidget {
-  const _CategoryRow({required this.category, required this.onTap});
-  final ServiceCategory category;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) => Semantics(
-    container: true,
-    explicitChildNodes: true,
-    label: '${category.name} service category',
-    child: ConstrainedBox(
-      constraints: const BoxConstraints(minHeight: 72),
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg,
-            vertical: AppSpacing.md,
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                alignment: Alignment.center,
-                decoration: const BoxDecoration(
-                  color: AppColors.primarySoft,
-                  borderRadius: AppRadius.inputBorder,
-                ),
-                child: Icon(
-                  _categoryIcon(category.iconName),
-                  color: AppColors.primary,
-                  size: 22,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      category.name,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    if (category.description case final description?) ...[
-                      const SizedBox(height: AppSpacing.xs),
-                      Text(
-                        description,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Text(
-                category.pricing?.displayLabel ?? 'Price on request',
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: category.pricing == null
-                      ? Theme.of(context).colorScheme.onSurfaceVariant
-                      : AppColors.primary,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.xs),
-              const Icon(Icons.chevron_right_rounded),
-            ],
-          ),
+  Widget build(BuildContext context) => Column(
+    children: [
+      for (var index = 0; index < categories.length; index += 1) ...[
+        if (index > 0) const SizedBox(height: AppSpacing.md),
+        // A gentle staggered reveal, echoing the quick-services grid above.
+        FixFadeSlideIn(
+          delay: AppMotion.staggerStep * index,
+          child: _card(categories[index]),
         ),
-      ),
-    ),
+      ],
+    ],
   );
 
+  /// Presents a real category as a service card. Every bound signal is real
+  /// platform data: name, description, icon, the admin-published price, the
+  /// backend `isEmergency` flag, and — only when there is data behind them —
+  /// the live availability strip and the rating. With no verified pros, nobody
+  /// online, and no reviews (a fresh deployment) the strip and stars simply
+  /// don't render, so the card never implies a count or rating we can't stand
+  /// behind. Avatar faces are never shown: we have real counts, not real
+  /// identities, so [FixServiceCard.showProStack] stays off.
+  Widget _card(ServiceCategory category) {
+    final action = onSelected == null ? null : () => onSelected!(category);
+    final (num? amount, String currency) = _priceFor(category.pricing);
+    final online = category.onlineProCount;
+    final verified = category.verifiedProCount;
+    final reviewCount = category.reviewCount > 0 ? category.reviewCount : null;
+
+    final availabilityLabel = online > 0
+        ? ', $online pros available now'
+        : verified > 0
+            ? ', $verified verified pros'
+            : '';
+    final ratingLabel = category.rating != null
+        ? ', rated ${category.rating!.toStringAsFixed(1)} out of 5'
+        : '';
+
+    return FixServiceCard(
+      name: category.name,
+      description: category.description,
+      descriptionMaxLines: 2,
+      icon: _categoryIcon(category.iconName),
+      badgeLabel: category.isEmergency ? 'Emergency' : null,
+      // Show the strip only when real data backs it: pros online now, or a
+      // verified-pro count to fall back to. Otherwise it stays hidden.
+      showLiveStrip: online > 0 || verified > 0,
+      prosAvailable: online,
+      verifiedProsCount: verified,
+      // We know real counts, not real pro identities — never show sample faces.
+      showProStack: false,
+      rating: category.rating,
+      reviewCount: reviewCount,
+      priceFrom: amount,
+      priceCurrency: currency,
+      priceNote: 'upfront · no hidden fees',
+      semanticLabel: '${category.name} service category'
+          '${category.isEmergency ? ', emergency service' : ''}'
+          '$availabilityLabel$ratingLabel',
+      onTap: action,
+      onPrimaryAction: action,
+    );
+  }
+
+  /// Resolves a display amount + currency symbol from published pricing. INR
+  /// minor units (paise) collapse to rupees; other currencies pass their minor
+  /// amount through until the pricing model widens. Null pricing → no price.
+  static (num?, String) _priceFor(ServiceCategoryPricing? pricing) {
+    if (pricing == null) return (null, '₹');
+    if (pricing.currency == 'INR') return (pricing.amountMinor / 100, '₹');
+    return (pricing.amountMinor, pricing.currency);
+  }
+
+  /// Maps a category's backend `iconName` to a Material glyph. Covers every
+  /// value the seed migration ships. Two are deliberate stand-ins for glyphs
+  /// not bundled in this Flutter build: locksmith uses an outline padlock, and
+  /// pest control uses a shield (home-protection) rather than a bug.
   static IconData _categoryIcon(String? value) => switch (value) {
-    'plumbing' => Icons.plumbing_outlined,
-    'electrical_services' => Icons.electrical_services_outlined,
-    'ac_unit' => Icons.ac_unit_outlined,
-    'key' => Icons.key_outlined,
-    _ => Icons.home_repair_service_outlined,
+    'plumbing' => Icons.plumbing_rounded,
+    'electrical_services' => Icons.electrical_services_rounded,
+    'hvac' => Icons.ac_unit_rounded,
+    'home_repair_service' => Icons.kitchen_rounded,
+    'lock' => Icons.lock_outline,
+    'handyman' => Icons.handyman_rounded,
+    'cleaning_services' => Icons.cleaning_services_rounded,
+    'pest_control' => Icons.shield_rounded,
+    'emergency' => Icons.emergency_rounded,
+    'carpenter' => Icons.carpenter_rounded,
+    _ => Icons.home_repair_service_rounded,
   };
 }
 
 /// Loading placeholder for the services list. A single shimmer sweeps across a
-/// stack of bars shaped like the real category rows, so the wait reads as
+/// short stack of card-shaped placeholders that mirror the real
+/// [FixServiceCard]s — icon tile, title, price, and CTA — so the wait reads as
 /// "content is coming" rather than a bare spinner.
 class _DiscoverySkeleton extends StatelessWidget {
   const _DiscoverySkeleton();
@@ -842,6 +832,59 @@ class _DiscoverySkeleton extends StatelessWidget {
         ),
       );
 
+  /// One placeholder card, shaped like a real [FixServiceCard]: a tile + title
+  /// block above a divider, then a price block beside a button.
+  static Widget _card() => Container(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        decoration: BoxDecoration(
+          color: AppColors.cream,
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          border: Border.all(color: AppColors.borderDefault),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                _bar(54, 54, radius: AppRadius.medium),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _bar(150, 16),
+                      const SizedBox(height: AppSpacing.sm),
+                      _bar(double.infinity, 12),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                _bar(26, 26, radius: AppRadius.pill),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.md),
+            const Divider(height: 1, color: AppColors.borderDefault),
+            const SizedBox(height: AppSpacing.md),
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _bar(88, 22),
+                      const SizedBox(height: AppSpacing.xs),
+                      _bar(120, 10),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                _bar(120, 46, radius: AppRadius.medium),
+              ],
+            ),
+          ],
+        ),
+      );
+
   @override
   Widget build(BuildContext context) => Semantics(
     label: 'Loading services',
@@ -850,30 +893,9 @@ class _DiscoverySkeleton extends StatelessWidget {
       child: FixShimmer(
         child: Column(
           children: [
-            for (var i = 0; i < 5; i++) ...[
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-                child: Row(
-                  children: [
-                    _bar(44, 44, radius: AppRadius.medium),
-                    const SizedBox(width: AppSpacing.md),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _bar(double.infinity, 14),
-                          const SizedBox(height: AppSpacing.xs),
-                          _bar(160, 12),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.md),
-                    _bar(56, 12),
-                  ],
-                ),
-              ),
-              if (i < 4)
-                const Divider(height: 1, color: AppColors.borderDefault),
+            for (var i = 0; i < 4; i++) ...[
+              if (i > 0) const SizedBox(height: AppSpacing.md),
+              _card(),
             ],
           ],
         ),

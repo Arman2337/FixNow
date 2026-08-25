@@ -8,6 +8,24 @@ export interface ServiceCategory {
   isActive: boolean;
   isEmergency: boolean;
   pricing: ServiceCategoryPricing | null;
+  /**
+   * Number of verified providers who offer this category and hold an active
+   * account. Real data derived from provider skills; 0 until providers
+   * register — never a placeholder.
+   */
+  verifiedProCount: number;
+  /**
+   * Of the verified providers, how many are online right now (real-time
+   * presence). Real data; 0 when none are live.
+   */
+  onlineProCount: number;
+  /**
+   * Average rating (1–5, one decimal) across published reviews for this
+   * category, or null when it has no reviews yet.
+   */
+  rating: number | null;
+  /** Number of published reviews behind {@link rating}. 0 when none. */
+  reviewCount: number;
   createdAt: Date;
   updatedAt: Date;
 }

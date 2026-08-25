@@ -55,9 +55,9 @@ Only these statuses are valid. A task cannot be completed while required validat
 # Project Progress
 
 Total Tasks: 114
-Completed: 91
+Completed: 93
 In Progress: 0
-Blocked: 3
+Blocked: 1
 Pending: 1
 Deferred: 18
 Cancelled: 1
@@ -2370,14 +2370,14 @@ Legal/product review is required before completion.
 Record the approved emergency policy and safety guidance, including the no-provider fallback and public-emergency disclaimer.
 ### Completion Record
 Completed By: Claude Code
-Completed Date: 2026-08-25
+Completed Date: 2026-08-26
 Commit:
 PR:
 
 ### Notes Addendum (completion)
-Fixed as five root causes: (1) missing dart:async import causing a 14-file compile cascade behind a stale kernel cache; (2) lazy late-final controllers first touched in dispose() - now created eagerly in initState with cancellable Timer starts; (3) always-on FixPulse/shimmer tickers defeating pumpAndSettle - scoped reduce-motion via the shared `pumpIdle()` tester extension (per-tester platformDispatcher override plus one pump to flush futures); deliberately NOT a global flutter_test_config, which force-initialised the widget binding and broke pure-Dart api_client tests; (4) stale assertion pins updated to shipped tokens (container 340ms, plumbing_rounded, icon asserted within the category card since quick-service chips may reuse glyphs); (5) restored redesign casualties: FixServiceCard.semanticLabel override feeding '<name> service category' and an explicit 'Price on request' branch when priceFrom is null (FN-107 contract). Validated 2026-08-25: flutter analyze 0 errors; flutter test 111/111 pass; backend 70 suites / 395 tests, lint clean.
+Implemented on `feat/payment-foundation` per the approved v1 policy. Files: `backend/src/emergency/{emergency-policy.ts,emergency-dispatch.entity.ts,emergency.service.ts,emergency.controller.ts,emergency.module.ts}`, migration `1786521000000-EmergencyDispatches`, matching radiusMultiplier parameter, DomainNotificationService bypassQuietHours option plus EMERGENCY_NOTIFICATION_TEMPLATES, TrustService.recordEmergencyFrequencySignal (+TRUST_RULES.emergency* constants), PERMISSIONS.emergencyCreateSelf / emergencyDispatchManage with policies matching the security matrix, AppModule registration. Deliberate scope notes: ops wave-3 alert ships as audited dashboard state via GET /admin/emergency/dispatches (admin push distribution deferred to FN-064/FN-062 UX work); provider-walked-away cooldown waiver implements policy section 7 row 4. Validation: lint clean, 71 suites / 410 tests pass, build passes.
 
-## FN-064 â€” Implement SOS UX and Safety Guidance
+## FN-064## FN-064 â€” Implement SOS UX and Safety Guidance
 Status: Blocked
 Priority: P1 â€” High
 Area: Emergency/Mobile

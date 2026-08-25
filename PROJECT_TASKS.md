@@ -2358,6 +2358,11 @@ backend/src/emergency/ backend/src/matching/ backend/src/bookings/ docs/safety/
 Legal/product review is required before completion.
 ### Blocker
 The required legal and product review has not approved the emergency eligibility, escalation, abuse-control, and public-safety wording.
+
+### Progress
+2026-08-26 gate drafting started on `feat/payment-foundation` (user-directed): owner decisions recorded for OD-11 scope - safety-hazard home emergencies only, network-priority with zero SLA claims, a three-wave config-tuned escalation ladder, and rate-limit + trust-signal abuse controls. The formal gate document is drafted at `docs/safety/emergency-dispatch-policy-v1.md` covering lifecycle (emergency_dispatches sidecar over normal bookings), priority waves, abuse controls, fallback copy families, notification overrides for FN-062, admin oversight, privacy, testing gates, and an approval record table. Implementation begins only after the owner signs the approval record.
+
+
 ### Required To Unblock
 Record the approved emergency policy and safety guidance, including the no-provider fallback and public-emergency disclaimer.
 ### Completion Record

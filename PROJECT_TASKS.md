@@ -54,17 +54,19 @@ Only these statuses are valid. A task cannot be completed while required validat
 
 # Project Progress
 
-Total Tasks: 113
+Total Tasks: 114
 Completed: 89
 In Progress: 0
 Blocked: 3
-Pending: 2
+Pending: 3
 Deferred: 18
 Cancelled: 1
 Current Phase: Payment foundation delivered; advisory AI assistance and trust signals active
 Next Recommended Task: FN-062 notification remainder (scheduled reminders need a scheduler decision; emergency slices gated by FN-063) or FN-113 advisory price/signal surfacing UI.
 
 # Current Work
+
+2026-08-25 FN-062 remainder delivered on `feat/payment-foundation`: scheduled booking reminders via a zero-dependency interval scanner (`BookingReminderService`, lead window + interval configurable by env, permanent per-role dedupe keys so reminders fire exactly once) sending customer and assigned-provider pushes through the existing deduplicated send path, and Android foreground push handling as an in-app banner (FirebaseMessaging.onMessage -> app-wide scaffold messenger, compile-time gated). Fixed a latent motion defect (FixFadeSlideIn delayed start now uses a cancellable Timer). The emergency-template and quiet-hour-override slices remain gated by FN-063 policy approval. Validated 2026-08-25: backend lint clean, 70 suites / 393 tests, build; flutter analyze 0 errors; mobile notification suites 7/7. Note: 14 widget tests fail on this branch from the committed design-system motion work - recorded as FN-114.
 
 2026-08-25 FN-060 completed on `feat/payment-foundation`: deterministic advisory price estimation (`GET /ai/price-estimate`, PUBLISHED/OBSERVED bases, honest PRICE_ON_REQUEST abstention) plus two new trust review signals (`customer-cancellation-frequency-v1`, `provider-refund-frequency-v1`), with all four windowed rules now wired best-effort into booking cancellation, complaint creation, and refund creation flows. Versioned evaluation suite `price-fraud-eval-v1` enforces false-positive, detection, bias, explanation, privacy, uncertainty, money, determinism, and threshold-drift gates. Also cleared pre-existing lint errors in the FN-053 payments code. Validated: backend lint clean, 69 suites / 388 tests, production build, `git diff --check`.
 
@@ -2313,6 +2315,8 @@ backend/src/notifications/ backend/src/bookings/ mobile/lib/notifications/
 Emergency alerts may override quiet hours only under the approved policy.
 
 2026-08-24 implementation progress on `feat/provider-ui-polish` (user-directed after FN-061 closed): added the in-process domain notification consumer over the FN-061 boundary. New reversible `notification_deliveries` table records one row per attempt (SENT / FAILED / NO_DEVICES / SKIPPED_QUIET_HOURS) with a per-user dedupe key unique index that makes sends replay-safe. Lock-screen-safe templates cover customer ASSIGNED / EN_ROUTE / IN_PROGRESS / COMPLETED / CANCELLED and provider REQUESTED / CANCELLED with no personal data. BookingsService fires best-effort notifications after create (fan-out to eligible providers via existing matching, capped at 20), accept, status updates, OTP service-start, and cancellations; a notification failure can never fail a booking. Quiet hours are a bounded server UTC window (`NOTIFICATION_QUIET_HOURS_UTC`, e.g. "23-7", disabled by default). Validated: backend lint clean, 65 suites / 332 tests, build; live run on the connected setup recorded provider fan-out (NO_DEVICES) and a real customer push (SENT) after a provider accepted a fresh booking. Remaining for full completion: emergency templates and quiet-hour override (gated by FN-063 policy approval) and scheduled booking reminders (need an approved scheduler dependency decision, e.g. @nestjs/schedule). Two-device live evidence (2026-08-25): a customer booking near an eligible enrolled provider produced a real provider-phone tray notification ("A new request is available near you", visually captured), and an earlier provider acceptance produced the real customer push ("A provider accepted your request") - both recorded SENT. Provider-side enrollment UI was added to the provider profile screen (FN-061 had shipped it customer-only). Note: Android does not display notification payloads in the tray while the app is foregrounded; foreground display handling remains part of the FN-062 remainder.
+
+2026-08-25 remainder delivery on `feat/payment-foundation` (user-directed): scheduled booking reminders shipped as a zero-dependency interval scanner - no scheduler dependency was approved or needed, because the notification_deliveries unique index already guarantees exactly-once sends across overlapping ticks or multiple instances. BookingReminderService scans REQUESTED/ASSIGNED bookings whose scheduledAt falls inside NOTIFICATION_REMINDER_LEAD_MINUTES (default 60) every NOTIFICATION_REMINDER_INTERVAL_MS (default 60s, timer unref'd, scan failures swallowed) and sends one customer plus one assigned-provider reminder per booking with permanent dedupe keys reminder:booking:<id>:<role>. Foreground display shipped as an in-app banner: FirebasePushGateway exposes FirebaseMessaging.onMessage as a ForegroundPushSource stream and bindForegroundPushBanner surfaces policy-owned copy through MaterialApp.scaffoldMessengerKey (inert when PUSH_NOTIFICATIONS_ENABLED is absent); subscription cancelled on dispose. FixFadeSlideIn's delayed start now cancels its Timer on dispose so disposed widgets never start tickers. Remaining for full completion: emergency templates and quiet-hour override only (gated by FN-063). Validated: backend lint clean, 70 suites / 393 tests, build; flutter analyze 0 errors; foreground-push and push-enrollment suites 7/7.
 ### Completion Record
 Completed By:
 Completed Date:
@@ -4382,6 +4386,47 @@ cd admin && npm run lint && npm run typecheck && npm test && npm run build
 
 ### Notes
 Created from FN-060 completion on 2026-08-25; backend capability exists without any client surface today.
+
+### Completion Record
+Completed By:
+Completed Date:
+Commit:
+PR:
+
+## FN-114 — Repair Design-System Motion Widget Test Suite
+
+Status: ⬜ Pending
+Priority: P1 — High
+Area: Mobile/Design System
+Depends On: None (repairs the committed motion foundation)
+Branch: fix/motion-widget-tests
+
+### Objective
+Make the full `flutter test` suite green on the design-system motion work committed 2026-08-25 (`fix_motion.dart`, `app_motion.dart`, provider card).
+
+### Scope
+- Diagnose and fix the 14 failing widget tests (pumpAndSettle timeouts from always-on FixPulse/shimmer tickers; teardown crashes from late ticker creation).
+- Prefer a test-environment reduce-motion declaration or component-level TickerMode gating over per-test pumping changes.
+- Keep production animation behavior unchanged for users without reduce-motion.
+
+### Do Not
+- Do not delete or weaken assertions to force green.
+- Do not disable ambient motion in production defaults.
+
+### Acceptance Criteria
+- [ ] `flutter test` passes with zero failures.
+- [ ] `flutter analyze` reports no new issues.
+
+### Validation
+```bash
+cd mobile && flutter analyze && flutter test
+```
+
+### Files / Areas
+`mobile/lib/design_system/`, `mobile/test/`
+
+### Notes
+Created 2026-08-25 after the FN-062 run measured a stable 14-failure baseline that exists at commit 00afdc7 independent of later changes. An attempted suite-wide reduce-motion config surfaced a second defect (late ticker creation during teardown); the cancellable-Timer half of that fix already shipped with FN-062.
 
 ### Completion Record
 Completed By:

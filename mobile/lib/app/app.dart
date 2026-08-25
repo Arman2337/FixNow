@@ -80,6 +80,12 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
   late final ComplaintsController _complaints;
   late final PushEnrollmentController _push;
   final Map<String, BookingTrackingController> _trackingControllers = {};
+  /// FN-062: app-wide messenger so foreground pushes can surface as banners
+  /// from any screen.
+  final GlobalKey<ScaffoldMessengerState> _messengerKey =
+      GlobalKey<ScaffoldMessengerState>();
+  final FirebasePushGateway _pushGateway = FirebasePushGateway();
+  StreamSubscription<ForegroundPushMessage>? _foregroundPushSub;
   _AuthEntryStep _authEntryStep = _AuthEntryStep.welcome;
   bool _registrationIntent = false;
   AccountRole _selectedRole = AccountRole.customer;
@@ -89,6 +95,10 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _initializeData();
+    _foregroundPushSub = bindForegroundPushBanner(
+      source: _pushGateway,
+      messengerKey: _messengerKey,
+    );
   }
 
   void _initializeData() {
@@ -126,6 +136,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
     );
     _push = PushEnrollmentController(
       api: PushApi(api, accessToken: _auth.validAccessToken),
+      gateway: _pushGateway,
     );
     _auth.restore();
   }
@@ -133,6 +144,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    unawaited(_foregroundPushSub?.cancel());
     _auth.dispose();
     _profile.dispose();
     _discovery.dispose();
@@ -153,6 +165,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'FixNow',
+      scaffoldMessengerKey: _messengerKey,
       theme: AppTheme.dark,
       darkTheme: AppTheme.dark,
       themeMode: ThemeMode.dark,

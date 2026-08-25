@@ -11,6 +11,7 @@ const navigation = [
   { label: "Bookings", href: "/bookings", roles: ["support_agent", "trust_safety_reviewer", "operations_administrator", "auditor"] },
   { label: "Support", href: "/support", roles: ["support_agent", "trust_safety_reviewer", "operations_administrator", "auditor"] },
   { label: "Analytics", href: "/analytics", roles: ["operations_administrator", "auditor"] },
+  { label: "Trust", href: "/trust", roles: ["trust_safety_reviewer", "operations_administrator"] },
   { label: "Access", href: "", roles: ["security_administrator", "auditor"] },
 ] as const;
 

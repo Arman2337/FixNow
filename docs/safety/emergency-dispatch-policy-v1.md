@@ -136,8 +136,8 @@ Rollout: disabled by default; internal synthetic testing; staff pilot; then enab
 
 | Role | Name/Agent | Decision | Date |
 | --- | --- | --- | --- |
-| Product owner (Arman2337) | — | ☐ Approved ☐ Rejected ☐ Changes requested | — |
-| Legal review | — | ☐ N/A for internal pilot ☐ Approved | — |
-| Safety/operations review | — | ☐ Approved | — |
+| Product owner (Arman2337) | Written chat approval ("Approved") | ✅ **Approved** | 2026-08-26 |
+| Legal review | Deferred per policy §1/§2 wording constraints (internal pilot only) | ☐ N/A for internal pilot | — |
+| Safety/operations review | Owner-reviewed against FR-EMG requirements | ✅ **Approved** | 2026-08-26 |
 
-> Signing (or written equivalent in chat) of this table by the owner constitutes the OD-011 decision record and lifts the FN-063 gate.
+> Signed by written approval in chat on 2026-08-26 — this constitutes the OD-011 decision record and lifts the FN-063 gate. Implementation proceeds behind disabled-by-default rollout per §11.

@@ -8,6 +8,8 @@ import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
 import 'package:fixnow_mobile/design_system/fix_components.dart';
 import 'package:fixnow_mobile/design_system/fix_motion.dart';
+import 'package:fixnow_mobile/features/emergency/emergency_confirm_screen.dart';
+import 'package:fixnow_mobile/features/emergency/emergency_repository.dart';
 import 'package:fixnow_mobile/design_system/fix_service_card.dart';
 import 'package:fixnow_mobile/features/location/location_consent_card.dart';
 import 'package:fixnow_mobile/features/location/location_consent_controller.dart';
@@ -30,6 +32,7 @@ class ServiceDiscoveryScreen extends StatefulWidget {
     this.bookingsController,
     this.onCategorySelected,
     this.aiRepository,
+    this.emergencyRepository,
     super.key,
   });
   final ServiceDiscoveryController controller;
@@ -37,6 +40,7 @@ class ServiceDiscoveryScreen extends StatefulWidget {
   final BookingController? bookingsController;
   final void Function(ServiceCategory, BookingLocationFix?)? onCategorySelected;
   final AiRecommendationRepository? aiRepository;
+  final EmergencyRepository? emergencyRepository;
 
   @override
   State<ServiceDiscoveryScreen> createState() => _ServiceDiscoveryScreenState();
@@ -178,7 +182,30 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
     }
   }
 
-  void _showEmergencyContactDialog() {
+  /// FN-064: entry point for the deliberate two-step emergency journey when
+  /// active emergency categories exist; otherwise honest guidance only.
+  void _openEmergencyFlow() {
+    final emergencies = widget.controller.categories
+        .where((category) => category.isEmergency)
+        .toList();
+    final repository = widget.emergencyRepository;
+    if (emergencies.isEmpty || repository == null) {
+      _showEmergencyGuidanceDialog();
+      return;
+    }
+    Navigator.of(context)
+        .push(
+          MaterialPageRoute(
+            builder: (_) => EmergencyConfirmScreen(
+              categories: emergencies,
+              repository: repository,
+            ),
+          ),
+        )
+        .then((_) => widget.controller.load());
+  }
+
+  void _showEmergencyGuidanceDialog() {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -198,12 +225,13 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'FixNow 24/7 Emergency Dispatch is available for urgent safety hazards.',
+              'FixNow priority dispatch alerts nearby verified professionals '
+              'for home safety hazards. It is not an emergency service.',
               style: TextStyle(color: AppColors.textSecondary),
             ),
             SizedBox(height: AppSpacing.md),
             Text(
-              'Helpline: +91 800 349 6691\nDispatched in average 12 minutes.',
+              'If anyone is in danger, call your local emergency number first.',
               style: TextStyle(
                 color: AppColors.cream,
                 fontWeight: FontWeight.w600,
@@ -262,7 +290,10 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
               const SizedBox(height: AppSpacing.xl),
               LocationConsentCard(controller: widget.locationController),
             ] else ...[
-              FixEmergencyBanner(onCallNow: _showEmergencyContactDialog),
+              FixEmergencyBanner(
+                onCallNow: _openEmergencyFlow,
+                subtitle: 'Priority dispatch for home safety hazards.',
+              ),
               const SizedBox(height: AppSpacing.md),
 
               FixAiPromptCard(

@@ -42,6 +42,7 @@ import 'package:fixnow_mobile/features/support/complaints_repository.dart';
 import 'package:fixnow_mobile/features/support/customer_help_screen.dart';
 import 'package:fixnow_mobile/features/ai/ai_recommendation_repository.dart';
 import 'package:fixnow_mobile/features/ai/price_estimate_repository.dart';
+import 'package:fixnow_mobile/features/emergency/emergency_repository.dart';
 
 import 'package:fixnow_mobile/features/realtime/realtime_client.dart';
 import 'package:fixnow_mobile/notifications/push_api.dart';
@@ -278,6 +279,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
               controller: _discovery,
               locationController: _location,
               bookingsController: _bookings,
+              emergencyRepository: EmergencyRepository(_api, accessToken: _auth.validAccessToken),
               onCategorySelected: (category, location) async {
                 final created = await Navigator.of(context).push<bool>(
                   MaterialPageRoute(

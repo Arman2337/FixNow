@@ -42,6 +42,7 @@ import 'package:fixnow_mobile/features/support/complaints_repository.dart';
 import 'package:fixnow_mobile/features/support/customer_help_screen.dart';
 import 'package:fixnow_mobile/features/ai/ai_recommendation_repository.dart';
 import 'package:fixnow_mobile/features/ai/price_estimate_repository.dart';
+import 'package:fixnow_mobile/features/ai/problem_analysis_repository.dart';
 import 'package:fixnow_mobile/features/emergency/emergency_repository.dart';
 
 import 'package:fixnow_mobile/features/realtime/realtime_client.dart';
@@ -302,6 +303,10 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
                 }
               },
               aiRepository: AiRecommendationRepository(_api, _auth.validAccessToken),
+              problemAnalysisRepository: ProblemAnalysisRepository(
+                _api,
+                accessToken: _auth.validAccessToken,
+              ),
             ),
             customerProfile: CustomerProfileScreen(
               controller: _profile,

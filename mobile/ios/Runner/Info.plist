@@ -28,6 +28,10 @@
 	<string>FixNow uses your location while the app is open to show services relevant to your area.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>FixNow uses the microphone only when you choose voice input for an editable issue description.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>FixNow uses the camera only when you choose to take a photo of a problem you want diagnosed.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>FixNow accesses your photo library only when you choose a photo of a problem you want diagnosed.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

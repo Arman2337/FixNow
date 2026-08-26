@@ -26,6 +26,7 @@ export enum BooleanString {
 export enum AiProviderName {
   Disabled = 'disabled',
   Fake = 'fake',
+  HuggingFace = 'huggingface',
 }
 
 export enum PaymentProviderName {
@@ -176,6 +177,55 @@ export class EnvironmentVariables {
   @IsOptional()
   AI_REQUEST_RATE_WINDOW_MS: number = 60_000;
 
+  // --- Multimodal problem classification (FN-058 voice, FN-059 image) ---
+  // Per-feature kill switches. Both default off; production enablement is
+  // additionally gated on the ADR-0014 release gate (see docs/ai/).
+  @IsEnum(BooleanString)
+  @IsOptional()
+  AI_VOICE_ENABLED: BooleanString = BooleanString.False;
+
+  @IsEnum(BooleanString)
+  @IsOptional()
+  AI_VISION_ENABLED: BooleanString = BooleanString.False;
+
+  @IsInt()
+  @Min(1_024)
+  @Max(33_554_432)
+  @IsOptional()
+  AI_MAX_IMAGE_BYTES: number = 8_388_608;
+
+  @IsInt()
+  @Min(1_024)
+  @Max(52_428_800)
+  @IsOptional()
+  AI_MAX_AUDIO_BYTES: number = 15_728_640;
+
+  // Hugging Face adapter settings. HF_TOKEN is server-side only and is never
+  // returned to the client or logged. Required only when AI_PROVIDER=huggingface.
+  @IsString()
+  @IsOptional()
+  HF_TOKEN?: string;
+
+  @IsString()
+  @MinLength(1)
+  @IsOptional()
+  HF_INFERENCE_BASE_URL: string = 'https://router.huggingface.co/v1';
+
+  @IsString()
+  @MinLength(1)
+  @IsOptional()
+  HF_ASR_BASE_URL: string = 'https://api-inference.huggingface.co/models';
+
+  @IsString()
+  @MinLength(1)
+  @IsOptional()
+  HF_VISION_MODEL: string = 'Qwen/Qwen2.5-VL-7B-Instruct';
+
+  @IsString()
+  @MinLength(1)
+  @IsOptional()
+  HF_WHISPER_MODEL: string = 'openai/whisper-large-v3';
+
   @IsEnum(PushProviderName)
   @IsOptional()
   PUSH_PROVIDER: PushProviderName = PushProviderName.Disabled;
@@ -242,6 +292,21 @@ function validateAiConfiguration(config: EnvironmentVariables): void {
     config.AI_PROVIDER === AiProviderName.Fake
   ) {
     throw new Error('AI_PROVIDER=fake is prohibited in production');
+  }
+  if (config.AI_PROVIDER === AiProviderName.HuggingFace && !config.HF_TOKEN) {
+    throw new Error('AI_PROVIDER=huggingface requires HF_TOKEN');
+  }
+  const modalityEnabled =
+    config.AI_VOICE_ENABLED === BooleanString.True ||
+    config.AI_VISION_ENABLED === BooleanString.True;
+  if (
+    modalityEnabled &&
+    (config.AI_ENABLED !== BooleanString.True ||
+      config.AI_PROVIDER === AiProviderName.Disabled)
+  ) {
+    throw new Error(
+      'AI_VOICE_ENABLED / AI_VISION_ENABLED require AI_ENABLED=true and a non-disabled AI_PROVIDER',
+    );
   }
 }
 

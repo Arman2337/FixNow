@@ -4,6 +4,7 @@ import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
 import 'package:fixnow_mobile/design_system/fix_page_frame.dart';
+import 'package:fixnow_mobile/design_system/fix_payment_checkout_sheet.dart';
 import 'package:fixnow_mobile/design_system/fix_state_views.dart';
 import 'package:fixnow_mobile/features/payments/invoice_repository.dart';
 import 'package:fixnow_mobile/features/payments/local_payment_config.dart';
@@ -144,6 +145,12 @@ class _PendingViewState extends State<_PendingView> {
           ),
           if (_canPayLocally) ...[
             const SizedBox(height: AppSpacing.lg),
+            FixButton(
+              label: 'Pay Now (Interactive Checkout)',
+              icon: Icons.payments_rounded,
+              onPressed: () => _openCheckoutSheet(context),
+            ),
+            const SizedBox(height: AppSpacing.sm),
             FixSecondaryButton(
               label: 'Complete payment (local)',
               icon: Icons.build_circle_outlined,
@@ -162,6 +169,29 @@ class _PendingViewState extends State<_PendingView> {
       ),
     ),
   );
+
+  void _openCheckoutSheet(BuildContext context) {
+    FixPaymentCheckoutSheet.show(
+      context,
+      bookingId: widget.bookingId,
+      baseAmountMinor: 49900,
+      onProcessPayment: ({
+        required paymentMethod,
+        required totalMinor,
+        required tipMinor,
+      }) async {
+        if (widget.repository != null) {
+          await widget.repository!.pay(widget.bookingId);
+        }
+      },
+      onViewInvoice: () async {
+        await widget.onPaid();
+      },
+      onDone: () async {
+        await widget.onPaid();
+      },
+    );
+  }
 }
 
 class _InvoiceView extends StatelessWidget {

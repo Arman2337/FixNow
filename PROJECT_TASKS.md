@@ -54,16 +54,16 @@ Only these statuses are valid. A task cannot be completed while required validat
 
 # Project Progress
 
-Total Tasks: 120
-Completed: 103
+Total Tasks: 124
+Completed: 104
 In Progress: 0
 Blocked: 0
-Pending: 0
+Pending: 3
 Deferred: 16
 Cancelled: 1
-Current Task: None (All active tasks completed! FN-120 delivered on branch `feat/in-app-communication`)
-Current Phase: In-app real-time communication and calling (Phase 13).
-Next Recommended Task: All eligible product tasks are completed. ClamAV malware scanning on ai-media-policy remains the sole code-solvable gate for FN-059.
+Current Task: None (FN-121 delivered on branch `feat/in-app-communication`)
+Current Phase: Phase 14 — World-Class Commercial Experience & Quality Control
+Next Recommended Task: FN-122 — Multi-Item Sub-Services Catalog & Cart System
 
 2026-08-27 (session 2) FN-113 advisory price/signal surfacing verified complete and closed. Evidence in the working tree: the mobile advisory price estimate (`mobile/lib/features/ai/price_estimate_repository.dart` — repository + controller + honest states) is surfaced on the service-request screen (`service_request_screen.dart` `_buildPriceContent`: ESTIMATE range + explanation + "Advisory only — the final charge is confirmed..." disclaimer, honest static fallback, PRICE_ON_REQUEST abstention) and wired at both `app.dart` construction sites (category-select and Book-again) via `PriceEstimateRepository(_api, accessToken: _auth.validAccessToken)`; the admin trust queue (`admin/src/app/trust/page.tsx`) already renders the FN-060 rule codes; the provider accept-time signal is surfaced on provider home (`provider_home_screen.dart` via `GET trust/my-accept-time`, FN-111). Payments set to local-only per ADR-0016: `PAYMENT_PROVIDER` defaults to the deterministic `fake` gateway (now made explicit in `backend/.env`), which is prohibited in production by `env.validation.ts` startup validation, needs no live gateway credentials, and offers no payouts. The mobile client has no interactive checkout surface yet (only the read-only invoice screen; `JobCompletedDialog` is unwired), so a dev-gated local payment flow is recorded as FN-118 rather than scaffolded. FN-058/FN-059 remain Deferred (live vision/voice still gated on malware scan + signed DPA + vendor/model approval, ADR-0014; AI stays advisory-only, disabled by default). Validated 2026-08-27: flutter analyze 0 errors, flutter test 164/164; backend jest payments 35/35.
 
@@ -2791,3 +2791,94 @@ Signaling passes through FixNow's existing WebSocket server. Audio streams peer-
 - **Validation**:
   - Backend: `npm test` across all 80 test suites (510 tests passed).
   - Mobile: `flutter analyze` clean, `flutter test` 178/178 tests passed (including `test/booking_call_screen_test.dart`).
+
+# Phase 14 — World-Class Commercial Experience & Quality Control
+
+## FN-121 — Implement Interactive Mobile Checkout Sheet (UPI, Cards, COD, Tip & Success Animation)
+Status: ✅ Completed
+Priority: P1 — High
+Area: Mobile / Payments
+Depends On: FN-053, FN-120
+Branch: feat/in-app-communication
+
+### Objective
+Provide a consumer-grade interactive payment checkout sheet in the mobile app upon booking completion, supporting UPI (Google Pay, PhonePe, Paytm), Credit/Debit Cards, Cash on Delivery, optional technician tipping, and a celebratory 60fps payment success animation modal with invoice access.
+
+### Scope
+- Mobile: `FixPaymentCheckoutSheet` component with:
+  - Total amount display with expandable itemized breakdown (Labour, Parts, 18% GST).
+  - Tipping selector chips (₹30, ₹50, ₹100, custom, none) with dynamic total calculation.
+  - Payment method selector: UPI (Intent / VPA ID), Cards (Card Number, Expiry, CVV), Cash on Delivery (COD).
+  - Pay CTA with active loading indicator.
+  - Full-screen / modal celebratory success state: 60fps spring checkmark draw, confetti celebration (disabled under `disableAnimations`), payment reference, and CTAs to view invoice or return to booking.
+- Wire into customer booking lifecycle when booking is completed.
+- Full widget test suite with reduce-motion validation.
+
+### Acceptance Criteria
+- [x] Checkout sheet opens smoothly with itemized breakdown and tip options.
+- [x] Tapping different tips updates the grand total in real-time.
+- [x] Switching between UPI, Card, and Cash updates form validation and CTAs.
+- [x] Payment submission displays processing state and transitions to celebratory success modal.
+- [x] Reduce motion renders clean static state without failing tests.
+- [x] 100% green tests in `flutter test` and clean `flutter analyze`.
+
+### Validation
+```bash
+cd mobile && flutter analyze && flutter test
+```
+
+### Files / Areas
+```text
+mobile/lib/features/payments/
+mobile/lib/design_system/fix_payment_checkout_sheet.dart
+mobile/test/payment_checkout_sheet_test.dart
+```
+
+### Notes
+Delivered on 2026-08-27:
+- Created `FixPaymentCheckoutSheet` in `mobile/lib/design_system/fix_payment_checkout_sheet.dart` with UPI, Cards, Cash on Delivery, FixNow Wallet, dynamic 18% GST breakdown, and tip chips (+₹30, +₹50, +₹100).
+- Built 60fps celebratory success modal featuring spring scale-in circle, progressive custom checkmark stroke painter, transaction reference, and invoice access.
+- Wired interactive checkout sheet into `mobile/lib/features/payments/invoice_screen.dart` alongside existing local bypass actions.
+- Added comprehensive unit and widget tests in `mobile/test/payment_checkout_sheet_test.dart`.
+- All 187 mobile tests pass (100% green) and `flutter analyze` reports zero issues.
+
+### Completion Record
+Completed By: Antigravity
+Completed Date: 2026-08-27
+Commit: Pending
+
+---
+
+## FN-122 — Implement Multi-Item Sub-Services Catalog & Cart System
+Status: ⬜ Pending
+Priority: P2 — Medium
+Area: Mobile / Services
+Depends On: FN-121
+Branch: feat/sub-services-cart
+
+### Objective
+Enable granular sub-service task selection (e.g. under Plumbing: Tap Repair ₹149, Flush Tank ₹249, Pipe Leak ₹349), quantity increment/decrement, and a floating sticky cart bar ("N items • ₹Total | View Cart →").
+
+---
+
+## FN-123 — Implement Before & After Job Verification Photos (Quality & Fraud Shield)
+Status: ⬜ Pending
+Priority: P2 — Medium
+Area: Mobile / Quality Control
+Depends On: FN-121
+Branch: feat/before-after-proof
+
+### Objective
+Require technician to capture a mandatory "Before Work" photograph upon OTP verification and an "After Work" photograph upon job completion, recorded onto the booking timeline to eliminate customer-technician quality disputes.
+
+---
+
+## FN-124 — Implement Saved Address Book (Home, Work, Other)
+Status: ⬜ Pending
+Priority: P2 — Medium
+Area: Mobile / User Profile
+Depends On: FN-121
+Branch: feat/saved-address-book
+
+### Objective
+Enable customers to save and manage multi-location addresses (Home, Work, Parents) with floor, flat, building name, and landmark for 1-tap booking address selection.

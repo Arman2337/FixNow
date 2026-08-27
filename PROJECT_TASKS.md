@@ -54,16 +54,16 @@ Only these statuses are valid. A task cannot be completed while required validat
 
 # Project Progress
 
-Total Tasks: 124
-Completed: 107
+Total Tasks: 128
+Completed: 108
 In Progress: 0
 Blocked: 0
-Pending: 0
+Pending: 3
 Deferred: 16
 Cancelled: 1
-Current Task: None (All Phase 14 tasks FN-121, FN-122, FN-123, FN-124 completed on branch `feat/in-app-communication`)
-Current Phase: Phase 14 — World-Class Commercial Experience & Quality Control (Completed)
-Next Recommended Task: None (All current eligible tasks completed)
+Current Task: None (FN-125 delivered on branch `feat/in-app-communication`)
+Current Phase: Phase 15 — Real-World Scheduling & Commercial Operations
+Next Recommended Task: FN-127 — Implement Booking Reschedule Flow
 
 2026-08-27 (session 2) FN-113 advisory price/signal surfacing verified complete and closed. Evidence in the working tree: the mobile advisory price estimate (`mobile/lib/features/ai/price_estimate_repository.dart` — repository + controller + honest states) is surfaced on the service-request screen (`service_request_screen.dart` `_buildPriceContent`: ESTIMATE range + explanation + "Advisory only — the final charge is confirmed..." disclaimer, honest static fallback, PRICE_ON_REQUEST abstention) and wired at both `app.dart` construction sites (category-select and Book-again) via `PriceEstimateRepository(_api, accessToken: _auth.validAccessToken)`; the admin trust queue (`admin/src/app/trust/page.tsx`) already renders the FN-060 rule codes; the provider accept-time signal is surfaced on provider home (`provider_home_screen.dart` via `GET trust/my-accept-time`, FN-111). Payments set to local-only per ADR-0016: `PAYMENT_PROVIDER` defaults to the deterministic `fake` gateway (now made explicit in `backend/.env`), which is prohibited in production by `env.validation.ts` startup validation, needs no live gateway credentials, and offers no payouts. The mobile client has no interactive checkout surface yet (only the read-only invoice screen; `JobCompletedDialog` is unwired), so a dev-gated local payment flow is recorded as FN-118 rather than scaffolded. FN-058/FN-059 remain Deferred (live vision/voice still gated on malware scan + signed DPA + vendor/model approval, ADR-0014; AI stays advisory-only, disabled by default). Validated 2026-08-27: flutter analyze 0 errors, flutter test 164/164; backend jest payments 35/35.
 
@@ -3006,4 +3006,99 @@ Delivered on 2026-08-28:
 ### Completion Record
 Completed By: Antigravity
 Completed Date: 2026-08-28
+Commit: 2f59181
+
+---
+
+# Phase 15 — Real-World Scheduling & Commercial Operations
+
+## FN-125 — Implement Interactive Date & Time Slot Picker
+Status: ✅ Completed
+Priority: P1 — High
+Area: Mobile / Bookings
+Depends On: FN-124
+Branch: feat/in-app-communication
+
+### Objective
+Enable customers to schedule home repair and maintenance services for a specific date and time slot ("Book for Now" vs "Schedule for Later" with horizontal date picker: Today, Tomorrow, +5 days, and Morning/Afternoon/Evening time windows), pre-filling and persisting the booking schedule.
+
+### Scope
+- Domain Model: `BookingSchedule` model with `ScheduleMode` (`now` vs `scheduled`), selected `DateTime`, and `TimeSlot` (`morning` 8–11 AM, `afternoon` 12–3 PM, `evening` 4–7 PM).
+- Component: `FixSchedulePickerCard` in `mobile/lib/design_system/fix_schedule_picker.dart`:
+  - Toggle between ⚡ "Book for Now (Immediate ~15-30m)" and 📅 "Schedule for Later".
+  - Horizontal scrollable Date selector chips (Today, Tomorrow, and upcoming 5 days with Day name and Date number).
+  - Time window chips:
+    - 🌅 Morning: `08:00 AM – 11:00 AM`
+    - ☀️ Afternoon: `12:00 PM – 03:00 PM`
+    - 🌆 Evening: `04:00 PM – 07:00 PM`
+- Integration: Embedded in `ServiceRequestScreen` passing selected `scheduledAt` to `BookingController.create()`.
+- Full widget and unit tests in `mobile/test/schedule_picker_test.dart`.
+
+### Acceptance Criteria
+- [x] Customer can toggle between "Book for Now" and "Schedule for Later".
+- [x] Selecting a date and time slot dynamically updates schedule preview.
+- [x] Slots in the past for "Today" are disabled or hidden.
+- [x] Submitting the request passes the calculated `scheduledAt` timestamp to the backend.
+- [x] 100% green tests in `flutter test` and clean `flutter analyze`.
+
+### Validation
+```bash
+cd mobile && flutter analyze && flutter test
+```
+
+### Files / Areas
+```text
+mobile/lib/features/bookings/booking_schedule.dart
+mobile/lib/design_system/fix_schedule_picker.dart
+mobile/lib/features/bookings/service_request_screen.dart
+mobile/test/schedule_picker_test.dart
+```
+
+### Notes
+Delivered on 2026-08-28:
+- Built `BookingSchedule` and `TimeSlot` models in `mobile/lib/features/bookings/booking_schedule.dart`.
+- Built `FixSchedulePickerCard` in `mobile/lib/design_system/fix_schedule_picker.dart` with 7-day horizontal calendar strip and 3-hour arrival window slots.
+- Wired `scheduledAt` support into `BookingRepository.create()`, `BookingController.create()`, and `ServiceRequestScreen`.
+- Created comprehensive test suite in `mobile/test/schedule_picker_test.dart` (3/3 passed).
+- All 201 mobile tests pass (100% green) and `flutter analyze` reports zero issues.
+
+### Completion Record
+Completed By: Antigravity
+Completed Date: 2026-08-28
 Commit: Pending
+
+---
+
+## FN-126 — Implement Promo Codes & Coupon Discount Engine
+Status: ⬜ Pending
+Priority: P2 — Medium
+Area: Mobile / Pricing
+Depends On: FN-125
+Branch: feat/in-app-communication
+
+### Objective
+Enable customers to enter and apply promotional coupons (e.g. `WELCOME100`, `FIRST20`, `FIXNOWFESTIVE`), validate discounts in real-time, and dynamically reduce the checkout and service estimate totals with transparent GST recalculation.
+
+---
+
+## FN-127 — Implement Booking Reschedule Flow
+Status: ⬜ Pending
+Priority: P2 — Medium
+Area: Mobile / Bookings
+Depends On: FN-125
+Branch: feat/in-app-communication
+
+### Objective
+Provide a dedicated "Reschedule" action on active bookings allowing customers to choose a new date/time slot without cancelling their booking, updating the timeline and sending push alerts to the assigned provider.
+
+---
+
+## FN-128 — Implement In-App Notification Center & Activity Inbox
+Status: ⬜ Pending
+Priority: P2 — Medium
+Area: Mobile / Notifications
+Depends On: FN-125
+Branch: feat/in-app-communication
+
+### Objective
+Provide a top-bar 🔔 Bell icon with an unread badge and dedicated Activity Inbox screen categorizing historical alerts across Bookings, Payments, and Service Updates with 1-tap navigation to relevant screens.

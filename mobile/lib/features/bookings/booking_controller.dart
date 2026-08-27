@@ -83,8 +83,9 @@ class BookingController extends ChangeNotifier {
     for (var index = 0; index < first.length; index += 1) {
       if (first[index].id != second[index].id ||
           first[index].version != second[index].version ||
-          first[index].status != second[index].status)
+          first[index].status != second[index].status) {
         return false;
+      }
     }
     return true;
   }
@@ -132,12 +133,14 @@ class BookingController extends ChangeNotifier {
     required String description,
     required double latitude,
     required double longitude,
+    DateTime? scheduledAt,
   }) async {
     final booking = await _repository.create(
       serviceCategoryId: serviceCategoryId,
       description: description,
       latitude: latitude,
       longitude: longitude,
+      scheduledAt: scheduledAt,
     );
     bookings = [booking, ...bookings.where((item) => item.id != booking.id)];
     status = BookingListStatus.ready;

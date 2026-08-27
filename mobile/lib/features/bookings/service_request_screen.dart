@@ -7,8 +7,10 @@ import 'package:fixnow_mobile/design_system/fix_page_frame.dart';
 import 'package:fixnow_mobile/design_system/fix_price_breakdown_card.dart';
 import 'package:fixnow_mobile/design_system/signature_motion.dart';
 import 'package:fixnow_mobile/design_system/fix_address_selector.dart';
+import 'package:fixnow_mobile/design_system/fix_schedule_picker.dart';
 import 'package:fixnow_mobile/features/ai/price_estimate_repository.dart';
 import 'package:fixnow_mobile/features/bookings/booking_controller.dart';
+import 'package:fixnow_mobile/features/bookings/booking_schedule.dart';
 import 'package:fixnow_mobile/features/location/booking_location.dart';
 import 'package:fixnow_mobile/features/location/saved_address.dart';
 import 'package:fixnow_mobile/features/services/service_category.dart';
@@ -50,6 +52,7 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
   bool _showRadar = false;
   String? _error;
   BookingLocationFix? _confirmedLocation;
+  BookingSchedule? _schedule;
   PriceEstimateController? _estimate;
 
   @override
@@ -177,6 +180,7 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
         description: _details.text,
         latitude: location.latitude,
         longitude: location.longitude,
+        scheduledAt: _schedule?.targetScheduledAt,
       );
       if (mounted) {
         setState(() => _showRadar = true); // FN-040 made visible (signature motion)
@@ -360,6 +364,14 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
                   );
                   _error = null;
                 });
+              },
+            ),
+            const SizedBox(height: AppSpacing.md),
+
+            FixSchedulePickerCard(
+              initialSchedule: _schedule,
+              onScheduleChanged: (sched) {
+                setState(() => _schedule = sched);
               },
             ),
             const SizedBox(height: AppSpacing.md),

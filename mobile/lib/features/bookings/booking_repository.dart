@@ -51,6 +51,7 @@ class BookingRepository {
     required String description,
     required double latitude,
     required double longitude,
+    DateTime? scheduledAt,
   }) async {
     final key = 'mobile-${DateTime.now().toUtc().millisecondsSinceEpoch}';
     final response = await _api.send(
@@ -64,6 +65,7 @@ class BookingRepository {
           'description': description.trim(),
           'locationLat': latitude,
           'locationLng': longitude,
+          if (scheduledAt != null) 'scheduledAt': scheduledAt.toUtc().toIso8601String(),
         },
       ),
     );
@@ -203,11 +205,12 @@ class BookingRepository {
         : null;
     final raw = body?['review'];
     if (raw == null) return null;
-    if (raw is! Map)
+    if (raw is! Map) {
       throw const ApiException(
         ApiFailureKind.invalidResponse,
         'The review response was invalid.',
       );
+    }
     return BookingReview.fromJson(Map<String, Object?>.from(raw));
   }
 
@@ -231,11 +234,12 @@ class BookingRepository {
         ? response.body! as Map<String, dynamic>
         : null;
     final raw = body?['review'];
-    if (raw is! Map)
+    if (raw is! Map) {
       throw const ApiException(
         ApiFailureKind.invalidResponse,
         'The review response was invalid.',
       );
+    }
     return BookingReview.fromJson(Map<String, Object?>.from(raw));
   }
 

@@ -146,6 +146,55 @@ describe('Environment Validation', () => {
       validate({ ...base, NODE_ENV: 'production', AI_PROVIDER: 'fake' }),
     ).toThrow('AI_PROVIDER=fake is prohibited in production');
   });
+
+  it('requires HF_TOKEN when the Hugging Face provider is selected', () => {
+    const base = {
+      DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/test',
+      REDIS_URL: 'redis://localhost:6379',
+      JWT_SECRET: 'test-only-jwt-secret-at-least-32-characters',
+      OTP_SECRET: 'test-only-otp-secret-at-least-32-characters',
+      AI_ENABLED: 'true',
+      AI_PROVIDER: 'huggingface',
+    };
+
+    expect(() => validate(base)).toThrow(
+      'AI_PROVIDER=huggingface requires HF_TOKEN',
+    );
+    const configured = validate({ ...base, HF_TOKEN: 'hf_local_test_token' });
+    expect(configured.AI_PROVIDER).toBe('huggingface');
+    // The token is retained server-side only; it is never surfaced elsewhere.
+    expect(configured.HF_TOKEN).toBe('hf_local_test_token');
+  });
+
+  it('gates the voice/vision modality flags behind an enabled, non-disabled provider', () => {
+    const base = {
+      DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/test',
+      REDIS_URL: 'redis://localhost:6379',
+      JWT_SECRET: 'test-only-jwt-secret-at-least-32-characters',
+      OTP_SECRET: 'test-only-otp-secret-at-least-32-characters',
+    };
+
+    // A modality flag with AI disabled and no provider fails closed.
+    expect(() => validate({ ...base, AI_VOICE_ENABLED: 'true' })).toThrow(
+      'AI_VOICE_ENABLED / AI_VISION_ENABLED require AI_ENABLED=true and a non-disabled AI_PROVIDER',
+    );
+    expect(() => validate({ ...base, AI_VISION_ENABLED: 'true' })).toThrow(
+      'AI_VOICE_ENABLED / AI_VISION_ENABLED require AI_ENABLED=true and a non-disabled AI_PROVIDER',
+    );
+
+    // Both defaults off is always valid (the governed baseline).
+    expect(validate(base).AI_VOICE_ENABLED).toBe('false');
+    expect(validate(base).AI_VISION_ENABLED).toBe('false');
+
+    // With AI enabled and a real (non-disabled) provider, the flag is accepted.
+    const enabled = validate({
+      ...base,
+      AI_ENABLED: 'true',
+      AI_PROVIDER: 'fake',
+      AI_VISION_ENABLED: 'true',
+    });
+    expect(enabled.AI_VISION_ENABLED).toBe('true');
+  });
 });
 
 describe('Push notification configuration', () => {

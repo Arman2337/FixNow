@@ -24,6 +24,9 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
 import 'package:fixnow_mobile/features/ai/ai_recommendation_repository.dart';
 import 'package:fixnow_mobile/features/ai/ai_recommendation_screen.dart';
+import 'package:fixnow_mobile/features/ai/problem_analysis_repository.dart';
+import 'package:fixnow_mobile/features/ai/problem_diagnosis_controller.dart';
+import 'package:fixnow_mobile/features/ai/problem_diagnosis_screen.dart';
 
 class ServiceDiscoveryScreen extends StatefulWidget {
   const ServiceDiscoveryScreen({
@@ -32,6 +35,7 @@ class ServiceDiscoveryScreen extends StatefulWidget {
     this.bookingsController,
     this.onCategorySelected,
     this.aiRepository,
+    this.problemAnalysisRepository,
     this.emergencyRepository,
     super.key,
   });
@@ -40,6 +44,7 @@ class ServiceDiscoveryScreen extends StatefulWidget {
   final BookingController? bookingsController;
   final void Function(ServiceCategory, BookingLocationFix?)? onCategorySelected;
   final AiRecommendationRepository? aiRepository;
+  final ProblemAnalysisRepository? problemAnalysisRepository;
   final EmergencyRepository? emergencyRepository;
 
   @override
@@ -299,6 +304,10 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
               FixAiPromptCard(
                 onTap: _openAi,
               ),
+              if (widget.problemAnalysisRepository != null) ...[
+                const SizedBox(height: AppSpacing.md),
+                _buildDiagnoseCard(),
+              ],
               const SizedBox(height: AppSpacing.xl),
 
               _buildQuickServicesSection(context),
@@ -741,6 +750,85 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
       MaterialPageRoute(
         builder: (_) => AiRecommendationScreen(
           repository: widget.aiRepository!,
+          categories: widget.controller.categories,
+        ),
+      ),
+    );
+    if (category != null && mounted) _selectCategory(category);
+  }
+
+  Widget _buildDiagnoseCard() => Semantics(
+    button: true,
+    label: 'Diagnose your problem. Add a photo or describe it by voice.',
+    child: InkWell(
+      onTap: _openDiagnose,
+      borderRadius: BorderRadius.circular(AppRadius.card),
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceElevated,
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          border: Border.all(color: AppColors.primary),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppColors.primarySoft,
+                borderRadius: BorderRadius.circular(AppRadius.small),
+              ),
+              child: const Icon(
+                Icons.camera_alt_rounded,
+                color: AppColors.primary,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Diagnose your problem',
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                    ),
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    'Add a photo or describe it by voice',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.mic_rounded, color: AppColors.primary, size: 20),
+            const SizedBox(width: AppSpacing.xs),
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: AppColors.textSecondary,
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+
+  Future<void> _openDiagnose() async {
+    if (widget.problemAnalysisRepository == null) return;
+    final category = await Navigator.of(context).push<ServiceCategory>(
+      MaterialPageRoute(
+        builder: (_) => ProblemDiagnosisScreen(
+          controller: ProblemDiagnosisController(
+            widget.problemAnalysisRepository!,
+          ),
           categories: widget.controller.categories,
         ),
       ),

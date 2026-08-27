@@ -3,6 +3,7 @@ import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
+import 'package:fixnow_mobile/design_system/fix_motion_suite.dart';
 import 'package:fixnow_mobile/design_system/fix_page_frame.dart';
 import 'package:fixnow_mobile/design_system/fix_payment_checkout_sheet.dart';
 import 'package:fixnow_mobile/design_system/fix_state_views.dart';
@@ -224,8 +225,12 @@ class _InvoiceView extends StatelessWidget {
               ),
             ),
             const SizedBox(height: AppSpacing.xs),
-            Text(
-              invoice.amountLabel,
+            FixRollingTicker(
+              targetValue: invoice.amountMinor > 0
+                  ? invoice.amountMinor / 100.0
+                  : (double.tryParse(invoice.amountLabel.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0),
+              currencySymbol: invoice.currency == 'INR' ? '₹' : '${invoice.currency} ',
+              showDecimals: (invoice.amountMinor % 100) != 0,
               style: Theme.of(context).textTheme.displaySmall?.copyWith(
                 color: AppColors.textOnLightPrimary,
                 fontWeight: FontWeight.w800,

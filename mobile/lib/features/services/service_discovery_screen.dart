@@ -8,6 +8,7 @@ import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
 import 'package:fixnow_mobile/design_system/fix_components.dart';
 import 'package:fixnow_mobile/design_system/fix_motion.dart';
+import 'package:fixnow_mobile/design_system/fix_motion_suite.dart';
 import 'package:fixnow_mobile/features/emergency/emergency_confirm_screen.dart';
 import 'package:fixnow_mobile/features/emergency/emergency_repository.dart';
 import 'package:fixnow_mobile/design_system/fix_service_card.dart';
@@ -535,7 +536,9 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
           ],
         ),
         const SizedBox(height: AppSpacing.sm),
-        ...filtered.map((item) {
+        ...filtered.asMap().entries.map((entry) {
+          final index = entry.key;
+          final item = entry.value;
           final cat = categories.firstWhere(
             (c) => c.slug == item.categorySlug || c.id == item.categorySlug,
             orElse: () => ServiceCategory(
@@ -545,118 +548,124 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
             ),
           );
 
-          return Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-            child: FixCard(
-              tone: FixCardTone.elevated,
-              padding: const EdgeInsets.all(AppSpacing.md),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: AppColors.primarySoft.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(AppRadius.medium),
-                      border: Border.all(color: AppColors.borderGold.withValues(alpha: 0.3)),
-                    ),
-                    child: Icon(item.icon, color: AppColors.accentGold, size: 22),
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: AppColors.backgroundSecondary,
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                cat.name.toUpperCase(),
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                            ),
-                            if (item.badge != null) ...[
-                              const SizedBox(width: 6),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: AppColors.accentGold.withValues(alpha: 0.2),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  item.badge!,
-                                  style: const TextStyle(
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppColors.accentGold,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ],
+          return StaggeredListReveal(
+            index: index,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+              child: FixSpringBounce(
+                onTap: () => widget.onCategorySelected?.call(cat, _bookingLocation),
+                child: FixCard(
+                  tone: FixCardTone.elevated,
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: AppColors.primarySoft.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(AppRadius.medium),
+                          border: Border.all(color: AppColors.borderGold.withValues(alpha: 0.3)),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          item.name,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 15,
-                            color: AppColors.cream,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          item.description,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                        ),
-                        const SizedBox(height: AppSpacing.sm),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        child: Icon(item.icon, color: AppColors.accentGold, size: 22),
+                      ),
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
                               children: [
-                                Text(
-                                  item.formattedPrice,
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppColors.accentGold,
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.backgroundSecondary,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    cat.name.toUpperCase(),
+                                    style: const TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.textSecondary,
+                                    ),
                                   ),
                                 ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  '• ${item.durationMinutes} mins',
-                                  style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+                                if (item.badge != null) ...[
+                                  const SizedBox(width: 6),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.accentGold.withValues(alpha: 0.2),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      item.badge!,
+                                      style: const TextStyle(
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w800,
+                                        color: AppColors.accentGold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              item.name,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 15,
+                                color: AppColors.cream,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              item.description,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      item.formattedPrice,
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w800,
+                                        color: AppColors.accentGold,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      '• ${item.durationMinutes} mins',
+                                      style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+                                    ),
+                                  ],
+                                ),
+                                FilledButton.tonal(
+                                  style: FilledButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                    minimumSize: Size.zero,
+                                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                  onPressed: () => widget.onCategorySelected?.call(cat, _bookingLocation),
+                                  child: const Text('View & Book', style: TextStyle(fontSize: 12)),
                                 ),
                               ],
                             ),
-                            FilledButton.tonal(
-                              style: FilledButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                                minimumSize: Size.zero,
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              ),
-                              onPressed: () => widget.onCategorySelected?.call(cat, _bookingLocation),
-                              child: const Text('View & Book', style: TextStyle(fontSize: 12)),
-                            ),
                           ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           );
@@ -875,9 +884,8 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
             final item = quickItems[index];
             return FixFadeSlideIn(
               delay: AppMotion.staggerStep * index,
-              child: InkWell(
+              child: FixSpringBounce(
                 onTap: () => _handleQuickService(item.$3, item.$2),
-                borderRadius: BorderRadius.circular(AppRadius.card),
                 child: Container(
                   decoration: BoxDecoration(
                     color: AppColors.surfacePrimary,

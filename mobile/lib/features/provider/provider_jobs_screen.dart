@@ -8,6 +8,7 @@ import 'package:fixnow_mobile/features/bookings/booking.dart';
 import 'package:fixnow_mobile/features/bookings/cancellation_dialog.dart';
 import 'package:fixnow_mobile/features/bookings/job_proof_service.dart';
 import 'package:fixnow_mobile/design_system/fix_job_proof_dialog.dart';
+import 'package:fixnow_mobile/features/provider/provider_active_job_cockpit_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -133,8 +134,24 @@ class _JobCard extends StatelessWidget {
               const SizedBox(height: AppSpacing.md),
               JobProofViewerCard(proof: proof),
             ],
+            if (!readOnly) ...[
+              const SizedBox(height: AppSpacing.md),
+              FixButton(
+                label: 'Open Full Job Cockpit',
+                icon: Icons.dashboard_customize_rounded,
+                variant: FixButtonVariant.secondary,
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => ProviderActiveJobCockpitScreen(
+                      job: job,
+                      controller: controller,
+                    ),
+                  ),
+                ),
+              ),
+            ],
             if (!readOnly && action != null) ...[
-              const SizedBox(height: AppSpacing.lg),
+              const SizedBox(height: AppSpacing.sm),
               FixButton(
                 label: action.$1,
                 icon: action.$2,

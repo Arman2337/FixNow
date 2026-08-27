@@ -54,16 +54,16 @@ Only these statuses are valid. A task cannot be completed while required validat
 
 # Project Progress
 
-Total Tasks: 128
-Completed: 112
+Total Tasks: 131
+Completed: 113
 In Progress: 0
 Blocked: 0
-Pending: 0
+Pending: 2
 Deferred: 14
 Cancelled: 2
-Current Task: None (FN-058 & FN-059 verified with live Hugging Face provider)
-Current Phase: Phase 15 — Real-World Scheduling & Commercial Operations
-Next Recommended Task: None (All active tasks in scope completed)
+Current Task: None (FN-129 Provider Active Job Cockpit & OTP Verification completed)
+Current Phase: Phase 16 — Production Operations & Commercial Polish
+Next Recommended Task: FN-130 — Universal Live Search, Filter & Price Sort Bar
 
 2026-08-27 (session 2) FN-113 advisory price/signal surfacing verified complete and closed. Evidence in the working tree: the mobile advisory price estimate (`mobile/lib/features/ai/price_estimate_repository.dart` — repository + controller + honest states) is surfaced on the service-request screen (`service_request_screen.dart` `_buildPriceContent`: ESTIMATE range + explanation + "Advisory only — the final charge is confirmed..." disclaimer, honest static fallback, PRICE_ON_REQUEST abstention) and wired at both `app.dart` construction sites (category-select and Book-again) via `PriceEstimateRepository(_api, accessToken: _auth.validAccessToken)`; the admin trust queue (`admin/src/app/trust/page.tsx`) already renders the FN-060 rule codes; the provider accept-time signal is surfaced on provider home (`provider_home_screen.dart` via `GET trust/my-accept-time`, FN-111). Payments set to local-only per ADR-0016: `PAYMENT_PROVIDER` defaults to the deterministic `fake` gateway (now made explicit in `backend/.env`), which is prohibited in production by `env.validation.ts` startup validation, needs no live gateway credentials, and offers no payouts. The mobile client has no interactive checkout surface yet (only the read-only invoice screen; `JobCompletedDialog` is unwired), so a dev-gated local payment flow is recorded as FN-118 rather than scaffolded. FN-058/FN-059 remain Deferred (live vision/voice still gated on malware scan + signed DPA + vendor/model approval, ADR-0014; AI stays advisory-only, disabled by default). Validated 2026-08-27: flutter analyze 0 errors, flutter test 164/164; backend jest payments 35/35.
 
@@ -3125,3 +3125,49 @@ Provide a top-bar 🔔 Bell icon with an unread badge and dedicated Activity Inb
 - Integrated `FixNotificationBellIcon` into `ServiceDiscoveryScreen` header and wired in `mobile/lib/app/app.dart`.
 - Added unit and widget tests in `mobile/test/notification_center_test.dart` (6/6 passed).
 - Validated: 100% green tests (211/211 mobile tests pass, flutter analyze 0 issues).
+
+---
+
+# Phase 16 — Production Operations & Commercial Polish
+
+## FN-129 — Provider Active Job Execution Cockpit & OTP Verification
+Status: ✅ Completed
+Priority: P0 — Critical
+Area: Mobile / Provider Experience
+Depends On: FN-041, FN-044, FN-124
+Branch: feat/in-app-communication
+
+### Objective
+Empower service technicians with an interactive active job cockpit guiding them through the real-world job execution lifecycle: slide to "Start Journey", 1-tap Google Maps navigation, "I Have Arrived" notification, 4-digit Customer Service-Start OTP verification modal, before/after job photo review, and complete service action.
+
+### Changes Delivered
+- Built `FixOtpInputSheet` in `mobile/lib/design_system/fix_otp_input_sheet.dart` with dedicated 4-digit boxes, keyboard capture, error feedback, and auto-submit.
+- Built `ProviderActiveJobCockpitScreen` in `mobile/lib/features/provider/provider_active_job_cockpit_screen.dart` with 4-step progress stepper (`ASSIGNED` -> `EN_ROUTE` -> `IN_PROGRESS` -> `COMPLETED`), customer destination info, Google Maps launcher, direct in-app chat and VoIP call buttons, and state-adaptive lifecycle action cards.
+- Integrated Start Journey (`EN_ROUTE`), live GPS sharing toggles, Customer Service-Start OTP entry (`POST /bookings/:id/start-service`), before/after photo verification review (`JobProofVerificationDialog`), and complete service actions.
+- Wired interactive tap navigation on active job cards in `ProviderHomeScreen` and added "Open Full Job Cockpit" button in `ProviderJobsScreen`.
+- Added unit and widget tests in `mobile/test/provider_active_job_cockpit_test.dart` (5/5 passed).
+- Validated: 100% green tests (216/216 mobile tests pass, flutter analyze 0 issues).
+
+---
+
+## FN-130 — Universal Live Search, Filter & Price Sort Bar
+Status: ⬜ Pending
+Priority: P1 — High
+Area: Mobile / Discovery
+Depends On: FN-123
+Branch: feat/in-app-communication
+
+### Objective
+Equip customer discovery with a prominent top search bar providing live debounced autocomplete across all service categories and sub-services, with filter chips (price low-to-high, rating 4.5+ ⭐, emergency available).
+
+---
+
+## FN-131 — Downloadable PDF Tax Invoice & Share Sheet
+Status: ⬜ Pending
+Priority: P2 — Medium
+Area: Mobile / Payments
+Depends On: FN-053, FN-115
+Branch: feat/in-app-communication
+
+### Objective
+Enable customers to generate and download official branded GST Tax Invoice PDFs for completed bookings with 1-tap native mobile sharing to WhatsApp, Email, or device storage.

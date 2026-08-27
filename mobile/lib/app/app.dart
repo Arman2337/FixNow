@@ -21,6 +21,7 @@ import 'package:fixnow_mobile/features/bookings/booking_controller.dart';
 import 'package:fixnow_mobile/features/bookings/booking.dart';
 import 'package:fixnow_mobile/features/bookings/booking_detail_screen.dart';
 import 'package:fixnow_mobile/features/bookings/booking_repository.dart';
+import 'package:fixnow_mobile/design_system/fix_reschedule_sheet.dart';
 import 'package:fixnow_mobile/features/bookings/customer_bookings_screen.dart';
 import 'package:fixnow_mobile/features/bookings/recurring_schedule.dart';
 import 'package:fixnow_mobile/features/bookings/service_request_screen.dart';
@@ -473,6 +474,13 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
               },
             onCancel: const {'REQUESTED', 'ASSIGNED'}.contains(currentBooking.status)
                 ? (reason) => _bookings.cancel(currentBooking, reason)
+                : null,
+            onReschedule: const {'REQUESTED', 'ASSIGNED'}.contains(currentBooking.status)
+                ? () => FixRescheduleSheet.show(
+                      context,
+                      booking: currentBooking,
+                      controller: _bookings,
+                    )
                 : null,
             reviewRepository: _bookings.repository,
             onBookAgain: currentBooking.status == 'COMPLETED'

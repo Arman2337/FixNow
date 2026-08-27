@@ -16,6 +16,7 @@ import {
   CreateBookingDto,
   UpdateBookingStatusDto,
   CancelBookingDto,
+  RescheduleBookingDto,
   BookingHistoryQueryDto,
   AcceptBookingDto,
   VerifyServiceStartOtpDto,
@@ -141,6 +142,28 @@ export class BookingsController {
       userId,
       dto.reason,
       dto.expectedVersion,
+    );
+
+    return {
+      booking: presentBooking(booking),
+    };
+  }
+
+  @Post(':id/reschedule')
+  @HttpCode(HttpStatus.OK)
+  @RequireOwnPermission(PERMISSIONS.bookingCancelSelf)
+  async reschedule(
+    @Param('id') bookingId: string,
+    @Req() req: AuthorizedRequest,
+    @Body() dto: RescheduleBookingDto,
+  ): Promise<BookingResponse> {
+    const userId = req.authorizationPrincipal!.userId;
+    const booking = await this.bookingsService.rescheduleBooking(
+      bookingId,
+      userId,
+      dto.newScheduledAt,
+      dto.expectedVersion,
+      dto.reason,
     );
 
     return {

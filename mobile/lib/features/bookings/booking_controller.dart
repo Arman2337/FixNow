@@ -157,6 +157,23 @@ class BookingController extends ChangeNotifier {
     return updated;
   }
 
+  Future<CustomerBooking> reschedule({
+    required CustomerBooking booking,
+    required DateTime newScheduledAt,
+    String? reason,
+  }) async {
+    final updated = await _repository.reschedule(
+      booking: booking,
+      newScheduledAt: newScheduledAt,
+      reason: reason,
+    );
+    bookings = bookings
+        .map((item) => item.id == updated.id ? updated : item)
+        .toList(growable: false);
+    notifyListeners();
+    return updated;
+  }
+
   @override
   void dispose() {
     _reconciliationTimer?.cancel();

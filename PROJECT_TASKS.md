@@ -55,15 +55,15 @@ Only these statuses are valid. A task cannot be completed while required validat
 # Project Progress
 
 Total Tasks: 128
-Completed: 108
+Completed: 109
 In Progress: 0
 Blocked: 0
-Pending: 3
+Pending: 2
 Deferred: 16
 Cancelled: 1
-Current Task: None (FN-125 delivered on branch `feat/in-app-communication`)
+Current Task: None (FN-127 delivered on branch `feat/in-app-communication`)
 Current Phase: Phase 15 — Real-World Scheduling & Commercial Operations
-Next Recommended Task: FN-127 — Implement Booking Reschedule Flow
+Next Recommended Task: FN-128 — Implement In-App Notification Center & Activity Inbox
 
 2026-08-27 (session 2) FN-113 advisory price/signal surfacing verified complete and closed. Evidence in the working tree: the mobile advisory price estimate (`mobile/lib/features/ai/price_estimate_repository.dart` — repository + controller + honest states) is surfaced on the service-request screen (`service_request_screen.dart` `_buildPriceContent`: ESTIMATE range + explanation + "Advisory only — the final charge is confirmed..." disclaimer, honest static fallback, PRICE_ON_REQUEST abstention) and wired at both `app.dart` construction sites (category-select and Book-again) via `PriceEstimateRepository(_api, accessToken: _auth.validAccessToken)`; the admin trust queue (`admin/src/app/trust/page.tsx`) already renders the FN-060 rule codes; the provider accept-time signal is surfaced on provider home (`provider_home_screen.dart` via `GET trust/my-accept-time`, FN-111). Payments set to local-only per ADR-0016: `PAYMENT_PROVIDER` defaults to the deterministic `fake` gateway (now made explicit in `backend/.env`), which is prohibited in production by `env.validation.ts` startup validation, needs no live gateway credentials, and offers no payouts. The mobile client has no interactive checkout surface yet (only the read-only invoice screen; `JobCompletedDialog` is unwired), so a dev-gated local payment flow is recorded as FN-118 rather than scaffolded. FN-058/FN-059 remain Deferred (live vision/voice still gated on malware scan + signed DPA + vendor/model approval, ADR-0014; AI stays advisory-only, disabled by default). Validated 2026-08-27: flutter analyze 0 errors, flutter test 164/164; backend jest payments 35/35.
 
@@ -3082,7 +3082,7 @@ Enable customers to enter and apply promotional coupons (e.g. `WELCOME100`, `FIR
 ---
 
 ## FN-127 — Implement Booking Reschedule Flow
-Status: ⬜ Pending
+Status: ✅ Completed
 Priority: P2 — Medium
 Area: Mobile / Bookings
 Depends On: FN-125
@@ -3090,6 +3090,16 @@ Branch: feat/in-app-communication
 
 ### Objective
 Provide a dedicated "Reschedule" action on active bookings allowing customers to choose a new date/time slot without cancelling their booking, updating the timeline and sending push alerts to the assigned provider.
+
+### Changes Delivered
+- Added `scheduledAt` to `CustomerBooking` model with `copyWith` and ISO parsing in `mobile/lib/features/bookings/booking.dart`.
+- Implemented `reschedule` method in `BookingRepository` and `BookingController` with optimistic state update and local notifications.
+- Created `FixRescheduleSheet` (`mobile/lib/design_system/fix_reschedule_sheet.dart`) integrating `FixSchedulePickerCard`, reason selection, and immediate feedback.
+- Integrated "Reschedule booking" action button and arrival window banner into `BookingDetailScreen` for active bookings (`REQUESTED`, `ASSIGNED`).
+- Wired `onReschedule` in `mobile/lib/app/app.dart`.
+- Added backend `POST /bookings/:id/reschedule` endpoint in `bookings.controller.ts`, `bookings.service.ts`, and `bookings.dto.ts` with domain event notification.
+- Added comprehensive unit and widget tests in `mobile/test/reschedule_test.dart` and `backend/src/bookings/bookings.controller.spec.ts`.
+- Validated: 100% green tests (backend controller 8/8 pass, full mobile suite 205/205 pass, flutter analyze 0 issues).
 
 ---
 

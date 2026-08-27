@@ -268,6 +268,54 @@ export class BookingsService {
     return booking;
   }
 
+  async rescheduleBooking(
+    bookingId: string,
+    userId: string,
+    newScheduledAt: string,
+    expectedVersion: number,
+    reason?: string,
+  ): Promise<Booking> {
+    const scheduledDate = new Date(newScheduledAt);
+    if (
+      isNaN(scheduledDate.getTime()) ||
+      scheduledDate.getTime() <= Date.now()
+    ) {
+      throw new BadRequestException('Rescheduled time must be in the future');
+    }
+    const booking = await this.transition(
+      bookingId,
+      userId,
+      expectedVersion,
+      (candidate) => {
+        const isCustomer = candidate.customerId === userId;
+        const isProvider = candidate.providerId === userId;
+        if (!isCustomer && !isProvider) {
+          throw new ForbiddenException(
+            'You are not authorized to reschedule this booking',
+          );
+        }
+        const allowed = [BookingStatus.REQUESTED, BookingStatus.ASSIGNED];
+        if (!allowed.includes(candidate.status)) {
+          throw new ConflictException(
+            'Only requested or assigned bookings can be rescheduled',
+          );
+        }
+        candidate.scheduledAt = scheduledDate;
+      },
+      reason ?? 'Rescheduled booking',
+    );
+    if (this.domainNotifications) {
+      await this.notifySafely(() =>
+        this.domainNotifications!.notifyBookingEvent(
+          booking,
+          'customer',
+          booking.status,
+        ),
+      );
+    }
+    return booking;
+  }
+
   async getServiceStartOtp(
     bookingId: string,
     customerId: string,
@@ -468,6 +516,7 @@ export class BookingsService {
         .set({
           providerId: booking.providerId,
           status: booking.status,
+          scheduledAt: booking.scheduledAt,
           assignedAt: booking.assignedAt,
           enRouteAt: booking.enRouteAt,
           startedAt: booking.startedAt,

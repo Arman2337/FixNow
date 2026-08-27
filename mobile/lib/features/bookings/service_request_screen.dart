@@ -4,10 +4,15 @@ import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
 import 'package:fixnow_mobile/design_system/fix_page_frame.dart';
+import 'package:fixnow_mobile/design_system/fix_price_breakdown_card.dart';
 import 'package:fixnow_mobile/design_system/signature_motion.dart';
+import 'package:fixnow_mobile/design_system/fix_address_selector.dart';
+import 'package:fixnow_mobile/design_system/fix_schedule_picker.dart';
 import 'package:fixnow_mobile/features/ai/price_estimate_repository.dart';
 import 'package:fixnow_mobile/features/bookings/booking_controller.dart';
+import 'package:fixnow_mobile/features/bookings/booking_schedule.dart';
 import 'package:fixnow_mobile/features/location/booking_location.dart';
+import 'package:fixnow_mobile/features/location/saved_address.dart';
 import 'package:fixnow_mobile/features/services/service_category.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -47,12 +52,22 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
   bool _showRadar = false;
   String? _error;
   BookingLocationFix? _confirmedLocation;
+  BookingSchedule? _schedule;
   PriceEstimateController? _estimate;
 
   @override
   void initState() {
     super.initState();
     _details.text = widget.initialDescription ?? '';
+    final defaultAddr = SavedAddressRepository.instance.defaultAddress;
+    if (defaultAddr != null && widget.initialLocation == null && widget.locationProvider == null) {
+      _confirmedLocation = BookingLocationFix(
+        latitude: defaultAddr.latitude,
+        longitude: defaultAddr.longitude,
+        accuracyMeters: 10,
+        timestamp: DateTime.now(),
+      );
+    }
     final repository = widget.estimateRepository;
     if (repository != null) {
       _estimate = PriceEstimateController(repository)
@@ -165,6 +180,7 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
         description: _details.text,
         latitude: location.latitude,
         longitude: location.longitude,
+        scheduledAt: _schedule?.targetScheduledAt,
       );
       if (mounted) {
         setState(() => _showRadar = true); // FN-040 made visible (signature motion)
@@ -257,6 +273,14 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
                 ],
               ),
             ),
+            if (widget.category.pricing != null) ...[
+              const SizedBox(height: AppSpacing.md),
+              FixPriceBreakdownCard(
+                amountMinor: widget.category.pricing!.amountMinor,
+                currency: widget.category.pricing!.currency,
+                modelType: PricingModelType.fixed,
+              ),
+            ],
             const SizedBox(height: AppSpacing.lg),
 
             FixCard(
@@ -326,6 +350,29 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
                   ],
                 ),
               ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+
+            SavedAddressSelectorCard(
+              onAddressSelected: (addr) {
+                setState(() {
+                  _confirmedLocation = BookingLocationFix(
+                    latitude: addr.latitude,
+                    longitude: addr.longitude,
+                    accuracyMeters: 10,
+                    timestamp: DateTime.now(),
+                  );
+                  _error = null;
+                });
+              },
+            ),
+            const SizedBox(height: AppSpacing.md),
+
+            FixSchedulePickerCard(
+              initialSchedule: _schedule,
+              onScheduleChanged: (sched) {
+                setState(() => _schedule = sched);
+              },
             ),
             const SizedBox(height: AppSpacing.md),
 

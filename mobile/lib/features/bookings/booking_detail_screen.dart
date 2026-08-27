@@ -8,6 +8,8 @@ import 'package:fixnow_mobile/design_system/fix_status_chip.dart';
 import 'package:fixnow_mobile/features/bookings/booking.dart';
 import 'package:fixnow_mobile/features/bookings/cancellation_dialog.dart';
 import 'package:fixnow_mobile/features/bookings/booking_repository.dart';
+import 'package:fixnow_mobile/features/bookings/job_proof_service.dart';
+import 'package:fixnow_mobile/design_system/fix_job_proof_dialog.dart';
 import 'package:fixnow_mobile/features/ratings/booking_review_panel.dart';
 import 'package:flutter/material.dart';
 
@@ -15,6 +17,7 @@ class BookingDetailScreen extends StatelessWidget {
   const BookingDetailScreen({
     required this.booking,
     this.onCancel,
+    this.onReschedule,
     this.onReportIssue,
     this.reviewRepository,
     this.onBookAgain,
@@ -23,6 +26,7 @@ class BookingDetailScreen extends StatelessWidget {
   });
   final CustomerBooking booking;
   final Future<CustomerBooking> Function(String reason)? onCancel;
+  final VoidCallback? onReschedule;
   final VoidCallback? onReportIssue;
   final BookingRepository? reviewRepository;
 
@@ -88,6 +92,33 @@ class BookingDetailScreen extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.xl),
               _BookingProgress(status: booking.status),
+              if (booking.scheduledAt != null) ...[
+                const SizedBox(height: AppSpacing.md),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.event_available_rounded, color: AppColors.primary, size: 18),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: Text(
+                          'Scheduled for: ${_formatScheduledTime(booking.scheduledAt!)}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               const SizedBox(height: AppSpacing.lg),
               FixCard(
                 tone: FixCardTone.elevated,
@@ -132,6 +163,10 @@ class BookingDetailScreen extends StatelessWidget {
                   ],
                 ),
               ),
+              if (JobProofRepository.instance.getProof(booking.id) case final proof?) ...[
+                const SizedBox(height: AppSpacing.lg),
+                JobProofViewerCard(proof: proof),
+              ],
               const SizedBox(height: AppSpacing.lg),
               const FixCard(
                 semanticLabel: 'Booking data availability note',
@@ -189,6 +224,16 @@ class BookingDetailScreen extends StatelessWidget {
                   repository: reviewRepository!,
                 ),
               ],
+              if (onReschedule != null &&
+                  const {'REQUESTED', 'ASSIGNED'}.contains(booking.status)) ...[
+                const SizedBox(height: AppSpacing.md),
+                FixButton(
+                  label: 'Reschedule booking',
+                  icon: Icons.event_repeat_rounded,
+                  variant: FixButtonVariant.secondary,
+                  onPressed: onReschedule,
+                ),
+              ],
               if (onCancel != null &&
                   const {'REQUESTED', 'ASSIGNED'}.contains(booking.status)) ...[
                 const SizedBox(height: AppSpacing.md),
@@ -210,6 +255,15 @@ class BookingDetailScreen extends StatelessWidget {
     'CANCELLED' => 'Booking cancelled',
     _ => 'Booking update',
   };
+
+  static String _formatScheduledTime(DateTime dt) {
+    final local = dt.toLocal();
+    final hour = local.hour > 12 ? local.hour - 12 : (local.hour == 0 ? 12 : local.hour);
+    final ampm = local.hour >= 12 ? 'PM' : 'AM';
+    final minute = local.minute.toString().padLeft(2, '0');
+    return '${local.day}/${local.month}/${local.year} at $hour:$minute $ampm';
+  }
+
   static ({IconData icon, Color color, String title, String description})
   _statusPanel(String value) => switch (value) {
     'REQUESTED' => (

@@ -262,6 +262,10 @@ void main() {
     );
     await tester.pump();
 
+    // Bring quick services fully into view
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -200));
+    await tester.pump();
+
     // Tap Plumber (available)
     await tester.tap(find.text('Plumber'));
     await tester.pump();

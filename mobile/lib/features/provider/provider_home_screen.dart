@@ -6,6 +6,7 @@ import 'package:fixnow_mobile/design_system/fix_card.dart';
 import 'package:fixnow_mobile/design_system/fix_page_frame.dart';
 import 'package:fixnow_mobile/design_system/fix_state_views.dart';
 import 'package:fixnow_mobile/design_system/fix_status_chip.dart';
+import 'package:fixnow_mobile/features/provider/provider_active_job_cockpit_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_controller.dart';
 import 'package:fixnow_mobile/features/provider/provider_models.dart';
 import 'package:flutter/material.dart';
@@ -374,31 +375,89 @@ class ProviderHomeScreen extends StatelessWidget {
               ...active.map(
                 (job) => Padding(
                   padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                  child: FixCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        FixStatusChip(
-                          label: job.status.replaceAll('_', ' '),
-                          icon: Icons.route_rounded,
+                  child: InkWell(
+                    key: Key('active_job_${job.id}'),
+                    borderRadius: BorderRadius.circular(AppRadius.card),
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => ProviderActiveJobCockpitScreen(
+                          job: job,
+                          controller: controller,
                         ),
-                        const SizedBox(height: AppSpacing.sm),
-                        Text(
-                          job.description,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: AppSpacing.xs),
-                        Text(
-                          job.serviceCategoryId.replaceAll('_', ' '),
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                        const SizedBox(height: AppSpacing.sm),
-                        Text(
-                          'Job ${job.id.substring(0, 8).toUpperCase()}',
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                      ],
+                      ),
+                    ),
+                    child: FixCard(
+                      tone: FixCardTone.elevated,
+                      borderColor: AppColors.borderGold,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              FixStatusChip(
+                                label: job.status.replaceAll('_', ' '),
+                                icon: Icons.route_rounded,
+                                tone: job.status == 'IN_PROGRESS'
+                                    ? FixStatusTone.warning
+                                    : FixStatusTone.info,
+                              ),
+                              const Row(
+                                children: [
+                                  Text(
+                                    'Open Cockpit',
+                                    style: TextStyle(
+                                      color: AppColors.accentGold,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  SizedBox(width: 4),
+                                  Icon(
+                                    Icons.arrow_forward_rounded,
+                                    size: 16,
+                                    color: AppColors.accentGold,
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          Text(
+                            job.description,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          const SizedBox(height: AppSpacing.xs),
+                          Text(
+                            providerServiceName(
+                              controller.categories,
+                              job.serviceCategoryId,
+                            ),
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Job #${job.id.replaceAll('-', '').substring(0, 8).toUpperCase()}',
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                              const Text(
+                                'Tap to update status / OTP',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: AppColors.textMuted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),

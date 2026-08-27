@@ -13,6 +13,7 @@ describe('BookingsController', () => {
   let acceptMock: jest.MockedFunction<BookingsService['acceptBooking']>;
   let updateStatusMock: jest.MockedFunction<BookingsService['updateStatus']>;
   let cancelMock: jest.MockedFunction<BookingsService['cancelBooking']>;
+  let rescheduleMock: jest.Mock;
   let historyMock: jest.MockedFunction<BookingsService['getBookingHistory']>;
   let availableMock: jest.MockedFunction<
     BookingsService['getAvailableRequests']
@@ -46,6 +47,7 @@ describe('BookingsController', () => {
     acceptMock = jest.fn();
     updateStatusMock = jest.fn();
     cancelMock = jest.fn();
+    rescheduleMock = jest.fn();
     historyMock = jest.fn();
     availableMock = jest.fn();
     const module: TestingModule = await Test.createTestingModule({
@@ -58,6 +60,7 @@ describe('BookingsController', () => {
             acceptBooking: acceptMock,
             updateStatus: updateStatusMock,
             cancelBooking: cancelMock,
+            rescheduleBooking: rescheduleMock,
             getBookingHistory: historyMock,
             getAvailableRequests: availableMock,
           },
@@ -165,6 +168,32 @@ describe('BookingsController', () => {
         'user-id',
         'reason',
         1,
+      );
+      expect(result.booking).toMatchObject({ id: mockBooking.id });
+    });
+  });
+
+  describe('reschedule', () => {
+    it('should call rescheduleBooking on service', async () => {
+      const mockBooking = completeBooking(new Booking());
+      mockBooking.id = 'booking-id';
+      mockBooking.scheduledAt = new Date('2026-08-30T10:00:00.000Z');
+
+      rescheduleMock.mockResolvedValue(mockBooking);
+      const req = requestFor('user-id');
+
+      const result = await controller.reschedule('booking-id', req, {
+        newScheduledAt: '2026-08-30T10:00:00.000Z',
+        reason: 'Family emergency',
+        expectedVersion: 1,
+      });
+
+      expect(rescheduleMock).toHaveBeenCalledWith(
+        'booking-id',
+        'user-id',
+        '2026-08-30T10:00:00.000Z',
+        1,
+        'Family emergency',
       );
       expect(result.booking).toMatchObject({ id: mockBooking.id });
     });

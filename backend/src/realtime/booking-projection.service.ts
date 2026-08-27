@@ -101,4 +101,76 @@ export class BookingProjectionService {
       }
     }
   }
+
+  publishChatMessage(
+    bookingId: string,
+    message: Readonly<Record<string, unknown>>,
+  ): void {
+    const occurredAt = new Date().toISOString();
+    for (const [client, state] of this.registry.entries()) {
+      if (client.readyState !== WebSocket.OPEN) continue;
+      for (const subscription of state.subscriptions.values()) {
+        if (
+          subscription.channel === 'booking' &&
+          subscription.resourceId === bookingId
+        ) {
+          client.send(
+            JSON.stringify({
+              type: 'chat.message-received.v1',
+              eventId: randomUUID(),
+              subscriptionId: subscription.id,
+              resourceId: bookingId,
+              occurredAt,
+              data: message,
+            }),
+          );
+        }
+      }
+    }
+  }
+
+  isSubscriberActive(bookingId: string, userId: string): boolean {
+    for (const [client, state] of this.registry.entries()) {
+      if (client.readyState !== WebSocket.OPEN) continue;
+      if (state.principal?.userId === userId) {
+        for (const subscription of state.subscriptions.values()) {
+          if (
+            subscription.channel === 'booking' &&
+            subscription.resourceId === bookingId
+          ) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  publishCallSignal(
+    bookingId: string,
+    signalType: string,
+    data: Readonly<Record<string, unknown>>,
+  ): void {
+    const occurredAt = new Date().toISOString();
+    for (const [client, state] of this.registry.entries()) {
+      if (client.readyState !== WebSocket.OPEN) continue;
+      for (const subscription of state.subscriptions.values()) {
+        if (
+          subscription.channel === 'booking' &&
+          subscription.resourceId === bookingId
+        ) {
+          client.send(
+            JSON.stringify({
+              type: signalType,
+              eventId: randomUUID(),
+              subscriptionId: subscription.id,
+              resourceId: bookingId,
+              occurredAt,
+              data,
+            }),
+          );
+        }
+      }
+    }
+  }
 }

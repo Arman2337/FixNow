@@ -4,6 +4,7 @@ import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
 import 'package:fixnow_mobile/design_system/fix_motion.dart';
+import 'package:fixnow_mobile/design_system/fix_motion_suite.dart';
 import 'package:fixnow_mobile/design_system/fix_state_views.dart';
 import 'package:fixnow_mobile/features/ai/problem_analysis_repository.dart';
 import 'package:fixnow_mobile/features/ai/problem_diagnosis_controller.dart';
@@ -140,14 +141,18 @@ class _ProblemDiagnosisScreenState extends State<ProblemDiagnosisScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.small),
-              child: Image.memory(
-                bytes,
-                height: 180,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                semanticLabel: 'Photo of the problem you added',
+            AiPhotoScannerOverlay(
+              isScanning: _controller.isAnalyzing,
+              statusText: 'AI Vision Defect Analysis…',
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(AppRadius.small),
+                child: Image.memory(
+                  bytes,
+                  height: 180,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  semanticLabel: 'Photo of the problem you added',
+                ),
               ),
             ),
             const SizedBox(height: AppSpacing.sm),

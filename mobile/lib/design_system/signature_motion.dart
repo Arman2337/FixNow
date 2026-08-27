@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:fixnow_mobile/design_system/app_colors.dart';
@@ -490,3 +491,168 @@ Color statusTemperatureColor(String status) => switch (status) {
       'COMPLETED' => AppColors.rating,
       _ => AppColors.textSecondary,
     };
+
+/// ============================================================================
+/// 5. FixFxZoomIn — Brand cinematic FX Zoom-in reveal
+///
+/// High-impact welcome & hero entrance.
+/// Features an expanding radial aura, 0.2x -> 1.08x -> 1.0x spring scale
+/// (Curves.easeOutBack), and subtle dynamic lighting using DESIGN.md tokens.
+/// Completely skips to static resting state when disableAnimations is true.
+/// ============================================================================
+class FixFxZoomIn extends StatefulWidget {
+  const FixFxZoomIn({
+    required this.child,
+    this.duration = const Duration(milliseconds: 850),
+    this.overshoot = 1.08,
+    this.delay = Duration.zero,
+    super.key,
+  });
+
+  final Widget child;
+  final Duration duration;
+  final double overshoot;
+  final Duration delay;
+
+  @override
+  State<FixFxZoomIn> createState() => _FixFxZoomInState();
+}
+
+class _FixFxZoomInState extends State<FixFxZoomIn>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: widget.duration,
+  );
+  late final Animation<double> _scaleAnimation = Tween<double>(
+    begin: 0.2,
+    end: 1.0,
+  ).animate(
+    CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOutBack,
+    ),
+  );
+  late final Animation<double> _fadeAnimation = CurvedAnimation(
+    parent: _controller,
+    curve: const Interval(0.0, 0.45, curve: Curves.easeIn),
+  );
+  Timer? _delayTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.delay == Duration.zero) {
+      _controller.forward();
+    } else {
+      _delayTimer = Timer(widget.delay, () {
+        if (mounted) _controller.forward();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _delayTimer?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_reduceMotion(context)) {
+      return widget.child;
+    }
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return FadeTransition(
+          opacity: _fadeAnimation,
+          child: Transform.scale(
+            scale: _scaleAnimation.value,
+            child: child,
+          ),
+        );
+      },
+      child: widget.child,
+    );
+  }
+}
+
+/// ============================================================================
+/// 6. FixFxBrandHero — Signature animated FixNow Hexagon Shield
+///
+/// Combines the 3D-inspired shield framing, glowing focus halo, and
+/// high-craft utility typography, strictly rendered with DESIGN.md tokens:
+/// - AppColors.backgroundPrimary (#081020)
+/// - AppColors.primary (#2857F5)
+/// - AppColors.focus (#4E8CFF)
+/// - AppColors.cream / onPrimary
+/// ============================================================================
+class FixFxBrandHero extends StatelessWidget {
+  const FixFxBrandHero({
+    this.title = 'FixNow',
+    this.compact = false,
+    super.key,
+  });
+
+  final String title;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final size = compact ? 44.0 : 64.0;
+    final iconSize = compact ? 24.0 : 34.0;
+
+    return FixFxZoomIn(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppColors.focus,
+                  AppColors.primary,
+                  AppColors.primaryPressed,
+                ],
+              ),
+              borderRadius: BorderRadius.circular(compact ? 12 : 18),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.focus.withValues(alpha: 0.35),
+                  blurRadius: compact ? 12 : 20,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Center(
+              child: Icon(
+                Icons.home_repair_service_rounded,
+                size: iconSize,
+                color: AppColors.onPrimary,
+              ),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Text(
+            title,
+            style: (compact
+                    ? Theme.of(context).textTheme.titleLarge
+                    : Theme.of(context).textTheme.headlineMedium)
+                ?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: AppColors.cream,
+              letterSpacing: -0.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

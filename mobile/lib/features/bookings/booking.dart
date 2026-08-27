@@ -8,6 +8,7 @@ class CustomerBooking {
     required this.version,
     this.locationLatitude,
     this.locationLongitude,
+    this.scheduledAt,
   });
   final String id;
   final String serviceCategoryId;
@@ -17,6 +18,30 @@ class CustomerBooking {
   final int version;
   final double? locationLatitude;
   final double? locationLongitude;
+  final DateTime? scheduledAt;
+
+  CustomerBooking copyWith({
+    String? id,
+    String? serviceCategoryId,
+    String? status,
+    String? description,
+    DateTime? createdAt,
+    int? version,
+    double? locationLatitude,
+    double? locationLongitude,
+    DateTime? scheduledAt,
+  }) =>
+      CustomerBooking(
+        id: id ?? this.id,
+        serviceCategoryId: serviceCategoryId ?? this.serviceCategoryId,
+        status: status ?? this.status,
+        description: description ?? this.description,
+        createdAt: createdAt ?? this.createdAt,
+        version: version ?? this.version,
+        locationLatitude: locationLatitude ?? this.locationLatitude,
+        locationLongitude: locationLongitude ?? this.locationLongitude,
+        scheduledAt: scheduledAt ?? this.scheduledAt,
+      );
 
   factory CustomerBooking.fromJson(Map<String, Object?> json) {
     final id = json['id'];
@@ -26,6 +51,9 @@ class CustomerBooking {
     final createdAt = DateTime.tryParse(json['createdAt']?.toString() ?? '');
     final latitude = json['locationLat'];
     final longitude = json['locationLng'];
+    final scheduledAt = json['scheduledAt'] != null
+        ? DateTime.tryParse(json['scheduledAt'].toString())
+        : null;
     if (id is! String ||
         category is! String ||
         status is! String ||
@@ -42,6 +70,7 @@ class CustomerBooking {
       version: (json['version'] as num?)?.toInt() ?? 1,
       locationLatitude: latitude is num ? latitude.toDouble() : null,
       locationLongitude: longitude is num ? longitude.toDouble() : null,
+      scheduledAt: scheduledAt,
     );
   }
 }

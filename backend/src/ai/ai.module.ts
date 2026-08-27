@@ -51,11 +51,11 @@ import { ProblemClassificationController } from './problem-classification/proble
               ),
               asrBaseUrl: config.get<string>(
                 'HF_ASR_BASE_URL',
-                'https://api-inference.huggingface.co/models',
+                'https://router.huggingface.co/hf-inference/models',
               ),
               visionModel: config.get<string>(
                 'HF_VISION_MODEL',
-                'Qwen/Qwen2.5-VL-7B-Instruct',
+                'Qwen/Qwen2.5-VL-72B-Instruct',
               ),
               whisperModel: config.get<string>(
                 'HF_WHISPER_MODEL',

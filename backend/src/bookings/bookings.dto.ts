@@ -63,6 +63,21 @@ export class CancelBookingDto {
   expectedVersion: number;
 }
 
+export class RescheduleBookingDto {
+  @IsDateString()
+  @IsNotEmpty()
+  newScheduledAt: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  reason?: string;
+
+  @IsInt()
+  @Min(1)
+  expectedVersion: number;
+}
+
 export class AcceptBookingDto {
   @IsInt()
   @Min(1)

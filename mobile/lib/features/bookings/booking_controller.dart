@@ -83,8 +83,9 @@ class BookingController extends ChangeNotifier {
     for (var index = 0; index < first.length; index += 1) {
       if (first[index].id != second[index].id ||
           first[index].version != second[index].version ||
-          first[index].status != second[index].status)
+          first[index].status != second[index].status) {
         return false;
+      }
     }
     return true;
   }
@@ -132,12 +133,14 @@ class BookingController extends ChangeNotifier {
     required String description,
     required double latitude,
     required double longitude,
+    DateTime? scheduledAt,
   }) async {
     final booking = await _repository.create(
       serviceCategoryId: serviceCategoryId,
       description: description,
       latitude: latitude,
       longitude: longitude,
+      scheduledAt: scheduledAt,
     );
     bookings = [booking, ...bookings.where((item) => item.id != booking.id)];
     status = BookingListStatus.ready;
@@ -147,6 +150,23 @@ class BookingController extends ChangeNotifier {
 
   Future<CustomerBooking> cancel(CustomerBooking booking, String reason) async {
     final updated = await _repository.cancel(booking: booking, reason: reason);
+    bookings = bookings
+        .map((item) => item.id == updated.id ? updated : item)
+        .toList(growable: false);
+    notifyListeners();
+    return updated;
+  }
+
+  Future<CustomerBooking> reschedule({
+    required CustomerBooking booking,
+    required DateTime newScheduledAt,
+    String? reason,
+  }) async {
+    final updated = await _repository.reschedule(
+      booking: booking,
+      newScheduledAt: newScheduledAt,
+      reason: reason,
+    );
     bookings = bookings
         .map((item) => item.id == updated.id ? updated : item)
         .toList(growable: false);

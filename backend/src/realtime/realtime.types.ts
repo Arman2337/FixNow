@@ -17,6 +17,8 @@ export interface RealtimeClientMessage {
   readonly latitude?: number;
   readonly longitude?: number;
   readonly accuracyMeters?: number;
+  readonly messageText?: string;
+  readonly clientMessageId?: string;
 }
 
 export interface RealtimeConnectionState {

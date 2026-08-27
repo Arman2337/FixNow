@@ -11,7 +11,12 @@ function jpegSeg(marker: number, payload: Buffer): Buffer {
 function pngChunk(type: string, data: Buffer): Buffer {
   const len = Buffer.alloc(4);
   len.writeUInt32BE(data.length);
-  return Buffer.concat([len, Buffer.from(type, 'ascii'), data, Buffer.alloc(4)]);
+  return Buffer.concat([
+    len,
+    Buffer.from(type, 'ascii'),
+    data,
+    Buffer.alloc(4),
+  ]);
 }
 
 /** <FourCC> <uint32le size> <data> <pad to even>. */
@@ -117,7 +122,10 @@ describe('stripImageMetadata', () => {
       Buffer.from([0xff, 0xd8, 0xff]),
       Buffer.from(' pipe leaking under the sink'),
     ]);
-    const out = stripImageMetadata({ bytes: synthetic, mimeType: 'image/jpeg' });
+    const out = stripImageMetadata({
+      bytes: synthetic,
+      mimeType: 'image/jpeg',
+    });
     expect(out.bytes).toEqual(synthetic);
   });
 });

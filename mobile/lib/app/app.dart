@@ -21,6 +21,7 @@ import 'package:fixnow_mobile/features/bookings/booking_controller.dart';
 import 'package:fixnow_mobile/features/bookings/booking.dart';
 import 'package:fixnow_mobile/features/bookings/booking_detail_screen.dart';
 import 'package:fixnow_mobile/features/bookings/booking_repository.dart';
+import 'package:fixnow_mobile/design_system/fix_reschedule_sheet.dart';
 import 'package:fixnow_mobile/features/bookings/customer_bookings_screen.dart';
 import 'package:fixnow_mobile/features/bookings/recurring_schedule.dart';
 import 'package:fixnow_mobile/features/bookings/service_request_screen.dart';
@@ -30,6 +31,7 @@ import 'package:fixnow_mobile/features/profile/customer_profile_screen.dart';
 import 'package:fixnow_mobile/features/services/service_category.dart';
 import 'package:fixnow_mobile/features/services/service_discovery_controller.dart';
 import 'package:fixnow_mobile/features/services/service_discovery_screen.dart';
+import 'package:fixnow_mobile/features/services/sub_service_catalog_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_controller.dart';
 import 'package:fixnow_mobile/features/provider/provider_earnings_repository.dart';
 import 'package:fixnow_mobile/features/provider/provider_earnings_screen.dart';
@@ -38,6 +40,8 @@ import 'package:fixnow_mobile/features/provider/provider_jobs_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_onboarding_screen.dart';
 import 'package:fixnow_mobile/features/support/complaint_list_screen.dart';
 import 'package:fixnow_mobile/features/support/submit_complaint_screen.dart';
+import 'package:fixnow_mobile/features/notifications/notification_controller.dart';
+import 'package:fixnow_mobile/features/notifications/notification_repository.dart';
 import 'package:fixnow_mobile/features/provider/provider_repository.dart';
 import 'package:fixnow_mobile/features/support/complaints_controller.dart';
 import 'package:fixnow_mobile/features/support/complaints_repository.dart';
@@ -53,6 +57,8 @@ import 'package:fixnow_mobile/features/payments/local_payment_repository.dart';
 import 'package:fixnow_mobile/features/realtime/realtime_client.dart';
 import 'package:fixnow_mobile/notifications/push_api.dart';
 import 'package:fixnow_mobile/notifications/push_enrollment.dart';
+import 'package:fixnow_mobile/features/chat/chat_repository.dart';
+import 'package:fixnow_mobile/features/call/call_repository.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking_controller.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking_screen.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking_source.dart';
@@ -87,6 +93,9 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
   late final ProviderController _provider;
   late final ComplaintsController _complaints;
   late final PushEnrollmentController _push;
+  late final NotificationController _notifications;
+  late final ChatRepository _chatRepository;
+  late final CallRepository _callRepository;
   final Map<String, BookingTrackingController> _trackingControllers = {};
   /// FN-062: app-wide messenger so foreground pushes can surface as banners
   /// from any screen.
@@ -146,6 +155,20 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
       api: PushApi(api, accessToken: _auth.validAccessToken),
       gateway: _pushGateway,
     );
+    _notifications = NotificationController(
+      NotificationRepository(
+        api: api,
+        accessToken: _auth.validAccessToken,
+      ),
+    );
+    _chatRepository = HttpChatRepository(
+      api: api,
+      accessToken: _auth.validAccessToken,
+    );
+    _callRepository = HttpCallRepository(
+      api: api,
+      accessToken: _auth.validAccessToken,
+    );
     _auth.restore();
   }
 
@@ -153,6 +176,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     unawaited(_foregroundPushSub?.cancel());
+    _notifications.dispose();
     _auth.dispose();
     _profile.dispose();
     _discovery.dispose();
@@ -299,11 +323,25 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
               onCategorySelected: (category, location) async {
                 final created = await Navigator.of(context).push<bool>(
                   MaterialPageRoute(
-                    builder: (_) => ServiceRequestScreen(
+                    builder: (_) => SubServiceCatalogScreen(
                       category: category,
-                      controller: _bookings,
                       initialLocation: location,
-                      estimateRepository: PriceEstimateRepository(_api, accessToken: _auth.validAccessToken),
+                      onProceedToBooking: (updatedCategory, description, priceMinor, loc) async {
+                        final reqCreated = await Navigator.of(context).push<bool>(
+                          MaterialPageRoute(
+                            builder: (_) => ServiceRequestScreen(
+                              category: updatedCategory,
+                              controller: _bookings,
+                              initialLocation: loc,
+                              initialDescription: description,
+                              estimateRepository: PriceEstimateRepository(_api, accessToken: _auth.validAccessToken),
+                            ),
+                          ),
+                        );
+                        if (reqCreated == true && context.mounted) {
+                          Navigator.of(context).pop(true);
+                        }
+                      },
                     ),
                   ),
                 );
@@ -322,6 +360,15 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
                 _api,
                 accessToken: _auth.validAccessToken,
               ),
+              notificationController: _notifications,
+              onBookingSelected: (bookingId) {
+                final match = _bookings.bookings.where((b) => b.id == bookingId).firstOrNull;
+                if (match != null) {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => _bookingDestination(match)),
+                  );
+                }
+              },
             ),
             customerProfile: CustomerProfileScreen(
               controller: _profile,
@@ -447,6 +494,13 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
             onCancel: const {'REQUESTED', 'ASSIGNED'}.contains(currentBooking.status)
                 ? (reason) => _bookings.cancel(currentBooking, reason)
                 : null,
+            onReschedule: const {'REQUESTED', 'ASSIGNED'}.contains(currentBooking.status)
+                ? () => FixRescheduleSheet.show(
+                      context,
+                      booking: currentBooking,
+                      controller: _bookings,
+                    )
+                : null,
             reviewRepository: _bookings.repository,
             onBookAgain: currentBooking.status == 'COMPLETED'
                 ? () => _openRebooking(context, currentBooking)
@@ -479,7 +533,11 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
             realtime: _createRealtimeClient(),
           ),
         );
-        return BookingTrackingScreen(controller: tracking);
+        return BookingTrackingScreen(
+          controller: tracking,
+          chatRepository: _chatRepository,
+          callRepository: _callRepository,
+        );
       },
     );
   }

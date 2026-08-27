@@ -390,8 +390,8 @@ export class AiService {
     readonly metadata?: AiModelMetadata;
     readonly usage?: AiUsage;
   }): void {
-    const pinoLogger = (this.logger as any).logger;
-    pinoLogger.info(
+    const pinoLogger = (this.logger as any)?.logger ?? this.logger;
+    pinoLogger?.info?.(
       {
         ai: {
           operation: event.operation,

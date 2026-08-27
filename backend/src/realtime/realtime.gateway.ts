@@ -456,6 +456,8 @@ export class RealtimeGateway
         'bookingId',
         'noticeVersion',
         'capturedAt',
+        'messageText',
+        'clientMessageId',
       ] as const) {
         if (record[field] !== undefined && typeof record[field] !== 'string') {
           return null;

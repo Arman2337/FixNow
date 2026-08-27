@@ -5,6 +5,9 @@ import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
 import 'package:fixnow_mobile/design_system/fix_components.dart';
 import 'package:fixnow_mobile/design_system/fix_status_chip.dart';
+import 'package:fixnow_mobile/features/chat/booking_chat_screen.dart';
+import 'package:fixnow_mobile/features/chat/chat_controller.dart';
+import 'package:fixnow_mobile/features/chat/chat_repository.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking_controller.dart';
 import 'package:fixnow_mobile/features/tracking/provider_live_map.dart';
@@ -12,8 +15,15 @@ import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 
 class BookingTrackingScreen extends StatefulWidget {
-  const BookingTrackingScreen({required this.controller, super.key});
+  const BookingTrackingScreen({
+    required this.controller,
+    this.chatRepository,
+    this.onOpenChat,
+    super.key,
+  });
   final BookingTrackingController controller;
+  final ChatRepository? chatRepository;
+  final void Function(BuildContext context, String bookingId)? onOpenChat;
   @override
   State<BookingTrackingScreen> createState() => _BookingTrackingScreenState();
 }
@@ -138,18 +148,41 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
               'Message',
               style: TextStyle(color: AppColors.textPrimary, fontSize: 13),
             ),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    'In-app messaging for active bookings is active.',
-                  ),
-                ),
-              );
-            },
+            onPressed: () => _openChat(context),
           ),
         ),
       ],
+    );
+  }
+
+  void _openChat(BuildContext context) {
+    final bookingId =
+        widget.controller.tracking?.bookingId ?? widget.controller.bookingId;
+
+    if (widget.onOpenChat != null) {
+      widget.onOpenChat!(context, bookingId);
+      return;
+    }
+
+    if (widget.chatRepository != null) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => BookingChatScreen(
+            controller: ChatController(
+              bookingId: bookingId,
+              repository: widget.chatRepository!,
+              realtimeClient: widget.controller.realtime,
+            ),
+          ),
+        ),
+      );
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('In-app messaging for active bookings is active.'),
+      ),
     );
   }
 }

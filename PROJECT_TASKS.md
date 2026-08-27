@@ -55,14 +55,15 @@ Only these statuses are valid. A task cannot be completed while required validat
 # Project Progress
 
 Total Tasks: 120
-Completed: 101
+Completed: 102
 In Progress: 0
 Blocked: 0
-Pending: 2
+Pending: 1
 Deferred: 16
 Cancelled: 1
-Current Phase (post-FN-064): Payment foundation and emergency dispatch delivered; advisory AI assistance, trust signals, mobile payments UI, and premium signature motion active. FN-113 advisory price/signal surfacing verified live across all audiences; payments confirmed local-only (deterministic fake gateway, ADR-0016).
-Next Recommended Task: FN-119 — Implement In-App Real-Time Chat for Active Bookings (P1) followed by FN-120 — Implement In-App VoIP Audio Calling for Active Bookings (P2). ClamAV malware scanning on ai-media-policy remains the sole code-solvable gate for FN-059.
+Current Task: None (FN-119 completed on branch `feat/in-app-communication`)
+Current Phase: In-app real-time communication foundation (Phase 13).
+Next Recommended Task: FN-120 — Implement In-App VoIP Audio Calling for Active Bookings (P2). ClamAV malware scanning on ai-media-policy remains the sole code-solvable gate for FN-059.
 
 2026-08-27 (session 2) FN-113 advisory price/signal surfacing verified complete and closed. Evidence in the working tree: the mobile advisory price estimate (`mobile/lib/features/ai/price_estimate_repository.dart` — repository + controller + honest states) is surfaced on the service-request screen (`service_request_screen.dart` `_buildPriceContent`: ESTIMATE range + explanation + "Advisory only — the final charge is confirmed..." disclaimer, honest static fallback, PRICE_ON_REQUEST abstention) and wired at both `app.dart` construction sites (category-select and Book-again) via `PriceEstimateRepository(_api, accessToken: _auth.validAccessToken)`; the admin trust queue (`admin/src/app/trust/page.tsx`) already renders the FN-060 rule codes; the provider accept-time signal is surfaced on provider home (`provider_home_screen.dart` via `GET trust/my-accept-time`, FN-111). Payments set to local-only per ADR-0016: `PAYMENT_PROVIDER` defaults to the deterministic `fake` gateway (now made explicit in `backend/.env`), which is prohibited in production by `env.validation.ts` startup validation, needs no live gateway credentials, and offers no payouts. The mobile client has no interactive checkout surface yet (only the read-only invoice screen; `JobCompletedDialog` is unwired), so a dev-gated local payment flow is recorded as FN-118 rather than scaffolded. FN-058/FN-059 remain Deferred (live vision/voice still gated on malware scan + signed DPA + vendor/model approval, ADR-0014; AI stays advisory-only, disabled by default). Validated 2026-08-27: flutter analyze 0 errors, flutter test 164/164; backend jest payments 35/35.
 
@@ -2670,7 +2671,7 @@ The backend local-only posture already exists: `PAYMENT_PROVIDER=fake` (explicit
 # Phase 13 — In-App Real-Time Communication and Calling
 
 ## FN-119 — Implement In-App Real-Time Chat for Active Bookings
-Status: Pending
+Status: ✅ Completed
 Priority: P1 — High
 Area: Mobile / Backend / Realtime
 Depends On: FN-041, FN-061, FN-062
@@ -2687,21 +2688,23 @@ Provide secure, in-app real-time text messaging between customers and assigned s
 - Do not allow messaging outside active booking lifecycles (`ASSIGNED`, `EN_ROUTE`, `IN_PROGRESS`), expose personal email or phone numbers, or bypass server authorization.
 
 ### Acceptance Criteria
-- [ ] Customer and provider can exchange text messages in real-time over WebSocket.
-- [ ] Messages are securely stored and retrievable via authenticated REST/WebSocket history endpoint.
-- [ ] Backgrounded recipient receives lock-screen-safe push notification.
-- [ ] Quick canned response chips trigger instant sends.
-- [ ] Chat automatically locks to read-only once booking reaches `COMPLETED` or `CANCELLED`.
-- [ ] `flutter analyze` and `flutter test` pass; backend jest tests pass.
+- [x] Customer and provider can exchange text messages in real-time over WebSocket.
+- [x] Messages are securely stored and retrievable via authenticated REST/WebSocket history endpoint.
+- [x] Backgrounded recipient receives lock-screen-safe push notification.
+- [x] Quick canned response chips trigger instant sends.
+- [x] Chat automatically locks to read-only once booking reaches `COMPLETED` or `CANCELLED`.
+- [x] `flutter analyze` and `flutter test` pass; backend jest tests pass.
 
 ### Validation
 ```bash
-cd backend && npm test -- src/realtime
+cd backend && npm test
 cd mobile && flutter analyze && flutter test
 ```
 
 ### Files / Areas
 ```text
+backend/migrations/1786521100000-BookingMessages.ts
+backend/src/bookings/
 backend/src/realtime/
 backend/src/notifications/
 mobile/lib/features/chat/
@@ -2710,6 +2713,20 @@ mobile/lib/features/tracking/booking_tracking_screen.dart
 
 ### Notes
 Reuses existing `RealtimeGateway` connection registry and token verification.
+
+### Implemented 2026-08-27
+- **Database & Persistence**: Migration `1786521100000-BookingMessages.ts` creating `booking_messages` with foreign keys, composite indexes (`booking_id`, `created_at ASC`), and client message deduplication. `BookingMessage` TypeORM entity registered in `BookingsModule`.
+- **Backend Service & API**: `BookingMessagesService` and `BookingMessagesController` providing `GET /bookings/:id/messages` and `POST /bookings/:id/messages`. Enforces authorization (participant matching), active lifecycle gate (`ASSIGNED`, `EN_ROUTE`, `IN_PROGRESS`), and marks unread messages.
+- **Real-Time Projection & Notifications**: `BookingProjectionService.publishChatMessage` broadcasts `chat.message-received.v1` to subscribed sockets. If recipient is not active in the chat channel, `DomainNotificationService.notifyChatMessage` sends privacy-safe lockscreen push notifications.
+- **Mobile Architecture & UI**:
+  - `ChatMessage` domain model with auto `isMe` calculation.
+  - `HttpChatRepository` with token auth and error mapping.
+  - `ChatController` managing message history, optimistic UI updates, and real-time socket streams.
+  - `BookingChatScreen` obeying `DESIGN.md` dark theme: Shield privacy card, recipient avatar with verified badge, incoming/outgoing bubbles with micro-timestamps and delivery status, 1-tap quick canned responses (buzz codes, gates, arrival updates), and read-only archive banner once booking is completed.
+  - Connected from `BookingTrackingScreen` "Message" button with graceful fallbacks.
+- **Validation**:
+  - Backend: `npm test` across all 78 test suites (497 tests passed).
+  - Mobile: `flutter analyze` 0 errors, 0 warnings; `flutter test` 174/174 passed (including `test/booking_chat_screen_test.dart`).
 
 ## FN-120 — Implement In-App VoIP Audio Calling for Active Bookings
 Status: Pending

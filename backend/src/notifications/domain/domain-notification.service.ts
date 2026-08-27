@@ -49,6 +49,14 @@ export const BOOKING_NOTIFICATION_TEMPLATES: Readonly<
     title: 'FixNow',
     body: 'An assigned booking was cancelled.',
   },
+  'customer:CHAT_MESSAGE': {
+    title: 'FixNow',
+    body: 'New message regarding your active service.',
+  },
+  'provider:CHAT_MESSAGE': {
+    title: 'FixNow',
+    body: 'New message regarding your assigned service.',
+  },
 };
 
 /**
@@ -121,6 +129,25 @@ export class DomainNotificationService {
         booking.id,
       );
     }
+  }
+
+  /** Notify inactive party of an incoming in-app chat message. */
+  async notifyChatMessage(
+    booking: Booking,
+    recipientUserId: string,
+    audience: 'customer' | 'provider',
+    messageId: string,
+  ): Promise<void> {
+    const template =
+      BOOKING_NOTIFICATION_TEMPLATES[`${audience}:CHAT_MESSAGE`];
+    if (!template) return;
+    await this.send(
+      recipientUserId,
+      `booking:${audience}:CHAT_MESSAGE`,
+      `booking:${booking.id}:chat:${messageId}`,
+      template,
+      booking.id,
+    );
   }
 
   async send(

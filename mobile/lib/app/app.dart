@@ -40,6 +40,8 @@ import 'package:fixnow_mobile/features/provider/provider_jobs_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_onboarding_screen.dart';
 import 'package:fixnow_mobile/features/support/complaint_list_screen.dart';
 import 'package:fixnow_mobile/features/support/submit_complaint_screen.dart';
+import 'package:fixnow_mobile/features/notifications/notification_controller.dart';
+import 'package:fixnow_mobile/features/notifications/notification_repository.dart';
 import 'package:fixnow_mobile/features/provider/provider_repository.dart';
 import 'package:fixnow_mobile/features/support/complaints_controller.dart';
 import 'package:fixnow_mobile/features/support/complaints_repository.dart';
@@ -91,6 +93,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
   late final ProviderController _provider;
   late final ComplaintsController _complaints;
   late final PushEnrollmentController _push;
+  late final NotificationController _notifications;
   late final ChatRepository _chatRepository;
   late final CallRepository _callRepository;
   final Map<String, BookingTrackingController> _trackingControllers = {};
@@ -152,6 +155,12 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
       api: PushApi(api, accessToken: _auth.validAccessToken),
       gateway: _pushGateway,
     );
+    _notifications = NotificationController(
+      NotificationRepository(
+        api: api,
+        accessToken: _auth.validAccessToken,
+      ),
+    );
     _chatRepository = HttpChatRepository(
       api: api,
       accessToken: _auth.validAccessToken,
@@ -167,6 +176,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     unawaited(_foregroundPushSub?.cancel());
+    _notifications.dispose();
     _auth.dispose();
     _profile.dispose();
     _discovery.dispose();
@@ -350,6 +360,15 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
                 _api,
                 accessToken: _auth.validAccessToken,
               ),
+              notificationController: _notifications,
+              onBookingSelected: (bookingId) {
+                final match = _bookings.bookings.where((b) => b.id == bookingId).firstOrNull;
+                if (match != null) {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => _bookingDestination(match)),
+                  );
+                }
+              },
             ),
             customerProfile: CustomerProfileScreen(
               controller: _profile,

@@ -27,6 +27,9 @@ import 'package:fixnow_mobile/features/ai/ai_recommendation_screen.dart';
 import 'package:fixnow_mobile/features/ai/problem_analysis_repository.dart';
 import 'package:fixnow_mobile/features/ai/problem_diagnosis_controller.dart';
 import 'package:fixnow_mobile/features/ai/problem_diagnosis_screen.dart';
+import 'package:fixnow_mobile/design_system/fix_notification_bell.dart';
+import 'package:fixnow_mobile/features/notifications/notification_center_screen.dart';
+import 'package:fixnow_mobile/features/notifications/notification_controller.dart';
 
 class ServiceDiscoveryScreen extends StatefulWidget {
   const ServiceDiscoveryScreen({
@@ -37,6 +40,8 @@ class ServiceDiscoveryScreen extends StatefulWidget {
     this.aiRepository,
     this.problemAnalysisRepository,
     this.emergencyRepository,
+    this.notificationController,
+    this.onBookingSelected,
     super.key,
   });
   final ServiceDiscoveryController controller;
@@ -46,6 +51,8 @@ class ServiceDiscoveryScreen extends StatefulWidget {
   final AiRecommendationRepository? aiRepository;
   final ProblemAnalysisRepository? problemAnalysisRepository;
   final EmergencyRepository? emergencyRepository;
+  final NotificationController? notificationController;
+  final void Function(String bookingId)? onBookingSelected;
 
   @override
   State<ServiceDiscoveryScreen> createState() => _ServiceDiscoveryScreenState();
@@ -525,7 +532,28 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                 ],
               ),
             ),
-            const FixAvatar(name: 'Arman', size: 44, isVerified: true),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (widget.notificationController != null) ...[
+                  FixNotificationBellIcon(
+                    controller: widget.notificationController!,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => NotificationCenterScreen(
+                            controller: widget.notificationController!,
+                            onOpenBooking: widget.onBookingSelected,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                ],
+                const FixAvatar(name: 'Arman', size: 44, isVerified: true),
+              ],
+            ),
           ],
         );
       },

@@ -30,6 +30,8 @@ import 'package:fixnow_mobile/features/ai/problem_diagnosis_screen.dart';
 import 'package:fixnow_mobile/design_system/fix_notification_bell.dart';
 import 'package:fixnow_mobile/features/notifications/notification_center_screen.dart';
 import 'package:fixnow_mobile/features/notifications/notification_controller.dart';
+import 'package:fixnow_mobile/features/services/fix_universal_search_bar.dart';
+import 'package:fixnow_mobile/features/services/sub_service_item.dart';
 
 class ServiceDiscoveryScreen extends StatefulWidget {
   const ServiceDiscoveryScreen({
@@ -61,6 +63,14 @@ class ServiceDiscoveryScreen extends StatefulWidget {
 class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
   String? _locationName;
   BookingLocationFix? _bookingLocation;
+  final _searchController = TextEditingController();
+  SearchSortOption _sortOption = SearchSortOption.relevance;
+  SearchFilterOption _filterOption = SearchFilterOption.all;
+
+  bool get _isSearching =>
+      _searchController.text.trim().isNotEmpty ||
+      _filterOption != SearchFilterOption.all ||
+      _sortOption != SearchSortOption.relevance;
 
   @override
   void initState() {
@@ -72,6 +82,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
 
   @override
   void dispose() {
+    _searchController.dispose();
     widget.locationController.removeListener(_onLocationStateChanged);
     super.dispose();
   }
@@ -295,9 +306,28 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
           padding: const EdgeInsets.all(AppSpacing.pagePadding),
           children: [
             _buildCustomerHeader(context),
+            const SizedBox(height: AppSpacing.md),
+
+            // FN-130: Universal Live Search, Filter & Price Sort Bar
+            FixUniversalSearchBar(
+              searchController: _searchController,
+              onSearchChanged: (_) => setState(() {}),
+              onClear: () => setState(() {
+                _searchController.clear();
+                _filterOption = SearchFilterOption.all;
+                _sortOption = SearchSortOption.relevance;
+              }),
+              activeSort: _sortOption,
+              onSortChanged: (sort) => setState(() => _sortOption = sort),
+              activeFilter: _filterOption,
+              onFilterChanged: (filter) => setState(() => _filterOption = filter),
+            ),
             const SizedBox(height: AppSpacing.lg),
 
-            if (isOfflineOrError) ...[
+            if (_isSearching) ...[
+              _buildSearchResultsSection(context),
+              const SizedBox(height: AppSpacing.xl),
+            ] else if (isOfflineOrError) ...[
               ..._content(context),
               const SizedBox(height: AppSpacing.xl),
               LocationConsentCard(controller: widget.locationController),
@@ -381,6 +411,259 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
       );
     },
   );
+
+  Widget _buildSearchResultsSection(BuildContext context) {
+    final query = _searchController.text.trim().toLowerCase();
+    final allSubServices = SubServiceCatalog.getAllSubServices();
+    final categories = widget.controller.categories;
+
+    // Filter sub-services
+    var filtered = allSubServices.where((item) {
+      final matchesQuery = query.isEmpty ||
+          item.name.toLowerCase().contains(query) ||
+          item.description.toLowerCase().contains(query) ||
+          item.categorySlug.toLowerCase().contains(query);
+
+      if (!matchesQuery) return false;
+
+      // Filter options
+      switch (_filterOption) {
+        case SearchFilterOption.under300:
+          if (item.priceMinor > 30000) return false;
+          break;
+        case SearchFilterOption.under500:
+          if (item.priceMinor > 50000) return false;
+          break;
+        case SearchFilterOption.emergency:
+          final cat = categories.firstWhere(
+            (c) => c.slug == item.categorySlug || c.id == item.categorySlug,
+            orElse: () => ServiceCategory(id: '', name: '', slug: ''),
+          );
+          if (!cat.isEmergency && item.durationMinutes > 45) return false;
+          break;
+        case SearchFilterOption.all:
+          break;
+      }
+      return true;
+    }).toList();
+
+    // Sort
+    switch (_sortOption) {
+      case SearchSortOption.priceLowHigh:
+        filtered.sort((a, b) => a.priceMinor.compareTo(b.priceMinor));
+        break;
+      case SearchSortOption.priceHighLow:
+        filtered.sort((a, b) => b.priceMinor.compareTo(a.priceMinor));
+        break;
+      case SearchSortOption.fastest:
+        filtered.sort((a, b) => a.durationMinutes.compareTo(b.durationMinutes));
+        break;
+      case SearchSortOption.popular:
+        filtered.sort((a, b) => (b.badge != null ? 1 : 0).compareTo(a.badge != null ? 1 : 0));
+        break;
+      case SearchSortOption.relevance:
+        break;
+    }
+
+    if (filtered.isEmpty) {
+      const suggestions = ['Tap Repair', 'Ceiling Fan', 'AC Service', 'Drain Cleaning', 'Switchboard'];
+      return FixCard(
+        tone: FixCardTone.elevated,
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          children: [
+            const Icon(Icons.search_off_rounded, size: 40, color: AppColors.textMuted),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              'No services found for "${_searchController.text.trim()}"',
+              style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.cream, fontSize: 16),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            const Text(
+              'Try popular home maintenance requests:',
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              alignment: WrapAlignment.center,
+              children: suggestions.map((s) {
+                return ActionChip(
+                  label: Text(s, style: const TextStyle(fontSize: 12, color: AppColors.cream)),
+                  backgroundColor: AppColors.backgroundSecondary,
+                  side: const BorderSide(color: AppColors.borderDefault),
+                  onPressed: () {
+                    setState(() {
+                      _searchController.text = s;
+                    });
+                  },
+                );
+              }).toList(),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Search Results (${filtered.length})',
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 16,
+                color: AppColors.cream,
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  _searchController.clear();
+                  _filterOption = SearchFilterOption.all;
+                  _sortOption = SearchSortOption.relevance;
+                });
+              },
+              child: const Text('Reset', style: TextStyle(color: AppColors.accentGold)),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        ...filtered.map((item) {
+          final cat = categories.firstWhere(
+            (c) => c.slug == item.categorySlug || c.id == item.categorySlug,
+            orElse: () => ServiceCategory(
+              id: item.categorySlug,
+              name: item.categorySlug[0].toUpperCase() + item.categorySlug.substring(1),
+              slug: item.categorySlug,
+            ),
+          );
+
+          return Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+            child: FixCard(
+              tone: FixCardTone.elevated,
+              padding: const EdgeInsets.all(AppSpacing.md),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: AppColors.primarySoft.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(AppRadius.medium),
+                      border: Border.all(color: AppColors.borderGold.withValues(alpha: 0.3)),
+                    ),
+                    child: Icon(item.icon, color: AppColors.accentGold, size: 22),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: AppColors.backgroundSecondary,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                cat.name.toUpperCase(),
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ),
+                            if (item.badge != null) ...[
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: AppColors.accentGold.withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  item.badge!,
+                                  style: const TextStyle(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.accentGold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          item.name,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                            color: AppColors.cream,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          item.description,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                Text(
+                                  item.formattedPrice,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.accentGold,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '• ${item.durationMinutes} mins',
+                                  style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+                                ),
+                              ],
+                            ),
+                            FilledButton.tonal(
+                              style: FilledButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              onPressed: () => widget.onCategorySelected?.call(cat, _bookingLocation),
+                              child: const Text('View & Book', style: TextStyle(fontSize: 12)),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }),
+      ],
+    );
+  }
 
   Widget _buildActiveBookingCard() {
     if (widget.bookingsController == null) return const SizedBox.shrink();

@@ -142,6 +142,14 @@ class SubServiceCatalog {
     return _catalog[categorySlug] ?? _defaultFallback(categorySlug);
   }
 
+  static List<SubServiceItem> getAllSubServices() {
+    final all = <SubServiceItem>[];
+    for (final items in _catalog.values) {
+      all.addAll(items);
+    }
+    return all;
+  }
+
   static const Map<String, List<SubServiceItem>> _catalog = {
     'plumbing': [
       SubServiceItem(

@@ -55,15 +55,15 @@ Only these statuses are valid. A task cannot be completed while required validat
 # Project Progress
 
 Total Tasks: 131
-Completed: 113
+Completed: 114
 In Progress: 0
 Blocked: 0
-Pending: 2
+Pending: 1
 Deferred: 14
 Cancelled: 2
-Current Task: None (FN-129 Provider Active Job Cockpit & OTP Verification completed)
+Current Task: None (FN-130 Universal Live Search, Filter & Price Sort Bar completed)
 Current Phase: Phase 16 — Production Operations & Commercial Polish
-Next Recommended Task: FN-130 — Universal Live Search, Filter & Price Sort Bar
+Next Recommended Task: FN-131 — Downloadable PDF Tax Invoice & Share Sheet
 
 2026-08-27 (session 2) FN-113 advisory price/signal surfacing verified complete and closed. Evidence in the working tree: the mobile advisory price estimate (`mobile/lib/features/ai/price_estimate_repository.dart` — repository + controller + honest states) is surfaced on the service-request screen (`service_request_screen.dart` `_buildPriceContent`: ESTIMATE range + explanation + "Advisory only — the final charge is confirmed..." disclaimer, honest static fallback, PRICE_ON_REQUEST abstention) and wired at both `app.dart` construction sites (category-select and Book-again) via `PriceEstimateRepository(_api, accessToken: _auth.validAccessToken)`; the admin trust queue (`admin/src/app/trust/page.tsx`) already renders the FN-060 rule codes; the provider accept-time signal is surfaced on provider home (`provider_home_screen.dart` via `GET trust/my-accept-time`, FN-111). Payments set to local-only per ADR-0016: `PAYMENT_PROVIDER` defaults to the deterministic `fake` gateway (now made explicit in `backend/.env`), which is prohibited in production by `env.validation.ts` startup validation, needs no live gateway credentials, and offers no payouts. The mobile client has no interactive checkout surface yet (only the read-only invoice screen; `JobCompletedDialog` is unwired), so a dev-gated local payment flow is recorded as FN-118 rather than scaffolded. FN-058/FN-059 remain Deferred (live vision/voice still gated on malware scan + signed DPA + vendor/model approval, ADR-0014; AI stays advisory-only, disabled by default). Validated 2026-08-27: flutter analyze 0 errors, flutter test 164/164; backend jest payments 35/35.
 
@@ -3151,7 +3151,7 @@ Empower service technicians with an interactive active job cockpit guiding them 
 ---
 
 ## FN-130 — Universal Live Search, Filter & Price Sort Bar
-Status: ⬜ Pending
+Status: ✅ Completed
 Priority: P1 — High
 Area: Mobile / Discovery
 Depends On: FN-123
@@ -3159,6 +3159,14 @@ Branch: feat/in-app-communication
 
 ### Objective
 Equip customer discovery with a prominent top search bar providing live debounced autocomplete across all service categories and sub-services, with filter chips (price low-to-high, rating 4.5+ ⭐, emergency available).
+
+### Changes Delivered
+- Added `SubServiceCatalog.getAllSubServices()` helper in `mobile/lib/features/services/sub_service_item.dart`.
+- Built `FixUniversalSearchBar` component in `mobile/lib/features/services/fix_universal_search_bar.dart` with gold search icon, clear button, popup sort menu (`Price: Low to High`, `Price: High to Low`, `Fastest <45 min`, `Most Popular`), and horizontal filter chips (`All Services`, `⚡ Emergency`, `Under ₹300`, `Under ₹500`).
+- Integrated live search filtering into `ServiceDiscoveryScreen` in `mobile/lib/features/services/service_discovery_screen.dart` with instant sub-service match cards (category tag, pricing, duration, "View & Book" direct navigation).
+- Added graceful empty search state with popular quick-action suggestion chips (`Tap Repair`, `Ceiling Fan`, `AC Service`, `Drain Cleaning`, `Switchboard`).
+- Added comprehensive unit and widget tests in `mobile/test/universal_search_test.dart` (2/2 passed).
+- Validated: 100% green tests (218/218 mobile tests pass, flutter analyze 0 issues).
 
 ---
 

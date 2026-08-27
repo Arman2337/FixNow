@@ -27,7 +27,12 @@ export class BookingMessage {
   @Column({ name: 'sender_role', type: 'varchar', length: 20 })
   senderRole!: ChatSenderRole;
 
-  @Column({ name: 'client_message_id', type: 'varchar', length: 64, nullable: true })
+  @Column({
+    name: 'client_message_id',
+    type: 'varchar',
+    length: 64,
+    nullable: true,
+  })
   clientMessageId!: string | null;
 
   @Column({ name: 'message_text', type: 'text' })

@@ -138,8 +138,7 @@ export class DomainNotificationService {
     audience: 'customer' | 'provider',
     messageId: string,
   ): Promise<void> {
-    const template =
-      BOOKING_NOTIFICATION_TEMPLATES[`${audience}:CHAT_MESSAGE`];
+    const template = BOOKING_NOTIFICATION_TEMPLATES[`${audience}:CHAT_MESSAGE`];
     if (!template) return;
     await this.send(
       recipientUserId,

@@ -55,12 +55,22 @@ describe('BookingCallsService', () => {
 
     callsRepo = {
       findOne: jest.fn(),
-      create: jest.fn((dto) => Object.assign(new BookingCall(), dto, { id: callId, startedAt: new Date() })),
+      create: jest.fn((dto) =>
+        Object.assign(new BookingCall(), dto, {
+          id: callId,
+          startedAt: new Date(),
+        }),
+      ),
       save: jest.fn((entity) => Promise.resolve(entity)),
     } as unknown as jest.Mocked<Repository<BookingCall>>;
 
     messagesRepo = {
-      create: jest.fn((dto) => Object.assign(new BookingMessage(), dto, { id: 'msg-id', createdAt: new Date() })),
+      create: jest.fn((dto) =>
+        Object.assign(new BookingMessage(), dto, {
+          id: 'msg-id',
+          createdAt: new Date(),
+        }),
+      ),
       save: jest.fn((entity) => Promise.resolve(entity)),
     } as unknown as jest.Mocked<Repository<BookingMessage>>;
 
@@ -79,7 +89,9 @@ describe('BookingCallsService', () => {
 
   describe('initiateCall', () => {
     it('creates call and broadcasts call.incoming.v1 during ASSIGNED status', async () => {
-      bookingsRepo.findOne.mockResolvedValue(mockBooking(BookingStatus.ASSIGNED));
+      bookingsRepo.findOne.mockResolvedValue(
+        mockBooking(BookingStatus.ASSIGNED),
+      );
 
       const result = await service.initiateCall(bookingId, customerId);
 
@@ -93,7 +105,9 @@ describe('BookingCallsService', () => {
     });
 
     it('creates call during EN_ROUTE status', async () => {
-      bookingsRepo.findOne.mockResolvedValue(mockBooking(BookingStatus.EN_ROUTE));
+      bookingsRepo.findOne.mockResolvedValue(
+        mockBooking(BookingStatus.EN_ROUTE),
+      );
 
       const result = await service.initiateCall(bookingId, customerId);
 
@@ -101,7 +115,9 @@ describe('BookingCallsService', () => {
     });
 
     it('rejects call when booking is IN_PROGRESS with ConflictException', async () => {
-      bookingsRepo.findOne.mockResolvedValue(mockBooking(BookingStatus.IN_PROGRESS));
+      bookingsRepo.findOne.mockResolvedValue(
+        mockBooking(BookingStatus.IN_PROGRESS),
+      );
 
       await expect(service.initiateCall(bookingId, customerId)).rejects.toThrow(
         ConflictException,
@@ -109,7 +125,9 @@ describe('BookingCallsService', () => {
     });
 
     it('rejects call when booking is COMPLETED with ConflictException', async () => {
-      bookingsRepo.findOne.mockResolvedValue(mockBooking(BookingStatus.COMPLETED));
+      bookingsRepo.findOne.mockResolvedValue(
+        mockBooking(BookingStatus.COMPLETED),
+      );
 
       await expect(service.initiateCall(bookingId, customerId)).rejects.toThrow(
         ConflictException,
@@ -117,7 +135,9 @@ describe('BookingCallsService', () => {
     });
 
     it('rejects call from non-participant with ForbiddenException', async () => {
-      bookingsRepo.findOne.mockResolvedValue(mockBooking(BookingStatus.ASSIGNED));
+      bookingsRepo.findOne.mockResolvedValue(
+        mockBooking(BookingStatus.ASSIGNED),
+      );
 
       await expect(service.initiateCall(bookingId, strangerId)).rejects.toThrow(
         ForbiddenException,
@@ -188,7 +208,9 @@ describe('BookingCallsService', () => {
       );
       expect(messagesRepo.save).toHaveBeenCalledWith(
         expect.objectContaining({
-          messageText: expect.stringMatching(/📞 In-app audio call ended • \d+m \d+s/),
+          messageText: expect.stringMatching(
+            /📞 In-app audio call ended • \d+m \d+s/,
+          ),
         }),
       );
     });

@@ -33,7 +33,9 @@ describe('BookingMessagesService', () => {
       version: 1,
     });
 
-  const mockMessage = (overrides: Partial<BookingMessage> = {}): BookingMessage =>
+  const mockMessage = (
+    overrides: Partial<BookingMessage> = {},
+  ): BookingMessage =>
     Object.assign(new BookingMessage(), {
       id: '00000000-0000-4000-8000-000000000201',
       bookingId,
@@ -54,7 +56,12 @@ describe('BookingMessagesService', () => {
     messagesRepo = {
       find: jest.fn(),
       findOne: jest.fn(),
-      create: jest.fn((dto) => Object.assign(new BookingMessage(), dto, { id: 'new-msg-id', createdAt: new Date() })),
+      create: jest.fn((dto) =>
+        Object.assign(new BookingMessage(), dto, {
+          id: 'new-msg-id',
+          createdAt: new Date(),
+        }),
+      ),
       save: jest.fn((entity) => Promise.resolve(entity)),
       update: jest.fn().mockResolvedValue({ affected: 1 }),
     } as unknown as jest.Mocked<Repository<BookingMessage>>;
@@ -78,7 +85,9 @@ describe('BookingMessagesService', () => {
 
   describe('listMessages', () => {
     it('returns messages and canSend=true for active customer', async () => {
-      bookingsRepo.findOne.mockResolvedValue(mockBooking(BookingStatus.ASSIGNED));
+      bookingsRepo.findOne.mockResolvedValue(
+        mockBooking(BookingStatus.ASSIGNED),
+      );
       messagesRepo.find.mockResolvedValue([mockMessage()]);
 
       const result = await service.listMessages(bookingId, customerId);
@@ -90,7 +99,9 @@ describe('BookingMessagesService', () => {
     });
 
     it('returns canSend=false for completed booking', async () => {
-      bookingsRepo.findOne.mockResolvedValue(mockBooking(BookingStatus.COMPLETED));
+      bookingsRepo.findOne.mockResolvedValue(
+        mockBooking(BookingStatus.COMPLETED),
+      );
       messagesRepo.find.mockResolvedValue([mockMessage()]);
 
       const result = await service.listMessages(bookingId, customerId);
@@ -100,7 +111,9 @@ describe('BookingMessagesService', () => {
     });
 
     it('rejects third-party user with ForbiddenException', async () => {
-      bookingsRepo.findOne.mockResolvedValue(mockBooking(BookingStatus.ASSIGNED));
+      bookingsRepo.findOne.mockResolvedValue(
+        mockBooking(BookingStatus.ASSIGNED),
+      );
 
       await expect(service.listMessages(bookingId, strangerId)).rejects.toThrow(
         ForbiddenException,
@@ -118,7 +131,9 @@ describe('BookingMessagesService', () => {
 
   describe('sendMessage', () => {
     it('saves, broadcasts, and notifies for valid message during ASSIGNED status', async () => {
-      bookingsRepo.findOne.mockResolvedValue(mockBooking(BookingStatus.ASSIGNED));
+      bookingsRepo.findOne.mockResolvedValue(
+        mockBooking(BookingStatus.ASSIGNED),
+      );
       messagesRepo.findOne.mockResolvedValue(null);
 
       const result = await service.sendMessage(bookingId, customerId, {
@@ -141,8 +156,13 @@ describe('BookingMessagesService', () => {
     });
 
     it('returns existing message if clientMessageId already exists (idempotent)', async () => {
-      const existing = mockMessage({ clientMessageId: 'c-123', messageText: 'Duplicate send' });
-      bookingsRepo.findOne.mockResolvedValue(mockBooking(BookingStatus.ASSIGNED));
+      const existing = mockMessage({
+        clientMessageId: 'c-123',
+        messageText: 'Duplicate send',
+      });
+      bookingsRepo.findOne.mockResolvedValue(
+        mockBooking(BookingStatus.ASSIGNED),
+      );
       messagesRepo.findOne.mockResolvedValue(existing);
 
       const result = await service.sendMessage(bookingId, customerId, {
@@ -155,7 +175,9 @@ describe('BookingMessagesService', () => {
     });
 
     it('rejects sending when booking is COMPLETED with ConflictException', async () => {
-      bookingsRepo.findOne.mockResolvedValue(mockBooking(BookingStatus.COMPLETED));
+      bookingsRepo.findOne.mockResolvedValue(
+        mockBooking(BookingStatus.COMPLETED),
+      );
 
       await expect(
         service.sendMessage(bookingId, customerId, { messageText: 'Hello' }),
@@ -163,7 +185,9 @@ describe('BookingMessagesService', () => {
     });
 
     it('rejects sending when booking is CANCELLED with ConflictException', async () => {
-      bookingsRepo.findOne.mockResolvedValue(mockBooking(BookingStatus.CANCELLED));
+      bookingsRepo.findOne.mockResolvedValue(
+        mockBooking(BookingStatus.CANCELLED),
+      );
 
       await expect(
         service.sendMessage(bookingId, customerId, { messageText: 'Hello' }),
@@ -178,12 +202,16 @@ describe('BookingMessagesService', () => {
 
     it('rejects message exceeding 2000 chars with BadRequestException', async () => {
       await expect(
-        service.sendMessage(bookingId, customerId, { messageText: 'a'.repeat(2001) }),
+        service.sendMessage(bookingId, customerId, {
+          messageText: 'a'.repeat(2001),
+        }),
       ).rejects.toThrow(BadRequestException);
     });
 
     it('rejects stranger sender with ForbiddenException', async () => {
-      bookingsRepo.findOne.mockResolvedValue(mockBooking(BookingStatus.ASSIGNED));
+      bookingsRepo.findOne.mockResolvedValue(
+        mockBooking(BookingStatus.ASSIGNED),
+      );
 
       await expect(
         service.sendMessage(bookingId, strangerId, { messageText: 'Hi' }),

@@ -108,7 +108,7 @@ function stripJpeg(buf: Buffer): Buffer {
   let i = 2;
   while (i + 1 < buf.length) {
     if (buf[i] !== 0xff) throw new AiError('INPUT_REJECTED');
-    const marker = buf[i + 1]!;
+    const marker = buf[i + 1];
     if (marker === 0xff) {
       i += 1; // fill byte before the real marker
       continue;

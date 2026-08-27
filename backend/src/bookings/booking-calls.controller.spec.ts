@@ -45,7 +45,10 @@ describe('BookingCallsController', () => {
   });
 
   it('delegates answer to service', async () => {
-    service.answerCall.mockResolvedValue({ ...mockCallDto, status: 'CONNECTED' });
+    service.answerCall.mockResolvedValue({
+      ...mockCallDto,
+      status: 'CONNECTED',
+    });
 
     const result = await controller.answer(req, bookingId, callId);
 
@@ -54,7 +57,10 @@ describe('BookingCallsController', () => {
   });
 
   it('delegates reject to service', async () => {
-    service.rejectCall.mockResolvedValue({ ...mockCallDto, status: 'REJECTED' });
+    service.rejectCall.mockResolvedValue({
+      ...mockCallDto,
+      status: 'REJECTED',
+    });
 
     const result = await controller.reject(req, bookingId, callId);
 
@@ -63,7 +69,11 @@ describe('BookingCallsController', () => {
   });
 
   it('delegates hangup to service', async () => {
-    service.hangupCall.mockResolvedValue({ ...mockCallDto, status: 'ENDED', durationSeconds: 45 });
+    service.hangupCall.mockResolvedValue({
+      ...mockCallDto,
+      status: 'ENDED',
+      durationSeconds: 45,
+    });
 
     const result = await controller.hangup(req, bookingId, callId);
 

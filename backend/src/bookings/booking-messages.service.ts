@@ -49,7 +49,9 @@ export class BookingMessagesService {
     bookingId: string,
     userId: string,
   ): Promise<BookingMessagesListResponse> {
-    const booking = await this.bookingsRepo.findOne({ where: { id: bookingId } });
+    const booking = await this.bookingsRepo.findOne({
+      where: { id: bookingId },
+    });
     if (!booking) {
       throw new NotFoundException('Booking not found');
     }
@@ -101,14 +103,14 @@ export class BookingMessagesService {
       );
     }
 
-    const booking = await this.bookingsRepo.findOne({ where: { id: bookingId } });
+    const booking = await this.bookingsRepo.findOne({
+      where: { id: bookingId },
+    });
     if (!booking) {
       throw new NotFoundException('Booking not found');
     }
     if (booking.customerId !== userId && booking.providerId !== userId) {
-      throw new ForbiddenException(
-        'Not authorized to message on this booking',
-      );
+      throw new ForbiddenException('Not authorized to message on this booking');
     }
 
     const canSend = [
@@ -156,7 +158,10 @@ export class BookingMessagesService {
     const presented = presentBookingMessage(saved);
 
     // Broadcast to real-time WebSocket subscribers
-    this.projections.publishChatMessage(bookingId, presented as unknown as Record<string, unknown>);
+    this.projections.publishChatMessage(
+      bookingId,
+      presented as unknown as Record<string, unknown>,
+    );
 
     // If recipient is not active on this booking channel, send push notification
     if (
@@ -164,7 +169,12 @@ export class BookingMessagesService {
       !this.projections.isSubscriberActive(bookingId, recipientUserId)
     ) {
       await this.notifications
-        .notifyChatMessage(booking, recipientUserId, recipientAudience, saved.id)
+        .notifyChatMessage(
+          booking,
+          recipientUserId,
+          recipientAudience,
+          saved.id,
+        )
         .catch(() => {});
     }
 

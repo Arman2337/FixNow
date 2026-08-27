@@ -51,12 +51,17 @@ export class BookingCallsService {
     bookingId: string,
     callerUserId: string,
   ): Promise<InitiateCallResponse> {
-    const booking = await this.bookingsRepo.findOne({ where: { id: bookingId } });
+    const booking = await this.bookingsRepo.findOne({
+      where: { id: bookingId },
+    });
     if (!booking) {
       throw new NotFoundException('Booking not found');
     }
 
-    if (booking.customerId !== callerUserId && booking.providerId !== callerUserId) {
+    if (
+      booking.customerId !== callerUserId &&
+      booking.providerId !== callerUserId
+    ) {
       throw new ForbiddenException('Not authorized to call on this booking');
     }
 
@@ -73,7 +78,9 @@ export class BookingCallsService {
     const callerRole: ChatSenderRole =
       booking.customerId === callerUserId ? 'CUSTOMER' : 'PROVIDER';
     const calleeUserId =
-      booking.customerId === callerUserId ? booking.providerId : booking.customerId;
+      booking.customerId === callerUserId
+        ? booking.providerId
+        : booking.customerId;
 
     if (!calleeUserId) {
       throw new BadRequestException('Recipient is not assigned yet');
@@ -108,7 +115,9 @@ export class BookingCallsService {
     callId: string,
     calleeUserId: string,
   ): Promise<BookingCallDto> {
-    const call = await this.callsRepo.findOne({ where: { id: callId, bookingId } });
+    const call = await this.callsRepo.findOne({
+      where: { id: callId, bookingId },
+    });
     if (!call) {
       throw new NotFoundException('Call session not found');
     }
@@ -118,7 +127,9 @@ export class BookingCallsService {
     }
 
     if (call.status !== 'INITIATED' && call.status !== 'RINGING') {
-      throw new ConflictException(`Cannot answer call in status ${call.status}`);
+      throw new ConflictException(
+        `Cannot answer call in status ${call.status}`,
+      );
     }
 
     call.status = 'CONNECTED';
@@ -141,7 +152,9 @@ export class BookingCallsService {
     callId: string,
     userId: string,
   ): Promise<BookingCallDto> {
-    const call = await this.callsRepo.findOne({ where: { id: callId, bookingId } });
+    const call = await this.callsRepo.findOne({
+      where: { id: callId, bookingId },
+    });
     if (!call) {
       throw new NotFoundException('Call session not found');
     }
@@ -190,7 +203,9 @@ export class BookingCallsService {
     callId: string,
     userId: string,
   ): Promise<BookingCallDto> {
-    const call = await this.callsRepo.findOne({ where: { id: callId, bookingId } });
+    const call = await this.callsRepo.findOne({
+      where: { id: callId, bookingId },
+    });
     if (!call) {
       throw new NotFoundException('Call session not found');
     }
@@ -208,7 +223,9 @@ export class BookingCallsService {
       call.status = 'ENDED';
       call.durationSeconds = Math.max(
         0,
-        Math.round((call.endedAt.getTime() - call.connectedAt.getTime()) / 1000),
+        Math.round(
+          (call.endedAt.getTime() - call.connectedAt.getTime()) / 1000,
+        ),
       );
     } else {
       call.status = 'MISSED';

@@ -55,15 +55,15 @@ Only these statuses are valid. A task cannot be completed while required validat
 # Project Progress
 
 Total Tasks: 120
-Completed: 102
+Completed: 103
 In Progress: 0
 Blocked: 0
-Pending: 1
+Pending: 0
 Deferred: 16
 Cancelled: 1
-Current Task: None (FN-119 completed on branch `feat/in-app-communication`)
-Current Phase: In-app real-time communication foundation (Phase 13).
-Next Recommended Task: FN-120 — Implement In-App VoIP Audio Calling for Active Bookings (P2). ClamAV malware scanning on ai-media-policy remains the sole code-solvable gate for FN-059.
+Current Task: None (All active tasks completed! FN-120 delivered on branch `feat/in-app-communication`)
+Current Phase: In-app real-time communication and calling (Phase 13).
+Next Recommended Task: All eligible product tasks are completed. ClamAV malware scanning on ai-media-policy remains the sole code-solvable gate for FN-059.
 
 2026-08-27 (session 2) FN-113 advisory price/signal surfacing verified complete and closed. Evidence in the working tree: the mobile advisory price estimate (`mobile/lib/features/ai/price_estimate_repository.dart` — repository + controller + honest states) is surfaced on the service-request screen (`service_request_screen.dart` `_buildPriceContent`: ESTIMATE range + explanation + "Advisory only — the final charge is confirmed..." disclaimer, honest static fallback, PRICE_ON_REQUEST abstention) and wired at both `app.dart` construction sites (category-select and Book-again) via `PriceEstimateRepository(_api, accessToken: _auth.validAccessToken)`; the admin trust queue (`admin/src/app/trust/page.tsx`) already renders the FN-060 rule codes; the provider accept-time signal is surfaced on provider home (`provider_home_screen.dart` via `GET trust/my-accept-time`, FN-111). Payments set to local-only per ADR-0016: `PAYMENT_PROVIDER` defaults to the deterministic `fake` gateway (now made explicit in `backend/.env`), which is prohibited in production by `env.validation.ts` startup validation, needs no live gateway credentials, and offers no payouts. The mobile client has no interactive checkout surface yet (only the read-only invoice screen; `JobCompletedDialog` is unwired), so a dev-gated local payment flow is recorded as FN-118 rather than scaffolded. FN-058/FN-059 remain Deferred (live vision/voice still gated on malware scan + signed DPA + vendor/model approval, ADR-0014; AI stays advisory-only, disabled by default). Validated 2026-08-27: flutter analyze 0 errors, flutter test 164/164; backend jest payments 35/35.
 
@@ -2729,7 +2729,7 @@ Reuses existing `RealtimeGateway` connection registry and token verification.
   - Mobile: `flutter analyze` 0 errors, 0 warnings; `flutter test` 174/174 passed (including `test/booking_chat_screen_test.dart`).
 
 ## FN-120 — Implement In-App VoIP Audio Calling for Active Bookings
-Status: Pending
+Status: ✅ Completed
 Priority: P2 — Medium
 Area: Mobile / Backend / VoIP
 Depends On: FN-119
@@ -2746,21 +2746,23 @@ Enable masked, in-app VoIP audio calls between customer and technician over inte
 - Do not expose native phone numbers, initiate cellular carrier calls, record audio without mutual compliance disclosures, or permit calls outside active bookings.
 
 ### Acceptance Criteria
-- [ ] Outgoing and incoming VoIP audio call flow connects two active devices over data.
-- [ ] Call authorization verifies both participants belong to an active booking (`ASSIGNED` / `EN_ROUTE`).
-- [ ] Microphone permission request handles denial and restricted states cleanly.
-- [ ] Call history entries (Answered / Missed / Duration) append to the booking chat timeline.
-- [ ] Call channel is revoked immediately when booking status changes to `COMPLETED` or `CANCELLED`.
-- [ ] Unit and widget tests pass.
+- [x] Outgoing and incoming VoIP audio call flow connects two active devices over data.
+- [x] Call authorization verifies both participants belong to an active booking (`ASSIGNED` / `EN_ROUTE`).
+- [x] Microphone permission request handles denial and restricted states cleanly.
+- [x] Call history entries (Answered / Missed / Duration) append to the booking chat timeline.
+- [x] Call channel is revoked immediately when booking status changes to `COMPLETED` or `CANCELLED`.
+- [x] Unit and widget tests pass.
 
 ### Validation
 ```bash
-cd backend && npm test -- src/realtime
+cd backend && npm test
 cd mobile && flutter analyze && flutter test
 ```
 
 ### Files / Areas
 ```text
+backend/migrations/1786521200000-BookingCalls.ts
+backend/src/bookings/
 backend/src/realtime/
 mobile/lib/features/call/
 mobile/lib/features/chat/
@@ -2769,3 +2771,23 @@ mobile/lib/features/tracking/booking_tracking_screen.dart
 
 ### Notes
 Signaling passes through FixNow's existing WebSocket server. Audio streams peer-to-peer via WebRTC with fallback STUN/TURN or approved managed RTC provider.
+
+### Implemented 2026-08-27
+- **Database & Persistence**: Migration `1786521200000-BookingCalls.ts` creating `booking_calls` table with foreign keys, composite indexes (`booking_id`, `started_at DESC`), `status`, and duration tracking. `BookingCall` TypeORM entity registered in `BookingsModule`.
+- **Backend Service & API**:
+  - `BookingCallsService` and `BookingCallsController` providing `POST /bookings/:id/calls/initiate`, `POST /bookings/:id/calls/:callId/answer`, `POST /bookings/:id/calls/:callId/reject`, and `POST /bookings/:id/calls/:callId/hangup`.
+  - Authorizes that caller and callee belong to booking.
+  - Strict lifecycle restriction: calls are strictly permitted during `ASSIGNED` and `EN_ROUTE` states; rejects with `409 Conflict` during `IN_PROGRESS`, `COMPLETED`, or `CANCELLED`.
+  - On call completion (`hangupCall` or `rejectCall`), automatically writes an authoritative call log message to `booking_messages` (e.g. `"📞 In-app audio call ended • 2m 14s"` or `"📞 Missed in-app audio call"`), broadcasting it to both parties in real-time.
+- **WebSocket Signaling**: Added `publishCallSignal` to `BookingProjectionService` broadcasting `call.incoming.v1`, `call.answered.v1`, `call.rejected.v1`, and `call.ended.v1`.
+- **Authorization**: Added `bookingCallInitiateSelf` and `bookingCallManageSelf` permissions mapped to customer and verified_provider roles.
+- **Mobile Architecture & UI**:
+  - `CallSession` domain model with duration formatting and status parsing.
+  - `HttpCallRepository` implementing `CallRepository` interface.
+  - `CallController` managing state transitions, duration ticker, mic mute, speakerphone, and real-time socket events.
+  - `BookingCallScreen`: Deep navy `#081020` UI with acoustic radar pulse animation (respects `disableAnimations`), verified technician avatar, status ticker, privacy shield badge (*"Masked In-App Audio • Numbers Protected"*), and in-call controls (Mute, Speaker, Red End Call button).
+  - Integrated into `BookingTrackingScreen` (wired Call Pro button) and `BookingChatScreen` (wired phone icon in header).
+  - Wired `_callRepository` in `mobile/lib/app/app.dart`.
+- **Validation**:
+  - Backend: `npm test` across all 80 test suites (510 tests passed).
+  - Mobile: `flutter analyze` clean, `flutter test` 178/178 tests passed (including `test/booking_call_screen_test.dart`).

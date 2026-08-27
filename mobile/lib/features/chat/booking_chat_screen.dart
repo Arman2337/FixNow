@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
+import 'package:fixnow_mobile/features/call/booking_call_screen.dart';
+import 'package:fixnow_mobile/features/call/call_controller.dart';
+import 'package:fixnow_mobile/features/call/call_repository.dart';
 import 'package:fixnow_mobile/features/chat/chat_controller.dart';
 import 'package:fixnow_mobile/features/chat/chat_message.dart';
 
@@ -10,11 +13,13 @@ class BookingChatScreen extends StatefulWidget {
     super.key,
     required this.controller,
     this.providerName = 'Verified Professional',
+    this.callRepository,
     this.onCallPressed,
   });
 
   final ChatController controller;
   final String providerName;
+  final CallRepository? callRepository;
   final VoidCallback? onCallPressed;
 
   @override
@@ -167,14 +172,31 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
           ],
         ),
         actions: [
-          if (widget.onCallPressed != null)
+          if (widget.onCallPressed != null || widget.callRepository != null)
             IconButton(
               icon: const Icon(
                 Icons.phone_outlined,
                 color: AppColors.accentGold,
               ),
               tooltip: 'Call Pro',
-              onPressed: widget.onCallPressed,
+              onPressed: () {
+                if (widget.onCallPressed != null) {
+                  widget.onCallPressed!();
+                } else if (widget.callRepository != null) {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => BookingCallScreen(
+                        controller: CallController(
+                          bookingId: widget.controller.bookingId,
+                          repository: widget.callRepository!,
+                          realtimeClient: widget.controller.realtimeClient,
+                        ),
+                        providerName: widget.providerName,
+                      ),
+                    ),
+                  );
+                }
+              },
             ),
           const SizedBox(width: 4),
         ],

@@ -145,4 +145,32 @@ export class BookingProjectionService {
     }
     return false;
   }
+
+  publishCallSignal(
+    bookingId: string,
+    signalType: string,
+    data: Readonly<Record<string, unknown>>,
+  ): void {
+    const occurredAt = new Date().toISOString();
+    for (const [client, state] of this.registry.entries()) {
+      if (client.readyState !== WebSocket.OPEN) continue;
+      for (const subscription of state.subscriptions.values()) {
+        if (
+          subscription.channel === 'booking' &&
+          subscription.resourceId === bookingId
+        ) {
+          client.send(
+            JSON.stringify({
+              type: signalType,
+              eventId: randomUUID(),
+              subscriptionId: subscription.id,
+              resourceId: bookingId,
+              occurredAt,
+              data,
+            }),
+          );
+        }
+      }
+    }
+  }
 }

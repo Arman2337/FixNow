@@ -54,6 +54,7 @@ import 'package:fixnow_mobile/features/realtime/realtime_client.dart';
 import 'package:fixnow_mobile/notifications/push_api.dart';
 import 'package:fixnow_mobile/notifications/push_enrollment.dart';
 import 'package:fixnow_mobile/features/chat/chat_repository.dart';
+import 'package:fixnow_mobile/features/call/call_repository.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking_controller.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking_screen.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking_source.dart';
@@ -89,6 +90,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
   late final ComplaintsController _complaints;
   late final PushEnrollmentController _push;
   late final ChatRepository _chatRepository;
+  late final CallRepository _callRepository;
   final Map<String, BookingTrackingController> _trackingControllers = {};
   /// FN-062: app-wide messenger so foreground pushes can surface as banners
   /// from any screen.
@@ -149,6 +151,10 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
       gateway: _pushGateway,
     );
     _chatRepository = HttpChatRepository(
+      api: api,
+      accessToken: _auth.validAccessToken,
+    );
+    _callRepository = HttpCallRepository(
       api: api,
       accessToken: _auth.validAccessToken,
     );
@@ -488,6 +494,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
         return BookingTrackingScreen(
           controller: tracking,
           chatRepository: _chatRepository,
+          callRepository: _callRepository,
         );
       },
     );

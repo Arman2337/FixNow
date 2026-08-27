@@ -64,6 +64,8 @@ export const PERMISSIONS = {
   adminComplaintsUpdate: 'admin.complaints.update',
   bookingChatSendSelf: 'bookings.chat.send.self',
   bookingChatReadSelf: 'bookings.chat.read.self',
+  bookingCallInitiateSelf: 'bookings.call.initiate.self',
+  bookingCallManageSelf: 'bookings.call.manage.self',
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -288,6 +290,16 @@ export const PERMISSION_POLICIES: Readonly<
     relationship: 'self',
   },
   [PERMISSIONS.bookingChatReadSelf]: {
+    roles: ['customer', 'verified_provider'],
+    audience: 'mobile',
+    relationship: 'self',
+  },
+  [PERMISSIONS.bookingCallInitiateSelf]: {
+    roles: ['customer', 'verified_provider'],
+    audience: 'mobile',
+    relationship: 'self',
+  },
+  [PERMISSIONS.bookingCallManageSelf]: {
     roles: ['customer', 'verified_provider'],
     audience: 'mobile',
     relationship: 'self',

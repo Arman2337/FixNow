@@ -5,6 +5,9 @@ import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
 import 'package:fixnow_mobile/design_system/fix_components.dart';
 import 'package:fixnow_mobile/design_system/fix_status_chip.dart';
+import 'package:fixnow_mobile/features/call/booking_call_screen.dart';
+import 'package:fixnow_mobile/features/call/call_controller.dart';
+import 'package:fixnow_mobile/features/call/call_repository.dart';
 import 'package:fixnow_mobile/features/chat/booking_chat_screen.dart';
 import 'package:fixnow_mobile/features/chat/chat_controller.dart';
 import 'package:fixnow_mobile/features/chat/chat_repository.dart';
@@ -18,12 +21,16 @@ class BookingTrackingScreen extends StatefulWidget {
   const BookingTrackingScreen({
     required this.controller,
     this.chatRepository,
+    this.callRepository,
     this.onOpenChat,
+    this.onCallPressed,
     super.key,
   });
   final BookingTrackingController controller;
   final ChatRepository? chatRepository;
+  final CallRepository? callRepository;
   final void Function(BuildContext context, String bookingId)? onOpenChat;
+  final void Function(BuildContext context, String bookingId)? onCallPressed;
   @override
   State<BookingTrackingScreen> createState() => _BookingTrackingScreenState();
 }
@@ -120,13 +127,7 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
               'Call Pro',
               style: TextStyle(color: AppColors.textPrimary, fontSize: 13),
             ),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Connecting to your assigned technician...'),
-                ),
-              );
-            },
+            onPressed: () => _startCall(context),
           ),
         ),
         const SizedBox(width: AppSpacing.sm),
@@ -173,6 +174,8 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
               repository: widget.chatRepository!,
               realtimeClient: widget.controller.realtime,
             ),
+            callRepository: widget.callRepository,
+            onCallPressed: () => _startCall(context),
           ),
         ),
       );
@@ -182,6 +185,37 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('In-app messaging for active bookings is active.'),
+      ),
+    );
+  }
+
+  void _startCall(BuildContext context) {
+    final bookingId =
+        widget.controller.tracking?.bookingId ?? widget.controller.bookingId;
+
+    if (widget.onCallPressed != null) {
+      widget.onCallPressed!(context, bookingId);
+      return;
+    }
+
+    if (widget.callRepository != null) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => BookingCallScreen(
+            controller: CallController(
+              bookingId: bookingId,
+              repository: widget.callRepository!,
+              realtimeClient: widget.controller.realtime,
+            ),
+          ),
+        ),
+      );
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('In-app audio calling connecting...'),
       ),
     );
   }

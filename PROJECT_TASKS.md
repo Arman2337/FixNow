@@ -55,15 +55,15 @@ Only these statuses are valid. A task cannot be completed while required validat
 # Project Progress
 
 Total Tasks: 131
-Completed: 114
+Completed: 115
 In Progress: 0
 Blocked: 0
-Pending: 1
+Pending: 0
 Deferred: 14
 Cancelled: 2
-Current Task: None (FN-130 Universal Live Search, Filter & Price Sort Bar completed)
-Current Phase: Phase 16 — Production Operations & Commercial Polish
-Next Recommended Task: FN-131 — Downloadable PDF Tax Invoice & Share Sheet
+Current Task: None (All Phase 16 tasks FN-129, FN-130, FN-131 completed)
+Current Phase: Phase 16 — Production Operations & Commercial Polish (Completed)
+Next Recommended Task: None (Phase 16 fully delivered)
 
 2026-08-27 (session 2) FN-113 advisory price/signal surfacing verified complete and closed. Evidence in the working tree: the mobile advisory price estimate (`mobile/lib/features/ai/price_estimate_repository.dart` — repository + controller + honest states) is surfaced on the service-request screen (`service_request_screen.dart` `_buildPriceContent`: ESTIMATE range + explanation + "Advisory only — the final charge is confirmed..." disclaimer, honest static fallback, PRICE_ON_REQUEST abstention) and wired at both `app.dart` construction sites (category-select and Book-again) via `PriceEstimateRepository(_api, accessToken: _auth.validAccessToken)`; the admin trust queue (`admin/src/app/trust/page.tsx`) already renders the FN-060 rule codes; the provider accept-time signal is surfaced on provider home (`provider_home_screen.dart` via `GET trust/my-accept-time`, FN-111). Payments set to local-only per ADR-0016: `PAYMENT_PROVIDER` defaults to the deterministic `fake` gateway (now made explicit in `backend/.env`), which is prohibited in production by `env.validation.ts` startup validation, needs no live gateway credentials, and offers no payouts. The mobile client has no interactive checkout surface yet (only the read-only invoice screen; `JobCompletedDialog` is unwired), so a dev-gated local payment flow is recorded as FN-118 rather than scaffolded. FN-058/FN-059 remain Deferred (live vision/voice still gated on malware scan + signed DPA + vendor/model approval, ADR-0014; AI stays advisory-only, disabled by default). Validated 2026-08-27: flutter analyze 0 errors, flutter test 164/164; backend jest payments 35/35.
 
@@ -3171,7 +3171,7 @@ Equip customer discovery with a prominent top search bar providing live debounce
 ---
 
 ## FN-131 — Downloadable PDF Tax Invoice & Share Sheet
-Status: ⬜ Pending
+Status: ✅ Completed
 Priority: P2 — Medium
 Area: Mobile / Payments
 Depends On: FN-053, FN-115
@@ -3179,3 +3179,11 @@ Branch: feat/in-app-communication
 
 ### Objective
 Enable customers to generate and download official branded GST Tax Invoice PDFs for completed bookings with 1-tap native mobile sharing to WhatsApp, Email, or device storage.
+
+### Changes Delivered
+- Built `FixPdfInvoiceBuilder` in `mobile/lib/features/payments/fix_pdf_invoice_builder.dart` generating standard, vector-rendered `%PDF-1.4` binary streams with FixNow branding, GSTIN (`24AAACF1234F1Z5`), SAC Code (`9987`), customer metadata, itemized tax table, and statutory IT Act 2000 declaration.
+- Enriched `Invoice` model in `mobile/lib/features/payments/invoice_repository.dart` with `amountMinor`, `currency`, and statutory 18% inclusive GST calculations (`baseAmountMinor`, `cgstMinor`, `sgstMinor`, `totalGstMinor`).
+- Built `FixShareInvoiceSheet` in `mobile/lib/features/payments/fix_share_invoice_sheet.dart` offering 1-tap sharing to WhatsApp, Email, clipboard summary copy, and device storage saving.
+- Integrated GST Tax Breakdown Card, "Download PDF Invoice", and "Share Invoice" actions into `InvoiceScreen` (`mobile/lib/features/payments/invoice_screen.dart`).
+- Added unit and widget tests in `mobile/test/pdf_tax_invoice_test.dart` (5/5 passed) and validated `mobile/test/invoice_screen_test.dart` (6/6 passed).
+- Validated: 100% green tests (224/224 mobile tests pass, flutter analyze 0 issues).

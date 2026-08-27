@@ -6,6 +6,8 @@ import 'package:fixnow_mobile/design_system/fix_card.dart';
 import 'package:fixnow_mobile/design_system/fix_page_frame.dart';
 import 'package:fixnow_mobile/design_system/fix_payment_checkout_sheet.dart';
 import 'package:fixnow_mobile/design_system/fix_state_views.dart';
+import 'package:fixnow_mobile/features/payments/fix_pdf_invoice_builder.dart';
+import 'package:fixnow_mobile/features/payments/fix_share_invoice_sheet.dart';
 import 'package:fixnow_mobile/features/payments/invoice_repository.dart';
 import 'package:fixnow_mobile/features/payments/local_payment_config.dart';
 import 'package:fixnow_mobile/features/payments/local_payment_repository.dart';
@@ -245,8 +247,104 @@ class _InvoiceView extends StatelessWidget {
           ],
         ),
       ),
+      const SizedBox(height: AppSpacing.md),
+      FixCard(
+        semanticLabel: 'GST Tax Breakdown',
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Expanded(
+                  child: Text(
+                    'GST Tax Breakdown',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      color: AppColors.textOnSurface,
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppColors.primarySoft,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: const Text(
+                    'SAC 9987 • 18% GST',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            _Row(label: 'Taxable Service Base', value: invoice.baseAmountLabel),
+            const Divider(height: AppSpacing.md),
+            _Row(label: 'Central GST (CGST @ 9%)', value: invoice.cgstLabel),
+            const Divider(height: AppSpacing.md),
+            _Row(label: 'State GST (SGST @ 9%)', value: invoice.sgstLabel),
+            const Divider(height: AppSpacing.md),
+            _Row(label: 'Total GST (18%)', value: invoice.totalGstLabel),
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              'GSTIN: ${FixPdfInvoiceBuilder.companyGstin} • Registered under CGST Act 2017',
+              style: const TextStyle(
+                fontSize: 11,
+                color: AppColors.textOnSurfaceSecondary,
+              ),
+            ),
+          ],
+        ),
+      ),
+      const SizedBox(height: AppSpacing.lg),
+      FixButton(
+        label: 'Download PDF Invoice',
+        icon: Icons.download_rounded,
+        onPressed: () => _downloadPdf(context),
+      ),
+      const SizedBox(height: AppSpacing.sm),
+      FixButton(
+        label: 'Share Invoice',
+        icon: Icons.share_rounded,
+        variant: FixButtonVariant.secondary,
+        onPressed: () => FixShareInvoiceSheet.show(context, invoice: invoice),
+      ),
     ],
   );
+
+  void _downloadPdf(BuildContext context) {
+    final bytes = FixPdfInvoiceBuilder.build(invoice);
+    final fileName = FixPdfInvoiceBuilder.getFileName(invoice);
+    final sizeKb = (bytes.length / 1024).toStringAsFixed(1);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: AppColors.surfaceElevated,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+          side: BorderSide(color: AppColors.borderDefault.withValues(alpha: 0.2)),
+        ),
+        content: Row(
+          children: [
+            const Icon(Icons.file_download_done_rounded, color: AppColors.success, size: 18),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Downloaded $fileName ($sizeKb KB)',
+                style: const TextStyle(color: AppColors.cream, fontSize: 13),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   static String _date(DateTime value) {
     final local = value.toLocal();
@@ -264,15 +362,21 @@ class _Row extends StatelessWidget {
   Widget build(BuildContext context) => Row(
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
     children: [
-      Text(label, style: Theme.of(context).textTheme.bodyLarge),
-      Flexible(
+      Expanded(
         child: Text(
-          value,
-          textAlign: TextAlign.right,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            color: AppColors.textOnSurface,
-            fontWeight: FontWeight.w700,
+          label,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: AppColors.textOnSurfaceSecondary,
           ),
+        ),
+      ),
+      const SizedBox(width: AppSpacing.sm),
+      Text(
+        value,
+        textAlign: TextAlign.right,
+        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+          color: AppColors.textOnSurface,
+          fontWeight: FontWeight.w700,
         ),
       ),
     ],

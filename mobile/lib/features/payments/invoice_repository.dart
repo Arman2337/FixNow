@@ -11,21 +11,60 @@ class Invoice {
     required this.issuedAt,
     required this.amountLabel,
     required this.statusLabel,
+    this.amountMinor = 0,
+    this.currency = 'INR',
+    this.bookingId,
+    this.serviceName,
   });
 
   final String invoiceNumber;
   final DateTime issuedAt;
   final String amountLabel;
   final String statusLabel;
+  final int amountMinor;
+  final String currency;
+  final String? bookingId;
+  final String? serviceName;
 
-  static Invoice fromJson(Map<String, Object?> json) {
-    final currency = json['currency']! as String;
+  /// GST statutory calculation properties (18% inclusive GST standard for service marketplaces)
+  /// Base Service Charge (approx 84.75% of total):
+  int get baseAmountMinor => (amountMinor / 1.18).round();
+
+  /// CGST @ 9%:
+  int get cgstMinor => ((amountMinor - baseAmountMinor) / 2).round();
+
+  /// SGST @ 9%:
+  int get sgstMinor => amountMinor - baseAmountMinor - cgstMinor;
+
+  /// Total GST (18%):
+  int get totalGstMinor => amountMinor - baseAmountMinor;
+
+  String get baseAmountLabel => _formatRupees(baseAmountMinor, currency);
+  String get cgstLabel => _formatRupees(cgstMinor, currency);
+  String get sgstLabel => _formatRupees(sgstMinor, currency);
+  String get totalGstLabel => _formatRupees(totalGstMinor, currency);
+
+  static String _formatRupees(int minor, String currency) {
     final symbol = currency == 'INR' ? '₹' : '$currency ';
+    final rupees = minor.toDouble() / 100;
+    return rupees % 1 == 0
+        ? '$symbol${rupees.toStringAsFixed(0)}'
+        : '$symbol${rupees.toStringAsFixed(2)}';
+  }
+
+  static Invoice fromJson(Map<String, Object?> json, {String? bookingId}) {
+    final currency = (json['currency'] as String?) ?? 'INR';
+    final symbol = currency == 'INR' ? '₹' : '$currency ';
+    final amountMinor = (json['amountMinor'] as num?)?.toInt() ?? 0;
     return Invoice(
       invoiceNumber: json['invoiceNumber']! as String,
       issuedAt: DateTime.parse(json['issuedAt']! as String),
-      amountLabel: _label(json['amountMinor'], symbol),
+      amountLabel: _label(amountMinor, symbol),
       statusLabel: json['status']! as String,
+      amountMinor: amountMinor,
+      currency: currency,
+      bookingId: bookingId ?? (json['bookingId'] as String?),
+      serviceName: json['serviceName'] as String?,
     );
   }
 
@@ -112,7 +151,10 @@ class InvoiceRepository {
           'Unexpected invoice response.',
         );
       }
-      return Invoice.fromJson(invoiceResponse.body as Map<String, Object?>);
+      return Invoice.fromJson(
+        invoiceResponse.body as Map<String, Object?>,
+        bookingId: bookingId,
+      );
     } on ApiException catch (error) {
       // 409 (invoices exist only for paid payments) is a defensive guard given
       // we already checked PAID; a 404 order-race is likewise "not yet".

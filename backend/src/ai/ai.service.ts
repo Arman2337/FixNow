@@ -18,6 +18,7 @@ import {
 import {
   assertAllowedAudio,
   assertAllowedImage,
+  stripImageMetadata,
 } from './policy/ai-media-policy';
 import {
   StructuredOutputSchema,
@@ -235,12 +236,17 @@ export class AiService {
     if (!operation.image && !operation.issueText?.trim())
       return this.fallback('INPUT_REJECTED', requestId, label);
 
+    let image = operation.image;
     try {
-      if (operation.image)
+      if (image) {
         assertAllowedImage(
-          operation.image,
+          image,
           this.numberConfig('AI_MAX_IMAGE_BYTES', 8 * 1024 * 1024),
         );
+        // Strip EXIF/XMP/IPTC before the image crosses the provider boundary.
+        // Runs only after validation and behind AI_VISION_ENABLED.
+        image = stripImageMetadata(image);
+      }
       this.assertWithinRateLimit(operation.userId);
     } catch (error) {
       return this.fallback(this.errorCode(error), requestId, label);
@@ -255,7 +261,7 @@ export class AiService {
         const response = await analyzeMedia({
           operation: 'classify_multimodal',
           requestId,
-          ...(operation.image ? { image: operation.image } : {}),
+          ...(image ? { image } : {}),
           ...(operation.issueText ? { issueText: operation.issueText } : {}),
           catalog: operation.catalog ?? [],
           prompt: operation.prompt,

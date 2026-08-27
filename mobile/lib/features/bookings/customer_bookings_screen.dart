@@ -4,6 +4,8 @@ import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
 import 'package:fixnow_mobile/design_system/fix_page_frame.dart';
 import 'package:fixnow_mobile/design_system/fix_status_chip.dart';
+import 'package:fixnow_mobile/design_system/signature_motion.dart';
+import 'package:fixnow_mobile/design_system/app_motion.dart';
 import 'package:fixnow_mobile/features/bookings/booking.dart';
 import 'package:fixnow_mobile/features/bookings/booking_controller.dart';
 import 'package:fixnow_mobile/features/bookings/recurring_schedule.dart';
@@ -242,7 +244,25 @@ class _BookingCard extends StatelessWidget {
       label: '${booking.status} booking. Open details',
       child: GestureDetector(
         onTap: onTap,
-        child: FixCard(
+        child: Stack(
+          children: [
+            // FN-064 signature motion: lifecycle read by color temperature
+            // (cobalt -> green -> amber -> gold), 340ms ease-in-out.
+            Positioned(
+              left: 0,
+              top: 8,
+              bottom: 8,
+              child: AnimatedContainer(
+                duration: AppMotion.container,
+                curve: Curves.easeInOut,
+                width: 4,
+                decoration: BoxDecoration(
+                  color: statusTemperatureColor(booking.status),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            FixCard(
           tone: requested ? FixCardTone.elevated : FixCardTone.standard,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -351,6 +371,8 @@ class _BookingCard extends StatelessWidget {
               ],
             ],
           ),
+        ),
+          ],
         ),
       ),
     );

@@ -14,7 +14,9 @@ void main() {
     await tester.pumpWidget(_app());
     await tester.pumpAndSettle();
 
-    expect(find.text('Trusted help.\nWhen you need it.'), findsOneWidget);
+    // Headline renders as two separately-revealed lines (welcome entrance).
+    expect(find.text('Trusted help.'), findsOneWidget);
+    expect(find.text('When you need it.'), findsOneWidget);
     final getStarted = find.text('Get started');
     await tester.ensureVisible(getStarted);
     await tester.tap(getStarted);

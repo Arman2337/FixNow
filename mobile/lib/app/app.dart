@@ -31,6 +31,8 @@ import 'package:fixnow_mobile/features/services/service_category.dart';
 import 'package:fixnow_mobile/features/services/service_discovery_controller.dart';
 import 'package:fixnow_mobile/features/services/service_discovery_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_controller.dart';
+import 'package:fixnow_mobile/features/provider/provider_earnings_repository.dart';
+import 'package:fixnow_mobile/features/provider/provider_earnings_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_home_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_jobs_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_onboarding_screen.dart';
@@ -44,6 +46,9 @@ import 'package:fixnow_mobile/features/ai/ai_recommendation_repository.dart';
 import 'package:fixnow_mobile/features/ai/price_estimate_repository.dart';
 import 'package:fixnow_mobile/features/ai/problem_analysis_repository.dart';
 import 'package:fixnow_mobile/features/emergency/emergency_repository.dart';
+import 'package:fixnow_mobile/features/payments/invoice_repository.dart';
+import 'package:fixnow_mobile/features/payments/invoice_screen.dart';
+import 'package:fixnow_mobile/features/payments/local_payment_repository.dart';
 
 import 'package:fixnow_mobile/features/realtime/realtime_client.dart';
 import 'package:fixnow_mobile/notifications/push_api.dart';
@@ -249,6 +254,16 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
                     return null;
                   }
                 },
+                onViewEarnings: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => ProviderEarningsScreen(
+                      repository: ProviderEarningsRepository(
+                        _api,
+                        accessToken: _auth.validAccessToken,
+                      ),
+                    ),
+                  ),
+                ),
               ),
               providerJobs: ProviderJobsScreen(
                 controller: _provider,
@@ -355,6 +370,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
     CustomerBooking booking,
   ) async {
     final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
     List<ServiceCategory> categories;
     try {
       categories = await _categoryRepository.active();
@@ -383,7 +399,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
       );
       return;
     }
-    await Navigator.of(context).push(
+    await navigator.push(
       MaterialPageRoute(
         builder: (_) => ServiceRequestScreen(
           category: category,
@@ -435,6 +451,21 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
             onBookAgain: currentBooking.status == 'COMPLETED'
                 ? () => _openRebooking(context, currentBooking)
                 : null,
+            onViewInvoice: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => InvoiceScreen(
+                  repository: InvoiceRepository(
+                    _api,
+                    accessToken: _auth.validAccessToken,
+                  ),
+                  localPaymentRepository: LocalPaymentRepository(
+                    _api,
+                    accessToken: _auth.validAccessToken,
+                  ),
+                  bookingId: currentBooking.id,
+                ),
+              ),
+            ),
           );
         }
         final tracking = _trackingControllers.putIfAbsent(

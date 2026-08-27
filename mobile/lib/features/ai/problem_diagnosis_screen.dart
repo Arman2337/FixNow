@@ -3,6 +3,7 @@ import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
+import 'package:fixnow_mobile/design_system/fix_motion.dart';
 import 'package:fixnow_mobile/design_system/fix_state_views.dart';
 import 'package:fixnow_mobile/features/ai/problem_analysis_repository.dart';
 import 'package:fixnow_mobile/features/ai/problem_diagnosis_controller.dart';
@@ -194,7 +195,10 @@ class _ProblemDiagnosisScreenState extends State<ProblemDiagnosisScreen> {
           children: [
             const Row(
               children: [
-                Icon(Icons.fiber_manual_record_rounded, color: AppColors.danger),
+                Icon(
+                  Icons.fiber_manual_record_rounded,
+                  color: AppColors.danger,
+                ),
                 SizedBox(width: AppSpacing.sm),
                 Text('Recording… describe the problem.'),
               ],
@@ -231,7 +235,9 @@ class _ProblemDiagnosisScreenState extends State<ProblemDiagnosisScreen> {
             const SizedBox(width: AppSpacing.sm),
             const Expanded(child: Text('Voice description recorded')),
             TextButton(
-              onPressed: _controller.isAnalyzing ? null : _controller.clearAudio,
+              onPressed: _controller.isAnalyzing
+                  ? null
+                  : _controller.clearAudio,
               child: const Text('Remove'),
             ),
           ],
@@ -266,10 +272,7 @@ class _ProblemDiagnosisScreenState extends State<ProblemDiagnosisScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Spoken language',
-          style: Theme.of(context).textTheme.labelLarge,
-        ),
+        Text('Spoken language', style: Theme.of(context).textTheme.labelLarge),
         const SizedBox(height: AppSpacing.sm),
         Wrap(
           spacing: AppSpacing.sm,
@@ -306,7 +309,9 @@ class _ProblemDiagnosisScreenState extends State<ProblemDiagnosisScreen> {
       case DiagnosisStatus.result:
         final analysis = _controller.result;
         if (analysis == null || !analysis.isAnalysis) return _fallback();
-        return _resultCard(analysis);
+        // The reveal is the payoff: the matched suggestion fades and rises in
+        // rather than snapping over the skeleton it replaces.
+        return FixFadeSlideIn(offsetY: 0.06, child: _resultCard(analysis));
       case DiagnosisStatus.idle:
       case DiagnosisStatus.capturing:
       case DiagnosisStatus.recording:
@@ -352,10 +357,7 @@ class _ProblemDiagnosisScreenState extends State<ProblemDiagnosisScreen> {
           if (analysis.transcription != null &&
               analysis.transcription!.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.md),
-            Text(
-              'You said',
-              style: Theme.of(context).textTheme.labelLarge,
-            ),
+            Text('You said', style: Theme.of(context).textTheme.labelLarge),
             const SizedBox(height: AppSpacing.xs),
             Text(
               analysis.transcription!,
@@ -428,10 +430,7 @@ class _ProblemDiagnosisScreenState extends State<ProblemDiagnosisScreen> {
         expand: true,
         onPressed: () => Navigator.pop(context),
       ),
-      TextButton(
-        onPressed: _controller.reset,
-        child: const Text('Start over'),
-      ),
+      TextButton(onPressed: _controller.reset, child: const Text('Start over')),
     ];
   }
 
@@ -446,18 +445,42 @@ class _ProblemDiagnosisScreenState extends State<ProblemDiagnosisScreen> {
 
   Widget _urgencyChip(ProblemUrgency urgency) {
     final (label, color, background) = switch (urgency) {
-      ProblemUrgency.high => ('High urgency', AppColors.danger, AppColors.dangerSoft),
-      ProblemUrgency.medium => ('Medium urgency', AppColors.warning, AppColors.warningSoft),
-      ProblemUrgency.low => ('Low urgency', AppColors.success, AppColors.successSoft),
+      ProblemUrgency.high => (
+        'High urgency',
+        AppColors.danger,
+        AppColors.dangerSoft,
+      ),
+      ProblemUrgency.medium => (
+        'Medium urgency',
+        AppColors.warning,
+        AppColors.warningSoft,
+      ),
+      ProblemUrgency.low => (
+        'Low urgency',
+        AppColors.success,
+        AppColors.successSoft,
+      ),
     };
     return _Chip(label: label, foreground: color, background: background);
   }
 
   Widget _bandChip(ProblemConfidenceBand band) {
     final (label, color, background) = switch (band) {
-      ProblemConfidenceBand.high => ('High confidence', AppColors.success, AppColors.successSoft),
-      ProblemConfidenceBand.medium => ('Medium confidence', AppColors.warning, AppColors.warningSoft),
-      ProblemConfidenceBand.low => ('Low confidence', AppColors.textOnSurfaceSecondary, AppColors.surfaceSecondary),
+      ProblemConfidenceBand.high => (
+        'High confidence',
+        AppColors.success,
+        AppColors.successSoft,
+      ),
+      ProblemConfidenceBand.medium => (
+        'Medium confidence',
+        AppColors.warning,
+        AppColors.warningSoft,
+      ),
+      ProblemConfidenceBand.low => (
+        'Low confidence',
+        AppColors.textOnSurfaceSecondary,
+        AppColors.surfaceSecondary,
+      ),
     };
     return _Chip(label: label, foreground: color, background: background);
   }
@@ -510,7 +533,11 @@ class _Chip extends StatelessWidget {
     ),
     child: Text(
       label,
-      style: TextStyle(color: foreground, fontWeight: FontWeight.w600, fontSize: 12),
+      style: TextStyle(
+        color: foreground,
+        fontWeight: FontWeight.w600,
+        fontSize: 12,
+      ),
     ),
   );
 }

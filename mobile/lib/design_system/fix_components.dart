@@ -1,3 +1,4 @@
+import 'package:fixnow_mobile/design_system/signature_motion.dart';
 import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_motion.dart';
 import 'package:fixnow_mobile/design_system/app_radius.dart';
@@ -748,8 +749,6 @@ class FixOtpDisplay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final digits = otp.split('');
-
     return FixCard(
       tone: FixCardTone.elevated,
       borderColor: AppColors.borderGold,
@@ -776,32 +775,7 @@ class FixOtpDisplay extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.md),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              for (final digit in digits) ...[
-                Container(
-                  width: 44,
-                  height: 52,
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceSecondary,
-                    borderRadius: BorderRadius.circular(AppRadius.medium),
-                    border: Border.all(color: AppColors.accentGold, width: 1.5),
-                  ),
-                  child: Text(
-                    digit,
-                    style: const TextStyle(
-                      color: AppColors.textOnLightPrimary,
-                      fontSize: 24,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
+          FlipOtpDigits(otp: otp),
           const SizedBox(height: AppSpacing.md),
           const Text(
             'Keep this code private. Share it with the professional only after they arrive.\nWork starts only after they verify it.',

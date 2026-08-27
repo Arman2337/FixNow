@@ -3,6 +3,7 @@ import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
 import 'package:fixnow_mobile/design_system/fix_page_frame.dart';
+import 'package:fixnow_mobile/design_system/signature_motion.dart';
 import 'package:fixnow_mobile/features/emergency/emergency_controller.dart';
 import 'package:fixnow_mobile/features/emergency/emergency_repository.dart';
 import 'package:fixnow_mobile/features/location/booking_location.dart';
@@ -199,22 +200,27 @@ class _EmergencyConfirmScreenState extends State<EmergencyConfirmScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        FixButton(
-          label: busy ? 'Sending…' : 'Send emergency alert',
-          onPressed: ready
-              ? () async {
-                  FocusScope.of(context).unfocus();
-                  await _controller.confirmAndDispatch(
-                    serviceCategoryId: _selected.id,
-                    description: _description.text,
-                    locationProvider:
-                        widget.locationProvider ?? BookingLocationResolver(),
-                  );
-                }
-              : null,
-          expand: true,
-          height: 56,
-        ),
+        if (!ready && !busy)
+          FixButton(
+            label: 'Send emergency alert',
+            onPressed: null,
+            expand: true,
+            height: 56,
+          )
+        else
+          HoldToConfirmButton(
+            key: const ValueKey('emergency-hold'),
+            label: busy ? 'Sending…' : 'Hold to send emergency alert',
+            onConfirmed: () async {
+              FocusScope.of(context).unfocus();
+              await _controller.confirmAndDispatch(
+                serviceCategoryId: _selected.id,
+                description: _description.text,
+                locationProvider:
+                    widget.locationProvider ?? BookingLocationResolver(),
+              );
+            },
+          ),
         const SizedBox(height: AppSpacing.xs),
         Text(
           'Alerts only verified professionals near you. '

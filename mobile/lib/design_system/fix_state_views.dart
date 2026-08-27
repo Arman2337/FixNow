@@ -22,13 +22,16 @@ class FixEmptyState extends StatelessWidget {
   final VoidCallback? onAction;
 
   @override
-  Widget build(BuildContext context) => _FixStateView(
-    icon: icon,
-    iconColor: AppColors.primary,
-    title: title,
-    message: message,
-    actionLabel: actionLabel,
-    onAction: onAction,
+  Widget build(BuildContext context) => FixFadeSlideIn(
+    offsetY: 0.10,
+    child: _FixStateView(
+      icon: icon,
+      iconColor: AppColors.primary,
+      title: title,
+      message: message,
+      actionLabel: actionLabel,
+      onAction: onAction,
+    ),
   );
 }
 

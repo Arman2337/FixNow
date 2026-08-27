@@ -1,6 +1,6 @@
 import 'package:fixnow_mobile/api/api_client.dart';
 import 'package:fixnow_mobile/features/emergency/emergency_confirm_screen.dart';
-import 'package:fixnow_mobile/design_system/fix_button.dart';
+import 'package:fixnow_mobile/design_system/signature_motion.dart';
 import 'package:fixnow_mobile/features/emergency/emergency_repository.dart';
 import 'package:fixnow_mobile/features/location/booking_location.dart';
 import 'package:fixnow_mobile/features/services/service_category.dart';
@@ -57,6 +57,16 @@ Widget host(Widget child) => MaterialApp(
       ),
     );
 
+/// Confirms via the button's tap path. pumpIdle() declares reduce-motion
+/// suite-wide (FakeAccessibilityFeatures), and HoldToConfirmButton swaps its
+/// long-press hold for a plain tap in that mode — so a tap here is what a
+/// reduced-motion user actually does. Hold-gesture mechanics are covered in
+/// signature_motion_test.dart.
+Future<void> confirmAlert(WidgetTester tester) async {
+  await tester.tap(find.byType(HoldToConfirmButton));
+  await tester.pump();
+}
+
 void main() {
   final created = {
     'bookingId': 'e1000000-0000-4000-8000-000000000001',
@@ -100,7 +110,7 @@ void main() {
     await tester.enterText(find.byType(TextField), 'Water everywhere');
     await tester.pump();
     await tester.pump(); // let the onChanged rebuild enable the button
-    await tester.tap(find.text('Send emergency alert'));
+    await confirmAlert(tester);
     await tester.pumpIdle();
     await tester.pumpIdle();
 
@@ -131,7 +141,7 @@ void main() {
     await tester.pumpIdle();
     await tester.enterText(find.byType(TextField), 'Gas smell');
     await tester.pump();
-    await tester.tap(find.text('Send emergency alert'));
+    await confirmAlert(tester);
     await tester.pumpIdle();
     await tester.pumpIdle();
 
@@ -152,11 +162,12 @@ void main() {
     await tester.pumpIdle();
     await tester.enterText(find.byType(TextField), 'Sparks from socket');
     await tester.pump();
-    await tester.tap(find.text('Send emergency alert'));
+    await confirmAlert(tester);
     await tester.pumpIdle();
     await tester.pumpIdle();
 
-    expect(find.text('Send emergency alert'), findsOneWidget); // form still here
+    expect(
+        find.text('Hold to send emergency alert'), findsOneWidget); // form still here
     expect(find.textContaining('could not be sent'), findsOneWidget);
     expect(find.textContaining('call your local emergency services'),
         findsOneWidget);

@@ -18,6 +18,7 @@ class BookingDetailScreen extends StatelessWidget {
     this.onReportIssue,
     this.reviewRepository,
     this.onBookAgain,
+    this.onViewInvoice,
     super.key,
   });
   final CustomerBooking booking;
@@ -27,6 +28,10 @@ class BookingDetailScreen extends StatelessWidget {
 
   /// Opens a prefilled request for a completed booking; null hides the action.
   final VoidCallback? onBookAgain;
+
+  /// FN-053: opens this booking's invoice; null hides the action. The invoice
+  /// screen itself reports honestly when no paid invoice exists yet.
+  final VoidCallback? onViewInvoice;
 
   @override
   Widget build(BuildContext context) {
@@ -150,6 +155,15 @@ class BookingDetailScreen extends StatelessWidget {
                   icon: Icons.report_problem_outlined,
                   variant: FixButtonVariant.secondary,
                   onPressed: onReportIssue,
+                ),
+              ],
+              if (onViewInvoice != null) ...[
+                const SizedBox(height: AppSpacing.md),
+                FixButton(
+                  label: 'View invoice',
+                  icon: Icons.receipt_long_outlined,
+                  variant: FixButtonVariant.secondary,
+                  onPressed: onViewInvoice,
                 ),
               ],
               if (booking.status == 'COMPLETED' && onBookAgain != null) ...[

@@ -28,12 +28,20 @@ String providerServiceName(
 }
 
 class ProviderHomeScreen extends StatelessWidget {
-  const ProviderHomeScreen({required this.controller, this.loadAcceptTime, super.key});
+  const ProviderHomeScreen({
+    required this.controller,
+    this.loadAcceptTime,
+    this.onViewEarnings,
+    super.key,
+  });
   final ProviderController controller;
 
   /// FN-111: loads this provider's rolling accept-time signal; null hides
   /// the card entirely (including failures and insufficient data).
   final Future<ProviderAcceptTime?> Function()? loadAcceptTime;
+
+  /// FN-053: opens the earnings ledger; null hides the entry point.
+  final VoidCallback? onViewEarnings;
 
   @override
   Widget build(BuildContext context) => ListenableBuilder(
@@ -183,6 +191,37 @@ class ProviderHomeScreen extends StatelessWidget {
                 ],
               ),
             ),
+            if (onViewEarnings != null) ...[
+              const SizedBox(height: AppSpacing.md),
+              FixCard(
+                semanticLabel: 'Earnings',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Earnings',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: AppColors.textOnLightPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      'See a record of completed payments. Payouts are not available yet.',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColors.textOnLightSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    FixButton(
+                      label: 'View earnings',
+                      icon: Icons.account_balance_wallet_outlined,
+                      variant: FixButtonVariant.secondary,
+                      onPressed: onViewEarnings,
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: AppSpacing.xxl),
             Row(
               children: [

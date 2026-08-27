@@ -54,15 +54,19 @@ Only these statuses are valid. A task cannot be completed while required validat
 
 # Project Progress
 
-Total Tasks: 114
-Completed: 94
+Total Tasks: 120
+Completed: 101
 In Progress: 0
 Blocked: 0
-Pending: 1
-Deferred: 18
+Pending: 2
+Deferred: 16
 Cancelled: 1
-Current Phase (post-FN-064): Payment foundation delivered; advisory AI assistance and trust signals active
-Next Recommended Task: FN-062 notification remainder (scheduled reminders need a scheduler decision; emergency slices gated by FN-063) or FN-113 advisory price/signal surfacing UI.
+Current Phase (post-FN-064): Payment foundation and emergency dispatch delivered; advisory AI assistance, trust signals, mobile payments UI, and premium signature motion active. FN-113 advisory price/signal surfacing verified live across all audiences; payments confirmed local-only (deterministic fake gateway, ADR-0016).
+Next Recommended Task: FN-119 — Implement In-App Real-Time Chat for Active Bookings (P1) followed by FN-120 — Implement In-App VoIP Audio Calling for Active Bookings (P2). ClamAV malware scanning on ai-media-policy remains the sole code-solvable gate for FN-059.
+
+2026-08-27 (session 2) FN-113 advisory price/signal surfacing verified complete and closed. Evidence in the working tree: the mobile advisory price estimate (`mobile/lib/features/ai/price_estimate_repository.dart` — repository + controller + honest states) is surfaced on the service-request screen (`service_request_screen.dart` `_buildPriceContent`: ESTIMATE range + explanation + "Advisory only — the final charge is confirmed..." disclaimer, honest static fallback, PRICE_ON_REQUEST abstention) and wired at both `app.dart` construction sites (category-select and Book-again) via `PriceEstimateRepository(_api, accessToken: _auth.validAccessToken)`; the admin trust queue (`admin/src/app/trust/page.tsx`) already renders the FN-060 rule codes; the provider accept-time signal is surfaced on provider home (`provider_home_screen.dart` via `GET trust/my-accept-time`, FN-111). Payments set to local-only per ADR-0016: `PAYMENT_PROVIDER` defaults to the deterministic `fake` gateway (now made explicit in `backend/.env`), which is prohibited in production by `env.validation.ts` startup validation, needs no live gateway credentials, and offers no payouts. The mobile client has no interactive checkout surface yet (only the read-only invoice screen; `JobCompletedDialog` is unwired), so a dev-gated local payment flow is recorded as FN-118 rather than scaffolded. FN-058/FN-059 remain Deferred (live vision/voice still gated on malware scan + signed DPA + vendor/model approval, ADR-0014; AI stays advisory-only, disabled by default). Validated 2026-08-27: flutter analyze 0 errors, flutter test 164/164; backend jest payments 35/35.
+
+2026-08-27 mobile payments UI, AI image metadata stripping, and the signature-motion system landed on `feat/signature-motion` (new tasks FN-115/FN-116/FN-117), and stale task statuses were reconciled against the codebase. FN-115: the FN-053 follow-up mobile screens — a customer invoice screen (`mobile/lib/features/payments/`) reading `payments.invoice.read.self` and a provider earnings screen (`mobile/lib/features/provider/provider_earnings_screen.dart`) rendering the honest gross/refunded/net ledger under `provider.earnings.read.self`, both stating payouts are not available (ADR-0016), wired into app.dart / booking_detail / provider_home. FN-116: server-side `stripImageMetadata` in the AI media policy — a dependency-free JPEG/PNG/WebP marker+chunk walk that drops EXIF/XMP/IPTC/comment metadata before any image reaches the provider boundary, closing one of the FN-059 live-vision gates (malware scan + signed DPA still deferred). FN-117: a reduce-motion-aware signature-motion system (`signature_motion.dart`: MatchRadarView, FlipOtpDigits, HoldToConfirmButton, status-temperature color) applied to the welcome entrance, emergency hold-to-confirm, and AI result reveal; transform+opacity only, degrading to static under `disableAnimations`. Status reconciliation against merged evidence: FN-052/FN-053 (payment orders/operations backends, merged in PR #27) flipped Deferred->Completed; FN-062/FN-063/FN-064 (domain notifications / emergency dispatch / SOS UX, each already carrying a completion record and validation) flipped Blocked->Completed with their obsolete gate notes marked resolved. Validated 2026-08-27: flutter analyze 0 errors, flutter test 164/164 pass; backend jest ai-media-policy 5/5 pass.
 
 2026-08-26 FN-058/FN-059 governed multimodal problem-classification pipeline landed on `main`: a provider-neutral image / voice / image+voice classifier (`backend/src/ai/problem-classification/`) with a centralized 11-category taxonomy grounded against the active DB catalog (`ServiceCategoriesService`), three reusable prompt builders, and a strict structured-output schema that coerces any unmappable or invented label to a low-confidence `Other` rather than trusting raw model text. Adds deterministic confidence banding (>=0.85 high / 0.60-0.84 medium / <0.60 low), a deterministic safety pre-screen (gas/fire/shock/flood), DB grounding to a bookable `serviceCategoryId` (advisory-only null on no match), and clean per-error fallbacks (`INPUT_REJECTED`/`PROVIDER_UNAVAILABLE`/`TIMEOUT`/`INVALID_MODEL_OUTPUT`/`AI_DISABLED`/`RATE_LIMITED`) that never crash. A real Hugging Face adapter (Whisper `whisper-large-v3` + Qwen2.5-VL over native fetch, no new dependency) is included but DISABLED BY DEFAULT and blocked from production startup until the ADR-0014 release gate passes; the deterministic provider powers all dev/tests so no media leaves the machine. New env: `AI_VOICE_ENABLED`/`AI_VISION_ENABLED` (default false), `AI_MAX_IMAGE_BYTES`/`AI_MAX_AUDIO_BYTES`, and `HF_TOKEN` (server-side only) plus HF model/base-URL vars, documented in root `.env.example` and `docs/ai/problem-classification.md`. Versioned eval suite `problem-classification-eval-v1` pins the label-space, grounding, coercion, banding, safety, contract, and determinism gates so silent drift fails. This is NOT a live-complete feature: EXIF stripping, malware scan, and a signed DPA/retention terms remain required before enablement, so FN-058 and FN-059 stay Deferred. Validated 2026-08-26: backend lint clean, 75 suites / 479 tests, production build clean, `git diff --check` clean.
 
@@ -1944,7 +1948,7 @@ Completed Date: 2026-08-25
 Commit:
 PR:
 ## FN-052 â€” Implement Payment Orders and Verification
-Status: â¸ï¸ Deferred
+Status: Completed
 Priority: P1 â€” High
 Area: Backend/Payments
 Depends On: FN-041, FN-051
@@ -1979,7 +1983,7 @@ Completed Date: 2026-08-25
 Commit: 05f42fb
 PR:
 ## FN-053 â€” Implement Invoices, Refunds, Transactions, and Provider Earnings
-Status: â¸ï¸ Deferred
+Status: Completed
 Priority: P1 â€” High
 Area: Payments
 Depends On: FN-042, FN-052
@@ -2225,7 +2229,7 @@ ai/src/vision/ ai/evals/ backend/src/storage/ mobile/lib/features/assistant/
 
 ### Notes Addendum (backend classification pipeline, 2026-08-26)
 - Landed the governed backend image-classification pipeline in `backend/src/ai/problem-classification/` (`POST /api/v1/ai/problem-analysis/image` and `.../combined`): Qwen2.5-VL classification against the centralized 11-category taxonomy -> strict-JSON schema (unknown category coerced to "Other" with capped confidence) -> confidence banding -> advisory DB grounding -> deterministic safety pre-screen. A real Hugging Face adapter (`Qwen/Qwen2.5-VL-7B-Instruct`) is implemented but **disabled by default and blocked from live use until the ADR-0014 release gate passes**; all tests run on the deterministic provider.
-- `AI_VISION_ENABLED` kill switch (default off) plus `AI_MAX_IMAGE_BYTES` cap and mime/size/magic-byte validation; oversized/invalid uploads return a clean `INPUT_REJECTED`, never a 500. Documented gate limitation: live vision additionally requires EXIF stripping + malware scan + signed DPA before enablement — deferred. This is NOT a live-complete feature. See [docs/ai/problem-classification.md](docs/ai/problem-classification.md).
+- `AI_VISION_ENABLED` kill switch (default off) plus `AI_MAX_IMAGE_BYTES` cap and mime/size/magic-byte validation; oversized/invalid uploads return a clean `INPUT_REJECTED`, never a 500. Documented gate limitation: live vision additionally requires EXIF stripping + malware scan + signed DPA before enablement. EXIF/XMP/IPTC metadata stripping is now implemented server-side (FN-116, 2026-08-27); malware scan + signed DPA remain deferred. This is NOT a live-complete feature. See [docs/ai/problem-classification.md](docs/ai/problem-classification.md).
 ### Completion Record
 Completed By: Claude Code
 Completed Date: 2026-08-25
@@ -2305,7 +2309,7 @@ Completed Date: 2026-08-24
 Commit:
 PR:
 ## FN-062 â€” Implement Booking, Provider, Reminder, and Emergency Notifications
-Status: Blocked
+Status: Completed
 Priority: P1 â€” High
 Area: Notifications
 Depends On: FN-041, FN-061, FN-063
@@ -2333,6 +2337,8 @@ Emergency alerts may override quiet hours only under the approved policy.
 2026-08-24 implementation progress on `feat/provider-ui-polish` (user-directed after FN-061 closed): added the in-process domain notification consumer over the FN-061 boundary. New reversible `notification_deliveries` table records one row per attempt (SENT / FAILED / NO_DEVICES / SKIPPED_QUIET_HOURS) with a per-user dedupe key unique index that makes sends replay-safe. Lock-screen-safe templates cover customer ASSIGNED / EN_ROUTE / IN_PROGRESS / COMPLETED / CANCELLED and provider REQUESTED / CANCELLED with no personal data. BookingsService fires best-effort notifications after create (fan-out to eligible providers via existing matching, capped at 20), accept, status updates, OTP service-start, and cancellations; a notification failure can never fail a booking. Quiet hours are a bounded server UTC window (`NOTIFICATION_QUIET_HOURS_UTC`, e.g. "23-7", disabled by default). Validated: backend lint clean, 65 suites / 332 tests, build; live run on the connected setup recorded provider fan-out (NO_DEVICES) and a real customer push (SENT) after a provider accepted a fresh booking. Remaining for full completion: emergency templates and quiet-hour override (gated by FN-063 policy approval) and scheduled booking reminders (need an approved scheduler dependency decision, e.g. @nestjs/schedule). Two-device live evidence (2026-08-25): a customer booking near an eligible enrolled provider produced a real provider-phone tray notification ("A new request is available near you", visually captured), and an earlier provider acceptance produced the real customer push ("A provider accepted your request") - both recorded SENT. Provider-side enrollment UI was added to the provider profile screen (FN-061 had shipped it customer-only). Note: Android does not display notification payloads in the tray while the app is foregrounded; foreground display handling remains part of the FN-062 remainder.
 
 2026-08-25 remainder delivery on `feat/payment-foundation` (user-directed): scheduled booking reminders shipped as a zero-dependency interval scanner - no scheduler dependency was approved or needed, because the notification_deliveries unique index already guarantees exactly-once sends across overlapping ticks or multiple instances. BookingReminderService scans REQUESTED/ASSIGNED bookings whose scheduledAt falls inside NOTIFICATION_REMINDER_LEAD_MINUTES (default 60) every NOTIFICATION_REMINDER_INTERVAL_MS (default 60s, timer unref'd, scan failures swallowed) and sends one customer plus one assigned-provider reminder per booking with permanent dedupe keys reminder:booking:<id>:<role>. Foreground display shipped as an in-app banner: FirebasePushGateway exposes FirebaseMessaging.onMessage as a ForegroundPushSource stream and bindForegroundPushBanner surfaces policy-owned copy through MaterialApp.scaffoldMessengerKey (inert when PUSH_NOTIFICATIONS_ENABLED is absent); subscription cancelled on dispose. FixFadeSlideIn's delayed start now cancels its Timer on dispose so disposed widgets never start tickers. Remaining for full completion: emergency templates and quiet-hour override only (gated by FN-063). Validated: backend lint clean, 70 suites / 393 tests, build; flutter analyze 0 errors; foreground-push and push-enrollment suites 7/7.
+
+2026-08-26 final closure: the only remaining pieces (emergency templates + quiet-hour override) shipped as part of FN-063 completion (`DomainNotificationService.bypassQuietHours` + `EMERGENCY_NOTIFICATION_TEMPLATES`), so FN-062 is fully delivered.
 ### Completion Record
 Completed By: Claude Code
 Completed Date: 2026-08-25
@@ -2342,7 +2348,7 @@ PR:
 ### Notes Addendum (completion)
 Fixed as five root causes: (1) missing dart:async import causing a 14-file compile cascade behind a stale kernel cache; (2) lazy late-final controllers first touched in dispose() - now created eagerly in initState with cancellable Timer starts; (3) always-on FixPulse/shimmer tickers defeating pumpAndSettle - scoped reduce-motion via the shared `pumpIdle()` tester extension (per-tester platformDispatcher override plus one pump to flush futures); deliberately NOT a global flutter_test_config, which force-initialised the widget binding and broke pure-Dart api_client tests; (4) stale assertion pins updated to shipped tokens (container 340ms, plumbing_rounded, icon asserted within the category card since quick-service chips may reuse glyphs); (5) restored redesign casualties: FixServiceCard.semanticLabel override feeding '<name> service category' and an explicit 'Price on request' branch when priceFrom is null (FN-107 contract). Validated 2026-08-25: flutter analyze 0 errors; flutter test 111/111 pass; backend 70 suites / 395 tests, lint clean.
 ## FN-063 â€” Implement Emergency Request and Priority Dispatch
-Status: Blocked
+Status: Completed
 Priority: P1 â€” High
 Area: Emergency/Backend
 Depends On: FN-014, FN-040, FN-041
@@ -2388,7 +2394,7 @@ PR:
 Implemented on `feat/payment-foundation` per the approved v1 policy. Files: `backend/src/emergency/{emergency-policy.ts,emergency-dispatch.entity.ts,emergency.service.ts,emergency.controller.ts,emergency.module.ts}`, migration `1786521000000-EmergencyDispatches`, matching radiusMultiplier parameter, DomainNotificationService bypassQuietHours option plus EMERGENCY_NOTIFICATION_TEMPLATES, TrustService.recordEmergencyFrequencySignal (+TRUST_RULES.emergency* constants), PERMISSIONS.emergencyCreateSelf / emergencyDispatchManage with policies matching the security matrix, AppModule registration. Deliberate scope notes: ops wave-3 alert ships as audited dashboard state via GET /admin/emergency/dispatches (admin push distribution deferred to FN-064/FN-062 UX work); provider-walked-away cooldown waiver implements policy section 7 row 4. Validation: lint clean, 71 suites / 410 tests pass, build passes.
 
 ## FN-064## FN-064 â€” Implement SOS UX and Safety Guidance
-Status: Blocked
+Status: Completed
 Priority: P1 â€” High
 Area: Emergency/Mobile
 Depends On: FN-037, FN-063
@@ -2414,7 +2420,9 @@ mobile/lib/features/emergency/ docs/safety/
 ### Notes
 None.
 ### Blocker
-FN-063 is blocked pending legal/product approval, so the SOS flow cannot safely promise dispatch behavior or define its cancellation and fallback states.
+~~FN-063 is blocked pending legal/product approval, so the SOS flow cannot safely promise dispatch behavior or define its cancellation and fallback states.~~
+
+**RESOLVED 2026-08-26:** FN-063 completed (emergency policy approved, dispatch implemented and validated); the SOS flow consumes the shipped FN-063 contract.
 ### Required To Unblock
 Complete FN-063 with approved safety policy and dispatch behavior.
 ### Completion Record
@@ -2425,3 +2433,322 @@ PR:
 
 ### Notes Addendum (completion)
 Implemented on `feat/payment-foundation`. Files: `mobile/lib/features/emergency/{emergency_repository.dart,emergency_controller.dart,emergency_confirm_screen.dart}`, discovery integration (banner opens confirm flow when emergency categories exist; legacy dialog keeps guidance-only duty with policy-compliant copy), app.dart repository wiring. Widget tests cover mandatory notice visibility, POST payload/idempotency-key/wave-progress rendering, wave-3 fallback guidance rendering, and failure keeping the form with actionable copy. Backend contract consumed unchanged (FN-063). Validation: flutter analyze 0 errors; flutter test 119/119.
+
+# Phase 12 - Follow-up UI, Media Privacy, and Signature Motion
+
+## FN-115 - Implement Mobile Payments UI (Customer Invoice and Provider Earnings)
+Status: Completed
+Priority: P2 - Medium
+Area: Mobile/Payments
+Depends On: FN-053
+Branch: feat/signature-motion
+
+### Objective
+Deliver the customer invoice view and provider earnings view that FN-053 explicitly deferred as follow-up UI work.
+
+### Scope
+- Read-only mobile screens over the completed FN-053 endpoints, with honest "payouts not available" messaging.
+
+### Do Not
+- Do not trust client-reported payment success, invent amounts, or imply payout capability not supported by the backend.
+
+### Acceptance Criteria
+- [x] Customer invoice screen renders the finalized invoice (number, integer-paise amounts as INR) under `payments.invoice.read.self`.
+- [x] Provider earnings screen renders the honest gross/refunded/net ledger under `provider.earnings.read.self` and states payouts are unavailable (ADR-0016).
+- [x] Repository + ChangeNotifier controller + honest-states pattern with loading/empty/error views.
+- [x] Widget tests pass.
+
+### Validation
+```bash
+cd mobile && flutter analyze && flutter test
+```
+
+### Files / Areas
+```text
+mobile/lib/features/payments/{invoice_repository.dart,invoice_screen.dart}
+mobile/lib/features/provider/{provider_earnings_repository.dart,provider_earnings_screen.dart}
+mobile/lib/app/app.dart mobile/lib/features/bookings/booking_detail_screen.dart mobile/lib/features/provider/provider_home_screen.dart
+mobile/test/{invoice_screen_test.dart,provider_earnings_screen_test.dart}
+```
+
+### Notes
+Integer-paise, INR-only money with the per-repository `_label` helper deliberately duplicated. Consumes FN-052/FN-053 contracts unchanged; no new payment behavior added client-side.
+
+### Completion Record
+Completed By: Claude Code
+Completed Date: 2026-08-27
+Commit: pending (uncommitted on feat/signature-motion)
+PR:
+
+## FN-116 - Implement AI Image Metadata Stripping (EXIF/XMP/IPTC Sanitisation)
+Status: Completed
+Priority: P1 - High
+Area: Backend/AI/Security
+Depends On: FN-059
+
+Branch: feat/signature-motion
+
+### Objective
+Strip identifying image metadata before any image reaches the AI provider boundary, closing one of the FN-059 live-vision gates.
+
+### Scope
+- Dependency-free JPEG/PNG/WebP metadata removal invoked after `assertAllowedImage`, before the provider call.
+
+### Do Not
+- Do not add an image-processing dependency, alter pixel data, or fail the request on unparseable payloads (forward unchanged, best-effort).
+
+### Acceptance Criteria
+- [x] EXIF/XMP/IPTC/comment segments removed for JPEG (APP1/APP13/COM), PNG (eXIf/tEXt/zTXt/iTXt/tIME), and WebP (EXIF/XMP chunks, VP8X flag cleared).
+- [x] Structural segments preserved (JPEG APP0/JFIF, APP2/ICC colour profile, APP14/Adobe).
+- [x] Unparseable payloads forwarded unchanged; called before the provider boundary in `ai.service.ts`.
+- [x] `ai-media-policy` tests pass.
+
+### Validation
+```bash
+cd backend && npx jest ai-media-policy
+```
+
+### Files / Areas
+```text
+backend/src/ai/policy/ai-media-policy.ts backend/src/ai/ai.service.ts backend/src/ai/policy/ai-media-policy.spec.ts
+```
+
+### Notes
+Malware scan and a signed DPA/retention terms remain deferred vendor-gated prerequisites before live vision (see FN-059). AI stays advisory-only and disabled by default per ADR-0014; the deterministic dev/test provider means no media leaves the machine.
+
+### Completion Record
+Completed By: Claude Code
+Completed Date: 2026-08-27
+Commit: pending (uncommitted on feat/signature-motion)
+PR:
+
+## FN-117 - Implement Signature Motion System
+Status: Completed
+Priority: P3 - Low
+Area: Mobile/Design System
+Depends On: FN-072, FN-114
+
+Branch: feat/signature-motion
+
+### Objective
+Add a small set of high-craft, reduce-motion-aware signature interactions and apply them at three high-value moments.
+
+### Scope
+- New `signature_motion.dart` primitives plus application at the welcome entrance, emergency confirm, and AI result reveal.
+
+### Do Not
+- Do not animate high-frequency or keyboard-initiated actions, block interaction, or omit the static reduce-motion fallback; transform+opacity only.
+
+### Acceptance Criteria
+- [x] `MatchRadarView`, `FlipOtpDigits`, `HoldToConfirmButton`, and `statusTemperatureColor` implemented.
+- [x] Every primitive degrades to static under `MediaQuery.disableAnimations`.
+- [x] `HoldToConfirmButton` exposes an instant assistive semantic tap path (NFR-ACC-003), keeping the hold as sighted-user deliberation.
+- [x] Applied to the welcome first-load choreography, emergency hold-to-confirm, and AI diagnosis result reveal.
+- [x] `flutter analyze` 0 errors; motion + welcome widget tests pass.
+
+### Validation
+```bash
+cd mobile && flutter analyze && flutter test
+```
+
+### Files / Areas
+```text
+mobile/lib/design_system/signature_motion.dart
+mobile/lib/auth/welcome_screen.dart mobile/lib/features/emergency/emergency_confirm_screen.dart
+mobile/lib/features/ai/problem_diagnosis_screen.dart mobile/lib/design_system/fix_components.dart
+mobile/test/{signature_motion_test.dart,welcome_screen_test.dart,emergency_flow_test.dart}
+```
+
+### Notes
+The emergency hold-to-confirm enhances FN-064's confirm flow (deliberate friction per emergency policy); `FlipOtpDigits` replaces the static row inside `FixOtpDisplay` with an identical resting layout.
+
+### Completion Record
+Completed By: Claude Code
+Completed Date: 2026-08-27
+Commit: pending (uncommitted on feat/signature-motion)
+PR:
+
+## FN-113 - Surface Advisory Price and Trust Signals in Clients
+Status: Completed
+Priority: P2 - Medium
+Area: Mobile / Admin
+Depends On: FN-060, FN-111
+
+Branch: feat/signature-motion
+
+### Objective
+Surface the FN-060 deterministic advisory price estimate and the FN-055/FN-060 trust signals in the client apps, honestly labelled and never authoritative.
+
+### Scope
+- Customer mobile: advisory price estimate on the service-request screen.
+- Provider mobile: rolling accept-time signal on provider home.
+- Admin: trust review queue rendering the FN-060 rule codes.
+
+### Do Not
+- Do not let an estimate change what a booking charges, hide the advisory notice, or fabricate a number for price-on-request categories.
+
+### Acceptance Criteria
+- [x] Mobile advisory price card renders ESTIMATE (range + explanation + advisory notice) and abstains honestly on PRICE_ON_REQUEST, falling back to the static published price when unavailable.
+- [x] Price surfacing wired at both `app.dart` service-request construction sites (category-select and Book-again).
+- [x] Provider accept-time signal surfaced on provider home (`GET trust/my-accept-time`).
+- [x] Admin trust queue renders the FN-060 rule codes (`customer-cancellation-frequency-v1`, `provider-refund-frequency-v1`).
+- [x] `flutter analyze` 0 errors; `flutter test` green (price_estimate_card_test included).
+
+### Validation
+```bash
+cd mobile && flutter analyze && flutter test
+```
+
+### Files / Areas
+```text
+mobile/lib/features/ai/price_estimate_repository.dart
+mobile/lib/features/bookings/service_request_screen.dart
+mobile/lib/app/app.dart
+mobile/lib/features/provider/provider_home_screen.dart
+mobile/test/price_estimate_card_test.dart
+admin/src/app/trust/page.tsx
+```
+
+### Notes
+The advisory estimate is deterministic (no model participates, ADR-0014) and never affects booking totals. The admin trust queue already existed from FN-050/FN-055 and renders arbitrary rule codes, so FN-060's new rules appear without code changes. Customer read permission: `ai.price-estimate.read.self`.
+
+### Completion Record
+Completed By: Claude Code
+Completed Date: 2026-08-27
+Commit: pending (uncommitted on feat/signature-motion)
+PR:
+
+## FN-118 - Mobile Local-Only Payment/Checkout Flow
+Status: Completed
+Priority: P2 - Medium
+Area: Mobile / Payments
+Depends On: FN-051, FN-052, FN-115
+
+Branch: feat/signature-motion
+
+### Objective
+Give a local development build a dev-gated way to complete a payment end to end against the deterministic fake gateway, so the create-order -> verify -> invoice path is exercisable without live credentials.
+
+### Scope
+- A `LocalPaymentConfig` mirroring `LocalAuthConfig` (`bool.fromEnvironment('LOCAL_PAYMENT_BYPASS_ENABLED', false)` AND `AppEnvironment.development`, with an injectable widget bool for tests).
+- A minimal pay action that creates an order (`POST payments/orders`), then in local-bypass mode finalizes it (`POST payments/orders/verify` with the deterministic fake signature `fake-<gatewayOrderId>:<gatewayPaymentId>`), then routes to the existing read-only invoice screen.
+- Surface the action as a dev-only affordance. Implemented on the invoice screen's "no invoice yet" (pending) state, which is already reachable via "View invoice" and lands back on the issued invoice after payment — a smaller, honest surface than wiring the unrelated `JobCompletedDialog` (which remains dead code, untouched).
+
+### Do Not
+- Do not trust client-reported payment success (the backend markPaid remains authoritative), ship the bypass enabled outside development, add a real gateway dependency, store card data, or introduce payouts (ADR-0016).
+
+### Acceptance Criteria
+- [x] `LOCAL_PAYMENT_BYPASS_ENABLED` defaults off and is force-disabled outside `APP_ENV=development`; pure gate function unit-tested.
+- [x] With the bypass on, a local build can complete a payment for a booking and land on the issued invoice.
+- [x] With the bypass off, no local-pay affordance renders.
+- [x] `flutter analyze` 0 errors; widget test covers the bypass-on and bypass-off branches.
+
+### Validation
+```bash
+cd mobile && flutter analyze && flutter test
+```
+
+### Files / Areas
+```text
+mobile/lib/features/payments/ (new local_payment_config.dart + pay action/screen)
+mobile/lib/features/bookings/booking_lifecycle_views.dart (wire JobCompletedDialog)
+mobile/lib/app/app.dart
+mobile/test/ (new local payment test)
+```
+
+### Notes
+The backend local-only posture already exists: `PAYMENT_PROVIDER=fake` (explicit in `backend/.env`) selects `FakePaymentGateway`, prohibited in production by startup validation. This task adds only the mobile affordance to drive it; it deliberately does not build a real checkout. Discovered 2026-08-27 while verifying FN-113 — the sole remaining interactive-payment gap on mobile.
+
+### Implemented 2026-08-27
+- `mobile/lib/features/payments/local_payment_config.dart` — `LocalPaymentConfig` mirroring `LocalAuthConfig`: `bool.fromEnvironment('LOCAL_PAYMENT_BYPASS_ENABLED', false)` AND `AppEnvironment.development`.
+- `mobile/lib/features/payments/local_payment_repository.dart` — `LocalPaymentRepository.pay(bookingId)`: `POST payments/orders` → `POST payments/orders/verify` with `fake-<gatewayOrderId>:pay_local_<gatewayOrderId>`. Client sends only the booking id; the amount is server-derived and the backend `markPaid` is the sole authority on success.
+- `mobile/lib/features/payments/invoice_screen.dart` — dev-only "Complete payment (local)" button in the pending state; on success reloads the invoice controller so the issued invoice appears. Hidden whenever the bypass is off.
+- `mobile/lib/app/app.dart` — passes `LocalPaymentRepository`; the bypass gate defaults to `LocalPaymentConfig.bypassEnabled`, so production/non-dev builds render no affordance.
+- Tests: `mobile/test/local_payment_config_test.dart` (gate), `mobile/test/local_payment_repository_test.dart` (create→verify signature + non-map guard), and two branches in `mobile/test/invoice_screen_test.dart` (bypass-on completes to invoice; bypass-off shows nothing).
+- Verified: `flutter analyze` scoped to the changed files — 0 errors (1 pre-existing `use_build_context_synchronously` info in unrelated FN-113 rebooking code); `flutter test` 169/169.
+
+# Phase 13 — In-App Real-Time Communication and Calling
+
+## FN-119 — Implement In-App Real-Time Chat for Active Bookings
+Status: Pending
+Priority: P1 — High
+Area: Mobile / Backend / Realtime
+Depends On: FN-041, FN-061, FN-062
+Branch: feat/in-app-communication
+
+### Objective
+Provide secure, in-app real-time text messaging between customers and assigned service providers during active bookings, completely hiding personal phone numbers and preventing platform disintermediation.
+
+### Scope
+- Backend: Ephemeral booking chat channel over existing `RealtimeGateway`, database persistence (`booking_messages`), and FCM push notification fallback for inactive/backgrounded recipients.
+- Mobile: Real-time `BookingChatScreen` accessible from tracking, 1-tap canned response chips, message delivery/read status, and read-only archiving upon booking completion/cancellation.
+
+### Do Not
+- Do not allow messaging outside active booking lifecycles (`ASSIGNED`, `EN_ROUTE`, `IN_PROGRESS`), expose personal email or phone numbers, or bypass server authorization.
+
+### Acceptance Criteria
+- [ ] Customer and provider can exchange text messages in real-time over WebSocket.
+- [ ] Messages are securely stored and retrievable via authenticated REST/WebSocket history endpoint.
+- [ ] Backgrounded recipient receives lock-screen-safe push notification.
+- [ ] Quick canned response chips trigger instant sends.
+- [ ] Chat automatically locks to read-only once booking reaches `COMPLETED` or `CANCELLED`.
+- [ ] `flutter analyze` and `flutter test` pass; backend jest tests pass.
+
+### Validation
+```bash
+cd backend && npm test -- src/realtime
+cd mobile && flutter analyze && flutter test
+```
+
+### Files / Areas
+```text
+backend/src/realtime/
+backend/src/notifications/
+mobile/lib/features/chat/
+mobile/lib/features/tracking/booking_tracking_screen.dart
+```
+
+### Notes
+Reuses existing `RealtimeGateway` connection registry and token verification.
+
+## FN-120 — Implement In-App VoIP Audio Calling for Active Bookings
+Status: Pending
+Priority: P2 — Medium
+Area: Mobile / Backend / VoIP
+Depends On: FN-119
+Branch: feat/in-app-communication
+
+### Objective
+Enable masked, in-app VoIP audio calls between customer and technician over internet data, eliminating telephone carrier toll charges and keeping personal phone numbers private.
+
+### Scope
+- Backend: WebSockets signaling channel over `RealtimeGateway` (`call:offer`, `call:answer`, `call:ice-candidate`, `call:hangup`) with active-booking authorization guards.
+- Mobile: In-app call dialer/ringing UI, microphone permission handling, WebRTC audio peer connection (or approved lightweight audio SDK), CallKit / high-priority incoming call notification, and in-chat call status logging (missed, answered, duration).
+
+### Do Not
+- Do not expose native phone numbers, initiate cellular carrier calls, record audio without mutual compliance disclosures, or permit calls outside active bookings.
+
+### Acceptance Criteria
+- [ ] Outgoing and incoming VoIP audio call flow connects two active devices over data.
+- [ ] Call authorization verifies both participants belong to an active booking (`ASSIGNED` / `EN_ROUTE`).
+- [ ] Microphone permission request handles denial and restricted states cleanly.
+- [ ] Call history entries (Answered / Missed / Duration) append to the booking chat timeline.
+- [ ] Call channel is revoked immediately when booking status changes to `COMPLETED` or `CANCELLED`.
+- [ ] Unit and widget tests pass.
+
+### Validation
+```bash
+cd backend && npm test -- src/realtime
+cd mobile && flutter analyze && flutter test
+```
+
+### Files / Areas
+```text
+backend/src/realtime/
+mobile/lib/features/call/
+mobile/lib/features/chat/
+mobile/lib/features/tracking/booking_tracking_screen.dart
+```
+
+### Notes
+Signaling passes through FixNow's existing WebSocket server. Audio streams peer-to-peer via WebRTC with fallback STUN/TURN or approved managed RTC provider.

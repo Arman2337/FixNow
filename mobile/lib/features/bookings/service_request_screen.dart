@@ -4,6 +4,7 @@ import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
 import 'package:fixnow_mobile/design_system/fix_page_frame.dart';
+import 'package:fixnow_mobile/design_system/signature_motion.dart';
 import 'package:fixnow_mobile/features/ai/price_estimate_repository.dart';
 import 'package:fixnow_mobile/features/bookings/booking_controller.dart';
 import 'package:fixnow_mobile/features/location/booking_location.dart';
@@ -43,6 +44,7 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
   final _formKey = GlobalKey<FormState>();
   final _details = TextEditingController();
   bool _submitting = false;
+  bool _showRadar = false;
   String? _error;
   BookingLocationFix? _confirmedLocation;
   PriceEstimateController? _estimate;
@@ -164,7 +166,9 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
         latitude: location.latitude,
         longitude: location.longitude,
       );
-      if (mounted) Navigator.of(context).pop(true);
+      if (mounted) {
+        setState(() => _showRadar = true); // FN-040 made visible (signature motion)
+      }
     } on BookingLocationFailure {
       // A browser may have permission but no hardware location source. Let the
       // customer choose the service address rather than showing a dead end.
@@ -191,7 +195,19 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
+  Widget build(BuildContext context) {
+    if (_showRadar) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Request service'), centerTitle: false),
+        body: MatchRadarView(
+          categoryName: widget.category.name,
+          onFinished: () {
+            if (mounted) Navigator.of(context).pop(true);
+          },
+        ),
+      );
+    }
+    return Scaffold(
     appBar: AppBar(title: const Text('Request service'), centerTitle: false),
     body: SafeArea(
       child: FixPageFrame(
@@ -361,7 +377,8 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
         ),
       ),
     ),
-  );
+    );
+  }
 
   Widget _buildChip(String label) {
     return ActionChip(
@@ -482,4 +499,4 @@ class _ServiceLocationPickerState extends State<_ServiceLocationPicker> {
       ),
     ),
   );
-}
+  }

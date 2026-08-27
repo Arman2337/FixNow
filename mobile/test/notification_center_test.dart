@@ -190,5 +190,38 @@ void main() {
 
       expect(find.text('You are all caught up!'), findsOneWidget);
     });
+
+    testWidgets('read notifications maintain high-contrast dark theme surfaces without white-on-white text',
+        (tester) async {
+      tester.view.physicalSize = const Size(800, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+
+      final repository = NotificationRepository();
+      final controller = NotificationController(repository);
+      await controller.load();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.dark,
+          home: NotificationCenterScreen(controller: controller),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Verify unread notifications
+      expect(find.text('Booking Confirmed & Assigned'), findsOneWidget);
+      expect(find.text('Seasonal Home Checkup'), findsOneWidget);
+
+      // Verify read notifications are rendered legibly
+      expect(find.text('Payment Invoice Ready'), findsOneWidget);
+      expect(find.text('Trust & Safety Assurance'), findsOneWidget);
+
+      // Find the text widget for read notification and verify it uses high contrast text color
+      final readTitle = tester.widget<Text>(find.text('Payment Invoice Ready'));
+      expect(readTitle.style?.color, isNotNull);
+      // Ensure text is high contrast cream/white (not dark text that blends into dark bg)
+      expect(readTitle.style!.color!.computeLuminance(), greaterThan(0.5));
+    });
   });
 }

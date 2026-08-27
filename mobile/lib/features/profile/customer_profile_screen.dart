@@ -4,6 +4,8 @@ import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
 import 'package:fixnow_mobile/design_system/fix_status_chip.dart';
 import 'package:fixnow_mobile/design_system/fix_page_frame.dart';
+import 'package:fixnow_mobile/design_system/fix_address_selector.dart';
+import 'package:fixnow_mobile/features/location/saved_address.dart';
 import 'package:fixnow_mobile/features/profile/customer_profile_controller.dart';
 import 'package:fixnow_mobile/notifications/push_enrollment.dart';
 import 'package:fixnow_mobile/notifications/push_settings_card.dart';
@@ -190,6 +192,8 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                 ),
               ),
             ),
+          const SizedBox(height: AppSpacing.lg),
+          const _SavedAddressesSection(),
           if (widget.pushController != null) ...[
             const SizedBox(height: AppSpacing.lg),
             PushSettingsCard(controller: widget.pushController!),
@@ -238,6 +242,128 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
     ProfileViewStatus.unauthorized,
     ProfileViewStatus.error,
   }.contains(widget.controller.status);
+}
+
+class _SavedAddressesSection extends StatelessWidget {
+  const _SavedAddressesSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: SavedAddressRepository.instance,
+      builder: (context, _) {
+        final addresses = SavedAddressRepository.instance.addresses;
+        return FixCard(
+          semanticLabel: 'Saved addresses',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.location_city_rounded, color: AppColors.primary),
+                      const SizedBox(width: AppSpacing.sm),
+                      Text(
+                        'Saved addresses',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: AppColors.textOnSurface,
+                            ),
+                      ),
+                    ],
+                  ),
+                  TextButton.icon(
+                    onPressed: () => AddEditAddressModalSheet.show(context),
+                    icon: const Icon(Icons.add_rounded, size: 16),
+                    label: const Text('Add new'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.md),
+              for (final addr in addresses) ...[
+                Container(
+                  margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceElevated,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.white12),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(addr.icon, color: AppColors.focus, size: 20),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Text(
+                                  addr.customTitle,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                if (addr.isDefault) ...[
+                                  const SizedBox(width: 6),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.success.withValues(alpha: 0.2),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: const Text(
+                                      'DEFAULT',
+                                      style: TextStyle(color: AppColors.success, fontSize: 8, fontWeight: FontWeight.w800),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              addr.formattedFull,
+                              style: const TextStyle(color: Colors.white70, fontSize: 11),
+                            ),
+                            const SizedBox(height: 6),
+                            Row(
+                              children: [
+                                if (!addr.isDefault)
+                                  InkWell(
+                                    onTap: () => SavedAddressRepository.instance.setDefault(addr.id),
+                                    child: const Text(
+                                      'Set as default',
+                                      style: TextStyle(color: AppColors.focus, fontSize: 11, fontWeight: FontWeight.w600),
+                                    ),
+                                  ),
+                                if (!addr.isDefault) const SizedBox(width: 14),
+                                InkWell(
+                                  onTap: () => SavedAddressRepository.instance.deleteAddress(addr.id),
+                                  child: const Text(
+                                    'Delete',
+                                    style: TextStyle(color: AppColors.danger, fontSize: 11, fontWeight: FontWeight.w600),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
 }
 
 class _ProfileFailure extends StatelessWidget {

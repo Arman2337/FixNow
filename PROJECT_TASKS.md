@@ -55,15 +55,15 @@ Only these statuses are valid. A task cannot be completed while required validat
 # Project Progress
 
 Total Tasks: 124
-Completed: 106
+Completed: 107
 In Progress: 0
 Blocked: 0
-Pending: 1
+Pending: 0
 Deferred: 16
 Cancelled: 1
-Current Task: None (FN-123 delivered on branch `feat/in-app-communication`)
-Current Phase: Phase 14 — World-Class Commercial Experience & Quality Control
-Next Recommended Task: FN-124 — Implement Saved Address Book (Home, Work, Other)
+Current Task: None (All Phase 14 tasks FN-121, FN-122, FN-123, FN-124 completed on branch `feat/in-app-communication`)
+Current Phase: Phase 14 — World-Class Commercial Experience & Quality Control (Completed)
+Next Recommended Task: None (All current eligible tasks completed)
 
 2026-08-27 (session 2) FN-113 advisory price/signal surfacing verified complete and closed. Evidence in the working tree: the mobile advisory price estimate (`mobile/lib/features/ai/price_estimate_repository.dart` — repository + controller + honest states) is surfaced on the service-request screen (`service_request_screen.dart` `_buildPriceContent`: ESTIMATE range + explanation + "Advisory only — the final charge is confirmed..." disclaimer, honest static fallback, PRICE_ON_REQUEST abstention) and wired at both `app.dart` construction sites (category-select and Book-again) via `PriceEstimateRepository(_api, accessToken: _auth.validAccessToken)`; the admin trust queue (`admin/src/app/trust/page.tsx`) already renders the FN-060 rule codes; the provider accept-time signal is surfaced on provider home (`provider_home_screen.dart` via `GET trust/my-accept-time`, FN-111). Payments set to local-only per ADR-0016: `PAYMENT_PROVIDER` defaults to the deterministic `fake` gateway (now made explicit in `backend/.env`), which is prohibited in production by `env.validation.ts` startup validation, needs no live gateway credentials, and offers no payouts. The mobile client has no interactive checkout surface yet (only the read-only invoice screen; `JobCompletedDialog` is unwired), so a dev-gated local payment flow is recorded as FN-118 rather than scaffolded. FN-058/FN-059 remain Deferred (live vision/voice still gated on malware scan + signed DPA + vendor/model approval, ADR-0014; AI stays advisory-only, disabled by default). Validated 2026-08-27: flutter analyze 0 errors, flutter test 164/164; backend jest payments 35/35.
 
@@ -2959,11 +2959,51 @@ Commit: Pending
 ---
 
 ## FN-124 — Implement Saved Address Book (Home, Work, Other)
-Status: ⬜ Pending
+Status: ✅ Completed
 Priority: P2 — Medium
 Area: Mobile / User Profile
 Depends On: FN-121
-Branch: feat/saved-address-book
+Branch: feat/in-app-communication
 
 ### Objective
 Enable customers to save and manage multi-location addresses (Home, Work, Parents) with floor, flat, building name, and landmark for 1-tap booking address selection.
+
+### Scope
+- Domain Model & Repository: `SavedAddress` model (with `AddressLabel`, flat/building, street/area, landmark, city, pincode, GPS coordinates, and default status) and `SavedAddressRepository`.
+- Selection Component: `SavedAddressSelectorCard` in `ServiceRequestScreen` allowing 1-tap switching between Home, Work, and other locations with real-time location coordinate updates.
+- Creation & Editing: `AddEditAddressModalSheet` enabling customers to add or edit addresses with form validation.
+- Profile Management: `_SavedAddressesSection` in `CustomerProfileScreen` allowing customers to view, set default, and delete saved addresses.
+
+### Acceptance Criteria
+- [x] Customers can select saved addresses (Home, Work) with 1 tap during service requests.
+- [x] Selecting an address updates the booking coordinates and pre-fills service location.
+- [x] Modal bottom sheet allows creating new addresses with label chips, landmark, and pincode.
+- [x] Saved addresses section in profile allows managing, defaulting, and deleting addresses.
+- [x] 100% green tests in `flutter test` and clean `flutter analyze`.
+
+### Validation
+```bash
+cd mobile && flutter analyze && flutter test
+```
+
+### Files / Areas
+```text
+mobile/lib/features/location/saved_address.dart
+mobile/lib/design_system/fix_address_selector.dart
+mobile/lib/features/bookings/service_request_screen.dart
+mobile/lib/features/profile/customer_profile_screen.dart
+mobile/test/saved_address_test.dart
+```
+
+### Notes
+Delivered on 2026-08-28:
+- Created `SavedAddress` and `SavedAddressRepository` in `mobile/lib/features/location/saved_address.dart`.
+- Built `SavedAddressSelectorCard` and `AddEditAddressModalSheet` in `mobile/lib/design_system/fix_address_selector.dart`.
+- Integrated seamlessly into `ServiceRequestScreen` for 1-tap address selection and `CustomerProfileScreen` for address management.
+- Added comprehensive unit and widget tests in `mobile/test/saved_address_test.dart` (4/4 passed).
+- All 198 mobile tests pass (100% green) and `flutter analyze` reports zero issues.
+
+### Completion Record
+Completed By: Antigravity
+Completed Date: 2026-08-28
+Commit: Pending

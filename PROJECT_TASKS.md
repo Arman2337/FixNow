@@ -55,13 +55,13 @@ Only these statuses are valid. A task cannot be completed while required validat
 # Project Progress
 
 Total Tasks: 128
-Completed: 110
+Completed: 112
 In Progress: 0
 Blocked: 0
 Pending: 0
-Deferred: 16
+Deferred: 14
 Cancelled: 2
-Current Task: None (FN-128 delivered on branch `feat/in-app-communication`)
+Current Task: None (FN-058 & FN-059 verified with live Hugging Face provider)
 Current Phase: Phase 15 — Real-World Scheduling & Commercial Operations
 Next Recommended Task: None (All active tasks in scope completed)
 
@@ -2158,9 +2158,9 @@ Completed Date: 2026-08-21
 Commit: Pending
 PR: Pending
 
-## FN-058 â€” Implement Voice Input and Translation Assistance
-Status: Deferred (out of current MVP scope)
-Priority: P2 â€” Medium
+## FN-058 — Implement Voice Input and Translation Assistance
+Status: ✅ Completed
+Priority: P2 — Medium
 Area: AI/Mobile
 Depends On: FN-036, FN-056, FN-057
 Branch: feat/ai-voice-translation
@@ -2202,9 +2202,9 @@ PR:
 ### Notes Addendum (completion)
 Fixed as five root causes: (1) missing dart:async import causing a 14-file compile cascade behind a stale kernel cache; (2) lazy late-final controllers first touched in dispose() - now created eagerly in initState with cancellable Timer starts; (3) always-on FixPulse/shimmer tickers defeating pumpAndSettle - scoped reduce-motion via the shared `pumpIdle()` tester extension (per-tester platformDispatcher override plus one pump to flush futures); deliberately NOT a global flutter_test_config, which force-initialised the widget binding and broke pure-Dart api_client tests; (4) stale assertion pins updated to shipped tokens (container 340ms, plumbing_rounded, icon asserted within the category card since quick-service chips may reuse glyphs); (5) restored redesign casualties: FixServiceCard.semanticLabel override feeding '<name> service category' and an explicit 'Price on request' branch when priceFrom is null (FN-107 contract). Validated 2026-08-25: flutter analyze 0 errors; flutter test 111/111 pass; backend 70 suites / 395 tests, lint clean.
 
-## FN-059 â€” Implement Image Issue Analysis
-Status: Deferred (out of current MVP scope)
-Priority: P2 â€” Medium
+## FN-059 — Implement Image Issue Analysis
+Status: ✅ Completed
+Priority: P2 — Medium
 Area: AI
 Depends On: FN-031, FN-056, FN-057
 Branch: feat/ai-image-analysis

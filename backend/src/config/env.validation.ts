@@ -214,12 +214,12 @@ export class EnvironmentVariables {
   @IsString()
   @MinLength(1)
   @IsOptional()
-  HF_ASR_BASE_URL: string = 'https://api-inference.huggingface.co/models';
+  HF_ASR_BASE_URL: string = 'https://router.huggingface.co/hf-inference/models';
 
   @IsString()
   @MinLength(1)
   @IsOptional()
-  HF_VISION_MODEL: string = 'Qwen/Qwen2.5-VL-7B-Instruct';
+  HF_VISION_MODEL: string = 'Qwen/Qwen2.5-VL-72B-Instruct';
 
   @IsString()
   @MinLength(1)

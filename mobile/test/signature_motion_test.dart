@@ -136,4 +136,31 @@ void main() {
       );
     });
   });
+
+  group('FixFxZoomIn', () {
+    testWidgets('settles child into view after spring animation', (tester) async {
+      await tester.pumpWidget(
+        host(
+          const FixFxZoomIn(
+            child: Text('FixNow Hero'),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('FixNow Hero'), findsOneWidget);
+    });
+
+    testWidgets('renders immediately under reduce-motion', (tester) async {
+      await tester.pumpWidget(
+        host(
+          const FixFxZoomIn(
+            child: Text('FixNow Hero'),
+          ),
+          reduceMotion: true,
+        ),
+      );
+      await tester.pump();
+      expect(find.text('FixNow Hero'), findsOneWidget);
+    });
+  });
 }

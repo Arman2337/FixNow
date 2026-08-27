@@ -25,8 +25,8 @@ class NotificationRepository {
     ),
     InAppNotification(
       id: 'notif-seed-2',
-      title: 'Welcome Offer: ₹100 Off',
-      body: 'Use promo code WELCOME100 on your first booking checkout to get ₹100 instant discount.',
+      title: 'Seasonal Home Checkup',
+      body: 'Schedule pre-monsoon appliance and plumbing checks with verified local pros.',
       category: NotificationCategory.offers,
       timestamp: DateTime.now().subtract(const Duration(hours: 2)),
       isRead: false,

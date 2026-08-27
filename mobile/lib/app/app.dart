@@ -30,6 +30,7 @@ import 'package:fixnow_mobile/features/profile/customer_profile_screen.dart';
 import 'package:fixnow_mobile/features/services/service_category.dart';
 import 'package:fixnow_mobile/features/services/service_discovery_controller.dart';
 import 'package:fixnow_mobile/features/services/service_discovery_screen.dart';
+import 'package:fixnow_mobile/features/services/sub_service_catalog_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_controller.dart';
 import 'package:fixnow_mobile/features/provider/provider_earnings_repository.dart';
 import 'package:fixnow_mobile/features/provider/provider_earnings_screen.dart';
@@ -311,11 +312,25 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
               onCategorySelected: (category, location) async {
                 final created = await Navigator.of(context).push<bool>(
                   MaterialPageRoute(
-                    builder: (_) => ServiceRequestScreen(
+                    builder: (_) => SubServiceCatalogScreen(
                       category: category,
-                      controller: _bookings,
                       initialLocation: location,
-                      estimateRepository: PriceEstimateRepository(_api, accessToken: _auth.validAccessToken),
+                      onProceedToBooking: (updatedCategory, description, priceMinor, loc) async {
+                        final reqCreated = await Navigator.of(context).push<bool>(
+                          MaterialPageRoute(
+                            builder: (_) => ServiceRequestScreen(
+                              category: updatedCategory,
+                              controller: _bookings,
+                              initialLocation: loc,
+                              initialDescription: description,
+                              estimateRepository: PriceEstimateRepository(_api, accessToken: _auth.validAccessToken),
+                            ),
+                          ),
+                        );
+                        if (reqCreated == true && context.mounted) {
+                          Navigator.of(context).pop(true);
+                        }
+                      },
                     ),
                   ),
                 );

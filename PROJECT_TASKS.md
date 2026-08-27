@@ -55,15 +55,15 @@ Only these statuses are valid. A task cannot be completed while required validat
 # Project Progress
 
 Total Tasks: 124
-Completed: 104
+Completed: 105
 In Progress: 0
 Blocked: 0
-Pending: 3
+Pending: 2
 Deferred: 16
 Cancelled: 1
-Current Task: None (FN-121 delivered on branch `feat/in-app-communication`)
+Current Task: None (FN-122 delivered on branch `feat/in-app-communication`)
 Current Phase: Phase 14 — World-Class Commercial Experience & Quality Control
-Next Recommended Task: FN-122 — Multi-Item Sub-Services Catalog & Cart System
+Next Recommended Task: FN-123 — Implement Before & After Job Verification Photos
 
 2026-08-27 (session 2) FN-113 advisory price/signal surfacing verified complete and closed. Evidence in the working tree: the mobile advisory price estimate (`mobile/lib/features/ai/price_estimate_repository.dart` — repository + controller + honest states) is surfaced on the service-request screen (`service_request_screen.dart` `_buildPriceContent`: ESTIMATE range + explanation + "Advisory only — the final charge is confirmed..." disclaimer, honest static fallback, PRICE_ON_REQUEST abstention) and wired at both `app.dart` construction sites (category-select and Book-again) via `PriceEstimateRepository(_api, accessToken: _auth.validAccessToken)`; the admin trust queue (`admin/src/app/trust/page.tsx`) already renders the FN-060 rule codes; the provider accept-time signal is surfaced on provider home (`provider_home_screen.dart` via `GET trust/my-accept-time`, FN-111). Payments set to local-only per ADR-0016: `PAYMENT_PROVIDER` defaults to the deterministic `fake` gateway (now made explicit in `backend/.env`), which is prohibited in production by `env.validation.ts` startup validation, needs no live gateway credentials, and offers no payouts. The mobile client has no interactive checkout surface yet (only the read-only invoice screen; `JobCompletedDialog` is unwired), so a dev-gated local payment flow is recorded as FN-118 rather than scaffolded. FN-058/FN-059 remain Deferred (live vision/voice still gated on malware scan + signed DPA + vendor/model approval, ADR-0014; AI stays advisory-only, disabled by default). Validated 2026-08-27: flutter analyze 0 errors, flutter test 164/164; backend jest payments 35/35.
 
@@ -2850,14 +2850,59 @@ Commit: Pending
 ---
 
 ## FN-122 — Implement Multi-Item Sub-Services Catalog & Cart System
-Status: ⬜ Pending
+Status: ✅ Completed
 Priority: P2 — Medium
 Area: Mobile / Services
 Depends On: FN-121
-Branch: feat/sub-services-cart
+Branch: feat/in-app-communication
 
 ### Objective
 Enable granular sub-service task selection (e.g. under Plumbing: Tap Repair ₹149, Flush Tank ₹249, Pipe Leak ₹349), quantity increment/decrement, and a floating sticky cart bar ("N items • ₹Total | View Cart →").
+
+### Scope
+- Domain Model: `SubServiceItem`, `CartItem`, and `ServiceCartController` managing items, quantities, itemized calculations, 18% GST math, and summary descriptions.
+- Pre-curated sub-services for all 10 platform categories (`SubServiceCatalog`).
+- `SubServiceCatalogScreen`:
+  - Category hero banner with verified pro count, star rating, and 30-day warranty badge.
+  - Live search/filter field.
+  - Sub-service cards with duration, price tag, and `Add` / `[-] [qty] [+]` steppers.
+  - Sticky bottom floating cart bar appearing smoothly when cart has items.
+  - Cart summary bottom sheet reviewing items, subtotal, GST, and total.
+- Integrated into customer category selection flow (`app.dart`), passing itemized cart summary and calculated price directly to `ServiceRequestScreen`.
+
+### Acceptance Criteria
+- [x] Sub-service catalog renders category tasks with price and duration badges.
+- [x] Adding and adjusting quantities dynamically updates `ServiceCartController`.
+- [x] Sticky floating cart bar animates into view on first addition.
+- [x] Real-time search filters tasks by name and description.
+- [x] Confirming cart hands off itemized description and calculated total to booking flow.
+- [x] 100% green tests in `flutter test` and clean `flutter analyze`.
+
+### Validation
+```bash
+cd mobile && flutter analyze && flutter test
+```
+
+### Files / Areas
+```text
+mobile/lib/features/services/sub_service_item.dart
+mobile/lib/features/services/sub_service_catalog_screen.dart
+mobile/lib/app/app.dart
+mobile/test/sub_service_catalog_screen_test.dart
+```
+
+### Notes
+Delivered on 2026-08-27:
+- Created `SubServiceItem`, `CartItem`, `ServiceCartController`, and curated catalog `SubServiceCatalog` in `mobile/lib/features/services/sub_service_item.dart`.
+- Built `SubServiceCatalogScreen` in `mobile/lib/features/services/sub_service_catalog_screen.dart` with floating sticky cart bar and cart breakdown sheet.
+- Integrated seamlessly in `mobile/lib/app/app.dart` on category select.
+- Verified with 3 unit & widget tests in `sub_service_catalog_screen_test.dart`.
+- All 190 tests pass (100% green) across the entire mobile test suite, and `flutter analyze` reports 0 issues.
+
+### Completion Record
+Completed By: Antigravity
+Completed Date: 2026-08-27
+Commit: Pending
 
 ---
 

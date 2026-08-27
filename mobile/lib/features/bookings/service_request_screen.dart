@@ -4,6 +4,7 @@ import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
 import 'package:fixnow_mobile/design_system/fix_page_frame.dart';
+import 'package:fixnow_mobile/design_system/fix_price_breakdown_card.dart';
 import 'package:fixnow_mobile/design_system/signature_motion.dart';
 import 'package:fixnow_mobile/features/ai/price_estimate_repository.dart';
 import 'package:fixnow_mobile/features/bookings/booking_controller.dart';
@@ -257,6 +258,14 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
                 ],
               ),
             ),
+            if (widget.category.pricing != null) ...[
+              const SizedBox(height: AppSpacing.md),
+              FixPriceBreakdownCard(
+                amountMinor: widget.category.pricing!.amountMinor,
+                currency: widget.category.pricing!.currency,
+                modelType: PricingModelType.fixed,
+              ),
+            ],
             const SizedBox(height: AppSpacing.lg),
 
             FixCard(

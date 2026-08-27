@@ -47,6 +47,22 @@ class ApiException implements Exception {
   String toString() => 'ApiException($kind, $message)';
 }
 
+/// One file part for a multipart upload. Held in memory only — see
+/// [ApiClient.uploadMultipart].
+class MultipartFileData {
+  const MultipartFileData({
+    required this.fieldName,
+    required this.fileName,
+    required this.contentType,
+    required this.bytes,
+  });
+
+  final String fieldName;
+  final String fileName;
+  final String contentType;
+  final List<int> bytes;
+}
+
 class ApiClient implements ApiTransport {
   ApiClient({
     required Uri baseUri,
@@ -86,6 +102,54 @@ class ApiClient implements ApiTransport {
             contentType: MediaType.parse(contentType),
           ),
         );
+      final response = await _httpClient.send(request).timeout(timeout);
+      final responseBytes = await response.stream.toBytes().timeout(timeout);
+      final body = _decodeJson(responseBytes);
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw _safeHttpFailure(response.statusCode, body);
+      }
+      return ApiResponse(statusCode: response.statusCode, body: body);
+    } on TimeoutException {
+      throw const ApiException(
+        ApiFailureKind.timeout,
+        'The request timed out.',
+      );
+    } on http.ClientException {
+      throw const ApiException(
+        ApiFailureKind.offline,
+        'No network connection.',
+      );
+    } on FormatException {
+      throw const ApiException(
+        ApiFailureKind.invalidResponse,
+        'The server response was invalid.',
+      );
+    }
+  }
+
+  /// Multipart upload of one or more in-memory files plus optional text fields.
+  /// Shares [uploadFile]'s timeout, 2xx acceptance, and safe error mapping; the
+  /// multimodal problem-analysis endpoints use this and answer with HTTP 201.
+  Future<ApiResponse> uploadMultipart({
+    required String path,
+    required String bearerToken,
+    required List<MultipartFileData> files,
+    Map<String, String>? fields,
+  }) async {
+    try {
+      final request = http.MultipartRequest('POST', _baseUri.resolve(path))
+        ..headers['Accept'] = 'application/json'
+        ..headers['Authorization'] = 'Bearer $bearerToken'
+        ..fields.addAll(fields ?? const {})
+        ..files.addAll([
+          for (final file in files)
+            http.MultipartFile.fromBytes(
+              file.fieldName,
+              file.bytes,
+              filename: file.fileName,
+              contentType: MediaType.parse(file.contentType),
+            ),
+        ]);
       final response = await _httpClient.send(request).timeout(timeout);
       final responseBytes = await response.stream.toBytes().timeout(timeout);
       final body = _decodeJson(responseBytes);

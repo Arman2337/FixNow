@@ -55,6 +55,7 @@ export const PERMISSIONS = {
   trustAcceptTimeReadSelf: 'trust.accept-time.read.self',
   complaintsCreate: 'complaints.create',
   aiRecommendationCreate: 'ai.recommendation.create',
+  aiProblemAnalysisCreate: 'ai.problem-analysis.create',
   aiPriceEstimateReadSelf: 'ai.price-estimate.read.self',
   emergencyCreateSelf: 'emergency.create.self',
   emergencyDispatchManage: 'emergency.dispatch.manage',
@@ -331,6 +332,10 @@ export const PERMISSION_POLICIES: Readonly<
     roles: ['customer', 'verified_provider'],
   },
   [PERMISSIONS.aiRecommendationCreate]: {
+    roles: ['customer'],
+    relationship: 'self',
+  },
+  [PERMISSIONS.aiProblemAnalysisCreate]: {
     roles: ['customer'],
     relationship: 'self',
   },

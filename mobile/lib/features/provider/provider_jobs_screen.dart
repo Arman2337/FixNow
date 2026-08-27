@@ -6,6 +6,8 @@ import 'package:fixnow_mobile/design_system/fix_page_frame.dart';
 import 'package:fixnow_mobile/design_system/fix_status_chip.dart';
 import 'package:fixnow_mobile/features/bookings/booking.dart';
 import 'package:fixnow_mobile/features/bookings/cancellation_dialog.dart';
+import 'package:fixnow_mobile/features/bookings/job_proof_service.dart';
+import 'package:fixnow_mobile/design_system/fix_job_proof_dialog.dart';
 import 'package:fixnow_mobile/features/provider/provider_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -127,21 +129,48 @@ class _JobCard extends StatelessWidget {
                 context,
               ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
             ),
+            if (JobProofRepository.instance.getProof(job.id) case final proof?) ...[
+              const SizedBox(height: AppSpacing.md),
+              JobProofViewerCard(proof: proof),
+            ],
             if (!readOnly && action != null) ...[
               const SizedBox(height: AppSpacing.lg),
               FixButton(
                 label: action.$1,
                 icon: action.$2,
                 onPressed: () async {
-                  if (job.status != 'EN_ROUTE') {
+                  if (job.status == 'EN_ROUTE') {
+                    final otp = await _requestServiceStartOtp(context);
+                    if (otp != null) {
+                      await controller.verifyOtpAndStartJob(job, otp);
+                    }
+                    return;
+                  }
+                  if (job.status == 'IN_PROGRESS') {
+                    if (!JobProofRepository.instance.hasProof(job.id)) {
+                      await JobProofVerificationDialog.show(
+                        context,
+                        bookingId: job.id,
+                      );
+                    }
                     await controller.advanceJob(job);
                     return;
                   }
-                  final otp = await _requestServiceStartOtp(context);
-                  if (otp != null) {
-                    await controller.verifyOtpAndStartJob(job, otp);
-                  }
+                  await controller.advanceJob(job);
                 },
+              ),
+            ],
+            if (!readOnly && job.status == 'IN_PROGRESS') ...[
+              const SizedBox(height: AppSpacing.sm),
+              FixButton(
+                label: 'Verification Photos',
+                icon: Icons.camera_alt_outlined,
+                variant: FixButtonVariant.secondary,
+                onPressed: () => JobProofVerificationDialog.show(
+                  context,
+                  bookingId: job.id,
+                  initialProof: JobProofRepository.instance.getProof(job.id),
+                ),
               ),
             ],
             if (!readOnly && job.status == 'EN_ROUTE') ...[

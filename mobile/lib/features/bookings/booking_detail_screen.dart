@@ -8,6 +8,8 @@ import 'package:fixnow_mobile/design_system/fix_status_chip.dart';
 import 'package:fixnow_mobile/features/bookings/booking.dart';
 import 'package:fixnow_mobile/features/bookings/cancellation_dialog.dart';
 import 'package:fixnow_mobile/features/bookings/booking_repository.dart';
+import 'package:fixnow_mobile/features/bookings/job_proof_service.dart';
+import 'package:fixnow_mobile/design_system/fix_job_proof_dialog.dart';
 import 'package:fixnow_mobile/features/ratings/booking_review_panel.dart';
 import 'package:flutter/material.dart';
 
@@ -132,6 +134,10 @@ class BookingDetailScreen extends StatelessWidget {
                   ],
                 ),
               ),
+              if (JobProofRepository.instance.getProof(booking.id) case final proof?) ...[
+                const SizedBox(height: AppSpacing.lg),
+                JobProofViewerCard(proof: proof),
+              ],
               const SizedBox(height: AppSpacing.lg),
               const FixCard(
                 semanticLabel: 'Booking data availability note',

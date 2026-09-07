@@ -6,6 +6,8 @@ import 'package:fixnow_mobile/design_system/fix_card.dart';
 import 'package:fixnow_mobile/design_system/fix_page_frame.dart';
 import 'package:fixnow_mobile/design_system/fix_state_views.dart';
 import 'package:fixnow_mobile/design_system/fix_status_chip.dart';
+import 'package:fixnow_mobile/features/call/call_repository.dart';
+import 'package:fixnow_mobile/features/chat/chat_repository.dart';
 import 'package:fixnow_mobile/features/provider/provider_active_job_cockpit_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_controller.dart';
 import 'package:fixnow_mobile/features/provider/provider_models.dart';
@@ -31,11 +33,15 @@ String providerServiceName(
 class ProviderHomeScreen extends StatelessWidget {
   const ProviderHomeScreen({
     required this.controller,
+    this.chatRepository,
+    this.callRepository,
     this.loadAcceptTime,
     this.onViewEarnings,
     super.key,
   });
   final ProviderController controller;
+  final ChatRepository? chatRepository;
+  final CallRepository? callRepository;
 
   /// FN-111: loads this provider's rolling accept-time signal; null hides
   /// the card entirely (including failures and insufficient data).
@@ -67,17 +73,23 @@ class ProviderHomeScreen extends StatelessWidget {
       final active = controller.jobs
           .where((job) => !{'COMPLETED', 'CANCELLED'}.contains(job.status))
           .toList();
-      return SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSpacing.pagePadding),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            FixPageHeader(
-              eyebrow: 'PROVIDER WORKSPACE',
-              title: 'Ready for your next job?',
-              description:
-                  'Manage your availability and respond to work assigned to you.',
-            ),
+      return RefreshIndicator(
+        onRefresh: () async {
+          await controller.refreshRequests();
+          await controller.load(verified: true);
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(AppSpacing.pagePadding),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              FixPageHeader(
+                eyebrow: 'PROVIDER WORKSPACE',
+                title: 'Ready for your next job?',
+                description:
+                    'Manage your availability and respond to work assigned to you.',
+              ),
             const SizedBox(height: AppSpacing.md),
 
             Container(
@@ -383,6 +395,8 @@ class ProviderHomeScreen extends StatelessWidget {
                         builder: (_) => ProviderActiveJobCockpitScreen(
                           job: job,
                           controller: controller,
+                          chatRepository: chatRepository,
+                          callRepository: callRepository,
                         ),
                       ),
                     ),
@@ -464,9 +478,10 @@ class ProviderHomeScreen extends StatelessWidget {
               ),
           ],
         ),
-      );
-    },
-  );
+      ),
+    );
+  },
+);
 
   static String _requestTime(DateTime value) {
     final local = value.toLocal();

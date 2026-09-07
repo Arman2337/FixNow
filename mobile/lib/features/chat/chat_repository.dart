@@ -2,6 +2,8 @@ import 'package:fixnow_mobile/api/api_client.dart';
 import 'package:fixnow_mobile/features/chat/chat_message.dart';
 
 abstract class ChatRepository {
+  String? get currentUserId => null;
+
   Future<({List<ChatMessage> messages, bool canSend})> fetchMessages(
     String bookingId,
   );
@@ -21,6 +23,9 @@ class HttpChatRepository implements ChatRepository {
   }) : _api = api,
        _accessToken = accessToken,
        _currentUserId = currentUserId;
+
+  @override
+  String? get currentUserId => _currentUserId?.call();
 
   final ApiTransport _api;
   final Future<String?> Function() _accessToken;

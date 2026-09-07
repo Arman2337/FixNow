@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
@@ -8,9 +9,12 @@ import 'package:fixnow_mobile/design_system/fix_status_chip.dart';
 import 'package:fixnow_mobile/features/call/booking_call_screen.dart';
 import 'package:fixnow_mobile/features/call/call_controller.dart';
 import 'package:fixnow_mobile/features/call/call_repository.dart';
+import 'package:fixnow_mobile/features/call/call_session.dart';
+import 'package:fixnow_mobile/features/call/incoming_call_dialog.dart';
 import 'package:fixnow_mobile/features/chat/booking_chat_screen.dart';
 import 'package:fixnow_mobile/features/chat/chat_controller.dart';
 import 'package:fixnow_mobile/features/chat/chat_repository.dart';
+import 'package:fixnow_mobile/features/realtime/realtime_client.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking_controller.dart';
 import 'package:fixnow_mobile/features/tracking/provider_live_map.dart';
@@ -36,10 +40,41 @@ class BookingTrackingScreen extends StatefulWidget {
 }
 
 class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
+  StreamSubscription<RealtimeProjection>? _callSub;
+
   @override
   void initState() {
     super.initState();
     widget.controller.loadSnapshot();
+    _listenForIncomingCalls();
+  }
+
+  void _listenForIncomingCalls() {
+    _callSub = widget.controller.realtime?.projections.listen((p) {
+      final type = p.data['type']?.toString();
+      final data = p.data['data'];
+      if (type == 'call.incoming.v1' && data is Map) {
+        final session = CallSession.fromJson(Map<String, Object?>.from(data));
+        // Only show incoming call dialog if caller is NOT the customer
+        if (session.callerRole != 'CUSTOMER' &&
+            widget.callRepository != null &&
+            mounted) {
+          IncomingCallDialog.show(
+            context,
+            session: session,
+            repository: widget.callRepository!,
+            realtimeClient: widget.controller.realtime,
+            callerTitle: 'Service Technician',
+          );
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _callSub?.cancel();
+    super.dispose();
   }
 
   @override
@@ -99,9 +134,23 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
             ),
           ),
           const SizedBox(height: AppSpacing.lg),
-          _buildQuickActionControls(context),
-          const SizedBox(height: AppSpacing.xl),
         ],
+      ),
+    ),
+    bottomNavigationBar: Container(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.pagePadding,
+        AppSpacing.xs,
+        AppSpacing.pagePadding,
+        AppSpacing.md,
+      ),
+      decoration: const BoxDecoration(
+        color: AppColors.backgroundPrimary,
+        border: Border(top: BorderSide(color: AppColors.borderDefault)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: _buildQuickActionControls(context),
       ),
     ),
   );
@@ -206,6 +255,7 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
               bookingId: bookingId,
               repository: widget.callRepository!,
               realtimeClient: widget.controller.realtime,
+              initialSpeakerOn: true,
             ),
           ),
         ),
@@ -299,10 +349,10 @@ class _TrackingCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.md),
           Text(locationLabel, style: Theme.of(context).textTheme.titleMedium),
-          if (value.providerLocation != null) ...[
+          if (value.providerLocation != null || value.customerLocation != null) ...[
             const SizedBox(height: AppSpacing.md),
             ProviderLiveMap(
-              providerLocation: value.providerLocation!,
+              providerLocation: value.providerLocation,
               customerLocation: value.customerLocation,
               route: value.route,
               estimatedMinutes: value.estimatedMinutes,
@@ -310,7 +360,7 @@ class _TrackingCard extends StatelessWidget {
                   ? null
                   : value.route!.distanceMeters / 1000,
             ),
-            if (value.route == null) ...[
+            if (value.route == null && value.providerLocation != null) ...[
               const SizedBox(height: AppSpacing.md),
               _JourneySummary(tracking: value),
             ],

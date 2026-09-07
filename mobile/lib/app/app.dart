@@ -164,6 +164,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
     _chatRepository = HttpChatRepository(
       api: api,
       accessToken: _auth.validAccessToken,
+      currentUserId: () => _auth.session?.userId,
     );
     _callRepository = HttpCallRepository(
       api: api,
@@ -270,6 +271,8 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
               role: AppShellRole.provider,
               providerHome: ProviderHomeScreen(
                 controller: _provider,
+                chatRepository: _chatRepository,
+                callRepository: _callRepository,
                 loadAcceptTime: () async {
                   try {
                     return await _provider.repository.acceptTime();
@@ -291,10 +294,14 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
               ),
               providerJobs: ProviderJobsScreen(
                 controller: _provider,
+                chatRepository: _chatRepository,
+                callRepository: _callRepository,
                 showHistory: false,
               ),
               providerHistory: ProviderJobsScreen(
                 controller: _provider,
+                chatRepository: _chatRepository,
+                callRepository: _callRepository,
                 showHistory: true,
               ),
               providerProfile: ProviderOnboardingScreen(

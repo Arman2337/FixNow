@@ -129,15 +129,17 @@ class _BookingCallScreenState extends State<BookingCallScreen>
               ),
 
               const Spacer(),
-
-              // Avatar with acoustic radar pulsation
+              // Avatar with acoustic radar pulsation & live speaking ripples
               AnimatedBuilder(
                 animation: _pulseController,
                 builder: (context, child) {
+                  final isSpeaking = controller.isRemoteSpeaking;
                   final scale = (!disableMotion &&
                           (status == CallStatus.ringing ||
                               status == CallStatus.connected))
-                      ? 1.0 + (_pulseController.value * 0.08)
+                      ? (isSpeaking
+                          ? 1.05 + (_pulseController.value * 0.05)
+                          : 1.0 + (_pulseController.value * 0.06))
                       : 1.0;
                   final pulseAlpha = (!disableMotion &&
                           (status == CallStatus.ringing ||
@@ -150,7 +152,27 @@ class _BookingCallScreenState extends State<BookingCallScreen>
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
-                        if (pulseAlpha > 0)
+                        if (isSpeaking && !disableMotion) ...[
+                          Container(
+                            width: 172,
+                            height: 172,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: AppColors.success.withValues(alpha: 0.4),
+                                width: 2,
+                              ),
+                            ),
+                          ),
+                          Container(
+                            width: 152,
+                            height: 152,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppColors.success.withValues(alpha: 0.16),
+                            ),
+                          ),
+                        ] else if (pulseAlpha > 0)
                           Container(
                             width: 148,
                             height: 148,
@@ -167,11 +189,22 @@ class _BookingCallScreenState extends State<BookingCallScreen>
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: AppColors.surfaceElevated,
+                            boxShadow: isSpeaking
+                                ? [
+                                    BoxShadow(
+                                      color: AppColors.success.withValues(alpha: 0.45),
+                                      blurRadius: 18,
+                                      spreadRadius: 4,
+                                    ),
+                                  ]
+                                : null,
                             border: Border.all(
-                              color: status == CallStatus.connected
+                              color: isSpeaking
                                   ? AppColors.success
-                                  : AppColors.primary,
-                              width: 3,
+                                  : (status == CallStatus.connected
+                                      ? AppColors.primary
+                                      : AppColors.borderStrong),
+                              width: isSpeaking ? 4 : 3,
                             ),
                           ),
                           child: const Center(
@@ -188,7 +221,72 @@ class _BookingCallScreenState extends State<BookingCallScreen>
                 },
               ),
 
-              const SizedBox(height: AppSpacing.xl),
+              const SizedBox(height: AppSpacing.md),
+
+              // Live Speaking or Reconnecting Feedback Badge
+              if (controller.isReconnecting)
+                Container(
+                  margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: AppColors.accentGold.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    border: Border.all(color: AppColors.accentGold),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: 12,
+                        height: 12,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.accentGold,
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        'Reconnecting audio...',
+                        style: TextStyle(
+                          color: AppColors.accentGold,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else if (controller.isRemoteSpeaking)
+                Container(
+                  margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: AppColors.success.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    border: Border.all(color: AppColors.success.withValues(alpha: 0.4)),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.graphic_eq_rounded,
+                        color: AppColors.success,
+                        size: 15,
+                      ),
+                      SizedBox(width: 6),
+                      Text(
+                        'Speaking...',
+                        style: TextStyle(
+                          color: AppColors.success,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+              const SizedBox(height: AppSpacing.sm),
 
               // Recipient Name & Verification
               Row(
@@ -199,9 +297,10 @@ class _BookingCallScreenState extends State<BookingCallScreen>
                       widget.providerName,
                       style: const TextStyle(
                         color: AppColors.textPrimary,
-                        fontSize: 22,
+                        fontSize: 24,
                         fontWeight: FontWeight.w700,
                       ),
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),

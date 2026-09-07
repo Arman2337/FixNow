@@ -30,22 +30,35 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
-  static const List<String> _quickResponses = [
-    '🚪 Buzz code is #',
-    '📍 At the front gate',
-    '🅿️ Park in driveway',
-    '🔔 Ring the doorbell',
-    '⏱️ 5 minutes away',
-  ];
+  List<String> get _quickResponses => widget.controller.isProvider
+      ? const [
+          '🛵 On my way now',
+          '⏱️ 5 minutes away',
+          '🚦 Stuck in traffic (+10m)',
+          '📍 Arrived outside building',
+          '🅿️ Where can I park?',
+          '🚪 Ringing the doorbell now',
+          '📞 Calling you now',
+        ]
+      : const [
+          '🚪 Buzz code is #',
+          '📍 At the front gate',
+          '🅿️ Park in driveway',
+          '🔔 Please ring the doorbell',
+          '⏱️ Ready when you arrive',
+          '📞 Call me from the gate',
+        ];
 
   @override
   void initState() {
     super.initState();
     widget.controller.addListener(_onControllerUpdate);
+    widget.controller.startPolling();
   }
 
   @override
   void dispose() {
+    widget.controller.stopPolling();
     widget.controller.removeListener(_onControllerUpdate);
     _textController.dispose();
     _scrollController.dispose();
@@ -55,18 +68,22 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
   void _onControllerUpdate() {
     if (mounted) {
       setState(() {});
-      _scrollToBottom();
+      _scrollToBottom(force: false);
     }
   }
 
-  void _scrollToBottom() {
+  void _scrollToBottom({bool force = false}) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 250),
-          curve: Curves.easeOut,
-        );
+        final pos = _scrollController.position;
+        final nearBottom = (pos.maxScrollExtent - pos.pixels) < 200;
+        if (force || nearBottom) {
+          _scrollController.animateTo(
+            pos.maxScrollExtent,
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOut,
+          );
+        }
       }
     });
   }
@@ -81,7 +98,15 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
 
     final ok = await widget.controller.send(text);
     if (ok) {
-      _scrollToBottom();
+      _scrollToBottom(force: true);
+    } else if (mounted && widget.controller.errorMessage != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(widget.controller.errorMessage!),
+          backgroundColor: AppColors.danger,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     }
   }
 
@@ -190,6 +215,7 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
                           bookingId: widget.controller.bookingId,
                           repository: widget.callRepository!,
                           realtimeClient: widget.controller.realtimeClient,
+                          initialSpeakerOn: true,
                         ),
                         providerName: widget.providerName,
                       ),
@@ -404,7 +430,9 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
                         ),
                         decoration: InputDecoration(
                           hintText: controller.canSend
-                              ? 'Message your professional...'
+                              ? (widget.controller.isProvider
+                                  ? 'Message customer...'
+                                  : 'Message your professional...')
                               : 'Chat is read-only',
                           hintStyle: const TextStyle(
                             color: AppColors.textDisabled,
@@ -476,6 +504,41 @@ class _ChatBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     final isMe = message.isMe;
 
+    if (message.messageText.startsWith('📞')) {
+      return Center(
+        child: Container(
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceElevated,
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+            border: Border.all(color: const Color(0xFF263353), width: 1),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                message.messageText,
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                _formatTime(message.createdAt.toLocal()),
+                style: const TextStyle(
+                  color: AppColors.textMuted,
+                  fontSize: 10,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
@@ -526,8 +589,12 @@ class _ChatBubble extends StatelessWidget {
                   Icon(
                     message.readAt != null
                         ? Icons.done_all_rounded
-                        : Icons.done_rounded,
-                    color: Colors.white.withValues(alpha: 0.8),
+                        : (message.id.isNotEmpty
+                            ? Icons.done_all_rounded
+                            : Icons.done_rounded),
+                    color: message.readAt != null
+                        ? AppColors.accentGold
+                        : Colors.white.withValues(alpha: 0.85),
                     size: 13,
                   ),
                 ],

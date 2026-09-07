@@ -118,8 +118,9 @@ class _Transport implements ApiTransport {
   Map<String, Object?>? postBody;
   @override
   Future<ApiResponse> send(ApiRequest request) async {
-    if (request.method == ApiMethod.get)
+    if (request.method == ApiMethod.get) {
       return const ApiResponse(statusCode: 200, body: {'review': null});
+    }
     postBody = Map<String, Object?>.from(request.body! as Map);
     return ApiResponse(
       statusCode: 201,

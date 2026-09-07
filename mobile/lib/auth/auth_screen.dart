@@ -7,6 +7,7 @@ import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/app_typography.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_page_frame.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class AuthScreen extends StatefulWidget {
@@ -133,6 +134,36 @@ class _AuthScreenState extends State<AuthScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
+                          if (kDebugMode)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                              child: ElevatedButton.icon(
+                                key: const Key('quick_login_btn'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primary,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                ),
+                                icon: const Icon(Icons.flash_on, color: Colors.amber),
+                                label: Text(
+                                  widget.role == AccountRole.customer
+                                      ? '⚡ Quick Login (Customer A)'
+                                      : '⚡ Quick Login (Provider A)',
+                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                onPressed: () {
+                                  setState(() => _register = false);
+                                  if (widget.role == AccountRole.customer) {
+                                    _email.text = 'fixnow.acceptance.customer-a@local.test';
+                                    _password.text = 'FixNow-local-customer-a-2026!';
+                                  } else {
+                                    _email.text = 'fixnow.acceptance.provider-a@local.test';
+                                    _password.text = 'FixNow-local-provider-a-2026!';
+                                  }
+                                  _submit();
+                                },
+                              ),
+                            ),
                           const FixBrandMark(),
                           const SizedBox(height: AppSpacing.xl),
                           Align(

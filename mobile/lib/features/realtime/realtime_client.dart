@@ -55,6 +55,7 @@ class RealtimeClient extends ChangeNotifier {
   final Future<String?> Function() accessToken;
   final RealtimeSocketConnector _connector;
   final _projections = StreamController<RealtimeProjection>.broadcast();
+  final _voiceFrames = StreamController<Map<String, Object?>>.broadcast();
   RealtimeSocket? _socket;
   StreamSubscription<Object?>? _subscription;
   Timer? _retryTimer;
@@ -66,18 +67,25 @@ class RealtimeClient extends ChangeNotifier {
   final Map<String, Completer<void>> _pendingAcks = {};
 
   Stream<RealtimeProjection> get projections => _projections.stream;
+  Stream<Map<String, Object?>> get voiceFrames => _voiceFrames.stream;
+  bool get isConnected => _socket != null && (_readyCompleter?.isCompleted ?? false);
 
   Future<void> subscribeBooking(String bookingId) async {
-    if (_bookingId == bookingId && _socket != null) {
+    _bookingId = bookingId;
+    _closed = false;
+    if (_socket != null) {
       if (_readyCompleter?.isCompleted == false) {
         try {
           await _readyCompleter!.future;
         } catch (_) {}
       }
+      await _send({
+        'type': 'subscribe',
+        'channel': 'booking',
+        'resourceId': bookingId,
+      });
       return;
     }
-    _bookingId = bookingId;
-    _closed = false;
     await _connect();
   }
 
@@ -110,6 +118,17 @@ class RealtimeClient extends ChangeNotifier {
     'latitude': latitude,
     'longitude': longitude,
     'accuracyMeters': accuracyMeters,
+  });
+
+  Future<void> sendVoiceFrame({
+    required String bookingId,
+    required String callId,
+    required String base64Data,
+  }) => _send({
+    'type': 'call.voice-frame.v1',
+    'bookingId': bookingId,
+    'callId': callId,
+    'data': base64Data,
   });
 
   Future<void> _connect() async {
@@ -165,10 +184,23 @@ class RealtimeClient extends ChangeNotifier {
         }
       }
       _completeAcknowledgement(decoded);
-      if (decoded['type'] != 'booking.projection-updated.v1') return;
-      final data = decoded['data'];
-      if (data is Map) {
-        _projections.add(RealtimeProjection(Map<String, Object?>.from(data)));
+      final msgType = decoded['type']?.toString();
+      if (msgType == 'call.voice-frame.v1') {
+        _voiceFrames.add(Map<String, Object?>.from(decoded));
+      } else if (msgType == 'booking.projection-updated.v1') {
+        final data = decoded['data'];
+        if (data is Map) {
+          _projections.add(RealtimeProjection(Map<String, Object?>.from(data)));
+        }
+      } else if (msgType != null &&
+          (msgType.startsWith('call.') || msgType.startsWith('chat.'))) {
+        _projections.add(
+          RealtimeProjection({
+            'type': msgType,
+            'data': decoded['data'],
+            'resourceId': decoded['resourceId'],
+          }),
+        );
       }
     } on Object {
       // Malformed frames are ignored; the authoritative HTTP snapshot remains available.
@@ -232,6 +264,7 @@ class RealtimeClient extends ChangeNotifier {
     unawaited(_subscription?.cancel());
     unawaited(_socket?.close());
     unawaited(_projections.close());
+    unawaited(_voiceFrames.close());
     for (final acknowledgement in _pendingAcks.values) {
       if (!acknowledgement.isCompleted) {
         acknowledgement.completeError(StateError('Realtime client closed'));

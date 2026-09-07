@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Booking } from './domain/booking.entity';
 import { BookingCall } from './domain/booking-call.entity';
 import { BookingMessage } from './domain/booking-message.entity';
@@ -86,6 +86,18 @@ export class BookingCallsService {
       throw new BadRequestException('Recipient is not assigned yet');
     }
 
+    // Close any previous unfinished calls on this booking
+    await this.callsRepo.update(
+      {
+        bookingId,
+        status: In(['INITIATED', 'RINGING', 'CONNECTED'] as CallStatus[]),
+      },
+      {
+        status: 'ENDED',
+        endedAt: new Date(),
+      },
+    );
+
     const call = this.callsRepo.create({
       bookingId,
       callerUserId,
@@ -108,6 +120,40 @@ export class BookingCallsService {
     );
 
     return { call: presented };
+  }
+
+  async getActiveCall(
+    bookingId: string,
+    userId: string,
+  ): Promise<BookingCallDto | null> {
+    const booking = await this.bookingsRepo.findOne({
+      where: { id: bookingId },
+    });
+    if (!booking) {
+      throw new NotFoundException('Booking not found');
+    }
+
+    if (
+      booking.customerId !== userId &&
+      booking.providerId !== userId
+    ) {
+      throw new ForbiddenException('Not authorized to access calls on this booking');
+    }
+
+    const call = await this.callsRepo.findOne({
+      where: [
+        { bookingId, status: 'INITIATED' },
+        { bookingId, status: 'RINGING' },
+        { bookingId, status: 'CONNECTED' },
+      ],
+      order: { startedAt: 'DESC' },
+    });
+
+    if (!call) {
+      return null;
+    }
+
+    return presentBookingCall(call);
   }
 
   async answerCall(

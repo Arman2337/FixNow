@@ -111,26 +111,29 @@ class _BookingReviewPanelState extends State<BookingReviewPanel> {
       final photos = review == null
           ? const <ReviewPhoto>[]
           : await widget.repository.reviewPhotos(widget.booking.id);
-      if (mounted)
+      if (mounted) {
         setState(() {
           _review = review;
           _photos = photos;
           _loading = false;
         });
+      }
     } on ApiException catch (error) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _loading = false;
           _error = error.kind == ApiFailureKind.offline
               ? 'You are offline. Reconnect to load your review.'
               : 'We could not load your review.';
         });
+      }
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _loading = false;
           _error = 'We could not load your review.';
         });
+      }
     }
   }
 
@@ -149,37 +152,41 @@ class _BookingReviewPanelState extends State<BookingReviewPanel> {
         rating: _rating!,
         reviewText: _text.text,
       );
-      if (mounted)
+      if (mounted) {
         setState(() {
           _review = review;
           _submitting = false;
         });
+      }
     } on ApiException catch (error) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _submitting = false;
           _error = error.kind == ApiFailureKind.offline
               ? 'You are offline. Your review was not sent.'
               : 'We could not submit your review. Try again.';
         });
+      }
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _submitting = false;
           _error = 'We could not submit your review. Try again.';
         });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_loading)
+    if (_loading) {
       return const FixCard(
         child: Center(
           child: CircularProgressIndicator(semanticsLabel: 'Loading review'),
         ),
       );
-    if (_review case final review?)
+    }
+    if (_review case final review?) {
       return FixCard(
         semanticLabel: 'Your submitted review',
         child: Column(
@@ -218,6 +225,7 @@ class _BookingReviewPanelState extends State<BookingReviewPanel> {
           ],
         ),
       );
+    }
     return FixCard(
       semanticLabel: 'Rate this completed service',
       child: Column(

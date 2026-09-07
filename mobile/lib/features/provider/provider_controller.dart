@@ -4,7 +4,6 @@ import 'package:fixnow_mobile/features/provider/provider_models.dart';
 import 'package:fixnow_mobile/features/provider/provider_repository.dart';
 import 'package:fixnow_mobile/features/realtime/realtime_client.dart';
 import 'package:flutter/foundation.dart';
-import 'package:geolocator/geolocator.dart';
 
 enum ProviderLoadState { loading, ready, failure }
 
@@ -88,6 +87,13 @@ class ProviderController extends ChangeNotifier {
     final current = availability;
     if (current == null) return;
     availability = await repository.setStatus(current, status);
+    if (status.toLowerCase() == 'online') {
+      try {
+        await refreshRequests();
+      } catch (_) {}
+    } else {
+      requests = const [];
+    }
     notifyListeners();
   }
 
@@ -98,17 +104,21 @@ class ProviderController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> advanceJob(CustomerBooking job) async {
+  Future<CustomerBooking?> advanceJob(CustomerBooking job) async {
     final next = switch (job.status) {
       'ASSIGNED' => 'EN_ROUTE',
       'EN_ROUTE' => 'IN_PROGRESS',
       'IN_PROGRESS' => 'COMPLETED',
       _ => null,
     };
-    if (next == null) return;
+    if (next == null) return null;
     final updated = await repository.updateJobStatus(job, next);
+    if (next == 'EN_ROUTE') {
+      locationSharing[job.id] = true;
+    }
     jobs = jobs.map((item) => item.id == updated.id ? updated : item).toList();
     notifyListeners();
+    return updated;
   }
 
   Future<CustomerBooking> cancelJob(CustomerBooking job, String reason) async {
@@ -120,7 +130,11 @@ class ProviderController extends ChangeNotifier {
 
   Future<void> setLocationConsent(CustomerBooking job, bool granted) async {
     final client = realtime;
-    if (client == null || job.status != 'EN_ROUTE') return;
+    final current = jobs.firstWhere(
+      (j) => j.id == job.id,
+      orElse: () => job,
+    );
+    if (client == null || (job.status != 'EN_ROUTE' && current.status != 'EN_ROUTE')) return;
     actionError = null;
     try {
       await client.subscribeBooking(job.id);
@@ -133,7 +147,7 @@ class ProviderController extends ChangeNotifier {
       locationSharing[job.id] = granted;
       if (!granted) locationPublished.remove(job.id);
       notifyListeners();
-      if (granted) await publishCurrentLocation(job);
+      if (granted) await publishCurrentLocation(current);
     } catch (_) {
       actionError = 'Location sharing could not start. Check that you are online and try again.';
       notifyListeners();
@@ -156,7 +170,12 @@ class ProviderController extends ChangeNotifier {
 
   Future<void> publishCurrentLocation(CustomerBooking job) async {
     final client = realtime;
-    if (client == null || job.status != 'EN_ROUTE' ||
+    final current = jobs.firstWhere(
+      (j) => j.id == job.id,
+      orElse: () => job,
+    );
+    if (client == null ||
+        (job.status != 'EN_ROUTE' && current.status != 'EN_ROUTE') ||
         _publishingLocation.contains(job.id)) {
       return;
     }
@@ -165,30 +184,54 @@ class ProviderController extends ChangeNotifier {
     _publishingLocation.add(job.id);
     notifyListeners();
     try {
-      final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-        ),
-      );
-
       final sequence = (_locationSequences[job.id] ?? 0) + 1;
       _locationSequences[job.id] = sequence;
+
+      // Always ensure presence and consent are recorded before sending coordinates
       await client.subscribeBooking(job.id);
       await client.sendPresence(true);
+      await client.sendLocationConsent(
+        bookingId: job.id,
+        granted: true,
+        noticeVersion: '2026-08-13',
+      );
+      locationSharing[job.id] = true;
+
+      // User requested: simulate provider ~25 km away from customer location for testing with 2 devices
+      double latitude;
+      double longitude;
+      const double accuracy = 5.0;
+
+      final custLat = current.locationLatitude ?? job.locationLatitude;
+      final custLng = current.locationLongitude ?? job.locationLongitude;
+
+      if (custLat != null && custLng != null) {
+        // Delta for 25.0 km: deltaLat = 0.187° (~20.8 km), deltaLng = 0.135° (~13.8 km) -> 24.96 km ~ 25 km
+        // Smoothly advances 2% closer with each periodic tick
+        final progress = ((sequence - 1) * 0.02).clamp(0.0, 0.85);
+        final factor = 1.0 - progress;
+        latitude = custLat + (0.187 * factor);
+        longitude = custLng + (0.135 * factor);
+      } else {
+        // Fallback default coordinates (Ahmedabad city base + 25km offset)
+        latitude = 23.0268278 + 0.187;
+        longitude = 73.0698506 + 0.135;
+      }
+
       await client.sendLocation(
         bookingId: job.id,
         sequence: sequence,
-        capturedAt: position.timestamp,
-        latitude: position.latitude,
-        longitude: position.longitude,
-        accuracyMeters: position.accuracy,
+        capturedAt: DateTime.now(),
+        latitude: latitude,
+        longitude: longitude,
+        accuracyMeters: accuracy,
       );
       locationPublished[job.id] = true;
     } on StateError catch (error) {
       actionError = _locationError(error.message.toString());
     } catch (_) {
       actionError =
-          'Your current location could not be sent. Allow browser location access and try again.';
+          'Your current location could not be sent. Check connection and try again.';
     } finally {
       _publishingLocation.remove(job.id);
       notifyListeners();

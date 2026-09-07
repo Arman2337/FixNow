@@ -62,6 +62,7 @@ describe('BookingCallsService', () => {
         }),
       ),
       save: jest.fn((entity) => Promise.resolve(entity)),
+      update: jest.fn().mockResolvedValue({ affected: 0 }),
     } as unknown as jest.Mocked<Repository<BookingCall>>;
 
     messagesRepo = {
@@ -142,6 +143,27 @@ describe('BookingCallsService', () => {
       await expect(service.initiateCall(bookingId, strangerId)).rejects.toThrow(
         ForbiddenException,
       );
+    });
+
+    it('returns active call when found', async () => {
+      bookingsRepo.findOne.mockResolvedValue(
+        mockBooking(BookingStatus.ASSIGNED),
+      );
+      callsRepo.findOne.mockResolvedValue(mockCall());
+
+      const result = await service.getActiveCall(bookingId, customerId);
+      expect(result).not.toBeNull();
+      expect(result?.status).toBe('RINGING');
+    });
+
+    it('returns null when no active call exists', async () => {
+      bookingsRepo.findOne.mockResolvedValue(
+        mockBooking(BookingStatus.ASSIGNED),
+      );
+      callsRepo.findOne.mockResolvedValue(null);
+
+      const result = await service.getActiveCall(bookingId, customerId);
+      expect(result).toBeNull();
     });
   });
 

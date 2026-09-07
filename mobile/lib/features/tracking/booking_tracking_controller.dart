@@ -120,7 +120,7 @@ class BookingTrackingController extends ChangeNotifier {
 
   Future<void> applyRealtime(BookingTracking next) async {
     final current = tracking;
-    if (next.bookingId != bookingId ||
+    if (next.bookingId.trim().toLowerCase() != bookingId.trim().toLowerCase() ||
         (current != null && next.sequence < current.sequence)) {
       return;
     }

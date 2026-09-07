@@ -53,6 +53,14 @@ describe('SchedulesService', () => {
     bookings as never,
   );
 
+  beforeAll(() => {
+    jest.useFakeTimers().setSystemTime(now);
+  });
+
+  afterAll(() => {
+    jest.useRealTimers();
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
     categories.findOneBy.mockResolvedValue({ id: categoryId, isActive: true });

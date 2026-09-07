@@ -16,6 +16,9 @@ class FakeChatRepository implements ChatRepository {
   final List<String> sentMessages = [];
 
   @override
+  String? get currentUserId => 'customer-1';
+
+  @override
   Future<({List<ChatMessage> messages, bool canSend})> fetchMessages(
     String bookingId,
   ) async {

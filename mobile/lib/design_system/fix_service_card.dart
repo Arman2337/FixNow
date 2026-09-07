@@ -67,7 +67,7 @@ class FixServiceCard extends StatelessWidget {
   final String name;
 
   /// Overrides the composed accessibility label when a caller needs a
-  /// specific contract (e.g. browse lists announce "<name> service category").
+  /// specific contract (e.g. browse lists announce "`<name>` service category").
   final String? semanticLabel;
 
   /// Availability state to present.

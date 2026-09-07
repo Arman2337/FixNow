@@ -9,8 +9,9 @@ class ChatController extends ChangeNotifier {
     required this.bookingId,
     required this.repository,
     this.realtimeClient,
-    this.currentUserId,
-  }) {
+    String? currentUserId,
+    this.isProvider = false,
+  }) : currentUserId = currentUserId ?? repository.currentUserId {
     _init();
   }
 
@@ -18,6 +19,7 @@ class ChatController extends ChangeNotifier {
   final ChatRepository repository;
   final RealtimeClient? realtimeClient;
   final String? currentUserId;
+  final bool isProvider;
 
   List<ChatMessage> _messages = [];
   bool _isLoading = true;
@@ -25,6 +27,7 @@ class ChatController extends ChangeNotifier {
   bool _canSend = true;
   String? _errorMessage;
   StreamSubscription<RealtimeProjection>? _realtimeSub;
+  Timer? _pollTimer;
 
   List<ChatMessage> get messages => List.unmodifiable(_messages);
   bool get isLoading => _isLoading;
@@ -35,6 +38,47 @@ class ChatController extends ChangeNotifier {
   void _init() {
     load();
     _listenToRealtime();
+    realtimeClient?.subscribeBooking(bookingId);
+  }
+
+  void startPolling() {
+    _pollTimer?.cancel();
+    _pollTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+      if (!_isSending) {
+        _pollMessages();
+      }
+    });
+  }
+
+  void stopPolling() {
+    _pollTimer?.cancel();
+    _pollTimer = null;
+  }
+
+  Future<void> _pollMessages() async {
+    try {
+      final result = await repository.fetchMessages(bookingId);
+      _canSend = result.canSend;
+      bool changed = false;
+      for (final msg in result.messages) {
+        final idx = _messages.indexWhere(
+          (m) =>
+              m.id == msg.id ||
+              (msg.clientMessageId != null &&
+                  m.clientMessageId == msg.clientMessageId),
+        );
+        if (idx < 0) {
+          _messages.add(msg);
+          changed = true;
+        } else if (_messages[idx].readAt != msg.readAt) {
+          _messages[idx] = msg;
+          changed = true;
+        }
+      }
+      if (changed) {
+        notifyListeners();
+      }
+    } catch (_) {}
   }
 
   void _listenToRealtime() {
@@ -57,18 +101,23 @@ class ChatController extends ChangeNotifier {
   }
 
   void _appendRealtimeMessage(ChatMessage message) {
+    final effectiveIsMe =
+        (currentUserId != null && message.senderUserId == currentUserId) ||
+        message.isMe;
+    final resolved = message.copyWith(isMe: effectiveIsMe);
+
     // Check if already in list by ID or clientMessageId
     final index = _messages.indexWhere(
       (m) =>
-          m.id == message.id ||
-          (message.clientMessageId != null &&
-              m.clientMessageId == message.clientMessageId),
+          m.id == resolved.id ||
+          (resolved.clientMessageId != null &&
+              m.clientMessageId == resolved.clientMessageId),
     );
 
     if (index >= 0) {
-      _messages[index] = message;
+      _messages[index] = resolved;
     } else {
-      _messages.add(message);
+      _messages.add(resolved);
     }
     notifyListeners();
   }
@@ -103,8 +152,8 @@ class ChatController extends ChangeNotifier {
     final optimisticMessage = ChatMessage(
       id: tempClientId,
       bookingId: bookingId,
-      senderUserId: currentUserId ?? 'me',
-      senderRole: 'CUSTOMER',
+      senderUserId: currentUserId ?? (isProvider ? 'provider' : 'customer'),
+      senderRole: isProvider ? 'PROVIDER' : 'CUSTOMER',
       messageText: trimmed,
       clientMessageId: tempClientId,
       createdAt: DateTime.now(),
@@ -143,6 +192,7 @@ class ChatController extends ChangeNotifier {
 
   @override
   void dispose() {
+    _pollTimer?.cancel();
     _realtimeSub?.cancel();
     super.dispose();
   }

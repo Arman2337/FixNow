@@ -1,5 +1,6 @@
 import {
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Param,
@@ -18,6 +19,17 @@ import type {
 @Controller('bookings/:id/calls')
 export class BookingCallsController {
   constructor(private readonly callsService: BookingCallsService) {}
+
+  @Get('active')
+  @HttpCode(HttpStatus.OK)
+  @RequireOwnPermission(PERMISSIONS.bookingCallManageSelf)
+  async getActive(
+    @Req() req: AuthorizedRequest,
+    @Param('id') bookingId: string,
+  ): Promise<BookingCallDto | null> {
+    const userId = req.authorizationPrincipal!.userId;
+    return this.callsService.getActiveCall(bookingId, userId);
+  }
 
   @Post('initiate')
   @HttpCode(HttpStatus.CREATED)

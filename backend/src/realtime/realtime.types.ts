@@ -19,6 +19,8 @@ export interface RealtimeClientMessage {
   readonly accuracyMeters?: number;
   readonly messageText?: string;
   readonly clientMessageId?: string;
+  readonly callId?: string;
+  readonly data?: string;
 }
 
 export interface RealtimeConnectionState {
@@ -29,6 +31,8 @@ export interface RealtimeConnectionState {
   alive: boolean;
   messageWindowStartedAt: number;
   messageCount: number;
+  voiceWindowStartedAt?: number;
+  voiceMessageCount?: number;
   subscriptions: Map<string, RealtimeSubscription>;
   authTimer?: NodeJS.Timeout;
 }

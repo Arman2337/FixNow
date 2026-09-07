@@ -5,6 +5,7 @@ import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/app_typography.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/features/bookings/job_proof_service.dart';
+import 'package:fixnow_mobile/design_system/fix_before_after_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -265,6 +266,61 @@ class _JobProofVerificationDialogState
                   ),
                 ),
 
+              // Preview Comparison Slider Button
+              if (hasBoth)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: () {
+                      showDialog<void>(
+                        context: context,
+                        builder: (_) => Dialog(
+                          backgroundColor: AppColors.backgroundPrimary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.card),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(AppSpacing.md),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    const Text(
+                                      'Compare Before & After',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.close_rounded, color: Colors.white),
+                                      onPressed: () => Navigator.of(context).pop(),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                FixBeforeAfterSlider(
+                                  beforeBytes: _beforeBytes,
+                                  afterBytes: _afterBytes,
+                                  height: 260,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.compare_arrows_rounded, size: 14, color: AppColors.focus),
+                    label: const Text(
+                      'Preview Comparison Slider',
+                      style: TextStyle(color: AppColors.focus, fontSize: 12),
+                    ),
+                  ),
+                ),
+
               // Work Notes TextField
               const SizedBox(height: AppSpacing.sm),
               TextField(
@@ -520,6 +576,63 @@ class JobProofViewerCard extends StatelessWidget {
                 ),
             ],
           ),
+
+          if (proof.hasBeforePhoto && proof.hasAfterPhoto) ...[
+            const SizedBox(height: AppSpacing.sm),
+            OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.accentGold,
+                side: const BorderSide(color: AppColors.accentGold),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.small),
+                ),
+              ),
+              onPressed: () {
+                showDialog<void>(
+                  context: context,
+                  builder: (_) => Dialog(
+                    backgroundColor: AppColors.backgroundPrimary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.card),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppSpacing.md),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'Interactive Work Comparison',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.close_rounded, color: Colors.white),
+                                onPressed: () => Navigator.of(context).pop(),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          FixBeforeAfterSlider(
+                            beforeBytes: proof.beforePhotoBytes,
+                            afterBytes: proof.afterPhotoBytes,
+                            height: 280,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.compare_arrows_rounded, size: 16),
+              label: const Text('Interactive Comparison Slider', style: TextStyle(fontSize: 12)),
+            ),
+          ],
 
           if (proof.notes != null) ...[
             const SizedBox(height: 10),

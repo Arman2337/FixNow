@@ -8,6 +8,8 @@ import 'package:fixnow_mobile/features/bookings/booking.dart';
 import 'package:fixnow_mobile/features/bookings/cancellation_dialog.dart';
 import 'package:fixnow_mobile/features/bookings/job_proof_service.dart';
 import 'package:fixnow_mobile/design_system/fix_job_proof_dialog.dart';
+import 'package:fixnow_mobile/features/call/call_repository.dart';
+import 'package:fixnow_mobile/features/chat/chat_repository.dart';
 import 'package:fixnow_mobile/features/provider/provider_active_job_cockpit_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_controller.dart';
 import 'package:flutter/material.dart';
@@ -17,11 +19,15 @@ class ProviderJobsScreen extends StatelessWidget {
   const ProviderJobsScreen({
     required this.controller,
     required this.showHistory,
+    this.chatRepository,
+    this.callRepository,
     super.key,
   });
 
   final ProviderController controller;
   final bool showHistory;
+  final ChatRepository? chatRepository;
+  final CallRepository? callRepository;
 
   @override
   Widget build(BuildContext context) => ListenableBuilder(
@@ -69,6 +75,8 @@ class ProviderJobsScreen extends StatelessWidget {
                   job: job,
                   controller: controller,
                   readOnly: showHistory,
+                  chatRepository: chatRepository,
+                  callRepository: callRepository,
                 ),
               ),
           ],
@@ -83,11 +91,15 @@ class _JobCard extends StatelessWidget {
     required this.job,
     required this.controller,
     required this.readOnly,
+    this.chatRepository,
+    this.callRepository,
   });
 
   final CustomerBooking job;
   final ProviderController controller;
   final bool readOnly;
+  final ChatRepository? chatRepository;
+  final CallRepository? callRepository;
 
   @override
   Widget build(BuildContext context) {
@@ -145,6 +157,8 @@ class _JobCard extends StatelessWidget {
                     builder: (_) => ProviderActiveJobCockpitScreen(
                       job: job,
                       controller: controller,
+                      chatRepository: chatRepository,
+                      callRepository: callRepository,
                     ),
                   ),
                 ),

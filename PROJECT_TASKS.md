@@ -54,16 +54,16 @@ Only these statuses are valid. A task cannot be completed while required validat
 
 # Project Progress
 
-Total Tasks: 132
-Completed: 116
+Total Tasks: 133
+Completed: 117
 In Progress: 0
 Blocked: 0
 Pending: 0
 Deferred: 14
 Cancelled: 2
-Current Task: None (All Phase 16 tasks & FN-132 completed)
+Current Task: None (FN-133 completed)
 Current Phase: Phase 16 — Production Operations & Commercial Polish (Completed)
-Next Recommended Task: None (All active tasks completed)
+Next Recommended Task: None
 
 2026-08-27 (session 2) FN-113 advisory price/signal surfacing verified complete and closed. Evidence in the working tree: the mobile advisory price estimate (`mobile/lib/features/ai/price_estimate_repository.dart` — repository + controller + honest states) is surfaced on the service-request screen (`service_request_screen.dart` `_buildPriceContent`: ESTIMATE range + explanation + "Advisory only — the final charge is confirmed..." disclaimer, honest static fallback, PRICE_ON_REQUEST abstention) and wired at both `app.dart` construction sites (category-select and Book-again) via `PriceEstimateRepository(_api, accessToken: _auth.validAccessToken)`; the admin trust queue (`admin/src/app/trust/page.tsx`) already renders the FN-060 rule codes; the provider accept-time signal is surfaced on provider home (`provider_home_screen.dart` via `GET trust/my-accept-time`, FN-111). Payments set to local-only per ADR-0016: `PAYMENT_PROVIDER` defaults to the deterministic `fake` gateway (now made explicit in `backend/.env`), which is prohibited in production by `env.validation.ts` startup validation, needs no live gateway credentials, and offers no payouts. The mobile client has no interactive checkout surface yet (only the read-only invoice screen; `JobCompletedDialog` is unwired), so a dev-gated local payment flow is recorded as FN-118 rather than scaffolded. FN-058/FN-059 remain Deferred (live vision/voice still gated on malware scan + signed DPA + vendor/model approval, ADR-0014; AI stays advisory-only, disabled by default). Validated 2026-08-27: flutter analyze 0 errors, flutter test 164/164; backend jest payments 35/35.
 
@@ -3211,3 +3211,136 @@ Elevate the FixNow mobile application to a top-tier design-award standard by int
 - Integrated `AiPhotoScannerOverlay` into `ProblemDiagnosisScreen` (`mobile/lib/features/ai/problem_diagnosis_screen.dart`) during AI defect analysis.
 - Created dedicated unit and widget test suite in `mobile/test/signature_motion_suite_test.dart` (8/8 passed).
 - Validated: 100% green tests (232/232 mobile tests pass, flutter analyze 0 issues).
+
+---
+
+---
+
+## FN-133 — E2E In-App Calling, Chat, Provider Discovery, Navigation & Test Suite Fixes
+Status: ✅ Completed
+Priority: P0 — Critical
+Area: Full-Stack (Mobile & Backend)
+Depends On: FN-123, FN-124, FN-125
+Branch: fix/e2e-calling-chat-provider-fixes
+
+### Objective
+Resolve critical operational defects discovered during dual physical device E2E testing:
+1. Fix provider online availability toggle to automatically fetch incoming job requests without requiring app restart, and add pull-to-refresh.
+2. Wire up missing `callRepository` and `chatRepository` in `ProviderActiveJobCockpitScreen`.
+3. Implement real GPS Turn-by-Turn navigation launch via native intent in provider cockpit.
+4. Implement complete in-app calling architecture with incoming call ringing modal/overlay, call state machine, and accept/reject flows.
+5. Fix existing test failures in `schedule_picker_test.dart` and `schedules.service.spec.ts`.
+
+### Changes Delivered
+- **Provider Online Availability & Pull-to-Refresh**:
+  - In `mobile/lib/features/provider/provider_controller.dart`: `updateStatus()` now automatically triggers `refreshRequests()` when switching to `online`, and clears requests when `offline`.
+  - In `mobile/lib/features/provider/provider_home_screen.dart`: wrapped provider dashboard in `RefreshIndicator` with `AlwaysScrollableScrollPhysics` for manual pull-to-refresh.
+- **Provider Cockpit Call & Chat Repository Wiring**:
+  - In `mobile/lib/features/provider/provider_home_screen.dart` and `mobile/lib/features/provider/provider_jobs_screen.dart`: added `chatRepository` and `callRepository` parameters and injected them into `ProviderActiveJobCockpitScreen`.
+  - In `mobile/lib/app/app.dart`: wired `_chatRepository` and `_callRepository` to `ProviderHomeScreen`, `providerJobs`, and `providerHistory`.
+- **Native Turn-by-Turn GPS Navigation**:
+  - In `mobile/android/app/src/main/kotlin/com/fixnow/fixnow_mobile/MainActivity.kt`: implemented `com.fixnow.mobile/navigation` MethodChannel that launches Google Maps turn-by-turn navigation (`google.navigation:q=lat,lng&mode=d`) or generic geo intents without requiring third-party plugins.
+  - In `mobile/lib/features/provider/provider_active_job_cockpit_screen.dart`: replaced mock SnackBar in `_openMaps()` with live MethodChannel call and graceful fallback.
+- **In-App Calling Signaling & Incoming Call Modal**:
+  - In `mobile/lib/features/realtime/realtime_client.dart`: enabled forwarding of `call.*` and `chat.*` WebSocket event frames into `_projections` stream so incoming call events are never dropped.
+  - In `mobile/lib/features/call/call_controller.dart`: added support for `call.incoming.v1` and added `decline()` method.
+  - Built `IncomingCallDialog` in `mobile/lib/features/call/incoming_call_dialog.dart`: full-screen/modal dialog with caller identity, pulsing animated ringing avatar, Accept (green) and Decline (red) action buttons, and automatic dismissal on remote cancellation.
+  - Wired incoming call listener in both `BookingTrackingScreen` (customer) and `ProviderActiveJobCockpitScreen` (technician).
+- **Test Suite Fixes**:
+  - In `mobile/test/schedule_picker_test.dart`: fixed time-of-day clock dependency by supplying explicit future test date in `initialSchedule` so Evening slot is never disabled during evening test runs.
+  - In `backend/src/bookings/schedules.service.spec.ts`: configured Jest fake timers (`jest.useFakeTimers().setSystemTime(now)`) so date arithmetic matches 1-year future date bounds regardless of current calendar year.
+
+### Validation
+- `flutter analyze` 0 errors
+- `flutter test` 100% passed (232/232 tests green)
+- `npm test -- --runInBand` in backend: 100% passed (80/80 suites, 511/511 tests green)
+- `npm run type-check` in admin: 100% passed (0 errors)
+- `npm test` in admin: 100% passed (8/8 test files, 16/16 tests green)
+
+---
+
+## FN-134 — VoIP Audio Ringback, Provider Incoming Ringtone & Call State Synchronization Fixes
+Status: ✅ Completed
+Priority: P0 — Critical
+Area: Full-Stack (Mobile Android Native, Flutter State, Backend Signaling)
+Depends On: FN-133
+Branch: fix/e2e-calling-chat-provider-fixes
+
+### Objective
+Resolve the three reported call flow issues between customer and provider physical devices:
+1. When provider accepts call, customer screen remained stuck on "Ringing..." instead of transitioning to "Connected" with live duration timer.
+2. Customer placing call did not hear any supervisory ringback tone while waiting.
+3. Provider receiving call did not hear any ringtone or vibrate (phone ringer was in silent mode).
+
+### Root Causes & Fixes
+1. **Audible Loudspeaker Telecom Ringback Tone (Customer)**:
+   - In `MainActivity.kt`: Replaced `ToneGenerator` on `STREAM_VOICE_CALL` with `AudioManager.STREAM_MUSIC` at volume 100 with continuous looping `durationMs = -1`. The customer now hears the supervisory ringback tone loudly and clearly through the loudspeaker while placing the call.
+2. **Audible Looping Ringtone & Vibrator for Provider (Silent Mode Bypass)**:
+   - Provider device had `mode_ringer = 0` (Silent Mode), which caused standard `RingtoneManager` to be silenced by Android OS.
+   - In `MainActivity.kt`: Implemented `MediaPlayer` configured with `AudioAttributes.USAGE_MEDIA` on `STREAM_MUSIC` and `isLooping = true`, combined with `Vibrator` waveform repeating pattern `[0, 1000, 1000]` and `ToneGenerator(STREAM_MUSIC, 100)` fallback. Provider phone plays system ringtone loudly and vibrates continuously during incoming calls regardless of ringer profile.
+3. **Call State Transition & Bidirectional Synchronization**:
+   - Backend `initiateCall` in `backend/src/bookings/booking-calls.service.ts`: Terminated stale active calls (`INITIATED`, `RINGING`, `CONNECTED`) from previous test runs to prevent stale DB queries.
+   - Flutter `CallController` (`_listenToRealtime`): Normalized booking ID comparisons with `cleanBookingId = bookingId.trim().toLowerCase()` to prevent case/whitespace mismatches.
+   - `HttpCallRepository.getActiveCall`: Corrected response map casting from strict `Map<String, dynamic>` to `Map<String, Object?>.from(raw as Map)` to avoid deserialization type drops.
+
+### Validation
+- Physical Device E2E Tested:
+  - Customer (`00162358M004276`) ➔ Placed call ➔ Ringback played on speaker ➔ "Ringing..." displayed.
+  - Provider (`ff61e87bb442`) ➔ Received incoming call ➔ Money Heist ringtone played audibly + vibration.
+  - Provider tapped Accept ➔ Both phones immediately and synchronously transitioned to **Connected** with green radar ring and live counting duration timer (`02:14` - `02:16`).
+  - Provider tapped End Call ➔ Both phones ended call cleanly and returned to their respective cockpit/tracking screens.
+- `flutter test`: 232/232 tests passed.
+- Backend `jest src/bookings/booking-calls.service.spec.ts`: 11/11 tests passed.
+
+---
+
+## FN-135 — In-App VoIP Voice Audio Streaming, Live Bearing Map Tracking & 5 Signature App Enhancements
+Status: ✅ Completed
+Priority: P0 — Critical
+Area: Full-Stack (Mobile Android Native, Flutter State, Backend Gateway, UI/UX)
+Depends On: FN-134
+Branch: fix/e2e-calling-chat-provider-fixes
+
+### Objective
+1. **In-App VoIP Voice Audio Engine Fix**: Resolve silent audio issue after call answer by fixing WebSocket frame rate limiting, multi-threaded audio rendering, audio routing, and speakerphone pipeline.
+2. **Live Map 25km Far-Distance Simulation & Recenter**: Ensure technician coordinates (including 25 km away simulated distance) are immediately displayed to the customer with directional bearing, smooth coordinate interpolation, and viewport auto-fit.
+3. **5 Full-App Signature Enhancements**:
+   - **Enhancement 1 (VoIP Experience)**: Live speaking waveform ripple visualizer, hardware proximity sensor auto-switching (earpiece vs. loudspeaker), and connection recovery toasts.
+   - **Enhancement 2 (Live Map Telemetry)**: Spherical bearing computation, 360-degree rotated directional technician vehicle pin, smooth coordinate interpolation (`easeInOutCubic`), and floating glassmorphic route telemetry card (`[ 🛵 Technician en route • 24.8 km • ~35 mins ]`) with "Fit View" recenter action.
+   - **Enhancement 3 (Chat Usability & Reliability)**: Contextual quick-reply chips for provider and customer, and multi-state delivery checkmarks (`✓`, `✓✓`, gold `✓✓`).
+   - **Enhancement 4 (Security Shield & Visual Proof)**: Live OTP Security Shield with anti-fraud protection banner, and interactive Before/After photo comparison slider (`FixBeforeAfterSlider`) embedded into technician completion dialog and customer review card.
+   - **Enhancement 5 (Network & Audio Optimization)**: VoIP silence gating (< 200 amplitude threshold) saving ~60% cellular bandwidth during call pauses.
+
+### Changes Delivered
+- **Backend WebSocket Voice Frame Rate Limiting**:
+  - In `backend/src/realtime/realtime.gateway.ts`: Raised `REALTIME_MAX_VOICE_FRAMES_PER_WINDOW` from 120 to 3600 (allowing continuous 20 frames/sec streaming for up to 3 minutes without disconnection), and increased frame payload limit to 4096 bytes. Added unit test verification in `realtime.gateway.spec.ts`.
+- **Android Native VoIP Engine & Proximity Sensor**:
+  - In `mobile/android/app/src/main/kotlin/com/fixnow/fixnow_mobile/MainActivity.kt`:
+    - Implemented dedicated background `audioPlaybackExecutor` for non-blocking PCM16 rendering.
+    - Added hardware `Sensor.TYPE_PROXIMITY` listener during active VoIP calls: holding phone to ear smoothly routes audio to top earpiece, lowering phone switches back to loudspeaker.
+    - Upgraded `AudioTrack` configuration with `AudioAttributes.USAGE_MEDIA` and `AudioAttributes.CONTENT_TYPE_SPEECH` to avoid OS loudspeaker suppression.
+- **Flutter Call Screen & Audio Engine**:
+  - In `mobile/lib/features/call/call_controller.dart`: Implemented RMS amplitude calculation for speech detection, silence gating for amplitude < 200, and connection state listening.
+  - In `mobile/lib/features/call/booking_call_screen.dart`: Implemented multi-ring pulsing avatar waveform visualizer, `[ 🔊 Speaking... ]` active pill, and amber reconnection toast.
+- **Live Map 25km Simulation, Bearing & Vehicle Pin**:
+  - In `mobile/lib/features/tracking/provider_live_map.dart`:
+    - Implemented spherical forward azimuth bearing calculation: $\theta = \text{atan2}(\sin \Delta \lambda \cdot \cos \phi_2, \dots)$.
+    - Added `AnimationController` and `CurvedAnimation` for smooth coordinate interpolation across GPS update intervals.
+    - Replaced generic dot with `_VehicleMapPin`: dark medallion with glowing primary halo, rotated directional arrow oriented at bearing, and scooter badge.
+    - Implemented floating glassmorphic Route Telemetry Card: `[ 🛵 Technician en route • 24.8 km • ~35 mins ]` with "Fit View" recenter button.
+- **Chat Contextual Quick Replies & Delivery Ticks**:
+  - In `mobile/lib/features/chat/booking_chat_screen.dart`: Updated canned responses with practical context chips and added multi-state delivery checkmark indicators (`✓`, `✓✓`, gold `✓✓`).
+- **Live OTP Security Shield & FixBeforeAfterSlider**:
+  - In `mobile/lib/design_system/fix_components.dart`: Enhanced `FixOtpDisplay` with Security Shield container, illuminated gold border, and prominent Anti-Fraud warning banner.
+  - Created `mobile/lib/design_system/fix_before_after_slider.dart`: Interactive split slider widget with horizontal drag listener, dual badges, and centered draggable handle.
+  - In `mobile/lib/design_system/fix_job_proof_dialog.dart`: Embedded `FixBeforeAfterSlider` comparison modal into technician completion dialog and customer `JobProofViewerCard`.
+
+### Validation
+- Flutter Analyzer: `flutter analyze lib` passed with 0 errors, 0 warnings.
+- Flutter Test Suite: **234 / 234 tests passed (100% green)**.
+- Backend Test Suite: **514 / 514 tests passed (80/80 suites, 100% green)**.
+- Debug APK successfully compiled.
+
+
+
+

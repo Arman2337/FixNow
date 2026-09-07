@@ -741,7 +741,7 @@ class _TimelineDot extends StatelessWidget {
   }
 }
 
-/// OTP Code Display Box for Service Start
+/// Live OTP Security Shield Display Box for Service Start
 class FixOtpDisplay extends StatelessWidget {
   const FixOtpDisplay({this.otp = '7362', super.key});
 
@@ -749,27 +749,44 @@ class FixOtpDisplay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FixCard(
-      tone: FixCardTone.elevated,
-      borderColor: AppColors.borderGold,
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surfaceElevated,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: AppColors.borderGold, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.accentGold.withValues(alpha: 0.12),
+            blurRadius: 16,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
-                Icons.shield_rounded,
-                color: AppColors.accentGold,
-                size: 18,
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: AppColors.accentGold.withValues(alpha: 0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.shield_rounded,
+                  color: AppColors.accentGold,
+                  size: 16,
+                ),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 8),
               Text(
                 'SERVICE START CODE',
                 style: AppTypography.caption.copyWith(
                   color: AppColors.accentGold,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.1,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.2,
                 ),
               ),
             ],
@@ -777,10 +794,57 @@ class FixOtpDisplay extends StatelessWidget {
           const SizedBox(height: AppSpacing.md),
           FlipOtpDigits(otp: otp),
           const SizedBox(height: AppSpacing.md),
-          const Text(
-            'Keep this code private. Share it with the professional only after they arrive.\nWork starts only after they verify it.',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+          // Branded Security Shield Anti-Fraud Container
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.sm,
+            ),
+            decoration: BoxDecoration(
+              color: AppColors.backgroundPrimary,
+              borderRadius: BorderRadius.circular(AppRadius.small),
+              border: Border.all(
+                color: AppColors.accentGold.withValues(alpha: 0.3),
+              ),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.only(top: 2),
+                  child: Icon(
+                    Icons.lock_person_rounded,
+                    color: AppColors.accentGold,
+                    size: 16,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'FixNow Anti-Fraud Protection',
+                        style: AppTypography.caption.copyWith(
+                          color: AppColors.cream,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 11,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      const Text(
+                        'Do NOT share this code over phone, SMS, or chat. Share ONLY in person when the technician is physically at your doorstep.',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 11,
+                          height: 1.35,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),

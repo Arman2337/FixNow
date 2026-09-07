@@ -54,6 +54,11 @@ void main() {
       await tester.pumpWidget(
         host(
           FixSchedulePickerCard(
+            initialSchedule: BookingSchedule(
+              mode: ScheduleMode.now,
+              date: DateTime.now().add(const Duration(days: 2)),
+              slot: TimeSlot.standardSlots[1],
+            ),
             onScheduleChanged: (s) => active = s,
           ),
         ),

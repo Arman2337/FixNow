@@ -16,9 +16,9 @@ class ComplaintsRepository {
       method: ApiMethod.post,
       path: '/support/complaints',
       body: {
-        if (bookingId != null) 'bookingId': bookingId,
+        'bookingId': ?bookingId,
         'targetRole': targetRole,
-        if (targetId != null) 'targetId': targetId,
+        'targetId': ?targetId,
         'category': category,
         'description': description,
       },

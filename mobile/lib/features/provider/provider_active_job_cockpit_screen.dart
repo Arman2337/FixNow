@@ -10,14 +10,19 @@ import 'package:fixnow_mobile/design_system/fix_status_chip.dart';
 import 'package:fixnow_mobile/features/bookings/booking.dart';
 import 'package:fixnow_mobile/features/bookings/cancellation_dialog.dart';
 import 'package:fixnow_mobile/features/bookings/job_proof_service.dart';
+import 'dart:async';
 import 'package:fixnow_mobile/features/call/booking_call_screen.dart';
 import 'package:fixnow_mobile/features/call/call_controller.dart';
 import 'package:fixnow_mobile/features/call/call_repository.dart';
+import 'package:fixnow_mobile/features/call/call_session.dart';
+import 'package:fixnow_mobile/features/call/incoming_call_dialog.dart';
 import 'package:fixnow_mobile/features/chat/booking_chat_screen.dart';
 import 'package:fixnow_mobile/features/chat/chat_controller.dart';
 import 'package:fixnow_mobile/features/chat/chat_repository.dart';
 import 'package:fixnow_mobile/features/provider/provider_controller.dart';
+import 'package:fixnow_mobile/features/realtime/realtime_client.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// Comprehensive interactive job execution cockpit for service technicians (FN-129).
 /// Guides the technician through the full real-world lifecycle:
@@ -48,6 +53,74 @@ class _ProviderActiveJobCockpitScreenState
     extends State<ProviderActiveJobCockpitScreen> {
   bool _isProcessing = false;
   String? _inlineError;
+  StreamSubscription<RealtimeProjection>? _callSub;
+  Timer? _locationTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.realtime?.subscribeBooking(_currentJob().id);
+    _listenForIncomingCalls();
+    if (_currentJob().status == 'EN_ROUTE' &&
+        widget.controller.locationSharing[widget.job.id] == true) {
+      _startLocationBroadcasting();
+    }
+  }
+
+  void _startLocationBroadcasting() {
+    _locationTimer?.cancel();
+    // Immediately publish first location so customer map gets live route without delay
+    final initial = _currentJob();
+    final isSharingInitial = widget.controller.locationSharing[initial.id] ?? true;
+    if (initial.status == 'EN_ROUTE' &&
+        isSharingInitial &&
+        !widget.controller.isPublishingLocation(initial.id)) {
+      widget.controller.publishCurrentLocation(initial);
+    }
+    _locationTimer = Timer.periodic(const Duration(seconds: 12), (_) async {
+      final current = _currentJob();
+      final isSharingCurrent = widget.controller.locationSharing[current.id] ?? true;
+      if (current.status == 'EN_ROUTE' &&
+          isSharingCurrent &&
+          !widget.controller.isPublishingLocation(current.id)) {
+        await widget.controller.publishCurrentLocation(current);
+      }
+    });
+  }
+
+  void _stopLocationBroadcasting() {
+    _locationTimer?.cancel();
+    _locationTimer = null;
+  }
+
+  void _listenForIncomingCalls() {
+    _callSub = widget.controller.realtime?.projections.listen((p) {
+      final type = p.data['type']?.toString();
+      final data = p.data['data'];
+      if (type == 'call.incoming.v1' && data is Map) {
+        final session = CallSession.fromJson(Map<String, Object?>.from(data));
+        // Only show incoming call dialog if caller is NOT the provider
+        if (session.callerRole != 'PROVIDER' &&
+            widget.callRepository != null &&
+            mounted) {
+          IncomingCallDialog.show(
+            context,
+            session: session,
+            repository: widget.callRepository!,
+            realtimeClient: widget.controller.realtime,
+            callerTitle: 'Customer Booking #${_currentJob().id.substring(0, 8)}',
+          );
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _stopLocationBroadcasting();
+    _callSub?.cancel();
+    super.dispose();
+  }
 
   CustomerBooking _currentJob() {
     return widget.controller.jobs.firstWhere(
@@ -62,8 +135,11 @@ class _ProviderActiveJobCockpitScreenState
       _inlineError = null;
     });
     try {
-      await widget.controller.advanceJob(job);
-      await widget.controller.setLocationConsent(job, true);
+      final updated = await widget.controller.advanceJob(job);
+      final current = updated ?? _currentJob();
+      await widget.controller.setLocationConsent(current, true);
+      await widget.controller.publishCurrentLocation(current);
+      _startLocationBroadcasting();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -92,6 +168,7 @@ class _ProviderActiveJobCockpitScreenState
 
     try {
       await widget.controller.verifyOtpAndStartJob(job, otp);
+      _stopLocationBroadcasting();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -179,7 +256,11 @@ class _ProviderActiveJobCockpitScreenState
             repository: widget.chatRepository!,
             bookingId: job.id,
             realtimeClient: widget.controller.realtime,
+            isProvider: true,
           ),
+          providerName: 'Customer',
+          callRepository: widget.callRepository,
+          onCallPressed: () => _openCall(context, job),
         ),
       ),
     );
@@ -199,28 +280,50 @@ class _ProviderActiveJobCockpitScreenState
             bookingId: job.id,
             repository: widget.callRepository!,
             realtimeClient: widget.controller.realtime,
+            initialSpeakerOn: true,
           ),
         ),
       ),
     );
   }
 
-  void _openMaps(CustomerBooking job) {
-    final lat = job.locationLatitude;
-    final lng = job.locationLongitude;
-    final text = lat != null && lng != null
-        ? 'Navigating to lat: ${lat.toStringAsFixed(4)}, lng: ${lng.toStringAsFixed(4)}'
-        : 'Navigating to customer location';
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(text),
-        action: SnackBarAction(
-          label: 'DISMISS',
-          textColor: AppColors.accentGold,
-          onPressed: () {},
+  static const MethodChannel _navChannel =
+      MethodChannel('com.fixnow.mobile/navigation');
+
+  Future<void> _openMaps(CustomerBooking job) async {
+    final lat = job.locationLatitude ?? 12.9716;
+    final lng = job.locationLongitude ?? 77.5946;
+
+    try {
+      await _navChannel.invokeMethod('openNavigation', {
+        'latitude': lat,
+        'longitude': lng,
+        'label': 'Customer Location #${job.id.substring(0, 8)}',
+      });
+    } on MissingPluginException {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Navigating to lat: ${lat.toStringAsFixed(4)}, lng: ${lng.toStringAsFixed(4)}',
+          ),
+          action: SnackBarAction(
+            label: 'DISMISS',
+            textColor: AppColors.accentGold,
+            onPressed: () {},
+          ),
         ),
-      ),
-    );
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Navigating to lat: ${lat.toStringAsFixed(4)}, lng: ${lng.toStringAsFixed(4)}',
+          ),
+        ),
+      );
+    }
   }
 
   @override
@@ -643,7 +746,15 @@ class _ProviderActiveJobCockpitScreenState
                 size: 16,
               ),
               label: Text(sharing ? 'Pause GPS Broadcast' : 'Resume GPS Broadcast'),
-              onPressed: () => widget.controller.setLocationConsent(job, !sharing),
+              onPressed: () async {
+                final current = _currentJob();
+                await widget.controller.setLocationConsent(current, !sharing);
+                if (!sharing) {
+                  _startLocationBroadcasting();
+                } else {
+                  _stopLocationBroadcasting();
+                }
+              },
             ),
           ],
         ),

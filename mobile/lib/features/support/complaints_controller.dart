@@ -1,5 +1,4 @@
 import 'package:flutter/foundation.dart';
-import 'complaints_repository.dart';
 import 'complaint.dart';
 
 enum ComplaintsListStatus { initial, loading, ready, empty, offline, error }

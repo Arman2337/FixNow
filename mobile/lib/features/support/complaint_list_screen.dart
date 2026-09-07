@@ -60,7 +60,7 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
                 child: ListView.separated(
                   padding: const EdgeInsets.all(AppSpacing.md),
                   itemCount: complaints.length,
-                  separatorBuilder: (_, __) =>
+                  separatorBuilder: (context, index) =>
                       const SizedBox(height: AppSpacing.md),
                   itemBuilder: (context, index) {
                     final complaint = complaints[index];

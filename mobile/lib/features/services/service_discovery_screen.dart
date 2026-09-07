@@ -162,11 +162,17 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
           }
         }
       } else {
-        final placemarks = await Geocoding()
-            .placemarkFromCoordinates(position.latitude, position.longitude)
-            .timeout(const Duration(seconds: 3));
-        if (placemarks.isNotEmpty) {
-          _updateLocationName(placemarks.first);
+        try {
+          final placemarks = await Geocoding()
+              .placemarkFromCoordinates(position.latitude, position.longitude)
+              .timeout(const Duration(seconds: 3));
+          if (placemarks.isNotEmpty) {
+            _updateLocationName(placemarks.first);
+          }
+        } catch (_) {
+          if (mounted && _locationName == null) {
+            setState(() => _locationName = 'Current Location');
+          }
         }
       }
     } catch (e) {

@@ -18,6 +18,7 @@ import {
   REALTIME_CLOSE,
   REALTIME_HEARTBEAT_INTERVAL_MS,
   REALTIME_MAX_MESSAGES_PER_WINDOW,
+  REALTIME_MAX_VOICE_FRAMES_PER_WINDOW,
   REALTIME_MAX_PAYLOAD_BYTES,
   REALTIME_MAX_SUBSCRIPTIONS,
   REALTIME_MESSAGE_WINDOW_MS,
@@ -120,15 +121,11 @@ export class RealtimeGateway
   ): Promise<void> {
     const state = this.registry.get(client);
     if (!state) return;
-    if (isBinary || !this.withinMessageLimit(state)) {
-      this.telemetry.increment(
-        isBinary ? 'messages.invalid' : 'limits.exceeded',
-      );
+    if (isBinary) {
+      this.telemetry.increment('messages.invalid');
       client.close(
-        isBinary
-          ? REALTIME_CLOSE.policyViolation
-          : REALTIME_CLOSE.limitExceeded,
-        isBinary ? 'text-frames-only' : 'message-rate-limit',
+        REALTIME_CLOSE.policyViolation,
+        'text-frames-only',
       );
       return;
     }
@@ -136,6 +133,15 @@ export class RealtimeGateway
     if (!message) {
       this.telemetry.increment('messages.invalid');
       this.send(client, { type: 'error', code: 'invalid-message' });
+      return;
+    }
+    const isVoice = message.type === 'call.voice-frame.v1';
+    if (!this.withinMessageLimit(state, isVoice)) {
+      this.telemetry.increment('limits.exceeded');
+      client.close(
+        REALTIME_CLOSE.limitExceeded,
+        isVoice ? 'voice-rate-limit' : 'message-rate-limit',
+      );
       return;
     }
     if (!state.principal) {
@@ -169,12 +175,44 @@ export class RealtimeGateway
       await this.ingestLocation(client, message);
       return;
     }
+    if (message.type === 'call.voice-frame.v1') {
+      this.relayVoiceFrame(client, message);
+      return;
+    }
     this.telemetry.increment('messages.invalid');
     this.send(client, {
       type: 'error',
       requestId: message.requestId,
       code: 'unsupported-message',
     });
+  }
+
+  private relayVoiceFrame(
+    senderClient: WebSocket,
+    message: RealtimeClientMessage,
+  ): void {
+    const bookingId = message.bookingId;
+    const data = message.data;
+    if (!bookingId || !data) return;
+
+    for (const [client, state] of this.registry.entries()) {
+      if (client === senderClient || client.readyState !== WebSocket.OPEN) continue;
+      for (const subscription of state.subscriptions.values()) {
+        if (
+          subscription.channel === 'booking' &&
+          subscription.resourceId?.toLowerCase() === bookingId.toLowerCase()
+        ) {
+          client.send(
+            JSON.stringify({
+              type: 'call.voice-frame.v1',
+              bookingId,
+              callId: message.callId,
+              data,
+            }),
+          );
+        }
+      }
+    }
   }
 
   private async authenticate(
@@ -247,6 +285,7 @@ export class RealtimeGateway
       this.denySubscription(client, message.requestId, 'limit-exceeded');
       return;
     }
+    let booking: Booking | null = null;
     try {
       if (message.channel === 'account') {
         await this.authorization.authorizeAccessToken(
@@ -255,7 +294,7 @@ export class RealtimeGateway
           { ownerId: message.resourceId },
         );
       } else {
-        const booking = await this.dataSource
+        booking = await this.dataSource
           .getRepository(Booking)
           .findOne({ where: { id: message.resourceId } });
         if (
@@ -283,6 +322,19 @@ export class RealtimeGateway
             ? 'snapshot-current'
             : 'snapshot-required',
       });
+      if (message.channel === 'booking' && booking) {
+        try {
+          const latest = await this.location.getLatestAuthorized(
+            state.principal,
+            booking.id,
+          );
+          if (latest) {
+            await this.projections.publishLocation(booking, latest);
+          }
+        } catch {
+          // Best effort initial location projection
+        }
+      }
     } catch {
       this.denySubscription(client, message.requestId, 'not-authorized');
     }
@@ -420,11 +472,28 @@ export class RealtimeGateway
     }
   }
 
-  private withinMessageLimit(state: {
-    messageWindowStartedAt: number;
-    messageCount: number;
-  }): boolean {
+  private withinMessageLimit(
+    state: {
+      messageWindowStartedAt: number;
+      messageCount: number;
+      voiceWindowStartedAt?: number;
+      voiceMessageCount?: number;
+    },
+    isVoice = false,
+  ): boolean {
     const now = Date.now();
+    if (isVoice) {
+      if (
+        !state.voiceWindowStartedAt ||
+        now - state.voiceWindowStartedAt >= REALTIME_MESSAGE_WINDOW_MS
+      ) {
+        state.voiceWindowStartedAt = now;
+        state.voiceMessageCount = 0;
+      }
+      state.voiceMessageCount = (state.voiceMessageCount ?? 0) + 1;
+      return state.voiceMessageCount <= REALTIME_MAX_VOICE_FRAMES_PER_WINDOW;
+    }
+
     if (now - state.messageWindowStartedAt >= REALTIME_MESSAGE_WINDOW_MS) {
       state.messageWindowStartedAt = now;
       state.messageCount = 0;

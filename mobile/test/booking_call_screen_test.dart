@@ -26,6 +26,11 @@ class FakeCallRepository implements CallRepository {
   }
 
   @override
+  Future<CallSession?> getActiveCall(String bookingId) async {
+    return lastInitiated;
+  }
+
+  @override
   Future<CallSession> answerCall(String bookingId, String callId) async {
     answered = true;
     return CallSession(
@@ -179,6 +184,7 @@ void main() {
           status: CallStatus.connected,
           startedAt: DateTime.now(),
         ),
+        initialSpeakerOn: false,
       );
 
       await tester.pumpWidget(

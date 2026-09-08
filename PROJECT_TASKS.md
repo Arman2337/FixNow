@@ -3341,6 +3341,57 @@ Branch: fix/e2e-calling-chat-provider-fixes
 - Backend Test Suite: **514 / 514 tests passed (80/80 suites, 100% green)**.
 - Debug APK successfully compiled.
 
+---
 
+## Task FN-133: UI/UX Master Motion Suite, Interactive Journey Line, VoIP Waveform & WCAG Contrast Hardening
 
+### Changes Delivered
+- **Interactive Living Journey Line (`FixJourneyProgressLine`)**:
+  - Created `mobile/lib/design_system/fix_journey_progress_line.dart`: Horizontal 5-stage animated progress widget (`Booked` → `Matched` → `En Route` → `Work` → `Done`) with `TweenAnimationBuilder` fill, active pulsing live dot (`AppColors.live`), and tap callbacks.
+  - In `mobile/lib/features/tracking/booking_tracking_screen.dart`: Embedded `FixJourneyProgressLine` inside the Service Progress card above `FixTimeline`.
+  - Added unit tests in `mobile/test/fix_journey_progress_line_test.dart` verifying all 5 stages, completed checks, and tap gestures.
+- **Animated VoIP Audio Waveform Visualizer (`FixAudioWaveform`)**:
+  - Created `mobile/lib/design_system/fix_audio_waveform.dart`: 7-bar acoustic visualizer with sinusoidal frequency phase animation during speech, collapsing to 4px minimal ticks during silence/mute (visualizing native < 200 silence gating).
+  - In `mobile/lib/features/call/booking_call_screen.dart`: Embedded `FixAudioWaveform` beneath the status ticker when `CallStatus.connected`.
+  - Added unit tests in `mobile/test/fix_audio_waveform_test.dart` verifying animated bar counts and silence/idle handling.
+- **Haversine Multi-Provider Match Radar Enhancement**:
+  - In `mobile/lib/design_system/signature_motion.dart`: Upgraded `_RadarPainter` to render nearby alerted provider nodes that pulse into view as expanding radar wave rings reach their coordinates.
+- **Interactive UI/UX & Motion Master Report**:
+  - Created `docs/reports/fixnow-uiux-motion-report-2026-09-08.html`: Interactive design showcase with real-time theme switcher (4 palettes), 8 live interactive animation prototypes, WCAG 2.2 AA contrast matrix, competitive moat breakdown, and Flutter code recipes.
+- **WCAG 2.2 AA Contrast Tokens**:
+  - Verified `AppColors` tokens for light surfaces: `ratingOnLight` (`#A64B08`, 4.85:1 Pass AA), `dangerOnLight` (`#C22B31`, 4.6:1 Pass AA), and `successOnLight` (`#15714A`, 6.2:1 Pass AAA).
+
+### Validation
+- Targeted tests: `flutter test test/fix_journey_progress_line_test.dart test/fix_audio_waveform_test.dart test/booking_call_screen_test.dart test/signature_motion_test.dart` passed (17/17).
+- Full Flutter test suite: **256 / 256 tests passed (100% green, 0 failures)**.
+
+---
+
+## Task FN-134: Next-Gen Animation Suite Integration (3D Holographic Tilt, Slide-to-Confirm, Star Sparkle Burst, SOS Vortex & Comet Trail)
+
+### Changes Delivered
+- **3D Holographic Perspective Tilt Card (`Fix3DTiltCard`)**:
+  - In `mobile/lib/design_system/fix_3d_tilt_card.dart`: Created matrix perspective rotation widget (`Matrix4.identity()..setEntry(3, 2, 0.0012)..rotateX()..rotateY()`) reacting dynamically to pointer hover/pan with specular radial sheen highlight and smooth spring level-out.
+  - Added unit test in `mobile/test/fix_3d_tilt_card_test.dart`.
+- **Progressive Slide-to-Confirm Slider (`FixSlideToConfirm`)**:
+  - In `mobile/lib/design_system/fix_slide_to_confirm.dart`: Tactile horizontal drag slider with progressive resistance, haptic ticks (`HapticFeedback.selectionClick`), snap-back reset under 85% threshold, and completion latch with `HapticFeedback.heavyImpact()`.
+  - Added unit test in `mobile/test/fix_slide_to_confirm_test.dart`.
+- **Interactive 5-Star Sparkle Burst (`FixStarRatingBurst`)**:
+  - In `mobile/lib/design_system/fix_star_rating_burst.dart`: 5-star rating selector with `Curves.elasticOut` scale bounce on selection and multi-particle gold sparkle explosion (`_SparklePainter`) on 5-star rating.
+  - Added unit test in `mobile/test/fix_star_rating_burst_test.dart`.
+- **SOS Long-Press Charging Vortex Button (`FixSosVortexButton`)**:
+  - In `mobile/lib/design_system/fix_sos_vortex_button.dart`: Prevents accidental emergency calls via 1.5-second deliberate hold requirement with rotating charging vortex arc ring (`_VortexRingPainter`), expanding pulse halo, and cancellation on premature release.
+  - Added unit test in `mobile/test/fix_sos_vortex_button_test.dart`.
+- **Bouncy Dock Icon Springs**:
+  - In `mobile/lib/design_system/fix_bottom_navigation.dart`: Upgraded `NavigationBar` destinations with `Curves.elasticOut` micro-springs and tactile `HapticFeedback.selectionClick()`.
+- **Shared-Element Hero Expansion**:
+  - In `mobile/lib/design_system/fix_service_card.dart`: Added optional `heroTag` wrapping `_ServiceTile` in `Hero` for fluid catalog-to-detail expansion.
+- **GPS Vehicle Map Comet Trail**:
+  - In `mobile/lib/features/tracking/provider_live_map.dart`: Added dynamic trailing particle comet glow behind `_VehicleMapPin` along the vehicle heading.
+- **Advanced Animations Showcase Report**:
+  - Created `docs/reports/fixnow-advanced-animations-showcase.html`: 10 interactive playable prototypes with real-time controls.
+
+### Validation
+- Flutter Analyzer: `flutter analyze lib` passed with 0 issues.
+- Full Flutter test suite: **261 / 261 tests passed (100% green, 0 failures)**.
 

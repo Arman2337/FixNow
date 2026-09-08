@@ -72,10 +72,24 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
               onSelected: (value) => setState(() => _filter = value),
             ),
             const SizedBox(height: AppSpacing.lg),
-            _BookingSummary(
-              activeCount: widget.controller.bookings
-                  .where((booking) => _isActive(booking.status))
-                  .length,
+            Builder(
+              builder: (context) {
+                final activeBookings = widget.controller.bookings
+                    .where((booking) => _isActive(booking.status))
+                    .toList();
+                return _BookingSummary(
+                  activeCount: activeBookings.length,
+                  onTap: activeBookings.isEmpty
+                      ? null
+                      : () {
+                          setState(() => _filter = _BookingFilter.active);
+                          if (activeBookings.length == 1 &&
+                              widget.onBookingSelected != null) {
+                            widget.onBookingSelected!(activeBookings.first);
+                          }
+                        },
+                );
+              },
             ),
             const SizedBox(height: AppSpacing.lg),
           ],
@@ -193,12 +207,17 @@ class _BookingFilterBar extends StatelessWidget {
 }
 
 class _BookingSummary extends StatelessWidget {
-  const _BookingSummary({required this.activeCount});
+  const _BookingSummary({
+    required this.activeCount,
+    this.onTap,
+  });
   final int activeCount;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) => FixCard(
     tone: FixCardTone.elevated,
+    onTap: onTap,
     semanticLabel: '$activeCount active bookings',
     child: Row(
       children: [
@@ -218,10 +237,14 @@ class _BookingSummary extends StatelessWidget {
             activeCount == 0
                 ? 'No active bookings right now'
                 : '$activeCount active ${activeCount == 1 ? 'booking' : 'bookings'}',
-            style: Theme.of(context).textTheme.titleMedium,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w700,
+                ),
           ),
         ),
-        const Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary),
+        if (activeCount > 0)
+          const Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary),
       ],
     ),
   );

@@ -88,14 +88,14 @@ class _EarningsView extends StatelessWidget {
             Text(
               'Net earnings',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: AppColors.textOnLightSecondary,
+                color: AppColors.textSecondary,
               ),
             ),
             const SizedBox(height: AppSpacing.xs),
             Text(
               earnings.netLabel,
               style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                color: AppColors.textOnLightPrimary,
+                color: AppColors.textPrimary,
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -104,7 +104,7 @@ class _EarningsView extends StatelessWidget {
               'From ${earnings.paidOrderCount} completed '
               '${earnings.paidOrderCount == 1 ? 'payment' : 'payments'}.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.textOnLightSecondary,
+                color: AppColors.textSecondary,
               ),
             ),
           ],
@@ -123,7 +123,7 @@ class _EarningsView extends StatelessWidget {
       ),
       const SizedBox(height: AppSpacing.md),
       FixCard(
-        tone: FixCardTone.secondary,
+        tone: FixCardTone.elevated,
         semanticLabel: 'Payout availability note',
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -133,7 +133,9 @@ class _EarningsView extends StatelessWidget {
             Expanded(
               child: Text(
                 earnings.note,
-                style: Theme.of(context).textTheme.bodyMedium,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColors.textSecondary,
+                ),
               ),
             ),
           ],

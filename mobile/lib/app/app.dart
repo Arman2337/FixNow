@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:fixnow_mobile/app/app_shell.dart';
 import 'package:fixnow_mobile/app/app_navigation.dart';
 import 'package:fixnow_mobile/api/api_client.dart';
@@ -62,6 +63,18 @@ import 'package:fixnow_mobile/features/call/call_repository.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking_controller.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking_screen.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking_source.dart';
+
+class AppScrollBehavior extends MaterialScrollBehavior {
+  const AppScrollBehavior();
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+    PointerDeviceKind.touch,
+    PointerDeviceKind.mouse,
+    PointerDeviceKind.trackpad,
+    PointerDeviceKind.stylus,
+  };
+}
 
 class FixNowApp extends StatefulWidget {
   const FixNowApp({
@@ -198,6 +211,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'FixNow',
+      scrollBehavior: const AppScrollBehavior(),
       scaffoldMessengerKey: _messengerKey,
       theme: AppTheme.dark,
       darkTheme: AppTheme.dark,

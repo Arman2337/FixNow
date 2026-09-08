@@ -87,6 +87,30 @@ void main() {
 
       expect(active?.slot.id, 'evening');
     });
+
+    testWidgets(
+        'allows horizontal scrolling of upcoming dates via navigation chevrons',
+        (tester) async {
+      await tester.pumpWidget(
+        host(
+          FixSchedulePickerCard(
+            initialSchedule: BookingSchedule(
+              mode: ScheduleMode.later,
+              date: DateTime.now().add(const Duration(days: 1)),
+              slot: TimeSlot.standardSlots.first,
+            ),
+            onScheduleChanged: (_) {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byIcon(Icons.chevron_left_rounded), findsOneWidget);
+      expect(find.byIcon(Icons.chevron_right_rounded), findsOneWidget);
+
+      await tester.tap(find.byIcon(Icons.chevron_right_rounded));
+      await tester.pumpAndSettle();
+    });
   });
 
   group('ServiceRequestScreen schedule integration', () {

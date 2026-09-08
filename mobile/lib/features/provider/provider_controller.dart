@@ -97,6 +97,16 @@ class ProviderController extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> updateSchedule(List<Map<String, Object?>> weeklyRules) async {
+    final current = availability;
+    if (current == null) return;
+    availability = await repository.updateSchedule(
+      current: current,
+      weeklyRules: weeklyRules,
+    );
+    notifyListeners();
+  }
+
   Future<void> setWeekdaySchedule(bool enabled) async {
     final current = availability;
     if (current == null) return;

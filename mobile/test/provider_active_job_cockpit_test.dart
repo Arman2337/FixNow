@@ -57,6 +57,12 @@ class _FakeProviderRepository implements ProviderRepository {
   Future<ProviderAvailability> setWeekdaySchedule(ProviderAvailability current, bool enabled) async => current;
 
   @override
+  Future<ProviderAvailability> updateSchedule({
+    required ProviderAvailability current,
+    required List<Map<String, Object?>> weeklyRules,
+  }) async => current;
+
+  @override
   Future<List<ProviderSkill>> skills() async => [];
 
   @override

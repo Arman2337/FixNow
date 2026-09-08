@@ -4,6 +4,7 @@ import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
 import 'package:fixnow_mobile/design_system/fix_page_frame.dart';
+import 'package:fixnow_mobile/design_system/fix_schedule_hours_sheet.dart';
 import 'package:fixnow_mobile/design_system/fix_state_views.dart';
 import 'package:fixnow_mobile/design_system/fix_status_chip.dart';
 import 'package:fixnow_mobile/features/call/call_repository.dart';
@@ -181,25 +182,38 @@ class ProviderHomeScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
-                    availability?.weeklyRules.isEmpty ?? true
-                        ? 'No recurring hours set.'
-                        : 'Monday to Friday, 09:00–17:00 ${availability?.timeZone}',
+                    availability?.scheduleSummary ?? 'No recurring hours set.',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: AppColors.textOnLightSecondary,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.md),
-                  FixButton(
-                    label: availability?.weeklyRules.isEmpty ?? true
-                        ? 'Set weekday hours'
-                        : 'Clear recurring hours',
-                    icon: Icons.calendar_month_rounded,
-                    variant: FixButtonVariant.secondary,
-                    onPressed: availability == null
-                        ? null
-                        : () => controller.setWeekdaySchedule(
-                            availability.weeklyRules.isEmpty,
-                          ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: FixButton(
+                          label: availability?.weeklyRules.isEmpty ?? true
+                              ? 'Set working hours'
+                              : 'Edit schedule',
+                          icon: Icons.calendar_month_rounded,
+                          variant: FixButtonVariant.secondary,
+                          onPressed: availability == null
+                              ? null
+                              : () => FixProviderWorkingHoursSheet.show(
+                                  context,
+                                  controller: controller,
+                                ),
+                        ),
+                      ),
+                      if (availability?.weeklyRules.isNotEmpty ?? false) ...[
+                        const SizedBox(width: AppSpacing.sm),
+                        IconButton(
+                          tooltip: 'Clear recurring hours',
+                          icon: const Icon(Icons.delete_outline_rounded, color: AppColors.danger),
+                          onPressed: () => controller.setWeekdaySchedule(false),
+                        ),
+                      ],
+                    ],
                   ),
                 ],
               ),

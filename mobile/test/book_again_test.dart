@@ -251,4 +251,35 @@ void main() {
     );
     expect(controller.bookings, isEmpty);
   });
+
+  testWidgets('tapping active booking summary switches filter and selects booking', (tester) async {
+    CustomerBooking? selected;
+    final controller = BookingController(
+      BookingRepository(api: _Transport(), accessToken: () async => 'token'),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.dark,
+        home: Scaffold(
+          body: CustomerBookingsScreen(
+            controller: controller,
+            onBookingSelected: (booking) => selected = booking,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Switch to Cancelled filter
+    await tester.tap(find.text('Cancelled'));
+    await tester.pumpAndSettle();
+    expect(find.text('No cancelled bookings'), findsOneWidget);
+    expect(find.text('1 active booking'), findsOneWidget);
+
+    // Tap active booking summary banner
+    await tester.tap(find.text('1 active booking'));
+    await tester.pumpAndSettle();
+
+    expect(selected?.id, 'bbbbbbbb-2222-4222-8222-222222222222');
+  });
 }

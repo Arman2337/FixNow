@@ -72,6 +72,73 @@ class ProviderAvailability {
             .map((rule) => Map<String, Object?>.from(rule as Map))
             .toList(),
       );
+
+  String get scheduleSummary {
+    if (weeklyRules.isEmpty) {
+      return 'No recurring hours set.';
+    }
+    final days = weeklyRules
+        .map((r) => (r['dayOfWeek'] as num?)?.toInt())
+        .whereType<int>()
+        .toSet()
+        .toList()
+      ..sort();
+
+    String timeStr = '09:00–17:00';
+    if (weeklyRules.isNotEmpty) {
+      final intervals = weeklyRules.first['intervals'] as List?;
+      if (intervals != null && intervals.isNotEmpty) {
+        final firstInterval = Map<String, Object?>.from(intervals.first as Map);
+        final startMin = (firstInterval['startMinute'] as num?)?.toInt() ?? 540;
+        final endMin = (firstInterval['endMinute'] as num?)?.toInt() ?? 1020;
+        final startH = (startMin ~/ 60).toString().padLeft(2, '0');
+        final startM = (startMin % 60).toString().padLeft(2, '0');
+        final endH = (endMin ~/ 60).toString().padLeft(2, '0');
+        final endM = (endMin % 60).toString().padLeft(2, '0');
+        timeStr = '$startH:$startM–$endH:$endM';
+      }
+    }
+
+    final isMonToFri = days.length == 5 &&
+        days.contains(1) &&
+        days.contains(2) &&
+        days.contains(3) &&
+        days.contains(4) &&
+        days.contains(5);
+    final isMonToSat = days.length == 6 &&
+        days.contains(1) &&
+        days.contains(2) &&
+        days.contains(3) &&
+        days.contains(4) &&
+        days.contains(5) &&
+        days.contains(6);
+    final isAllWeek = days.length == 7;
+
+    String daysStr;
+    if (isAllWeek) {
+      daysStr = 'Every day';
+    } else if (isMonToSat) {
+      daysStr = 'Monday to Saturday';
+    } else if (isMonToFri) {
+      daysStr = 'Monday to Friday';
+    } else {
+      const dayNames = {
+        1: 'Mon',
+        2: 'Tue',
+        3: 'Wed',
+        4: 'Thu',
+        5: 'Fri',
+        6: 'Sat',
+        0: 'Sun',
+      };
+      daysStr = days
+          .map((d) => dayNames[d] ?? '')
+          .where((s) => s.isNotEmpty)
+          .join(', ');
+    }
+
+    return '$daysStr, $timeStr $timeZone';
+  }
 }
 
 class ProviderSkill {

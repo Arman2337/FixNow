@@ -1,4 +1,5 @@
 import 'package:fixnow_mobile/design_system/app_colors.dart';
+import 'package:fixnow_mobile/design_system/app_motion.dart';
 import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/fix_motion.dart';
@@ -14,6 +15,8 @@ class FixButton extends StatelessWidget {
     this.icon,
     this.trailingIcon,
     this.isLoading = false,
+    this.success = false,
+    this.successLabel,
     this.height = 52.0,
     this.expand = false,
     super.key,
@@ -31,36 +34,75 @@ class FixButton extends StatelessWidget {
   final IconData? trailingIcon;
 
   final bool isLoading;
+
+  /// Completed state: the button morphs to a success check and stops taking
+  /// input until [success] resets. Keep it on for ~1.5s after the future
+  /// resolves, then clear it so the button returns to normal.
+  final bool success;
+
+  /// Label swapped in while [success] — defaults to [label].
+  final String? successLabel;
   final double height;
   final bool expand;
 
   @override
   Widget build(BuildContext context) {
-    final callback = isLoading ? null : onPressed;
-    final child = Wrap(
-      alignment: WrapAlignment.center,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      spacing: AppSpacing.sm,
-      runSpacing: AppSpacing.xs,
-      children: [
-        if (isLoading)
-          const SizedBox.square(
-            dimension: 18,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          )
-        else if (icon case final value?)
-          Icon(value, size: 20),
-        Text(label, textAlign: TextAlign.center),
-        if (trailingIcon case final value? when !isLoading)
-          Icon(value, size: 20),
-      ],
+    final callback = (isLoading || success) ? null : onPressed;
+    final reduceMotion = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+
+    Widget content(String key) => KeyedSubtree(
+      key: ValueKey(key),
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: AppSpacing.sm,
+        runSpacing: AppSpacing.xs,
+        children: [
+          if (isLoading)
+            const SizedBox.square(
+              dimension: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          else if (success)
+            const Icon(Icons.check_rounded, size: 20)
+          else if (icon case final value?)
+            Icon(value, size: 20),
+          Text(
+            success && !isLoading ? successLabel ?? label : label,
+            textAlign: TextAlign.center,
+          ),
+          if (trailingIcon case final value? when !isLoading && !success)
+            Icon(value, size: 20),
+        ],
+      ),
     );
 
+    // Morph between idle/loading/success in place instead of snapping, and
+    // animate the size change so the width jump reads as intentional.
+    final child = reduceMotion
+        ? content('static')
+        : AnimatedSize(
+            duration: AppMotion.standard,
+            curve: AppMotion.standardCurve,
+            child: AnimatedSwitcher(
+              duration: AppMotion.standard,
+              switchInCurve: AppMotion.enterCurve,
+              switchOutCurve: AppMotion.exitCurve,
+              child: isLoading
+                  ? content('loading')
+                  : success
+                      ? content('success')
+                      : content('idle'),
+            ),
+          );
+
+    // Success tints filled variants green; outlined/text variants take the
+    // on-light step so the check stays readable on light surfaces.
     final button = switch (variant) {
       FixButtonVariant.primary => FilledButton(
         style: FilledButton.styleFrom(
           minimumSize: Size(expand ? double.infinity : 48, height),
-          backgroundColor: AppColors.primary,
+          backgroundColor: success ? AppColors.success : AppColors.primary,
           foregroundColor: AppColors.onPrimary,
           shape: const RoundedRectangleBorder(
             borderRadius: AppRadius.buttonBorder,
@@ -72,8 +114,10 @@ class FixButton extends StatelessWidget {
       FixButtonVariant.secondary => OutlinedButton(
         style: OutlinedButton.styleFrom(
           minimumSize: Size(expand ? double.infinity : 48, height),
-          foregroundColor: AppColors.primary,
-          side: const BorderSide(color: AppColors.borderStrong),
+          foregroundColor: success ? AppColors.successOnLight : AppColors.primary,
+          side: success
+              ? const BorderSide(color: AppColors.success)
+              : const BorderSide(color: AppColors.borderStrong),
           shape: const RoundedRectangleBorder(
             borderRadius: AppRadius.buttonBorder,
           ),
@@ -84,7 +128,7 @@ class FixButton extends StatelessWidget {
       FixButtonVariant.tertiary => TextButton(
         style: TextButton.styleFrom(
           minimumSize: Size(expand ? double.infinity : 48, height),
-          foregroundColor: AppColors.primary,
+          foregroundColor: success ? AppColors.successOnLight : AppColors.primary,
           shape: const RoundedRectangleBorder(
             borderRadius: AppRadius.buttonBorder,
           ),
@@ -95,8 +139,10 @@ class FixButton extends StatelessWidget {
       FixButtonVariant.destructive => OutlinedButton(
         style: OutlinedButton.styleFrom(
           minimumSize: Size(expand ? double.infinity : 48, height),
-          foregroundColor: AppColors.danger,
-          side: const BorderSide(color: AppColors.danger),
+          foregroundColor: success ? AppColors.successOnLight : AppColors.danger,
+          side: success
+              ? const BorderSide(color: AppColors.success)
+              : const BorderSide(color: AppColors.danger),
           shape: const RoundedRectangleBorder(
             borderRadius: AppRadius.buttonBorder,
           ),
@@ -107,7 +153,7 @@ class FixButton extends StatelessWidget {
       FixButtonVariant.emergency => FilledButton(
         style: FilledButton.styleFrom(
           minimumSize: Size(expand ? double.infinity : 48, height),
-          backgroundColor: AppColors.emergency,
+          backgroundColor: success ? AppColors.success : AppColors.emergency,
           foregroundColor: AppColors.textPrimary,
           shape: const RoundedRectangleBorder(
             borderRadius: AppRadius.buttonBorder,
@@ -119,7 +165,7 @@ class FixButton extends StatelessWidget {
       FixButtonVariant.gold => FilledButton(
         style: FilledButton.styleFrom(
           minimumSize: Size(expand ? double.infinity : 48, height),
-          backgroundColor: AppColors.accentGold,
+          backgroundColor: success ? AppColors.success : AppColors.accentGold,
           foregroundColor: AppColors.onAccentGold,
           shape: const RoundedRectangleBorder(
             borderRadius: AppRadius.buttonBorder,

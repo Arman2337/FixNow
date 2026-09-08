@@ -225,14 +225,8 @@ class _ProviderActiveJobCockpitScreenState
 
     try {
       await widget.controller.advanceJob(job);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Job marked as Completed! Great work.'),
-            backgroundColor: AppColors.success,
-          ),
-        );
-      }
+      // The cockpit rebuilds to the green COMPLETED card — that is the
+      // success feedback; no snackbar on top of it.
     } catch (e) {
       if (mounted) {
         setState(() => _inlineError = 'Could not complete job: $e');

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
@@ -560,7 +562,7 @@ class _SchedulesSectionState extends State<_SchedulesSection> {
   );
 }
 
-class _ScheduleCard extends StatelessWidget {
+class _ScheduleCard extends StatefulWidget {
   const _ScheduleCard({
     required this.schedule,
     required this.controller,
@@ -571,7 +573,38 @@ class _ScheduleCard extends StatelessWidget {
   final VoidCallback? onConfirmed;
 
   @override
+  State<_ScheduleCard> createState() => _ScheduleCardState();
+}
+
+class _ScheduleCardState extends State<_ScheduleCard> {
+  /// True while the confirm button shows its success morph.
+  bool _justConfirmed = false;
+  Timer? _successReset;
+
+  @override
+  void dispose() {
+    _successReset?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _confirm() async {
+    final bookingId = await widget.controller.confirm(widget.schedule);
+    if (!mounted) return;
+    if (bookingId == null) return;
+    // Parent side-effects (dispatch notice, list reload) fire immediately;
+    // only the in-place success state holds for a beat.
+    widget.onConfirmed?.call();
+    setState(() => _justConfirmed = true);
+    _successReset?.cancel();
+    _successReset = Timer(const Duration(milliseconds: 1500), () {
+      if (mounted) setState(() => _justConfirmed = false);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final schedule = widget.schedule;
+    final controller = widget.controller;
     String? nextVisit;
     final next = schedule.nextOccurrenceAt;
     if (schedule.isActive && next != null) {
@@ -640,10 +673,9 @@ class _ScheduleCard extends StatelessWidget {
                   label: 'Confirm visit',
                   icon: Icons.check_circle_outline_rounded,
                   isLoading: controller.working,
-                  onPressed: () async {
-                    final bookingId = await controller.confirm(schedule);
-                    if (bookingId != null) onConfirmed?.call();
-                  },
+                  success: _justConfirmed,
+                  successLabel: 'Visit booked',
+                  onPressed: _confirm,
                 ),
               if (schedule.isActive)
                 FixButton(

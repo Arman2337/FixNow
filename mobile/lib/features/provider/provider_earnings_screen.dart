@@ -30,7 +30,16 @@ class _ProviderEarningsScreenState extends State<ProviderEarningsScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Earnings')),
+    appBar: AppBar(
+      title: const Text('Earnings'),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.refresh_rounded),
+          tooltip: 'Refresh earnings',
+          onPressed: _controller.load,
+        ),
+      ],
+    ),
     body: SafeArea(
       top: false,
       child: FixPageFrame(
@@ -54,8 +63,11 @@ class _ProviderEarningsScreenState extends State<ProviderEarningsScreen> {
                 ),
               ),
             ),
-            ProviderEarningsState.ready => _EarningsView(
-              earnings: _controller.earnings!,
+            ProviderEarningsState.ready => RefreshIndicator(
+              onRefresh: _controller.load,
+              child: _EarningsView(
+                earnings: _controller.earnings!,
+              ),
             ),
           },
         ),
@@ -71,6 +83,7 @@ class _EarningsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ListView(
+    physics: const AlwaysScrollableScrollPhysics(),
     padding: const EdgeInsets.all(AppSpacing.pagePadding),
     children: [
       const FixPageHeader(
@@ -88,14 +101,14 @@ class _EarningsView extends StatelessWidget {
             Text(
               'Net earnings',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: AppColors.textOnLightSecondary,
+                color: AppColors.textSecondary,
               ),
             ),
             const SizedBox(height: AppSpacing.xs),
             Text(
               earnings.netLabel,
               style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                color: AppColors.textOnLightPrimary,
+                color: AppColors.textPrimary,
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -104,7 +117,7 @@ class _EarningsView extends StatelessWidget {
               'From ${earnings.paidOrderCount} completed '
               '${earnings.paidOrderCount == 1 ? 'payment' : 'payments'}.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.textOnLightSecondary,
+                color: AppColors.textSecondary,
               ),
             ),
           ],
@@ -123,7 +136,7 @@ class _EarningsView extends StatelessWidget {
       ),
       const SizedBox(height: AppSpacing.md),
       FixCard(
-        tone: FixCardTone.secondary,
+        tone: FixCardTone.elevated,
         semanticLabel: 'Payout availability note',
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -133,7 +146,9 @@ class _EarningsView extends StatelessWidget {
             Expanded(
               child: Text(
                 earnings.note,
-                style: Theme.of(context).textTheme.bodyMedium,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColors.textSecondary,
+                ),
               ),
             ),
           ],

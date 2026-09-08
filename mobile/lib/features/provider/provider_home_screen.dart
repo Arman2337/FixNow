@@ -1,13 +1,19 @@
 import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
+import 'package:fixnow_mobile/design_system/fix_banner.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
+import 'package:fixnow_mobile/design_system/fix_notification_bell.dart';
 import 'package:fixnow_mobile/design_system/fix_page_frame.dart';
+import 'package:fixnow_mobile/design_system/fix_schedule_hours_sheet.dart';
 import 'package:fixnow_mobile/design_system/fix_state_views.dart';
 import 'package:fixnow_mobile/design_system/fix_status_chip.dart';
 import 'package:fixnow_mobile/features/call/call_repository.dart';
 import 'package:fixnow_mobile/features/chat/chat_repository.dart';
+import 'package:fixnow_mobile/features/notifications/notification_center_screen.dart';
+import 'package:fixnow_mobile/features/notifications/notification_controller.dart';
+import 'package:fixnow_mobile/features/notifications/notification_model.dart';
 import 'package:fixnow_mobile/features/provider/provider_active_job_cockpit_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_controller.dart';
 import 'package:fixnow_mobile/features/provider/provider_models.dart';
@@ -37,6 +43,9 @@ class ProviderHomeScreen extends StatelessWidget {
     this.callRepository,
     this.loadAcceptTime,
     this.onViewEarnings,
+    this.notificationController,
+    this.onOpenBooking,
+    this.onOpenInvoice,
     super.key,
   });
   final ProviderController controller;
@@ -50,9 +59,15 @@ class ProviderHomeScreen extends StatelessWidget {
   /// FN-053: opens the earnings ledger; null hides the entry point.
   final VoidCallback? onViewEarnings;
 
+  final NotificationController? notificationController;
+  final void Function(String bookingId)? onOpenBooking;
+  final void Function(InAppNotification notification)? onOpenInvoice;
+
   @override
   Widget build(BuildContext context) => ListenableBuilder(
-    listenable: controller,
+    listenable: notificationController == null
+        ? controller
+        : Listenable.merge([controller, notificationController!]),
     builder: (context, _) {
       if (controller.state == ProviderLoadState.loading) {
         return const Center(
@@ -74,6 +89,8 @@ class ProviderHomeScreen extends StatelessWidget {
           .where((job) => !{'COMPLETED', 'CANCELLED'}.contains(job.status))
           .toList();
       return RefreshIndicator(
+        color: AppColors.accentGold,
+        backgroundColor: AppColors.surfaceElevated,
         onRefresh: () async {
           await controller.refreshRequests();
           await controller.load(verified: true);
@@ -84,13 +101,77 @@ class ProviderHomeScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              FixPageHeader(
-                eyebrow: 'PROVIDER WORKSPACE',
-                title: 'Ready for your next job?',
-                description:
-                    'Manage your availability and respond to work assigned to you.',
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: FixPageHeader(
+                      eyebrow: 'PROVIDER WORKSPACE',
+                      title: 'Ready for your next job?',
+                      description:
+                          'Manage your availability and respond to work assigned to you.',
+                    ),
+                  ),
+                  if (notificationController != null) ...[
+                    const SizedBox(width: AppSpacing.sm),
+                    FixNotificationBellIcon(
+                      controller: notificationController!,
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => NotificationCenterScreen(
+                              controller: notificationController!,
+                              onOpenBooking: onOpenBooking,
+                              onOpenInvoice: onOpenInvoice,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ],
               ),
             const SizedBox(height: AppSpacing.md),
+
+            if (notificationController != null &&
+                notificationController!.notifications.any((n) => !n.isRead)) ...[
+              Builder(builder: (context) {
+                final unread = notificationController!.notifications
+                    .firstWhere((n) => !n.isRead);
+                return _ProviderNotificationBanner(
+                  notification: unread,
+                  onTap: () {
+                    notificationController!.markAsRead(unread.id);
+                    if (unread.category == NotificationCategory.payments) {
+                      onOpenInvoice?.call(unread);
+                    } else if (unread.bookingId != null) {
+                      onOpenBooking?.call(unread.bookingId!);
+                    } else {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => NotificationCenterScreen(
+                            controller: notificationController!,
+                            onOpenBooking: onOpenBooking,
+                            onOpenInvoice: onOpenInvoice,
+                          ),
+                        ),
+                      );
+                    }
+                  },
+                  onDismiss: () {
+                    notificationController!.markAsRead(unread.id);
+                  },
+                );
+              }),
+            ],
+
+            if (controller.requests.isNotEmpty)
+              _IncomingRequestBanner(
+                count: controller.requests.length,
+                firstRequest: controller.requests.first,
+                onTap: () {},
+              ),
 
             Container(
               padding: const EdgeInsets.symmetric(
@@ -148,9 +229,19 @@ class ProviderHomeScreen extends StatelessWidget {
                         value: online,
                         onChanged: availability == null
                             ? null
-                            : (value) => controller.updateStatus(
-                                value ? 'online' : 'offline',
-                              ),
+                            : (value) async {
+                                final newStatus = value ? 'online' : 'offline';
+                                await controller.updateStatus(newStatus);
+                                if (context.mounted) {
+                                  showFixBanner(
+                                    ScaffoldMessenger.of(context),
+                                    message: value
+                                        ? 'You are now online. Receiving eligible jobs in your area.'
+                                        : 'You are now offline. Go online to receive customer requests.',
+                                    tone: value ? FixBannerTone.success : FixBannerTone.info,
+                                  );
+                                }
+                              },
                       ),
                     ],
                   ),
@@ -181,25 +272,38 @@ class ProviderHomeScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
-                    availability?.weeklyRules.isEmpty ?? true
-                        ? 'No recurring hours set.'
-                        : 'Monday to Friday, 09:00–17:00 ${availability?.timeZone}',
+                    availability?.scheduleSummary ?? 'No recurring hours set.',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: AppColors.textOnLightSecondary,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.md),
-                  FixButton(
-                    label: availability?.weeklyRules.isEmpty ?? true
-                        ? 'Set weekday hours'
-                        : 'Clear recurring hours',
-                    icon: Icons.calendar_month_rounded,
-                    variant: FixButtonVariant.secondary,
-                    onPressed: availability == null
-                        ? null
-                        : () => controller.setWeekdaySchedule(
-                            availability.weeklyRules.isEmpty,
-                          ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: FixButton(
+                          label: availability?.weeklyRules.isEmpty ?? true
+                              ? 'Set working hours'
+                              : 'Edit schedule',
+                          icon: Icons.calendar_month_rounded,
+                          variant: FixButtonVariant.secondary,
+                          onPressed: availability == null
+                              ? null
+                              : () => FixProviderWorkingHoursSheet.show(
+                                  context,
+                                  controller: controller,
+                                ),
+                        ),
+                      ),
+                      if (availability?.weeklyRules.isNotEmpty ?? false) ...[
+                        const SizedBox(width: AppSpacing.sm),
+                        IconButton(
+                          tooltip: 'Clear recurring hours',
+                          icon: const Icon(Icons.delete_outline_rounded, color: AppColors.danger),
+                          onPressed: () => controller.setWeekdaySchedule(false),
+                        ),
+                      ],
+                    ],
                   ),
                 ],
               ),
@@ -351,7 +455,16 @@ class ProviderHomeScreen extends StatelessWidget {
                         FixButton(
                           label: 'Accept request',
                           icon: Icons.check_circle_outline_rounded,
-                          onPressed: () => controller.acceptRequest(request),
+                          onPressed: () async {
+                            await controller.acceptRequest(request);
+                            if (context.mounted) {
+                              showFixBanner(
+                                ScaffoldMessenger.of(context),
+                                message: 'Request accepted! Preparing active job details.',
+                                tone: FixBannerTone.success,
+                              );
+                            }
+                          },
                         ),
                       ],
                     ),
@@ -531,4 +644,246 @@ class _AcceptTimeCardState extends State<_AcceptTimeCard> {
       );
     },
   );
+}
+
+class _ProviderNotificationBanner extends StatelessWidget {
+  const _ProviderNotificationBanner({
+    required this.notification,
+    required this.onTap,
+    required this.onDismiss,
+  });
+
+  final InAppNotification notification;
+  final VoidCallback onTap;
+  final VoidCallback onDismiss;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = notification.category.color;
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceElevated,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(
+          color: color.withValues(alpha: 0.4),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.12),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.sm + 2,
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.18),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: color.withValues(alpha: 0.3)),
+                  ),
+                  child: Icon(notification.category.icon, size: 18, color: color),
+                ),
+                const SizedBox(width: AppSpacing.sm + 4),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              notification.title,
+                              style: const TextStyle(
+                                color: AppColors.cream,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                            decoration: BoxDecoration(
+                              color: color.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              'NEW',
+                              style: TextStyle(
+                                color: color,
+                                fontSize: 9,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        notification.body,
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                          height: 1.3,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          Text(
+                            notification.category == NotificationCategory.payments
+                                ? 'View Invoice'
+                                : notification.bookingId != null
+                                    ? 'View Booking'
+                                    : 'View Details',
+                            style: TextStyle(
+                              color: color,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(width: 3),
+                          Icon(Icons.arrow_forward_rounded, size: 12, color: color),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.xs),
+                IconButton(
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                  icon: const Icon(Icons.close_rounded, size: 16, color: AppColors.textMuted),
+                  tooltip: 'Dismiss notification',
+                  onPressed: onDismiss,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _IncomingRequestBanner extends StatelessWidget {
+  const _IncomingRequestBanner({
+    required this.count,
+    required this.firstRequest,
+    required this.onTap,
+  });
+
+  final int count;
+  final ProviderRequest firstRequest;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.accentGoldSoft,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: AppColors.borderGold, width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.accentGold.withValues(alpha: 0.15),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.sm + 2,
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: AppColors.accentGold.withValues(alpha: 0.25),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.radar_rounded, size: 20, color: AppColors.accentGold),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            count == 1 ? 'New Request Available!' : '$count New Requests Available!',
+                            style: const TextStyle(
+                              color: AppColors.cream,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: AppColors.accentGold,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Text(
+                              'ACTION NEEDED',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 8.5,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${firstRequest.distanceKm.toStringAsFixed(1)} km away · Tap to review and accept',
+                        style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.accentGold),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

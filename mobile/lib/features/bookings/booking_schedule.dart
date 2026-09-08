@@ -9,13 +9,21 @@ class TimeSlot {
     required this.label,
     required this.timeRange,
     required this.startHour,
+    required this.endHour,
     required this.icon,
   });
 
   final String id;
   final String label;
+
+  // ponytail: timeRange duplicates startHour/endHour — deriving the string
+  // reformats "08:00 AM" to "8:00 AM" and breaks asserted copy; revisit if a
+  // third slot style appears.
   final String timeRange;
   final int startHour;
+
+  /// Exclusive end of the arrival window; the slot stays bookable until then.
+  final int endHour;
   final IconData icon;
 
   static const List<TimeSlot> standardSlots = [
@@ -24,6 +32,7 @@ class TimeSlot {
       label: 'Morning',
       timeRange: '08:00 AM – 11:00 AM',
       startHour: 8,
+      endHour: 11,
       icon: Icons.wb_twilight_rounded,
     ),
     TimeSlot(
@@ -31,6 +40,7 @@ class TimeSlot {
       label: 'Afternoon',
       timeRange: '12:00 PM – 03:00 PM',
       startHour: 12,
+      endHour: 15,
       icon: Icons.wb_sunny_rounded,
     ),
     TimeSlot(
@@ -38,6 +48,7 @@ class TimeSlot {
       label: 'Evening',
       timeRange: '04:00 PM – 07:00 PM',
       startHour: 16,
+      endHour: 19,
       icon: Icons.nights_stay_rounded,
     ),
   ];
@@ -106,6 +117,17 @@ class BookingSchedule {
       7,
       (i) => DateTime(start.year, start.month, start.day).add(Duration(days: i)),
     );
+  }
+
+  /// The moment [slot] stops being bookable on [date].
+  static DateTime slotEnd(DateTime date, TimeSlot slot) =>
+      DateTime(date.year, date.month, date.day, slot.endHour);
+
+  /// True once [slot] on [date] has fully elapsed. Slots stay selectable until
+  /// their window closes, not merely when it starts.
+  static bool isSlotPast(DateTime date, TimeSlot slot, {DateTime? now}) {
+    final n = now ?? DateTime.now();
+    return !n.isBefore(slotEnd(date, slot));
   }
 
   static String _weekday(int day) => switch (day) {

@@ -3,6 +3,7 @@ import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/app_typography.dart';
+import 'package:fixnow_mobile/design_system/fix_3d_flip_card.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:flutter/material.dart';
 
@@ -510,13 +511,23 @@ class _FixPaymentCheckoutSheetState extends State<FixPaymentCheckoutSheet>
           subtitle: 'Google Pay, PhonePe, Paytm, BHIM',
           badge: 'POPULAR',
         ),
-        const SizedBox(height: 8),
         _buildMethodCard(
           type: PaymentMethodType.card,
           icon: Icons.credit_card_rounded,
           title: 'Credit / Debit Card',
           subtitle: 'Visa, MasterCard, RuPay (256-Bit SSL)',
         ),
+        if (_selectedMethod == PaymentMethodType.card) ...[
+          const SizedBox(height: 12),
+          const Fix3DFlipCard(),
+          const SizedBox(height: 4),
+          const Center(
+            child: Text(
+              'Tap card to flip in 3D & inspect Escrow Protection',
+              style: TextStyle(fontSize: 11, color: Colors.white54),
+            ),
+          ),
+        ],
         const SizedBox(height: 8),
         _buildMethodCard(
           type: PaymentMethodType.cash,

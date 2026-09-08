@@ -1,3 +1,4 @@
+import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/app_typography.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
@@ -56,6 +57,8 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
             case ComplaintsListStatus.ready:
               final complaints = widget.controller.complaints;
               return RefreshIndicator(
+                color: AppColors.accentGold,
+                backgroundColor: AppColors.surfaceElevated,
                 onRefresh: () => widget.controller.loadComplaints(),
                 child: ListView.separated(
                   padding: const EdgeInsets.all(AppSpacing.md),

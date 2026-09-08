@@ -38,6 +38,7 @@ class NotificationRepository {
       category: NotificationCategory.payments,
       timestamp: DateTime.now().subtract(const Duration(hours: 18)),
       isRead: true,
+      bookingId: 'booking-seed-1',
       paymentId: 'pay-seed-1',
     ),
     InAppNotification(

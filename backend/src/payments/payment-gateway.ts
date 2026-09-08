@@ -74,7 +74,7 @@ export class FakePaymentGateway implements PaymentGateway {
     this.orders.push(input);
     this.sequence += 1;
     return Promise.resolve({
-      gatewayOrderId: `order_fake_${this.sequence.toString().padStart(14, '0')}`,
+      gatewayOrderId: `order_fake_${Date.now()}${this.sequence.toString().padStart(5, '0')}`,
       amountMinor: input.amountMinor,
       currency: input.currency,
       status: 'created',
@@ -108,9 +108,7 @@ export class FakePaymentGateway implements PaymentGateway {
     this.refunds.push(input);
     this.refundSequence += 1;
     return Promise.resolve({
-      gatewayRefundId: `rfnd_fake_${this.refundSequence
-        .toString()
-        .padStart(14, '0')}`,
+      gatewayRefundId: `rfnd_fake_${Date.now()}${this.refundSequence.toString().padStart(5, '0')}`,
       amountMinor: input.amountMinor ?? 0,
       status: 'processed',
     });

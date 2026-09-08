@@ -62,10 +62,16 @@ class IncomingCallDialog extends StatefulWidget {
 }
 
 class _IncomingCallDialogState extends State<IncomingCallDialog>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late final AnimationController _pulseController;
+  late final AnimationController _ringController;
   late final CallController _controller;
   StreamSubscription<RealtimeProjection>? _realtimeSub;
+  bool _reduce = false;
+
+  /// Set when decline/accept took ownership of the controller; the dialog
+  /// must then not dispose it (accept hands it to the call screen).
+  bool _resolvedCall = false;
 
   @override
   void initState() {
@@ -76,7 +82,11 @@ class _IncomingCallDialogState extends State<IncomingCallDialog>
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1000),
-    )..repeat(reverse: true);
+    );
+    _ringController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1800),
+    );
 
     _controller = CallController(
       bookingId: widget.session.bookingId,
@@ -101,11 +111,35 @@ class _IncomingCallDialogState extends State<IncomingCallDialog>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Inherited-widget reads belong here, not initState. Ambient loops are
+    // stopped (not merely hidden) under reduce motion.
+    _reduce = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    if (_reduce) {
+      _pulseController.stop();
+      _ringController.stop();
+      _pulseController.value = 0.5;
+    } else {
+      if (_pulseController.status != AnimationStatus.forward) {
+        _pulseController.repeat(reverse: true);
+      }
+      if (_ringController.status != AnimationStatus.forward) {
+        _ringController.repeat();
+      }
+    }
+  }
+
+  @override
   void dispose() {
     if (_controller.currentSession?.status != CallStatus.connected) {
       CallAudioService.stop();
+      // Nobody took ownership (auto-dismiss or a failed answer): stop the
+      // controller's reconciliation poll so it doesn't leak.
+      if (!_resolvedCall) _controller.dispose();
     }
     _pulseController.dispose();
+    _ringController.dispose();
     _realtimeSub?.cancel();
     super.dispose();
   }
@@ -128,9 +162,11 @@ class _IncomingCallDialogState extends State<IncomingCallDialog>
 
   Future<void> _handleDecline() async {
     final nav = Navigator.of(context);
+    _resolvedCall = true;
     await CallAudioService.stop();
     nav.pop();
     await _controller.decline();
+    _controller.dispose();
   }
 
   @override
@@ -175,34 +211,47 @@ class _IncomingCallDialogState extends State<IncomingCallDialog>
             ),
             const SizedBox(height: AppSpacing.lg),
 
-            // Pulsing Ringing Avatar
-            ScaleTransition(
-              scale: Tween<double>(begin: 0.92, end: 1.08).animate(
-                CurvedAnimation(
-                  parent: _pulseController,
-                  curve: Curves.easeInOut,
-                ),
-              ),
-              child: Container(
-                width: 84,
-                height: 84,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.primary.withValues(alpha: 0.15),
-                  border: Border.all(color: AppColors.primary, width: 2),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.3),
-                      blurRadius: 18,
-                      spreadRadius: 4,
+            // Ringing avatar: outward wave rings + the breathing pulse.
+            SizedBox(
+              width: 150,
+              height: 150,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  if (!_reduce)
+                    _RingPulse(controller: _ringController, phase: 0),
+                  if (!_reduce)
+                    _RingPulse(controller: _ringController, phase: 1 / 3),
+                  ScaleTransition(
+                    scale: Tween<double>(begin: 0.92, end: 1.08).animate(
+                      CurvedAnimation(
+                        parent: _pulseController,
+                        curve: Curves.easeInOut,
+                      ),
                     ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.phone_in_talk_rounded,
-                  color: AppColors.primary,
-                  size: 38,
-                ),
+                    child: Container(
+                      width: 84,
+                      height: 84,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.primary.withValues(alpha: 0.15),
+                        border: Border.all(color: AppColors.primary, width: 2),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.3),
+                            blurRadius: 18,
+                            spreadRadius: 4,
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.phone_in_talk_rounded,
+                        color: AppColors.primary,
+                        size: 38,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
@@ -270,18 +319,33 @@ class _IncomingCallDialogState extends State<IncomingCallDialog>
                     InkWell(
                       onTap: _handleAccept,
                       borderRadius: BorderRadius.circular(32),
-                      child: Container(
-                        width: 56,
-                        height: 56,
-                        decoration: const BoxDecoration(
-                          color: AppColors.success,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.call_rounded,
-                          color: Colors.white,
-                          size: 26,
-                        ),
+                      child: AnimatedBuilder(
+                        animation: _pulseController,
+                        builder: (context, child) {
+                          final pulse = _reduce ? 0.5 : _pulseController.value;
+                          return Container(
+                            width: 56,
+                            height: 56,
+                            decoration: BoxDecoration(
+                              color: AppColors.success,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.live.withValues(
+                                    alpha: 0.20 + 0.20 * pulse,
+                                  ),
+                                  blurRadius: 12 + 10 * pulse,
+                                  spreadRadius: 2 + 4 * pulse,
+                                ),
+                              ],
+                            ),
+                            child: const Icon(
+                              Icons.call_rounded,
+                              color: Colors.white,
+                              size: 26,
+                            ),
+                          );
+                        },
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -300,6 +364,39 @@ class _IncomingCallDialogState extends State<IncomingCallDialog>
           ],
         ),
       ),
+    );
+  }
+}
+
+/// One outward-traveling wave ring. Two instances share the controller with
+/// different phases for the stagger; transform + opacity only.
+class _RingPulse extends StatelessWidget {
+  const _RingPulse({required this.controller, required this.phase});
+
+  final AnimationController controller;
+  final double phase;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, _) {
+        final t = (controller.value - phase) % 1.0;
+        return Transform.scale(
+          scale: 0.75 + (1.45 - 0.75) * t,
+          child: Container(
+            width: 84,
+            height: 84,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: AppColors.live.withValues(alpha: (1 - t) * 0.55),
+                width: 2,
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

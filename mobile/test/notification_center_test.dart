@@ -223,5 +223,85 @@ void main() {
       // Ensure text is high contrast cream/white (not dark text that blends into dark bg)
       expect(readTitle.style!.color!.computeLuminance(), greaterThan(0.5));
     });
+
+    testWidgets('renders View Invoice on payment notifications and triggers onOpenInvoice',
+        (tester) async {
+      tester.view.physicalSize = const Size(800, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+
+      final repository = NotificationRepository();
+      final controller = NotificationController(repository);
+      await controller.load();
+
+      InAppNotification? openedInvoice;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.dark,
+          home: NotificationCenterScreen(
+            controller: controller,
+            onOpenInvoice: (item) => openedInvoice = item,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Switch to Payments tab
+      await tester.tap(find.text('Payments'));
+      await tester.pumpAndSettle();
+
+      // Verify View Invoice button is visible
+      expect(find.text('View Invoice'), findsOneWidget);
+
+      // Tap on View Invoice / Payment notification
+      await tester.tap(find.text('Payment Invoice Ready'));
+      await tester.pumpAndSettle();
+
+      expect(openedInvoice, isNotNull);
+      expect(openedInvoice?.title, 'Payment Invoice Ready');
+      expect(openedInvoice?.category, NotificationCategory.payments);
+    });
+
+    testWidgets('displays fallback invoice modal when onOpenInvoice is not supplied',
+        (tester) async {
+      tester.view.physicalSize = const Size(800, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+
+      final repository = NotificationRepository();
+      final controller = NotificationController(repository);
+      await controller.load();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.dark,
+          home: NotificationCenterScreen(
+            controller: controller,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Switch to Payments tab
+      await tester.tap(find.text('Payments'));
+      await tester.pumpAndSettle();
+
+      // Tap on Payment Invoice Ready card
+      await tester.tap(find.text('Payment Invoice Ready'));
+      await tester.pumpAndSettle();
+
+      // Modal sheet should be open
+      expect(find.text('Invoice INV-2026-0824'), findsOneWidget);
+      expect(find.text('Plumbing Service'), findsOneWidget);
+      expect(find.text('PAID'), findsOneWidget);
+      expect(find.text('₹649'), findsOneWidget);
+
+      // Tap close button on modal
+      await tester.tap(find.text('Close'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Invoice INV-2026-0824'), findsNothing);
+    });
   });
 }

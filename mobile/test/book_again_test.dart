@@ -1,4 +1,5 @@
 import 'package:fixnow_mobile/api/api_client.dart';
+import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_theme.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/features/bookings/booking.dart';
@@ -157,6 +158,12 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    // Branded pull-to-refresh: the indicator uses the gold accent.
+    expect(
+      tester.widget<RefreshIndicator>(find.byType(RefreshIndicator)).color,
+      AppColors.accentGold,
+    );
+
     // Active filter first: the completed entry must not expose the action.
     expect(find.text('Book again'), findsNothing);
 
@@ -250,5 +257,36 @@ void main() {
       findsOneWidget,
     );
     expect(controller.bookings, isEmpty);
+  });
+
+  testWidgets('tapping active booking summary switches filter and selects booking', (tester) async {
+    CustomerBooking? selected;
+    final controller = BookingController(
+      BookingRepository(api: _Transport(), accessToken: () async => 'token'),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.dark,
+        home: Scaffold(
+          body: CustomerBookingsScreen(
+            controller: controller,
+            onBookingSelected: (booking) => selected = booking,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Switch to Cancelled filter
+    await tester.tap(find.text('Cancelled'));
+    await tester.pumpAndSettle();
+    expect(find.text('No cancelled bookings'), findsOneWidget);
+    expect(find.text('1 active booking'), findsOneWidget);
+
+    // Tap active booking summary banner
+    await tester.tap(find.text('1 active booking'));
+    await tester.pumpAndSettle();
+
+    expect(selected?.id, 'bbbbbbbb-2222-4222-8222-222222222222');
   });
 }

@@ -80,24 +80,40 @@ class Invoice {
 enum InvoiceState { loading, ready, pending, unavailable }
 
 class InvoiceController extends ChangeNotifier {
-  InvoiceController(this._repository, this._bookingId);
+  InvoiceController(
+    this._repository,
+    this._bookingId, {
+    Invoice? initialInvoice,
+  }) : invoice = initialInvoice,
+       state = initialInvoice != null ? InvoiceState.ready : InvoiceState.loading;
 
   final InvoiceRepository _repository;
   final String _bookingId;
 
-  InvoiceState state = InvoiceState.loading;
+  InvoiceState state;
   Invoice? invoice;
 
   Future<void> load() async {
-    state = InvoiceState.loading;
-    notifyListeners();
+    if (invoice == null) {
+      state = InvoiceState.loading;
+      notifyListeners();
+    }
     try {
-      invoice = await _repository.fetch(_bookingId);
-      state = invoice == null ? InvoiceState.pending : InvoiceState.ready;
+      final fetched = await _repository.fetch(_bookingId);
+      if (fetched != null) {
+        invoice = fetched;
+        state = InvoiceState.ready;
+      } else if (invoice == null) {
+        state = InvoiceState.pending;
+      }
     } on ApiException {
-      state = InvoiceState.unavailable;
+      if (invoice == null) {
+        state = InvoiceState.unavailable;
+      }
     } on FormatException {
-      state = InvoiceState.unavailable;
+      if (invoice == null) {
+        state = InvoiceState.unavailable;
+      }
     }
     notifyListeners();
   }

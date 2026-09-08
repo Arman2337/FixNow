@@ -11,10 +11,12 @@ class NotificationCenterScreen extends StatelessWidget {
     super.key,
     required this.controller,
     this.onOpenBooking,
+    this.onOpenInvoice,
   });
 
   final NotificationController controller;
   final void Function(String bookingId)? onOpenBooking;
+  final void Function(InAppNotification notification)? onOpenInvoice;
 
   @override
   Widget build(BuildContext context) {
@@ -297,7 +299,13 @@ class NotificationCenterScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(AppRadius.card),
               onTap: () {
                 controller.markAsRead(item.id);
-                if (item.bookingId != null && onOpenBooking != null) {
+                if (item.category == NotificationCategory.payments || item.paymentId != null) {
+                  if (onOpenInvoice != null) {
+                    onOpenInvoice!(item);
+                  } else {
+                    _showInvoiceModal(context, item);
+                  }
+                } else if (item.bookingId != null && onOpenBooking != null) {
                   onOpenBooking!(item.bookingId!);
                 }
               },
@@ -395,7 +403,31 @@ class NotificationCenterScreen extends StatelessWidget {
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
-                              if (item.bookingId != null)
+                              if (item.category == NotificationCategory.payments || item.paymentId != null)
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      'View Invoice',
+                                      style: TextStyle(
+                                        color: isUnread
+                                            ? item.category.color
+                                            : item.category.color.withValues(alpha: 0.8),
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 3),
+                                    Icon(
+                                      Icons.arrow_forward_rounded,
+                                      size: 13,
+                                      color: isUnread
+                                          ? item.category.color
+                                          : item.category.color.withValues(alpha: 0.8),
+                                    ),
+                                  ],
+                                )
+                              else if (item.bookingId != null)
                                 Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
@@ -481,6 +513,99 @@ class NotificationCenterScreen extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  void _showInvoiceModal(BuildContext context, InAppNotification item) {
+    final invoiceNumber = RegExp(r'INV-[0-9-]+').firstMatch(item.body)?.group(0) ?? 'INV-2026-0824';
+    final serviceName = item.body.contains('Plumbing') ? 'Plumbing Service' : 'Home Service';
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.surfaceElevated,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.large)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.pagePadding),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Invoice $invoiceNumber',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.cream,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, color: AppColors.textMuted),
+                    onPressed: () => Navigator.of(ctx).pop(),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                item.body,
+                style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: BoxDecoration(
+                  color: AppColors.backgroundSecondary,
+                  borderRadius: BorderRadius.circular(AppRadius.medium),
+                  border: Border.all(color: AppColors.borderDefault),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Service', style: TextStyle(color: AppColors.textMuted)),
+                        Text(serviceName, style: const TextStyle(color: AppColors.cream, fontWeight: FontWeight.w600)),
+                      ],
+                    ),
+                    const Divider(height: AppSpacing.md),
+                    const Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Status', style: TextStyle(color: AppColors.textMuted)),
+                        Text('PAID', style: TextStyle(color: AppColors.success, fontWeight: FontWeight.w700)),
+                      ],
+                    ),
+                    const Divider(height: AppSpacing.md),
+                    const Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Total Amount', style: TextStyle(color: AppColors.textMuted)),
+                        Text('₹649', style: TextStyle(color: AppColors.cream, fontWeight: FontWeight.w800, fontSize: 16)),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  child: const Text('Close', style: TextStyle(fontWeight: FontWeight.w700)),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

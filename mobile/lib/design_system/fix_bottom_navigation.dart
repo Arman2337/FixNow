@@ -1,6 +1,6 @@
 import 'package:fixnow_mobile/app/app_navigation.dart';
-import 'package:fixnow_mobile/design_system/fix_motion.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class FixBottomNavigation extends StatelessWidget {
   const FixBottomNavigation({
@@ -18,16 +18,26 @@ class FixBottomNavigation extends StatelessWidget {
   Widget build(BuildContext context) {
     return NavigationBar(
       selectedIndex: selectedIndex,
-      onDestinationSelected: onDestinationSelected,
+      onDestinationSelected: (index) {
+        if (index != selectedIndex) {
+          HapticFeedback.selectionClick();
+        }
+        onDestinationSelected(index);
+      },
       destinations: [
         for (var i = 0; i < destinations.length; i++)
           NavigationDestination(
             icon: Icon(destinations[i].icon),
-            // Keyed on selection so the glyph pops each time this tab becomes
-            // active. The M3 pill indicator already slides on its own.
-            selectedIcon: FixScaleIn(
+            // Keyed on selection with elastic micro-spring pop on tap
+            selectedIcon: TweenAnimationBuilder<double>(
               key: ValueKey('fix-nav-$i-${selectedIndex == i}'),
-              from: 0.7,
+              tween: Tween(begin: 0.65, end: 1.0),
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.elasticOut,
+              builder: (context, scale, child) => Transform.scale(
+                scale: scale,
+                child: child,
+              ),
               child: Icon(destinations[i].selectedIcon),
             ),
             label: destinations[i].label,

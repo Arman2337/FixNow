@@ -7,6 +7,35 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
+/// The route prefix drawn up to progress [t] (0..1): whole coordinate points
+/// plus one interpolated point on the segment being crossed. Pure and
+/// unit-tested — the draw-on animation is just this list, replayed per tick.
+@visibleForTesting
+List<LatLng> sliceRoute(List<CustomerMapLocation> coordinates, double t) {
+  if (coordinates.isEmpty || t <= 0) return const [];
+  if (t >= 1) {
+    return coordinates.map((p) => LatLng(p.latitude, p.longitude)).toList();
+  }
+  final scaled = t * (coordinates.length - 1);
+  final whole = scaled.floor();
+  final points = <LatLng>[
+    for (var i = 0; i <= whole; i += 1)
+      LatLng(coordinates[i].latitude, coordinates[i].longitude),
+  ];
+  final frac = scaled - whole;
+  if (frac > 0 && whole + 1 < coordinates.length) {
+    final a = coordinates[whole];
+    final b = coordinates[whole + 1];
+    points.add(
+      LatLng(
+        a.latitude + (b.latitude - a.latitude) * frac,
+        a.longitude + (b.longitude - a.longitude) * frac,
+      ),
+    );
+  }
+  return points;
+}
+
 class ProviderLiveMap extends StatefulWidget {
   const ProviderLiveMap({
     this.providerLocation,
@@ -28,11 +57,21 @@ class ProviderLiveMap extends StatefulWidget {
 }
 
 class _ProviderLiveMapState extends State<ProviderLiveMap>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late final MapController _mapController;
   late final AnimationController _moveAnimController;
+  late final AnimationController _routeDrawController;
   LatLng? _animatedProviderPos;
   double _currentBearing = 0.0;
+
+  // Route draw-on state: the first time a full route arrives (null→non-null
+  // with both endpoints known), the live-emerald overlay is drawn
+  // progressively and the vehicle marker travels along it. Runs once.
+  DrivingRoute? _drawRoute;
+  List<LatLng> _sliced = const [];
+  LatLng? _drawPos;
+  double _drawBearing = 0.0;
+  bool _routeIntroduced = false;
 
   @override
   void initState() {
@@ -42,12 +81,41 @@ class _ProviderLiveMapState extends State<ProviderLiveMap>
       vsync: this,
       duration: const Duration(milliseconds: 900),
     );
+    _routeDrawController =
+        AnimationController(
+            vsync: this,
+            duration: const Duration(milliseconds: 3000),
+          )
+          ..addListener(_onRouteDrawTick)
+          ..addStatusListener((status) {
+            if (status != AnimationStatus.completed) return;
+            // Hand the marker back to live GPS without a teleport: glide from
+            // the route's end to wherever the provider actually is now.
+            final from = _animatedProviderPos ?? _drawPos;
+            final to = widget.providerLocation == null
+                ? null
+                : LatLng(
+                    widget.providerLocation!.latitude,
+                    widget.providerLocation!.longitude,
+                  );
+            if (mounted) {
+              setState(() {
+                _sliced = const [];
+                _drawPos = null;
+              });
+            }
+            if (from != null && to != null) {
+              _animateProviderTo(from, to);
+            }
+          });
     if (widget.providerLocation != null) {
       _animatedProviderPos = LatLng(
         widget.providerLocation!.latitude,
         widget.providerLocation!.longitude,
       );
     }
+    // A snapshot that already carries the route must not replay the reveal.
+    if (widget.route != null) _routeIntroduced = true;
     WidgetsBinding.instance.addPostFrameCallback((_) => _fitCamera());
   }
 
@@ -61,37 +129,100 @@ class _ProviderLiveMapState extends State<ProviderLiveMap>
           widget.providerLocation!.longitude,
         );
         final currentPos = _animatedProviderPos ?? newTarget;
-        final bearing = _calculateBearing(currentPos, newTarget);
-        if (bearing != 0.0) {
-          _currentBearing = bearing;
-        }
-
-        _moveAnimController.reset();
-        final start = currentPos;
-        final anim = CurvedAnimation(
-          parent: _moveAnimController,
-          curve: Curves.easeInOutCubic,
-        );
-        anim.addListener(() {
-          if (mounted) {
-            setState(() {
-              _animatedProviderPos = LatLng(
-                start.latitude + (newTarget.latitude - start.latitude) * anim.value,
-                start.longitude + (newTarget.longitude - start.longitude) * anim.value,
-              );
-            });
-          }
-        });
-        _moveAnimController.forward();
+        _animateProviderTo(currentPos, newTarget);
       }
       WidgetsBinding.instance.addPostFrameCallback((_) => _fitCamera());
     } else if (widget.customerLocation != oldWidget.customerLocation) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _fitCamera());
     }
+    _maybeStartRouteDraw();
+  }
+
+  /// Glides the vehicle marker from [from] to [to] over 900ms, updating
+  /// bearing from the travel direction. Single home for marker movement.
+  void _animateProviderTo(LatLng from, LatLng to) {
+    final bearing = _calculateBearing(from, to);
+    if (bearing != 0.0) {
+      _currentBearing = bearing;
+    }
+    _moveAnimController.reset();
+    final anim = CurvedAnimation(
+      parent: _moveAnimController,
+      curve: Curves.easeInOutCubic,
+    );
+    anim.addListener(() {
+      if (mounted) {
+        setState(() {
+          _animatedProviderPos = LatLng(
+            from.latitude + (to.latitude - from.latitude) * anim.value,
+            from.longitude + (to.longitude - from.longitude) * anim.value,
+          );
+        });
+      }
+    });
+    _moveAnimController.forward();
+  }
+
+  void _maybeStartRouteDraw() {
+    if (_routeIntroduced) return;
+    if (widget.route == null) return;
+    if (widget.route!.coordinates.length < 2) return;
+    if (widget.providerLocation == null || widget.customerLocation == null) {
+      return;
+    }
+    // Set BEFORE starting so a rebuild mid-flight can't re-enter.
+    _routeIntroduced = true;
+    if (MediaQuery.maybeOf(context)?.disableAnimations ?? false) {
+      return; // Static full route; nothing to animate.
+    }
+    _drawRoute = _orientRoute(widget.route!);
+    _routeDrawController.forward(from: 0);
+  }
+
+  void _onRouteDrawTick() {
+    if (!mounted || _drawRoute == null) return;
+    // Route refresh mid-draw re-slices in place; never restart.
+    if (!identical(widget.route, _drawRoute) && widget.route != null) {
+      _drawRoute = _orientRoute(widget.route!);
+    }
+    final sliced = sliceRoute(
+      _drawRoute!.coordinates,
+      _routeDrawController.value,
+    );
+    if (sliced.isEmpty) return;
+    final bearing = sliced.length >= 2
+        ? _calculateBearing(sliced[sliced.length - 2], sliced.last)
+        : _drawBearing;
+    setState(() {
+      _sliced = sliced;
+      _drawPos = sliced.last;
+      if (bearing != 0.0) _drawBearing = bearing;
+    });
+  }
+
+  /// The API does not document coordinate ordering.
+  /// ponytail: nearest-endpoint heuristic — if route.refresh ever gains an
+  /// explicit origin flag, replace this with it.
+  DrivingRoute _orientRoute(DrivingRoute route) {
+    final provider = _animatedProviderPos;
+    if (provider == null || route.coordinates.length < 2) return route;
+    final first = route.coordinates.first;
+    final last = route.coordinates.last;
+    double dist(LatLng p, CustomerMapLocation q) =>
+        (p.latitude - q.latitude) * (p.latitude - q.latitude) +
+        (p.longitude - q.longitude) * (p.longitude - q.longitude);
+    final firstIsNearer = dist(provider, first) <= dist(provider, last);
+    if (firstIsNearer) return route;
+    return DrivingRoute(
+      coordinates: route.coordinates.reversed.toList(),
+      distanceMeters: route.distanceMeters,
+      durationSeconds: route.durationSeconds,
+    );
   }
 
   @override
   void dispose() {
+    _routeDrawController.dispose();
     _moveAnimController.dispose();
     super.dispose();
   }
@@ -108,7 +239,8 @@ class _ProviderLiveMapState extends State<ProviderLiveMap>
 
     final dLon = lon2 - lon1;
     final y = math.sin(dLon) * math.cos(lat2);
-    final x = math.cos(lat1) * math.sin(lat2) -
+    final x =
+        math.cos(lat1) * math.sin(lat2) -
         math.sin(lat1) * math.cos(lat2) * math.cos(dLon);
     final rad = math.atan2(y, x);
     return (rad * 180.0 / math.pi + 360.0) % 360.0;
@@ -116,7 +248,11 @@ class _ProviderLiveMapState extends State<ProviderLiveMap>
 
   void _fitCamera() {
     if (!mounted) return;
-    final provider = _animatedProviderPos ??
+    // Mid-draw the marker position is choreographed, not real GPS — don't
+    // refit the viewport to it (the move-anim keeps updating the real pos).
+    if (_drawPos != null) return;
+    final provider =
+        _animatedProviderPos ??
         (widget.providerLocation == null
             ? null
             : LatLng(
@@ -148,7 +284,8 @@ class _ProviderLiveMapState extends State<ProviderLiveMap>
 
   @override
   Widget build(BuildContext context) {
-    final provider = _animatedProviderPos ??
+    final provider =
+        _animatedProviderPos ??
         (widget.providerLocation == null
             ? null
             : LatLng(
@@ -195,7 +332,8 @@ class _ProviderLiveMapState extends State<ProviderLiveMap>
                     PolylineLayer(
                       polylines: [
                         Polyline(
-                          points: widget.route?.coordinates
+                          points:
+                              widget.route?.coordinates
                                   .map(
                                     (point) =>
                                         LatLng(point.latitude, point.longitude),
@@ -209,7 +347,8 @@ class _ProviderLiveMapState extends State<ProviderLiveMap>
                               : const StrokePattern.solid(),
                         ),
                         Polyline(
-                          points: widget.route?.coordinates
+                          points:
+                              widget.route?.coordinates
                                   .map(
                                     (point) =>
                                         LatLng(point.latitude, point.longitude),
@@ -222,17 +361,30 @@ class _ProviderLiveMapState extends State<ProviderLiveMap>
                               ? const StrokePattern.dotted()
                               : const StrokePattern.solid(),
                         ),
+                        // Progressive draw-on overlay (replays once on route
+                        // arrival — see _maybeStartRouteDraw).
+                        if (_sliced.length > 1)
+                          Polyline(
+                            points: _sliced,
+                            strokeWidth: 5,
+                            color: AppColors.live,
+                            pattern: const StrokePattern.solid(),
+                          ),
                       ],
                     ),
                   MarkerLayer(
                     markers: [
                       if (provider != null)
                         Marker(
-                          point: provider,
+                          // During the draw-on the marker rides the route
+                          // head; afterwards it follows live GPS.
+                          point: _drawPos ?? provider,
                           width: 72,
                           height: 84,
                           child: _VehicleMapPin(
-                            bearing: _currentBearing,
+                            bearing: _drawPos != null
+                                ? _drawBearing
+                                : _currentBearing,
                             isLive: true,
                           ),
                         ),
@@ -276,13 +428,16 @@ class _ProviderLiveMapState extends State<ProviderLiveMap>
                 left: AppSpacing.md,
                 right: 98,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xE60F172A),
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                     border: Border.all(
                       color: provider != null
-                          ? AppColors.primary.withValues(alpha: 0.6)
+                          ? AppColors.live.withValues(alpha: 0.6)
                           : AppColors.borderStrong,
                       width: 1.5,
                     ),
@@ -300,7 +455,9 @@ class _ProviderLiveMapState extends State<ProviderLiveMap>
                         provider != null
                             ? Icons.two_wheeler_rounded
                             : Icons.radar_rounded,
-                        color: AppColors.primary,
+                        color: provider != null
+                            ? AppColors.live
+                            : AppColors.primary,
                         size: 18,
                       ),
                       const SizedBox(width: 8),
@@ -334,7 +491,10 @@ class _ProviderLiveMapState extends State<ProviderLiveMap>
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                     onTap: _fitCamera,
                     child: const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 8,
+                      ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -550,7 +710,9 @@ class _MapPin extends StatelessWidget {
               color: color,
               shape: BoxShape.circle,
               border: Border.all(color: Colors.white, width: 3),
-              boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 8)],
+              boxShadow: const [
+                BoxShadow(color: Colors.black38, blurRadius: 8),
+              ],
             ),
             child: Icon(icon, color: Colors.white, size: 22),
           ),
@@ -579,10 +741,7 @@ class _MapPin extends StatelessWidget {
 }
 
 class _VehicleMapPin extends StatelessWidget {
-  const _VehicleMapPin({
-    required this.bearing,
-    this.isLive = true,
-  });
+  const _VehicleMapPin({required this.bearing, this.isLive = true});
 
   final double bearing;
   final bool isLive;
@@ -596,7 +755,29 @@ class _VehicleMapPin extends StatelessWidget {
         Stack(
           alignment: Alignment.center,
           children: [
-            if (isLive)
+            if (isLive) ...[
+              // Trailing telemetry comet glow behind the vehicle heading
+              Transform.translate(
+                offset: Offset(
+                  math.cos((bearing + 90) * (math.pi / 180.0)) * 14.0,
+                  math.sin((bearing + 90) * (math.pi / 180.0)) * 14.0,
+                ),
+                child: Container(
+                  width: 18,
+                  height: 18,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.live.withValues(alpha: 0.35),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.live.withValues(alpha: 0.5),
+                        blurRadius: 10,
+                        spreadRadius: 2,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
               Container(
                 width: 48,
                 height: 48,
@@ -605,6 +786,7 @@ class _VehicleMapPin extends StatelessWidget {
                   color: AppColors.primary.withValues(alpha: 0.22),
                 ),
               ),
+            ],
             Container(
               width: 38,
               height: 38,
@@ -646,7 +828,11 @@ class _VehicleMapPin extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.two_wheeler_rounded, color: AppColors.primary, size: 10),
+                Icon(
+                  Icons.two_wheeler_rounded,
+                  color: AppColors.primary,
+                  size: 10,
+                ),
                 SizedBox(width: 3),
                 Text(
                   'Technician',

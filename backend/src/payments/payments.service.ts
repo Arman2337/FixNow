@@ -31,6 +31,9 @@ import { TrustService } from '../trust/trust.service';
 const PAYABLE_BOOKING_STATUSES: readonly string[] = [
   BookingStatus.REQUESTED,
   BookingStatus.ASSIGNED,
+  BookingStatus.EN_ROUTE,
+  BookingStatus.IN_PROGRESS,
+  BookingStatus.COMPLETED,
 ];
 
 @Injectable()
@@ -107,8 +110,8 @@ export class PaymentsService {
       return this.present(saved);
     } catch (error: unknown) {
       if (this.isUniqueViolation(error)) {
-        const raced = await this.orders.findOneByOrFail({ receipt });
-        return this.present(raced);
+        const raced = await this.orders.findOneBy({ receipt });
+        if (raced) return this.present(raced);
       }
       throw error;
     }

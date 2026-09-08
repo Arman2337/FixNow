@@ -5,6 +5,7 @@ import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_motion.dart';
 import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
+import 'package:fixnow_mobile/design_system/fix_3d_spatial_beacon.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -73,7 +74,7 @@ class _MatchRadarViewState extends State<MatchRadarView>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             SizedBox(
-              height: 220,
+              height: 240,
               child: reduce
                   ? const Center(
                       child: Icon(
@@ -82,12 +83,26 @@ class _MatchRadarViewState extends State<MatchRadarView>
                         size: 56,
                       ),
                     )
-                  : AnimatedBuilder(
-                      animation: _controller,
-                      builder: (context, _) => CustomPaint(
-                        size: const Size.fromHeight(220),
-                        painter: _RadarPainter(progress: _controller.value),
-                      ),
+                  : Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        AnimatedBuilder(
+                          animation: _controller,
+                          builder: (context, _) => CustomPaint(
+                            size: const Size.fromHeight(240),
+                            painter: _RadarPainter(progress: _controller.value),
+                          ),
+                        ),
+                        AnimatedBuilder(
+                          animation: _controller,
+                          builder: (context, _) => Fix3DSpatialBeacon(
+                            size: 150,
+                            label: '',
+                            sublabel: '',
+                            progress: _controller.value,
+                          ),
+                        ),
+                      ],
                     ),
             ),
             const SizedBox(height: AppSpacing.lg),
@@ -173,6 +188,47 @@ class _RadarPainter extends CustomPainter {
         ..strokeWidth = 1.5
         ..color = AppColors.primary.withValues(alpha: 0.6),
     );
+
+    // Nearby alerted provider nodes (visualizing multi-provider dispatch)
+    const providerPoints = [
+      Offset(-0.48, -0.38),
+      Offset(0.52, -0.32),
+      Offset(-0.38, 0.52),
+      Offset(0.44, 0.46),
+      Offset(-0.68, 0.12),
+      Offset(0.28, -0.66),
+    ];
+
+    for (final pt in providerPoints) {
+      final pos = Offset(
+        center.dx + pt.dx * maxRadius,
+        center.dy + pt.dy * maxRadius,
+      );
+      final dist = (pos - center).distance;
+      final triggerFraction = dist / maxRadius;
+      final alpha = (progress >= triggerFraction * 0.7)
+          ? (0.3 +
+                  0.5 *
+                      math
+                          .sin((progress * 4 * math.pi) + dist)
+                          .abs())
+              .clamp(0.2, 0.9)
+          : 0.15;
+
+      canvas.drawCircle(
+        pos,
+        4.5,
+        Paint()..color = AppColors.accentGold.withValues(alpha: alpha),
+      );
+      canvas.drawCircle(
+        pos,
+        8.0,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.0
+          ..color = AppColors.accentGold.withValues(alpha: alpha * 0.5),
+      );
+    }
   }
 
   @override

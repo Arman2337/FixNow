@@ -119,10 +119,10 @@ class ProviderRepository {
     ),
   );
 
-  Future<ProviderAvailability> setWeekdaySchedule(
-    ProviderAvailability current,
-    bool enabled,
-  ) async => ProviderAvailability.fromJson(
+  Future<ProviderAvailability> updateSchedule({
+    required ProviderAvailability current,
+    required List<Map<String, Object?>> weeklyRules,
+  }) async => ProviderAvailability.fromJson(
     _map(
       (await _api.send(
         ApiRequest(
@@ -131,23 +131,31 @@ class ProviderRepository {
           bearerToken: await _token(),
           body: {
             'timeZone': current.timeZone,
-            'weeklyRules': enabled
-                ? [
-                    for (var day = 1; day <= 5; day += 1)
-                      {
-                        'dayOfWeek': day,
-                        'intervals': [
-                          {'startMinute': 540, 'endMinute': 1020},
-                        ],
-                      },
-                  ]
-                : const [],
+            'weeklyRules': weeklyRules,
             'exceptions': const [],
             'expectedVersion': current.version,
           },
         ),
       )).body,
     ),
+  );
+
+  Future<ProviderAvailability> setWeekdaySchedule(
+    ProviderAvailability current,
+    bool enabled,
+  ) async => updateSchedule(
+    current: current,
+    weeklyRules: enabled
+        ? [
+            for (var day = 1; day <= 5; day += 1)
+              {
+                'dayOfWeek': day,
+                'intervals': [
+                  {'startMinute': 540, 'endMinute': 1020},
+                ],
+              },
+          ]
+        : const [],
   );
 
   Future<List<CustomerBooking>> jobs() async {

@@ -1,4 +1,5 @@
 import 'package:fixnow_mobile/api/api_client.dart';
+import 'package:fixnow_mobile/config/app_environment.dart';
 import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
@@ -21,14 +22,18 @@ class InvoiceScreen extends StatefulWidget {
   InvoiceScreen({
     required this.repository,
     required this.bookingId,
+    this.initialInvoice,
     this.localPaymentRepository,
     bool? localPaymentBypassEnabled,
     super.key,
   }) : localPaymentBypassEnabled =
-           localPaymentBypassEnabled ?? LocalPaymentConfig.bypassEnabled;
+           localPaymentBypassEnabled ??
+           (AppEnvironment.current == AppEnvironment.development ||
+               LocalPaymentConfig.bypassEnabled);
 
   final InvoiceRepository repository;
   final String bookingId;
+  final Invoice? initialInvoice;
 
   /// FN-118: dev-only local checkout. When null the pay affordance never
   /// shows; production and non-dev builds simply pass nothing here.
@@ -43,7 +48,11 @@ class InvoiceScreen extends StatefulWidget {
 
 class _InvoiceScreenState extends State<InvoiceScreen> {
   late final InvoiceController _controller =
-      InvoiceController(widget.repository, widget.bookingId)..load();
+      InvoiceController(
+        widget.repository,
+        widget.bookingId,
+        initialInvoice: widget.initialInvoice,
+      )..load();
 
   @override
   void dispose() {

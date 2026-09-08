@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
@@ -12,10 +14,15 @@ class FixSchedulePickerCard extends StatefulWidget {
     super.key,
     this.initialSchedule,
     required this.onScheduleChanged,
+    this.recheckInterval = const Duration(seconds: 60),
   });
 
   final BookingSchedule? initialSchedule;
   final ValueChanged<BookingSchedule> onScheduleChanged;
+
+  /// How often slot availability is re-evaluated against the wall clock.
+  /// Pass null to disable the ticker (tests that use [pumpAndSettle]).
+  final Duration? recheckInterval;
 
   @override
   State<FixSchedulePickerCard> createState() => _FixSchedulePickerCardState();
@@ -25,18 +32,65 @@ class _FixSchedulePickerCardState extends State<FixSchedulePickerCard> {
   late BookingSchedule _schedule;
   late final List<DateTime> _upcomingDates;
   late final ScrollController _dateScrollController = ScrollController();
+  Timer? _recheckTimer;
 
   @override
   void initState() {
     super.initState();
     _upcomingDates = BookingSchedule.getUpcomingDates();
     _schedule = widget.initialSchedule ?? _computeInitialSchedule();
+    final interval = widget.recheckInterval;
+    if (interval != null) {
+      _recheckTimer = Timer.periodic(interval, (_) => _onRecheckTick());
+    }
   }
 
   @override
   void dispose() {
+    _recheckTimer?.cancel();
     _dateScrollController.dispose();
     super.dispose();
+  }
+
+  /// Keeps the card honest when it sits open across a slot boundary or
+  /// midnight: refresh the date strip, then move the selection off any
+  /// now-elapsed slot so a stale window can't be booked. Promotion routes
+  /// through [_updateSchedule] so the parent's submitted schedule follows.
+  void _onRecheckTick() {
+    if (!mounted) return;
+    final today = DateTime.now();
+    final first = _upcomingDates.first;
+    final dayRolledOver = first.year != today.year ||
+        first.month != today.month ||
+        first.day != today.day;
+    if (dayRolledOver) {
+      setState(() {
+        _upcomingDates.clear();
+        _upcomingDates.addAll(BookingSchedule.getUpcomingDates());
+      });
+    }
+    if (BookingSchedule.isSlotPast(_schedule.date, _schedule.slot)) {
+      _updateSchedule(_promotePastSchedule(_schedule));
+    }
+  }
+
+  /// Returns [schedule] moved to the first selectable slot on its date — or,
+  /// if the whole day has elapsed, to the first slot of the next day.
+  BookingSchedule _promotePastSchedule(BookingSchedule schedule) {
+    final available = TimeSlot.standardSlots
+        .where((s) => !_isSlotPast(schedule.date, s))
+        .toList();
+    if (available.isNotEmpty) {
+      return schedule.copyWith(slot: available.first);
+    }
+    final laterDays = _upcomingDates.where((d) => d.isAfter(schedule.date)).toList();
+    if (laterDays.isNotEmpty) {
+      return schedule.copyWith(
+        date: laterDays.first,
+        slot: TimeSlot.standardSlots.first,
+      );
+    }
+    return schedule;
   }
 
   BookingSchedule _computeInitialSchedule() {
@@ -69,21 +123,8 @@ class _FixSchedulePickerCardState extends State<FixSchedulePickerCard> {
 
   void _selectScheduleLater() {
     var targetSchedule = _schedule.copyWith(mode: ScheduleMode.later);
-    final allTodayPast = TimeSlot.standardSlots.every((s) => _isSlotPast(targetSchedule.date, s));
-    if (allTodayPast && _upcomingDates.length > 1) {
-      final tomorrow = _upcomingDates[1];
-      targetSchedule = targetSchedule.copyWith(
-        date: tomorrow,
-        slot: TimeSlot.standardSlots.first,
-      );
-    } else if (_isSlotPast(targetSchedule.date, targetSchedule.slot)) {
-      final firstAvail = TimeSlot.standardSlots.cast<TimeSlot?>().firstWhere(
-        (s) => !_isSlotPast(targetSchedule.date, s!),
-        orElse: () => null,
-      );
-      if (firstAvail != null) {
-        targetSchedule = targetSchedule.copyWith(slot: firstAvail);
-      }
+    if (BookingSchedule.isSlotPast(targetSchedule.date, targetSchedule.slot)) {
+      targetSchedule = _promotePastSchedule(targetSchedule);
     }
     _updateSchedule(targetSchedule);
   }
@@ -96,14 +137,8 @@ class _FixSchedulePickerCardState extends State<FixSchedulePickerCard> {
       _scrollToIndex(index);
     }
     var targetSchedule = _schedule.copyWith(date: date);
-    if (_isSlotPast(date, targetSchedule.slot)) {
-      final firstAvail = TimeSlot.standardSlots.cast<TimeSlot?>().firstWhere(
-        (s) => !_isSlotPast(date, s!),
-        orElse: () => null,
-      );
-      if (firstAvail != null) {
-        targetSchedule = targetSchedule.copyWith(slot: firstAvail);
-      }
+    if (BookingSchedule.isSlotPast(date, targetSchedule.slot)) {
+      targetSchedule = _promotePastSchedule(targetSchedule);
     }
     _updateSchedule(targetSchedule);
   }
@@ -122,12 +157,8 @@ class _FixSchedulePickerCardState extends State<FixSchedulePickerCard> {
     );
   }
 
-  bool _isSlotPast(DateTime date, TimeSlot slot) {
-    final now = DateTime.now();
-    final isToday = date.year == now.year && date.month == now.month && date.day == now.day;
-    if (!isToday) return false;
-    return now.hour >= (slot.startHour + 3);
-  }
+  bool _isSlotPast(DateTime date, TimeSlot slot) =>
+      BookingSchedule.isSlotPast(date, slot);
 
   @override
   Widget build(BuildContext context) {

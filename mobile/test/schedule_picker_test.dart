@@ -46,6 +46,67 @@ void main() {
     });
   });
 
+  group('slot expiry', () {
+    final today = DateTime(2026, 9, 8);
+    final morning = TimeSlot.standardSlots[0]; // 08:00 – 11:00
+
+    test('slot stays bookable until its window closes', () {
+      expect(
+        BookingSchedule.isSlotPast(today, morning, now: DateTime(2026, 9, 8, 10, 59)),
+        isFalse,
+      );
+      // Window closes at 11:00 sharp — minute-precise, not start+3h eyeballed.
+      expect(
+        BookingSchedule.isSlotPast(today, morning, now: DateTime(2026, 9, 8, 11, 0)),
+        isTrue,
+      );
+    });
+
+    test('future-date slots are never past', () {
+      final tomorrow = DateTime(2026, 9, 9);
+      expect(
+        BookingSchedule.isSlotPast(tomorrow, morning, now: DateTime(2026, 9, 8, 23, 0)),
+        isFalse,
+      );
+    });
+
+    testWidgets('recheck ticker promotes the selection off elapsed slots',
+        (tester) async {
+      BookingSchedule? active;
+      final soonPast = BookingSchedule(
+        mode: ScheduleMode.later,
+        date: DateTime.now(),
+        slot: TimeSlot.standardSlots[0], // morning — assume test runs after 8am
+      );
+
+      await tester.pumpWidget(
+        host(
+          FixSchedulePickerCard(
+            initialSchedule: soonPast,
+            recheckInterval: const Duration(milliseconds: 50),
+            onScheduleChanged: (s) => active = s,
+          ),
+        ),
+      );
+      // Advance fake time past the first tick; never pumpAndSettle with a
+      // live periodic timer.
+      await tester.pump(const Duration(milliseconds: 120));
+
+      // Selection must no longer sit on a slot that has elapsed.
+      if (BookingSchedule.isSlotPast(
+        soonPast.date,
+        soonPast.slot,
+        now: DateTime.now(),
+      )) {
+        expect(
+          BookingSchedule.isSlotPast(active!.date, active!.slot),
+          isFalse,
+          reason: 'ticker must move the selection to a selectable slot',
+        );
+      }
+    });
+  });
+
   group('FixSchedulePickerCard widget', () {
     testWidgets('toggles between Book for Now and Schedule for Later',
         (tester) async {

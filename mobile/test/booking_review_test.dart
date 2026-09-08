@@ -34,6 +34,8 @@ void main() {
       expect(find.text('How was your experience?'), findsOneWidget);
       expect(find.bySemanticsLabel('5 stars'), findsOneWidget);
       await tester.tap(find.bySemanticsLabel('5 stars'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Submit review'));
       await tester.tap(find.text('Submit review'));
       await tester.pumpAndSettle();
       expect(transport.postBody, {'rating': 5});

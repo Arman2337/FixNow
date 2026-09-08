@@ -4,6 +4,8 @@ import 'package:fixnow_mobile/features/provider/provider_home_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_onboarding_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_models.dart';
 import 'package:fixnow_mobile/features/provider/provider_repository.dart';
+import 'package:fixnow_mobile/features/notifications/notification_controller.dart';
+import 'package:fixnow_mobile/features/notifications/notification_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -154,6 +156,81 @@ void main() {
 
     expect(find.bySemanticsLabel('Your usual accept time'), findsNothing);
     expect(find.textContaining('usual accept time'), findsNothing);
+  });
+
+  testWidgets(
+    'verified provider sees notification banner when unread alerts exist and can open notification',
+    (tester) async {
+      tester.view.physicalSize = const Size(800, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+
+      final controller = _loadedVerifiedController();
+      final notifRepo = NotificationRepository();
+      final notifController = NotificationController(notifRepo);
+      await notifController.load();
+
+      String? openedBooking;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData.dark(),
+          home: Scaffold(
+            body: ProviderHomeScreen(
+              controller: controller,
+              notificationController: notifController,
+              onOpenBooking: (id) => openedBooking = id,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Provider Notification Banner should be displayed with the unread notification
+      expect(find.text('Booking Confirmed & Assigned'), findsOneWidget);
+      expect(find.text('NEW'), findsOneWidget);
+      expect(find.text('View Booking'), findsOneWidget);
+
+      // Tap on the notification banner
+      await tester.tap(find.text('Booking Confirmed & Assigned'));
+      await tester.pumpAndSettle();
+
+      expect(openedBooking, 'booking-seed-1');
+    },
+  );
+
+  testWidgets('verified provider can dismiss notification banner', (tester) async {
+    tester.view.physicalSize = const Size(800, 2400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+
+    final controller = _loadedVerifiedController();
+    final notifRepo = NotificationRepository();
+    final notifController = NotificationController(notifRepo);
+    await notifController.load();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData.dark(),
+        home: Scaffold(
+          body: ProviderHomeScreen(
+            controller: controller,
+            notificationController: notifController,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Booking Confirmed & Assigned'), findsOneWidget);
+
+    // Tap dismiss (close icon button)
+    await tester.tap(find.byTooltip('Dismiss notification'));
+    await tester.pumpAndSettle();
+
+    // That notification is dismissed/marked read, so the next unread notification appears
+    expect(find.text('Booking Confirmed & Assigned'), findsNothing);
+    expect(find.text('Seasonal Home Checkup'), findsOneWidget);
   });
 }
 

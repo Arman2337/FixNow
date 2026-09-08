@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fixnow_mobile/design_system/app_colors.dart';
+import 'package:fixnow_mobile/design_system/app_motion.dart';
 import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/features/call/booking_call_screen.dart';
@@ -29,6 +30,11 @@ class BookingChatScreen extends StatefulWidget {
 class _BookingChatScreenState extends State<BookingChatScreen> {
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  bool _primed = false;
+  int _watermark = 0;
+
+  /// First index that should play the entrance animation; -1 = none.
+  int _animateFrom = -1;
 
   List<String> get _quickResponses => widget.controller.isProvider
       ? const [
@@ -66,10 +72,24 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
   }
 
   void _onControllerUpdate() {
-    if (mounted) {
-      setState(() {});
-      _scrollToBottom(force: false);
+    if (!mounted) return;
+    // Track which messages are NEW so only they animate in. History renders
+    // instantly; the optimistic-send replace (same count, new id) keeps the
+    // window open so the in-flight entrance isn't torn down by the second
+    // notifyListeners.
+    final count = widget.controller.messages.length;
+    if (!_primed) {
+      _primed = true;
+      _watermark = count;
+    } else if (count > _watermark) {
+      _animateFrom = _watermark;
+      _watermark = count;
+    } else if (count < _watermark) {
+      _watermark = count;
+      if (_animateFrom > count) _animateFrom = count;
     }
+    setState(() {});
+    _scrollToBottom(force: false);
   }
 
   void _scrollToBottom({bool force = false}) {
@@ -355,7 +375,15 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
                               itemCount: controller.messages.length,
                               itemBuilder: (context, index) {
                                 final message = controller.messages[index];
-                                return _ChatBubble(message: message);
+                                final bubble = _ChatBubble(message: message);
+                                final isNew =
+                                    _animateFrom >= 0 && index >= _animateFrom;
+                                return isNew
+                                    ? _BubbleEntrance(
+                                        isMe: message.isMe,
+                                        child: bubble,
+                                      )
+                                    : bubble;
                               },
                             ),
             ),
@@ -586,23 +614,82 @@ class _ChatBubble extends StatelessWidget {
                 ),
                 if (isMe) ...[
                   const SizedBox(width: 4),
-                  Icon(
-                    message.readAt != null
-                        ? Icons.done_all_rounded
-                        : (message.id.isNotEmpty
-                            ? Icons.done_all_rounded
-                            : Icons.done_rounded),
-                    color: message.readAt != null
-                        ? AppColors.accentGold
-                        : Colors.white.withValues(alpha: 0.85),
-                    size: 13,
-                  ),
+                  _DeliveryTick(message: message),
                 ],
               ],
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Slides a just-arrived bubble up and in from its sender's side. History
+/// messages never pass through here — only indices above the watermark.
+class _BubbleEntrance extends StatelessWidget {
+  const _BubbleEntrance({required this.isMe, required this.child});
+
+  final bool isMe;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (MediaQuery.maybeOf(context)?.disableAnimations ?? false) return child;
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: AppMotion.container,
+      curve: AppMotion.enterCurve,
+      builder: (context, t, child) {
+        final dx = isMe ? 0.16 : -0.16;
+        return Opacity(
+          opacity: t.clamp(0.0, 1.0),
+          child: Transform.translate(
+            offset: Offset(dx * 60 * (1 - t), 18 * (1 - t)),
+            child: Transform.scale(
+              scale: 0.94 + 0.06 * t,
+              alignment: isMe ? Alignment.bottomRight : Alignment.bottomLeft,
+              child: child,
+            ),
+          ),
+        );
+      },
+      child: child,
+    );
+  }
+}
+
+/// ✓ sent → ✓✓ delivered → gold ✓✓ read, morphing between states instead of
+/// snapping. Plain icon under reduce motion (AnimatedSwitcher ignores it).
+class _DeliveryTick extends StatelessWidget {
+  const _DeliveryTick({required this.message});
+
+  final ChatMessage message;
+
+  @override
+  Widget build(BuildContext context) {
+    final read = message.readAt != null;
+    final delivered = message.id.isNotEmpty;
+    final stateKey = read ? 'read' : (delivered ? 'delivered' : 'sent');
+    final icon = read || delivered
+        ? Icons.done_all_rounded
+        : Icons.done_rounded;
+    final color = read
+        ? AppColors.accentGold
+        : Colors.white.withValues(alpha: 0.85);
+
+    if (MediaQuery.maybeOf(context)?.disableAnimations ?? false) {
+      return Icon(icon, color: color, size: 13);
+    }
+    return AnimatedSwitcher(
+      duration: AppMotion.standard,
+      transitionBuilder: (child, animation) => ScaleTransition(
+        scale: Tween(begin: 0.6, end: 1.0).animate(
+          CurvedAnimation(parent: animation, curve: AppMotion.celebrateCurve),
+        ),
+        child: FadeTransition(opacity: animation, child: child),
+      ),
+      child: Icon(icon, key: ValueKey(stateKey), color: color, size: 13),
     );
   }
 }

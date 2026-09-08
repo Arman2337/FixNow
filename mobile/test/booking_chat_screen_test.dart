@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/features/chat/booking_chat_screen.dart';
 import 'package:fixnow_mobile/features/chat/chat_controller.dart';
 import 'package:fixnow_mobile/features/chat/chat_message.dart';
@@ -220,6 +221,120 @@ void main() {
       await tester.pump();
 
       expect(callTriggered, isTrue);
+    });
+
+    testWidgets('appended message animates in and settles (new-only rule)',
+        (tester) async {
+      final fakeRepo = FakeChatRepository(
+        initialMessages: [
+          ChatMessage(
+            id: 'm1',
+            bookingId: 'booking-123',
+            senderUserId: 'provider-1',
+            senderRole: 'PROVIDER',
+            messageText: 'History message',
+            createdAt: DateTime.parse('2026-08-27T10:00:00Z'),
+            isMe: false,
+          ),
+        ],
+      );
+      final controller = ChatController(
+        bookingId: 'booking-123',
+        repository: fakeRepo,
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(home: BookingChatScreen(controller: controller)),
+      );
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      // Append: the 3s poll timer fires under the fake clock; timers don't
+      // schedule frames so this is safe before a pumpAndSettle.
+      fakeRepo.messages.add(
+        ChatMessage(
+          id: 'm2',
+          bookingId: 'booking-123',
+          senderUserId: 'provider-1',
+          senderRole: 'PROVIDER',
+          messageText: 'Fresh arrival',
+          createdAt: DateTime.now(),
+          isMe: false,
+        ),
+      );
+      await tester.pump(const Duration(seconds: 3));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Fresh arrival'), findsOneWidget);
+      expect(find.text('History message'), findsOneWidget);
+    });
+
+    testWidgets('optimistic send replace keeps the bubble through settle', (
+      tester,
+    ) async {
+      final fakeRepo = FakeChatRepository();
+      final controller = ChatController(
+        bookingId: 'booking-123',
+        repository: fakeRepo,
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(home: BookingChatScreen(controller: controller)),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField), 'Temp id then real id');
+      await tester.tap(find.byIcon(Icons.send_rounded));
+      await tester.pumpAndSettle();
+
+      // One bubble only (temp replaced by server copy), still animating or
+      // settled — never duplicated, never dropped.
+      expect(find.text('Temp id then real id'), findsOneWidget);
+      expect(fakeRepo.sentMessages, contains('Temp id then real id'));
+    });
+
+    testWidgets('read receipt renders gold done_all, pending renders white',
+        (tester) async {
+      final fakeRepo = FakeChatRepository(initialMessages: [
+        ChatMessage(
+          id: 'm1',
+          bookingId: 'booking-123',
+          senderUserId: 'customer-1',
+          senderRole: 'CUSTOMER',
+          messageText: 'Read message',
+          createdAt: DateTime.now(),
+          isMe: true,
+          readAt: DateTime.now(),
+        ),
+        ChatMessage(
+          id: 'm2',
+          bookingId: 'booking-123',
+          senderUserId: 'customer-1',
+          senderRole: 'CUSTOMER',
+          messageText: 'Delivered message',
+          createdAt: DateTime.now(),
+          isMe: true,
+        ),
+      ]);
+      final controller = ChatController(
+        bookingId: 'booking-123',
+        repository: fakeRepo,
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(home: BookingChatScreen(controller: controller)),
+      );
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      final goldTick = tester.widget<Icon>(
+        find.byIcon(Icons.done_all_rounded).first,
+      );
+      expect(goldTick.color, AppColors.accentGold);
+      final whiteTick = tester.widget<Icon>(
+        find.byIcon(Icons.done_all_rounded).last,
+      );
+      expect(whiteTick.color, Colors.white.withValues(alpha: 0.85));
     });
   });
 }

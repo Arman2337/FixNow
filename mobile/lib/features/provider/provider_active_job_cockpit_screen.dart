@@ -2,6 +2,7 @@ import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/app_typography.dart';
+import 'package:fixnow_mobile/design_system/fix_banner.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
 import 'package:fixnow_mobile/design_system/fix_job_proof_dialog.dart';
@@ -141,11 +142,11 @@ class _ProviderActiveJobCockpitScreenState
       await widget.controller.publishCurrentLocation(current);
       _startLocationBroadcasting();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Trip started! Location sharing is active.'),
-            backgroundColor: AppColors.primary,
-          ),
+        showFixBanner(
+          ScaffoldMessenger.of(context),
+          tone: FixBannerTone.success,
+          title: 'Trip started',
+          message: 'Location sharing is active.',
         );
       }
     } catch (e) {
@@ -170,11 +171,11 @@ class _ProviderActiveJobCockpitScreenState
       await widget.controller.verifyOtpAndStartJob(job, otp);
       _stopLocationBroadcasting();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('OTP Verified! Service is now In Progress.'),
-            backgroundColor: AppColors.success,
-          ),
+        showFixBanner(
+          ScaffoldMessenger.of(context),
+          tone: FixBannerTone.success,
+          title: 'OTP verified',
+          message: 'Service is now in progress.',
         );
       }
     } catch (e) {
@@ -238,8 +239,10 @@ class _ProviderActiveJobCockpitScreenState
 
   void _openChat(BuildContext context, CustomerBooking job) {
     if (widget.chatRepository == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Chat is currently offline.')),
+      showFixBanner(
+        ScaffoldMessenger.of(context),
+        tone: FixBannerTone.danger,
+        message: 'Chat is currently offline.',
       );
       return;
     }
@@ -262,8 +265,9 @@ class _ProviderActiveJobCockpitScreenState
 
   void _openCall(BuildContext context, CustomerBooking job) {
     if (widget.callRepository == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('In-app calling is connecting...')),
+      showFixBanner(
+        ScaffoldMessenger.of(context),
+        message: 'In-app calling is connecting...',
       );
       return;
     }
@@ -296,26 +300,18 @@ class _ProviderActiveJobCockpitScreenState
       });
     } on MissingPluginException {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
+      showFixBanner(
+        ScaffoldMessenger.of(context),
+        message:
             'Navigating to lat: ${lat.toStringAsFixed(4)}, lng: ${lng.toStringAsFixed(4)}',
-          ),
-          action: SnackBarAction(
-            label: 'DISMISS',
-            textColor: AppColors.accentGold,
-            onPressed: () {},
-          ),
-        ),
+        actionLabel: 'DISMISS',
       );
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
+      showFixBanner(
+        ScaffoldMessenger.of(context),
+        message:
             'Navigating to lat: ${lat.toStringAsFixed(4)}, lng: ${lng.toStringAsFixed(4)}',
-          ),
-        ),
       );
     }
   }
@@ -350,8 +346,9 @@ class _ProviderActiveJobCockpitScreenState
                 tooltip: 'Emergency SOS',
                 icon: const Icon(Icons.shield_outlined, color: AppColors.emergency),
                 onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Safety assistance team alerted.')),
+                  showFixBanner(
+                    ScaffoldMessenger.of(context),
+                    message: 'Safety assistance team alerted.',
                   );
                 },
               ),

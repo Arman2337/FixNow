@@ -3,6 +3,7 @@ import 'package:fixnow_mobile/design_system/app_motion.dart';
 import 'package:fixnow_mobile/design_system/app_theme.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
+import 'package:fixnow_mobile/design_system/fix_eta_ring.dart';
 import 'package:fixnow_mobile/design_system/fix_status_chip.dart';
 import 'package:fixnow_mobile/design_system/fix_state_views.dart';
 import 'package:flutter/material.dart';
@@ -53,6 +54,89 @@ void main() {
       ),
       greaterThanOrEqualTo(4.5),
     );
+    expect(
+      _contrastRatio(AppColors.textOnSurfaceMuted, AppColors.surfacePrimary),
+      greaterThanOrEqualTo(4.5),
+    );
+  });
+
+  test('every status chip tone holds 4.5:1 on its own background', () {
+    for (final tone in FixStatusTone.values) {
+      final (foreground, background) = FixStatusChip.colorsFor(tone);
+      expect(
+        _contrastRatio(foreground, background),
+        greaterThanOrEqualTo(4.5),
+        reason: '${tone.name} chip foreground must meet AA on its background',
+      );
+    }
+  });
+
+  test('on-light accent steps hold AA on light surfaces and soft chips', () {
+    const lightSurfaces = [
+      AppColors.surfacePrimary,
+      AppColors.surfaceSecondary,
+      AppColors.cream,
+    ];
+    final pairs = <(Color, Color, List<Color>)>[
+      (AppColors.successOnLight, AppColors.successSoft, lightSurfaces),
+      (AppColors.warningOnLight, AppColors.warningSoft, lightSurfaces),
+      (AppColors.dangerOnLight, AppColors.dangerSoft, lightSurfaces),
+      (AppColors.ratingOnLight, AppColors.accentGoldSoft, lightSurfaces),
+      (AppColors.infoOnLight, AppColors.infoSoft, lightSurfaces),
+    ];
+    for (final (foreground, soft, surfaces) in pairs) {
+      expect(
+        _contrastRatio(foreground, soft),
+        greaterThanOrEqualTo(4.5),
+        reason: 'on-light step must meet AA on its soft chip background',
+      );
+      for (final surface in surfaces) {
+        expect(
+          _contrastRatio(foreground, surface),
+          greaterThanOrEqualTo(4.5),
+          reason: 'on-light step must meet AA on light card surfaces',
+        );
+      }
+    }
+  });
+
+  testWidgets('eta ring renders minutes, dash for null, and static fallback',
+      (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.dark,
+        home: const Scaffold(
+          body: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              EtaProgressRing(minutes: 12),
+              EtaProgressRing(minutes: null),
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('12'), findsOneWidget);
+    expect(find.text('—'), findsOneWidget);
+  });
+
+  testWidgets('eta ring settles under reduced motion', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.dark,
+        home: MediaQuery(
+          data: const MediaQueryData(disableAnimations: true),
+          child: Scaffold(
+            body: Center(child: EtaProgressRing(minutes: 7)),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('7'), findsOneWidget);
   });
 
   testWidgets('button preserves a 48px accessible target', (tester) async {
@@ -70,6 +154,55 @@ void main() {
     final size = tester.getSize(find.byType(FilledButton));
     expect(size.height, greaterThanOrEqualTo(48));
     expect(size.width, greaterThanOrEqualTo(48));
+  });
+
+  testWidgets('success morph shows the check, swaps the label, and disables',
+      (tester) async {
+    final semantics = tester.ensureSemantics();
+    var taps = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.dark,
+        home: Scaffold(
+          body: Center(
+            child: FixButton(
+              label: 'Confirm visit',
+              success: true,
+              successLabel: 'Visit booked',
+              onPressed: () => taps++,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byIcon(Icons.check_rounded), findsOneWidget);
+    expect(find.text('Visit booked'), findsOneWidget);
+    expect(find.text('Confirm visit'), findsNothing);
+    await tester.tap(find.byType(FilledButton));
+    expect(taps, 0, reason: 'success button must not accept taps');
+    final handler = semantics;
+    handler.dispose();
+  });
+
+  testWidgets('success morph settles under reduced motion', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.dark,
+        home: MediaQuery(
+          data: const MediaQueryData(disableAnimations: true),
+          child: Scaffold(
+            body: Center(
+              child: FixButton(label: 'Go', success: true, onPressed: () {}),
+            ),
+          ),
+        ),
+      ),
+    );
+    // Reduced motion renders a static success child — settle must terminate.
+    await tester.pumpAndSettle();
+    expect(find.byIcon(Icons.check_rounded), findsOneWidget);
   });
 
   testWidgets('card and status chip expose semantic context', (tester) async {

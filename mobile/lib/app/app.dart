@@ -20,6 +20,7 @@ import 'package:fixnow_mobile/design_system/app_theme.dart';
 import 'package:fixnow_mobile/features/location/location_consent_controller.dart';
 import 'package:fixnow_mobile/features/bookings/booking_controller.dart';
 import 'package:fixnow_mobile/features/bookings/booking.dart';
+import 'package:fixnow_mobile/design_system/fix_accept_celebration.dart';
 import 'package:fixnow_mobile/features/bookings/booking_detail_screen.dart';
 import 'package:fixnow_mobile/features/bookings/booking_repository.dart';
 import 'package:fixnow_mobile/design_system/fix_reschedule_sheet.dart';
@@ -114,6 +115,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
   /// from any screen.
   final GlobalKey<ScaffoldMessengerState> _messengerKey =
       GlobalKey<ScaffoldMessengerState>();
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
   final FirebasePushGateway _pushGateway = FirebasePushGateway();
   StreamSubscription<ForegroundPushMessage>? _foregroundPushSub;
   _AuthEntryStep _authEntryStep = _AuthEntryStep.welcome;
@@ -128,6 +130,47 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
     _foregroundPushSub = bindForegroundPushBanner(
       source: _pushGateway,
       messengerKey: _messengerKey,
+    );
+    _bookings.acceptedBooking.addListener(_showAcceptCelebration);
+  }
+
+  /// One-shot celebrate overlay when realtime reports a provider acceptance.
+  /// Value is cleared before pushing so a rebuild can't re-fire it.
+  void _showAcceptCelebration() {
+    final bookingId = _bookings.acceptedBooking.value;
+    if (bookingId == null) return;
+    _bookings.acceptedBooking.value = null;
+    final nav = _navigatorKey.currentState;
+    if (nav == null) return;
+    CustomerBooking? booking;
+    for (final candidate in _bookings.bookings) {
+      if (candidate.id == bookingId) {
+        booking = candidate;
+        break;
+      }
+    }
+    // Resolve a human service name for the subtitle; fall back to generic copy.
+    String? serviceName;
+    final categoryId = booking?.serviceCategoryId;
+    if (categoryId != null) {
+      for (final category in _discovery.categories) {
+        if (category.id == categoryId) {
+          serviceName = category.name;
+          break;
+        }
+      }
+    }
+    nav.push(
+      RawDialogRoute<void>(
+        barrierDismissible: true,
+        barrierLabel: 'Provider accepted',
+        barrierColor: Colors.transparent,
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            FixAcceptCelebration(
+          serviceName: serviceName,
+          onDismiss: () => nav.pop(),
+        ),
+      ),
     );
   }
 
@@ -190,6 +233,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     unawaited(_foregroundPushSub?.cancel());
+    _bookings.acceptedBooking.removeListener(_showAcceptCelebration);
     _notifications.dispose();
     _auth.dispose();
     _profile.dispose();
@@ -212,6 +256,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
       debugShowCheckedModeBanner: false,
       title: 'FixNow',
       scrollBehavior: const AppScrollBehavior(),
+      navigatorKey: _navigatorKey,
       scaffoldMessengerKey: _messengerKey,
       theme: AppTheme.dark,
       darkTheme: AppTheme.dark,

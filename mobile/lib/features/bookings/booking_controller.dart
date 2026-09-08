@@ -18,6 +18,11 @@ class BookingController extends ChangeNotifier {
   BookingListStatus status = BookingListStatus.initial;
   List<CustomerBooking> bookings = const [];
 
+  /// One-shot signal fired when a REQUESTED booking is accepted by a provider
+  /// over realtime. The UI reads and clears the value; kept separate from
+  /// [notifyListeners] so a shell rebuild can't re-fire the celebration.
+  final ValueNotifier<String?> acceptedBooking = ValueNotifier(null);
+
   Future<void> load() async {
     status = BookingListStatus.loading;
     notifyListeners();
@@ -122,8 +127,14 @@ class BookingController extends ChangeNotifier {
       description: current.description,
       createdAt: current.createdAt,
       version: version,
+      locationLatitude: current.locationLatitude,
+      locationLongitude: current.locationLongitude,
+      scheduledAt: current.scheduledAt,
     );
     bookings = [...bookings]..[index] = updated;
+    if (current.status == 'REQUESTED' && statusValue == 'ASSIGNED') {
+      acceptedBooking.value = id;
+    }
     notifyListeners();
     unawaited(_subscribeToActiveBooking());
   }
@@ -179,6 +190,7 @@ class BookingController extends ChangeNotifier {
     _reconciliationTimer?.cancel();
     unawaited(_projectionSubscription?.cancel());
     realtime?.dispose();
+    acceptedBooking.dispose();
     super.dispose();
   }
 }

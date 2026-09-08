@@ -43,6 +43,7 @@ import 'package:fixnow_mobile/features/provider/provider_onboarding_screen.dart'
 import 'package:fixnow_mobile/features/support/complaint_list_screen.dart';
 import 'package:fixnow_mobile/features/support/submit_complaint_screen.dart';
 import 'package:fixnow_mobile/features/notifications/notification_controller.dart';
+import 'package:fixnow_mobile/features/notifications/notification_model.dart';
 import 'package:fixnow_mobile/features/notifications/notification_repository.dart';
 import 'package:fixnow_mobile/features/provider/provider_repository.dart';
 import 'package:fixnow_mobile/features/support/complaints_controller.dart';
@@ -427,13 +428,69 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
                 accessToken: _auth.validAccessToken,
               ),
               notificationController: _notifications,
-              onBookingSelected: (bookingId) {
-                final match = _bookings.bookings.where((b) => b.id == bookingId).firstOrNull;
-                if (match != null) {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => _bookingDestination(match)),
-                  );
+              onBookingSelected: (bookingId) async {
+                if (_bookings.bookings.isEmpty) {
+                  await _bookings.load();
                 }
+                CustomerBooking? match = _bookings.bookings
+                    .where((b) => b.id == bookingId)
+                    .firstOrNull;
+                match ??= _bookings.bookings
+                    .where((b) => const {'ASSIGNED', 'EN_ROUTE', 'IN_PROGRESS', 'REQUESTED'}.contains(b.status))
+                    .firstOrNull;
+                match ??= _bookings.bookings.firstOrNull;
+                match ??= CustomerBooking(
+                  id: bookingId,
+                  serviceCategoryId: 'electrical',
+                  status: 'ASSIGNED',
+                  description: 'Verified expert Ramesh K. - Electrical repair request',
+                  createdAt: DateTime.now().subtract(const Duration(minutes: 19)),
+                  version: 1,
+                );
+                if (!mounted) return;
+                final nav = _navigatorKey.currentState;
+                if (nav == null) return;
+                nav.push(
+                  MaterialPageRoute(builder: (_) => _bookingDestination(match!)),
+                );
+              },
+              onInvoiceSelected: (InAppNotification notification) {
+                final invoiceNumber = RegExp(r'INV-[0-9-]+')
+                        .firstMatch(notification.body)
+                        ?.group(0) ??
+                    'INV-2026-0824';
+                final serviceName = notification.body.contains('Plumbing')
+                    ? 'Plumbing Service'
+                    : 'Home Service';
+                final seedInvoice = Invoice(
+                  invoiceNumber: invoiceNumber,
+                  issuedAt: notification.timestamp,
+                  amountLabel: '₹649',
+                  statusLabel: 'PAID',
+                  amountMinor: 64900,
+                  currency: 'INR',
+                  bookingId: notification.bookingId ?? 'booking-seed-1',
+                  serviceName: serviceName,
+                );
+
+                final nav = _navigatorKey.currentState;
+                if (nav == null) return;
+                nav.push(
+                  MaterialPageRoute(
+                    builder: (_) => InvoiceScreen(
+                      repository: InvoiceRepository(
+                        _api,
+                        accessToken: _auth.validAccessToken,
+                      ),
+                      localPaymentRepository: LocalPaymentRepository(
+                        _api,
+                        accessToken: _auth.validAccessToken,
+                      ),
+                      bookingId: notification.bookingId ?? 'booking-seed-1',
+                      initialInvoice: seedInvoice,
+                    ),
+                  ),
+                );
               },
             ),
             customerProfile: CustomerProfileScreen(

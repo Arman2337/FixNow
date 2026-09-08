@@ -6,6 +6,7 @@ import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
 import 'package:fixnow_mobile/design_system/fix_components.dart';
 import 'package:fixnow_mobile/design_system/fix_eta_ring.dart';
+import 'package:fixnow_mobile/design_system/fix_journey_progress_line.dart';
 import 'package:fixnow_mobile/design_system/fix_status_chip.dart';
 import 'package:fixnow_mobile/features/call/booking_call_screen.dart';
 import 'package:fixnow_mobile/features/call/call_controller.dart';
@@ -126,7 +127,11 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: AppSpacing.md),
+                FixJourneyProgressLine(
+                  currentStatus:
+                      widget.controller.tracking?.status ?? 'REQUESTED',
+                ),
+                const SizedBox(height: AppSpacing.lg),
                 FixTimeline(
                   currentStatus:
                       widget.controller.tracking?.status ?? 'REQUESTED',

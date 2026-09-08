@@ -598,7 +598,29 @@ class _VehicleMapPin extends StatelessWidget {
         Stack(
           alignment: Alignment.center,
           children: [
-            if (isLive)
+            if (isLive) ...[
+              // Trailing telemetry comet glow behind the vehicle heading
+              Transform.translate(
+                offset: Offset(
+                  math.cos((bearing + 90) * (math.pi / 180.0)) * 14.0,
+                  math.sin((bearing + 90) * (math.pi / 180.0)) * 14.0,
+                ),
+                child: Container(
+                  width: 18,
+                  height: 18,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.live.withValues(alpha: 0.35),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.live.withValues(alpha: 0.5),
+                        blurRadius: 10,
+                        spreadRadius: 2,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
               Container(
                 width: 48,
                 height: 48,
@@ -607,6 +629,7 @@ class _VehicleMapPin extends StatelessWidget {
                   color: AppColors.primary.withValues(alpha: 0.22),
                 ),
               ),
+            ],
             Container(
               width: 38,
               height: 38,

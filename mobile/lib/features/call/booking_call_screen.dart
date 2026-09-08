@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
+import 'package:fixnow_mobile/design_system/fix_audio_waveform.dart';
 import 'package:fixnow_mobile/features/call/call_controller.dart';
 import 'package:fixnow_mobile/features/call/call_session.dart';
 
@@ -347,6 +348,15 @@ class _BookingCallScreenState extends State<BookingCallScreen>
                   ),
                 ),
               ),
+
+              if (status == CallStatus.connected) ...[
+                const SizedBox(height: AppSpacing.sm),
+                FixAudioWaveform(
+                  isSpeaking: controller.isRemoteSpeaking,
+                  height: 32,
+                  activeColor: AppColors.success,
+                ),
+              ],
 
               const Spacer(),
 

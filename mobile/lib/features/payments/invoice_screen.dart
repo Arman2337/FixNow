@@ -21,6 +21,7 @@ class InvoiceScreen extends StatefulWidget {
   InvoiceScreen({
     required this.repository,
     required this.bookingId,
+    this.initialInvoice,
     this.localPaymentRepository,
     bool? localPaymentBypassEnabled,
     super.key,
@@ -29,6 +30,7 @@ class InvoiceScreen extends StatefulWidget {
 
   final InvoiceRepository repository;
   final String bookingId;
+  final Invoice? initialInvoice;
 
   /// FN-118: dev-only local checkout. When null the pay affordance never
   /// shows; production and non-dev builds simply pass nothing here.
@@ -43,7 +45,11 @@ class InvoiceScreen extends StatefulWidget {
 
 class _InvoiceScreenState extends State<InvoiceScreen> {
   late final InvoiceController _controller =
-      InvoiceController(widget.repository, widget.bookingId)..load();
+      InvoiceController(
+        widget.repository,
+        widget.bookingId,
+        initialInvoice: widget.initialInvoice,
+      )..load();
 
   @override
   void dispose() {

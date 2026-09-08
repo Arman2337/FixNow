@@ -60,8 +60,12 @@ class FixServiceCard extends StatelessWidget {
     this.onPrimaryAction,
     this.onTap,
     this.semanticLabel,
+    this.heroTag,
     super.key,
   });
+
+  /// Optional tag for shared-element Hero transition into service details.
+  final Object? heroTag;
 
   /// Service name, e.g. "Plumbing".
   final String name;
@@ -170,6 +174,7 @@ class FixServiceCard extends StatelessWidget {
             etaText: _isAfterHours ? null : etaText,
             badgeLabel: badgeLabel,
             muted: _isAfterHours,
+            heroTag: heroTag,
           ),
           const SizedBox(height: AppSpacing.md),
           if (showLiveStrip) ...[
@@ -240,6 +245,7 @@ class _TopRow extends StatelessWidget {
     required this.etaText,
     required this.badgeLabel,
     required this.muted,
+    this.heroTag,
   });
 
   final String name;
@@ -251,13 +257,19 @@ class _TopRow extends StatelessWidget {
   final String? etaText;
   final String? badgeLabel;
   final bool muted;
+  final Object? heroTag;
 
   @override
   Widget build(BuildContext context) {
+    final tile = _ServiceTile(icon: icon, muted: muted);
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _ServiceTile(icon: icon, muted: muted),
+        if (heroTag != null)
+          Hero(tag: heroTag!, child: tile)
+        else
+          tile,
         const SizedBox(width: AppSpacing.md),
         Expanded(
           child: Column(

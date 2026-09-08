@@ -31,6 +31,7 @@ import 'package:fixnow_mobile/features/ai/problem_diagnosis_screen.dart';
 import 'package:fixnow_mobile/design_system/fix_notification_bell.dart';
 import 'package:fixnow_mobile/features/notifications/notification_center_screen.dart';
 import 'package:fixnow_mobile/features/notifications/notification_controller.dart';
+import 'package:fixnow_mobile/features/notifications/notification_model.dart';
 import 'package:fixnow_mobile/features/services/fix_universal_search_bar.dart';
 import 'package:fixnow_mobile/features/services/sub_service_item.dart';
 
@@ -45,6 +46,7 @@ class ServiceDiscoveryScreen extends StatefulWidget {
     this.emergencyRepository,
     this.notificationController,
     this.onBookingSelected,
+    this.onInvoiceSelected,
     super.key,
   });
   final ServiceDiscoveryController controller;
@@ -56,6 +58,7 @@ class ServiceDiscoveryScreen extends StatefulWidget {
   final EmergencyRepository? emergencyRepository;
   final NotificationController? notificationController;
   final void Function(String bookingId)? onBookingSelected;
+  final void Function(InAppNotification notification)? onInvoiceSelected;
 
   @override
   State<ServiceDiscoveryScreen> createState() => _ServiceDiscoveryScreenState();
@@ -842,6 +845,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                           builder: (_) => NotificationCenterScreen(
                             controller: widget.notificationController!,
                             onOpenBooking: widget.onBookingSelected,
+                            onOpenInvoice: widget.onInvoiceSelected,
                           ),
                         ),
                       );

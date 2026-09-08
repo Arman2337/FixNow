@@ -5,6 +5,7 @@ import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
 import 'package:fixnow_mobile/design_system/fix_components.dart';
+import 'package:fixnow_mobile/design_system/fix_eta_ring.dart';
 import 'package:fixnow_mobile/design_system/fix_status_chip.dart';
 import 'package:fixnow_mobile/features/call/booking_call_screen.dart';
 import 'package:fixnow_mobile/features/call/call_controller.dart';
@@ -343,7 +344,9 @@ class _TrackingCard extends StatelessWidget {
               FixStatusChip(
                 label: _status(value.status),
                 icon: Icons.route_outlined,
-                tone: FixStatusTone.info,
+                tone: value.status == 'EN_ROUTE'
+                    ? FixStatusTone.live
+                    : FixStatusTone.info,
               ),
             ],
           ),
@@ -380,14 +383,26 @@ class _TrackingCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.xs),
-          Text(
-            value.estimatedMinutes == null
-                ? 'Unavailable'
-                : '${value.estimatedMinutes} min',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              color: AppColors.cream,
-              fontWeight: FontWeight.w700,
-            ),
+          Row(
+            children: [
+              EtaProgressRing(
+                minutes: value.estimatedMinutes,
+                size: 44,
+                color: AppColors.live,
+                track: AppColors.liveSoft,
+                textColor: AppColors.cream,
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Text(
+                value.estimatedMinutes == null
+                    ? 'Unavailable'
+                    : '${value.estimatedMinutes} min away',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  color: AppColors.cream,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(

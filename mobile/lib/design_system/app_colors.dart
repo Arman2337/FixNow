@@ -30,7 +30,7 @@ abstract final class AppColors {
   static const textDisabled = Color(0xFF6D7890);
   static const textOnSurface = Color(0xFF172035);
   static const textOnSurfaceSecondary = Color(0xFF596579);
-  static const textOnSurfaceMuted = Color(0xFF6D7890);
+  static const textOnSurfaceMuted = Color(0xFF5D6A82);
 
   // Explicit foreground contracts prevent a page-level dark theme from
   // leaking unreadable text into a light component surface.
@@ -68,6 +68,24 @@ abstract final class AppColors {
   static const infoSoft = Color(0xFFDDE7FF);
   static const verified = Color(0xFF1F9D68);
   static const rating = Color(0xFFF59E0B);
+
+  // Darker steps for text/icons sitting ON light surfaces — the base accent
+  // hexes fail WCAG 4.5:1 as foreground on surfacePrimary, surfaceSecondary,
+  // and their Soft backgrounds (verified by design_system_test contrast
+  // assertions, which cover all three surfaces plus the soft chip).
+  static const ratingOnLight = Color(0xFFA64B08);
+  static const warningOnLight = Color(0xFFA64B08);
+  static const dangerOnLight = Color(0xFFC22B31);
+  static const successOnLight = Color(0xFF15714A);
+  static const infoOnLight = Color(0xFF1D4ED8);
+
+  // "Live" is reserved for in-motion states — a provider actively en route.
+  // Deliberately NOT reused for generic success, so green-on-dark always
+  // means "someone is moving toward you right now".
+  static const live = Color(0xFF22C58B);
+
+  /// Dark track color for live rings/gauges on navy surfaces (7.2:1 vs live).
+  static const liveSoft = Color(0xFF0F3D2E);
   static const scrim = Color(0xB3081020);
 
   // Compatibility aliases keep feature code semantic while it migrates in

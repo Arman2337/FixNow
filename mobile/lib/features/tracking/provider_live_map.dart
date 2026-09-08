@@ -282,7 +282,7 @@ class _ProviderLiveMapState extends State<ProviderLiveMap>
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                     border: Border.all(
                       color: provider != null
-                          ? AppColors.primary.withValues(alpha: 0.6)
+                          ? AppColors.live.withValues(alpha: 0.6)
                           : AppColors.borderStrong,
                       width: 1.5,
                     ),
@@ -300,7 +300,9 @@ class _ProviderLiveMapState extends State<ProviderLiveMap>
                         provider != null
                             ? Icons.two_wheeler_rounded
                             : Icons.radar_rounded,
-                        color: AppColors.primary,
+                        color: provider != null
+                            ? AppColors.live
+                            : AppColors.primary,
                         size: 18,
                       ),
                       const SizedBox(width: 8),

@@ -52,6 +52,8 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: widget.controller,
     builder: (context, _) => RefreshIndicator(
+      color: AppColors.accentGold,
+      backgroundColor: AppColors.surfaceElevated,
       onRefresh: widget.controller.load,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),

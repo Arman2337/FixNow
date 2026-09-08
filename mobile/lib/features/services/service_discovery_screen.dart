@@ -310,6 +310,8 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
           widget.controller.status == DiscoveryStatus.empty;
 
       return RefreshIndicator(
+        color: AppColors.accentGold,
+        backgroundColor: AppColors.surfaceElevated,
         onRefresh: widget.controller.load,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),

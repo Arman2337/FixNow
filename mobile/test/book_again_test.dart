@@ -1,4 +1,5 @@
 import 'package:fixnow_mobile/api/api_client.dart';
+import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_theme.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/features/bookings/booking.dart';
@@ -156,6 +157,12 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+
+    // Branded pull-to-refresh: the indicator uses the gold accent.
+    expect(
+      tester.widget<RefreshIndicator>(find.byType(RefreshIndicator)).color,
+      AppColors.accentGold,
+    );
 
     // Active filter first: the completed entry must not expose the action.
     expect(find.text('Book again'), findsNothing);

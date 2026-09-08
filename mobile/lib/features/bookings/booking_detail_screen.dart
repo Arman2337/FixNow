@@ -41,209 +41,242 @@ class BookingDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final panel = _statusPanel(booking.status);
     return Scaffold(
-      appBar: AppBar(title: const Text('Booking details')),
-      body: SafeArea(
-        top: false,
-        child: FixPageFrame(
-          child: ListView(
-            padding: const EdgeInsets.all(AppSpacing.pagePadding),
-            children: [
-              Container(
-                constraints: const BoxConstraints(minHeight: 220),
-                padding: const EdgeInsets.all(AppSpacing.xl),
-                decoration: BoxDecoration(
-                  color: AppColors.backgroundSecondary,
-                  borderRadius: BorderRadius.circular(AppRadius.large),
-                  border: Border.all(color: AppColors.borderDefault),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(panel.icon, color: panel.color, size: 48),
-                    const SizedBox(height: AppSpacing.lg),
-                    Text(
-                      panel.title,
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    Text(
-                      panel.description,
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.textSecondary,
+      // SliverAppBar owns the top inset; no SafeArea wrapper needed.
+      body: FixPageFrame(
+        child: CustomScrollView(
+          slivers: [
+            SliverAppBar(
+              pinned: true,
+              expandedHeight: 112,
+              flexibleSpace: const FlexibleSpaceBar(
+                title: Text('Booking details'),
+                titlePadding: EdgeInsets.only(left: 16, bottom: 14),
+              ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.all(AppSpacing.pagePadding),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate(
+                  [
+                    Container(
+                      constraints: const BoxConstraints(minHeight: 220),
+                      padding: const EdgeInsets.all(AppSpacing.xl),
+                      decoration: BoxDecoration(
+                        color: AppColors.backgroundSecondary,
+                        borderRadius: BorderRadius.circular(AppRadius.large),
+                        border: Border.all(color: AppColors.borderDefault),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(panel.icon, color: panel.color, size: 48),
+                          const SizedBox(height: AppSpacing.lg),
+                          Text(
+                            panel.title,
+                            style: Theme.of(context).textTheme.headlineSmall,
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          Text(
+                            panel.description,
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(color: AppColors.textSecondary),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: AppSpacing.xl),
-              Text(
-                _title(booking.status),
-                style: Theme.of(context).textTheme.headlineMedium,
-              ),
-              const SizedBox(height: AppSpacing.md),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: FixStatusChip(
-                  label: _label(booking.status),
-                  icon: _icon(booking.status),
-                  tone: _tone(booking.status),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.xl),
-              _BookingProgress(status: booking.status),
-              if (booking.scheduledAt != null) ...[
-                const SizedBox(height: AppSpacing.md),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.event_available_rounded, color: AppColors.primary, size: 18),
-                      const SizedBox(width: AppSpacing.sm),
-                      Expanded(
-                        child: Text(
-                          'Scheduled for: ${_formatScheduledTime(booking.scheduledAt!)}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
+                    const SizedBox(height: AppSpacing.xl),
+                    Text(
+                      _title(booking.status),
+                      style: Theme.of(context).textTheme.headlineMedium,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: FixStatusChip(
+                        label: _label(booking.status),
+                        icon: _icon(booking.status),
+                        tone: _tone(booking.status),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    _BookingProgress(status: booking.status),
+                    if (booking.scheduledAt != null) ...[
+                      const SizedBox(height: AppSpacing.md),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.md,
+                          vertical: AppSpacing.sm,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: AppColors.primary.withValues(alpha: 0.3),
                           ),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.event_available_rounded,
+                              color: AppColors.primary,
+                              size: 18,
+                            ),
+                            const SizedBox(width: AppSpacing.sm),
+                            Expanded(
+                              child: Text(
+                                'Scheduled for: ${_formatScheduledTime(booking.scheduledAt!)}',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
-                  ),
-                ),
-              ],
-              const SizedBox(height: AppSpacing.lg),
-              FixCard(
-                tone: FixCardTone.elevated,
-                semanticLabel: 'Booking request details',
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Service request',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    Text(
-                      _category(booking.serviceCategoryId),
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    Text(booking.description),
                     const SizedBox(height: AppSpacing.lg),
-                    const Divider(),
-                    const SizedBox(height: AppSpacing.sm),
-                    Text(
-                      'Booking #${_shortId(booking.id)}',
-                      style: Theme.of(context).textTheme.labelLarge,
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text('Requested ${_date(booking.createdAt)}'),
-                    const SizedBox(height: AppSpacing.md),
-                    Text(
-                      'Full booking ID',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                    SelectableText(
-                      booking.id,
-                      style: const TextStyle(
-                        color: AppColors.textOnSurfaceSecondary,
+                    FixCard(
+                      tone: FixCardTone.elevated,
+                      semanticLabel: 'Booking request details',
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Service request',
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          Text(
+                            _category(booking.serviceCategoryId),
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                          Text(booking.description),
+                          const SizedBox(height: AppSpacing.lg),
+                          const Divider(),
+                          const SizedBox(height: AppSpacing.sm),
+                          Text(
+                            'Booking #${_shortId(booking.id)}',
+                            style: Theme.of(context).textTheme.labelLarge,
+                          ),
+                          const SizedBox(height: AppSpacing.xs),
+                          Text('Requested ${_date(booking.createdAt)}'),
+                          const SizedBox(height: AppSpacing.md),
+                          Text(
+                            'Full booking ID',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                          SelectableText(
+                            booking.id,
+                            style: const TextStyle(
+                              color: AppColors.textOnSurfaceSecondary,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
-              ),
-              if (JobProofRepository.instance.getProof(booking.id) case final proof?) ...[
-                const SizedBox(height: AppSpacing.lg),
-                JobProofViewerCard(proof: proof),
-              ],
-              const SizedBox(height: AppSpacing.lg),
-              const FixCard(
-                semanticLabel: 'Booking data availability note',
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(Icons.verified_user_rounded, color: AppColors.primary),
-                    SizedBox(width: AppSpacing.md),
-                    Expanded(
-                      child: Text(
-                        'Provider identity, ETA, price, call, and chat appear only when authoritative data is available.',
+                    if (JobProofRepository.instance.getProof(booking.id)
+                        case final proof?) ...[
+                      const SizedBox(height: AppSpacing.lg),
+                      JobProofViewerCard(proof: proof),
+                    ],
+                    const SizedBox(height: AppSpacing.lg),
+                    const FixCard(
+                      semanticLabel: 'Booking data availability note',
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.verified_user_rounded,
+                            color: AppColors.primary,
+                          ),
+                          SizedBox(width: AppSpacing.md),
+                          Expanded(
+                            child: Text(
+                              'Provider identity, ETA, price, call, and chat appear only when authoritative data is available.',
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
-              ),
-              if (onReportIssue != null) ...[
-                const SizedBox(height: AppSpacing.md),
-                FixButton(
-                  label: 'Report Issue',
-                  icon: Icons.report_problem_outlined,
-                  variant: FixButtonVariant.secondary,
-                  onPressed: onReportIssue,
-                ),
-              ],
-              if (onViewInvoice != null) ...[
-                const SizedBox(height: AppSpacing.md),
-                FixButton(
-                  label: 'View invoice',
-                  icon: Icons.receipt_long_outlined,
-                  variant: FixButtonVariant.secondary,
-                  onPressed: onViewInvoice,
-                ),
-              ],
-              if (booking.status == 'COMPLETED' && onBookAgain != null) ...[
-                const SizedBox(height: AppSpacing.md),
-                FixButton(
-                  label: 'Book again',
-                  icon: Icons.refresh_rounded,
-                  onPressed: onBookAgain,
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  'Your request details are prefilled for review. Matching selects an eligible professional; the same one is not guaranteed.',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.textOnSurfaceSecondary,
-                  ),
-                ),
-              ],
-              if (booking.status == 'COMPLETED' &&
-                  reviewRepository != null) ...[
-                const SizedBox(height: AppSpacing.md),
-                BookingReviewPanel(
-                  booking: booking,
-                  repository: reviewRepository!,
-                ),
-              ],
-              if (onReschedule != null &&
-                  const {'REQUESTED', 'ASSIGNED'}.contains(booking.status)) ...[
-                const SizedBox(height: AppSpacing.md),
-                FixButton(
-                  label: 'Reschedule booking',
-                  icon: Icons.event_repeat_rounded,
-                  variant: FixButtonVariant.secondary,
-                  onPressed: onReschedule,
-                ),
-              ],
-              if (onCancel != null &&
-                  const {'REQUESTED', 'ASSIGNED'}.contains(booking.status)) ...[
-                const SizedBox(height: AppSpacing.md),
-                _CancelButton(booking: booking, onCancel: onCancel!),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
+                    if (onReportIssue != null) ...[
+                      const SizedBox(height: AppSpacing.md),
+                      FixButton(
+                        label: 'Report Issue',
+                        icon: Icons.report_problem_outlined,
+                        variant: FixButtonVariant.secondary,
+                        onPressed: onReportIssue,
+                      ),
+                    ],
+                    if (onViewInvoice != null) ...[
+                      const SizedBox(height: AppSpacing.md),
+                      FixButton(
+                        label: 'View invoice',
+                        icon: Icons.receipt_long_outlined,
+                        variant: FixButtonVariant.secondary,
+                        onPressed: onViewInvoice,
+                      ),
+                    ],
+                    if (booking.status == 'COMPLETED' &&
+                        onBookAgain != null) ...[
+                      const SizedBox(height: AppSpacing.md),
+                      FixButton(
+                        label: 'Book again',
+                        icon: Icons.refresh_rounded,
+                        onPressed: onBookAgain,
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        'Your request details are prefilled for review. Matching selects an eligible professional; the same one is not guaranteed.',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.textOnSurfaceSecondary,
+                        ),
+                      ),
+                    ],
+                    if (booking.status == 'COMPLETED' &&
+                        reviewRepository != null) ...[
+                      const SizedBox(height: AppSpacing.md),
+                      BookingReviewPanel(
+                        booking: booking,
+                        repository: reviewRepository!,
+                      ),
+                    ],
+                    if (onReschedule != null &&
+                        const {
+                          'REQUESTED',
+                          'ASSIGNED',
+                        }.contains(booking.status)) ...[
+                      const SizedBox(height: AppSpacing.md),
+                      FixButton(
+                        label: 'Reschedule booking',
+                        icon: Icons.event_repeat_rounded,
+                        variant: FixButtonVariant.secondary,
+                        onPressed: onReschedule,
+                      ),
+                    ],
+                    if (onCancel != null &&
+                        const {
+                          'REQUESTED',
+                          'ASSIGNED',
+                        }.contains(booking.status)) ...[
+                      const SizedBox(height: AppSpacing.md),
+                      _CancelButton(booking: booking, onCancel: onCancel!),
+                    ],
+                  ], // SliverChildListDelegate children
+                ), // SliverChildListDelegate
+              ), // SliverList
+            ), // SliverPadding
+          ], // slivers
+        ), // CustomScrollView
+      ), // FixPageFrame
+    ); // Scaffold
   }
 
   static String _title(String value) => switch (value) {
@@ -258,7 +291,9 @@ class BookingDetailScreen extends StatelessWidget {
 
   static String _formatScheduledTime(DateTime dt) {
     final local = dt.toLocal();
-    final hour = local.hour > 12 ? local.hour - 12 : (local.hour == 0 ? 12 : local.hour);
+    final hour = local.hour > 12
+        ? local.hour - 12
+        : (local.hour == 0 ? 12 : local.hour);
     final ampm = local.hour >= 12 ? 'PM' : 'AM';
     final minute = local.minute.toString().padLeft(2, '0');
     return '${local.day}/${local.month}/${local.year} at $hour:$minute $ampm';

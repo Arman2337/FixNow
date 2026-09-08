@@ -2,9 +2,11 @@ import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/app_typography.dart';
+import 'package:fixnow_mobile/design_system/fix_3d_tilt_card.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
 import 'package:fixnow_mobile/design_system/fix_components.dart';
+import 'package:fixnow_mobile/design_system/fix_jelly_squish_button.dart';
 import 'package:fixnow_mobile/design_system/fix_status_chip.dart';
 import 'package:flutter/material.dart';
 
@@ -111,94 +113,90 @@ class AvailableProvidersSheet extends StatelessWidget {
     required String price,
     required bool isEmergencyReady,
   }) {
-    return FixCard(
-      tone: FixCardTone.standard,
-      padding: const EdgeInsets.all(AppSpacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              FixAvatar(name: name, size: 48, isVerified: true),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          name,
-                          style: const TextStyle(
-                            color: AppColors.textOnLightPrimary,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 15,
+    return Fix3DTiltCard(
+      maxRotationDegrees: 8.0,
+      borderRadius: AppRadius.card,
+      child: FixCard(
+        tone: FixCardTone.standard,
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                FixAvatar(name: name, size: 48, isVerified: true),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            name,
+                            style: const TextStyle(
+                              color: AppColors.textOnLightPrimary,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15,
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 6),
-                        const FixVerificationBadge(compact: true),
-                      ],
-                    ),
-                    const SizedBox(height: 2),
-                    Row(
-                      children: [
-                        FixRating(rating: rating, reviewCount: reviews),
-                        const SizedBox(width: 8),
-                        Text(
-                          '• $experience',
-                          style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.md),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: [
-              _metricChip(Icons.work_history_outlined, jobs),
-              _metricChip(Icons.navigation_outlined, distance),
-              _metricChip(Icons.schedule_outlined, eta, color: AppColors.primary),
-              if (isEmergencyReady)
-                _metricChip(Icons.bolt_rounded, 'Emergency Ready', color: AppColors.accentGold),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.md),
-          const Divider(color: AppColors.borderDefault, height: 1),
-          const SizedBox(height: AppSpacing.sm),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                price,
-                style: const TextStyle(
-                  color: AppColors.accentGold,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 15,
-                ),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: AppColors.onPrimary,
-                  minimumSize: const Size(100, 36),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.small),
+                          const SizedBox(width: 6),
+                          const FixVerificationBadge(compact: true),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          FixRating(rating: rating, reviewCount: reviews),
+                          const SizedBox(width: 8),
+                          Text(
+                            '• $experience',
+                            style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-                onPressed: () => onProviderSelected(name),
-                child: const Text(
-                  'Select Pro',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                _metricChip(Icons.work_history_outlined, jobs),
+                _metricChip(Icons.navigation_outlined, distance),
+                _metricChip(Icons.schedule_outlined, eta, color: AppColors.primary),
+                if (isEmergencyReady)
+                  _metricChip(Icons.bolt_rounded, 'Emergency Ready', color: AppColors.accentGold),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.md),
+            const Divider(color: AppColors.borderDefault, height: 1),
+            const SizedBox(height: AppSpacing.sm),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  price,
+                  style: const TextStyle(
+                    color: AppColors.accentGold,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ],
+                FixJellySquishButton(
+                  label: 'Select Pro',
+                  height: 36,
+                  expand: false,
+                  gradientColors: const [AppColors.focus, AppColors.primary],
+                  onPressed: () => onProviderSelected(name),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

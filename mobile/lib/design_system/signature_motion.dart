@@ -5,6 +5,7 @@ import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_motion.dart';
 import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
+import 'package:fixnow_mobile/design_system/fix_3d_spatial_beacon.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -73,7 +74,7 @@ class _MatchRadarViewState extends State<MatchRadarView>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             SizedBox(
-              height: 220,
+              height: 240,
               child: reduce
                   ? const Center(
                       child: Icon(
@@ -82,12 +83,26 @@ class _MatchRadarViewState extends State<MatchRadarView>
                         size: 56,
                       ),
                     )
-                  : AnimatedBuilder(
-                      animation: _controller,
-                      builder: (context, _) => CustomPaint(
-                        size: const Size.fromHeight(220),
-                        painter: _RadarPainter(progress: _controller.value),
-                      ),
+                  : Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        AnimatedBuilder(
+                          animation: _controller,
+                          builder: (context, _) => CustomPaint(
+                            size: const Size.fromHeight(240),
+                            painter: _RadarPainter(progress: _controller.value),
+                          ),
+                        ),
+                        AnimatedBuilder(
+                          animation: _controller,
+                          builder: (context, _) => Fix3DSpatialBeacon(
+                            size: 150,
+                            label: '',
+                            sublabel: '',
+                            progress: _controller.value,
+                          ),
+                        ),
+                      ],
                     ),
             ),
             const SizedBox(height: AppSpacing.lg),

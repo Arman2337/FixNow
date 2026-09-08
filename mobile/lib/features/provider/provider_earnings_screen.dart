@@ -30,7 +30,16 @@ class _ProviderEarningsScreenState extends State<ProviderEarningsScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Earnings')),
+    appBar: AppBar(
+      title: const Text('Earnings'),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.refresh_rounded),
+          tooltip: 'Refresh earnings',
+          onPressed: _controller.load,
+        ),
+      ],
+    ),
     body: SafeArea(
       top: false,
       child: FixPageFrame(
@@ -54,8 +63,11 @@ class _ProviderEarningsScreenState extends State<ProviderEarningsScreen> {
                 ),
               ),
             ),
-            ProviderEarningsState.ready => _EarningsView(
-              earnings: _controller.earnings!,
+            ProviderEarningsState.ready => RefreshIndicator(
+              onRefresh: _controller.load,
+              child: _EarningsView(
+                earnings: _controller.earnings!,
+              ),
             ),
           },
         ),
@@ -71,6 +83,7 @@ class _EarningsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ListView(
+    physics: const AlwaysScrollableScrollPhysics(),
     padding: const EdgeInsets.all(AppSpacing.pagePadding),
     children: [
       const FixPageHeader(

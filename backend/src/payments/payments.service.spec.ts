@@ -128,6 +128,14 @@ describe('PaymentsService', () => {
     bookingRepo.findOneBy.mockResolvedValue(ownedBooking());
     categoryRepo.findOneBy.mockResolvedValue(pricedCategory());
     orders.findOneBy.mockResolvedValue(null);
+    orders.save.mockReset();
+    orders.save.mockImplementation((value: Record<string, unknown>) =>
+      Promise.resolve({
+        id: 'oooooooo-0000-4000-8000-00000000o001',
+        createdAt: new Date(),
+        ...value,
+      }),
+    );
     dataSource.query.mockImplementation((sql: string) => {
       if (sql.includes('SUM(o.amount_minor)')) {
         return Promise.resolve([{ gross: '49900', count: 1 }]);
@@ -175,6 +183,15 @@ describe('PaymentsService', () => {
       await expect(
         service.createForBooking(customerId, bookingId),
       ).rejects.toBeInstanceOf(ConflictException);
+    });
+
+    it('accepts COMPLETED bookings for post-service payment', async () => {
+      bookingRepo.findOneBy.mockResolvedValue(
+        ownedBooking(BookingStatus.COMPLETED),
+      );
+      const order = await service.createForBooking(customerId, bookingId);
+      expect(order.status).toBe(PaymentOrderStatus.CREATED);
+      expect(order.amountMinor).toBe(49900);
     });
 
     it('refuses price-on-request categories instead of inventing an amount', async () => {

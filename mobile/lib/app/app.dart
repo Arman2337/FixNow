@@ -701,6 +701,8 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
                     _api,
                     accessToken: _auth.validAccessToken,
                   ),
+                  localPaymentBypassEnabled:
+                      AppEnvironment.current == AppEnvironment.development,
                   bookingId: currentBooking.id,
                 ),
               ),

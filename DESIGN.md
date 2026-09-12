@@ -1,578 +1,112 @@
 # FixNow Design System
 
-`DESIGN.md` is the authoritative UI/UX design source for FixNow customer, provider, and admin experiences. It governs product hierarchy, visual tokens, reusable patterns, interaction behavior, accessibility, and design changes. Product requirements and safety policy remain authoritative for business and risk behavior; where they constrain a visual choice, the safer requirement wins.
+Status: authoritative cross-platform design contract
+Revision: 2026-09-12 — approved full professional redesign
 
-This document specifies design intent only. It does not approve a UI framework, package, hosted service, screen implementation, or third-party asset.
+FixNow is a trusted, real-time services platform. Customer mobile, provider mobile, and the admin web workspace share one visual language but use role-appropriate information architecture. This document governs visual decisions and reusable UI; product, accessibility, privacy, safety, permissions, and backend contracts remain authoritative.
 
-## 1. Product Design Philosophy
+## 1. Product promise and priorities
 
-FixNow combines **Uber-like immediacy + TaskRabbit-like provider trust + Urban Company-like service discovery**:
+**Professional help, clearly coordinated.** Customers must quickly understand where they are, what help is available, what it costs, and what happens next. Providers must act on live work without losing safety or context. Administrators must resolve operational queues with traceable, role-appropriate actions.
 
-- Immediacy means location-aware entry, visible ETA, legible job state, strong actions, and a distraction-free active-service experience.
-- Provider trust means professional profiles, verification context, ratings, completed-job evidence, skills, availability, and useful comparison.
-- Service discovery means understandable categories, clear service details, transparent indicative pricing, and a short booking path.
+Priority order: safety and honest system state; speed to the next action; trust (verification, price type, ETA, identity); clarity in dense operational information; consistency across roles and devices; refined visual quality without decoration that impairs use.
 
-These products are references for interaction principles, not templates. Do not reproduce their branding, layouts, copy, illustrations, icons, trade dress, or component geometry. FixNow must remain recognizable as an original premium utility platform: deep navy framing, bright white information surfaces, cobalt actions, compact trust-rich cards, and map-first active-service experiences.
+The approved visual reference informs tone, hierarchy, density, and component quality only. It does not supply application data, copy, assets, flows, or layouts to copy.
 
-Design decisions follow this order:
+## 2. Visual language and tokens
 
-1. Speed
-2. Trust
-3. Clarity
-4. Safety
-5. Location awareness
-6. Fast decision making
-7. Consistency
+FixNow uses warm ivory information surfaces, deep evergreen brand framing, restrained gold for ratings and trust, and dark readable typography. The overall feel is calm, precise, and international—not playful, generic, or ornamental. Applications consume semantic tokens, not raw hex values.
 
-A person facing a leaking pipe or broken lock should understand the next action within seconds. Remove decoration or choice when it competes with that outcome.
-
-## 2. Brand Personality
-
-| Trait | UI expression |
-| --- | --- |
-| Fast | Short paths, immediate feedback, prefilled known data, visible ETA, and decisive primary actions. |
-| Reliable | Stable layouts, persistent booking state, accurate status language, and explicit recovery paths. |
-| Trustworthy | Verification context, transparent price/ETA, plain consent, honest uncertainty, and no dark patterns. |
-| Calm | Neutral surfaces, restrained color, generous spacing, readable hierarchy, and motion that never creates urgency by itself. |
-| Professional | Consistent typography, precise alignment, real service information, and minimal decorative effects. |
-| Accessible | Strong contrast, scalable text, large targets, keyboard/screen-reader support, and redundant status cues. |
-| Helpful | Contextual guidance, safety-first messages, useful empty states, and next actions that solve the immediate problem. |
-
-The voice is direct, respectful, and reassuring. Never sound playful during risk, blame the user for errors, manufacture scarcity, or promise an outcome the platform cannot guarantee.
-
-## 3. UX Principles
-
-1. Give each screen one obvious primary action. Secondary actions must look secondary.
-2. Make genuine emergency actions immediately findable without turning every screen red.
-3. Keep price, fees, ETA, provider identity, and booking state visible when they affect a decision.
-4. Minimize steps and fields in urgent flows; reuse verified information with user control.
-5. Show progress with named stages, not indefinite animation alone.
-6. Always communicate system state: loading, searching, saved, offline, delayed, failed, or completed.
-7. Pair errors with recovery: retry, edit, choose another method, contact support, or safely exit.
-8. Avoid asking for decisions the system can safely infer; explain consequential defaults.
-9. Use plain, specific language. Prefer “Provider is 8 minutes away” over “Dispatch in progress.”
-10. Show price composition and whether a figure is fixed, estimated, or subject to inspection.
-11. Show ETA as an estimate and update it honestly.
-12. Preserve the active booking across navigation, relaunch, and temporary network loss.
-13. Never use color, map position, or iconography as the only carrier of critical meaning.
-14. Do not place promotions in emergency, payment, or active-service critical paths.
-
-## 4. Color System
-
-Use three layers: primitive values, semantic roles, then component tokens. Application code consumes semantic or component tokens, never raw hex values. The following premium dark theme is the approved mobile baseline and requires contrast validation in implementation.
-
-### Approved navy and cobalt semantic tokens
-
-| Token | Value | Use |
+| Token | Value | Purpose |
 | --- | --- | --- |
-| `color.backgroundPrimary` | `#081020` | Main authenticated app background. |
-| `color.backgroundSecondary` | `#14213D` | Secondary page region and map fallback. |
-| `color.surfacePrimary` | `#F7F7FA` | Default information cards and inputs. |
-| `color.surfaceSecondary` | `#E2E6EF` | Grouped sections and muted controls. |
-| `color.surfaceElevated` | `#14213D` | Navy panels requiring a light foreground. |
-| `color.primary` | `#2857F5` | Main CTA, selected navigation, and interactive emphasis. |
-| `color.primaryPressed` | `#1E43C9` | Pressed/active feedback. |
-| `color.primarySoft` | `#DDE7FF` | Selected rows and restrained blue containers. |
-| `color.onPrimary` | `#FFFFFF` | Content on primary fills. |
-| `color.textPrimary` | `#FFFFFF` | Text on navy framing and elevated panels. |
-| `color.textOnSurface` | `#172035` | Text on white/cream surfaces. |
-| `color.textOnSurfaceSecondary` | `#596579` | Supporting text on white/cream surfaces. |
-| `color.borderDefault` | `#D5DAE5` | Standard dividers and component borders. |
-| `color.focus` | `#4E8CFF` | Visible focus rings. |
-| `color.success` | `#1F9D68` | Verified, success, or online state only. |
-| `color.warning` | `#F59E0B` | Caution, delay, or urgency. |
-| `color.danger` | `#FF4D4F` | Validation failure and destructive actions. |
-| `color.info` | `#4E8CFF` | Neutral operational information. |
-| `color.emergency` | `#FF4D4F` | Genuine urgent escalation/SOS only. |
-| `color.scrim` | `rgba(8, 16, 32, 0.70)` | Modal/sheet scrim. |
+| `backgroundPrimary` | `#F6F3EC` | Page background / warm ivory |
+| `backgroundSecondary` | `#ECE8DD` | Grouped page areas |
+| `surfacePrimary` | `#FFFFFF` | Cards, inputs, sheets, tables |
+| `surfaceSecondary` | `#F2EFE7` | Quiet grouped controls and skeleton tracks |
+| `surfaceElevated` | `#063F3A` | Dark brand panels and high-emphasis surfaces |
+| `primary` / `primaryPressed` | `#075D53` / `#044942` | CTA, selected navigation, pressed feedback |
+| `primarySoft` | `#DDF0E9` | Selected/light primary state |
+| `accentGold` / `accentGoldSoft` | `#C78A19` / `#FFF1CF` | Rating and trust emphasis only |
+| `textOnSurface` / secondary | `#142420` / `#5A6863` | Light-surface foregrounds |
+| `textPrimary` / secondary | `#FFFFFF` / `#CEE2DA` | Dark-surface foregrounds |
+| `borderDefault` / strong | `#DFE3DC` / `#B9C5BD` | Quiet / high-definition boundary |
+| `focus` | `#146EDE` | Keyboard focus indicator |
+| `success`, `warning`, `danger`, `info` | `#1B7D4E`, `#B66B05`, `#C83C36`, `#236FBE` | Semantic operational status |
 
-`danger` covers errors and destructive actions. `emergency` is a separately governed role for an immediate safety escalation; neither is decorative. Green means verified success or current availability, not merely “good-looking.” Amber means caution or waiting, never failure. A component must use its surface's foreground token: light text/icons on navy surfaces and dark text/icons on white/cream surfaces.
+`emergency` uses the danger color but is reserved for genuine safety escalation. Status is always an icon plus a plain-language label; color is never its only signal. Gold never substitutes for a success or warning status.
 
-The authenticated customer and provider experience uses this premium dark system by default. Authentication entry may use a controlled dark-to-surface composition, but must remain part of the same visual language. Any future light theme must override semantic tokens rather than screen components and requires independent contrast and visual validation. Dark implementation must test WCAG contrast, OLED smearing, map legibility, photographs, disabled states, and elevation boundaries; it is not approved by color substitution alone.
+## 3. Typography, icons, spacing, and motion
 
-## 5. Typography
+Use **Inter** as the primary UI typeface, falling back to system sans-serif until bundled font files are present. Use tabular figures for money, ratings, counts, and ETAs. A restrained serif display face may be used only for welcome/marketing entry surfaces; product workspaces use Inter for speed and legibility.
 
-Use **Playfair Display** (with serif fallback) for premium headings (`display`, `heading1`, `heading2`, `heading3`) and **Inter** (with sans-serif fallback) for title, body, labels, and captions. Use tabular numerals for prices, ETA countdowns, and aligned financial data when supported.
+| Role | Size / line height | Weight | Use |
+| --- | --- | --- | --- |
+| Display | 36 / 44 | 700 | Welcome and rare marketing moment |
+| Page heading | 28 / 36 | 700 | Screen title |
+| Section heading | 20 / 28 | 700 | Major card/list group |
+| Title | 16 / 24 | 600 | Card, provider, row title |
+| Body | 14–16 / 20–24 | 400–500 | Description and field values |
+| Label | 13–14 / 20 | 600 | Controls and status |
+| Caption | 12 / 16 | 400–600 | Supporting metadata, never critical instruction |
 
-| Token | Size | Weight | Line height | Use |
-| --- | ---: | ---: | ---: | --- |
-| `type.display` | 36px | 700 | 44px | Playfair Display: Hero / marketing headline. |
-| `type.heading1` | 28px | 700 | 36px | Playfair Display: Top-level page heading. |
-| `type.heading2` | 24px | 600 | 32px | Playfair Display: Major section or sheet heading. |
-| `type.heading3` | 20px | 600 | 28px | Playfair Display: Card group or subsection heading. |
-| `type.title` | 18px | 600 | 24px | Inter: Card/dialog title and prominent provider name. |
-| `type.bodyLarge` | 16px | 500 | 24px | Inter: High-priority explanatory text. |
-| `type.body` | 14px | 400 | 20px | Inter: Default body and input value. |
-| `type.label` | 14px | 600 | 20px | Inter: Buttons, field labels, navigation, status labels. |
-| `type.caption` | 12px | 400 | 16px | Inter: Supporting metadata; never critical instructions. |
+Use Material Symbols Rounded as the shared icon family. Mobile targets are at least 48×48 logical pixels; desktop targets are at least 44×44px. Use the 4px spacing scale: `4, 8, 12, 16, 24, 32, 48`. Page padding is 16px on small phones, 20–24px on large phones/tablets, and 24–32px in desktop admin. Motion clarifies state, respects reduced motion, and never manufactures urgency or GPS precision.
 
-Mobile body text remains 16px equivalent by default. Support platform text scaling without clipping, hiding actions, or replacing text with ellipses where the full value is needed. Use only tokenized sizes, weights, and line heights.
+## 4. Components and states
 
-## 6. Spacing System
-
-Use a 4px primitive grid and a restrained semantic scale:
-
-| Token | Value | Typical use |
-| --- | ---: | --- |
-| `space.xs` | 4px | Tight icon/label adjustment. |
-| `space.sm` | 8px | Related inline content. |
-| `space.md` | 12px | Compact control groups. |
-| `space.lg` | 16px | Default component gap and mobile page padding. |
-| `space.xl` | 24px | Card padding and form groups. |
-| `space.2xl` | 32px | Section separation. |
-| `space.3xl` | 48px | Major page sections/desktop whitespace. |
-
-Defaults:
-
-- Mobile page horizontal padding: `space.lg` (16px); 20–24px is allowed on large phones through a page token.
-- Tablet/desktop page gutters: 24–32px, governed by responsive layout tokens.
-- Standard card padding: 16px mobile, 24px comfortable/desktop.
-- Section spacing: 32px; tightly related subsections: 24px.
-- Inline icon-to-label gap: 8px.
-- Stacked form field gap: 16px; field label-to-control gap: 8px; form section gap: 24px.
-
-Do not create intermediate values inside screens. Add a documented token only when repeated evidence shows the scale is insufficient.
-
-## 7. Border Radius
-
-| Token | Value | Components |
-| --- | ---: | --- |
-| `radius.small` | 6px | Small chips, compact controls, map tooltips. |
-| `radius.medium` | 10px | Inputs, standard buttons, menu items. |
-| `radius.card` | 14px | Cards and contained panels. |
-| `radius.large` | 20px | Dialogs, prominent panels, bottom-sheet top corners. |
-| `radius.pill` | 999px | Status chips, avatars, segmented controls; not general cards. |
-
-Nested components should use a radius smaller than their container. Do not use rounded shapes to make dangerous actions feel playful.
-
-## 8. Elevation and Shadows
-
-Use borders and surface contrast before shadow. Shadows are functional depth cues, not decoration.
-
-| Token | Shadow | Use |
-| --- | --- | --- |
-| `elevation.flat` | none | Default sections, tables, inline cards. |
-| `elevation.card` | `0 1px 3px rgba(20,32,51,.10)` | Cards requiring separation from page background. |
-| `elevation.floating` | `0 6px 18px rgba(20,32,51,.14)` | Map controls, floating CTA, sticky panel. |
-| `elevation.modal` | `0 16px 40px rgba(20,32,51,.20)` | Dialog and modal sheet above a scrim. |
-
-Avoid colored, glowing, oversized, or stacked decorative shadows.
-
-## 9. Iconography
-
-Use **Material Symbols Rounded** as the one canonical outlined/rounded icon family across mobile and admin. Platform adapters may package or render those same approved glyphs, but they must not substitute another icon family. Do not mix Material, Lucide, Font Awesome, emoji, and arbitrary SVGs in one product.
-
-| Size | Use |
-| ---: | --- |
-| 16px | Dense admin metadata or inline status. |
-| 20px | Inputs, compact controls, secondary actions. |
-| 24px | Default mobile navigation and buttons. |
-| 32px | Service/category icons. |
-| 40–48px | Empty-state/emergency illustration icon only. |
-
-Icons require accessible labels when meaning is not adjacent in text. Use filled/selected variants consistently. Never use emoji as production control icons.
-
-## 10. Buttons
-
-Default button height is 48px mobile and 40px compact admin; urgent/mobile primary actions may use 52px. Minimum interactive target is 48×48px mobile and 44×44 CSS px on desktop/touch-capable admin.
-
-| Variant | Treatment | Use |
-| --- | --- | --- |
-| Primary | Primary fill, on-primary label | The one main action on a screen or sheet. |
-| Secondary | Surface fill, primary text, border | Important alternative that must not compete. |
-| Tertiary/Text | Transparent, primary text | Low-emphasis navigation or contextual action. |
-| Destructive | Danger fill or outlined danger | Delete, cancel with consequence, irreversible action. |
-| Emergency | Emergency fill, explicit icon and label | Genuine safety escalation only; not ordinary urgent booking. |
-| Icon | Square/circle, tooltip/semantic label | Common compact action such as locate, close, call. |
-
-All use `radius.medium`, horizontal padding 20px (16px compact), `type.label`, and an 8px icon gap. Prefer a leading icon; trailing icons indicate continuation or direction. Do not place icons on both sides without a functional reason.
-
-Disabled buttons must remain identifiable, meet applicable contrast, and explain why when the reason is not obvious. Loading keeps width stable, blocks duplicate submission, shows a spinner plus an accessible busy label, and preserves the action text when space allows. Never use a disabled button as the only explanation for invalid input.
-
-## 11. Input Fields
-
-Inputs use a persistent external label, 48px minimum height, `radius.medium`, surface background, standard border, 16px value text, and inline helper/error area. Placeholder text is an example, not a label.
-
-| Input | Requirements |
+| Component | Contract |
 | --- | --- |
-| Text | Clear label, input purpose/autofill metadata, length guidance if constrained. |
-| Phone | Country context, forgiving formatting, normalized storage, numeric-appropriate keyboard. |
-| Password | Show/hide control, password-manager support, requirements before failure. |
-| OTP | One accessible logical field or correctly grouped cells, paste/autofill, expiry and resend status. |
-| Select | Current value visible; native/accessibility-friendly behavior; search for long lists. |
-| Search | Search icon, clear action, query persistence, results/loading/empty state. |
-| Location | Location icon, current address, edit/confirm action, permission fallback, map/list alternative. |
-| Multiline | Visible label, sensible minimum rows, character count when constrained, no fixed height that clips text. |
+| `FixButton` | One clear primary CTA per decision point; secondary, outline, destructive, loading, disabled variants |
+| `FixTextField` / search | Label, helpful input mode, validation, error recovery, focus and disabled states |
+| `FixCard` | Warm white surface, 12–16px radius, subtle border, restrained elevation; nested cards use a smaller radius |
+| `FixStatusChip` | Icon + label + semantic tone, never color alone |
+| `FixProviderCard` | Real identity, verification, rating/review count, availability/ETA, service fit, price type, one action |
+| `FixServiceCard` | Real category/service content, concise scope, forward action |
+| `FixNavigation` | Persistent role-specific destinations with selected state; never authorization |
+| `FixPageFrame` | Responsive safe-area/gutter/sticky-action behavior |
+| `FixStateView` | Loading skeleton, empty invitation, or error with retry/alternate action—no fabricated data |
+| `FixBottomSheet` / dialog | Clear title, explicit close path, focus behavior, sticky action region where needed |
+| `FixPriceDisplay` | Amount, currency, estimate/final state, fee composition and explanatory note |
 
-States:
+Every component supports default, pressed/hover where applicable, focus, disabled, loading, error, text scaling, and reduced-motion behavior. Do not introduce one-off visual languages or hardcoded raw visual values in screen files.
 
-- Default: border + surface + label.
-- Focus: primary/focus border and 2px visible ring; keyboard focus never removed.
-- Filled: retain label; value uses primary text.
-- Disabled: muted surface and text plus semantic disabled state.
-- Error: danger border, icon, and specific inline message associated with the control.
-- Success: success icon/message only when confirmation is useful; do not turn every valid field green.
+## 5. Role-specific information architecture
 
-Validate at the helpful time: format feedback after sufficient input, required feedback after blur/submit, and server errors near the responsible field. Never expose backend exception text.
+### Customer mobile
 
-## 12. Cards
+Home follows: **confirmed location → greeting and search → AI Assistant → relevant categories → recommended services/providers → active booking**. An active booking becomes the first meaningful card.
 
-Use `FixCard` foundations: surface, optional border, `radius.card`, 16/24px padding, and `elevation.flat` or `elevation.card`. Whole-card tap behavior must be clear and must not conflict with nested actions.
+The AI Assistant is a flagship entry with real **Text, Photo, and Voice** inputs. Results order: detected issue, recommended category, confidence/uncertainty, urgency and safety guidance, required skills, estimate range/type, then “find experts.” Preserve advisory wording from the real analysis; never promise a diagnosis, price, or availability the API did not provide.
 
-### Service Card
+Service/provider discovery makes verification, ETA/distance, experience/reviews, price type, availability, filters, and comparison legible. Booking preserves location, recurrence, cancellation rules, confirmation, payment, review/photo, invoice, support, chat, and calls. Tracking is map-first: status, provider identity, ETA, freshness, call/chat, support, and emergency stay visible. Stale/unavailable location is explicitly labeled and never animated as live.
 
-Supports category icon, service name, one-line scope, indicative starting price/visit charge, availability hint, and optional popularity/recent marker. Examples include plumber, electrician, AC repair, locksmith, and mechanic. It must not imply that an estimate is a guaranteed final price.
+### Provider mobile
 
-### Provider Card
+Provider home is an operations workspace: availability first, incoming requests next, then active work, schedule, earnings/performance, and notifications. Incoming requests display only policy-permitted data before acceptance. The active-job cockpit prioritizes state, customer/service context, navigation/location-sharing consent, OTP, lifecycle controls, proof/completion, chat/call, cancellation and recovery.
 
-Supports provider photo/avatar, name, verification badge with explanation, rating and review count, completed jobs/experience, primary skill/category, distance, ETA, indicative price/visit charge, availability, and one clear CTA. Trust facts precede promotional copy. Missing data is stated honestly rather than represented as zero or hidden.
+Provider verification, service radius, skills, documents, availability, earnings, history, and profile retain their real workflows. The redesign must not expose customer data sooner than the permission model allows.
 
-### Booking Card
+### Admin web
 
-Supports service, provider, icon+label status, ETA/date, transparent price state, and the primary next action. Active bookings visually outrank historical bookings; destructive cancellation never becomes the default CTA.
+Admin is an enterprise workspace, not a consumer dashboard. It uses a collapsible labeled sidebar, responsive top/compact navigation, clear page header, role-filtered navigation, actionable queues, filter/search bars, semantic table statuses, compact metrics, and drill-down detail pages.
 
-### Emergency Card
+Existing routes are the source of truth: Overview, Users, Providers, Services, Bookings, Support/Complaints, Analytics, Trust, and Access. “Applications,” “Emergency/Dispatch,” “Reviews,” “Payments,” and “Settings” may appear only when a current authorized route and data contract exists; otherwise never use fake modules or metrics.
 
-Uses emergency-soft background/border, compact safety copy, one immediate action, and one safe alternative/escalation. Exclude ratings, promotions, carousels, and unrelated details.
+## 6. Safety, accessibility, and responsive behavior
 
-Screens may compose these patterns but must not invent replacement card styles without a system change.
+- Meet WCAG 2.2 AA contrast, visible focus, semantic labels, keyboard support in admin, and screen-reader announcements for meaningful updates.
+- Support small/large Android and iOS phones, tablets, text scaling, safe areas, portrait/required landscape, and desktop web input methods.
+- Emergency views reduce choices, give safety-first guidance, contain no promotion, and state FixNow’s limits. Emergency red is never decorative.
+- Loading, empty, offline, error, permission-denied, and unavailable states preserve user context and provide truthful recovery. No demo data or placeholder metrics in production UI.
 
-## 13. Customer Navigation
+## 7. Implementation rules
 
-Primary mobile navigation:
+1. Do not change an API contract, authorization rule, business rule, or live data shape for visual convenience.
+2. Retain authentication/email OTP, sessions, bookings, realtime/WebSockets, live location, service OTP, chat, calls, recurrence, reviews/photos, AI, emergency, payments/refunds/invoices, push, complaints, provider verification, earnings, and admin operations.
+3. Migrate by flow: foundation; customer; provider; admin. Each phase leaves the product buildable and the migrated workflow testable.
+4. Reuse or extend `mobile/lib/design_system/`; centralize equivalent admin tokens/components under `admin/src/`.
+5. Before changing a screen, identify its real data source, permission gates, loading/error behavior, and navigation exits; preserve them during layout migration.
+6. Test representative small/large mobile, provider active-job, and desktop admin states, plus behavioral regressions.
 
-1. Home
-2. Bookings
-3. Help / Support
-4. Profile
+## 8. Avoid
 
-Service discovery lives primarily in Home. Use labels with icons, preserve navigation state, and indicate active booking persistently without adding a fifth destination. Contextual flows such as payment, tracking, provider selection, and emergency escalation sit above this navigation and do not become permanent tabs.
-
-## 14. Provider Navigation
-
-Provider mobile navigation:
-
-1. Home / Jobs
-2. Active Job
-3. Earnings
-4. Profile
-
-Availability is a prominent, accessible toggle on Home/Jobs with explicit Online, Busy, and Offline meaning. It must show sync/progress/errors and must not imply availability when location or required verification is unavailable. Incoming jobs and an active job outrank earnings summaries.
-
-## 15. Admin Navigation
-
-Admin is desktop-first with a collapsible, labeled sidebar:
-
-- Overview
-- Customers
-- Providers
-- Verification
-- Services
-- Bookings
-- Complaints
-- Payments
-- Analytics
-- Settings
-
-Use permission-aware visibility without treating hidden navigation as authorization. Preserve current section, provide breadcrumbs for depth, and use compact density without shrinking targets or text below accessibility thresholds. High-risk actions require role checks, reason capture where policy requires, and confirmation.
-
-## 16. Customer Home Screen Rules
-
-Prioritize in this order:
-
-1. Confirmed/current location
-2. Search or plain-language problem entry
-3. Clearly bounded emergency action
-4. Popular/recent services
-5. Nearby available providers
-6. Existing active booking, if present
-
-An active booking becomes the dominant first-viewport card. Do not show every category, provider, promotion, and history item at once. The first viewport should answer “Where?”, “What help?”, and “What is happening now?”
-
-## 17. Service Discovery
-
-Use recognizable, consistent category icons; short labels; and logical household/vehicle/safety groupings. Lead with recent, popular, and context-relevant services, then expose the full catalog through search or “View all.” Avoid a 20+ item equal-priority grid. Category detail states what is included, excluded, expected, how pricing works, and what information improves matching.
-
-## 18. Provider Discovery
-
-Provider results emphasize verified identity context, rating plus review count, relevant completed jobs/experience, ETA, distance, indicative price, availability, and service fit. Explain sorting/filtering and distinguish sponsored placement if ever introduced. Do not rank purely by lowest price; reliability, relevance, arrival, verification, quality, and fair choice matter. Auto-match must explain its basis and allow an alternative when operationally possible.
-
-## 19. Booking Flow
-
-Standard lifecycle:
-
-`Service Selection → Problem Details → Location → Provider Matching → Provider Selection / Auto Match → Booking Confirmation → Provider Acceptance → Live Tracking → Service In Progress → Completion → Payment → Rating`
-
-Combine steps when it reduces work without hiding consequences. Persist entered details, allow review/edit before confirmation, show estimates and cancellation terms before commitment, and use a single progress model. Provider rejection/timeout, no provider, price change, location correction, payment failure, and cancellation each need an explicit recovery path.
-
-## 20. Live Tracking
-
-The active booking view prioritizes the map, provider/customer position, ETA, provider name/photo, vehicle information when operationally relevant, service type, call/chat, booking status, and support/emergency access. The bottom panel communicates the current state and next expected event.
-
-Status progression:
-
-`Searching → Provider Found → Provider Accepted → On The Way → Arriving → Arrived → Work Started → Work Completed`
-
-Do not pretend GPS is exact, or show stale location as live. Communicate delayed updates and provide a refresh/recovery path. Remove promotions, unrelated service suggestions, and marketplace browsing during active tracking.
-
-## 21. Maps
-
-- Customer marker: stable person/location symbol with text alternative.
-- Provider marker: directional provider symbol; selected state is visually and semantically distinct.
-- Destination/service marker: distinct pin when different from customer position.
-- Route line: primary emerald with sufficient contrast against the approved map style; never encode status solely in route color.
-- ETA card: surface overlay with ETA, status label, and last-updated/stale state where needed.
-- Actions: locate me, recenter route, accessibility/list alternative; 48px targets.
-- Bottom sheet: uses defined snap points and never permanently obscures the full route/context.
-
-Reuse the same marker and overlay components. Respect safe areas and map attribution. Keep interactive controls away from system gestures and sheet handles.
-
-## 22. Bottom Sheets
-
-Bottom sheets serve provider details, booking confirmation, tracking details, service options, and location selection. Use 20px top corners, surface background, modal/floating elevation as appropriate, 24px horizontal padding (16px on very small screens), a centered 32×4px drag handle, `heading2`/`heading3` title hierarchy, and a sticky bottom CTA area above the safe inset.
-
-Define collapsed, medium, and expanded states only when each has a clear purpose. Preserve map context, announce expansion to assistive technology, trap focus only for modal sheets, support keyboard dismissal where appropriate, and never rely on dragging as the only way to close or expand.
-
-## 23. Emergency UX
-
-Emergency experiences reduce cognitive load, state the immediate safe action, and offer the smallest viable choice set. They contain no ads, promotions, cross-sells, long forms, celebratory motion, or ambiguous dismiss controls.
-
-Rules:
-
-1. Use emergency red only for genuine urgent escalation and immediate danger messaging.
-2. State what FixNow can and cannot do. FixNow does **not** replace official emergency services.
-3. For gas leaks, fire, electrical danger, medical emergencies, violence, or other imminent risk, lead with safety-first instructions and appropriate local emergency-service escalation options before ordinary provider booking.
-4. Do not make unsupported diagnosis claims. Use concise, reviewed language and localize emergency numbers/policy.
-5. Keep cancel/back visible and confirm cancellation only when accidental exit creates material risk.
-6. Confirm whether a request was sent, is still searching, was accepted, or failed; never imply help is coming without evidence.
-7. Provide support escalation and accessible call alternatives.
-8. Minimize data entry and reuse verified location/contact details with a visible correction path.
-
-Emergency copy and routing require safety/legal review before production.
-
-## 24. Status System
-
-Every status uses label plus icon and, where useful, color. Status text is the authority.
-
-| Status | Semantic role | Suggested icon |
-| --- | --- | --- |
-| Available | Success | check-circle |
-| Busy | Warning | schedule |
-| Offline | Neutral | cloud-off |
-| Pending | Warning/neutral | hourglass |
-| Accepted | Info | task-alt |
-| En Route | Info | navigation |
-| Arrived | Primary/success | location-on |
-| In Progress | Primary | build/service icon |
-| Completed | Success | check-circle |
-| Cancelled | Neutral or danger when consequential | cancel |
-| Failed | Danger | error |
-| Refunded | Info/success based on settlement state | currency-exchange |
-
-Status chips use `type.caption` or `type.label`, `radius.pill`, and semantic soft containers. Do not overload one label with multiple backend meanings; map technical states to a stable user vocabulary.
-
-## 25. Loading States
-
-- Use shape-matched skeletons for cards/lists after the first brief load threshold; avoid layout shift.
-- Buttons use an inline spinner, stable width, accessible busy announcement, and duplicate-action prevention.
-- Map searching shows a clear centered/overlay state while retaining usable map context.
-- Provider matching shows named progress, expected uncertainty, cancel/help where appropriate, and timeout recovery.
-- Payment processing uses a blocking transaction state, prevents resubmission, and explains that leaving may not cancel processing.
-
-Never show a blank white screen. Indeterminate loading must not imply guaranteed progress.
-
-## 26. Empty States
-
-An empty state contains a relevant icon/illustration, plain title, one-sentence explanation, and useful primary action when available.
-
-| State | Helpful action |
-| --- | --- |
-| No bookings yet | Find a service. |
-| No providers nearby | Expand time/radius, try another category, or get notified; do not fabricate availability. |
-| No reviews | Explain that this provider has no reviews yet; show other trust evidence. |
-| No notifications | Return to Home or manage notification preferences. |
-| No earnings | Explain the selected period and link to available jobs/status. |
-
-Do not make normal new-user emptiness look like an error.
-
-## 27. Error States
-
-Reusable error components include an icon, clear title, short explanation, retry CTA, and alternate action where possible. Preserve entered data and critical booking context. Translate technical failures into safe user language while recording diagnostic identifiers privately. Never expose stack traces, raw backend errors, provider payloads, secrets, or personal data.
-
-Use inline errors for local/field problems, contained errors for one panel, and full-page errors only when the page cannot function. For destructive/payment/booking ambiguity, state what may already have happened before asking the user to retry.
-
-## 28. Offline State
-
-Show a persistent offline banner/status as soon as loss is confirmed. Keep the last verified critical booking state visible, marked with its update time and “may be out of date.” Queue only operations explicitly designed to be safe and idempotent; otherwise explain that the action was not sent. On reconnection, reconcile server state before claiming success and announce meaningful changes. Provide call/support fallback when appropriate.
-
-## 29. Toasts, Snackbars and Alerts
-
-- Snackbar: brief, non-critical confirmation or reversible action; one optional action; no essential details.
-- Inline message: validation, local warning, persistent guidance, or recoverable component error.
-- Modal: blocking, high-consequence decision or information requiring acknowledgment; use sparingly.
-- Confirmation dialog: destructive/irreversible action, material cancellation fee, or sensitive permission change.
-
-Avoid modal spam and stacked transient messages. Success that is already obvious from the updated screen needs no toast. Destructive confirmation names the action and consequence; never use vague “Are you sure?” alone.
-
-## 30. Motion and Animation
-
-| Token | Duration | Use |
-| --- | ---: | --- |
-| `motion.fast` | 150ms | Press, hover, color, focus feedback. |
-| `motion.standard` | 200ms | Small component/state transitions. |
-| `motion.emphasis` | 250ms | Provider accepted or compact success transition. |
-| `motion.container` | 300ms | Screen/sheet/dialog transition. |
-
-Motion supports comprehension: button feedback, screen hierarchy, provider acceptance, interpolated map movement, loading, success confirmation, and bottom-sheet transitions. Map markers move smoothly only between trustworthy updates and must not suggest false precision. Respect reduced-motion preferences by removing nonessential movement and replacing spatial transitions with fades/state changes. No parallax, autoplay decoration, confetti in urgent flows, or animation that delays action.
-
-## 31. Accessibility
-
-- Meet WCAG 2.2 AA contrast: 4.5:1 normal text, 3:1 large text and meaningful UI boundaries/focus indicators.
-- Use 48×48px mobile and at least 44×44px web touch targets.
-- Provide semantic labels, roles, values, hints, reading order, and live-region announcements where needed.
-- Support text scaling/reflow without clipping at platform accessibility sizes.
-- Admin is fully keyboard operable with logical tab order, skip navigation, visible focus, and no keyboard traps.
-- Pair color with icons, labels, patterns, or position.
-- Errors identify the field, cause in plain language, and recovery; focus moves predictably after submit.
-- Images have useful alternatives; decorative imagery is ignored by assistive technology.
-- Map flows provide a list/text alternative for status and location information.
-- Test screen reader, keyboard, contrast, zoom, reduced motion, orientation, and dynamic text before completion.
-
-## 32. Responsive Rules
-
-Mobile supports small Android devices (~320px logical width), standard/large Android phones, iPhones, landscape where required, and tablets where practical. Use constraints, safe areas, flexible stacks, wrapping, and scroll; avoid absolute positioning tied to one screen. Keep the primary CTA reachable without hiding critical content behind it.
-
-Admin breakpoints are implementation tokens, not scattered media queries. Support laptop (from ~1024px), desktop (~1280–1599px), and large desktop (1600px+). Use a content maximum around 1440px for dashboards and 720–960px for reading/forms, while data tables may use the available viewport with controlled horizontal scrolling. Collapse side navigation rather than deleting access, and never convert dense tables into unreadable squeezed columns.
-
-## 33. Design Tokens
-
-Centralize three layers:
-
-1. **Primitive:** raw navy/emerald/neutral/status scales, 4px spacing, type values, radii, shadows, durations.
-2. **Semantic:** `primary`, `surface`, `textSecondary`, `danger`, `pagePadding`, `focus`, and other purpose roles.
-3. **Component:** `button.primary.background`, `input.focus.border`, `providerCard.padding`, etc., referencing semantic tokens.
-
-The Flutter design-system structure is:
-
-```text
-mobile/lib/design_system/
-    app_colors.dart
-    app_typography.dart
-    app_spacing.dart
-    app_radius.dart
-    app_shadows.dart
-    app_theme.dart
-```
-
-Future Next.js/admin uses equivalent centralized source files and CSS/custom-property or framework mappings. Token names should remain conceptually aligned across platforms even when language conventions differ. Never hardcode a random color, font, radius, motion duration, or spacing value in screen code when a token exists.
-
-## 34. Reusable Components
-
-Planned conceptual components:
-
-- `FixButton`
-- `FixTextField`
-- `FixCard`
-- `FixServiceCard`
-- `FixProviderCard`
-- `FixBookingCard`
-- `FixStatusChip`
-- `FixAvatar`
-- `FixRating`
-- `FixAppBar`
-- `FixBottomNavigation`
-- `FixBottomSheet`
-- `FixDialog`
-- `FixSnackbar`
-- `FixLoader`
-- `FixEmptyState`
-- `FixErrorState`
-- `FixEmergencyBanner`
-- `FixLocationSelector`
-- `FixPriceDisplay`
-- `FixVerificationBadge`
-
-Names are conceptual and must adapt to approved project conventions when implementation begins. Each component specification includes anatomy, variants, sizes, semantic tokens, default/hover/focus/pressed/disabled/loading/error states as applicable, responsive rules, accessibility contract, and tests. Reuse or extend a component before creating another with the same responsibility.
-
-## 35. Design Agent Rules
-
-Before implementing any UI, an agent must:
-
-1. Read `AGENTS.md`.
-2. Read `DESIGN.md`.
-3. Inspect existing design tokens.
-4. Inspect existing reusable components.
-5. Reuse existing components before creating new ones.
-6. Follow typography tokens.
-7. Follow spacing tokens.
-8. Follow semantic colors.
-9. Implement required component states.
-10. Preserve accessibility.
-11. Maintain responsive behavior.
-12. Compare the result with the approved design direction.
-
-Agents must not:
-
-- Invent colors without approval or restore the previous blue-led visual language.
-- Introduce fonts or arbitrary type values.
-- Create another spacing/radius/elevation system.
-- Create a one-screen button or card language.
-- Duplicate components.
-- Mix random icon libraries.
-- Introduce neon, excessive gradient, gaming, glassmorphism, decorative animation, or cluttered dashboard styles.
-- Redesign unrelated screens.
-- copy Uber, TaskRabbit, or Urban Company branding or layouts.
-- Change the global design system during a feature task without explicit approval.
-
-## 36. Design Change Protocol
-
-If the system is insufficient, do not silently work around it:
-
-1. Document the proposed change and affected platforms/components.
-2. Explain the user need and why existing tokens/components cannot satisfy it.
-3. Update `DESIGN.md` only with specific approval or within an explicitly assigned design-system task.
-4. Update centralized tokens and reusable components with migration/compatibility notes.
-5. Update affected screens and tests after the foundation is approved.
-
-A feature task must not redefine the global visual language. Hard-to-reverse framework, font, icon, or cross-platform token decisions may also require an ADR.
-
-## 37. Customer vs Provider Consistency
-
-Customer and provider surfaces share colors, typography, spacing, icons, buttons, inputs, statuses, cards, dialogs, loading, error, and accessibility behavior. Information hierarchy differs:
-
-- Customer: finding help, provider trust, ETA, booking, payment, and support.
-- Provider: availability, incoming jobs, navigation, service status, completion, earnings, and safety.
-
-Role context may change labels and content density, not the visual grammar.
-
-## 38. Admin Consistency
-
-Admin uses denser desktop layouts while retaining the deep-neutral and emerald brand system, Inter typography, semantic statuses, 4/8px spacing philosophy, radii, focus behavior, form rules, and component states. Dense does not mean cramped: tables keep readable rows, actions remain discoverable, and mobile-only patterns such as bottom navigation are translated to suitable desktop patterns rather than copied literally.
-
-## 39. Do / Don't Examples
-
-| Do | Don't |
-| --- | --- |
-| Present one strong primary CTA. | Present three competing primary buttons. |
-| Show price type, fees, and ETA clearly. | Hide fees or imply estimates are guaranteed. |
-| Reuse `FixProviderCard`. | Invent a provider card for every result page. |
-| Use semantic status tokens plus icon and label. | Communicate status with color alone. |
-| Show a shape-matched skeleton while loading. | Show a blank white screen or fake content. |
-| Provide retry and an alternate action after network failure. | Display a raw exception or dead-end error. |
-| Reserve red for danger, destruction, and true emergency. | Use red as a decorative brand/accent color. |
-| Keep promotions out of emergency and active-service views. | Put promotional banners in emergency flow. |
-| Use Inter and tokenized type styles consistently. | Use different fonts or arbitrary sizes between screens. |
-| Use page/card spacing tokens. | Hardcode arbitrary padding to make one screenshot fit. |
-| Communicate stale map/location data. | Animate stale coordinates as if they are live. |
-
-## 40. Inspiration Reference
-
-**Uber:** Use for interaction inspiration around real-time dispatch, maps, ETA, and active-job tracking.
-
-**TaskRabbit:** Use for marketplace/provider profile and trust-information inspiration.
-
-**Urban Company:** Use for home-service discovery, categorization, service information, and booking inspiration.
-
-These references are inspiration only. FixNow must maintain its own original branding, layouts, components, content, and design identity. Do not download or copy their assets, reproduce their screens, or create trademark-confusing visual similarities.
-
-The approved FixNow visual benchmark is a premium dark utility interface with emerald/mint identity, compact information-rich provider cards, strong verification signals, restrained motion, clear emergency hierarchy, and map-first real-time service states. Customer and provider applications must look like role-specific parts of one product. The intended promise is: **Professional help is minutes away.**
+No excessive gradients, glassmorphism, oversized rounded controls, cartoon illustration, generic AI-dashboard layouts, copied reference content, random colors, unlabelled icon-only actions, or decorative animation. Do not make an unavailable feature look live.

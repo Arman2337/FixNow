@@ -139,6 +139,19 @@ class ProblemAnalysisRepository {
   final ApiTransport _transport;
   final Future<String?> Function()? _accessToken;
 
+  Future<ProblemAnalysis> analyzeText({required String description}) async {
+    final token = await _token();
+    final response = await _transport.send(
+      ApiRequest(
+        method: ApiMethod.post,
+        path: 'ai/problem-analysis/text',
+        bearerToken: token,
+        body: {'description': description.trim()},
+      ),
+    );
+    return _parse(response);
+  }
+
   Future<ProblemAnalysis> analyzeImage({required MultipartFileData image}) =>
       _upload('ai/problem-analysis/image', files: [image]);
 
@@ -174,13 +187,7 @@ class ProblemAnalysisRepository {
         'Uploads require the HTTP client.',
       );
     }
-    final token = await _accessToken?.call();
-    if (token == null) {
-      throw const ApiException(
-        ApiFailureKind.unauthorized,
-        'Sign in to analyze a problem.',
-      );
-    }
+    final token = await _token();
     final response = await client.uploadMultipart(
       path: path,
       bearerToken: token,
@@ -189,6 +196,21 @@ class ProblemAnalysisRepository {
     );
     // Endpoints answer 201; uploadMultipart already accepts any 2xx and mapped
     // non-2xx to an ApiException, so only the body shape remains to check.
+    return _parse(response);
+  }
+
+  Future<String> _token() async {
+    final token = await _accessToken?.call();
+    if (token == null) {
+      throw const ApiException(
+        ApiFailureKind.unauthorized,
+        'Sign in to analyze a problem.',
+      );
+    }
+    return token;
+  }
+
+  ProblemAnalysis _parse(ApiResponse response) {
     if (response.body is! Map<String, Object?>) {
       throw const ApiException(
         ApiFailureKind.invalidResponse,

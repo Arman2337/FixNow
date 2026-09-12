@@ -95,4 +95,40 @@ describe('ProblemClassificationController authorization boundary', () => {
     });
     expect(analysis.analyzeImage as jest.Mock).not.toHaveBeenCalled();
   });
+
+  it('passes typed problem details to the text-analysis workflow', async () => {
+    const textAnalysis = jest.fn().mockResolvedValue({
+      kind: 'analysis',
+      source: 'text',
+      category: 'Plumbing',
+      subcategory: 'Leak',
+      problemSummary: 'A leak under the sink.',
+      urgency: 'medium',
+      confidence: 0.9,
+      confidenceBand: 'high',
+      serviceCategoryId: 'category-1',
+      serviceName: 'Plumbing',
+      safetyNotice: null,
+    });
+    const textController = controller as unknown as {
+      analyzeText: (
+        request: unknown,
+        dto: { description: string },
+      ) => Promise<unknown>;
+    };
+    (analysis as unknown as { analyzeText: jest.Mock }).analyzeText =
+      textAnalysis;
+
+    await expect(
+      textController.analyzeText(
+        { authorizationPrincipal: { userId: 'customer-1' } },
+        { description: 'There is water leaking under my sink.' },
+      ),
+    ).resolves.toEqual(expect.objectContaining({ source: 'text' }));
+
+    expect(textAnalysis).toHaveBeenCalledWith({
+      userId: 'customer-1',
+      description: 'There is water leaking under my sink.',
+    });
+  });
 });

@@ -12,8 +12,8 @@ import 'package:fixnow_mobile/features/services/service_category.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
-/// "Diagnose your problem": capture a photo and/or a spoken description, send it
-/// once to the governed backend, and offer a confidence-banded suggestion that
+/// "Diagnose your problem": enter text, capture a photo, and/or record a spoken
+/// description, then offer a confidence-banded suggestion that
 /// hands a matched service category back to the booking flow. Every failure
 /// degrades to manual "Browse services" — it never blocks the customer.
 ///
@@ -34,9 +34,19 @@ class ProblemDiagnosisScreen extends StatefulWidget {
 
 class _ProblemDiagnosisScreenState extends State<ProblemDiagnosisScreen> {
   ProblemDiagnosisController get _controller => widget.controller;
+  late final TextEditingController _descriptionController;
+
+  @override
+  void initState() {
+    super.initState();
+    _descriptionController = TextEditingController(
+      text: _controller.description,
+    );
+  }
 
   @override
   void dispose() {
+    _descriptionController.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -75,7 +85,14 @@ class _ProblemDiagnosisScreenState extends State<ProblemDiagnosisScreen> {
       await controller.analyzeImage();
     } else if (controller.hasAudio) {
       await controller.analyzeVoice();
+    } else if (controller.hasText) {
+      await controller.analyzeText();
     }
+  }
+
+  void _reset() {
+    _controller.reset();
+    _descriptionController.clear();
   }
 
   ServiceCategory? _matchedCategory(ProblemAnalysis analysis) {
@@ -96,8 +113,23 @@ class _ProblemDiagnosisScreenState extends State<ProblemDiagnosisScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Text(
-                'Add a photo of the problem, describe it out loud, or both. '
+                'Describe the problem, add a photo, speak out loud, or combine media. '
                 "We'll suggest the right service — you always confirm before booking.",
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              TextField(
+                controller: _descriptionController,
+                enabled: !_controller.isAnalyzing && !_controller.isRecording,
+                maxLength: 2000,
+                minLines: 3,
+                maxLines: 6,
+                textInputAction: TextInputAction.newline,
+                onChanged: _controller.setDescription,
+                decoration: const InputDecoration(
+                  labelText: 'Describe the problem',
+                  hintText: 'For example: Water is leaking under my kitchen sink.',
+                  alignLabelWithHint: true,
+                ),
               ),
               const SizedBox(height: AppSpacing.lg),
               _photoSection(),
@@ -112,7 +144,9 @@ class _ProblemDiagnosisScreenState extends State<ProblemDiagnosisScreen> {
                 expand: true,
                 isLoading: _controller.isAnalyzing,
                 onPressed:
-                    (_controller.hasImage || _controller.hasAudio) &&
+                    (_controller.hasText ||
+                        _controller.hasImage ||
+                        _controller.hasAudio) &&
                         !_controller.isAnalyzing &&
                         !_controller.isRecording
                     ? _analyze
@@ -400,7 +434,7 @@ class _ProblemDiagnosisScreenState extends State<ProblemDiagnosisScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         TextButton(
-          onPressed: _controller.reset,
+          onPressed: _reset,
           child: const Text('Start over'),
         ),
       ];
@@ -414,7 +448,7 @@ class _ProblemDiagnosisScreenState extends State<ProblemDiagnosisScreen> {
           onPressed: () => Navigator.pop(context, matched),
         ),
         TextButton(
-          onPressed: _controller.reset,
+          onPressed: _reset,
           child: const Text('Start over'),
         ),
       ];
@@ -435,7 +469,7 @@ class _ProblemDiagnosisScreenState extends State<ProblemDiagnosisScreen> {
         expand: true,
         onPressed: () => Navigator.pop(context),
       ),
-      TextButton(onPressed: _controller.reset, child: const Text('Start over')),
+      TextButton(onPressed: _reset, child: const Text('Start over')),
     ];
   }
 

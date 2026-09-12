@@ -8,7 +8,7 @@
  * confident match (the result stays advisory-only).
  */
 
-export type ProblemAnalysisSource = 'image' | 'voice' | 'image_voice';
+export type ProblemAnalysisSource = 'text' | 'image' | 'voice' | 'image_voice';
 
 export type ProblemUrgency = 'low' | 'medium' | 'high';
 

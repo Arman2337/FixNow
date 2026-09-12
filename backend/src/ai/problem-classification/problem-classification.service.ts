@@ -29,6 +29,12 @@ export interface ImageAnalysisInput {
   readonly requestId?: string;
 }
 
+export interface TextAnalysisInput {
+  readonly userId: string;
+  readonly description: string;
+  readonly requestId?: string;
+}
+
 export interface VoiceAnalysisInput {
   readonly userId: string;
   readonly audio: MediaInput;
@@ -58,6 +64,25 @@ export class ProblemClassificationService {
     private readonly ai: AiService,
     private readonly categories: ServiceCategoriesService,
   ) {}
+
+  async analyzeText(input: TextAnalysisInput): Promise<ProblemAnalysisResult> {
+    const description = input.description.trim();
+    const classified = await this.ai.classifyMultimodal({
+      userId: input.userId,
+      issueText: description,
+      prompt: buildTextClassificationPrompt({ issueText: description }),
+      schema: problemAnalysisSchema,
+      ...(input.requestId ? { requestId: input.requestId } : {}),
+    });
+    if (classified.kind === 'fallback') {
+      return {
+        kind: 'unavailable',
+        source: 'text',
+        errorCode: classified.errorCode,
+      };
+    }
+    return this.toAnalysis('text', classified.value, undefined);
+  }
 
   async analyzeImage(
     input: ImageAnalysisInput,

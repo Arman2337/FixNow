@@ -18,7 +18,10 @@ import {
   ProblemAnalysisResult,
   ProblemAnalysisSource,
 } from '../../../../shared/problem-analysis.types';
-import { ProblemAnalysisMediaDto } from './problem-classification.dto';
+import {
+  ProblemAnalysisMediaDto,
+  ProblemAnalysisTextDto,
+} from './problem-classification.dto';
 import { ProblemClassificationService } from './problem-classification.service';
 
 interface UploadedMedia {
@@ -46,6 +49,18 @@ const MAX_AUDIO_UPLOAD_BYTES = 52_428_800; // 50 MiB
 @Controller('ai/problem-analysis')
 export class ProblemClassificationController {
   constructor(private readonly analysis: ProblemClassificationService) {}
+
+  @Post('text')
+  @RequireOwnPermission(PERMISSIONS.aiProblemAnalysisCreate)
+  analyzeText(
+    @Req() request: AuthorizedRequest,
+    @Body() dto: ProblemAnalysisTextDto,
+  ): Promise<ProblemAnalysisResult> {
+    return this.analysis.analyzeText({
+      userId: request.authorizationPrincipal!.userId,
+      description: dto.description,
+    });
+  }
 
   @Post('image')
   @RequireOwnPermission(PERMISSIONS.aiProblemAnalysisCreate)

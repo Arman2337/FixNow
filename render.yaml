@@ -19,8 +19,16 @@ services:
         generateValue: true
       - key: OTP_SECRET
         generateValue: true
-      - key: AI_PROVIDER_API_KEY
+      - key: HF_TOKEN
         sync: false
+      - key: AI_ENABLED
+        value: true
+      - key: AI_PROVIDER
+        value: huggingface
+      - key: AI_VOICE_ENABLED
+        value: true
+      - key: AI_VISION_ENABLED
+        value: true
       - key: PROVIDER_DOCUMENT_S3_ACCESS_KEY
         sync: false
       - key: PROVIDER_DOCUMENT_S3_SECRET_KEY

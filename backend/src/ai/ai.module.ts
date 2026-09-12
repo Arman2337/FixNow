@@ -55,7 +55,7 @@ import { ProblemClassificationController } from './problem-classification/proble
               ),
               visionModel: config.get<string>(
                 'HF_VISION_MODEL',
-                'Qwen/Qwen2.5-VL-72B-Instruct',
+                'Qwen/Qwen2.5-VL-7B-Instruct',
               ),
               whisperModel: config.get<string>(
                 'HF_WHISPER_MODEL',

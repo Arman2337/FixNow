@@ -1,4 +1,18 @@
-import { IsOptional, IsString, Matches, MaxLength } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Matches,
+  MaxLength,
+} from 'class-validator';
+
+/** Typed issue description for the same grounded diagnosis pipeline. */
+export class ProblemAnalysisTextDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(2_000)
+  description!: string;
+}
 
 /**
  * Optional multipart body for the voice and combined problem-analysis

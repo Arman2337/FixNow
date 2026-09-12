@@ -17,6 +17,13 @@ class _FakeApiClient extends ApiClient {
   Map<String, String>? fields;
 
   @override
+  Future<ApiResponse> send(ApiRequest request) async {
+    path = request.path;
+    bearerToken = request.bearerToken;
+    return _response;
+  }
+
+  @override
   Future<ApiResponse> uploadMultipart({
     required String path,
     required String bearerToken,
@@ -59,6 +66,30 @@ const _analysisBody = <String, Object?>{
 };
 
 void main() {
+  test('text analysis posts the typed description to the text endpoint', () async {
+    final client = _FakeApiClient(
+      const ApiResponse(
+        statusCode: 201,
+        body: <String, Object?>{
+          ..._analysisBody,
+          'source': 'text',
+        },
+      ),
+    );
+    final repository = ProblemAnalysisRepository(
+      client,
+      accessToken: () async => 'token-abc',
+    );
+
+    final analysis = await (repository as dynamic).analyzeText(
+      description: 'There is water leaking under my sink.',
+    );
+
+    expect(client.path, 'ai/problem-analysis/text');
+    expect(client.bearerToken, 'token-abc');
+    expect(analysis.source, 'text');
+  });
+
   test('combined upload posts to the combined path with token and hint',
       () async {
     final client = _FakeApiClient(

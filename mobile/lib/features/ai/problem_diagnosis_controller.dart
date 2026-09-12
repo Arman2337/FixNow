@@ -43,13 +43,20 @@ class ProblemDiagnosisController extends ChangeNotifier {
   Uint8List? _audioWav;
 
   Uint8List? get imageBytes => _image?.bytes;
+  String description = '';
   bool get hasImage => _image != null;
   bool get hasAudio => _audioWav != null;
+  bool get hasText => description.trim().isNotEmpty;
   bool get isRecording => status == DiagnosisStatus.recording;
   bool get isAnalyzing => status == DiagnosisStatus.analyzing;
 
   void setLanguage(DiagnosisLanguage value) {
     language = value;
+    notifyListeners();
+  }
+
+  void setDescription(String value) {
+    description = value;
     notifyListeners();
   }
 
@@ -121,6 +128,7 @@ class ProblemDiagnosisController extends ChangeNotifier {
   void reset() {
     _image = null;
     _audioWav = null;
+    description = '';
     result = null;
     message = null;
     status = DiagnosisStatus.idle;
@@ -131,6 +139,13 @@ class ProblemDiagnosisController extends ChangeNotifier {
     final image = _image;
     if (image == null) return;
     await _analyze(() => _repository.analyzeImage(image: _imagePart(image)));
+  }
+
+  Future<void> analyzeText() async {
+    if (!hasText) return;
+    await _analyze(
+      () => _repository.analyzeText(description: description.trim()),
+    );
   }
 
   Future<void> analyzeVoice() async {

@@ -319,12 +319,15 @@ void main() {
       final controller = build();
       await controller.pickImage(ImageSource.camera);
       await controller.analyzeImage();
+      controller.setDescription('There is a leak under my sink.');
       controller.reset();
 
       expect(controller.hasImage, isFalse);
       expect(controller.hasAudio, isFalse);
       expect(controller.result, isNull);
       expect(controller.message, isNull);
+      expect(controller.hasText, isFalse);
+      expect(controller.description, isEmpty);
       expect(controller.status, DiagnosisStatus.idle);
     });
   });

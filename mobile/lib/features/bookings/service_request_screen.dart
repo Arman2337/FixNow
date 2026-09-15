@@ -9,6 +9,7 @@ import 'package:fixnow_mobile/design_system/signature_motion.dart';
 import 'package:fixnow_mobile/design_system/fix_address_selector.dart';
 import 'package:fixnow_mobile/design_system/fix_schedule_picker.dart';
 import 'package:fixnow_mobile/features/ai/price_estimate_repository.dart';
+import 'package:fixnow_mobile/features/bookings/booking.dart';
 import 'package:fixnow_mobile/features/bookings/booking_controller.dart';
 import 'package:fixnow_mobile/features/bookings/booking_schedule.dart';
 import 'package:fixnow_mobile/features/location/booking_location.dart';
@@ -25,6 +26,7 @@ class ServiceRequestScreen extends StatefulWidget {
     this.locationProvider,
     this.initialLocation,
     this.initialDescription,
+    this.initialItems,
     this.estimateRepository,
     super.key,
   });
@@ -32,6 +34,10 @@ class ServiceRequestScreen extends StatefulWidget {
   final BookingController controller;
   final BookingLocationProvider? locationProvider;
   final BookingLocationFix? initialLocation;
+
+  /// Itemized services carried over from the catalog cart; sent with the
+  /// booking so the backend can recompute totals and visit duration.
+  final List<BookingItemDraft>? initialItems;
 
   /// Prefill from a previous booking ("Book again"); always reviewable and
   /// editable before submission.
@@ -155,6 +161,90 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
     super.dispose();
   }
 
+  /// Itemized recap of the cart the customer built, mirroring what the
+  /// backend will store and recompute (GST included in the shown total).
+  Widget _buildItemsSummaryCard(List<BookingItemDraft> items) {
+    final subtotalMinor = items.fold<int>(
+      0,
+      (sum, item) => sum + item.unitPriceMinor * item.quantity,
+    );
+    final gstMinor = (subtotalMinor * 0.18).round();
+    String money(int minor) =>
+        '₹${(minor / 100).toStringAsFixed(minor % 100 == 0 ? 0 : 2)}';
+    final totalMinutes = items.fold<int>(
+      0,
+      (sum, item) => sum + (item.durationMinutes ?? 0) * item.quantity,
+    );
+    final durationLabel = totalMinutes == 0
+        ? null
+        : totalMinutes >= 60
+            ? '${totalMinutes ~/ 60} hr ${totalMinutes % 60} min'
+            : '$totalMinutes min';
+    return FixCard(
+      tone: FixCardTone.secondary,
+      semanticLabel: 'Selected services',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.fact_check_outlined, color: AppColors.primary),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Text(
+                  'Selected services',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: AppColors.textOnSurface,
+                      ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          for (final item in items)
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(
+                      item.quantity == 1
+                          ? item.name
+                          : '${item.name}  ×${item.quantity}',
+                      style: const TextStyle(color: AppColors.textOnSurface),
+                    ),
+                  ),
+                  Text(
+                    money(item.unitPriceMinor * item.quantity),
+                    style: const TextStyle(color: AppColors.textOnSurface),
+                  ),
+                ],
+              ),
+            ),
+          const SizedBox(height: AppSpacing.xs),
+          const Divider(color: AppColors.borderDefault),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Estimated visit${durationLabel == null ? '' : ' • ~$durationLabel'}',
+                style: const TextStyle(color: AppColors.textOnSurfaceSecondary),
+              ),
+              Text(
+                money(subtotalMinor + gstMinor),
+                style: const TextStyle(
+                  color: AppColors.textOnSurface,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   void _addSuggestion(String text) {
     if (_details.text.isEmpty) {
       _details.text = text;
@@ -181,6 +271,7 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
         latitude: location.latitude,
         longitude: location.longitude,
         scheduledAt: _schedule?.targetScheduledAt,
+        items: widget.initialItems,
       );
       if (mounted) {
         setState(() => _showRadar = true); // FN-040 made visible (signature motion)
@@ -256,6 +347,11 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
+
+            if (widget.initialItems case final items? when items.isNotEmpty)
+              _buildItemsSummaryCard(items),
+            if (widget.initialItems case final items? when items.isNotEmpty)
+              const SizedBox(height: AppSpacing.md),
 
             FixCard(
               tone: FixCardTone.elevated,

@@ -103,6 +103,82 @@ describe('BookingsService', () => {
     expect(eventSave).toHaveBeenCalledTimes(1);
   });
 
+  it('snapshots line items and recomputes totals and duration server-side', async () => {
+    bookingFindOneBy.mockResolvedValue(null);
+    bookingSave.mockImplementation((value: Booking) =>
+      Promise.resolve(value),
+    );
+
+    const result = await service.create(
+      '00000000-0000-4000-8000-000000000001',
+      {
+        serviceCategoryId: '00000000-0000-4000-8000-000000000010',
+        description: 'Repair a leaking pipe',
+        locationLat: 22.3,
+        locationLng: 73.2,
+        items: [
+          {
+            id: 'plumb-3',
+            name: 'Shower & Water Pipe Leakage',
+            quantity: 2,
+            unitPriceMinor: 24900,
+            durationMinutes: 45,
+          },
+          {
+            id: 'plumb-1',
+            name: 'Tap & Mixer Repair',
+            quantity: 1,
+            unitPriceMinor: 14900,
+            durationMinutes: 30,
+          },
+        ],
+      },
+      'request-key-123',
+    );
+
+    // 2×24900 + 1×14900 = 64700; GST 18% = 11646; duration 2×45 + 30 = 120.
+    expect(result.items).toEqual([
+      {
+        id: 'plumb-3',
+        name: 'Shower & Water Pipe Leakage',
+        quantity: 2,
+        unitPriceMinor: 24900,
+        durationMinutes: 45,
+      },
+      {
+        id: 'plumb-1',
+        name: 'Tap & Mixer Repair',
+        quantity: 1,
+        unitPriceMinor: 14900,
+        durationMinutes: 30,
+      },
+    ]);
+    expect(result.totalAmountMinor).toBe(76346);
+    expect(result.estimatedDurationMinutes).toBe(120);
+  });
+
+  it('leaves items and totals empty when no line items are sent', async () => {
+    bookingFindOneBy.mockResolvedValue(null);
+    bookingSave.mockImplementation((value: Booking) =>
+      Promise.resolve(value),
+    );
+
+    const result = await service.create(
+      '00000000-0000-4000-8000-000000000001',
+      {
+        serviceCategoryId: '00000000-0000-4000-8000-000000000010',
+        description: 'Repair a leaking pipe',
+        locationLat: 22.3,
+        locationLng: 73.2,
+      },
+      'request-key-123',
+    );
+
+    expect(result.items).toBeNull();
+    expect(result.totalAmountMinor).toBeNull();
+    expect(result.estimatedDurationMinutes).toBeNull();
+  });
+
   it('returns an existing booking for an identical idempotent replay', async () => {
     bookingFindOneBy.mockResolvedValue(null);
     bookingSave.mockImplementation((value: Booking) => Promise.resolve(value));

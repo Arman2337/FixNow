@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:fixnow_mobile/api/api_client.dart';
+import 'package:fixnow_mobile/features/bookings/booking.dart';
 import 'package:fixnow_mobile/features/bookings/booking_controller.dart';
 import 'package:fixnow_mobile/features/bookings/booking_repository.dart';
 import 'package:fixnow_mobile/features/realtime/realtime_client.dart';
@@ -26,6 +27,43 @@ void main() {
     expect(request.bearerToken, 'token');
     expect(request.headers['Idempotency-Key'], startsWith('mobile-'));
     expect(request.body?['locationLat'], 17.385);
+  });
+
+  test('sends cart line items and parses server-computed pricing', () async {
+    final transport = _Transport(withItems: true);
+    final controller = BookingController(
+      BookingRepository(api: transport, accessToken: () async => 'token'),
+    );
+
+    await controller.create(
+      serviceCategoryId: '11111111-1111-4111-8111-111111111111',
+      description: 'Kitchen sink is leaking underneath.',
+      latitude: 17.385,
+      longitude: 78.4867,
+      items: const [
+        BookingItemDraft(
+          id: 'plumb-3',
+          name: 'Shower & Water Pipe Leakage',
+          quantity: 2,
+          unitPriceMinor: 24900,
+          durationMinutes: 45,
+        ),
+      ],
+    );
+
+    expect(transport.requests.single.body?['items'], [
+      {
+        'id': 'plumb-3',
+        'name': 'Shower & Water Pipe Leakage',
+        'quantity': 2,
+        'unitPriceMinor': 24900,
+        'durationMinutes': 45,
+      },
+    ]);
+    final booking = controller.bookings.single;
+    expect(booking.items?.single.lineTotalMinor, 49800);
+    expect(booking.pricing?.totalMinor, 58764);
+    expect(booking.estimatedDurationMinutes, 90);
   });
 
   test('loads empty booking history', () async {
@@ -117,9 +155,10 @@ class _FakeSocket implements RealtimeSocket {
 }
 
 class _Transport implements ApiTransport {
-  _Transport({this.history = false, this.activeBooking = false});
+  _Transport({this.history = false, this.activeBooking = false, this.withItems = false});
   final bool history;
   final bool activeBooking;
+  final bool withItems;
   final List<ApiRequest> requests = [];
 
   @override
@@ -129,6 +168,36 @@ class _Transport implements ApiTransport {
       return const ApiResponse(
         statusCode: 200,
         body: {'bookings': <Object?>[], 'nextCursor': null},
+      );
+    }
+    if (withItems) {
+      return const ApiResponse(
+        statusCode: 201,
+        body: {
+          'booking': {
+            'id': '22222222-2222-4222-8222-222222222222',
+            'serviceCategoryId': '11111111-1111-4111-8111-111111111111',
+            'status': 'REQUESTED',
+            'description': 'Kitchen sink is leaking underneath.',
+            'createdAt': '2026-08-13T12:00:00.000Z',
+            'items': [
+              {
+                'id': 'plumb-3',
+                'name': 'Shower & Water Pipe Leakage',
+                'quantity': 2,
+                'unitPriceMinor': 24900,
+                'durationMinutes': 45,
+              },
+            ],
+            'pricing': {
+              'subtotalMinor': 49800,
+              'gstMinor': 8964,
+              'totalMinor': 58764,
+              'currency': 'INR',
+            },
+            'estimatedDurationMinutes': 90,
+          },
+        },
       );
     }
     if (activeBooking) {

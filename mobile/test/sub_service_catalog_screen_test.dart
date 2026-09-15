@@ -1,3 +1,4 @@
+import 'package:fixnow_mobile/features/bookings/booking.dart';
 import 'package:fixnow_mobile/features/services/service_category.dart';
 import 'package:fixnow_mobile/features/services/sub_service_catalog_screen.dart';
 import 'package:fixnow_mobile/features/services/sub_service_item.dart';
@@ -79,14 +80,16 @@ void main() {
         (tester) async {
       String? proceededDescription;
       int? proceededPrice;
+      List<BookingItemDraft>? proceededItems;
 
       await tester.pumpWidget(
         host(
           SubServiceCatalogScreen(
             category: testCategory,
-            onProceedToBooking: (cat, desc, price, loc) {
+            onProceedToBooking: (cat, desc, price, loc, items) {
               proceededDescription = desc;
               proceededPrice = price;
+              proceededItems = items;
             },
           ),
         ),
@@ -123,6 +126,10 @@ void main() {
 
       expect(proceededDescription, 'Tap & Mixer Repair (x2)');
       expect(proceededPrice, 35164); // 29800 subtotal + 5364 GST
+      expect(proceededItems, hasLength(1));
+      expect(proceededItems!.single.quantity, 2);
+      expect(proceededItems!.single.unitPriceMinor, 14900);
+      expect(proceededItems!.single.durationMinutes, 30);
     });
 
     testWidgets('search query filters available sub-services', (tester) async {

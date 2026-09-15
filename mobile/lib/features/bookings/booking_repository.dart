@@ -52,6 +52,7 @@ class BookingRepository {
     required double latitude,
     required double longitude,
     DateTime? scheduledAt,
+    List<BookingItemDraft>? items,
   }) async {
     final key = 'mobile-${DateTime.now().toUtc().millisecondsSinceEpoch}';
     final response = await _api.send(
@@ -66,6 +67,8 @@ class BookingRepository {
           'locationLat': latitude,
           'locationLng': longitude,
           if (scheduledAt != null) 'scheduledAt': scheduledAt.toUtc().toIso8601String(),
+          if (items != null && items.isNotEmpty)
+            'items': items.map((item) => item.toJson()).toList(),
         },
       ),
     );

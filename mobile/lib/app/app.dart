@@ -459,7 +459,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
                     builder: (_) => SubServiceCatalogScreen(
                       category: category,
                       initialLocation: location,
-                      onProceedToBooking: (updatedCategory, description, priceMinor, loc) async {
+                      onProceedToBooking: (updatedCategory, description, priceMinor, loc, items) async {
                         final reqCreated = await Navigator.of(context).push<bool>(
                           MaterialPageRoute(
                             builder: (_) => ServiceRequestScreen(
@@ -467,6 +467,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
                               controller: _bookings,
                               initialLocation: loc,
                               initialDescription: description,
+                              initialItems: items,
                               estimateRepository: PriceEstimateRepository(_api, accessToken: _auth.validAccessToken),
                             ),
                           ),

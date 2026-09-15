@@ -145,6 +145,7 @@ class BookingController extends ChangeNotifier {
     required double latitude,
     required double longitude,
     DateTime? scheduledAt,
+    List<BookingItemDraft>? items,
   }) async {
     final booking = await _repository.create(
       serviceCategoryId: serviceCategoryId,
@@ -152,6 +153,7 @@ class BookingController extends ChangeNotifier {
       latitude: latitude,
       longitude: longitude,
       scheduledAt: scheduledAt,
+      items: items,
     );
     bookings = [booking, ...bookings.where((item) => item.id != booking.id)];
     status = BookingListStatus.ready;

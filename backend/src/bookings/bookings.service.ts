@@ -13,6 +13,10 @@ import { BookingStatus } from '../../../shared/booking-lifecycle.types';
 import { CreateBookingDto } from './bookings.dto';
 import { BookingEvent } from './domain/booking-event.entity';
 import { Booking } from './domain/booking.entity';
+import {
+  BookingItemSnapshot,
+  computeBookingTotals,
+} from './domain/booking-items';
 import { MatchingService } from '../matching/matching.service';
 import { LocationService } from '../location/location.service';
 import { BookingProjectionService } from '../realtime/booking-projection.service';
@@ -82,6 +86,10 @@ export class BookingsService {
           requestFingerprint: fingerprint,
           status: BookingStatus.REQUESTED,
           description: normalizedInput.description,
+          items: normalizedInput.items,
+          totalAmountMinor: normalizedInput.totals.totalMinor || null,
+          estimatedDurationMinutes:
+            normalizedInput.totals.estimatedDurationMinutes,
           locationLat: normalizedInput.locationLat,
           locationLng: normalizedInput.locationLng,
           scheduledAt: normalizedInput.scheduledAt
@@ -602,9 +610,24 @@ export class BookingsService {
     if (scheduledAt && new Date(scheduledAt).getTime() <= Date.now()) {
       throw new BadRequestException('Scheduled time must be in the future');
     }
+    // Snapshots only the whitelisted fields; totals and duration are
+    // recomputed server-side and never taken from the client.
+    const items: BookingItemSnapshot[] | null = input.items?.length
+      ? input.items.map((item) => ({
+          id: item.id.trim(),
+          name: item.name.trim(),
+          quantity: item.quantity,
+          unitPriceMinor: item.unitPriceMinor,
+          ...(typeof item.durationMinutes === 'number'
+            ? { durationMinutes: item.durationMinutes }
+            : {}),
+        }))
+      : null;
     return {
       serviceCategoryId: input.serviceCategoryId,
       description,
+      items,
+      totals: computeBookingTotals(items),
       locationLat: Number(input.locationLat.toFixed(7)),
       locationLng: Number(input.locationLng.toFixed(7)),
       scheduledAt,

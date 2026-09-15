@@ -77,13 +77,16 @@ export class PaymentsService {
     // "price on request" rather than guessed.
     const currency =
       category?.priceCurrency === 'INR' ? category.priceCurrency : null;
-    if (!category?.priceAmount || !currency) {
+    // The itemized booking total is authoritative; the category's published
+    // price is only a fallback for bookings created without line items.
+    const amountMinor = booking.totalAmountMinor ?? category?.priceAmount;
+    if (!amountMinor || !currency) {
       throw new ConflictException(
         'This service is priced on request; online payment is unavailable',
       );
     }
     const input: CreatePaymentOrderRequest = {
-      amountMinor: category.priceAmount,
+      amountMinor,
       currency,
       receipt,
       notes: { bookingId: booking.id },

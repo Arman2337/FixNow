@@ -39,6 +39,15 @@ class _FakeProviderRepository implements ProviderRepository {
   }
 
   @override
+  Future<CustomerBooking> updateJobItems(
+    CustomerBooking job,
+    List<BookingItemDraft> items,
+  ) async {
+    lastUpdatedJob = job;
+    return job.copyWith(items: null, version: job.version + 1);
+  }
+
+  @override
   Future<ProviderAvailability> availability() async => throw UnimplementedError();
 
   @override

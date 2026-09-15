@@ -314,6 +314,28 @@ class ProviderRepository {
     return CustomerBooking.fromJson(_map(body['booking']));
   }
 
+  /// On-site adjustment: replaces the job's line items; the backend
+  /// recomputes totals and duration.
+  Future<CustomerBooking> updateJobItems(
+    CustomerBooking job,
+    List<BookingItemDraft> items,
+  ) async {
+    final body = _map(
+      (await _api.send(
+        ApiRequest(
+          method: ApiMethod.patch,
+          path: 'bookings/${job.id}/items',
+          bearerToken: await _token(),
+          body: {
+            'items': items.map((item) => item.toJson()).toList(),
+            'expectedVersion': job.version,
+          },
+        ),
+      )).body,
+    );
+    return CustomerBooking.fromJson(_map(body['booking']));
+  }
+
   Future<CustomerBooking> cancelJob(CustomerBooking job, String reason) async {
     final body = _map(
       (await _api.send(

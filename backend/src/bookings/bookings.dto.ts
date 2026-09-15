@@ -11,6 +11,7 @@ import {
   IsEnum,
   IsArray,
   ArrayMaxSize,
+  ArrayMinSize,
   ValidateNested,
   MaxLength,
   Matches,
@@ -19,6 +20,7 @@ import { Type } from 'class-transformer';
 import {
   BookingStatus,
   CreateBookingRequest,
+  UpdateBookingItemsRequest,
 } from '../../../shared/booking-lifecycle.types';
 
 export class BookingItemDto {
@@ -82,6 +84,19 @@ export class CreateBookingDto implements CreateBookingRequest {
 export class UpdateBookingStatusDto {
   @IsEnum(BookingStatus)
   status: BookingStatus;
+
+  @IsInt()
+  @Min(1)
+  expectedVersion: number;
+}
+
+export class UpdateBookingItemsDto implements UpdateBookingItemsRequest {
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(30)
+  @ValidateNested({ each: true })
+  @Type(() => BookingItemDto)
+  items: BookingItemDto[];
 
   @IsInt()
   @Min(1)

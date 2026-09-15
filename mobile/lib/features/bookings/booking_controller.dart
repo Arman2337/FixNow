@@ -120,16 +120,25 @@ class BookingController extends ChangeNotifier {
       return;
     }
     final current = bookings[index];
-    final updated = CustomerBooking(
-      id: current.id,
-      serviceCategoryId: current.serviceCategoryId,
+    // Items ride along on the projection so an on-site adjustment (version
+    // bump without a status change) updates the customer's view live.
+    final rawItems = projection.data['items'];
+    final items = rawItems is List && rawItems.isNotEmpty
+        ? rawItems
+            .map(
+              (item) => BookingLineItem.fromJson(
+                Map<String, Object?>.from(item as Map),
+              ),
+            )
+            .toList(growable: false)
+        : null;
+    final duration = projection.data['estimatedDurationMinutes'];
+    final updated = current.copyWith(
       status: statusValue,
-      description: current.description,
-      createdAt: current.createdAt,
       version: version,
-      locationLatitude: current.locationLatitude,
-      locationLongitude: current.locationLongitude,
-      scheduledAt: current.scheduledAt,
+      // null keeps the current values (copyWith semantics).
+      items: items,
+      estimatedDurationMinutes: duration is int ? duration : null,
     );
     bookings = [...bookings]..[index] = updated;
     if (current.status == 'REQUESTED' && statusValue == 'ASSIGNED') {

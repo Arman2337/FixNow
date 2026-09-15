@@ -55,6 +55,15 @@ export interface CreateBookingRequest {
   items?: BookingItemContract[] | null;
 }
 
+/**
+ * Provider command to replace the booking's line items after finding more
+ * (or less) work on site. Totals are recomputed server-side.
+ */
+export interface UpdateBookingItemsRequest {
+  items: BookingItemContract[];
+  expectedVersion: number;
+}
+
 export interface BookingContract {
   id: string;
   customerId: string;

@@ -159,7 +159,63 @@ class BookingDetailScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: AppSpacing.md),
                           Text(booking.description),
-                          const SizedBox(height: AppSpacing.lg),
+                          if (booking.items
+                              case final items? when items.isNotEmpty) ...[
+                          const SizedBox(height: AppSpacing.md),
+                          const Divider(),
+                          const SizedBox(height: AppSpacing.sm),
+                          Text(
+                            'Services',
+                            style: Theme.of(context).textTheme.labelLarge,
+                          ),
+                          const SizedBox(height: AppSpacing.xs),
+                          for (final item in items)
+                            Padding(
+                              padding:
+                                  const EdgeInsets.only(bottom: AppSpacing.xs),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      item.quantity == 1
+                                          ? item.name
+                                          : '${item.name}  ×${item.quantity}',
+                                    ),
+                                  ),
+                                  Text(_money(item.lineTotalMinor)),
+                                ],
+                              ),
+                            ),
+                          if (booking.pricing case final pricing?) ...[
+                            const SizedBox(height: AppSpacing.xs),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Total (incl. GST)',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .labelLarge
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                ),
+                                Text(
+                                  pricing.formattedTotal,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .labelLarge
+                                      ?.copyWith(
+                                        color: AppColors.primary,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ],
+                        const SizedBox(height: AppSpacing.lg),
                           const Divider(),
                           const SizedBox(height: AppSpacing.sm),
                           Text(
@@ -364,6 +420,9 @@ class BookingDetailScreen extends StatelessWidget {
   };
   static String _date(DateTime value) =>
       '${value.day}/${value.month}/${value.year}';
+
+  static String _money(int minor) =>
+      '₹${(minor / 100).toStringAsFixed(minor % 100 == 0 ? 0 : 2)}';
 }
 
 class _BookingProgress extends StatelessWidget {

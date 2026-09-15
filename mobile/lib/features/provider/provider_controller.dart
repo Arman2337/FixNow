@@ -138,6 +138,27 @@ class ProviderController extends ChangeNotifier {
     return updated;
   }
 
+  /// On-site adjustment of the job's line items. Returns the updated job,
+  /// or null when the backend rejects the change (stale version, payment
+  /// already initiated).
+  Future<CustomerBooking?> updateJobItems(
+    CustomerBooking job,
+    List<BookingItemDraft> items,
+  ) async {
+    try {
+      final updated = await repository.updateJobItems(job, items);
+      jobs = jobs.map((item) => item.id == updated.id ? updated : item).toList();
+      notifyListeners();
+      return updated;
+    } on ApiException catch (error) {
+      actionError = error.statusCode == 409
+          ? 'The booking was updated elsewhere or payment already started. Refresh and try again.'
+          : 'Services could not be updated. Try again.';
+      notifyListeners();
+      return null;
+    }
+  }
+
   Future<void> setLocationConsent(CustomerBooking job, bool granted) async {
     final client = realtime;
     final current = jobs.firstWhere(

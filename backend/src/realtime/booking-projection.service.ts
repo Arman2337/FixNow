@@ -66,6 +66,8 @@ export class BookingProjectionService {
       status: booking.status,
       sequence: booking.version,
       occurredAt,
+      items: booking.items ?? undefined,
+      estimatedDurationMinutes: booking.estimatedDurationMinutes,
       location: location
         ? {
             latitude: location.latitude,

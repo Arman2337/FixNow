@@ -1,4 +1,5 @@
 import 'package:fixnow_mobile/api/api_client.dart';
+import 'package:fixnow_mobile/features/bookings/booking.dart';
 import 'package:fixnow_mobile/features/provider/provider_controller.dart';
 import 'package:fixnow_mobile/features/provider/provider_home_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_onboarding_screen.dart';
@@ -232,6 +233,80 @@ void main() {
     expect(find.text('Booking Confirmed & Assigned'), findsNothing);
     expect(find.text('Seasonal Home Checkup'), findsOneWidget);
   });
+
+  test('on-site adjustment sends drafts and refreshes the job totals', () async {
+    final transport = _ProviderTransport(verified: true);
+    final controller = ProviderController(
+      ProviderRepository(
+        api: transport,
+        accessToken: () async => 'token',
+      ),
+    );
+    final job = CustomerBooking(
+      id: 'job-1',
+      serviceCategoryId: 'plumbing',
+      status: 'IN_PROGRESS',
+      description: 'Kitchen sink pipe is leaking heavily.',
+      createdAt: DateTime.parse('2026-09-08T09:00:00.000Z'),
+      version: 2,
+    );
+    controller.jobs = [job];
+
+    final updated = await controller.updateJobItems(job, const [
+      BookingItemDraft(
+        id: 'on-site-1',
+        name: 'New tap cartridge',
+        quantity: 2,
+        unitPriceMinor: 24900,
+      ),
+    ]);
+
+    expect(updated, isNotNull);
+    expect(updated!.items?.single.name, 'New tap cartridge');
+    expect(updated.pricing?.totalMinor, 58764);
+    expect(updated.estimatedDurationMinutes, 90);
+    expect(controller.jobs.single.version, 3);
+
+    final body = transport.requests.last.body!;
+    expect(body['expectedVersion'], 2);
+    expect((body['items'] as List).single, {
+      'id': 'on-site-1',
+      'name': 'New tap cartridge',
+      'quantity': 2,
+      'unitPriceMinor': 24900,
+    });
+  });
+
+  test('on-site adjustment surfaces a conflict without losing the job', () async {
+    final controller = ProviderController(
+      ProviderRepository(
+        api: _ProviderTransport(verified: true, itemsConflict: true),
+        accessToken: () async => 'token',
+      ),
+    );
+    final job = CustomerBooking(
+      id: 'job-1',
+      serviceCategoryId: 'plumbing',
+      status: 'IN_PROGRESS',
+      description: 'Kitchen sink pipe is leaking heavily.',
+      createdAt: DateTime.parse('2026-09-08T09:00:00.000Z'),
+      version: 2,
+    );
+    controller.jobs = [job];
+
+    final updated = await controller.updateJobItems(job, const [
+      BookingItemDraft(
+        id: 'on-site-1',
+        name: 'New tap cartridge',
+        quantity: 1,
+        unitPriceMinor: 24900,
+      ),
+    ]);
+
+    expect(updated, isNull);
+    expect(controller.actionError, isNotNull);
+    expect(controller.jobs.single.version, 2);
+  });
 }
 
 ProviderController _loadedVerifiedController() {
@@ -246,10 +321,51 @@ ProviderController _loadedVerifiedController() {
 }
 
 class _ProviderTransport implements ApiTransport {
-  _ProviderTransport({required this.verified});
+  _ProviderTransport({required this.verified, this.itemsConflict = false});
   final bool verified;
+  final bool itemsConflict;
+  final List<ApiRequest> requests = [];
   @override
   Future<ApiResponse> send(ApiRequest request) async {
+    requests.add(request);
+    if (request.path == 'bookings/job-1/items') {
+      if (itemsConflict) {
+        // Mirror ApiClient, which converts non-2xx into ApiException.
+        throw const ApiException(
+          ApiFailureKind.server,
+          'Booking version is stale',
+          statusCode: 409,
+        );
+      }
+      return const ApiResponse(
+        statusCode: 200,
+        body: {
+          'booking': {
+            'id': 'job-1',
+            'serviceCategoryId': 'plumbing',
+            'status': 'IN_PROGRESS',
+            'description': 'Kitchen sink pipe is leaking heavily.',
+            'createdAt': '2026-09-08T09:00:00.000Z',
+            'version': 3,
+            'items': [
+              {
+                'id': 'on-site-1',
+                'name': 'New tap cartridge',
+                'quantity': 2,
+                'unitPriceMinor': 24900,
+              },
+            ],
+            'pricing': {
+              'subtotalMinor': 49800,
+              'gstMinor': 8964,
+              'totalMinor': 58764,
+              'currency': 'INR',
+            },
+            'estimatedDurationMinutes': 90,
+          },
+        },
+      );
+    }
     if (request.path == 'provider-applications/me') {
       return ApiResponse(
         statusCode: 200,

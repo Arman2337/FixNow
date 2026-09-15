@@ -5,6 +5,7 @@ import type { MatchingService } from '../matching/matching.service';
 import { BookingsService } from './bookings.service';
 import { BookingEvent } from './domain/booking-event.entity';
 import { Booking } from './domain/booking.entity';
+import { PaymentOrder } from '../payments/domain/payment-order.entity';
 
 describe('BookingsService', () => {
   let service: BookingsService;
@@ -17,6 +18,7 @@ describe('BookingsService', () => {
   let bookingFind: jest.Mock;
   let bookingSave: jest.Mock;
   let eventSave: jest.Mock;
+  let orderExist: jest.Mock;
 
   const booking = (overrides: Partial<Booking> = {}): Booking =>
     Object.assign(new Booking(), {
@@ -68,8 +70,12 @@ describe('BookingsService', () => {
         entity === Booking ? bookingRepository : eventRepository,
       ),
     } as unknown as jest.Mocked<EntityManager>;
+    orderExist = jest.fn().mockResolvedValue(false);
+    const orderRepository = { exists: orderExist };
     dataSource = {
-      getRepository: jest.fn(() => bookingRepository),
+      getRepository: jest.fn((entity: unknown) =>
+        entity === PaymentOrder ? orderRepository : bookingRepository,
+      ),
       transaction: jest.fn(
         (callback: (transactionManager: EntityManager) => unknown) =>
           Promise.resolve(callback(manager)),
@@ -266,5 +272,116 @@ describe('BookingsService', () => {
       ),
     ).rejects.toBeInstanceOf(ConflictException);
     expect(eventSave).not.toHaveBeenCalled();
+  });
+
+  describe('updateBookingItems', () => {
+    const stubTransition = (updated: Booking) => {
+      const builder = {
+        update: jest.fn().mockReturnThis(),
+        set: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        execute: jest.fn().mockResolvedValue({ affected: 1 }),
+      };
+      (bookingRepository.createQueryBuilder as jest.Mock).mockReturnValue(
+        builder,
+      );
+      (bookingRepository.findOneByOrFail as jest.Mock).mockResolvedValue(
+        updated,
+      );
+      return builder;
+    };
+
+    const activeJob = () =>
+      booking({
+        providerId: 'provider-1',
+        status: BookingStatus.IN_PROGRESS,
+        version: 2,
+      });
+
+    it('replaces items and recomputes totals for the assigned provider', async () => {
+      const original = activeJob();
+      bookingFindOneBy.mockResolvedValue(original);
+      const updated = activeJob();
+      updated.version = 3;
+      const builder = stubTransition(updated);
+
+      const result = await service.updateBookingItems(
+        '00000000-0000-4000-8000-000000000101',
+        'provider-1',
+        {
+          expectedVersion: 2,
+          items: [
+            {
+              id: 'plumb-3',
+              name: 'Shower & Water Pipe Leakage',
+              quantity: 2,
+              unitPriceMinor: 24900,
+              durationMinutes: 45,
+            },
+          ],
+        },
+      );
+
+      // 2×24900 = 49800 subtotal; GST 8964; duration 90.
+      expect(builder.set).toHaveBeenCalledWith(
+        expect.objectContaining({
+          items: [
+            {
+              id: 'plumb-3',
+              name: 'Shower & Water Pipe Leakage',
+              quantity: 2,
+              unitPriceMinor: 24900,
+              durationMinutes: 45,
+            },
+          ],
+          totalAmountMinor: 58764,
+          estimatedDurationMinutes: 90,
+        }),
+      );
+      expect(result).toBe(updated);
+      expect(eventSave).toHaveBeenCalledTimes(1);
+    });
+
+    it('rejects adjustment by a provider who is not assigned', async () => {
+      bookingFindOneBy.mockResolvedValue(activeJob());
+
+      await expect(
+        service.updateBookingItems(
+          '00000000-0000-4000-8000-000000000101',
+          'not-the-provider',
+          { expectedVersion: 2, items: [] },
+        ),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+    });
+
+    it('rejects adjustment once a payment order exists', async () => {
+      orderExist.mockResolvedValue(true);
+
+      await expect(
+        service.updateBookingItems(
+          '00000000-0000-4000-8000-000000000101',
+          'provider-1',
+          { expectedVersion: 2, items: [] },
+        ),
+      ).rejects.toBeInstanceOf(ConflictException);
+    });
+
+    it('rejects adjustment after the job is completed', async () => {
+      bookingFindOneBy.mockResolvedValue(
+        booking({
+          providerId: 'provider-1',
+          status: BookingStatus.COMPLETED,
+          completedAt: new Date(),
+        }),
+      );
+
+      await expect(
+        service.updateBookingItems(
+          '00000000-0000-4000-8000-000000000101',
+          'provider-1',
+          { expectedVersion: 1, items: [] },
+        ),
+      ).rejects.toBeInstanceOf(ConflictException);
+    });
   });
 });

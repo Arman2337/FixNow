@@ -3,6 +3,7 @@ import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/app_typography.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
+import 'package:fixnow_mobile/features/location/live_location_service.dart';
 import 'package:fixnow_mobile/features/location/saved_address.dart';
 import 'package:flutter/material.dart';
 
@@ -24,6 +25,8 @@ class SavedAddressSelectorCard extends StatefulWidget {
 
 class _SavedAddressSelectorCardState extends State<SavedAddressSelectorCard> {
   late SavedAddress _selectedAddress;
+  bool _userManuallySelected = false;
+  bool _isLocating = false;
 
   @override
   void initState() {
@@ -38,8 +41,9 @@ class _SavedAddressSelectorCardState extends State<SavedAddressSelectorCard> {
     if (!mounted) return;
     final all = SavedAddressRepository.instance.addresses;
     if (all.isEmpty) return;
-    if (!all.any((a) => a.id == _selectedAddress.id)) {
-      _selectedAddress = SavedAddressRepository.instance.defaultAddress ?? all.first;
+    final def = SavedAddressRepository.instance.defaultAddress ?? all.first;
+    if (!_userManuallySelected || !all.any((a) => a.id == _selectedAddress.id)) {
+      _selectedAddress = def;
       widget.onAddressSelected(_selectedAddress);
     }
     setState(() {});
@@ -52,8 +56,36 @@ class _SavedAddressSelectorCardState extends State<SavedAddressSelectorCard> {
   }
 
   void _select(SavedAddress address) {
+    _userManuallySelected = true;
     setState(() => _selectedAddress = address);
     widget.onAddressSelected(address);
+  }
+
+  Future<void> _detectAndUseLiveLocation() async {
+    setState(() => _isLocating = true);
+    final live = await LiveLocationService.detectAndSaveLiveAddress();
+    if (mounted) {
+      setState(() => _isLocating = false);
+      if (live != null) {
+        _userManuallySelected = false;
+        _select(live);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Selected live GPS address: ${live.formattedSnippet}'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Could not access live GPS location. Please check location permissions.',
+            ),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    }
   }
 
   void _openAddModal() async {
@@ -116,6 +148,48 @@ class _SavedAddressSelectorCardState extends State<SavedAddressSelectorCard> {
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
+                InkWell(
+                  onTap: _isLocating ? null : _detectAndUseLiveLocation,
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppColors.focus.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                      border: Border.all(color: AppColors.focus),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (_isLocating)
+                          const SizedBox(
+                            width: 12,
+                            height: 12,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.focus,
+                            ),
+                          )
+                        else
+                          const Icon(
+                            Icons.my_location_rounded,
+                            size: 13,
+                            color: AppColors.focus,
+                          ),
+                        const SizedBox(width: 4),
+                        const Text(
+                          'Use Live GPS',
+                          style: TextStyle(
+                            color: AppColors.focus,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
                 for (final addr in addresses) ...[
                   _buildAddressChip(addr),
                   const SizedBox(width: 8),
@@ -278,6 +352,9 @@ class _AddEditAddressModalSheetState extends State<AddEditAddressModalSheet> {
   late TextEditingController _cityController;
   late TextEditingController _pincodeController;
   bool _isDefault = false;
+  bool _isAutoFilling = false;
+  double? _latitude;
+  double? _longitude;
 
   @override
   void initState() {
@@ -291,6 +368,8 @@ class _AddEditAddressModalSheetState extends State<AddEditAddressModalSheet> {
     _cityController = TextEditingController(text: a?.city ?? 'Bengaluru');
     _pincodeController = TextEditingController(text: a?.postalCode ?? '560034');
     _isDefault = a?.isDefault ?? false;
+    _latitude = a?.latitude;
+    _longitude = a?.longitude;
   }
 
   @override
@@ -304,20 +383,61 @@ class _AddEditAddressModalSheetState extends State<AddEditAddressModalSheet> {
     super.dispose();
   }
 
+  Future<void> _fillFromLiveGps() async {
+    setState(() => _isAutoFilling = true);
+    final live = await LiveLocationService.detectAndSaveLiveAddress();
+    if (mounted) {
+      setState(() => _isAutoFilling = false);
+      if (live != null) {
+        setState(() {
+          _latitude = live.latitude;
+          _longitude = live.longitude;
+          if (live.flatBuilding.isNotEmpty &&
+              live.flatBuilding != 'Current Location') {
+            _flatController.text = live.flatBuilding;
+          } else if (_flatController.text.isEmpty) {
+            _flatController.text = 'Current Location';
+          }
+          _streetController.text = live.streetArea;
+          _cityController.text = live.city;
+          if (live.postalCode.isNotEmpty) {
+            _pincodeController.text = live.postalCode;
+          }
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Auto-filled from live GPS: ${live.formattedSnippet}'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not access live GPS location.'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
+
   void _save() {
     if (!_formKey.currentState!.validate()) return;
 
     final address = SavedAddress(
-      id: widget.existingAddress?.id ?? 'addr-${DateTime.now().millisecondsSinceEpoch}',
+      id: widget.existingAddress?.id ??
+          'addr-${DateTime.now().millisecondsSinceEpoch}',
       label: _label,
       customTitle: _titleController.text.trim(),
       flatBuilding: _flatController.text.trim(),
       streetArea: _streetController.text.trim(),
-      landmark: _landmarkController.text.trim().isNotEmpty ? _landmarkController.text.trim() : null,
+      landmark: _landmarkController.text.trim().isNotEmpty
+          ? _landmarkController.text.trim()
+          : null,
       city: _cityController.text.trim(),
       postalCode: _pincodeController.text.trim(),
-      latitude: widget.existingAddress?.latitude ?? 12.9352,
-      longitude: widget.existingAddress?.longitude ?? 77.6245,
+      latitude: _latitude ?? widget.existingAddress?.latitude ?? 12.9352,
+      longitude: _longitude ?? widget.existingAddress?.longitude ?? 77.6245,
       isDefault: _isDefault,
     );
 
@@ -385,6 +505,51 @@ class _AddEditAddressModalSheetState extends State<AddEditAddressModalSheet> {
                     const SizedBox(width: 8),
                     _buildLabelChoice(AddressLabel.other, 'Other', Icons.location_on_rounded),
                   ],
+                ),
+
+                const SizedBox(height: AppSpacing.sm),
+
+                // Quick live GPS auto-fill
+                InkWell(
+                  onTap: _isAutoFilling ? null : _fillFromLiveGps,
+                  borderRadius: BorderRadius.circular(AppRadius.small),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: AppColors.focus.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(AppRadius.small),
+                      border: Border.all(color: AppColors.focus.withValues(alpha: 0.3)),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (_isAutoFilling)
+                          const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.focus,
+                            ),
+                          )
+                        else
+                          const Icon(
+                            Icons.my_location_rounded,
+                            color: AppColors.focus,
+                            size: 15,
+                          ),
+                        const SizedBox(width: 6),
+                        const Text(
+                          'Fill from current GPS location',
+                          style: TextStyle(
+                            color: AppColors.focus,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
 
                 const SizedBox(height: AppSpacing.md),

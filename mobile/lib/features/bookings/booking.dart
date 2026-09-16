@@ -39,6 +39,14 @@ class BookingLineItem {
 
   int get lineTotalMinor => unitPriceMinor * quantity;
 
+  BookingItemDraft toDraft() => BookingItemDraft(
+        id: id,
+        name: name,
+        quantity: quantity,
+        unitPriceMinor: unitPriceMinor,
+        durationMinutes: durationMinutes,
+      );
+
   factory BookingLineItem.fromJson(Map<String, Object?> json) {
     final id = json['id'];
     final name = json['name'];

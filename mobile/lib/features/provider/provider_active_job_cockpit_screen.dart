@@ -900,7 +900,24 @@ class _ServiceAdjustmentSheetState extends State<_ServiceAdjustmentSheet> {
   @override
   void initState() {
     super.initState();
-    _lines = List<BookingItemDraft>.from(widget.job.items ?? const []);
+    if (widget.job.items != null && widget.job.items!.isNotEmpty) {
+      _lines = widget.job.items!.map((item) => item.toDraft()).toList();
+    } else if (widget.job.pricing != null &&
+        widget.job.pricing!.subtotalMinor > 0) {
+      _lines = [
+        BookingItemDraft(
+          id: 'initial-service',
+          name: widget.job.description.isNotEmpty
+              ? widget.job.description
+              : 'Base Service',
+          quantity: 1,
+          unitPriceMinor: widget.job.pricing!.subtotalMinor,
+          durationMinutes: widget.job.estimatedDurationMinutes,
+        ),
+      ];
+    } else {
+      _lines = [];
+    }
   }
 
   @override

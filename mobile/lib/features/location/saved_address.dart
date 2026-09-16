@@ -30,11 +30,13 @@ class SavedAddress {
   final double longitude;
   final bool isDefault;
 
-  IconData get icon => switch (label) {
-        AddressLabel.home => Icons.home_rounded,
-        AddressLabel.work => Icons.work_rounded,
-        AddressLabel.other => Icons.location_on_rounded,
-      };
+  IconData get icon => id == 'addr-current-live'
+      ? Icons.my_location_rounded
+      : switch (label) {
+          AddressLabel.home => Icons.home_rounded,
+          AddressLabel.work => Icons.work_rounded,
+          AddressLabel.other => Icons.location_on_rounded,
+        };
 
   String get labelText => switch (label) {
         AddressLabel.home => 'Home',
@@ -42,10 +44,37 @@ class SavedAddress {
         AddressLabel.other => customTitle.isNotEmpty ? customTitle : 'Other',
       };
 
-  String get formattedSnippet => '$flatBuilding, $streetArea';
+  String get formattedSnippet {
+    if (flatBuilding.isNotEmpty &&
+        flatBuilding != streetArea &&
+        flatBuilding != 'Current Location') {
+      return '$flatBuilding, $streetArea';
+    }
+    return streetArea.isNotEmpty ? streetArea : city;
+  }
 
-  String get formattedFull =>
-      '$flatBuilding, $streetArea${landmark != null && landmark!.isNotEmpty ? ' (Near $landmark)' : ''}, $city - $postalCode';
+  String get formattedFull {
+    final buffer = StringBuffer();
+    if (flatBuilding.isNotEmpty && flatBuilding != streetArea) {
+      buffer.write(flatBuilding);
+    }
+    if (streetArea.isNotEmpty) {
+      if (buffer.isNotEmpty) buffer.write(', ');
+      buffer.write(streetArea);
+    }
+    if (landmark != null && landmark!.isNotEmpty) {
+      if (buffer.isNotEmpty) buffer.write(' ');
+      buffer.write('(Near $landmark)');
+    }
+    if (city.isNotEmpty) {
+      if (buffer.isNotEmpty) buffer.write(', ');
+      buffer.write(city);
+      if (postalCode.isNotEmpty) {
+        buffer.write(' - $postalCode');
+      }
+    }
+    return buffer.toString();
+  }
 
   SavedAddress copyWith({
     String? id,
@@ -80,6 +109,7 @@ class SavedAddressRepository extends ChangeNotifier {
   SavedAddressRepository._() {
     _seedDefaults();
   }
+
   static final SavedAddressRepository instance = SavedAddressRepository._();
 
   final List<SavedAddress> _addresses = [];
@@ -87,8 +117,11 @@ class SavedAddressRepository extends ChangeNotifier {
   List<SavedAddress> get addresses => List.unmodifiable(_addresses);
 
   SavedAddress? get defaultAddress {
-    if (_addresses.isEmpty) return null;
-    return _addresses.firstWhere((a) => a.isDefault, orElse: () => _addresses.first);
+    try {
+      return _addresses.firstWhere((a) => a.isDefault);
+    } catch (_) {
+      return _addresses.isNotEmpty ? _addresses.first : null;
+    }
   }
 
   void _seedDefaults() {
@@ -128,11 +161,16 @@ class SavedAddressRepository extends ChangeNotifier {
       for (var i = 0; i < _addresses.length; i++) {
         _addresses[i] = _addresses[i].copyWith(isDefault: false);
       }
-    }
-    if (idx >= 0) {
-      _addresses[idx] = address;
+      if (idx >= 0) {
+        _addresses.removeAt(idx);
+      }
+      _addresses.insert(0, address);
     } else {
-      _addresses.add(address);
+      if (idx >= 0) {
+        _addresses[idx] = address;
+      } else {
+        _addresses.add(address);
+      }
     }
     notifyListeners();
   }
@@ -146,10 +184,51 @@ class SavedAddressRepository extends ChangeNotifier {
   }
 
   void setDefault(String id) {
+    SavedAddress? target;
     for (var i = 0; i < _addresses.length; i++) {
-      _addresses[i] = _addresses[i].copyWith(isDefault: _addresses[i].id == id);
+      final isMatch = _addresses[i].id == id;
+      _addresses[i] = _addresses[i].copyWith(isDefault: isMatch);
+      if (isMatch) target = _addresses[i];
+    }
+    if (target != null) {
+      _addresses.removeWhere((a) => a.id == id);
+      _addresses.insert(0, target);
     }
     notifyListeners();
+  }
+
+  void setLiveLocationAddress({
+    required double latitude,
+    required double longitude,
+    String? area,
+    String? city,
+    String? state,
+    String? postalCode,
+  }) {
+    final liveCity =
+        (city != null && city.trim().isNotEmpty) ? city.trim() : 'Local Area';
+    final liveArea = (area != null && area.trim().isNotEmpty)
+        ? area.trim()
+        : ((state != null && state.trim().isNotEmpty)
+            ? state.trim()
+            : 'Current Area');
+    final livePostal = (postalCode != null && postalCode.trim().isNotEmpty)
+        ? postalCode.trim()
+        : '';
+
+    final live = SavedAddress(
+      id: 'addr-current-live',
+      label: AddressLabel.other,
+      customTitle: 'Current Location',
+      flatBuilding: 'Current Location',
+      streetArea: liveArea,
+      city: liveCity,
+      postalCode: livePostal,
+      latitude: latitude,
+      longitude: longitude,
+      isDefault: true,
+    );
+    saveAddress(live);
   }
 
   void reset() {

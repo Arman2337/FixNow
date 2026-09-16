@@ -12,6 +12,8 @@ import 'package:fixnow_mobile/design_system/fix_motion_suite.dart';
 import 'package:fixnow_mobile/features/emergency/emergency_confirm_screen.dart';
 import 'package:fixnow_mobile/features/emergency/emergency_repository.dart';
 import 'package:fixnow_mobile/design_system/fix_service_card.dart';
+import 'package:fixnow_mobile/features/location/live_location_service.dart';
+import 'package:fixnow_mobile/features/location/saved_address.dart';
 import 'package:fixnow_mobile/features/location/location_consent_card.dart';
 import 'package:fixnow_mobile/features/location/location_consent_controller.dart';
 import 'package:fixnow_mobile/features/location/booking_location.dart';
@@ -91,6 +93,8 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
     super.dispose();
   }
 
+  bool _isFetchingLocation = false;
+
   void _onLocationStateChanged() {
     if (widget.locationController.state == LocationPermissionState.granted &&
         _locationName == null) {
@@ -99,13 +103,36 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
   }
 
   Future<void> _fetchLocationName() async {
+    if (_isFetchingLocation) return;
+    _isFetchingLocation = true;
     try {
+      final liveAddress = await LiveLocationService.detectAndSaveLiveAddress(
+        skipPermissionCheck: true,
+      );
+      if (liveAddress != null) {
+        if (mounted) {
+          setState(() {
+            _locationName = liveAddress.streetArea.isNotEmpty &&
+                    liveAddress.streetArea != 'Current Area'
+                ? '${liveAddress.city}, ${liveAddress.streetArea}'
+                : liveAddress.city;
+            _bookingLocation = BookingLocationFix(
+              latitude: liveAddress.latitude,
+              longitude: liveAddress.longitude,
+              accuracyMeters: 10,
+              timestamp: DateTime.now(),
+            );
+          });
+        }
+        return;
+      }
+
       final position = await Geolocator.getCurrentPosition(
         locationSettings: kIsWeb
             ? WebSettings(
                 accuracy: LocationAccuracy.low,
-                timeLimit: Duration(seconds: 5),
-                maximumAge: Duration(minutes: 5),
+                timeLimit: const Duration(seconds: 5),
+                maximumAge: const Duration(minutes: 5),
               )
             : const LocationSettings(
                 accuracy: LocationAccuracy.low,
@@ -122,6 +149,13 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
         setState(() => _locationName = 'Location found');
       }
 
+      SavedAddressRepository.instance.setLiveLocationAddress(
+        latitude: position.latitude,
+        longitude: position.longitude,
+        area: 'Current Area',
+        city: 'Current Location',
+      );
+
       if (kIsWeb) {
         // Geocoding package doesn't support web by default without a web plugin.
         // We fallback to a generic message if it fails on web.
@@ -130,7 +164,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
               .placemarkFromCoordinates(position.latitude, position.longitude)
               .timeout(const Duration(seconds: 3));
           if (placemarks.isNotEmpty) {
-            _updateLocationName(placemarks.first);
+            _updateLocationName(placemarks.first, position);
             return;
           }
         } catch (_) {
@@ -152,6 +186,12 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                 setState(() {
                   _locationName = '$city, $state';
                 });
+                SavedAddressRepository.instance.setLiveLocationAddress(
+                  latitude: position.latitude,
+                  longitude: position.longitude,
+                  area: state.toString(),
+                  city: city.toString(),
+                );
                 return;
               }
             }
@@ -170,7 +210,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
               .placemarkFromCoordinates(position.latitude, position.longitude)
               .timeout(const Duration(seconds: 3));
           if (placemarks.isNotEmpty) {
-            _updateLocationName(placemarks.first);
+            _updateLocationName(placemarks.first, position);
           }
         } catch (_) {
           if (mounted && _locationName == null) {
@@ -180,10 +220,12 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
       }
     } catch (e) {
       debugPrint('Failed to fetch/geocode location: $e');
+    } finally {
+      _isFetchingLocation = false;
     }
   }
 
-  void _updateLocationName(Placemark place) {
+  void _updateLocationName(Placemark place, Position position) {
     final city =
         place.locality ??
         place.subAdministrativeArea ??
@@ -193,6 +235,14 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
       setState(() {
         _locationName = '$city, $state';
       });
+      SavedAddressRepository.instance.setLiveLocationAddress(
+        latitude: position.latitude,
+        longitude: position.longitude,
+        area: place.subLocality ?? state,
+        city: city,
+        state: state,
+        postalCode: place.postalCode,
+      );
     }
   }
 
@@ -780,9 +830,41 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   InkWell(
-                    onTap: () {
+                    onTap: () async {
                       if (!isGranted) {
                         widget.locationController.request();
+                      } else {
+                        setState(() => _locationName = 'Locating...');
+                        final live =
+                            await LiveLocationService.detectAndSaveLiveAddress(
+                          skipPermissionCheck: true,
+                        );
+                        if (context.mounted) {
+                          if (live != null) {
+                            setState(() {
+                              _locationName = live.streetArea.isNotEmpty &&
+                                      live.streetArea != 'Current Area'
+                                  ? '${live.city}, ${live.streetArea}'
+                                  : live.city;
+                              _bookingLocation = BookingLocationFix(
+                                latitude: live.latitude,
+                                longitude: live.longitude,
+                                accuracyMeters: 10,
+                                timestamp: DateTime.now(),
+                              );
+                            });
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'Address synced to live GPS: ${live.formattedFull}',
+                                ),
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          } else {
+                            setState(() => _locationName = 'Location Found');
+                          }
+                        }
                       }
                     },
                     borderRadius: BorderRadius.circular(4),

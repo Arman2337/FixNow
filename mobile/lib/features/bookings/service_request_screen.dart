@@ -65,14 +65,18 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
   void initState() {
     super.initState();
     _details.text = widget.initialDescription ?? '';
-    final defaultAddr = SavedAddressRepository.instance.defaultAddress;
-    if (defaultAddr != null && widget.initialLocation == null && widget.locationProvider == null) {
-      _confirmedLocation = BookingLocationFix(
-        latitude: defaultAddr.latitude,
-        longitude: defaultAddr.longitude,
-        accuracyMeters: 10,
-        timestamp: DateTime.now(),
-      );
+    if (widget.initialLocation != null) {
+      _confirmedLocation = widget.initialLocation;
+    } else {
+      final defaultAddr = SavedAddressRepository.instance.defaultAddress;
+      if (defaultAddr != null && widget.locationProvider == null) {
+        _confirmedLocation = BookingLocationFix(
+          latitude: defaultAddr.latitude,
+          longitude: defaultAddr.longitude,
+          accuracyMeters: 10,
+          timestamp: DateTime.now(),
+        );
+      }
     }
     final repository = widget.estimateRepository;
     if (repository != null) {
@@ -542,13 +546,19 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
       context: context,
       isScrollControlled: true,
       builder: (_) =>
-          _ServiceLocationPicker(initialLocation: widget.initialLocation),
+          _ServiceLocationPicker(initialLocation: _confirmedLocation ?? widget.initialLocation),
     );
     if (selected != null && mounted) {
       setState(() {
         _confirmedLocation = selected;
         _error = null;
       });
+      SavedAddressRepository.instance.setLiveLocationAddress(
+        latitude: selected.latitude,
+        longitude: selected.longitude,
+        area: 'Pinned Map Location',
+        city: 'Selected Location',
+      );
     }
   }
 }

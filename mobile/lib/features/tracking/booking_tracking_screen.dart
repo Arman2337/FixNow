@@ -335,7 +335,125 @@ class _TrackingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final value = tracking;
-    if (value == null) return const SizedBox.shrink();
+    if (value == null || value.status == 'CANCELLED') return const SizedBox.shrink();
+
+    if (value.status == 'IN_PROGRESS') {
+      return FixCard(
+        tone: FixCardTone.elevated,
+        semanticLabel: 'Service currently in progress',
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 10,
+                      height: 10,
+                      decoration: const BoxDecoration(
+                        color: AppColors.live,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Service in progress',
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        color: AppColors.cream,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+                const FixStatusChip(
+                  label: 'Work started',
+                  icon: Icons.handyman_rounded,
+                  tone: FixStatusTone.live,
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                color: AppColors.live.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(AppRadius.medium),
+                border: Border.all(color: AppColors.live.withValues(alpha: 0.2)),
+              ),
+              child: const Row(
+                children: [
+                  Icon(
+                    Icons.build_circle_outlined,
+                    color: AppColors.live,
+                    size: 28,
+                  ),
+                  SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Technician is working on-site',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          'Your provider has arrived and service is underway. Transit map is no longer active.',
+                          style: TextStyle(color: Colors.white70, fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (value.status == 'COMPLETED') {
+      return FixCard(
+        tone: FixCardTone.elevated,
+        semanticLabel: 'Service completed',
+        child: Row(
+          children: [
+            const Icon(
+              Icons.check_circle_rounded,
+              color: AppColors.success,
+              size: 28,
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Service Completed',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: AppColors.cream,
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                  const SizedBox(height: 2),
+                  const Text(
+                    'All work finished. You can view your invoice and ratings.',
+                    style: TextStyle(color: Colors.white70, fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     final locationLabel =
         value.locationAvailability == LocationAvailability.live
         ? 'Live location available'

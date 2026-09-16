@@ -246,4 +246,44 @@ void main() {
     expect(find.text('Job Completed'), findsOneWidget);
     expect(find.text('Back to Workspace'), findsOneWidget);
   });
+
+  testWidgets('ProviderActiveJobCockpitScreen allows opening and updating Adjust Services & Price with BookingLineItem', (tester) async {
+    final job = CustomerBooking(
+      id: 'job-1234-5678-90ab',
+      serviceCategoryId: 'plumbing',
+      status: 'IN_PROGRESS',
+      description: 'Kitchen sink pipe is leaking heavily.',
+      createdAt: DateTime.now(),
+      version: 1,
+      locationLatitude: 18.9220,
+      locationLongitude: 72.8347,
+      items: const [
+        BookingLineItem(
+          id: 'item-1',
+          name: 'Pipe Replacement',
+          quantity: 1,
+          unitPriceMinor: 49900,
+        ),
+      ],
+    );
+    controller.jobs = [job];
+
+    await tester.pumpWidget(
+      wrapWidget(
+        ProviderActiveJobCockpitScreen(
+          job: job,
+          controller: controller,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('cockpit_adjust_services_button')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('cockpit_adjust_services_button')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Adjust Services'), findsOneWidget);
+    expect(find.text('Pipe Replacement'), findsOneWidget);
+    expect(find.text('Update Booking'), findsOneWidget);
+  });
 }

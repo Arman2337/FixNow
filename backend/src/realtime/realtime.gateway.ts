@@ -123,10 +123,7 @@ export class RealtimeGateway
     if (!state) return;
     if (isBinary) {
       this.telemetry.increment('messages.invalid');
-      client.close(
-        REALTIME_CLOSE.policyViolation,
-        'text-frames-only',
-      );
+      client.close(REALTIME_CLOSE.policyViolation, 'text-frames-only');
       return;
     }
     const message = this.parseMessage(data);
@@ -196,7 +193,8 @@ export class RealtimeGateway
     if (!bookingId || !data) return;
 
     for (const [client, state] of this.registry.entries()) {
-      if (client === senderClient || client.readyState !== WebSocket.OPEN) continue;
+      if (client === senderClient || client.readyState !== WebSocket.OPEN)
+        continue;
       for (const subscription of state.subscriptions.values()) {
         if (
           subscription.channel === 'booking' &&

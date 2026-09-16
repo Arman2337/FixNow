@@ -111,9 +111,7 @@ describe('BookingsService', () => {
 
   it('snapshots line items and recomputes totals and duration server-side', async () => {
     bookingFindOneBy.mockResolvedValue(null);
-    bookingSave.mockImplementation((value: Booking) =>
-      Promise.resolve(value),
-    );
+    bookingSave.mockImplementation((value: Booking) => Promise.resolve(value));
 
     const result = await service.create(
       '00000000-0000-4000-8000-000000000001',
@@ -165,9 +163,7 @@ describe('BookingsService', () => {
 
   it('leaves items and totals empty when no line items are sent', async () => {
     bookingFindOneBy.mockResolvedValue(null);
-    bookingSave.mockImplementation((value: Booking) =>
-      Promise.resolve(value),
-    );
+    bookingSave.mockImplementation((value: Booking) => Promise.resolve(value));
 
     const result = await service.create(
       '00000000-0000-4000-8000-000000000001',

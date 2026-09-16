@@ -105,6 +105,12 @@ void main() {
       ),
       findsOneWidget,
     );
+    expect(find.text('New Request Available!'), findsOneWidget);
+    expect(find.text('ACTION NEEDED'), findsOneWidget);
+    expect(find.textContaining('Tap to review and accept'), findsOneWidget);
+    await tester.tap(find.text('New Request Available!'));
+    await tester.pumpAndSettle();
+
     expect(find.text('Accept request'), findsOneWidget);
   });
 

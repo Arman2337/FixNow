@@ -375,8 +375,7 @@ export class BookingsService {
         const totals = computeBookingTotals(items);
         candidate.items = items;
         candidate.totalAmountMinor = totals.totalMinor;
-        candidate.estimatedDurationMinutes =
-          totals.estimatedDurationMinutes;
+        candidate.estimatedDurationMinutes = totals.estimatedDurationMinutes;
       },
       'Provider adjusted on-site services',
     );

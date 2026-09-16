@@ -16,7 +16,13 @@ describe('computeBookingTotals', () => {
 
   it('ignores client-supplied extras by only summing known fields', () => {
     const items = [
-      { id: 'a', name: 'A', quantity: 1, unitPriceMinor: 9900, durationMinutes: 25 },
+      {
+        id: 'a',
+        name: 'A',
+        quantity: 1,
+        unitPriceMinor: 9900,
+        durationMinutes: 25,
+      },
     ];
     expect(computeBookingTotals(items).totalMinor).toBe(11682);
   });

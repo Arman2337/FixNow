@@ -74,6 +74,19 @@ class ProviderRepository {
     );
   }
 
+  /// Whether the caller's assigned booking has a completed (PAID) payment.
+  Future<bool> bookingPaymentPaid(String bookingId) async {
+    final response = await _api.send(
+      ApiRequest(
+        method: ApiMethod.get,
+        path: 'providers/me/bookings/$bookingId/payment-status',
+        bearerToken: await _token(),
+      ),
+    );
+    final body = response.body;
+    return body is Map && body['paid'] == true;
+  }
+
   Future<ProviderProfile?> profile() async {
     try {
       final response = await _api.send(

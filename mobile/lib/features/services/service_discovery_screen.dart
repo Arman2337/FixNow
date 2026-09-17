@@ -121,51 +121,35 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
         accuracyMeters: position.accuracy,
         timestamp: position.timestamp,
       );
-      if (mounted) {
-        setState(() => _locationName = 'Location found');
-      }
 
       if (kIsWeb) {
-        // Geocoding package doesn't support web by default without a web plugin.
-        // We fallback to a generic message if it fails on web.
+        // The geocoding package has no web implementation, so resolve the
+        // place name over HTTP. Until it resolves, the header keeps the
+        // honest 'Current Location' label.
         try {
-          final placemarks = await Geocoding()
-              .placemarkFromCoordinates(position.latitude, position.longitude)
+          final uri = Uri.parse(
+            'https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${position.latitude}&longitude=${position.longitude}&localityLanguage=en',
+          );
+          final response = await http
+              .get(uri)
               .timeout(const Duration(seconds: 3));
-          if (placemarks.isNotEmpty) {
-            _updateLocationName(placemarks.first);
-            return;
-          }
-        } catch (_) {
-          try {
-            final uri = Uri.parse(
-              'https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${position.latitude}&longitude=${position.longitude}&localityLanguage=en',
-            );
-            final response = await http
-                .get(uri)
-                .timeout(const Duration(seconds: 3));
-            if (response.statusCode == 200) {
-              final data = jsonDecode(response.body);
-              final city = data['city'] ?? data['locality'];
-              final state = data['principalSubdivision'] ?? data['countryName'];
-              if (mounted &&
-                  city != null &&
-                  state != null &&
-                  city.toString().isNotEmpty) {
-                setState(() {
-                  _locationName = '$city, $state';
-                });
-                return;
-              }
+          if (response.statusCode == 200) {
+            final data = jsonDecode(response.body);
+            final city = data['city'] ?? data['locality'];
+            final state = data['principalSubdivision'] ?? data['countryName'];
+            if (mounted &&
+                city != null &&
+                city.toString().trim().isNotEmpty) {
+              setState(() {
+                _locationName = (state != null &&
+                        state.toString().trim().isNotEmpty)
+                    ? '${city.toString().trim()}, ${state.toString().trim()}'
+                    : city.toString().trim();
+              });
             }
-          } catch (e) {
-            debugPrint('Web geocoding fallback failed: $e');
           }
-          if (mounted) {
-            setState(() {
-              _locationName = 'Location Found';
-            });
-          }
+        } catch (e) {
+          debugPrint('Web geocoding fallback failed: $e');
         }
       } else {
         try {
@@ -176,9 +160,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
             _updateLocationName(placemarks.first);
           }
         } catch (_) {
-          if (mounted && _locationName == null) {
-            setState(() => _locationName = 'Current Location');
-          }
+          // Geocoder unavailable; header keeps the honest 'Current Location'.
         }
       }
     } catch (e) {
@@ -1504,6 +1486,10 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
               onTap: () {
                 if (!isGranted) {
                   widget.locationController.request();
+                } else if (_locationName == null) {
+                  // The first position fix can time out while the browser
+                  // permission prompt is still open; tap retries the lookup.
+                  _fetchLocationName();
                 }
               },
               borderRadius: BorderRadius.circular(14),

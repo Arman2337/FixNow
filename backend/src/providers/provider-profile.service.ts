@@ -8,6 +8,7 @@ import {
   CoverageCheckDto,
   CoverageCheckResponseDto,
   ProviderProfileResponseDto,
+  UpdateProviderLocationDto,
   UpsertProviderProfileDto,
 } from './provider-profile.dto';
 
@@ -47,6 +48,17 @@ export class ProviderProfileService {
     const profile = existing
       ? Object.assign(existing, dto)
       : this.profileRepository.create({ userId, ...dto });
+    const saved = await this.profileRepository.save(profile);
+    return this.toOwnerResponse(saved);
+  }
+
+  async updateLocation(
+    userId: string,
+    dto: UpdateProviderLocationDto,
+  ): Promise<ProviderProfileResponseDto> {
+    const profile = await this.findByUserId(userId);
+    profile.baseLatitude = dto.latitude;
+    profile.baseLongitude = dto.longitude;
     const saved = await this.profileRepository.save(profile);
     return this.toOwnerResponse(saved);
   }

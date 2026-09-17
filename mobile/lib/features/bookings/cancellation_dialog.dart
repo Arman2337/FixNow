@@ -19,7 +19,11 @@ Future<String?> showCancellationDialog(BuildContext context) async {
                 color: AppColors.danger.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.cancel_rounded, color: AppColors.danger, size: 22),
+              child: const Icon(
+                Icons.cancel_rounded,
+                color: AppColors.danger,
+                size: 22,
+              ),
             ),
             const SizedBox(width: AppSpacing.sm),
             const Text(
@@ -43,12 +47,18 @@ Future<String?> showCancellationDialog(BuildContext context) async {
                 decoration: BoxDecoration(
                   color: AppColors.primarySoft,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+                  border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.2),
+                  ),
                 ),
                 child: const Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.verified_user_rounded, color: AppColors.primary, size: 20),
+                    Icon(
+                      Icons.verified_user_rounded,
+                      color: AppColors.primary,
+                      size: 20,
+                    ),
                     SizedBox(width: 8),
                     Expanded(
                       child: Column(
@@ -89,36 +99,57 @@ Future<String?> showCancellationDialog(BuildContext context) async {
               Wrap(
                 spacing: 6,
                 runSpacing: 6,
-                children: [
-                  'Technician taking too long',
-                  'Booked by mistake',
-                  'Resolved issue myself',
-                  'Found another provider',
-                ].map((r) => ActionChip(
-                  label: Text(r, style: const TextStyle(fontSize: 11)),
-                  backgroundColor: reason.text == r ? AppColors.primarySoft : AppColors.surfaceContainerLow,
-                  side: BorderSide(
-                    color: reason.text == r ? AppColors.primary : AppColors.outline.withValues(alpha: 0.15),
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      reason.text = r;
-                    });
-                  },
-                )).toList(),
+                children:
+                    [
+                          'Technician taking too long',
+                          'Booked by mistake',
+                          'Resolved issue myself',
+                          'Found another provider',
+                        ]
+                        .map(
+                          (r) => ActionChip(
+                            label: Text(
+                              r,
+                              style: const TextStyle(fontSize: 11),
+                            ),
+                            backgroundColor: reason.text == r
+                                ? AppColors.primarySoft
+                                : AppColors.surfaceContainerLow,
+                            side: BorderSide(
+                              color: reason.text == r
+                                  ? AppColors.primary
+                                  : AppColors.outline.withValues(alpha: 0.15),
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                reason.text = r;
+                              });
+                            },
+                          ),
+                        )
+                        .toList(),
               ),
               const SizedBox(height: AppSpacing.md),
               TextField(
                 controller: reason,
-                style: const TextStyle(color: AppColors.textPrimary, fontSize: 13),
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 13,
+                ),
                 cursorColor: AppColors.primary,
                 maxLines: 3,
                 maxLength: 500,
                 decoration: InputDecoration(
                   labelText: 'Reason',
                   hintText: 'Tell us why you need to cancel.',
-                  labelStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
-                  hintStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                  labelStyle: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 13,
+                  ),
+                  hintStyle: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                  ),
                   filled: true,
                   fillColor: AppColors.surfaceContainerLow,
                   border: OutlineInputBorder(

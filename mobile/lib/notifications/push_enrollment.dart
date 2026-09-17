@@ -22,10 +22,15 @@ abstract interface class PushGateway {
 /// A push delivered while the app is open. Android suppresses tray display
 /// for foregrounded apps; the app surfaces these as an in-app banner.
 class ForegroundPushMessage {
-  const ForegroundPushMessage({required this.title, required this.body});
+  const ForegroundPushMessage({
+    required this.title,
+    required this.body,
+    this.data,
+  });
 
   final String title;
   final String body;
+  final Map<String, dynamic>? data;
 }
 
 /// Source of foreground-delivered pushes; separate from [PushGateway] so
@@ -72,6 +77,7 @@ class FirebasePushGateway implements PushGateway, ForegroundPushSource {
         return ForegroundPushMessage(
           title: notification?.title ?? 'FixNow',
           body: notification?.body ?? '',
+          data: message.data,
         );
       });
 }

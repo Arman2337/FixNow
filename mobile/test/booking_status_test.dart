@@ -6,7 +6,10 @@ void main() {
     expect(BookingStatusValue.parse('REQUESTED'), BookingStatusValue.requested);
     expect(BookingStatusValue.parse('ASSIGNED'), BookingStatusValue.assigned);
     expect(BookingStatusValue.parse('EN_ROUTE'), BookingStatusValue.enRoute);
-    expect(BookingStatusValue.parse('IN_PROGRESS'), BookingStatusValue.inProgress);
+    expect(
+      BookingStatusValue.parse('IN_PROGRESS'),
+      BookingStatusValue.inProgress,
+    );
     expect(BookingStatusValue.parse('COMPLETED'), BookingStatusValue.completed);
     expect(BookingStatusValue.parse('CANCELLED'), BookingStatusValue.cancelled);
     expect(BookingStatusValue.parse('accepted'), BookingStatusValue.unknown);

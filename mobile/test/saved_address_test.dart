@@ -10,9 +10,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Widget host(Widget child) => MaterialApp(
-      theme: AppTheme.dark,
-      home: Scaffold(body: child),
-    );
+  theme: AppTheme.dark,
+  home: Scaffold(body: child),
+);
 
 void main() {
   setUp(() {
@@ -117,8 +117,9 @@ void main() {
   });
 
   group('CustomerProfileScreen Saved Addresses integration', () {
-    testWidgets('displays saved addresses and allows deleting an address',
-        (tester) async {
+    testWidgets('displays saved addresses and allows deleting an address', (
+      tester,
+    ) async {
       final repository = FakeProfileRepository(
         const CustomerProfile(displayName: 'Rahul'),
       );

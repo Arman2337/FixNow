@@ -70,7 +70,12 @@ class AuthController extends ChangeNotifier {
     String? mobile,
   }) async {
     await _authenticate(
-      () => _api.login(email: email, password: password, role: role, mobile: mobile),
+      () => _api.login(
+        email: email,
+        password: password,
+        role: role,
+        mobile: mobile,
+      ),
     );
   }
 
@@ -239,7 +244,10 @@ class AuthController extends ChangeNotifier {
         'You appear to be offline.',
       _ when error.kind == ApiFailureKind.timeout =>
         'The request timed out. Try again.',
-      _ => error.message != 'The request could not be completed.' ? error.message : 'We could not complete that request. Try again.',
+      _ =>
+        error.message != 'The request could not be completed.'
+            ? error.message
+            : 'We could not complete that request. Try again.',
     };
     if (error.kind == ApiFailureKind.unauthorized) {
       await _store.clear();

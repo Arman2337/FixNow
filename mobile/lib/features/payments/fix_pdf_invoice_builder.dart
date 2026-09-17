@@ -13,7 +13,8 @@ class FixPdfInvoiceBuilder {
   static const companyName = 'FixNow Technologies Private Limited';
   static const companyGstin = '24AAACF1234F1Z5';
   static const companySac = '9987';
-  static const companyAddress = 'Level 4, Commerce House, SG Highway, Ahmedabad, Gujarat - 380054';
+  static const companyAddress =
+      'Level 4, Commerce House, SG Highway, Ahmedabad, Gujarat - 380054';
   static const supportEmail = 'support@fixnow.app';
   static const verifyUrl = 'https://fixnow.app/verify/invoice';
 
@@ -24,8 +25,11 @@ class FixPdfInvoiceBuilder {
     String serviceAddress = 'Ahmedabad, Gujarat, India',
   }) {
     final issuedStr = _formatDate(invoice.issuedAt);
-    final bookingIdStr = invoice.bookingId ?? 'BK-${invoice.invoiceNumber.replaceAll(RegExp(r'[^0-9]'), '')}';
-    final serviceNameStr = invoice.serviceName ?? 'Home Maintenance & Repair Service';
+    final bookingIdStr =
+        invoice.bookingId ??
+        'BK-${invoice.invoiceNumber.replaceAll(RegExp(r'[^0-9]'), '')}';
+    final serviceNameStr =
+        invoice.serviceName ?? 'Home Maintenance & Repair Service';
 
     final baseStr = _rupees(invoice.baseAmountMinor);
     final cgstStr = _rupees(invoice.cgstMinor);
@@ -166,7 +170,9 @@ class FixPdfInvoiceBuilder {
     op('/F1 9 Tf');
     op('0.35 0.40 0.47 rg');
     op('40 622 Td');
-    op('(${_escape('Payment Status: Confirmed & Paid via FixNow Gateway')}) Tj');
+    op(
+      '(${_escape('Payment Status: Confirmed & Paid via FixNow Gateway')}) Tj',
+    );
     op('ET');
 
     // -------------------------------------------------------------
@@ -340,13 +346,19 @@ class FixPdfInvoiceBuilder {
     op('/F1 8 Tf');
     op('0.2 0.25 0.35 rg');
     op('50 492 Td');
-    op('(${_escape('This invoice is generated in strict accordance with the')}) Tj');
+    op(
+      '(${_escape('This invoice is generated in strict accordance with the')}) Tj',
+    );
     op('0 -12 Td');
     op('(${_escape('Central Goods & Services Tax (CGST) Act, 2017.')}) Tj');
     op('0 -12 Td');
-    op('(${_escape('Includes reverse charge & marketplace intermediary taxes.')}) Tj');
+    op(
+      '(${_escape('Includes reverse charge & marketplace intermediary taxes.')}) Tj',
+    );
     op('0 -12 Td');
-    op('(${_escape('Payment verified and authenticated by FixNow platform.')}) Tj');
+    op(
+      '(${_escape('Payment verified and authenticated by FixNow platform.')}) Tj',
+    );
     op('ET');
 
     // -------------------------------------------------------------
@@ -367,13 +379,21 @@ class FixPdfInvoiceBuilder {
     op('/F1 7.5 Tf');
     op('0.4 0.45 0.52 rg');
     op('40 90 Td');
-    op('(${_escape('1. This is a computer-generated tax invoice and requires no physical or digital signature under the Information Technology Act, 2000.')}) Tj');
+    op(
+      '(${_escape('1. This is a computer-generated tax invoice and requires no physical or digital signature under the Information Technology Act, 2000.')}) Tj',
+    );
     op('0 -10 Td');
-    op('(${_escape('2. Goods & services once delivered and verified via Customer Service-Start PIN & completion proof are subject to standard dispute terms.')}) Tj');
+    op(
+      '(${_escape('2. Goods & services once delivered and verified via Customer Service-Start PIN & completion proof are subject to standard dispute terms.')}) Tj',
+    );
     op('0 -10 Td');
-    op('(${_escape('3. For customer inquiries or GST credit reconciliations, contact support@fixnow.app quoting the Invoice Reference Number above.')}) Tj');
+    op(
+      '(${_escape('3. For customer inquiries or GST credit reconciliations, contact support@fixnow.app quoting the Invoice Reference Number above.')}) Tj',
+    );
     op('0 -10 Td');
-    op('(${_escape('4. All claims and arbitrations are exclusively subject to Ahmedabad, Gujarat jurisdiction.')}) Tj');
+    op(
+      '(${_escape('4. All claims and arbitrations are exclusively subject to Ahmedabad, Gujarat jurisdiction.')}) Tj',
+    );
     op('ET');
 
     // Bottom brand stamp
@@ -381,7 +401,9 @@ class FixPdfInvoiceBuilder {
     op('/F2 8 Tf');
     op('0.6 0.65 0.72 rg');
     op('200 40 Td');
-    op('(${_escape('FixNow Technologies  --  Empowering Quality Local Services')}) Tj');
+    op(
+      '(${_escape('FixNow Technologies  --  Empowering Quality Local Services')}) Tj',
+    );
     op('ET');
 
     final contentStream = streamBuffer.toString();
@@ -413,11 +435,15 @@ class FixPdfInvoiceBuilder {
 
     // 2: Pages
     startObj(2);
-    writeString('<<\n  /Type /Pages\n  /Kids [3 0 R]\n  /Count 1\n>>\nendobj\n');
+    writeString(
+      '<<\n  /Type /Pages\n  /Kids [3 0 R]\n  /Count 1\n>>\nendobj\n',
+    );
 
     // 3: Page (A4: 595.28 x 841.89 pt)
     startObj(3);
-    writeString('<<\n  /Type /Page\n  /Parent 2 0 R\n  /MediaBox [0 0 595.28 841.89]\n  /Contents 4 0 R\n  /Resources <<\n    /Font <<\n      /F1 5 0 R\n      /F2 6 0 R\n    >>\n  >>\n>>\nendobj\n');
+    writeString(
+      '<<\n  /Type /Page\n  /Parent 2 0 R\n  /MediaBox [0 0 595.28 841.89]\n  /Contents 4 0 R\n  /Resources <<\n    /Font <<\n      /F1 5 0 R\n      /F2 6 0 R\n    >>\n  >>\n>>\nendobj\n',
+    );
 
     // 4: Stream contents
     startObj(4);
@@ -427,11 +453,15 @@ class FixPdfInvoiceBuilder {
 
     // 5: Font Helvetica
     startObj(5);
-    writeString('<<\n  /Type /Font\n  /Subtype /Type1\n  /BaseFont /Helvetica\n>>\nendobj\n');
+    writeString(
+      '<<\n  /Type /Font\n  /Subtype /Type1\n  /BaseFont /Helvetica\n>>\nendobj\n',
+    );
 
     // 6: Font Helvetica-Bold
     startObj(6);
-    writeString('<<\n  /Type /Font\n  /Subtype /Type1\n  /BaseFont /Helvetica-Bold\n>>\nendobj\n');
+    writeString(
+      '<<\n  /Type /Font\n  /Subtype /Type1\n  /BaseFont /Helvetica-Bold\n>>\nendobj\n',
+    );
 
     // xref table
     final xrefOffset = pdfBuffer.length;
@@ -451,7 +481,10 @@ class FixPdfInvoiceBuilder {
 
   /// Formats formatted filename.
   static String getFileName(Invoice invoice) {
-    final sanitized = invoice.invoiceNumber.replaceAll(RegExp(r'[^a-zA-Z0-9\-]'), '_');
+    final sanitized = invoice.invoiceNumber.replaceAll(
+      RegExp(r'[^a-zA-Z0-9\-]'),
+      '_',
+    );
     return 'Invoice-$sanitized.pdf';
   }
 
@@ -484,7 +517,8 @@ Download official PDF receipt or verify at:
 $verifyUrl?ref=${invoice.invoiceNumber}
 ----------------------------------------
 Thank you for choosing FixNow!
-'''.trim();
+'''
+        .trim();
   }
 
   static String _formatDate(DateTime dt) {
@@ -497,7 +531,9 @@ Thank you for choosing FixNow!
 
   static String _rupees(int minor) {
     final val = minor / 100.0;
-    return val % 1 == 0 ? 'INR ${val.toStringAsFixed(0)}' : 'INR ${val.toStringAsFixed(2)}';
+    return val % 1 == 0
+        ? 'INR ${val.toStringAsFixed(0)}'
+        : 'INR ${val.toStringAsFixed(2)}';
   }
 
   static String _escape(String text) {

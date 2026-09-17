@@ -4,40 +4,45 @@ import 'package:fixnow_mobile/features/ai/ai_diagnostic_screen.dart';
 import 'package:fixnow_mobile/features/services/service_category.dart';
 
 void main() {
-  testWidgets('renders FixAI Diagnostics header, mode tabs, and interactive viewfinder', (tester) async {
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: AiDiagnosticScreen(
-          category: ServiceCategory(
-            id: 'cat-1',
-            name: 'Plumbing',
-            slug: 'plumbing',
+  testWidgets(
+    'renders FixAI Diagnostics header, mode tabs, and interactive viewfinder',
+    (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: AiDiagnosticScreen(
+            category: ServiceCategory(
+              id: 'cat-1',
+              name: 'Plumbing',
+              slug: 'plumbing',
+            ),
           ),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
 
-    expect(find.text('FixAI Diagnostics'), findsOneWidget);
-    expect(find.text('Scan Image'), findsOneWidget);
-    expect(find.text('Record Audio'), findsOneWidget);
-    expect(find.text('Text Prompt'), findsOneWidget);
+      expect(find.text('FixAI Diagnostics'), findsOneWidget);
+      expect(find.text('Scan Image'), findsOneWidget);
+      expect(find.text('Record Audio'), findsOneWidget);
+      expect(find.text('Text Prompt'), findsOneWidget);
 
-    // Initial mode is camera
-    expect(find.textContaining('CLASSIFIER'), findsOneWidget);
+      // Initial mode is camera
+      expect(find.textContaining('CLASSIFIER'), findsOneWidget);
 
-    // Switch to Record Audio
-    await tester.tap(find.text('Record Audio'));
-    await tester.pumpAndSettle();
-    expect(find.text('Record Audio'), findsOneWidget);
+      // Switch to Record Audio
+      await tester.tap(find.text('Record Audio'));
+      await tester.pumpAndSettle();
+      expect(find.text('Record Audio'), findsOneWidget);
 
-    // Switch to Text Prompt
-    await tester.tap(find.text('Text Prompt'));
-    await tester.pumpAndSettle();
-    expect(find.text('Text Prompt'), findsOneWidget);
-  });
+      // Switch to Text Prompt
+      await tester.tap(find.text('Text Prompt'));
+      await tester.pumpAndSettle();
+      expect(find.text('Text Prompt'), findsOneWidget);
+    },
+  );
 
-  testWidgets('triggers onBookSpecialist callback when CTA pressed', (tester) async {
+  testWidgets('triggers onBookSpecialist callback when CTA pressed', (
+    tester,
+  ) async {
     var booked = false;
     await tester.pumpWidget(
       MaterialApp(

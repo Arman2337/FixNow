@@ -85,7 +85,9 @@ class InvoiceController extends ChangeNotifier {
     this._bookingId, {
     Invoice? initialInvoice,
   }) : invoice = initialInvoice,
-       state = initialInvoice != null ? InvoiceState.ready : InvoiceState.loading;
+       state = initialInvoice != null
+           ? InvoiceState.ready
+           : InvoiceState.loading;
 
   final InvoiceRepository _repository;
   final String _bookingId;
@@ -120,10 +122,8 @@ class InvoiceController extends ChangeNotifier {
 }
 
 class InvoiceRepository {
-  InvoiceRepository(
-    this._transport, {
-    Future<String?> Function()? accessToken,
-  }) : _accessToken = accessToken;
+  InvoiceRepository(this._transport, {Future<String?> Function()? accessToken})
+    : _accessToken = accessToken;
 
   final ApiTransport _transport;
   final Future<String?> Function()? _accessToken;

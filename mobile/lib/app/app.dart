@@ -41,6 +41,7 @@ import 'package:fixnow_mobile/features/provider/provider_earnings_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_home_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_jobs_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_onboarding_screen.dart';
+import 'package:fixnow_mobile/features/provider/provider_incoming_request_screen.dart';
 import 'package:fixnow_mobile/features/support/complaint_list_screen.dart';
 import 'package:fixnow_mobile/features/support/submit_complaint_screen.dart';
 import 'package:fixnow_mobile/features/notifications/notification_controller.dart';
@@ -115,6 +116,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
   late final CallRepository _callRepository;
   late final SavedAddressRepository _savedAddresses;
   final Map<String, BookingTrackingController> _trackingControllers = {};
+
   /// FN-062: app-wide messenger so foreground pushes can surface as banners
   /// from any screen.
   final GlobalKey<ScaffoldMessengerState> _messengerKey =
@@ -131,10 +133,24 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _initializeData();
-    _foregroundPushSub = bindForegroundPushBanner(
-      source: _pushGateway,
-      messengerKey: _messengerKey,
-    );
+    _foregroundPushSub = _pushGateway.foregroundMessages().listen((message) {
+      if (message.data != null &&
+          message.data!['type'] == 'booking:provider:REQUESTED') {
+        _navigatorKey.currentState?.push(
+          MaterialPageRoute(
+            fullscreenDialog: true,
+            builder: (context) => ProviderIncomingRequestScreen(
+              requestData: message.data!,
+              providerController: _provider,
+            ),
+          ),
+        );
+      } else {
+        _messengerKey.currentState?.showSnackBar(
+          SnackBar(content: Text('${message.title} — ${message.body}')),
+        );
+      }
+    });
     _bookings.acceptedBooking.addListener(_showAcceptCelebration);
   }
 
@@ -171,9 +187,9 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
         barrierColor: Colors.transparent,
         pageBuilder: (context, animation, secondaryAnimation) =>
             FixAcceptCelebration(
-          serviceName: serviceName,
-          onDismiss: () => nav.pop(),
-        ),
+              serviceName: serviceName,
+              onDismiss: () => nav.pop(),
+            ),
       ),
     );
   }
@@ -185,7 +201,8 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
     _api = api;
     _auth = AuthController(
       api: AuthApi(api),
-      store: widget.sessionStore ??
+      store:
+          widget.sessionStore ??
           (kIsWeb ? WebAuthSessionStore() : SecureAuthSessionStore()),
     );
     _profile = CustomerProfileController(
@@ -212,20 +229,14 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
       realtime: _createRealtimeClient(),
     );
     _complaints = ComplaintsController(
-      ComplaintsRepository(
-        client: api,
-        accessToken: _auth.validAccessToken,
-      ),
+      ComplaintsRepository(client: api, accessToken: _auth.validAccessToken),
     );
     _push = PushEnrollmentController(
       api: PushApi(api, accessToken: _auth.validAccessToken),
       gateway: _pushGateway,
     );
     _notifications = NotificationController(
-      NotificationRepository(
-        api: api,
-        accessToken: _auth.validAccessToken,
-      ),
+      NotificationRepository(api: api, accessToken: _auth.validAccessToken),
     );
     _chatRepository = HttpChatRepository(
       api: api,
@@ -319,15 +330,14 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
               controller: _provider,
               pushController: _push,
               onSupportCases: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => ComplaintListScreen(
-                        controller: _complaints,
-                      ),
-                    ),
-                  );
-                },
-                onSignOut: _signOut,
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        ComplaintListScreen(controller: _complaints),
+                  ),
+                );
+              },
+              onSignOut: _signOut,
             );
           }
           if (_auth.session?.role == AccountRole.verifiedProvider) {
@@ -346,9 +356,8 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
                   if (nav == null) return;
                   nav.push(
                     MaterialPageRoute(
-                      builder: (_) => CustomerHelpScreen(
-                        controller: _complaints,
-                      ),
+                      builder: (_) =>
+                          CustomerHelpScreen(controller: _complaints),
                     ),
                   );
                 },
@@ -361,7 +370,14 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
                       .where((b) => b.id == bookingId)
                       .firstOrNull;
                   match ??= _bookings.bookings
-                      .where((b) => const {'ASSIGNED', 'EN_ROUTE', 'IN_PROGRESS', 'REQUESTED'}.contains(b.status))
+                      .where(
+                        (b) => const {
+                          'ASSIGNED',
+                          'EN_ROUTE',
+                          'IN_PROGRESS',
+                          'REQUESTED',
+                        }.contains(b.status),
+                      )
                       .firstOrNull;
                   if (match == null) {
                     try {
@@ -374,7 +390,9 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
                   final nav = _navigatorKey.currentState;
                   if (nav == null) return;
                   nav.push(
-                    MaterialPageRoute(builder: (_) => _bookingDestination(match!)),
+                    MaterialPageRoute(
+                      builder: (_) => _bookingDestination(match!),
+                    ),
                   );
                 },
                 onOpenInvoice: (InAppNotification notification) {
@@ -433,9 +451,8 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
                 onSupportCases: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (_) => ComplaintListScreen(
-                        controller: _complaints,
-                      ),
+                      builder: (_) =>
+                          ComplaintListScreen(controller: _complaints),
                     ),
                   );
                 },
@@ -449,7 +466,10 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
               controller: _discovery,
               locationController: _location,
               bookingsController: _bookings,
-              emergencyRepository: EmergencyRepository(_api, accessToken: _auth.validAccessToken),
+              emergencyRepository: EmergencyRepository(
+                _api,
+                accessToken: _auth.validAccessToken,
+              ),
               onCategorySelected: (category, location) async {
                 final created = await Navigator.of(context).push<bool>(
                   MaterialPageRoute(
@@ -457,22 +477,33 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
                       category: category,
                       api: _api,
                       initialLocation: location,
-                      onProceedToBooking: (updatedCategory, description, priceMinor, loc) async {
-                        final reqCreated = await Navigator.of(context).push<bool>(
-                          MaterialPageRoute(
-                            builder: (_) => ServiceRequestScreen(
-                              category: updatedCategory,
-                              controller: _bookings,
-                              initialLocation: loc,
-                              initialDescription: description,
-                              estimateRepository: PriceEstimateRepository(_api, accessToken: _auth.validAccessToken),
-                            ),
-                          ),
-                        );
-                        if (reqCreated == true && context.mounted) {
-                          Navigator.of(context).pop(true);
-                        }
-                      },
+                      onProceedToBooking:
+                          (
+                            updatedCategory,
+                            description,
+                            priceMinor,
+                            loc,
+                          ) async {
+                            final reqCreated = await Navigator.of(context)
+                                .push<bool>(
+                                  MaterialPageRoute(
+                                    builder: (_) => ServiceRequestScreen(
+                                      category: updatedCategory,
+                                      controller: _bookings,
+                                      initialLocation: loc,
+                                      initialDescription: description,
+                                      estimateRepository:
+                                          PriceEstimateRepository(
+                                            _api,
+                                            accessToken: _auth.validAccessToken,
+                                          ),
+                                    ),
+                                  ),
+                                );
+                            if (reqCreated == true && context.mounted) {
+                              Navigator.of(context).pop(true);
+                            }
+                          },
                     ),
                   ),
                 );
@@ -485,7 +516,10 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
                   );
                 }
               },
-              aiRepository: AiRecommendationRepository(_api, _auth.validAccessToken),
+              aiRepository: AiRecommendationRepository(
+                _api,
+                _auth.validAccessToken,
+              ),
               problemAnalysisRepository: ProblemAnalysisRepository(
                 _api,
                 accessToken: _auth.validAccessToken,
@@ -499,7 +533,14 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
                     .where((b) => b.id == bookingId)
                     .firstOrNull;
                 match ??= _bookings.bookings
-                    .where((b) => const {'ASSIGNED', 'EN_ROUTE', 'IN_PROGRESS', 'REQUESTED'}.contains(b.status))
+                    .where(
+                      (b) => const {
+                        'ASSIGNED',
+                        'EN_ROUTE',
+                        'IN_PROGRESS',
+                        'REQUESTED',
+                      }.contains(b.status),
+                    )
                     .firstOrNull;
                 if (match == null) {
                   try {
@@ -512,7 +553,9 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
                 final nav = _navigatorKey.currentState;
                 if (nav == null) return;
                 nav.push(
-                  MaterialPageRoute(builder: (_) => _bookingDestination(match!)),
+                  MaterialPageRoute(
+                    builder: (_) => _bookingDestination(match!),
+                  ),
                 );
               },
               onInvoiceSelected: (InAppNotification notification) {
@@ -539,15 +582,14 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
               controller: _profile,
               pushController: _push,
               onSupportCases: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => ComplaintListScreen(
-                        controller: _complaints,
-                      ),
-                    ),
-                  );
-                },
-                onSignOut: _signOut,
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        ComplaintListScreen(controller: _complaints),
+                  ),
+                );
+              },
+              onSignOut: _signOut,
             ),
             customerBookings: CustomerBookingsScreen(
               controller: _bookings,
@@ -566,9 +608,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
                 unawaited(_bookings.load());
               },
             ),
-            customerHelp: CustomerHelpScreen(
-              controller: _complaints,
-            ),
+            customerHelp: CustomerHelpScreen(controller: _complaints),
           );
         },
       ),
@@ -592,7 +632,8 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
       showFixBanner(
         messenger,
         tone: FixBannerTone.danger,
-        message: 'We could not load services. Check your connection and try again.',
+        message:
+            'We could not load services. Check your connection and try again.',
       );
       return;
     }
@@ -604,7 +645,8 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
       showFixBanner(
         messenger,
         tone: FixBannerTone.danger,
-        message: 'That service is no longer available to book. Choose one from Home.',
+        message:
+            'That service is no longer available to book. Choose one from Home.',
       );
       return;
     }
@@ -614,7 +656,10 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
           category: category,
           controller: _bookings,
           initialDescription: booking.description,
-          estimateRepository: PriceEstimateRepository(_api, accessToken: _auth.validAccessToken),
+          estimateRepository: PriceEstimateRepository(
+            _api,
+            accessToken: _auth.validAccessToken,
+          ),
         ),
       ),
     );
@@ -639,26 +684,28 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
           return BookingDetailScreen(
             booking: currentBooking,
             onReportIssue: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => SubmitComplaintScreen(
-                      controller: _complaints,
-                      bookingId: currentBooking.id,
-                      targetRole: 'PROVIDER',
-                      targetId: null,
-                    ),
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => SubmitComplaintScreen(
+                    controller: _complaints,
+                    bookingId: currentBooking.id,
+                    targetRole: 'PROVIDER',
+                    targetId: null,
                   ),
-                );
-              },
-            onCancel: const {'REQUESTED', 'ASSIGNED'}.contains(currentBooking.status)
+                ),
+              );
+            },
+            onCancel:
+                const {'REQUESTED', 'ASSIGNED'}.contains(currentBooking.status)
                 ? (reason) => _bookings.cancel(currentBooking, reason)
                 : null,
-            onReschedule: const {'REQUESTED', 'ASSIGNED'}.contains(currentBooking.status)
+            onReschedule:
+                const {'REQUESTED', 'ASSIGNED'}.contains(currentBooking.status)
                 ? () => FixRescheduleSheet.show(
-                      context,
-                      booking: currentBooking,
-                      controller: _bookings,
-                    )
+                    context,
+                    booking: currentBooking,
+                    controller: _bookings,
+                  )
                 : null,
             reviewRepository: _bookings.repository,
             onBookAgain: currentBooking.status == 'COMPLETED'

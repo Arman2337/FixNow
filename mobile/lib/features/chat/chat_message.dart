@@ -27,7 +27,8 @@ class ChatMessage {
     bool? overrideIsMe,
   }) {
     final senderId = json['senderUserId']?.toString() ?? '';
-    final isMeCalculated = overrideIsMe ?? (currentUserId != null && currentUserId == senderId);
+    final isMeCalculated =
+        overrideIsMe ?? (currentUserId != null && currentUserId == senderId);
 
     DateTime parsedDate;
     final createdAtRaw = json['createdAt']?.toString();

@@ -46,7 +46,8 @@ class IncomingCallDialog extends StatefulWidget {
           session: session,
           repository: repository,
           realtimeClient: realtimeClient,
-          callerTitle: callerTitle ??
+          callerTitle:
+              callerTitle ??
               (session.callerRole == 'PROVIDER'
                   ? 'Verified Service Technician'
                   : 'Customer Call'),
@@ -195,7 +196,11 @@ class _IncomingCallDialogState extends State<IncomingCallDialog>
               child: const Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.shield_outlined, size: 13, color: AppColors.accentGold),
+                  Icon(
+                    Icons.shield_outlined,
+                    size: 13,
+                    color: AppColors.accentGold,
+                  ),
                   SizedBox(width: 4),
                   Text(
                     'SECURE IN-APP CALL',

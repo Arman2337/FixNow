@@ -1,5 +1,10 @@
+require('dotenv').config();
 const { Client } = require('pg');
-const client = new Client('postgresql://postgres:parin@localhost:5432/fixnow');
+const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:parin@localhost:5432/fixnow';
+const client = new Client({
+  connectionString,
+  ssl: connectionString.includes('localhost') ? false : { rejectUnauthorized: false }
+});
 
 async function run() {
   await client.connect();

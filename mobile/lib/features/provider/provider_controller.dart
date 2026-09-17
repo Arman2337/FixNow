@@ -1,16 +1,23 @@
+import 'dart:async';
+
 import 'package:fixnow_mobile/api/api_client.dart';
 import 'package:fixnow_mobile/features/bookings/booking.dart';
 import 'package:fixnow_mobile/features/provider/provider_models.dart';
 import 'package:fixnow_mobile/features/provider/provider_repository.dart';
 import 'package:fixnow_mobile/features/realtime/realtime_client.dart';
+import 'package:fixnow_mobile/features/tracking/booking_tracking.dart';
 import 'package:flutter/foundation.dart';
+import 'package:geolocator/geolocator.dart';
 
 enum ProviderLoadState { loading, ready, failure }
 
 class ProviderController extends ChangeNotifier {
-  ProviderController(this.repository, {this.realtime});
+  ProviderController(this.repository, {this.realtime}) {
+    _initRealtime();
+  }
   final ProviderRepository repository;
   final RealtimeClient? realtime;
+  StreamSubscription<RealtimeProjection>? _realtimeSub;
   ProviderLoadState state = ProviderLoadState.loading;
   ProviderApplication? application;
   ProviderProfile? profile;
@@ -28,6 +35,99 @@ class ProviderController extends ChangeNotifier {
   final Map<String, int> _locationSequences = {};
   final Map<String, bool> locationSharing = {};
 
+  DrivingRoute? currentRoute;
+  ProviderMapLocation? currentLocation;
+
+  Timer? _locationTimer;
+
+  void _initRealtime() {
+    _realtimeSub = realtime?.projections.listen((projection) {
+      if (projection.data['type'] == 'booking.tracking.v1') {
+        final data = projection.data['data'];
+        if (data is Map<String, Object?>) {
+          final newRoute = _parseRoute(data);
+          final newLocation = _parseLocation(data);
+          if (newRoute != null || newLocation != null) {
+            if (newRoute != null) currentRoute = newRoute;
+            if (newLocation != null) currentLocation = newLocation;
+            notifyListeners();
+          }
+        }
+      }
+    });
+  }
+
+  DrivingRoute? _parseRoute(Map<String, Object?> data) {
+    final route = data['route'];
+    if (route is! Map) return null;
+    final distance = route['distanceMeters'];
+    final duration = route['durationSeconds'];
+    final rawCoordinates = route['coordinates'];
+    if (distance is! num || duration is! num || rawCoordinates is! List) return null;
+    final coordinates = rawCoordinates
+        .map((p) {
+          if (p is! List || p.length < 2) return null;
+          final lng = p[0];
+          final lat = p[1];
+          if (lng is! num || lat is! num) return null;
+          return CustomerMapLocation(latitude: lat.toDouble(), longitude: lng.toDouble());
+        })
+        .whereType<CustomerMapLocation>()
+        .toList();
+    if (coordinates.length < 2) return null;
+    return DrivingRoute(
+      distanceMeters: distance.toDouble(),
+      durationSeconds: duration.toInt(),
+      coordinates: coordinates,
+    );
+  }
+
+  ProviderMapLocation? _parseLocation(Map<String, Object?> data) {
+    if (data['locationAvailability'] != 'live') return null;
+    final location = data['location'];
+    if (location is! Map) return null;
+    final latitude = location['latitude'];
+    final longitude = location['longitude'];
+    final accuracy = location['accuracyMeters'];
+    final capturedAt = DateTime.tryParse(location['capturedAt']?.toString() ?? '');
+    final receivedAt = DateTime.tryParse(location['receivedAt']?.toString() ?? '');
+    if (latitude is! num || longitude is! num || accuracy is! num || capturedAt == null || receivedAt == null) return null;
+    return ProviderMapLocation(
+      latitude: latitude.toDouble(),
+      longitude: longitude.toDouble(),
+      accuracyMeters: accuracy.toDouble(),
+      capturedAt: capturedAt,
+      receivedAt: receivedAt,
+    );
+  }
+
+  void _startLocationTracking() {
+    _locationTimer?.cancel();
+    _locationTimer = Timer.periodic(const Duration(seconds: 30), (timer) async {
+      try {
+        var permission = await Geolocator.checkPermission();
+        if (permission == LocationPermission.always ||
+            permission == LocationPermission.whileInUse) {
+          final position = await Geolocator.getCurrentPosition(
+            locationSettings: const LocationSettings(
+              accuracy: LocationAccuracy.high,
+            ),
+          );
+          profile = await repository.updateLocation(
+            position.latitude,
+            position.longitude,
+          );
+          notifyListeners();
+        }
+      } catch (_) {}
+    });
+  }
+
+  void _stopLocationTracking() {
+    _locationTimer?.cancel();
+    _locationTimer = null;
+  }
+
   Future<void> load({required bool verified}) async {
     state = ProviderLoadState.loading;
     notifyListeners();
@@ -39,6 +139,9 @@ class ProviderController extends ChangeNotifier {
       documents = verified ? const [] : await repository.documents();
       if (verified) {
         availability = await repository.availability();
+        if (availability?.status == 'online') {
+          _startLocationTracking();
+        }
         jobs = await repository.jobs();
         try {
           requests = await repository.availableRequests();
@@ -98,9 +201,29 @@ class ProviderController extends ChangeNotifier {
     availability = await repository.setStatus(current, status);
     if (status.toLowerCase() == 'online') {
       try {
+        var permission = await Geolocator.checkPermission();
+        if (permission == LocationPermission.denied) {
+          permission = await Geolocator.requestPermission();
+        }
+        if (permission == LocationPermission.always ||
+            permission == LocationPermission.whileInUse) {
+          final position = await Geolocator.getCurrentPosition(
+            locationSettings: const LocationSettings(
+              accuracy: LocationAccuracy.high,
+            ),
+          );
+          profile = await repository.updateLocation(
+            position.latitude,
+            position.longitude,
+          );
+        }
+      } catch (_) {}
+      _startLocationTracking();
+      try {
         await refreshRequests();
       } catch (_) {}
     } else {
+      _stopLocationTracking();
       requests = const [];
     }
     notifyListeners();
@@ -114,6 +237,10 @@ class ProviderController extends ChangeNotifier {
       weeklyRules: weeklyRules,
     );
     notifyListeners();
+  }
+
+  Future<void> acceptBooking(String bookingId) async {
+    await repository.acceptBooking(bookingId);
   }
 
   Future<void> setWeekdaySchedule(bool enabled) async {
@@ -149,11 +276,10 @@ class ProviderController extends ChangeNotifier {
 
   Future<void> setLocationConsent(CustomerBooking job, bool granted) async {
     final client = realtime;
-    final current = jobs.firstWhere(
-      (j) => j.id == job.id,
-      orElse: () => job,
-    );
-    if (client == null || (job.status != 'EN_ROUTE' && current.status != 'EN_ROUTE')) return;
+    final current = jobs.firstWhere((j) => j.id == job.id, orElse: () => job);
+    if (client == null ||
+        (job.status != 'EN_ROUTE' && current.status != 'EN_ROUTE'))
+      return;
     actionError = null;
     try {
       await client.subscribeBooking(job.id);
@@ -168,7 +294,8 @@ class ProviderController extends ChangeNotifier {
       notifyListeners();
       if (granted) await publishCurrentLocation(current);
     } catch (_) {
-      actionError = 'Location sharing could not start. Check that you are online and try again.';
+      actionError =
+          'Location sharing could not start. Check that you are online and try again.';
       notifyListeners();
     }
   }
@@ -178,7 +305,9 @@ class ProviderController extends ChangeNotifier {
     notifyListeners();
     try {
       final updated = await repository.verifyOtpAndStartJob(job, otp);
-      jobs = jobs.map((item) => item.id == updated.id ? updated : item).toList();
+      jobs = jobs
+          .map((item) => item.id == updated.id ? updated : item)
+          .toList();
     } on ApiException catch (error) {
       actionError = error.statusCode == 403
           ? 'That OTP is incorrect. Ask the customer for the current service-start OTP.'
@@ -189,10 +318,7 @@ class ProviderController extends ChangeNotifier {
 
   Future<void> publishCurrentLocation(CustomerBooking job) async {
     final client = realtime;
-    final current = jobs.firstWhere(
-      (j) => j.id == job.id,
-      orElse: () => job,
-    );
+    final current = jobs.firstWhere((j) => j.id == job.id, orElse: () => job);
     if (client == null ||
         (job.status != 'EN_ROUTE' && current.status != 'EN_ROUTE') ||
         _publishingLocation.contains(job.id)) {
@@ -286,6 +412,8 @@ class ProviderController extends ChangeNotifier {
 
   @override
   void dispose() {
+    _realtimeSub?.cancel();
+    _stopLocationTracking();
     realtime?.dispose();
     super.dispose();
   }

@@ -20,11 +20,11 @@ class PriceEstimate {
     required String explanation,
     required String notice,
   }) : this._(
-          kind: PriceEstimateKind.published,
-          typicalLabel: amountLabel,
-          explanation: explanation,
-          notice: notice,
-        );
+         kind: PriceEstimateKind.published,
+         typicalLabel: amountLabel,
+         explanation: explanation,
+         notice: notice,
+       );
 
   const PriceEstimate.observed({
     required String minLabel,
@@ -34,16 +34,17 @@ class PriceEstimate {
     required String explanation,
     required String notice,
   }) : this._(
-          kind: PriceEstimateKind.observed,
-          minLabel: minLabel,
-          maxLabel: maxLabel,
-          typicalLabel: typicalLabel,
-          sampleSize: sampleSize,
-          explanation: explanation,
-          notice: notice,
-        );
+         kind: PriceEstimateKind.observed,
+         minLabel: minLabel,
+         maxLabel: maxLabel,
+         typicalLabel: typicalLabel,
+         sampleSize: sampleSize,
+         explanation: explanation,
+         notice: notice,
+       );
 
-  const PriceEstimate.onRequest() : this._(kind: PriceEstimateKind.priceOnRequest);
+  const PriceEstimate.onRequest()
+    : this._(kind: PriceEstimateKind.priceOnRequest);
 
   final PriceEstimateKind kind;
   final String? minLabel;
@@ -54,8 +55,9 @@ class PriceEstimate {
   final String notice;
 
   /// "₹449 – ₹549" for observed bands; a single label otherwise.
-  String get rangeLabel =>
-      kind == PriceEstimateKind.observed ? '$minLabel – $maxLabel' : (typicalLabel ?? '');
+  String get rangeLabel => kind == PriceEstimateKind.observed
+      ? '$minLabel – $maxLabel'
+      : (typicalLabel ?? '');
 
   static PriceEstimate fromJson(Map<String, Object?> json) {
     switch (json['kind']) {

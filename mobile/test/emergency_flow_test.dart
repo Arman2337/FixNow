@@ -27,11 +27,11 @@ class FakeTransport implements ApiTransport {
 class FixedLocation implements BookingLocationProvider {
   @override
   Future<BookingLocationFix> resolve() async => BookingLocationFix(
-        latitude: 23.02,
-        longitude: 72.57,
-        accuracyMeters: 8,
-        timestamp: DateTime.now(),
-      );
+    latitude: 23.02,
+    longitude: 72.57,
+    accuracyMeters: 8,
+    timestamp: DateTime.now(),
+  );
 }
 
 const category = ServiceCategory(
@@ -50,12 +50,12 @@ Future<EmergencyConfirmScreen> screen(ApiTransport transport) async =>
     );
 
 Widget host(Widget child) => MaterialApp(
-      home: Scaffold(
-        // Generous fixed height so every field and the confirm button are
-        // built and hittable without scrolling in tests.
-        body: SizedBox(height: 2600, child: child),
-      ),
-    );
+  home: Scaffold(
+    // Generous fixed height so every field and the confirm button are
+    // built and hittable without scrolling in tests.
+    body: SizedBox(height: 2600, child: child),
+  ),
+);
 
 /// Confirms via the button's tap path. pumpIdle() declares reduce-motion
 /// suite-wide (FakeAccessibilityFeatures), and HoldToConfirmButton swaps its
@@ -84,44 +84,52 @@ void main() {
     'guidance': null,
   };
 
-  testWidgets('shows the mandatory public-emergency notice before anything',
-      (tester) async {
+  testWidgets('shows the mandatory public-emergency notice before anything', (
+    tester,
+  ) async {
     final transport = FakeTransport(
       ApiResponse(statusCode: 201, body: created),
       () => ApiResponse(statusCode: 200, body: okStatus),
     );
     await tester.pumpWidget(host(await screen(transport)));
 
-    expect(find.textContaining('It is not an emergency service'), findsOneWidget);
+    expect(
+      find.textContaining('It is not an emergency service'),
+      findsOneWidget,
+    );
     expect(find.textContaining('local emergency number first'), findsOneWidget);
   });
 
-  testWidgets('confirm posts once with idempotency key and shows wave progress',
-      (tester) async {
-    final transport = FakeTransport(
-      ApiResponse(statusCode: 201, body: created),
-      () => ApiResponse(statusCode: 200, body: okStatus),
-    );
-    await tester.pumpWidget(host(await screen(transport)));
-    await tester.pumpIdle();
+  testWidgets(
+    'confirm posts once with idempotency key and shows wave progress',
+    (tester) async {
+      final transport = FakeTransport(
+        ApiResponse(statusCode: 201, body: created),
+        () => ApiResponse(statusCode: 200, body: okStatus),
+      );
+      await tester.pumpWidget(host(await screen(transport)));
+      await tester.pumpIdle();
 
-    await tester.ensureVisible(find.text('Send emergency alert'));
-    await tester.pumpIdle();
-    await tester.enterText(find.byType(TextField), 'Water everywhere');
-    await tester.pump();
-    await tester.pump(); // let the onChanged rebuild enable the button
-    await confirmAlert(tester);
-    await tester.pumpIdle();
-    await tester.pumpIdle();
+      await tester.ensureVisible(find.text('Send emergency alert'));
+      await tester.pumpIdle();
+      await tester.enterText(find.byType(TextField), 'Water everywhere');
+      await tester.pump();
+      await tester.pump(); // let the onChanged rebuild enable the button
+      await confirmAlert(tester);
+      await tester.pumpIdle();
+      await tester.pumpIdle();
 
-    final post = transport.requests.firstWhere((r) => r.method == ApiMethod.post);
-    expect(post.path, 'emergency/requests');
-    expect(post.headers['Idempotency-Key'], startsWith('emergency-'));
-    expect(post.body!['serviceCategoryId'], category.id);
-    expect(post.body!['locationLat'], 23.02);
-    expect(find.textContaining('wave 1'), findsOneWidget);
-    expect(find.text('Alert sent'), findsOneWidget);
-  });
+      final post = transport.requests.firstWhere(
+        (r) => r.method == ApiMethod.post,
+      );
+      expect(post.path, 'emergency/requests');
+      expect(post.headers['Idempotency-Key'], startsWith('emergency-'));
+      expect(post.body!['serviceCategoryId'], category.id);
+      expect(post.body!['locationLat'], 23.02);
+      expect(find.textContaining('wave 1'), findsOneWidget);
+      expect(find.text('Alert sent'), findsOneWidget);
+    },
+  );
 
   testWidgets('renders the honest fallback guidance at wave 3', (tester) async {
     final fallbackStatus = {
@@ -151,7 +159,9 @@ void main() {
     );
   });
 
-  testWidgets('a failed alert keeps the form with actionable copy', (tester) async {
+  testWidgets('a failed alert keeps the form with actionable copy', (
+    tester,
+  ) async {
     final transport = FakeTransport(
       const ApiResponse(statusCode: 500, body: <Object?>{}),
       () => ApiResponse(statusCode: 200, body: okStatus),
@@ -167,9 +177,13 @@ void main() {
     await tester.pumpIdle();
 
     expect(
-        find.text('Hold to send emergency alert'), findsOneWidget); // form still here
+      find.text('Hold to send emergency alert'),
+      findsOneWidget,
+    ); // form still here
     expect(find.textContaining('could not be sent'), findsOneWidget);
-    expect(find.textContaining('call your local emergency services'),
-        findsOneWidget);
+    expect(
+      find.textContaining('call your local emergency services'),
+      findsOneWidget,
+    );
   });
 }

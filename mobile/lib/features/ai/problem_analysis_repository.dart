@@ -194,7 +194,8 @@ class ProblemAnalysisRepository {
     }
     final fields = <String, String>{
       if (languageHint != null) 'languageHint': languageHint,
-      if (textDescription != null && textDescription.trim().isNotEmpty) 'textDescription': textDescription,
+      if (textDescription != null && textDescription.trim().isNotEmpty)
+        'textDescription': textDescription,
     };
 
     final response = await client.uploadMultipart(

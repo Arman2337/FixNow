@@ -104,7 +104,8 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                       children: [
                         CircleAvatar(
                           radius: 30,
-                          backgroundColor: AppColors.primaryContainer.withValues(alpha: 0.18),
+                          backgroundColor: AppColors.primaryContainer
+                              .withValues(alpha: 0.18),
                           child: Text(
                             widget.controller.displayName.isNotEmpty
                                 ? widget.controller.displayName[0].toUpperCase()
@@ -219,7 +220,9 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.onTertiaryFixed.withValues(alpha: 0.12),
+                          color: AppColors.onTertiaryFixed.withValues(
+                            alpha: 0.12,
+                          ),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: const Text(
@@ -247,7 +250,8 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                   icon: Icons.task_alt_rounded,
                   iconBg: AppColors.primaryFixed,
                   iconColor: AppColors.onPrimaryFixed,
-                  metric: widget.controller.stats?.completedJobs.toString() ?? '-',
+                  metric:
+                      widget.controller.stats?.completedJobs.toString() ?? '-',
                   label: 'Completed',
                 ),
               ),
@@ -269,7 +273,9 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                   icon: Icons.shield_rounded,
                   iconBg: AppColors.secondaryContainer,
                   iconColor: AppColors.onSecondaryContainer,
-                  metric: widget.controller.stats?.activeWarranties.toString() ?? '-',
+                  metric:
+                      widget.controller.stats?.activeWarranties.toString() ??
+                      '-',
                   label: 'Warranty',
                 ),
               ),
@@ -380,7 +386,8 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                         }
                       },
                     ),
-                    if (widget.controller.status == ProfileViewStatus.saved) ...[
+                    if (widget.controller.status ==
+                        ProfileViewStatus.saved) ...[
                       const SizedBox(height: AppSpacing.sm),
                       const Align(
                         alignment: Alignment.centerLeft,
@@ -481,7 +488,9 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
               children: [
                 InkWell(
                   onTap: widget.onSupportCases,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(16),
+                  ),
                   child: Padding(
                     padding: const EdgeInsets.all(AppSpacing.md),
                     child: Row(
@@ -691,9 +700,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: AppColors.outline.withValues(alpha: 0.1),
-        ),
+        border: Border.all(color: AppColors.outline.withValues(alpha: 0.1)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
@@ -707,15 +714,8 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
           Container(
             width: 32,
             height: 32,
-            decoration: BoxDecoration(
-              color: iconBg,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              icon,
-              size: 16,
-              color: iconColor,
-            ),
+            decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
+            child: Icon(icon, size: 16, color: iconColor),
           ),
           const SizedBox(height: 6),
           Text(
@@ -760,11 +760,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
               color: AppColors.surfaceContainer,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(
-              icon,
-              size: 20,
-              color: AppColors.textSecondary,
-            ),
+            child: Icon(icon, size: 20, color: AppColors.textSecondary),
           ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
@@ -897,12 +893,16 @@ class _SavedAddressesSection extends StatelessWidget {
                           children: [
                             Row(
                               children: [
-                                Text(
-                                  addr.customTitle,
-                                  style: const TextStyle(
-                                    color: AppColors.textPrimary,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 13,
+                                Expanded(
+                                  child: Text(
+                                    addr.customTitle,
+                                    style: const TextStyle(
+                                      color: AppColors.textPrimary,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 13,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                                 if (addr.isDefault) ...[

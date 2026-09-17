@@ -270,12 +270,13 @@ class _TabRevealState extends State<_TabReveal>
     return FadeTransition(
       opacity: _controller,
       child: SlideTransition(
-        position: Tween(
-          begin: Offset(widget.forward ? 0.05 : -0.05, 0),
-          end: Offset.zero,
-        ).animate(
-          CurvedAnimation(parent: _controller, curve: AppMotion.enterCurve),
-        ),
+        position:
+            Tween(
+              begin: Offset(widget.forward ? 0.05 : -0.05, 0),
+              end: Offset.zero,
+            ).animate(
+              CurvedAnimation(parent: _controller, curve: AppMotion.enterCurve),
+            ),
         child: widget.child,
       ),
     );

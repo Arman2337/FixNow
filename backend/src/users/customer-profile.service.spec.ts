@@ -8,6 +8,8 @@ describe('CustomerProfileService', () => {
     findOneBy: jest.fn(),
     create: jest.fn((_entity, value: object) => ({ ...value })),
     save: jest.fn((value: object) => Promise.resolve(value)),
+    count: jest.fn().mockResolvedValue(0),
+    getRepository: jest.fn().mockReturnValue({ count: jest.fn().mockResolvedValue(0) }),
   };
   const dataSource = {
     transaction: jest.fn((work: (value: EntityManager) => unknown) =>

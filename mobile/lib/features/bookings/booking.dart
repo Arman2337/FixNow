@@ -7,7 +7,8 @@ enum BookingStatusValue {
   cancelled,
   unknown;
 
-  static BookingStatusValue parse(String raw) => switch (raw.trim().toUpperCase()) {
+  static BookingStatusValue parse(String raw) =>
+      switch (raw.trim().toUpperCase()) {
         'REQUESTED' => BookingStatusValue.requested,
         'ASSIGNED' => BookingStatusValue.assigned,
         'EN_ROUTE' => BookingStatusValue.enRoute,
@@ -18,24 +19,24 @@ enum BookingStatusValue {
       };
 
   bool get isActive => const {
-        BookingStatusValue.requested,
-        BookingStatusValue.assigned,
-        BookingStatusValue.enRoute,
-        BookingStatusValue.inProgress,
-      }.contains(this);
+    BookingStatusValue.requested,
+    BookingStatusValue.assigned,
+    BookingStatusValue.enRoute,
+    BookingStatusValue.inProgress,
+  }.contains(this);
 
   bool get isCompleted => this == BookingStatusValue.completed;
   bool get isCancelled => this == BookingStatusValue.cancelled;
 
   String get label => switch (this) {
-        BookingStatusValue.requested => 'Matching specialists',
-        BookingStatusValue.assigned => 'Provider assigned',
-        BookingStatusValue.enRoute => 'En route',
-        BookingStatusValue.inProgress => 'Work in progress',
-        BookingStatusValue.completed => 'Completed',
-        BookingStatusValue.cancelled => 'Cancelled',
-        BookingStatusValue.unknown => 'Status unavailable',
-      };
+    BookingStatusValue.requested => 'Matching specialists',
+    BookingStatusValue.assigned => 'Provider assigned',
+    BookingStatusValue.enRoute => 'En route',
+    BookingStatusValue.inProgress => 'Work in progress',
+    BookingStatusValue.completed => 'Completed',
+    BookingStatusValue.cancelled => 'Cancelled',
+    BookingStatusValue.unknown => 'Status unavailable',
+  };
 }
 
 class CustomerBooking {
@@ -72,18 +73,17 @@ class CustomerBooking {
     double? locationLatitude,
     double? locationLongitude,
     DateTime? scheduledAt,
-  }) =>
-      CustomerBooking(
-        id: id ?? this.id,
-        serviceCategoryId: serviceCategoryId ?? this.serviceCategoryId,
-        status: status ?? this.status,
-        description: description ?? this.description,
-        createdAt: createdAt ?? this.createdAt,
-        version: version ?? this.version,
-        locationLatitude: locationLatitude ?? this.locationLatitude,
-        locationLongitude: locationLongitude ?? this.locationLongitude,
-        scheduledAt: scheduledAt ?? this.scheduledAt,
-      );
+  }) => CustomerBooking(
+    id: id ?? this.id,
+    serviceCategoryId: serviceCategoryId ?? this.serviceCategoryId,
+    status: status ?? this.status,
+    description: description ?? this.description,
+    createdAt: createdAt ?? this.createdAt,
+    version: version ?? this.version,
+    locationLatitude: locationLatitude ?? this.locationLatitude,
+    locationLongitude: locationLongitude ?? this.locationLongitude,
+    scheduledAt: scheduledAt ?? this.scheduledAt,
+  );
 
   factory CustomerBooking.fromJson(Map<String, Object?> json) {
     final id = json['id'];

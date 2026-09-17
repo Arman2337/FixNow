@@ -46,7 +46,10 @@ class _AiDiagnosticScreenState extends State<AiDiagnosticScreen> {
         elevation: 0,
         scrolledUnderElevation: 1,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+          icon: const Icon(
+            Icons.arrow_back_rounded,
+            color: AppColors.textPrimary,
+          ),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         title: Row(
@@ -111,10 +114,7 @@ class _AiDiagnosticScreenState extends State<AiDiagnosticScreen> {
                   }
                 },
                 items: _categories.map((cat) {
-                  return DropdownMenuItem(
-                    value: cat,
-                    child: Text(cat),
-                  );
+                  return DropdownMenuItem(value: cat, child: Text(cat));
                 }).toList(),
               ),
             ),
@@ -178,8 +178,14 @@ class _AiDiagnosticScreenState extends State<AiDiagnosticScreen> {
                     height: 24,
                     decoration: const BoxDecoration(
                       border: Border(
-                        top: BorderSide(color: AppColors.primaryFixed, width: 2),
-                        left: BorderSide(color: AppColors.primaryFixed, width: 2),
+                        top: BorderSide(
+                          color: AppColors.primaryFixed,
+                          width: 2,
+                        ),
+                        left: BorderSide(
+                          color: AppColors.primaryFixed,
+                          width: 2,
+                        ),
                       ),
                     ),
                   ),
@@ -192,8 +198,14 @@ class _AiDiagnosticScreenState extends State<AiDiagnosticScreen> {
                     height: 24,
                     decoration: const BoxDecoration(
                       border: Border(
-                        top: BorderSide(color: AppColors.primaryFixed, width: 2),
-                        right: BorderSide(color: AppColors.primaryFixed, width: 2),
+                        top: BorderSide(
+                          color: AppColors.primaryFixed,
+                          width: 2,
+                        ),
+                        right: BorderSide(
+                          color: AppColors.primaryFixed,
+                          width: 2,
+                        ),
                       ),
                     ),
                   ),
@@ -206,8 +218,14 @@ class _AiDiagnosticScreenState extends State<AiDiagnosticScreen> {
                     height: 24,
                     decoration: const BoxDecoration(
                       border: Border(
-                        bottom: BorderSide(color: AppColors.primaryFixed, width: 2),
-                        left: BorderSide(color: AppColors.primaryFixed, width: 2),
+                        bottom: BorderSide(
+                          color: AppColors.primaryFixed,
+                          width: 2,
+                        ),
+                        left: BorderSide(
+                          color: AppColors.primaryFixed,
+                          width: 2,
+                        ),
                       ),
                     ),
                   ),
@@ -220,8 +238,14 @@ class _AiDiagnosticScreenState extends State<AiDiagnosticScreen> {
                     height: 24,
                     decoration: const BoxDecoration(
                       border: Border(
-                        bottom: BorderSide(color: AppColors.primaryFixed, width: 2),
-                        right: BorderSide(color: AppColors.primaryFixed, width: 2),
+                        bottom: BorderSide(
+                          color: AppColors.primaryFixed,
+                          width: 2,
+                        ),
+                        right: BorderSide(
+                          color: AppColors.primaryFixed,
+                          width: 2,
+                        ),
                       ),
                     ),
                   ),
@@ -360,7 +384,9 @@ class _AiDiagnosticScreenState extends State<AiDiagnosticScreen> {
                   right: 48,
                   child: IconButton(
                     icon: Icon(
-                      _flashOn ? Icons.flash_on_rounded : Icons.flash_off_rounded,
+                      _flashOn
+                          ? Icons.flash_on_rounded
+                          : Icons.flash_off_rounded,
                       color: _flashOn ? AppColors.accentGold : Colors.white70,
                       size: 20,
                     ),
@@ -423,9 +449,7 @@ class _AiDiagnosticScreenState extends State<AiDiagnosticScreen> {
             decoration: BoxDecoration(
               color: AppColors.errorContainer,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: AppColors.error.withValues(alpha: 0.2),
-              ),
+              border: Border.all(color: AppColors.error.withValues(alpha: 0.2)),
             ),
             child: Row(
               children: [
@@ -551,9 +575,30 @@ class _AiDiagnosticScreenState extends State<AiDiagnosticScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: List.generate(24, (index) {
                       final heights = [
-                        8.0, 14.0, 22.0, 30.0, 18.0, 10.0, 20.0, 28.0,
-                        32.0, 16.0, 22.0, 8.0, 14.0, 26.0, 18.0, 12.0,
-                        10.0, 16.0, 24.0, 30.0, 14.0, 10.0, 18.0, 12.0
+                        8.0,
+                        14.0,
+                        22.0,
+                        30.0,
+                        18.0,
+                        10.0,
+                        20.0,
+                        28.0,
+                        32.0,
+                        16.0,
+                        22.0,
+                        8.0,
+                        14.0,
+                        26.0,
+                        18.0,
+                        12.0,
+                        10.0,
+                        16.0,
+                        24.0,
+                        30.0,
+                        14.0,
+                        10.0,
+                        18.0,
+                        12.0,
                       ];
                       return Container(
                         width: 3,
@@ -707,7 +752,6 @@ class _AiDiagnosticScreenState extends State<AiDiagnosticScreen> {
                     builder: (_) => ServiceRequestScreen(
                       category: widget.category!,
                       controller: widget.bookingController!,
-                      
                     ),
                   ),
                 );
@@ -749,10 +793,7 @@ class _AiDiagnosticScreenState extends State<AiDiagnosticScreen> {
                         ),
                         Text(
                           'Dispatches nearest certified technician',
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: Colors.white70,
-                          ),
+                          style: TextStyle(fontSize: 10, color: Colors.white70),
                         ),
                       ],
                     ),
@@ -786,10 +827,7 @@ class _AiDiagnosticScreenState extends State<AiDiagnosticScreen> {
               SizedBox(width: 4),
               Text(
                 'FixNow 30-Day Workmanship Guarantee Included',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: AppColors.textSecondary,
-                ),
+                style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
               ),
             ],
           ),
@@ -811,7 +849,9 @@ class _AiDiagnosticScreenState extends State<AiDiagnosticScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.surfaceContainerLowest : Colors.transparent,
+            color: isSelected
+                ? AppColors.surfaceContainerLowest
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
             boxShadow: isSelected
                 ? const [
@@ -837,7 +877,9 @@ class _AiDiagnosticScreenState extends State<AiDiagnosticScreen> {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                  color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                  color: isSelected
+                      ? AppColors.primary
+                      : AppColors.textSecondary,
                 ),
               ),
             ],

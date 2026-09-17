@@ -5,9 +5,7 @@ import 'package:fixnow_mobile/features/services/sub_service_item.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-Widget host(Widget child) => MaterialApp(
-      home: child,
-    );
+Widget host(Widget child) => MaterialApp(home: child);
 
 void main() {
   group('ServiceCartController', () {
@@ -76,60 +74,66 @@ void main() {
       reviewCount: 120,
     );
 
-    testWidgets('renders sub-services and shows floating cart when items added',
-        (tester) async {
-      String? proceededDescription;
-      int? proceededPrice;
+    testWidgets(
+      'renders sub-services and shows floating cart when items added',
+      (tester) async {
+        String? proceededDescription;
+        int? proceededPrice;
 
-      await tester.pumpWidget(
-        host(
-          SubServiceCatalogScreen(api: MockApiTransport(), 
-            category: testCategory,
-            onProceedToBooking: (cat, desc, price, loc) {
-              proceededDescription = desc;
-              proceededPrice = price;
-            },
+        await tester.pumpWidget(
+          host(
+            SubServiceCatalogScreen(
+              api: MockApiTransport(),
+              category: testCategory,
+              onProceedToBooking: (cat, desc, price, loc) {
+                proceededDescription = desc;
+                proceededPrice = price;
+              },
+            ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      expect(find.text('Plumbing'), findsOneWidget);
-      expect(find.text('Tap & Mixer Repair'), findsOneWidget);
-      expect(find.text('Flush Tank & Jet Spray Fix'), findsOneWidget);
-      expect(find.text('3 Verified Pros Nearby'), findsOneWidget);
+        expect(find.text('Plumbing'), findsOneWidget);
+        expect(find.text('Tap & Mixer Repair'), findsOneWidget);
+        expect(find.text('Flush Tank & Jet Spray Fix'), findsOneWidget);
+        expect(find.text('3 Verified Pros Nearby'), findsOneWidget);
 
-      // Floating cart should be hidden initially
-      expect(find.text('Book Now'), findsNothing);
+        // Floating cart should be hidden initially
+        expect(find.text('Book Now'), findsNothing);
 
-      // Add "Tap & Mixer Repair"
-      final addFinders = find.text('ADD');
-      expect(addFinders, findsWidgets);
-      await tester.tap(addFinders.first);
-      await tester.pumpAndSettle();
+        // Add "Tap & Mixer Repair"
+        final addFinders = find.text('ADD');
+        expect(addFinders, findsWidgets);
+        await tester.tap(addFinders.first);
+        await tester.pumpAndSettle();
 
-      // Floating cart should now be visible!
-      expect(find.text('Book Now'), findsOneWidget);
-      expect(find.textContaining('1 item'), findsOneWidget);
+        // Floating cart should now be visible!
+        expect(find.text('Book Now'), findsOneWidget);
+        expect(find.textContaining('1 item'), findsOneWidget);
 
-      // Tap + to increment quantity
-      await tester.tap(find.byIcon(Icons.add_rounded).first);
-      await tester.pumpAndSettle();
+        // Tap + to increment quantity
+        await tester.tap(find.byIcon(Icons.add_rounded).first);
+        await tester.pumpAndSettle();
 
-      expect(find.textContaining('2 items'), findsOneWidget);
+        expect(find.textContaining('2 items'), findsOneWidget);
 
-      // Tap Book Now
-      await tester.tap(find.text('Book Now'));
-      await tester.pumpAndSettle();
+        // Tap Book Now
+        await tester.tap(find.text('Book Now'));
+        await tester.pumpAndSettle();
 
-      expect(proceededDescription, 'Tap & Mixer Repair (x2)');
-      expect(proceededPrice, 35164); // 29800 subtotal + 5364 GST
-    });
+        expect(proceededDescription, 'Tap & Mixer Repair (x2)');
+        expect(proceededPrice, 35164); // 29800 subtotal + 5364 GST
+      },
+    );
 
     testWidgets('search query filters available sub-services', (tester) async {
       await tester.pumpWidget(
         host(
-          SubServiceCatalogScreen(api: MockApiTransport(), category: testCategory),
+          SubServiceCatalogScreen(
+            api: MockApiTransport(),
+            category: testCategory,
+          ),
         ),
       );
       await tester.pumpAndSettle();
@@ -147,8 +151,8 @@ void main() {
   });
 }
 
-
 class MockApiTransport implements ApiTransport {
   @override
-  Future<ApiResponse> send(ApiRequest request) async => const ApiResponse(statusCode: 200, body: []);
+  Future<ApiResponse> send(ApiRequest request) async =>
+      const ApiResponse(statusCode: 200, body: []);
 }

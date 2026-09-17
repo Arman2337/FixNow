@@ -60,8 +60,8 @@ class _BookingReviewPanelState extends State<BookingReviewPanel> {
       if (file.bytes!.lengthInBytes > 5 * 1024 * 1024) {
         if (mounted) {
           setState(
-            () => _photoError =
-                'That photo is over 5 MB. Choose a smaller one.',
+            () =>
+                _photoError = 'That photo is over 5 MB. Choose a smaller one.',
           );
         }
         return;
@@ -230,9 +230,7 @@ class _BookingReviewPanelState extends State<BookingReviewPanel> {
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppColors.outline.withValues(alpha: 0.08),
-        ),
+        border: Border.all(color: AppColors.outline.withValues(alpha: 0.08)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -251,8 +249,11 @@ class _BookingReviewPanelState extends State<BookingReviewPanel> {
               CircleAvatar(
                 radius: 20,
                 backgroundColor: AppColors.primarySoft,
-                child: const Icon(Icons.person_rounded,
-                    color: AppColors.primary, size: 22),
+                child: const Icon(
+                  Icons.person_rounded,
+                  color: AppColors.primary,
+                  size: 22,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -263,21 +264,25 @@ class _BookingReviewPanelState extends State<BookingReviewPanel> {
                       children: [
                         Text(
                           'Verified Specialist',
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.textPrimary,
                               ),
                         ),
                         const SizedBox(width: 4),
-                        const Icon(Icons.verified_rounded,
-                            color: AppColors.primary, size: 14),
+                        const Icon(
+                          Icons.verified_rounded,
+                          color: AppColors.primary,
+                          size: 14,
+                        ),
                       ],
                     ),
                     Text(
                       'How was your experience?',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                   ],
                 ),
@@ -318,7 +323,9 @@ class _BookingReviewPanelState extends State<BookingReviewPanel> {
                   const SizedBox(height: 4),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 3),
+                      horizontal: 10,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.accentGoldSoft,
                       borderRadius: BorderRadius.circular(12),
@@ -352,40 +359,45 @@ class _BookingReviewPanelState extends State<BookingReviewPanel> {
           Wrap(
             spacing: 6,
             runSpacing: 6,
-            children: [
-              'Punctual',
-              'Clean Workspace',
-              'Fair Cost',
-              'Polite & Professional',
-              'Clear Explanation',
-            ].map((compliment) {
-              final isSelected = _text.text.contains(compliment);
-              return ActionChip(
-                label: Text(compliment, style: const TextStyle(fontSize: 11)),
-                backgroundColor: isSelected
-                    ? AppColors.primarySoft
-                    : AppColors.surfaceContainerLow,
-                side: BorderSide(
-                  color: isSelected
-                      ? AppColors.primary
-                      : AppColors.outline.withValues(alpha: 0.15),
-                ),
-                onPressed: () {
-                  setState(() {
-                    if (isSelected) {
-                      _text.text = _text.text
-                          .replaceAll(compliment, '')
-                          .replaceAll(RegExp(r'\s+'), ' ')
-                          .trim();
-                    } else {
-                      final prefix =
-                          _text.text.isEmpty ? '' : '${_text.text}, ';
-                      _text.text = '$prefix$compliment';
-                    }
-                  });
-                },
-              );
-            }).toList(),
+            children:
+                [
+                  'Punctual',
+                  'Clean Workspace',
+                  'Fair Cost',
+                  'Polite & Professional',
+                  'Clear Explanation',
+                ].map((compliment) {
+                  final isSelected = _text.text.contains(compliment);
+                  return ActionChip(
+                    label: Text(
+                      compliment,
+                      style: const TextStyle(fontSize: 11),
+                    ),
+                    backgroundColor: isSelected
+                        ? AppColors.primarySoft
+                        : AppColors.surfaceContainerLow,
+                    side: BorderSide(
+                      color: isSelected
+                          ? AppColors.primary
+                          : AppColors.outline.withValues(alpha: 0.15),
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        if (isSelected) {
+                          _text.text = _text.text
+                              .replaceAll(compliment, '')
+                              .replaceAll(RegExp(r'\s+'), ' ')
+                              .trim();
+                        } else {
+                          final prefix = _text.text.isEmpty
+                              ? ''
+                              : '${_text.text}, ';
+                          _text.text = '$prefix$compliment';
+                        }
+                      });
+                    },
+                  );
+                }).toList(),
           ),
           const SizedBox(height: AppSpacing.md),
 
@@ -499,7 +511,10 @@ class _ReviewPhotosSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Photos (optional)', style: Theme.of(context).textTheme.labelLarge),
+        Text(
+          'Photos (optional)',
+          style: Theme.of(context).textTheme.labelLarge,
+        ),
         const SizedBox(height: AppSpacing.xs),
         for (final photo in photos)
           Padding(
@@ -517,14 +532,11 @@ class _ReviewPhotosSection extends StatelessWidget {
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
-                  child: Text(
-                    switch (photo.status) {
-                      'APPROVED' => 'Visible on your review',
-                      'REJECTED' => 'Not published after moderation',
-                      _ => 'Awaiting a moderation check before it is shown',
-                    },
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
+                  child: Text(switch (photo.status) {
+                    'APPROVED' => 'Visible on your review',
+                    'REJECTED' => 'Not published after moderation',
+                    _ => 'Awaiting a moderation check before it is shown',
+                  }, style: Theme.of(context).textTheme.bodySmall),
                 ),
               ],
             ),

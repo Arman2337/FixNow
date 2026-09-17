@@ -24,7 +24,20 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
 
   String _formatDateTime(DateTime dt) {
     final localDt = dt.toLocal();
-    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    final months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
     final month = months[localDt.month - 1];
     var hour = localDt.hour;
     final ampm = hour >= 12 ? 'PM' : 'AM';
@@ -40,9 +53,7 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(ctx).viewInsets.bottom,
-        ),
+        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
         child: Container(
           padding: const EdgeInsets.all(AppSpacing.md),
           decoration: const BoxDecoration(
@@ -94,7 +105,9 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   foregroundColor: AppColors.primary,
-                  side: BorderSide(color: AppColors.primary.withValues(alpha: 0.5)),
+                  side: BorderSide(
+                    color: AppColors.primary.withValues(alpha: 0.5),
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -105,7 +118,10 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
                 maxLines: 3,
                 decoration: InputDecoration(
                   hintText: 'Write remarks here...',
-                  hintStyle: const TextStyle(fontSize: 12, color: AppColors.textTertiary),
+                  hintStyle: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textTertiary,
+                  ),
                   filled: true,
                   fillColor: AppColors.surfaceContainerLow,
                   border: OutlineInputBorder(
@@ -137,7 +153,9 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             backgroundColor: AppColors.primary,
-                            content: Text('Additional proof submitted to Case Officer.'),
+                            content: Text(
+                              'Additional proof submitted to Case Officer.',
+                            ),
                           ),
                         );
                       },
@@ -178,11 +196,16 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.surfaceContainerLowest.withValues(alpha: 0.95),
+        backgroundColor: AppColors.surfaceContainerLowest.withValues(
+          alpha: 0.95,
+        ),
         elevation: 0,
         scrolledUnderElevation: 1,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+          icon: const Icon(
+            Icons.arrow_back_rounded,
+            color: AppColors.textPrimary,
+          ),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         title: const Column(
@@ -227,7 +250,10 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
                 backgroundColor: AppColors.primary,
                 foregroundColor: AppColors.onPrimary,
                 elevation: 0,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -334,7 +360,9 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
                               label: const Text('File a Dispute Case'),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: AppColors.primary,
-                                side: const BorderSide(color: AppColors.primary),
+                                side: const BorderSide(
+                                  color: AppColors.primary,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10),
                                 ),
@@ -462,7 +490,10 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
     );
   }
 
-  Widget _buildActiveCaseHighlightCard(BuildContext context, Complaint complaint) {
+  Widget _buildActiveCaseHighlightCard(
+    BuildContext context,
+    Complaint complaint,
+  ) {
     final caseShort = complaint.id.length >= 8
         ? complaint.id.substring(0, 8).toUpperCase()
         : complaint.id.toUpperCase();
@@ -503,7 +534,10 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
                         ),
                       ),
                       const SizedBox(width: 6),
-                      const Text('•', style: TextStyle(color: AppColors.outlineVariant)),
+                      const Text(
+                        '•',
+                        style: TextStyle(color: AppColors.outlineVariant),
+                      ),
                       const SizedBox(width: 6),
                       Text(
                         complaint.bookingId != null
@@ -528,7 +562,10 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
                 ],
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.tertiaryFixed,
                   borderRadius: BorderRadius.circular(20),
@@ -608,7 +645,10 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
                       ],
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.primaryFixed.withValues(alpha: 0.4),
                         borderRadius: BorderRadius.circular(12),
@@ -660,7 +700,13 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
                 ),
               ),
               Text(
-                'Stage ${complaint.status == 'OPEN' ? 1 : complaint.status == 'IN_PROGRESS' ? 2 : complaint.status == 'PENDING' ? 3 : 4} of 4',
+                'Stage ${complaint.status == 'OPEN'
+                    ? 1
+                    : complaint.status == 'IN_PROGRESS'
+                    ? 2
+                    : complaint.status == 'PENDING'
+                    ? 3
+                    : 4} of 4',
                 style: const TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
@@ -684,26 +730,45 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
                   time: _formatDateTime(complaint.createdAt),
                 ),
                 _buildMilestoneRow(
-                  isDone: complaint.status != 'OPEN' && complaint.status != 'IN_PROGRESS',
+                  isDone:
+                      complaint.status != 'OPEN' &&
+                      complaint.status != 'IN_PROGRESS',
                   isActive: complaint.status == 'IN_PROGRESS',
                   title: 'Evidence & Bill Audited',
                   meta: 'Unit rates matched with technician checklist logs.',
-                  time: complaint.status == 'OPEN' ? 'Pending' : _formatDateTime(complaint.updatedAt),
+                  time: complaint.status == 'OPEN'
+                      ? 'Pending'
+                      : _formatDateTime(complaint.updatedAt),
                 ),
                 _buildMilestoneRow(
-                  isDone: complaint.status == 'RESOLVED' || complaint.status == 'CLOSED',
+                  isDone:
+                      complaint.status == 'RESOLVED' ||
+                      complaint.status == 'CLOSED',
                   isActive: complaint.status == 'PENDING',
                   title: 'Provider Clarification & Audit',
                   meta: 'Technician response window open. IoT logs verified.',
-                  time: (complaint.status == 'OPEN' || complaint.status == 'IN_PROGRESS') ? 'Pending' : _formatDateTime(complaint.updatedAt),
+                  time:
+                      (complaint.status == 'OPEN' ||
+                          complaint.status == 'IN_PROGRESS')
+                      ? 'Pending'
+                      : _formatDateTime(complaint.updatedAt),
                 ),
                 _buildMilestoneRow(
-                  isDone: complaint.status == 'RESOLVED' || complaint.status == 'CLOSED',
-                  isActive: complaint.status == 'RESOLVED' || complaint.status == 'CLOSED',
+                  isDone:
+                      complaint.status == 'RESOLVED' ||
+                      complaint.status == 'CLOSED',
+                  isActive:
+                      complaint.status == 'RESOLVED' ||
+                      complaint.status == 'CLOSED',
                   isLast: true,
                   title: 'Resolution & Escrow Adjustment / Refund',
-                  meta: 'Immediate wallet refund or warranty service re-dispatch.',
-                  time: (complaint.status == 'RESOLVED' || complaint.status == 'CLOSED') ? _formatDateTime(complaint.updatedAt) : 'Pending',
+                  meta:
+                      'Immediate wallet refund or warranty service re-dispatch.',
+                  time:
+                      (complaint.status == 'RESOLVED' ||
+                          complaint.status == 'CLOSED')
+                      ? _formatDateTime(complaint.updatedAt)
+                      : 'Pending',
                 ),
               ],
             ),
@@ -783,7 +848,9 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
                   label: const Text('Add Proof'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.textPrimary,
-                    side: BorderSide(color: AppColors.outline.withValues(alpha: 0.2)),
+                    side: BorderSide(
+                      color: AppColors.outline.withValues(alpha: 0.2),
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -843,8 +910,8 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
                   color: isDone
                       ? AppColors.primary
                       : (isActive
-                          ? AppColors.tertiaryFixed
-                          : AppColors.surfaceContainerHigh),
+                            ? AppColors.tertiaryFixed
+                            : AppColors.surfaceContainerHigh),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -854,7 +921,9 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
                   size: 12,
                   color: isDone
                       ? AppColors.onPrimary
-                      : (isActive ? AppColors.onTertiaryFixed : AppColors.textSecondary),
+                      : (isActive
+                            ? AppColors.onTertiaryFixed
+                            : AppColors.textSecondary),
                 ),
               ),
               if (!isLast)
@@ -882,8 +951,12 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
                         title,
                         style: TextStyle(
                           fontSize: 12,
-                          fontWeight: isActive ? FontWeight.w800 : FontWeight.w700,
-                          color: isActive ? AppColors.tertiary : AppColors.textPrimary,
+                          fontWeight: isActive
+                              ? FontWeight.w800
+                              : FontWeight.w700,
+                          color: isActive
+                              ? AppColors.tertiary
+                              : AppColors.textPrimary,
                         ),
                       ),
                       Text(
@@ -891,7 +964,9 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
-                          color: isActive ? AppColors.tertiary : AppColors.textSecondary,
+                          color: isActive
+                              ? AppColors.tertiary
+                              : AppColors.textSecondary,
                         ),
                       ),
                     ],
@@ -914,7 +989,10 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
     );
   }
 
-  Widget _buildResolvedCaseAccordion(BuildContext context, Complaint complaint) {
+  Widget _buildResolvedCaseAccordion(
+    BuildContext context,
+    Complaint complaint,
+  ) {
     final caseShort = complaint.id.length >= 8
         ? complaint.id.substring(0, 8).toUpperCase()
         : complaint.id.toUpperCase();

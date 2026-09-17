@@ -36,10 +36,7 @@ class SubServiceItem {
 
 /// A line item in the customer's active service cart.
 class CartItem {
-  const CartItem({
-    required this.subService,
-    required this.quantity,
-  });
+  const CartItem({required this.subService, required this.quantity});
 
   final SubServiceItem subService;
   final int quantity;
@@ -51,10 +48,8 @@ class CartItem {
     return '₹${rupees.toStringAsFixed(itemTotalMinor % 100 == 0 ? 0 : 2)}';
   }
 
-  CartItem copyWith({int? quantity}) => CartItem(
-        subService: subService,
-        quantity: quantity ?? this.quantity,
-      );
+  CartItem copyWith({int? quantity}) =>
+      CartItem(subService: subService, quantity: quantity ?? this.quantity);
 }
 
 /// In-memory state manager for the multi-item sub-service cart.
@@ -92,8 +87,7 @@ class ServiceCartController extends ChangeNotifier {
     return '₹${rupees.toStringAsFixed(grandTotalMinor % 100 == 0 ? 0 : 2)}';
   }
 
-  int getQuantity(String subServiceId) =>
-      _items[subServiceId]?.quantity ?? 0;
+  int getQuantity(String subServiceId) => _items[subServiceId]?.quantity ?? 0;
 
   void add(SubServiceItem subService) {
     if (_items.containsKey(subService.id)) {
@@ -143,13 +137,17 @@ class SubServiceRepository {
   const SubServiceRepository(this._api);
   final ApiTransport _api;
 
-  Future<List<SubServiceItem>> getSubServicesForCategory(String categorySlug) async {
+  Future<List<SubServiceItem>> getSubServicesForCategory(
+    String categorySlug,
+  ) async {
     try {
-      final response = await _api.send(ApiRequest(
-        method: ApiMethod.get,
-        path: 'sub-services?categoryId=$categorySlug',
-      ));
-      
+      final response = await _api.send(
+        ApiRequest(
+          method: ApiMethod.get,
+          path: 'sub-services?categoryId=$categorySlug',
+        ),
+      );
+
       final data = response.body;
       if (data is List) {
         return data.map((json) {
@@ -174,11 +172,10 @@ class SubServiceRepository {
 
   Future<List<SubServiceItem>> getAllSubServices() async {
     try {
-      final response = await _api.send(const ApiRequest(
-        method: ApiMethod.get,
-        path: 'sub-services',
-      ));
-      
+      final response = await _api.send(
+        const ApiRequest(method: ApiMethod.get, path: 'sub-services'),
+      );
+
       final data = response.body;
       if (data is List) {
         return data.map((json) {

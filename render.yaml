@@ -4,7 +4,7 @@ services:
     env: node
     rootDir: backend
     buildCommand: npm install && npm run build
-    startCommand: npm run typeorm -- migration:run -d typeorm.config.ts && npm run start:prod
+    startCommand: npm run typeorm -- migration:run -d typeorm.config.ts && node seed.js && npm run start:prod
     plan: free
     envVars:
       - key: NODE_ENV

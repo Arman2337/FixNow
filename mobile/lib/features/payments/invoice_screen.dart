@@ -47,12 +47,11 @@ class InvoiceScreen extends StatefulWidget {
 }
 
 class _InvoiceScreenState extends State<InvoiceScreen> {
-  late final InvoiceController _controller =
-      InvoiceController(
-        widget.repository,
-        widget.bookingId,
-        initialInvoice: widget.initialInvoice,
-      )..load();
+  late final InvoiceController _controller = InvoiceController(
+    widget.repository,
+    widget.bookingId,
+    initialInvoice: widget.initialInvoice,
+  )..load();
 
   @override
   void dispose() {
@@ -173,15 +172,16 @@ class _PendingViewState extends State<_PendingView> {
       context,
       bookingId: widget.bookingId,
       baseAmountMinor: 49900,
-      onProcessPayment: ({
-        required paymentMethod,
-        required totalMinor,
-        required tipMinor,
-      }) async {
-        if (widget.repository != null) {
-          await widget.repository!.pay(widget.bookingId);
-        }
-      },
+      onProcessPayment:
+          ({
+            required paymentMethod,
+            required totalMinor,
+            required tipMinor,
+          }) async {
+            if (widget.repository != null) {
+              await widget.repository!.pay(widget.bookingId);
+            }
+          },
       onViewInvoice: () async {
         await widget.onPaid();
       },
@@ -207,9 +207,7 @@ class _InvoiceView extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.surfaceContainerLowest,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: AppColors.outline.withValues(alpha: 0.08),
-          ),
+          border: Border.all(color: AppColors.outline.withValues(alpha: 0.08)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -220,15 +218,18 @@ class _InvoiceView extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.verified_user_rounded,
-                        color: AppColors.primary, size: 22),
+                    const Icon(
+                      Icons.verified_user_rounded,
+                      color: AppColors.primary,
+                      size: 22,
+                    ),
                     const SizedBox(width: 6),
                     Text(
                       'FixNow',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 ),
@@ -246,7 +247,7 @@ class _InvoiceView extends StatelessWidget {
                   style: const TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 11,
-),
+                  ),
                 ),
                 const Text(
                   'Bengaluru, Karnataka 560102',
@@ -264,8 +265,11 @@ class _InvoiceView extends StatelessWidget {
                 color: AppColors.surfaceContainerLow,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(Icons.receipt_long_rounded,
-                  color: AppColors.primary, size: 24),
+              child: const Icon(
+                Icons.receipt_long_rounded,
+                color: AppColors.primary,
+                size: 24,
+              ),
             ),
           ],
         ),
@@ -285,9 +289,7 @@ class _InvoiceView extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.surfaceContainerLowest,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: AppColors.outline.withValues(alpha: 0.08),
-          ),
+          border: Border.all(color: AppColors.outline.withValues(alpha: 0.08)),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.04),
@@ -301,21 +303,29 @@ class _InvoiceView extends StatelessWidget {
           children: [
             Text(
               'Amount paid',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(color: AppColors.textSecondary),
             ),
             const SizedBox(height: AppSpacing.xs),
             FixRollingTicker(
               targetValue: invoice.amountMinor > 0
                   ? invoice.amountMinor / 100.0
-                  : (double.tryParse(invoice.amountLabel.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0),
-              currencySymbol: invoice.currency == 'INR' ? '₹' : '${invoice.currency} ',
+                  : (double.tryParse(
+                          invoice.amountLabel.replaceAll(
+                            RegExp(r'[^0-9.]'),
+                            '',
+                          ),
+                        ) ??
+                        0.0),
+              currencySymbol: invoice.currency == 'INR'
+                  ? '₹'
+                  : '${invoice.currency} ',
               showDecimals: (invoice.amountMinor % 100) != 0,
               style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w800,
-                  ),
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ],
         ),
@@ -355,7 +365,10 @@ class _InvoiceView extends StatelessWidget {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.primarySoft,
                     borderRadius: BorderRadius.circular(4),
@@ -397,17 +410,17 @@ class _InvoiceView extends StatelessWidget {
         padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
-            colors: [
-              AppColors.primary,
-              AppColors.primaryContainer,
-            ],
+            colors: [AppColors.primary, AppColors.primaryContainer],
           ),
           borderRadius: BorderRadius.circular(16),
         ),
         child: const Row(
           children: [
-            Icon(Icons.workspace_premium_rounded,
-                color: AppColors.primaryFixed, size: 28),
+            Icon(
+              Icons.workspace_premium_rounded,
+              color: AppColors.primaryFixed,
+              size: 28,
+            ),
             SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -423,10 +436,7 @@ class _InvoiceView extends StatelessWidget {
                   ),
                   Text(
                     'Free rework & dispute resolution guaranteed on this invoice.',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 11,
-                    ),
+                    style: TextStyle(color: Colors.white70, fontSize: 11),
                   ),
                 ],
               ),
@@ -461,11 +471,17 @@ class _InvoiceView extends StatelessWidget {
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
-          side: BorderSide(color: AppColors.borderDefault.withValues(alpha: 0.2)),
+          side: BorderSide(
+            color: AppColors.borderDefault.withValues(alpha: 0.2),
+          ),
         ),
         content: Row(
           children: [
-            const Icon(Icons.file_download_done_rounded, color: AppColors.success, size: 18),
+            const Icon(
+              Icons.file_download_done_rounded,
+              color: AppColors.success,
+              size: 18,
+            ),
             const SizedBox(width: 10),
             Expanded(
               child: Text(

@@ -2,7 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 abstract final class FixNowTypography {
-  static TextStyle _manrope(double size, FontWeight weight, double height, [double letterSpacing = 0.0]) {
+  static TextStyle _manrope(
+    double size,
+    FontWeight weight,
+    double height, [
+    double letterSpacing = 0.0,
+  ]) {
     return GoogleFonts.manrope(
       fontSize: size,
       fontWeight: weight,
@@ -11,8 +16,18 @@ abstract final class FixNowTypography {
     );
   }
 
-  static final TextStyle displayLarge = _manrope(32, FontWeight.w700, 1.15, -0.3);
-  static final TextStyle displayMedium = _manrope(28, FontWeight.w700, 1.2, -0.3);
+  static final TextStyle displayLarge = _manrope(
+    32,
+    FontWeight.w700,
+    1.15,
+    -0.3,
+  );
+  static final TextStyle displayMedium = _manrope(
+    28,
+    FontWeight.w700,
+    1.2,
+    -0.3,
+  );
 
   static final TextStyle h1 = _manrope(26, FontWeight.w700, 1.2, -0.2);
   static final TextStyle h2 = _manrope(24, FontWeight.w700, 1.25);
@@ -25,7 +40,12 @@ abstract final class FixNowTypography {
 
   static final TextStyle labelLarge = _manrope(14, FontWeight.w600, 1.0);
   static final TextStyle labelMedium = _manrope(12, FontWeight.w600, 1.0);
-  static final TextStyle labelSmall = _manrope(11, FontWeight.w500, 1.0, 0.4); // small uppercase labels get +0.4 spacing
+  static final TextStyle labelSmall = _manrope(
+    11,
+    FontWeight.w500,
+    1.0,
+    0.4,
+  ); // small uppercase labels get +0.4 spacing
 
   static final TextStyle button = _manrope(15, FontWeight.w600, 1.1);
   static final TextStyle buttonSecondary = _manrope(15, FontWeight.w600, 1.1);

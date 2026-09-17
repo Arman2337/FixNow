@@ -30,7 +30,10 @@ class ComplaintDetailScreen extends StatelessWidget {
         elevation: 0,
         scrolledUnderElevation: 1,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+          icon: const Icon(
+            Icons.arrow_back_rounded,
+            color: AppColors.textPrimary,
+          ),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         title: const Text(
@@ -258,9 +261,12 @@ class ComplaintDetailScreen extends StatelessWidget {
                   isLast: true,
                   title: 'Resolution & Escrow Settlement',
                   subtitle: isResolved
-                      ? (complaint.resolutionNotes ?? 'Dispute resolved successfully.')
+                      ? (complaint.resolutionNotes ??
+                            'Dispute resolved successfully.')
                       : 'Final decision or refund issued to source payment.',
-                  date: isResolved ? _formatDateTime(complaint.updatedAt) : 'Pending',
+                  date: isResolved
+                      ? _formatDateTime(complaint.updatedAt)
+                      : 'Pending',
                 ),
               ],
             ),
@@ -336,7 +342,11 @@ class ComplaintDetailScreen extends StatelessWidget {
                 children: [
                   Row(
                     children: const [
-                      Icon(Icons.check_circle_rounded, color: AppColors.primary, size: 18),
+                      Icon(
+                        Icons.check_circle_rounded,
+                        color: AppColors.primary,
+                        size: 18,
+                      ),
                       SizedBox(width: 6),
                       Text(
                         'Resolution Notes',
@@ -377,7 +387,9 @@ class ComplaintDetailScreen extends StatelessWidget {
   }) {
     Color dotColor = isDone
         ? AppColors.primary
-        : (isActive ? AppColors.tertiaryContainer : AppColors.surfaceContainerHigh);
+        : (isActive
+              ? AppColors.tertiaryContainer
+              : AppColors.surfaceContainerHigh);
 
     return IntrinsicHeight(
       child: Row(
@@ -395,10 +407,18 @@ class ComplaintDetailScreen extends StatelessWidget {
                     shape: BoxShape.circle,
                   ),
                   child: isDone
-                      ? const Icon(Icons.check, size: 11, color: AppColors.onPrimary)
+                      ? const Icon(
+                          Icons.check,
+                          size: 11,
+                          color: AppColors.onPrimary,
+                        )
                       : (isActive
-                          ? const Icon(Icons.sync, size: 11, color: AppColors.onPrimary)
-                          : null),
+                            ? const Icon(
+                                Icons.sync,
+                                size: 11,
+                                color: AppColors.onPrimary,
+                              )
+                            : null),
                 ),
                 if (!isLast)
                   Expanded(

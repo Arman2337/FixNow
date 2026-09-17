@@ -36,7 +36,10 @@ class PushApi {
     return resolve == null ? null : resolve();
   }
 
-  Future<void> register({required String token, required String platform}) async {
+  Future<void> register({
+    required String token,
+    required String platform,
+  }) async {
     await _transport.send(
       ApiRequest(
         method: ApiMethod.put,

@@ -107,12 +107,13 @@ class ProviderAvailability {
     if (weeklyRules.isEmpty) {
       return 'No recurring hours set.';
     }
-    final days = weeklyRules
-        .map((r) => (r['dayOfWeek'] as num?)?.toInt())
-        .whereType<int>()
-        .toSet()
-        .toList()
-      ..sort();
+    final days =
+        weeklyRules
+            .map((r) => (r['dayOfWeek'] as num?)?.toInt())
+            .whereType<int>()
+            .toSet()
+            .toList()
+          ..sort();
 
     String timeStr = '09:00–17:00';
     if (weeklyRules.isNotEmpty) {
@@ -129,13 +130,15 @@ class ProviderAvailability {
       }
     }
 
-    final isMonToFri = days.length == 5 &&
+    final isMonToFri =
+        days.length == 5 &&
         days.contains(1) &&
         days.contains(2) &&
         days.contains(3) &&
         days.contains(4) &&
         days.contains(5);
-    final isMonToSat = days.length == 6 &&
+    final isMonToSat =
+        days.length == 6 &&
         days.contains(1) &&
         days.contains(2) &&
         days.contains(3) &&
@@ -174,16 +177,19 @@ class ProviderAvailability {
 class ProviderSkill {
   const ProviderSkill({
     required this.id,
+    required this.categoryId,
     required this.categoryName,
     required this.verified,
   });
   final String id;
+  final String categoryId;
   final String categoryName;
   final bool verified;
   factory ProviderSkill.fromJson(Map<String, Object?> json) {
     final category = Map<String, Object?>.from(json['serviceCategory'] as Map);
     return ProviderSkill(
       id: json['id'] as String,
+      categoryId: category['id'] as String? ?? '',
       categoryName: category['name'] as String,
       verified: json['isVerified'] as bool,
     );

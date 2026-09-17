@@ -28,10 +28,11 @@ class _SavedAddressSelectorCardState extends State<SavedAddressSelectorCard> {
   @override
   void initState() {
     super.initState();
-    _selectedAddress = widget.initialAddress ??
+    _selectedAddress =
+        widget.initialAddress ??
         SavedAddressRepository.instance.defaultAddress ??
-        (SavedAddressRepository.instance.addresses.isNotEmpty 
-            ? SavedAddressRepository.instance.addresses.first 
+        (SavedAddressRepository.instance.addresses.isNotEmpty
+            ? SavedAddressRepository.instance.addresses.first
             : const SavedAddress(
                 id: 'empty',
                 label: AddressLabel.other,
@@ -49,7 +50,8 @@ class _SavedAddressSelectorCardState extends State<SavedAddressSelectorCard> {
     final all = SavedAddressRepository.instance.addresses;
     if (all.isEmpty) return;
     if (!all.any((a) => a.id == _selectedAddress.id)) {
-      _selectedAddress = SavedAddressRepository.instance.defaultAddress ?? all.first;
+      _selectedAddress =
+          SavedAddressRepository.instance.defaultAddress ?? all.first;
       widget.onAddressSelected(_selectedAddress);
     }
     setState(() {});
@@ -100,7 +102,11 @@ class _SavedAddressSelectorCardState extends State<SavedAddressSelectorCard> {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.location_on_rounded, color: AppColors.primary, size: 18),
+                  const Icon(
+                    Icons.location_on_rounded,
+                    color: AppColors.primary,
+                    size: 18,
+                  ),
                   const SizedBox(width: 8),
                   const Text(
                     'Service Address',
@@ -112,7 +118,10 @@ class _SavedAddressSelectorCardState extends State<SavedAddressSelectorCard> {
                   ),
                   const SizedBox(width: 6),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.primary.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -120,7 +129,11 @@ class _SavedAddressSelectorCardState extends State<SavedAddressSelectorCard> {
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.my_location_rounded, size: 10, color: AppColors.primary),
+                        Icon(
+                          Icons.my_location_rounded,
+                          size: 10,
+                          color: AppColors.primary,
+                        ),
                         SizedBox(width: 2),
                         Text(
                           'GPS ±3m',
@@ -164,7 +177,10 @@ class _SavedAddressSelectorCardState extends State<SavedAddressSelectorCard> {
                   onTap: _openAddModal,
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.surfaceContainerLow,
                       borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -172,7 +188,11 @@ class _SavedAddressSelectorCardState extends State<SavedAddressSelectorCard> {
                     ),
                     child: const Row(
                       children: [
-                        Icon(Icons.add_rounded, size: 14, color: AppColors.textSecondary),
+                        Icon(
+                          Icons.add_rounded,
+                          size: 14,
+                          color: AppColors.textSecondary,
+                        ),
                         SizedBox(width: 4),
                         Text(
                           'New Address',
@@ -209,7 +229,11 @@ class _SavedAddressSelectorCardState extends State<SavedAddressSelectorCard> {
                     color: AppColors.primary.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(_selectedAddress.icon, color: AppColors.primary, size: 16),
+                  child: Icon(
+                    _selectedAddress.icon,
+                    color: AppColors.primary,
+                    size: 16,
+                  ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -229,9 +253,14 @@ class _SavedAddressSelectorCardState extends State<SavedAddressSelectorCard> {
                           if (_selectedAddress.isDefault) ...[
                             const SizedBox(width: 6),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 5,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
-                                color: AppColors.primary.withValues(alpha: 0.15),
+                                color: AppColors.primary.withValues(
+                                  alpha: 0.15,
+                                ),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: const Text(
@@ -306,14 +335,14 @@ class _SavedAddressSelectorCardState extends State<SavedAddressSelectorCard> {
 
 /// Modal Bottom Sheet for adding or editing an address
 class AddEditAddressModalSheet extends StatefulWidget {
-  const AddEditAddressModalSheet({
-    super.key,
-    this.initialAddress,
-  });
+  const AddEditAddressModalSheet({super.key, this.initialAddress});
 
   final SavedAddress? initialAddress;
 
-  static Future<SavedAddress?> show(BuildContext context, {SavedAddress? address}) {
+  static Future<SavedAddress?> show(
+    BuildContext context, {
+    SavedAddress? address,
+  }) {
     return showModalBottomSheet<SavedAddress>(
       context: context,
       isScrollControlled: true,
@@ -370,12 +399,16 @@ class _AddEditAddressModalSheetState extends State<AddEditAddressModalSheet> {
     if (!_formKey.currentState!.validate()) return;
 
     final address = SavedAddress(
-      id: widget.initialAddress?.id ?? 'addr-${DateTime.now().millisecondsSinceEpoch}',
+      id:
+          widget.initialAddress?.id ??
+          'addr-${DateTime.now().millisecondsSinceEpoch}',
       label: _label,
       customTitle: _titleController.text.trim(),
       flatBuilding: _flatController.text.trim(),
       streetArea: _streetController.text.trim(),
-      landmark: _landmarkController.text.trim().isNotEmpty ? _landmarkController.text.trim() : null,
+      landmark: _landmarkController.text.trim().isNotEmpty
+          ? _landmarkController.text.trim()
+          : null,
       city: _cityController.text.trim(),
       postalCode: _pincodeController.text.trim(),
       latitude: widget.initialAddress?.latitude ?? 12.9352,
@@ -391,7 +424,9 @@ class _AddEditAddressModalSheetState extends State<AddEditAddressModalSheet> {
   Widget build(BuildContext context) {
     return Material(
       color: AppColors.surfaceContainerLowest,
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.card)),
+      borderRadius: const BorderRadius.vertical(
+        top: Radius.circular(AppRadius.card),
+      ),
       clipBehavior: Clip.antiAlias,
       child: Container(
         padding: EdgeInsets.only(
@@ -428,11 +463,19 @@ class _AddEditAddressModalSheetState extends State<AddEditAddressModalSheet> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        widget.initialAddress == null ? 'Add New Address' : 'Edit Address',
-                        style: FixNowTypography.heading2.copyWith(color: AppColors.textPrimary, fontSize: 18),
+                        widget.initialAddress == null
+                            ? 'Add New Address'
+                            : 'Edit Address',
+                        style: FixNowTypography.heading2.copyWith(
+                          color: AppColors.textPrimary,
+                          fontSize: 18,
+                        ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.close_rounded, color: AppColors.textSecondary),
+                        icon: const Icon(
+                          Icons.close_rounded,
+                          color: AppColors.textSecondary,
+                        ),
                         onPressed: () => Navigator.of(context).pop(),
                       ),
                     ],
@@ -443,11 +486,23 @@ class _AddEditAddressModalSheetState extends State<AddEditAddressModalSheet> {
                   // Label selector chips
                   Row(
                     children: [
-                      _buildLabelChoice(AddressLabel.home, 'Home', Icons.home_rounded),
+                      _buildLabelChoice(
+                        AddressLabel.home,
+                        'Home',
+                        Icons.home_rounded,
+                      ),
                       const SizedBox(width: 8),
-                      _buildLabelChoice(AddressLabel.work, 'Work', Icons.work_rounded),
+                      _buildLabelChoice(
+                        AddressLabel.work,
+                        'Work',
+                        Icons.work_rounded,
+                      ),
                       const SizedBox(width: 8),
-                      _buildLabelChoice(AddressLabel.other, 'Other', Icons.location_on_rounded),
+                      _buildLabelChoice(
+                        AddressLabel.other,
+                        'Other',
+                        Icons.location_on_rounded,
+                      ),
                     ],
                   ),
 
@@ -456,9 +511,16 @@ class _AddEditAddressModalSheetState extends State<AddEditAddressModalSheet> {
                   // Flat/Building
                   TextFormField(
                     controller: _flatController,
-                    style: const TextStyle(color: AppColors.textPrimary, fontSize: 13),
-                    decoration: _inputDecoration('Flat, House No., Building Name *'),
-                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter building / flat details' : null,
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 13,
+                    ),
+                    decoration: _inputDecoration(
+                      'Flat, House No., Building Name *',
+                    ),
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? 'Enter building / flat details'
+                        : null,
                   ),
 
                   const SizedBox(height: AppSpacing.sm),
@@ -466,9 +528,14 @@ class _AddEditAddressModalSheetState extends State<AddEditAddressModalSheet> {
                   // Street/Area
                   TextFormField(
                     controller: _streetController,
-                    style: const TextStyle(color: AppColors.textPrimary, fontSize: 13),
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 13,
+                    ),
                     decoration: _inputDecoration('Street, Area, Colony *'),
-                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter street / area' : null,
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? 'Enter street / area'
+                        : null,
                   ),
 
                   const SizedBox(height: AppSpacing.sm),
@@ -476,7 +543,10 @@ class _AddEditAddressModalSheetState extends State<AddEditAddressModalSheet> {
                   // Landmark
                   TextFormField(
                     controller: _landmarkController,
-                    style: const TextStyle(color: AppColors.textPrimary, fontSize: 13),
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 13,
+                    ),
                     decoration: _inputDecoration('Landmark (Optional)'),
                   ),
 
@@ -487,18 +557,28 @@ class _AddEditAddressModalSheetState extends State<AddEditAddressModalSheet> {
                       Expanded(
                         child: TextFormField(
                           controller: _cityController,
-                          style: const TextStyle(color: AppColors.textPrimary, fontSize: 13),
+                          style: const TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 13,
+                          ),
                           decoration: _inputDecoration('City *'),
-                          validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter city' : null,
+                          validator: (v) => (v == null || v.trim().isEmpty)
+                              ? 'Enter city'
+                              : null,
                         ),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: TextFormField(
                           controller: _pincodeController,
-                          style: const TextStyle(color: AppColors.textPrimary, fontSize: 13),
+                          style: const TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 13,
+                          ),
                           decoration: _inputDecoration('Pincode *'),
-                          validator: (v) => (v == null || v.trim().length < 6) ? '6-digit pincode' : null,
+                          validator: (v) => (v == null || v.trim().length < 6)
+                              ? '6-digit pincode'
+                              : null,
                         ),
                       ),
                     ],
@@ -511,7 +591,13 @@ class _AddEditAddressModalSheetState extends State<AddEditAddressModalSheet> {
                     color: Colors.transparent,
                     child: SwitchListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: const Text('Save as default service address', style: TextStyle(color: AppColors.textPrimary, fontSize: 13)),
+                      title: const Text(
+                        'Save as default service address',
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 13,
+                        ),
+                      ),
                       value: _isDefault,
                       activeThumbColor: AppColors.primary,
                       onChanged: (val) => setState(() => _isDefault = val),
@@ -541,7 +627,9 @@ class _AddEditAddressModalSheetState extends State<AddEditAddressModalSheet> {
         onTap: () {
           setState(() {
             _label = label;
-            if (_titleController.text == 'Home' || _titleController.text == 'Work' || _titleController.text == 'Other') {
+            if (_titleController.text == 'Home' ||
+                _titleController.text == 'Work' ||
+                _titleController.text == 'Other') {
               _titleController.text = text;
             }
           });
@@ -550,19 +638,29 @@ class _AddEditAddressModalSheetState extends State<AddEditAddressModalSheet> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.primary.withValues(alpha: 0.12) : AppColors.surfaceContainerLow,
+            color: isSelected
+                ? AppColors.primary.withValues(alpha: 0.12)
+                : AppColors.surfaceContainerLow,
             borderRadius: BorderRadius.circular(AppRadius.card),
-            border: Border.all(color: isSelected ? AppColors.primary : AppColors.borderDefault),
+            border: Border.all(
+              color: isSelected ? AppColors.primary : AppColors.borderDefault,
+            ),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: isSelected ? AppColors.primary : AppColors.textSecondary, size: 16),
+              Icon(
+                icon,
+                color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                size: 16,
+              ),
               const SizedBox(width: 6),
               Text(
                 text,
                 style: TextStyle(
-                  color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                  color: isSelected
+                      ? AppColors.primary
+                      : AppColors.textSecondary,
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                 ),

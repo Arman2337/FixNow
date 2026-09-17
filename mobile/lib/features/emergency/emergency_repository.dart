@@ -43,8 +43,10 @@ class EmergencyStatusResult {
 }
 
 class EmergencyRepository {
-  EmergencyRepository(this._transport, {Future<String?> Function()? accessToken})
-    : _accessToken = accessToken;
+  EmergencyRepository(
+    this._transport, {
+    Future<String?> Function()? accessToken,
+  }) : _accessToken = accessToken;
 
   final ApiTransport _transport;
   final Future<String?> Function()? _accessToken;
@@ -79,7 +81,9 @@ class EmergencyRepository {
         'The emergency alert could not be sent.',
       );
     }
-    return EmergencyCreationResult.fromJson(response.body as Map<String, Object?>);
+    return EmergencyCreationResult.fromJson(
+      response.body as Map<String, Object?>,
+    );
   }
 
   Future<EmergencyStatusResult> status(String bookingId) async {
@@ -96,6 +100,8 @@ class EmergencyRepository {
         'Unexpected emergency status response.',
       );
     }
-    return EmergencyStatusResult.fromJson(response.body as Map<String, Object?>);
+    return EmergencyStatusResult.fromJson(
+      response.body as Map<String, Object?>,
+    );
   }
 }

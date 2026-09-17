@@ -97,10 +97,73 @@ class _JobProofVerificationDialogState
     } catch (_) {
       // Fallback dummy 1x1 png bytes if running in test / simulator without camera
       final dummyBytes = Uint8List.fromList([
-        137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82, 0, 0,
-        0, 1, 0, 0, 0, 1, 8, 6, 0, 0, 0, 31, 21, 196, 137, 0, 0, 0, 10, 73,
-        68, 65, 84, 120, 156, 99, 0, 1, 0, 0, 5, 0, 1, 13, 10, 45, 180, 0, 0,
-        0, 0, 73, 69, 78, 68, 174, 66, 96, 130,
+        137,
+        80,
+        78,
+        71,
+        13,
+        10,
+        26,
+        10,
+        0,
+        0,
+        0,
+        13,
+        73,
+        72,
+        68,
+        82,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        8,
+        6,
+        0,
+        0,
+        0,
+        31,
+        21,
+        196,
+        137,
+        0,
+        0,
+        0,
+        10,
+        73,
+        68,
+        65,
+        84,
+        120,
+        156,
+        99,
+        0,
+        1,
+        0,
+        0,
+        5,
+        0,
+        1,
+        13,
+        10,
+        45,
+        180,
+        0,
+        0,
+        0,
+        0,
+        73,
+        69,
+        78,
+        68,
+        174,
+        66,
+        96,
+        130,
       ]);
       setState(() {
         if (isBefore) {
@@ -118,10 +181,73 @@ class _JobProofVerificationDialogState
 
   void _simulateTestPhotos() {
     final dummyBytes = Uint8List.fromList([
-      137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82, 0, 0,
-      0, 1, 0, 0, 0, 1, 8, 6, 0, 0, 0, 31, 21, 196, 137, 0, 0, 0, 10, 73,
-      68, 65, 84, 120, 156, 99, 0, 1, 0, 0, 5, 0, 1, 13, 10, 45, 180, 0, 0,
-      0, 0, 73, 69, 78, 68, 174, 66, 96, 130,
+      137,
+      80,
+      78,
+      71,
+      13,
+      10,
+      26,
+      10,
+      0,
+      0,
+      0,
+      13,
+      73,
+      72,
+      68,
+      82,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      8,
+      6,
+      0,
+      0,
+      0,
+      31,
+      21,
+      196,
+      137,
+      0,
+      0,
+      0,
+      10,
+      73,
+      68,
+      65,
+      84,
+      120,
+      156,
+      99,
+      0,
+      1,
+      0,
+      0,
+      5,
+      0,
+      1,
+      13,
+      10,
+      45,
+      180,
+      0,
+      0,
+      0,
+      0,
+      73,
+      69,
+      78,
+      68,
+      174,
+      66,
+      96,
+      130,
     ]);
     setState(() {
       _beforeBytes = dummyBytes;
@@ -160,7 +286,9 @@ class _JobProofVerificationDialogState
       ),
       decoration: const BoxDecoration(
         color: AppColors.backgroundPrimary,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.card)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppRadius.card),
+        ),
         border: Border(top: BorderSide(color: Colors.white12)),
       ),
       child: SafeArea(
@@ -212,7 +340,10 @@ class _JobProofVerificationDialogState
                     ],
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close_rounded, color: Colors.white70),
+                    icon: const Icon(
+                      Icons.close_rounded,
+                      color: Colors.white70,
+                    ),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                 ],
@@ -220,7 +351,11 @@ class _JobProofVerificationDialogState
               const SizedBox(height: 4),
               const Text(
                 'Take mandatory Before and After photos to verify service quality, maintain customer trust, and protect against disputes.',
-                style: TextStyle(color: Colors.white60, fontSize: 12, height: 1.4),
+                style: TextStyle(
+                  color: Colors.white60,
+                  fontSize: 12,
+                  height: 1.4,
+                ),
               ),
 
               const SizedBox(height: AppSpacing.lg),
@@ -258,7 +393,11 @@ class _JobProofVerificationDialogState
                   alignment: Alignment.centerRight,
                   child: TextButton.icon(
                     onPressed: _simulateTestPhotos,
-                    icon: const Icon(Icons.auto_awesome_rounded, size: 14, color: AppColors.focus),
+                    icon: const Icon(
+                      Icons.auto_awesome_rounded,
+                      size: 14,
+                      color: AppColors.focus,
+                    ),
                     label: const Text(
                       'Simulate test photos',
                       style: TextStyle(color: AppColors.focus, fontSize: 12),
@@ -285,7 +424,8 @@ class _JobProofVerificationDialogState
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     const Text(
                                       'Compare Before & After',
@@ -296,8 +436,12 @@ class _JobProofVerificationDialogState
                                       ),
                                     ),
                                     IconButton(
-                                      icon: const Icon(Icons.close_rounded, color: Colors.white),
-                                      onPressed: () => Navigator.of(context).pop(),
+                                      icon: const Icon(
+                                        Icons.close_rounded,
+                                        color: Colors.white,
+                                      ),
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(),
                                     ),
                                   ],
                                 ),
@@ -313,7 +457,11 @@ class _JobProofVerificationDialogState
                         ),
                       );
                     },
-                    icon: const Icon(Icons.compare_arrows_rounded, size: 14, color: AppColors.focus),
+                    icon: const Icon(
+                      Icons.compare_arrows_rounded,
+                      size: 14,
+                      color: AppColors.focus,
+                    ),
                     label: const Text(
                       'Preview Comparison Slider',
                       style: TextStyle(color: AppColors.focus, fontSize: 12),
@@ -328,8 +476,12 @@ class _JobProofVerificationDialogState
                 maxLines: 2,
                 style: const TextStyle(color: Colors.white, fontSize: 13),
                 decoration: InputDecoration(
-                  hintText: 'Work notes (e.g. Replaced rubber gasket, tested zero leaks)...',
-                  hintStyle: const TextStyle(color: Colors.white38, fontSize: 12),
+                  hintText:
+                      'Work notes (e.g. Replaced rubber gasket, tested zero leaks)...',
+                  hintStyle: const TextStyle(
+                    color: Colors.white38,
+                    fontSize: 12,
+                  ),
                   filled: true,
                   fillColor: AppColors.surfaceElevated,
                   contentPadding: const EdgeInsets.all(12),
@@ -356,16 +508,26 @@ class _JobProofVerificationDialogState
                 decoration: BoxDecoration(
                   color: AppColors.success.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppRadius.small),
-                  border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
+                  border: Border.all(
+                    color: AppColors.success.withValues(alpha: 0.3),
+                  ),
                 ),
                 child: const Row(
                   children: [
-                    Icon(Icons.shield_outlined, color: AppColors.success, size: 18),
+                    Icon(
+                      Icons.shield_outlined,
+                      color: AppColors.success,
+                      size: 18,
+                    ),
                     SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Photos are encrypted and watermarked with GPS & timestamp.',
-                        style: TextStyle(color: AppColors.success, fontSize: 11, fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                          color: AppColors.success,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ],
@@ -386,7 +548,10 @@ class _JobProofVerificationDialogState
 
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Cancel', style: TextStyle(color: Colors.white60)),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(color: Colors.white60),
+                ),
               ),
             ],
           ),
@@ -437,12 +602,20 @@ class _JobProofVerificationDialogState
                         color: Colors.white.withValues(alpha: 0.08),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.add_a_photo_outlined, color: Colors.white70, size: 22),
+                      child: const Icon(
+                        Icons.add_a_photo_outlined,
+                        color: Colors.white70,
+                        size: 22,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     const Text(
                       'Take Photo',
-                      style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ],
                 ),
@@ -460,7 +633,11 @@ class _JobProofVerificationDialogState
                 ),
                 child: Text(
                   label,
-                  style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w800),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
             ),
@@ -476,7 +653,11 @@ class _JobProofVerificationDialogState
                     color: AppColors.success,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.check_rounded, color: Colors.white, size: 14),
+                  child: const Icon(
+                    Icons.check_rounded,
+                    color: Colors.white,
+                    size: 14,
+                  ),
                 ),
               ),
           ],
@@ -488,10 +669,7 @@ class _JobProofVerificationDialogState
 
 /// Customer & Provider facing card displaying verified Before & After photos.
 class JobProofViewerCard extends StatelessWidget {
-  const JobProofViewerCard({
-    required this.proof,
-    super.key,
-  });
+  const JobProofViewerCard({required this.proof, super.key});
 
   final JobProof proof;
 
@@ -503,7 +681,14 @@ class JobProofViewerCard extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+            Text(
+              title,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
             const SizedBox(height: 12),
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
@@ -540,7 +725,11 @@ class JobProofViewerCard extends StatelessWidget {
                   color: AppColors.success.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.verified_rounded, color: AppColors.success, size: 16),
+                child: const Icon(
+                  Icons.verified_rounded,
+                  color: AppColors.success,
+                  size: 16,
+                ),
               ),
               const SizedBox(width: 8),
               const Text(
@@ -561,7 +750,11 @@ class JobProofViewerCard extends StatelessWidget {
               if (proof.hasBeforePhoto)
                 Expanded(
                   child: GestureDetector(
-                    onTap: () => _showExpanded(context, proof.beforePhotoBytes!, 'Before Work Photo'),
+                    onTap: () => _showExpanded(
+                      context,
+                      proof.beforePhotoBytes!,
+                      'Before Work Photo',
+                    ),
                     child: _buildThumbnail('BEFORE', proof.beforePhotoBytes!),
                   ),
                 ),
@@ -570,7 +763,11 @@ class JobProofViewerCard extends StatelessWidget {
               if (proof.hasAfterPhoto)
                 Expanded(
                   child: GestureDetector(
-                    onTap: () => _showExpanded(context, proof.afterPhotoBytes!, 'After Work Photo'),
+                    onTap: () => _showExpanded(
+                      context,
+                      proof.afterPhotoBytes!,
+                      'After Work Photo',
+                    ),
                     child: _buildThumbnail('AFTER', proof.afterPhotoBytes!),
                   ),
                 ),
@@ -612,7 +809,10 @@ class JobProofViewerCard extends StatelessWidget {
                                 ),
                               ),
                               IconButton(
-                                icon: const Icon(Icons.close_rounded, color: Colors.white),
+                                icon: const Icon(
+                                  Icons.close_rounded,
+                                  color: Colors.white,
+                                ),
                                 onPressed: () => Navigator.of(context).pop(),
                               ),
                             ],
@@ -630,7 +830,10 @@ class JobProofViewerCard extends StatelessWidget {
                 );
               },
               icon: const Icon(Icons.compare_arrows_rounded, size: 16),
-              label: const Text('Interactive Comparison Slider', style: TextStyle(fontSize: 12)),
+              label: const Text(
+                'Interactive Comparison Slider',
+                style: TextStyle(fontSize: 12),
+              ),
             ),
           ],
 
@@ -638,7 +841,11 @@ class JobProofViewerCard extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
               'Technician Notes: ${proof.notes}',
-              style: const TextStyle(color: Colors.white70, fontSize: 12, fontStyle: FontStyle.italic),
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 12,
+                fontStyle: FontStyle.italic,
+              ),
             ),
           ],
 
@@ -681,7 +888,11 @@ class JobProofViewerCard extends StatelessWidget {
               ),
               child: Text(
                 badge,
-                style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w800),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 8,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
           ),

@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('Fix3DTiltCard renders child and handles pan/hover events', (tester) async {
+  testWidgets('Fix3DTiltCard renders child and handles pan/hover events', (
+    tester,
+  ) async {
     bool tapped = false;
     await tester.pumpWidget(
       MaterialApp(

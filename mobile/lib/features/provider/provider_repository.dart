@@ -64,6 +64,16 @@ class ProviderRepository {
     }
   }
 
+  Future<void> acceptBooking(String bookingId) async {
+    await _api.send(
+      ApiRequest(
+        method: ApiMethod.post,
+        path: 'bookings/$bookingId/accept',
+        bearerToken: await _token(),
+      ),
+    );
+  }
+
   Future<ProviderProfile?> profile() async {
     try {
       final response = await _api.send(
@@ -98,6 +108,21 @@ class ProviderRepository {
     return ProviderProfile.fromJson(_map(response.body));
   }
 
+  Future<ProviderProfile> updateLocation(
+    double latitude,
+    double longitude,
+  ) async {
+    final response = await _api.send(
+      ApiRequest(
+        method: ApiMethod.put,
+        path: 'provider-profile/me/location',
+        bearerToken: await _token(),
+        body: {'latitude': latitude, 'longitude': longitude},
+      ),
+    );
+    return ProviderProfile.fromJson(_map(response.body));
+  }
+
   Future<ProviderAvailability> availability() async =>
       ProviderAvailability.fromJson(
         _map(
@@ -122,10 +147,13 @@ class ProviderRepository {
           path: 'provider-availability/me/status',
           bearerToken: await _token(),
           body: {
-            'status': status, 
+            'status': status,
             'expectedVersion': current.version,
-            if (status != 'offline') 
-              'expiresAt': DateTime.now().toUtc().add(const Duration(hours: 8)).toIso8601String(),
+            if (status != 'offline')
+              'expiresAt': DateTime.now()
+                  .toUtc()
+                  .add(const Duration(hours: 8))
+                  .toIso8601String(),
           },
         ),
       )).body,

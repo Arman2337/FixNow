@@ -170,28 +170,32 @@ void main() {
       expect(controller.message, isNull);
     });
 
-    test('a picker failure surfaces a friendly message, not the error',
-        () async {
-      imageGateway = _FakeImageGateway(null)..error = Exception('boom');
-      final controller = build();
-      await controller.pickImage(ImageSource.camera);
+    test(
+      'a picker failure surfaces a friendly message, not the error',
+      () async {
+        imageGateway = _FakeImageGateway(null)..error = Exception('boom');
+        final controller = build();
+        await controller.pickImage(ImageSource.camera);
 
-      expect(controller.hasImage, isFalse);
-      expect(controller.status, DiagnosisStatus.idle);
-      expect(controller.message, isNotNull);
-      expect(controller.message, isNot(contains('boom')));
-    });
+        expect(controller.hasImage, isFalse);
+        expect(controller.status, DiagnosisStatus.idle);
+        expect(controller.message, isNotNull);
+        expect(controller.message, isNot(contains('boom')));
+      },
+    );
 
-    test('denied microphone permission yields a permissionDenied state',
-        () async {
-      audioGateway = _FakeAudioGateway(granted: false);
-      final controller = build();
-      await controller.startRecording();
+    test(
+      'denied microphone permission yields a permissionDenied state',
+      () async {
+        audioGateway = _FakeAudioGateway(granted: false);
+        final controller = build();
+        await controller.startRecording();
 
-      expect(controller.status, DiagnosisStatus.permissionDenied);
-      expect(controller.isRecording, isFalse);
-      expect(audioGateway.startCalled, isFalse);
-    });
+        expect(controller.status, DiagnosisStatus.permissionDenied);
+        expect(controller.isRecording, isFalse);
+        expect(audioGateway.startCalled, isFalse);
+      },
+    );
 
     test('recording then stopping wraps the PCM as a WAV payload', () async {
       final controller = build();

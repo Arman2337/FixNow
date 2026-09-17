@@ -67,7 +67,9 @@ class _FixOtpInputSheetState extends State<FixOtpInputSheet> {
       ),
       decoration: const BoxDecoration(
         color: AppColors.surfaceElevated,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.bottomSheet)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppRadius.bottomSheet),
+        ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -142,7 +144,9 @@ class _FixOtpInputSheetState extends State<FixOtpInputSheet> {
                     border: Border.all(
                       color: isCurrent
                           ? AppColors.primary
-                          : (hasDigit ? AppColors.accentGold : AppColors.borderStrong),
+                          : (hasDigit
+                                ? AppColors.accentGold
+                                : AppColors.borderStrong),
                       width: isCurrent || hasDigit ? 2 : 1,
                     ),
                   ),
@@ -205,12 +209,19 @@ class _FixOtpInputSheetState extends State<FixOtpInputSheet> {
             ),
             child: const Row(
               children: [
-                Icon(Icons.security_rounded, size: 18, color: AppColors.textSecondary),
+                Icon(
+                  Icons.security_rounded,
+                  size: 18,
+                  color: AppColors.textSecondary,
+                ),
                 SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     'Work starts only after the code is verified on the server.',
-                    style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
+                    ),
                   ),
                 ),
               ],

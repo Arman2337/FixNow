@@ -84,7 +84,8 @@ class _BookingCallScreenState extends State<BookingCallScreen>
   Widget build(BuildContext context) {
     final controller = widget.controller;
     final status = controller.status;
-    final disableMotion = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final disableMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
 
     return Scaffold(
       backgroundColor: AppColors.secondarySlate,
@@ -218,12 +219,13 @@ class _BookingCallScreenState extends State<BookingCallScreen>
                         animation: _pulseController,
                         builder: (context, child) {
                           final isSpeaking = controller.isRemoteSpeaking;
-                          final scale = (!disableMotion &&
+                          final scale =
+                              (!disableMotion &&
                                   (status == CallStatus.ringing ||
                                       status == CallStatus.connected))
                               ? (isSpeaking
-                                  ? 1.04 + (_pulseController.value * 0.04)
-                                  : 1.0 + (_pulseController.value * 0.04))
+                                    ? 1.04 + (_pulseController.value * 0.04)
+                                    : 1.0 + (_pulseController.value * 0.04))
                               : 1.0;
 
                           return Transform.scale(
@@ -240,7 +242,9 @@ class _BookingCallScreenState extends State<BookingCallScreen>
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
                                       color: AppColors.primaryFixed.withValues(
-                                        alpha: 0.12 * (1.0 - _pulseController.value),
+                                        alpha:
+                                            0.12 *
+                                            (1.0 - _pulseController.value),
                                       ),
                                     ),
                                   ),
@@ -249,9 +253,10 @@ class _BookingCallScreenState extends State<BookingCallScreen>
                                     height: 112,
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
-                                      color: AppColors.primaryFixedDim.withValues(
-                                        alpha: 0.2 * _pulseController.value,
-                                      ),
+                                      color: AppColors.primaryFixedDim
+                                          .withValues(
+                                            alpha: 0.2 * _pulseController.value,
+                                          ),
                                     ),
                                   ),
                                 ],
@@ -270,7 +275,9 @@ class _BookingCallScreenState extends State<BookingCallScreen>
                                     ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black.withValues(alpha: 0.3),
+                                        color: Colors.black.withValues(
+                                          alpha: 0.3,
+                                        ),
                                         blurRadius: 12,
                                       ),
                                     ],
@@ -332,9 +339,13 @@ class _BookingCallScreenState extends State<BookingCallScreen>
                           const SizedBox(width: 8),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 6, vertical: 2),
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
-                              color: AppColors.primaryFixedDim.withValues(alpha: 0.25),
+                              color: AppColors.primaryFixedDim.withValues(
+                                alpha: 0.25,
+                              ),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: const Row(
@@ -472,7 +483,9 @@ class _BookingCallScreenState extends State<BookingCallScreen>
                               const SizedBox(width: 6),
                               Container(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 6, vertical: 1),
+                                  horizontal: 6,
+                                  vertical: 1,
+                                ),
                                 decoration: BoxDecoration(
                                   color: AppColors.primarySoft,
                                   borderRadius: BorderRadius.circular(4),
@@ -482,7 +495,7 @@ class _BookingCallScreenState extends State<BookingCallScreen>
                                   style: const TextStyle(
                                     color: AppColors.primary,
                                     fontSize: 10,
-fontWeight: FontWeight.bold,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
                               ),
@@ -531,7 +544,8 @@ fontWeight: FontWeight.bold,
                               : Icons.mic_rounded,
                           label: controller.isMuted ? 'Unmute' : 'Mute',
                           isActive: controller.isMuted,
-                          onPressed: status == CallStatus.connected ||
+                          onPressed:
+                              status == CallStatus.connected ||
                                   status == CallStatus.ringing
                               ? controller.toggleMute
                               : null,
@@ -544,7 +558,8 @@ fontWeight: FontWeight.bold,
                               : Icons.volume_down_rounded,
                           label: 'Speaker',
                           isActive: controller.isSpeakerOn,
-                          onPressed: status == CallStatus.connected ||
+                          onPressed:
+                              status == CallStatus.connected ||
                                   status == CallStatus.ringing
                               ? controller.toggleSpeaker
                               : null,
@@ -639,9 +654,7 @@ class _CallActionButton extends StatelessWidget {
             height: 54,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: isActive
-                  ? AppColors.primary
-                  : AppColors.surfaceElevated,
+              color: isActive ? AppColors.primary : AppColors.surfaceElevated,
               border: Border.all(
                 color: isActive
                     ? AppColors.primary

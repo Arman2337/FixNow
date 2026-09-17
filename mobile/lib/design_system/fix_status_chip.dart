@@ -4,7 +4,16 @@ import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/app_typography.dart';
 import 'package:flutter/material.dart';
 
-enum FixStatusTone { neutral, success, warning, danger, info, emergency, gold, live }
+enum FixStatusTone {
+  neutral,
+  success,
+  warning,
+  danger,
+  info,
+  emergency,
+  gold,
+  live,
+}
 
 class FixStatusChip extends StatelessWidget {
   const FixStatusChip({
@@ -54,7 +63,9 @@ class FixStatusChip extends StatelessWidget {
             border: Border.all(
               color: tone == FixStatusTone.emergency
                   ? AppColors.emergency
-                  : (tone == FixStatusTone.gold ? AppColors.borderGold : Colors.transparent),
+                  : (tone == FixStatusTone.gold
+                        ? AppColors.borderGold
+                        : Colors.transparent),
               width: 1,
             ),
           ),
@@ -103,7 +114,9 @@ class FixVerificationBadge extends StatelessWidget {
     decoration: BoxDecoration(
       color: AppColors.successSoft,
       borderRadius: BorderRadius.circular(AppRadius.pill),
-      border: Border.all(color: AppColors.successOnLight.withValues(alpha: 0.3)),
+      border: Border.all(
+        color: AppColors.successOnLight.withValues(alpha: 0.3),
+      ),
     ),
     child: Row(
       mainAxisSize: MainAxisSize.min,

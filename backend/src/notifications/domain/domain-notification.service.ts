@@ -120,13 +120,33 @@ export class DomainNotificationService {
   ): Promise<void> {
     const template = BOOKING_NOTIFICATION_TEMPLATES['provider:REQUESTED'];
     if (!template) return;
+    
+    let totalMinor = 0;
+    if (booking.lineItems) {
+      totalMinor = booking.lineItems.reduce((sum, item) => sum + item.priceMinor * item.quantity, 0);
+    }
+    
+    const enrichedTemplate = {
+      ...template,
+      data: {
+        bookingId: booking.id,
+        serviceCategoryId: booking.serviceCategoryId,
+        locationLat: booking.locationLat ? booking.locationLat.toString() : '',
+        locationLng: booking.locationLng ? booking.locationLng.toString() : '',
+        description: booking.description ?? '',
+        priceMinor: totalMinor.toString(),
+        type: 'booking:provider:REQUESTED',
+      },
+    };
+
     for (const providerId of eligibleProviderIds.slice(0, cap)) {
       await this.send(
         providerId,
         'booking:provider:REQUESTED',
         `booking:${booking.id}:provider:REQUESTED`,
-        template,
+        enrichedTemplate,
         booking.id,
+        { bypassQuietHours: true },
       );
     }
   }

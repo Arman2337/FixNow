@@ -35,7 +35,10 @@ class _ProviderEarningsScreenState extends State<ProviderEarningsScreen> {
       elevation: 0,
       scrolledUnderElevation: 1,
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+        icon: const Icon(
+          Icons.arrow_back_rounded,
+          color: AppColors.textPrimary,
+        ),
         onPressed: () => Navigator.of(context).maybePop(),
       ),
       title: Column(
@@ -51,10 +54,7 @@ class _ProviderEarningsScreenState extends State<ProviderEarningsScreen> {
           ),
           Text(
             'Shift Financial Performance',
-            style: TextStyle(
-              fontSize: 11,
-              color: AppColors.textSecondary,
-            ),
+            style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
           ),
         ],
       ),
@@ -94,9 +94,7 @@ class _ProviderEarningsScreenState extends State<ProviderEarningsScreen> {
               color: AppColors.primary,
               backgroundColor: AppColors.surfaceElevated,
               onRefresh: _controller.load,
-              child: _EarningsView(
-                earnings: _controller.earnings!,
-              ),
+              child: _EarningsView(earnings: _controller.earnings!),
             ),
           },
         ),
@@ -155,7 +153,10 @@ class _EarningsView extends StatelessWidget {
                   ],
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.primary,
                     borderRadius: BorderRadius.circular(12),
@@ -163,7 +164,11 @@ class _EarningsView extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: const [
-                      Icon(Icons.bolt_rounded, size: 12, color: AppColors.onPrimary),
+                      Icon(
+                        Icons.bolt_rounded,
+                        size: 12,
+                        color: AppColors.onPrimary,
+                      ),
                       SizedBox(width: 3),
                       Text(
                         'Instant Payout',

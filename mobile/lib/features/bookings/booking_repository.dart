@@ -86,7 +86,8 @@ class BookingRepository {
           'description': description.trim(),
           'locationLat': latitude,
           'locationLng': longitude,
-          if (scheduledAt != null) 'scheduledAt': scheduledAt.toUtc().toIso8601String(),
+          if (scheduledAt != null)
+            'scheduledAt': scheduledAt.toUtc().toIso8601String(),
         },
       ),
     );
@@ -138,7 +139,8 @@ class BookingRepository {
         bearerToken: await _token(),
         body: {
           'newScheduledAt': newScheduledAt.toUtc().toIso8601String(),
-          if (reason != null && reason.trim().isNotEmpty) 'reason': reason.trim(),
+          if (reason != null && reason.trim().isNotEmpty)
+            'reason': reason.trim(),
           'expectedVersion': booking.version,
         },
       ),
@@ -167,7 +169,8 @@ class BookingRepository {
     if (items is! List) return const [];
     return items
         .map(
-          (item) => ReviewPhoto.fromJson(Map<String, Object?>.from(item as Map)),
+          (item) =>
+              ReviewPhoto.fromJson(Map<String, Object?>.from(item as Map)),
         )
         .toList(growable: false);
   }
@@ -211,7 +214,11 @@ class BookingRepository {
       );
     }
     return items
-        .map((item) => RecurringSchedule.fromJson(Map<String, Object?>.from(item as Map)))
+        .map(
+          (item) => RecurringSchedule.fromJson(
+            Map<String, Object?>.from(item as Map),
+          ),
+        )
         .toList(growable: false);
   }
 

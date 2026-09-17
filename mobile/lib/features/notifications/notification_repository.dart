@@ -2,10 +2,7 @@ import 'package:fixnow_mobile/api/api_client.dart';
 import 'package:fixnow_mobile/features/notifications/notification_model.dart';
 
 class NotificationRepository {
-  NotificationRepository({
-    this.api,
-    this.accessToken,
-  });
+  NotificationRepository({this.api, this.accessToken});
 
   final ApiTransport? api;
   final Future<String?> Function()? accessToken;
@@ -29,7 +26,9 @@ class NotificationRepository {
           final raw = response.body as List;
           remoteList = raw
               .whereType<Map>()
-              .map((m) => InAppNotification.fromJson(Map<String, dynamic>.from(m)))
+              .map(
+                (m) => InAppNotification.fromJson(Map<String, dynamic>.from(m)),
+              )
               .toList();
         }
       } catch (_) {

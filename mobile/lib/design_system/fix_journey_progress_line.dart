@@ -48,7 +48,8 @@ class FixJourneyProgressLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final reduceMotion = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
     final activeIndex = currentIndex;
     final targetFraction = progressFraction;
 
@@ -60,7 +61,9 @@ class FixJourneyProgressLine extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surfaceElevated,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.borderStrong.withValues(alpha: 0.3)),
+        border: Border.all(
+          color: AppColors.borderStrong.withValues(alpha: 0.3),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -82,7 +85,9 @@ class FixJourneyProgressLine extends StatelessWidget {
                   child: Container(
                     height: 6,
                     decoration: BoxDecoration(
-                      color: activeIndex == 4 ? AppColors.success : AppColors.primary,
+                      color: activeIndex == 4
+                          ? AppColors.success
+                          : AppColors.primary,
                       borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),
                   ),
@@ -101,7 +106,9 @@ class FixJourneyProgressLine extends StatelessWidget {
                           gradient: LinearGradient(
                             colors: [
                               AppColors.primary,
-                              activeIndex >= 2 ? AppColors.live : AppColors.primaryHover,
+                              activeIndex >= 2
+                                  ? AppColors.live
+                                  : AppColors.primaryHover,
                             ],
                           ),
                           borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -135,12 +142,14 @@ class FixJourneyProgressLine extends StatelessWidget {
                         stages[i].label,
                         style: TextStyle(
                           fontSize: 10,
-                          fontWeight: i == activeIndex ? FontWeight.w700 : FontWeight.w500,
+                          fontWeight: i == activeIndex
+                              ? FontWeight.w700
+                              : FontWeight.w500,
                           color: i == activeIndex
                               ? AppColors.cream
                               : (i < activeIndex
-                                  ? AppColors.textSecondary
-                                  : AppColors.textMuted),
+                                    ? AppColors.textSecondary
+                                    : AppColors.textMuted),
                         ),
                       ),
                     ],

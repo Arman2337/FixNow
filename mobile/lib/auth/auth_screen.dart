@@ -24,7 +24,8 @@ class AuthScreen extends StatefulWidget {
   State<AuthScreen> createState() => _AuthScreenState();
 }
 
-class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateMixin {
+class _AuthScreenState extends State<AuthScreen>
+    with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _email = TextEditingController();
   final _password = TextEditingController();
@@ -104,14 +105,19 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
       return Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(
-          backgroundColor: AppColors.surfaceContainerLowest.withValues(alpha: 0.8),
+          backgroundColor: AppColors.surfaceContainerLowest.withValues(
+            alpha: 0.8,
+          ),
           elevation: 0,
           scrolledUnderElevation: 1,
           shadowColor: Colors.black.withValues(alpha: 0.04),
           leading: IconButton(
             tooltip: 'Back',
             onPressed: loading ? null : widget.onBack,
-            icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+            icon: const Icon(
+              Icons.arrow_back_rounded,
+              color: AppColors.textPrimary,
+            ),
           ),
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -142,7 +148,11 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
               child: CircleAvatar(
                 radius: 16,
                 backgroundColor: AppColors.surfaceContainerHigh,
-                child: const Icon(Icons.person, size: 16, color: AppColors.textSecondary),
+                child: const Icon(
+                  Icons.person,
+                  size: 16,
+                  color: AppColors.textSecondary,
+                ),
               ),
             ),
           ],
@@ -150,7 +160,10 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
         body: SafeArea(
           top: false,
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.lg,
+              vertical: AppSpacing.md,
+            ),
             child: FixPageFrame(
               maxWidth: 480,
               child: Column(
@@ -158,7 +171,10 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                 children: [
                   // Subtle Ambient Glow & Trust Banner
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.sm),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.sm,
+                      vertical: AppSpacing.sm,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.surfaceContainerLow,
                       borderRadius: BorderRadius.circular(12),
@@ -205,7 +221,11 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                         ),
                         Row(
                           children: [
-                            const Icon(Icons.verified_user_rounded, size: 16, color: AppColors.primary),
+                            const Icon(
+                              Icons.verified_user_rounded,
+                              size: 16,
+                              color: AppColors.primary,
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               'FixSafe Protected',
@@ -229,28 +249,29 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                       color: AppColors.surfaceContainer,
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: const [
-                        BoxShadow(
-                          color: Color(0x0A000000),
-                          blurRadius: 4,
-                        ),
+                        BoxShadow(color: Color(0x0A000000), blurRadius: 4),
                       ],
                     ),
                     child: Row(
                       children: [
                         Expanded(
                           child: InkWell(
-                            onTap: loading ? null : () {
-                              if (_register) {
-                                widget.controller.clearError();
-                                setState(() => _register = false);
-                              }
-                            },
+                            onTap: loading
+                                ? null
+                                : () {
+                                    if (_register) {
+                                      widget.controller.clearError();
+                                      setState(() => _register = false);
+                                    }
+                                  },
                             borderRadius: BorderRadius.circular(8),
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 200),
                               padding: const EdgeInsets.symmetric(vertical: 10),
                               decoration: BoxDecoration(
-                                color: !_register ? AppColors.surfaceContainerLowest : Colors.transparent,
+                                color: !_register
+                                    ? AppColors.surfaceContainerLowest
+                                    : Colors.transparent,
                                 borderRadius: BorderRadius.circular(8),
                                 boxShadow: !_register
                                     ? const [
@@ -268,13 +289,17 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                                   Icon(
                                     Icons.login_rounded,
                                     size: 16,
-                                    color: !_register ? AppColors.primary : AppColors.textSecondary,
+                                    color: !_register
+                                        ? AppColors.primary
+                                        : AppColors.textSecondary,
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
                                     'Sign In',
                                     style: FixNowTypography.label.copyWith(
-                                      color: !_register ? AppColors.textPrimary : AppColors.textSecondary,
+                                      color: !_register
+                                          ? AppColors.textPrimary
+                                          : AppColors.textSecondary,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -285,18 +310,22 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                         ),
                         Expanded(
                           child: InkWell(
-                            onTap: loading ? null : () {
-                              if (!_register) {
-                                widget.controller.clearError();
-                                setState(() => _register = true);
-                              }
-                            },
+                            onTap: loading
+                                ? null
+                                : () {
+                                    if (!_register) {
+                                      widget.controller.clearError();
+                                      setState(() => _register = true);
+                                    }
+                                  },
                             borderRadius: BorderRadius.circular(8),
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 200),
                               padding: const EdgeInsets.symmetric(vertical: 10),
                               decoration: BoxDecoration(
-                                color: _register ? AppColors.surfaceContainerLowest : Colors.transparent,
+                                color: _register
+                                    ? AppColors.surfaceContainerLowest
+                                    : Colors.transparent,
                                 borderRadius: BorderRadius.circular(8),
                                 boxShadow: _register
                                     ? const [
@@ -314,13 +343,17 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                                   Icon(
                                     Icons.person_add_rounded,
                                     size: 16,
-                                    color: _register ? AppColors.textPrimary : AppColors.textSecondary,
+                                    color: _register
+                                        ? AppColors.textPrimary
+                                        : AppColors.textSecondary,
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
                                     'Create Account',
                                     style: FixNowTypography.label.copyWith(
-                                      color: _register ? AppColors.textPrimary : AppColors.textSecondary,
+                                      color: _register
+                                          ? AppColors.textPrimary
+                                          : AppColors.textSecondary,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -368,23 +401,36 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                               backgroundColor: AppColors.primary,
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(vertical: 10),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
                             ),
-                            icon: const Icon(Icons.flash_on, color: Colors.amber, size: 18),
+                            icon: const Icon(
+                              Icons.flash_on,
+                              color: Colors.amber,
+                              size: 18,
+                            ),
                             label: Text(
                               widget.role == AccountRole.customer
                                   ? '⚡ Quick Login (Customer A)'
                                   : '⚡ Quick Login (Provider A)',
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
                             ),
                             onPressed: () {
                               setState(() => _register = false);
                               if (widget.role == AccountRole.customer) {
-                                _email.text = 'fixnow.acceptance.customer-a@local.test';
-                                _password.text = 'FixNow-local-customer-a-2026!';
+                                _email.text =
+                                    'fixnow.acceptance.customer-a@local.test';
+                                _password.text =
+                                    'FixNow-local-customer-a-2026!';
                               } else {
-                                _email.text = 'fixnow.acceptance.provider-a@local.test';
-                                _password.text = 'FixNow-local-provider-a-2026!';
+                                _email.text =
+                                    'fixnow.acceptance.provider-a@local.test';
+                                _password.text =
+                                    'FixNow-local-provider-a-2026!';
                               }
                               _submit();
                             },
@@ -407,20 +453,35 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                             controller: _fullName,
                             enabled: !loading,
                             textInputAction: TextInputAction.next,
-                            style: const TextStyle(color: AppColors.textPrimary),
+                            style: const TextStyle(
+                              color: AppColors.textPrimary,
+                            ),
                             decoration: InputDecoration(
                               hintText: 'e.g. Rahul Sharma',
-                              hintStyle: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.5)),
-                              prefixIcon: const Icon(Icons.person_outline_rounded, size: 20, color: AppColors.textSecondary),
+                              hintStyle: TextStyle(
+                                color: AppColors.textSecondary.withValues(
+                                  alpha: 0.5,
+                                ),
+                              ),
+                              prefixIcon: const Icon(
+                                Icons.person_outline_rounded,
+                                size: 20,
+                                color: AppColors.textSecondary,
+                              ),
                               filled: true,
                               fillColor: AppColors.surfaceContainerLowest,
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 14,
+                              ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
                                 borderSide: BorderSide.none,
                               ),
                             ),
-                            validator: (value) => _register && (value == null || value.trim().isEmpty)
+                            validator: (value) =>
+                                _register &&
+                                    (value == null || value.trim().isEmpty)
                                 ? 'Enter your full name.'
                                 : null,
                           ),
@@ -459,14 +520,21 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                               // +91 Prefix Pill
                               Container(
                                 margin: const EdgeInsets.only(left: 8),
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
                                 decoration: BoxDecoration(
                                   color: AppColors.surfaceContainer,
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Row(
                                   children: [
-                                    const Icon(Icons.flag_circle_rounded, size: 16, color: Colors.orange),
+                                    const Icon(
+                                      Icons.flag_circle_rounded,
+                                      size: 16,
+                                      color: Colors.orange,
+                                    ),
                                     const SizedBox(width: 4),
                                     Text(
                                       '+91',
@@ -484,12 +552,21 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                                   enabled: !loading,
                                   keyboardType: TextInputType.phone,
                                   textInputAction: TextInputAction.next,
-                                  style: const TextStyle(color: AppColors.textPrimary),
+                                  style: const TextStyle(
+                                    color: AppColors.textPrimary,
+                                  ),
                                   decoration: InputDecoration(
                                     hintText: '98765 43210',
-                                    hintStyle: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.5)),
+                                    hintStyle: TextStyle(
+                                      color: AppColors.textSecondary.withValues(
+                                        alpha: 0.5,
+                                      ),
+                                    ),
                                     border: InputBorder.none,
-                                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 14,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -497,7 +574,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                           ),
                         ),
                         const SizedBox(height: AppSpacing.md),
-                        
+
                         // Email Field (Mandatory)
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -531,20 +608,33 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                           style: const TextStyle(color: AppColors.textPrimary),
                           decoration: InputDecoration(
                             hintText: 'name@mail.com',
-                            hintStyle: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.5)),
-                            prefixIcon: const Icon(Icons.email_outlined, size: 20, color: AppColors.textSecondary),
+                            hintStyle: TextStyle(
+                              color: AppColors.textSecondary.withValues(
+                                alpha: 0.5,
+                              ),
+                            ),
+                            prefixIcon: const Icon(
+                              Icons.email_outlined,
+                              size: 20,
+                              color: AppColors.textSecondary,
+                            ),
                             filled: true,
                             fillColor: AppColors.surfaceContainerLowest,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 14,
+                            ),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
                               borderSide: BorderSide.none,
                             ),
                           ),
                           validator: (value) =>
-                              RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value?.trim() ?? '')
-                                  ? null
-                                  : 'Enter a valid email address.',
+                              RegExp(
+                                r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                              ).hasMatch(value?.trim() ?? '')
+                              ? null
+                              : 'Enter a valid email address.',
                         ),
                         const SizedBox(height: AppSpacing.md),
 
@@ -583,23 +673,43 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                               : const [AutofillHints.password],
                           textInputAction: TextInputAction.done,
                           onFieldSubmitted: (_) => _submit(),
-                          style: const TextStyle(color: AppColors.textPrimary, letterSpacing: 2),
+                          style: const TextStyle(
+                            color: AppColors.textPrimary,
+                            letterSpacing: 2,
+                          ),
                           decoration: InputDecoration(
                             hintText: 'Enter your secure password',
-                            hintStyle: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.5), letterSpacing: 0),
-                            prefixIcon: const Icon(Icons.lock_outline_rounded, size: 20, color: AppColors.textSecondary),
+                            hintStyle: TextStyle(
+                              color: AppColors.textSecondary.withValues(
+                                alpha: 0.5,
+                              ),
+                              letterSpacing: 0,
+                            ),
+                            prefixIcon: const Icon(
+                              Icons.lock_outline_rounded,
+                              size: 20,
+                              color: AppColors.textSecondary,
+                            ),
                             filled: true,
                             fillColor: AppColors.surfaceContainerLowest,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 14,
+                            ),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
                               borderSide: BorderSide.none,
                             ),
                             suffixIcon: IconButton(
-                              tooltip: _obscure ? 'Show password' : 'Hide password',
-                              onPressed: () => setState(() => _obscure = !_obscure),
+                              tooltip: _obscure
+                                  ? 'Show password'
+                                  : 'Hide password',
+                              onPressed: () =>
+                                  setState(() => _obscure = !_obscure),
                               icon: Icon(
-                                _obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                                _obscure
+                                    ? Icons.visibility_outlined
+                                    : Icons.visibility_off_outlined,
                                 size: 20,
                                 color: AppColors.textSecondary,
                               ),
@@ -611,7 +721,8 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                         ),
 
                         // Referral Field (Register Only)
-                        if (_register && widget.role == AccountRole.customer) ...[
+                        if (_register &&
+                            widget.role == AccountRole.customer) ...[
                           const SizedBox(height: AppSpacing.md),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -640,15 +751,28 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                             enabled: !loading,
                             textInputAction: TextInputAction.done,
                             onFieldSubmitted: (_) => _submit(),
-                            style: FixNowTypography.dataMono.copyWith(color: AppColors.textPrimary),
+                            style: FixNowTypography.dataMono.copyWith(
+                              color: AppColors.textPrimary,
+                            ),
                             textCapitalization: TextCapitalization.characters,
                             decoration: InputDecoration(
                               hintText: 'e.g. FIXSAFE2025',
-                              hintStyle: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.5)),
-                              prefixIcon: const Icon(Icons.local_offer_outlined, size: 20, color: AppColors.tertiary),
+                              hintStyle: TextStyle(
+                                color: AppColors.textSecondary.withValues(
+                                  alpha: 0.5,
+                                ),
+                              ),
+                              prefixIcon: const Icon(
+                                Icons.local_offer_outlined,
+                                size: 20,
+                                color: AppColors.tertiary,
+                              ),
                               filled: true,
                               fillColor: AppColors.surfaceContainerLowest,
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 14,
+                              ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
                                 borderSide: BorderSide.none,
@@ -657,7 +781,8 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                           ),
                         ],
 
-                        if (widget.controller.errorMessage case final message?) ...[
+                        if (widget.controller.errorMessage
+                            case final message?) ...[
                           const SizedBox(height: AppSpacing.sm),
                           Semantics(
                             liveRegion: true,
@@ -669,12 +794,19 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(Icons.error_outline_rounded, size: 16, color: AppColors.error),
+                                  const Icon(
+                                    Icons.error_outline_rounded,
+                                    size: 16,
+                                    color: AppColors.error,
+                                  ),
                                   const SizedBox(width: 6),
                                   Expanded(
                                     child: Text(
                                       message,
-                                      style: const TextStyle(color: AppColors.error, fontSize: 12),
+                                      style: const TextStyle(
+                                        color: AppColors.error,
+                                        fontSize: 12,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -692,29 +824,42 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primary,
                               foregroundColor: AppColors.onPrimary,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                               elevation: 2,
-                              shadowColor: AppColors.primary.withValues(alpha: 0.3),
+                              shadowColor: AppColors.primary.withValues(
+                                alpha: 0.3,
+                              ),
                             ),
                             child: loading
                                 ? const SizedBox(
                                     height: 20,
                                     width: 20,
-                                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.onPrimary),
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: AppColors.onPrimary,
+                                    ),
                                   )
                                 : Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       Text(
-                                        _register ? 'Create Account & Continue' : 'Sign In to FixNow',
-                                        style: FixNowTypography.headlineMd.copyWith(
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 16,
-                                          letterSpacing: -0.5,
-                                        ),
+                                        _register
+                                            ? 'Create Account & Continue'
+                                            : 'Sign In to FixNow',
+                                        style: FixNowTypography.headlineMd
+                                            .copyWith(
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 16,
+                                              letterSpacing: -0.5,
+                                            ),
                                       ),
                                       const SizedBox(width: 8),
-                                      const Icon(Icons.arrow_forward_rounded, size: 20),
+                                      const Icon(
+                                        Icons.arrow_forward_rounded,
+                                        size: 20,
+                                      ),
                                     ],
                                   ),
                           ),
@@ -723,14 +868,19 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                     ),
                   ),
 
-
-
                   // Social Divider
                   Padding(
-                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.md,
+                    ),
                     child: Row(
                       children: [
-                        Expanded(child: Container(height: 1, color: AppColors.surfaceContainerHigh)),
+                        Expanded(
+                          child: Container(
+                            height: 1,
+                            color: AppColors.surfaceContainerHigh,
+                          ),
+                        ),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 12),
                           child: Text(
@@ -742,7 +892,12 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                             ),
                           ),
                         ),
-                        Expanded(child: Container(height: 1, color: AppColors.surfaceContainerHigh)),
+                        Expanded(
+                          child: Container(
+                            height: 1,
+                            color: AppColors.surfaceContainerHigh,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -793,7 +948,11 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                           children: [
                             Row(
                               children: [
-                                const Icon(Icons.shield_rounded, size: 20, color: AppColors.primary),
+                                const Icon(
+                                  Icons.shield_rounded,
+                                  size: 20,
+                                  color: AppColors.primary,
+                                ),
                                 const SizedBox(width: 8),
                                 Text(
                                   '30-Day FixNow Warranty',
@@ -805,9 +964,14 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                               ],
                             ),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
-                                color: AppColors.primaryFixed.withValues(alpha: 0.3),
+                                color: AppColors.primaryFixed.withValues(
+                                  alpha: 0.3,
+                                ),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
@@ -833,7 +997,11 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                                     child: CircleAvatar(
                                       radius: 14,
                                       backgroundColor: Colors.blueGrey,
-                                      child: const Icon(Icons.person, size: 16, color: Colors.white),
+                                      child: const Icon(
+                                        Icons.person,
+                                        size: 16,
+                                        color: Colors.white,
+                                      ),
                                     ),
                                   ),
                                   Positioned(
@@ -841,7 +1009,11 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                                     child: CircleAvatar(
                                       radius: 14,
                                       backgroundColor: Colors.brown,
-                                      child: const Icon(Icons.person, size: 16, color: Colors.white),
+                                      child: const Icon(
+                                        Icons.person,
+                                        size: 16,
+                                        color: Colors.white,
+                                      ),
                                     ),
                                   ),
                                   Positioned(
@@ -849,7 +1021,11 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                                     child: CircleAvatar(
                                       radius: 14,
                                       backgroundColor: Colors.deepOrange,
-                                      child: const Icon(Icons.person, size: 16, color: Colors.white),
+                                      child: const Icon(
+                                        Icons.person,
+                                        size: 16,
+                                        color: Colors.white,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -867,9 +1043,15 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                                     TextSpan(text: 'Joined by '),
                                     TextSpan(
                                       text: '14,200+',
-                                      style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600),
+                                      style: TextStyle(
+                                        color: AppColors.textPrimary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
                                     ),
-                                    TextSpan(text: ' verified pros ready across your city.'),
+                                    TextSpan(
+                                      text:
+                                          ' verified pros ready across your city.',
+                                    ),
                                   ],
                                 ),
                               ),
@@ -887,7 +1069,11 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.lock_outline_rounded, size: 16, color: AppColors.primary),
+                          const Icon(
+                            Icons.lock_outline_rounded,
+                            size: 16,
+                            color: AppColors.primary,
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             '256-Bit SSL Bank Grade Encryption',

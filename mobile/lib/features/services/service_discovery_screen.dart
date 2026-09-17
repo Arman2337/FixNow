@@ -335,7 +335,8 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
               activeSort: _sortOption,
               onSortChanged: (sort) => setState(() => _sortOption = sort),
               activeFilter: _filterOption,
-              onFilterChanged: (filter) => setState(() => _filterOption = filter),
+              onFilterChanged: (filter) =>
+                  setState(() => _filterOption = filter),
               onAiDiagnose: _openDiagnose,
             ),
             const SizedBox(height: AppSpacing.md),
@@ -407,7 +408,8 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
 
     // Filter sub-services
     var filtered = allSubServices.where((item) {
-      final matchesQuery = query.isEmpty ||
+      final matchesQuery =
+          query.isEmpty ||
           item.name.toLowerCase().contains(query) ||
           item.description.toLowerCase().contains(query) ||
           item.categorySlug.toLowerCase().contains(query);
@@ -447,24 +449,41 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
         filtered.sort((a, b) => a.durationMinutes.compareTo(b.durationMinutes));
         break;
       case SearchSortOption.popular:
-        filtered.sort((a, b) => (b.badge != null ? 1 : 0).compareTo(a.badge != null ? 1 : 0));
+        filtered.sort(
+          (a, b) =>
+              (b.badge != null ? 1 : 0).compareTo(a.badge != null ? 1 : 0),
+        );
         break;
       case SearchSortOption.relevance:
         break;
     }
 
     if (filtered.isEmpty) {
-      const suggestions = ['Tap Repair', 'Ceiling Fan', 'AC Service', 'Drain Cleaning', 'Switchboard'];
+      const suggestions = [
+        'Tap Repair',
+        'Ceiling Fan',
+        'AC Service',
+        'Drain Cleaning',
+        'Switchboard',
+      ];
       return FixCard(
         tone: FixCardTone.elevated,
         padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
           children: [
-            const Icon(Icons.search_off_rounded, size: 40, color: AppColors.textMuted),
+            const Icon(
+              Icons.search_off_rounded,
+              size: 40,
+              color: AppColors.textMuted,
+            ),
             const SizedBox(height: AppSpacing.sm),
             Text(
               'No services found for "${_searchController.text.trim()}"',
-              style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.cream, fontSize: 16),
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
+                color: AppColors.cream,
+                fontSize: 16,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppSpacing.xs),
@@ -480,7 +499,13 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
               alignment: WrapAlignment.center,
               children: suggestions.map((s) {
                 return ActionChip(
-                  label: Text(s, style: const TextStyle(fontSize: 12, color: AppColors.cream)),
+                  label: Text(
+                    s,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.cream,
+                    ),
+                  ),
                   backgroundColor: AppColors.backgroundSecondary,
                   side: const BorderSide(color: AppColors.borderDefault),
                   onPressed: () {
@@ -518,7 +543,10 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                   _sortOption = SearchSortOption.relevance;
                 });
               },
-              child: const Text('Reset', style: TextStyle(color: AppColors.accentGold)),
+              child: const Text(
+                'Reset',
+                style: TextStyle(color: AppColors.accentGold),
+              ),
             ),
           ],
         ),
@@ -530,7 +558,9 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
             (c) => c.slug == item.categorySlug || c.id == item.categorySlug,
             orElse: () => ServiceCategory(
               id: item.categorySlug,
-              name: item.categorySlug[0].toUpperCase() + item.categorySlug.substring(1),
+              name:
+                  item.categorySlug[0].toUpperCase() +
+                  item.categorySlug.substring(1),
               slug: item.categorySlug,
             ),
           );
@@ -540,7 +570,8 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
             child: Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.sm),
               child: FixSpringBounce(
-                onTap: () => widget.onCategorySelected?.call(cat, _bookingLocation),
+                onTap: () =>
+                    widget.onCategorySelected?.call(cat, _bookingLocation),
                 child: FixCard(
                   tone: FixCardTone.elevated,
                   padding: const EdgeInsets.all(AppSpacing.md),
@@ -553,9 +584,15 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                         decoration: BoxDecoration(
                           color: AppColors.primarySoft.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(AppRadius.medium),
-                          border: Border.all(color: AppColors.borderGold.withValues(alpha: 0.3)),
+                          border: Border.all(
+                            color: AppColors.borderGold.withValues(alpha: 0.3),
+                          ),
                         ),
-                        child: Icon(item.icon, color: AppColors.accentGold, size: 22),
+                        child: Icon(
+                          item.icon,
+                          color: AppColors.accentGold,
+                          size: 22,
+                        ),
                       ),
                       const SizedBox(width: AppSpacing.md),
                       Expanded(
@@ -565,7 +602,10 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                             Row(
                               children: [
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: AppColors.backgroundSecondary,
                                     borderRadius: BorderRadius.circular(4),
@@ -582,9 +622,14 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                                 if (item.badge != null) ...[
                                   const SizedBox(width: 6),
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
                                     decoration: BoxDecoration(
-                                      color: AppColors.accentGold.withValues(alpha: 0.2),
+                                      color: AppColors.accentGold.withValues(
+                                        alpha: 0.2,
+                                      ),
                                       borderRadius: BorderRadius.circular(4),
                                     ),
                                     child: Text(
@@ -613,7 +658,10 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                               item.description,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textSecondary,
+                              ),
                             ),
                             const SizedBox(height: 8),
                             Row(
@@ -632,18 +680,29 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                                     const SizedBox(width: 8),
                                     Text(
                                       '• ${item.durationMinutes} mins',
-                                      style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: AppColors.textMuted,
+                                      ),
                                     ),
                                   ],
                                 ),
                                 FilledButton.tonal(
                                   style: FilledButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 4,
+                                    ),
                                     minimumSize: Size.zero,
-                                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                    tapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
                                   ),
-                                  onPressed: () => widget.onCategorySelected?.call(cat, _bookingLocation),
-                                  child: const Text('View & Book', style: TextStyle(fontSize: 12)),
+                                  onPressed: () => widget.onCategorySelected
+                                      ?.call(cat, _bookingLocation),
+                                  child: const Text(
+                                    'View & Book',
+                                    style: TextStyle(fontSize: 12),
+                                  ),
                                 ),
                               ],
                             ),
@@ -660,7 +719,6 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
       ],
     );
   }
-
 
   Widget _buildActiveBookingCard() {
     if (widget.bookingsController == null) return const SizedBox.shrink();
@@ -806,8 +864,9 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                             color: Colors.white.withValues(alpha: 0.1),
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: const Color(0xFF10B981)
-                                  .withValues(alpha: 0.5),
+                              color: const Color(
+                                0xFF10B981,
+                              ).withValues(alpha: 0.5),
                               width: 1.5,
                             ),
                           ),
@@ -946,7 +1005,9 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
     if (categories.isEmpty) return const SizedBox.shrink();
 
     final items = categories.take(6).map((cat) {
-      final price = cat.pricing != null ? cat.pricing!.displayLabel : 'On inspection';
+      final price = cat.pricing != null
+          ? cat.pricing!.displayLabel
+          : 'On inspection';
       final ratingStr = cat.rating != null
           ? '${cat.rating!.toStringAsFixed(1)} ★ (${cat.reviewCount})'
           : 'Verified Pro';
@@ -975,18 +1036,18 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                   Text(
                     'Community Favourites',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 18,
-                        ),
+                      fontWeight: FontWeight.w800,
+                      fontSize: 18,
+                    ),
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 2),
                   Text(
                     'Top-rated local service packages',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.textSecondary,
-                          fontSize: 11,
-                        ),
+                      color: AppColors.textSecondary,
+                      fontSize: 11,
+                    ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
@@ -1040,7 +1101,9 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                   children: [
                     if (item.$4.isNotEmpty)
                       ClipRRect(
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(15),
+                        ),
                         child: Image.asset(
                           item.$4,
                           height: 120,
@@ -1058,7 +1121,8 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     Container(
                                       padding: const EdgeInsets.symmetric(
@@ -1095,7 +1159,9 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                                         vertical: 2,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: AppColors.primary.withValues(alpha: 0.1),
+                                        color: AppColors.primary.withValues(
+                                          alpha: 0.1,
+                                        ),
                                         borderRadius: BorderRadius.circular(10),
                                       ),
                                       child: const Row(
@@ -1161,7 +1227,8 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                                 ),
                                 const SizedBox(width: 4),
                                 ElevatedButton(
-                                  onPressed: () => _handleQuickService(item.$6, item.$7),
+                                  onPressed: () =>
+                                      _handleQuickService(item.$6, item.$7),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: AppColors.primary,
                                     foregroundColor: Colors.white,
@@ -1170,7 +1237,8 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                                       vertical: 4,
                                     ),
                                     minimumSize: Size.zero,
-                                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                    tapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(8),
                                     ),
@@ -1194,7 +1262,6 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                 ),
               );
             },
-
           ),
         ),
       ],
@@ -1365,7 +1432,9 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(8),
                     image: const DecorationImage(
-                      image: NetworkImage('https://lh3.googleusercontent.com/aida-public/AB6AXuBq3W54yVgIIYzS2ZmyZZ0d9kwFAN6ICfuhZt7xwzFvvtpyeMbbct9nXWFyX6ptnBKyMW12g8HEm89mm4UmVE44PrFuYKwUIb3SRYCHXq6Kv8tUUv752LSORLe_9kWLBzwm99CMXx7tdvhIVHJJ7TmMjQ0d0QncryYSbDns4E39pUp7H_O9pED5oar2w3k3xSsY_XM0-6M2n5Rytv5n6ety7Afuy6O3MEGapgQX1Qgy5iqdYxMhAfBqp19_6hNc40YqTw'),
+                      image: NetworkImage(
+                        'https://lh3.googleusercontent.com/aida-public/AB6AXuBq3W54yVgIIYzS2ZmyZZ0d9kwFAN6ICfuhZt7xwzFvvtpyeMbbct9nXWFyX6ptnBKyMW12g8HEm89mm4UmVE44PrFuYKwUIb3SRYCHXq6Kv8tUUv752LSORLe_9kWLBzwm99CMXx7tdvhIVHJJ7TmMjQ0d0QncryYSbDns4E39pUp7H_O9pED5oar2w3k3xSsY_XM0-6M2n5Rytv5n6ety7Afuy6O3MEGapgQX1Qgy5iqdYxMhAfBqp19_6hNc40YqTw',
+                      ),
                       fit: BoxFit.contain,
                     ),
                   ),
@@ -1447,7 +1516,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                           child: FlutterMap(
                             options: MapOptions(
                               initialCenter: LatLng(
-                                _bookingLocation?.latitude ?? 23.0225, 
+                                _bookingLocation?.latitude ?? 23.0225,
                                 _bookingLocation?.longitude ?? 72.5714,
                               ),
                               initialZoom: 14.0,
@@ -1457,7 +1526,8 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                             ),
                             children: [
                               TileLayer(
-                                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                urlTemplate:
+                                    'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                                 userAgentPackageName: 'com.stitch.fixnow',
                               ),
                             ],
@@ -1466,106 +1536,121 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                       ),
                     if (isGranted)
                       Positioned.fill(
-                        child: Container(
-                          color: const Color(0xBB0B131F),
-                        ),
+                        child: Container(color: const Color(0xBB0B131F)),
                       ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 16,
+                      ),
                       decoration: BoxDecoration(
-                        color: isGranted ? Colors.transparent : AppColors.surfaceContainerLow,
+                        color: isGranted
+                            ? Colors.transparent
+                            : AppColors.surfaceContainerLow,
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(color: AppColors.borderDefault),
                       ),
                       child: Row(
-                  children: [
-                    Icon(
-                      Icons.near_me_rounded,
-                      color: isGranted ? AppColors.primaryFixed : AppColors.primary,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
-                            children: [
-                              Flexible(
-                                child: Text(
-                                  locationText,
-                                  style: FixNowTypography.label.copyWith(
-                                    color: isGranted ? Colors.white : AppColors.textPrimary,
-                                    fontWeight: FontWeight.w600,
+                          Icon(
+                            Icons.near_me_rounded,
+                            color: isGranted
+                                ? AppColors.primaryFixed
+                                : AppColors.primary,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        locationText,
+                                        style: FixNowTypography.label.copyWith(
+                                          color: isGranted
+                                              ? Colors.white
+                                              : AppColors.textPrimary,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    Icon(
+                                      Icons.keyboard_arrow_down_rounded,
+                                      color: isGranted
+                                          ? Colors.white70
+                                          : AppColors.textSecondary,
+                                      size: 18,
+                                    ),
+                                  ],
+                                ),
+                                Text(
+                                  isGranted
+                                      ? 'Verified Service Grid'
+                                      : 'Tap to enable matching',
+                                  style: FixNowTypography.labelSmall.copyWith(
+                                    color: isGranted
+                                        ? Colors.white70
+                                        : AppColors.textSecondary,
+                                    fontSize: 11,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
-                              ),
-                              Icon(
-                                Icons.keyboard_arrow_down_rounded,
-                                color: isGranted ? Colors.white70 : AppColors.textSecondary,
-                                size: 18,
-                              ),
-                            ],
-                          ),
-                          Text(
-                            isGranted ? 'Verified Service Grid' : 'Tap to enable matching',
-                            style: FixNowTypography.labelSmall.copyWith(
-                              color: isGranted ? Colors.white70 : AppColors.textSecondary,
-                              fontSize: 11,
+                              ],
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
-                        ],
-                      ),
-                    ),
-                    if (onlineCount > 0) ...[
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryFixed,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
+                          if (onlineCount > 0) ...[
+                            const SizedBox(width: 8),
                             Container(
-                              width: 6,
-                              height: 6,
-                              decoration: const BoxDecoration(
-                                color: AppColors.primary,
-                                shape: BoxShape.circle,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
                               ),
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '$onlineCount Pros Online',
-                              style: const TextStyle(
-                                color: AppColors.onPrimaryFixed,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryFixed,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: 6,
+                                    height: 6,
+                                    decoration: const BoxDecoration(
+                                      color: AppColors.primary,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '$onlineCount Pros Online',
+                                    style: const TextStyle(
+                                      color: AppColors.onPrimaryFixed,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
-                        ),
+                        ],
                       ),
-                    ],
+                    ),
                   ],
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
-      ],
+            ),
+          ],
         );
       },
     );
   }
-
 
   Widget _buildQuickServicesSection(BuildContext context) {
     final quickItems = [
@@ -1598,7 +1683,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
           itemBuilder: (context, index) {
             final item = quickItems[index];
             final imageUrl = ServiceImageResolver.resolveImage(item.$3);
-            
+
             return FixFadeSlideIn(
               delay: AppMotion.staggerStep * index,
               child: FixSpringBounce(
@@ -1616,11 +1701,10 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                         Expanded(
                           flex: 3,
                           child: ClipRRect(
-                            borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.card)),
-                            child: Image.asset(
-                              imageUrl,
-                              fit: BoxFit.cover,
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(AppRadius.card),
                             ),
+                            child: Image.asset(imageUrl, fit: BoxFit.cover),
                           ),
                         )
                       else
@@ -1632,7 +1716,9 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                               height: 40,
                               decoration: BoxDecoration(
                                 color: AppColors.primarySoft,
-                                borderRadius: BorderRadius.circular(AppRadius.medium),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.medium,
+                                ),
                               ),
                               child: Icon(
                                 item.$1,
@@ -1646,7 +1732,9 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                         flex: 2,
                         child: Center(
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 4.0,
+                            ),
                             child: Text(
                               item.$2,
                               style: const TextStyle(
@@ -1676,10 +1764,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const FixSectionHeader(
-          title: 'In safe hands',
-          subtitle: '',
-        ),
+        const FixSectionHeader(title: 'In safe hands', subtitle: ''),
         const SizedBox(height: AppSpacing.md),
         Container(
           padding: const EdgeInsets.all(AppSpacing.md),
@@ -1712,11 +1797,8 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
           ),
         ),
         const SizedBox(height: AppSpacing.xl),
-        
-        const FixSectionHeader(
-          title: 'Guaranteed Satisfaction',
-          subtitle: '',
-        ),
+
+        const FixSectionHeader(title: 'Guaranteed Satisfaction', subtitle: ''),
         const SizedBox(height: AppSpacing.md),
         Container(
           padding: const EdgeInsets.all(AppSpacing.md),
@@ -1733,7 +1815,11 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                   color: AppColors.primarySoft,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.workspace_premium_rounded, color: AppColors.primary, size: 24),
+                child: const Icon(
+                  Icons.workspace_premium_rounded,
+                  color: AppColors.primary,
+                  size: 24,
+                ),
               ),
               const SizedBox(width: 16),
               const Expanded(
@@ -1765,10 +1851,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
         ),
         const SizedBox(height: AppSpacing.xl),
 
-        const FixSectionHeader(
-          title: 'We are here for you',
-          subtitle: '',
-        ),
+        const FixSectionHeader(title: 'We are here for you', subtitle: ''),
         const SizedBox(height: AppSpacing.md),
         Container(
           padding: const EdgeInsets.all(AppSpacing.md),
@@ -1781,7 +1864,11 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.phone_rounded, color: AppColors.primary, size: 20),
+                  const Icon(
+                    Icons.phone_rounded,
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
                   const SizedBox(width: 12),
                   const Text(
                     '+91 1800-FIX-NOW',
@@ -1793,12 +1880,22 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                   ),
                   const Spacer(),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.primarySoft,
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    child: const Text('Call Now', style: TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.w700)),
+                    child: const Text(
+                      'Call Now',
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -1808,7 +1905,11 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
               ),
               Row(
                 children: [
-                  const Icon(Icons.email_rounded, color: AppColors.primary, size: 20),
+                  const Icon(
+                    Icons.email_rounded,
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
                   const SizedBox(width: 12),
                   const Text(
                     'support@fixnow.com',
@@ -1820,12 +1921,22 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                   ),
                   const Spacer(),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.primarySoft,
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    child: const Text('Email Us', style: TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.w700)),
+                    child: const Text(
+                      'Email Us',
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -1883,9 +1994,8 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
 
   List<Widget> _content(BuildContext context) =>
       switch (widget.controller.status) {
-        DiscoveryStatus.initial || DiscoveryStatus.loading => const [
-          _DiscoverySkeleton(),
-        ],
+        DiscoveryStatus.initial ||
+        DiscoveryStatus.loading => const [_DiscoverySkeleton()],
         DiscoveryStatus.empty => [
           _DiscoveryMessage(
             title: 'No services available',
@@ -1917,8 +2027,6 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
 
   void _selectCategory(ServiceCategory category) =>
       widget.onCategorySelected?.call(category, _bookingLocation);
-
-
 
   Future<void> _openDiagnose() async {
     if (widget.problemAnalysisRepository == null) return;
@@ -1982,8 +2090,8 @@ class _CategoryList extends StatelessWidget {
     final availabilityLabel = online > 0
         ? ', $online pros available now'
         : verified > 0
-            ? ', $verified verified pros'
-            : '';
+        ? ', $verified verified pros'
+        : '';
     final ratingLabel = category.rating != null
         ? ', rated ${category.rating!.toStringAsFixed(1)} out of 5'
         : '';
@@ -2008,7 +2116,8 @@ class _CategoryList extends StatelessWidget {
       priceFrom: amount,
       priceCurrency: currency,
       priceNote: 'upfront · no hidden fees',
-      semanticLabel: '${category.name} service category'
+      semanticLabel:
+          '${category.name} service category'
           '${category.isEmergency ? ', emergency service' : ''}'
           '$availabilityLabel$ratingLabel',
       onTap: action,
@@ -2064,55 +2173,55 @@ class _DiscoverySkeleton extends StatelessWidget {
   /// One placeholder card, shaped like a real [FixServiceCard]: a tile + title
   /// block above a divider, then a price block beside a button.
   static Widget _card() => Container(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        decoration: BoxDecoration(
-          color: AppColors.cream,
-          borderRadius: BorderRadius.circular(AppRadius.card),
-          border: Border.all(color: AppColors.borderDefault),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    padding: const EdgeInsets.all(AppSpacing.lg),
+    decoration: BoxDecoration(
+      color: AppColors.cream,
+      borderRadius: BorderRadius.circular(AppRadius.card),
+      border: Border.all(color: AppColors.borderDefault),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
           children: [
-            Row(
-              children: [
-                _bar(54, 54, radius: AppRadius.medium),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _bar(150, 16),
-                      const SizedBox(height: AppSpacing.sm),
-                      _bar(double.infinity, 12),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.md),
-                _bar(26, 26, radius: AppRadius.pill),
-              ],
+            _bar(54, 54, radius: AppRadius.medium),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _bar(150, 16),
+                  const SizedBox(height: AppSpacing.sm),
+                  _bar(double.infinity, 12),
+                ],
+              ),
             ),
-            const SizedBox(height: AppSpacing.md),
-            const Divider(height: 1, color: AppColors.borderDefault),
-            const SizedBox(height: AppSpacing.md),
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _bar(88, 22),
-                      const SizedBox(height: AppSpacing.xs),
-                      _bar(120, 10),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.md),
-                _bar(120, 46, radius: AppRadius.medium),
-              ],
-            ),
+            const SizedBox(width: AppSpacing.md),
+            _bar(26, 26, radius: AppRadius.pill),
           ],
         ),
-      );
+        const SizedBox(height: AppSpacing.md),
+        const Divider(height: 1, color: AppColors.borderDefault),
+        const SizedBox(height: AppSpacing.md),
+        Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _bar(88, 22),
+                  const SizedBox(height: AppSpacing.xs),
+                  _bar(120, 10),
+                ],
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            _bar(120, 46, radius: AppRadius.medium),
+          ],
+        ),
+      ],
+    ),
+  );
 
   @override
   Widget build(BuildContext context) => Semantics(

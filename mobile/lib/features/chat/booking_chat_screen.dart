@@ -144,7 +144,10 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
         elevation: 0,
         scrolledUnderElevation: 1,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+          icon: const Icon(
+            Icons.arrow_back_rounded,
+            color: AppColors.textPrimary,
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
         titleSpacing: 0,
@@ -222,10 +225,7 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
         actions: [
           if (widget.onCallPressed != null || widget.callRepository != null)
             IconButton(
-              icon: const Icon(
-                Icons.phone_outlined,
-                color: AppColors.primary,
-              ),
+              icon: const Icon(Icons.phone_outlined, color: AppColors.primary),
               tooltip: 'Call Pro',
               onPressed: () {
                 if (widget.onCallPressed != null) {
@@ -282,7 +282,10 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
             // Read-Only Notice Bar if service is completed
             if (!controller.canSend)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 8,
+                ),
                 color: AppColors.accentGoldSoft,
                 child: Row(
                   children: const [
@@ -314,82 +317,80 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
                         color: AppColors.primary,
                       ),
                     )
-                  : controller.errorMessage != null && controller.messages.isEmpty
-                      ? Center(
-                          child: InkWell(
-                            onTap: controller.load,
-                            child: Padding(
-                              padding: const EdgeInsets.all(AppSpacing.lg),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(
-                                    Icons.refresh_rounded,
-                                    color: AppColors.textSecondary,
-                                    size: 32,
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    controller.errorMessage!,
-                                    style: const TextStyle(
-                                      color: AppColors.textSecondary,
-                                    ),
-                                  ),
-                                ],
+                  : controller.errorMessage != null &&
+                        controller.messages.isEmpty
+                  ? Center(
+                      child: InkWell(
+                        onTap: controller.load,
+                        child: Padding(
+                          padding: const EdgeInsets.all(AppSpacing.lg),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.refresh_rounded,
+                                color: AppColors.textSecondary,
+                                size: 32,
                               ),
+                              const SizedBox(height: 8),
+                              Text(
+                                controller.errorMessage!,
+                                style: const TextStyle(
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    )
+                  : controller.messages.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Icon(
+                            Icons.chat_bubble_outline_rounded,
+                            color: AppColors.textDisabled,
+                            size: 44,
+                          ),
+                          SizedBox(height: 12),
+                          Text(
+                            'No messages yet',
+                            style: TextStyle(
+                              color: AppColors.textPrimary,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
-                        )
-                      : controller.messages.isEmpty
-                          ? Center(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: const [
-                                  Icon(
-                                    Icons.chat_bubble_outline_rounded,
-                                    color: AppColors.textDisabled,
-                                    size: 44,
-                                  ),
-                                  SizedBox(height: 12),
-                                  Text(
-                                    'No messages yet',
-                                    style: TextStyle(
-                                      color: AppColors.textPrimary,
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  SizedBox(height: 4),
-                                  Text(
-                                    'Coordinate arrival, buzz codes, or gate instructions.',
-                                    style: TextStyle(
-                                      color: AppColors.textSecondary,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            )
-                          : ListView.builder(
-                              controller: _scrollController,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AppSpacing.md,
-                                vertical: AppSpacing.sm,
-                              ),
-                              itemCount: controller.messages.length,
-                              itemBuilder: (context, index) {
-                                final message = controller.messages[index];
-                                final bubble = _ChatBubble(message: message);
-                                final isNew =
-                                    _animateFrom >= 0 && index >= _animateFrom;
-                                return isNew
-                                    ? _BubbleEntrance(
-                                        isMe: message.isMe,
-                                        child: bubble,
-                                      )
-                                    : bubble;
-                              },
+                          SizedBox(height: 4),
+                          Text(
+                            'Coordinate arrival, buzz codes, or gate instructions.',
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 13,
                             ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.md,
+                        vertical: AppSpacing.sm,
+                      ),
+                      itemCount: controller.messages.length,
+                      itemBuilder: (context, index) {
+                        final message = controller.messages[index];
+                        final bubble = _ChatBubble(message: message);
+                        final isNew =
+                            _animateFrom >= 0 && index >= _animateFrom;
+                        return isNew
+                            ? _BubbleEntrance(isMe: message.isMe, child: bubble)
+                            : bubble;
+                      },
+                    ),
             ),
 
             // 1-Tap Quick Responses (Stitch Pills)
@@ -399,9 +400,12 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
                 margin: const EdgeInsets.only(bottom: 6),
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                  ),
                   itemCount: _quickResponses.length,
-                  separatorBuilder: (context, index) => const SizedBox(width: 8),
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(width: 8),
                   itemBuilder: (context, index) {
                     final chipText = _quickResponses[index];
                     return ActionChip(
@@ -421,9 +425,10 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
                       onPressed: () {
                         if (chipText.endsWith('#')) {
                           _textController.text = chipText;
-                          _textController.selection = TextSelection.fromPosition(
-                            TextPosition(offset: chipText.length),
-                          );
+                          _textController.selection =
+                              TextSelection.fromPosition(
+                                TextPosition(offset: chipText.length),
+                              );
                         } else {
                           _sendMessage(chipText);
                         }
@@ -441,9 +446,7 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
               ),
               decoration: const BoxDecoration(
                 color: AppColors.surfaceContainerLowest,
-                border: Border(
-                  top: BorderSide(color: AppColors.borderDefault),
-                ),
+                border: Border(top: BorderSide(color: AppColors.borderDefault)),
               ),
               child: Row(
                 children: [
@@ -464,8 +467,8 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
                         decoration: InputDecoration(
                           hintText: controller.canSend
                               ? (widget.controller.isProvider
-                                  ? 'Message customer...'
-                                  : 'Message your professional...')
+                                    ? 'Message customer...'
+                                    : 'Message your professional...')
                               : 'Chat is read-only',
                           hintStyle: const TextStyle(
                             color: AppColors.textDisabled,
@@ -602,12 +605,15 @@ class _ChatBubble extends StatelessWidget {
             ],
             Flexible(
               child: Column(
-                crossAxisAlignment:
-                    isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                crossAxisAlignment: isMe
+                    ? CrossAxisAlignment.end
+                    : CrossAxisAlignment.start,
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                     decoration: BoxDecoration(
                       color: isMe
                           ? AppColors.primary
@@ -644,7 +650,9 @@ class _ChatBubble extends StatelessWidget {
                   const SizedBox(height: 4),
                   Padding(
                     padding: EdgeInsets.only(
-                        left: isMe ? 0 : 4, right: isMe ? 4 : 0),
+                      left: isMe ? 0 : 4,
+                      right: isMe ? 4 : 0,
+                    ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -659,7 +667,9 @@ class _ChatBubble extends StatelessWidget {
                           const SizedBox(width: 6),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 6, vertical: 1),
+                              horizontal: 6,
+                              vertical: 1,
+                            ),
                             decoration: BoxDecoration(
                               color: AppColors.primarySoft,
                               borderRadius: BorderRadius.circular(4),

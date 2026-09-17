@@ -76,6 +76,15 @@ class _ProblemDiagnosisScreenState extends State<ProblemDiagnosisScreen> {
       await controller.analyzeImage();
     } else if (controller.hasAudio) {
       await controller.analyzeVoice();
+    } else if (controller.hasText) {
+      // Backend requires at least one media file (image or audio) for AI analysis.
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Please add a photo or record your voice to use AI analysis. Text alone is not supported.',
+          ),
+        ),
+      );
     }
   }
 
@@ -87,7 +96,10 @@ class _ProblemDiagnosisScreenState extends State<ProblemDiagnosisScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: Text('Diagnose your problem', style: FixNowTypography.h1), centerTitle: false),
+    appBar: AppBar(
+      title: Text('Diagnose your problem', style: FixNowTypography.h1),
+      centerTitle: false,
+    ),
     body: SafeArea(
       child: ListenableBuilder(
         listenable: _controller,
@@ -99,7 +111,9 @@ class _ProblemDiagnosisScreenState extends State<ProblemDiagnosisScreen> {
               Text(
                 'Add a photo of the problem, describe it out loud, or both. '
                 "We'll suggest the right service — you always confirm before booking.",
-                style: FixNowTypography.bodyMedium.copyWith(color: AppColors.textSecondary),
+                style: FixNowTypography.bodyMedium.copyWith(
+                  color: AppColors.textSecondary,
+                ),
               ),
               const SizedBox(height: AppSpacing.lg),
               Row(
@@ -133,18 +147,23 @@ class _ProblemDiagnosisScreenState extends State<ProblemDiagnosisScreen> {
     bottomNavigationBar: SafeArea(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.lg),
-        child: FixButton(
-          label: 'Analyze',
-          icon: Icons.auto_awesome_rounded,
-          trailingIcon: Icons.arrow_forward_rounded,
-          expand: true,
-          isLoading: _controller.isAnalyzing,
-          onPressed:
-              (_controller.hasImage || _controller.hasAudio || _controller.hasText) &&
-                      !_controller.isAnalyzing &&
-                      !_controller.isRecording
-                  ? _analyze
-                  : null,
+        child: ListenableBuilder(
+          listenable: _controller,
+          builder: (context, _) => FixButton(
+            label: 'Analyze',
+            icon: Icons.auto_awesome_rounded,
+            trailingIcon: Icons.arrow_forward_rounded,
+            expand: true,
+            isLoading: _controller.isAnalyzing,
+            onPressed:
+                (_controller.hasImage ||
+                        _controller.hasAudio ||
+                        _controller.hasText) &&
+                    !_controller.isAnalyzing &&
+                    !_controller.isRecording
+                ? _analyze
+                : null,
+          ),
         ),
       ),
     ),
@@ -181,17 +200,24 @@ class _ProblemDiagnosisScreenState extends State<ProblemDiagnosisScreen> {
             FixButton(
               label: 'Remove',
               variant: FixButtonVariant.tertiary,
-              onPressed: _controller.isAnalyzing ? null : _controller.clearImage,
+              onPressed: _controller.isAnalyzing
+                  ? null
+                  : _controller.clearImage,
             ),
           ],
         ),
       );
     }
     return InkWell(
-      onTap: _controller.isAnalyzing || _controller.isRecording ? null : _addPhoto,
+      onTap: _controller.isAnalyzing || _controller.isRecording
+          ? null
+          : _addPhoto,
       borderRadius: BorderRadius.circular(AppRadius.card),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xl),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm,
+          vertical: AppSpacing.xl,
+        ),
         decoration: BoxDecoration(
           color: const Color(0xFFF2FBF5),
           borderRadius: BorderRadius.circular(AppRadius.card),
@@ -208,7 +234,11 @@ class _ProblemDiagnosisScreenState extends State<ProblemDiagnosisScreen> {
                     color: Color(0xFFE2F4E8),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.camera_alt_rounded, color: AppColors.primary, size: 32),
+                  child: const Icon(
+                    Icons.camera_alt_rounded,
+                    color: AppColors.primary,
+                    size: 32,
+                  ),
                 ),
                 Container(
                   padding: const EdgeInsets.all(2),
@@ -216,14 +246,33 @@ class _ProblemDiagnosisScreenState extends State<ProblemDiagnosisScreen> {
                     color: Colors.white,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.add_circle_rounded, color: AppColors.primary, size: 16),
+                  child: const Icon(
+                    Icons.add_circle_rounded,
+                    color: AppColors.primary,
+                    size: 16,
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: AppSpacing.md),
-            const Text('Add photo', style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.primary, fontSize: 16)),
+            const Text(
+              'Add photo',
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: AppColors.primary,
+                fontSize: 16,
+              ),
+            ),
             const SizedBox(height: 4),
-            const Text('Take or choose a photo\nof the problem.', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.3)),
+            const Text(
+              'Take or choose a photo\nof the problem.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.textSecondary,
+                height: 1.3,
+              ),
+            ),
           ],
         ),
       ),
@@ -245,7 +294,14 @@ class _ProblemDiagnosisScreenState extends State<ProblemDiagnosisScreen> {
                   size: 16,
                 ),
                 SizedBox(width: 4),
-                Text('Recording...', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.danger)),
+                Text(
+                  'Recording...',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.danger,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: AppSpacing.sm),
@@ -269,14 +325,27 @@ class _ProblemDiagnosisScreenState extends State<ProblemDiagnosisScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Icon(Icons.graphic_eq_rounded, color: AppColors.success, size: 32),
+            const Icon(
+              Icons.graphic_eq_rounded,
+              color: AppColors.success,
+              size: 32,
+            ),
             const SizedBox(height: AppSpacing.sm),
-            const Text('Voice recorded', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.success)),
+            const Text(
+              'Voice recorded',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: AppColors.success,
+              ),
+            ),
             const SizedBox(height: AppSpacing.sm),
             FixButton(
               label: 'Remove',
               variant: FixButtonVariant.tertiary,
-              onPressed: _controller.isAnalyzing ? null : _controller.clearAudio,
+              onPressed: _controller.isAnalyzing
+                  ? null
+                  : _controller.clearAudio,
             ),
           ],
         ),
@@ -296,7 +365,10 @@ class _ProblemDiagnosisScreenState extends State<ProblemDiagnosisScreen> {
       onTap: _controller.isAnalyzing ? null : _controller.startRecording,
       borderRadius: BorderRadius.circular(AppRadius.card),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xl),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm,
+          vertical: AppSpacing.xl,
+        ),
         decoration: BoxDecoration(
           color: const Color(0xFFF4F7FE),
           borderRadius: BorderRadius.circular(AppRadius.card),
@@ -307,7 +379,11 @@ class _ProblemDiagnosisScreenState extends State<ProblemDiagnosisScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.graphic_eq_rounded, color: AppColors.primary.withValues(alpha: 0.2), size: 16),
+                Icon(
+                  Icons.graphic_eq_rounded,
+                  color: AppColors.primary.withValues(alpha: 0.2),
+                  size: 16,
+                ),
                 const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.all(12),
@@ -315,16 +391,39 @@ class _ProblemDiagnosisScreenState extends State<ProblemDiagnosisScreen> {
                     color: Color(0xFFE8EEFC),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.mic_rounded, color: AppColors.primary, size: 32),
+                  child: const Icon(
+                    Icons.mic_rounded,
+                    color: AppColors.primary,
+                    size: 32,
+                  ),
                 ),
                 const SizedBox(width: 8),
-                Icon(Icons.graphic_eq_rounded, color: AppColors.primary.withValues(alpha: 0.2), size: 16),
+                Icon(
+                  Icons.graphic_eq_rounded,
+                  color: AppColors.primary.withValues(alpha: 0.2),
+                  size: 16,
+                ),
               ],
             ),
             const SizedBox(height: AppSpacing.md),
-            const Text('Record voice', style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.primary, fontSize: 16)),
+            const Text(
+              'Record voice',
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: AppColors.primary,
+                fontSize: 16,
+              ),
+            ),
             const SizedBox(height: 4),
-            const Text('Describe your problem\nin your own words.', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.3)),
+            const Text(
+              'Describe your problem\nin your own words.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.textSecondary,
+                height: 1.3,
+              ),
+            ),
           ],
         ),
       ),
@@ -338,10 +437,18 @@ class _ProblemDiagnosisScreenState extends State<ProblemDiagnosisScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Describe the problem', style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800)),
+            Text(
+              'Describe the problem',
+              style: Theme.of(
+                context,
+              ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
+            ),
             Text(
               '${_controller.textDescription.length}/500',
-              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              style: const TextStyle(
+                fontSize: 12,
+                color: AppColors.textSecondary,
+              ),
             ),
           ],
         ),
@@ -349,7 +456,13 @@ class _ProblemDiagnosisScreenState extends State<ProblemDiagnosisScreen> {
         TextField(
           maxLength: 500,
           maxLines: 4,
-          buildCounter: (context, {required currentLength, required isFocused, maxLength}) => null,
+          buildCounter:
+              (
+                context, {
+                required currentLength,
+                required isFocused,
+                maxLength,
+              }) => null,
           decoration: InputDecoration(
             hintText: 'Type a detailed description of the problem...',
             hintStyle: const TextStyle(color: AppColors.textMuted),
@@ -388,11 +501,18 @@ class _ProblemDiagnosisScreenState extends State<ProblemDiagnosisScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: const [
-                Text('Our AI will analyze your input', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                Text(
+                  'Our AI will analyze your input',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                ),
                 SizedBox(height: 4),
                 Text(
                   "We'll suggest the best service for you based on your photo, voice and description.",
-                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.4),
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppColors.textSecondary,
+                    height: 1.4,
+                  ),
                 ),
               ],
             ),
@@ -412,7 +532,12 @@ class _ProblemDiagnosisScreenState extends State<ProblemDiagnosisScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Spoken language', style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800)),
+        Text(
+          'Spoken language',
+          style: Theme.of(
+            context,
+          ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
+        ),
         const SizedBox(height: AppSpacing.sm),
         Wrap(
           spacing: AppSpacing.sm,

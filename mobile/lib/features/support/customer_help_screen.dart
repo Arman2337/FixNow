@@ -72,7 +72,9 @@ class _CustomerHelpScreenState extends State<CustomerHelpScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.surfaceContainerLowest.withValues(alpha: 0.9),
+        backgroundColor: AppColors.surfaceContainerLowest.withValues(
+          alpha: 0.9,
+        ),
         elevation: 0,
         scrolledUnderElevation: 1,
         title: Row(
@@ -159,7 +161,9 @@ class _CustomerHelpScreenState extends State<CustomerHelpScreen> {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   backgroundColor: AppColors.error,
-                  content: Text('Connecting to 24/7 Emergency Hazard Response...'),
+                  content: Text(
+                    'Connecting to 24/7 Emergency Hazard Response...',
+                  ),
                 ),
               );
             },
@@ -396,14 +400,13 @@ class _CustomerHelpScreenState extends State<CustomerHelpScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Quick Resolution Hub',
-                        style: FixNowTypography.h1,
-                      ),
+                      Text('Quick Resolution Hub', style: FixNowTypography.h1),
                       const SizedBox(height: 4),
                       Text(
                         'Get help, track issues, or connect with our support team.',
-                        style: FixNowTypography.bodyMedium.copyWith(color: AppColors.textSecondary),
+                        style: FixNowTypography.bodyMedium.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                     ],
                   ),
@@ -449,7 +452,8 @@ class _CustomerHelpScreenState extends State<CustomerHelpScreen> {
                       baseColor: const Color(0xFF0F766E),
                       tag: '#DISPUTE',
                       title: 'File or Report Dispute',
-                      subtitle: 'Raise an issue with our escalation team for quick resolution.',
+                      subtitle:
+                          'Raise an issue with our escalation team for quick resolution.',
                       onTap: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
@@ -464,7 +468,9 @@ class _CustomerHelpScreenState extends State<CustomerHelpScreen> {
                     _QuickActionTile(
                       icon: Icons.assignment_rounded,
                       baseColor: const Color(0xFF3730A3),
-                      tag: complaintCount > 0 ? '$complaintCount Active' : 'Cases',
+                      tag: complaintCount > 0
+                          ? '$complaintCount Active'
+                          : 'Cases',
                       title: 'Track Tickets',
                       subtitle: complaintCount > 0
                           ? 'You have $complaintCount active ticket${complaintCount == 1 ? '' : 's'} in progress.'
@@ -500,7 +506,8 @@ class _CustomerHelpScreenState extends State<CustomerHelpScreen> {
                       baseColor: const Color(0xFF15803D),
                       tag: 'Instant Bot',
                       title: 'WhatsApp Desk',
-                      subtitle: 'Get instant help.\nSend photos, videos or audio.',
+                      subtitle:
+                          'Get instant help.\nSend photos, videos or audio.',
                       onTap: () {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
@@ -648,68 +655,69 @@ class _CustomerHelpScreenState extends State<CustomerHelpScreen> {
                     ),
                     clipBehavior: Clip.antiAlias,
                     child: Theme(
-                      data: Theme.of(context).copyWith(
-                        dividerColor: Colors.transparent,
-                      ),
+                      data: Theme.of(
+                        context,
+                      ).copyWith(dividerColor: Colors.transparent),
                       child: Builder(
                         builder: (context) {
-                          final shouldExpand = _expandAll || _searchQuery.isNotEmpty;
+                          final shouldExpand =
+                              _expandAll || _searchQuery.isNotEmpty;
                           return ExpansionTile(
                             key: Key('${faq.question}_$shouldExpand'),
                             initiallyExpanded: shouldExpand,
-                      leading: Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: AppColors.surfaceContainer,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(
-                          faq.icon,
-                          color: AppColors.primary,
-                          size: 18,
-                        ),
-                      ),
-                      title: Text(
-                        faq.question,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      childrenPadding: const EdgeInsets.fromLTRB(
-                        AppSpacing.md,
-                        0,
-                        AppSpacing.md,
-                        AppSpacing.md,
-                      ),
-                      children: [
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(AppSpacing.sm),
-                          decoration: BoxDecoration(
-                            color: AppColors.surfaceContainerLow,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Text(
-                            faq.summary,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: AppColors.textSecondary,
-                              height: 1.4,
+                            leading: Container(
+                              width: 32,
+                              height: 32,
+                              decoration: BoxDecoration(
+                                color: AppColors.surfaceContainer,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(
+                                faq.icon,
+                                color: AppColors.primary,
+                                size: 18,
+                              ),
                             ),
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-              ),
-            ),
-          );
-        }).toList(),
-        const SizedBox(height: AppSpacing.lg),
+                            title: Text(
+                              faq.question,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            childrenPadding: const EdgeInsets.fromLTRB(
+                              AppSpacing.md,
+                              0,
+                              AppSpacing.md,
+                              AppSpacing.md,
+                            ),
+                            children: [
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(AppSpacing.sm),
+                                decoration: BoxDecoration(
+                                  color: AppColors.surfaceContainerLow,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  faq.summary,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.textSecondary,
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            const SizedBox(height: AppSpacing.lg),
 
             // Still Need Assistance Card (Inverse Surface Dark)
             Container(
@@ -912,7 +920,9 @@ class _CustomerHelpScreenState extends State<CustomerHelpScreen> {
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.textSecondary.withValues(alpha: 0.9),
+                            color: AppColors.textSecondary.withValues(
+                              alpha: 0.9,
+                            ),
                           ),
                           textAlign: TextAlign.center,
                         ),

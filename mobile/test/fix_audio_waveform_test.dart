@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('FixAudioWaveform renders requested number of frequency bars', (tester) async {
+  testWidgets('FixAudioWaveform renders requested number of frequency bars', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       const MaterialApp(
-        home: Scaffold(
-          body: FixAudioWaveform(isSpeaking: true, barCount: 7),
-        ),
+        home: Scaffold(body: FixAudioWaveform(isSpeaking: true, barCount: 7)),
       ),
     );
     await tester.pump(const Duration(milliseconds: 100));
@@ -18,12 +18,12 @@ void main() {
     expect(find.byType(AnimatedContainer), findsNWidgets(7));
   });
 
-  testWidgets('FixAudioWaveform handles idle/silence state gracefully', (tester) async {
+  testWidgets('FixAudioWaveform handles idle/silence state gracefully', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       const MaterialApp(
-        home: Scaffold(
-          body: FixAudioWaveform(isSpeaking: false, barCount: 5),
-        ),
+        home: Scaffold(body: FixAudioWaveform(isSpeaking: false, barCount: 5)),
       ),
     );
     await tester.pump(const Duration(milliseconds: 100));

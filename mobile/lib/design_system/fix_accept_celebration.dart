@@ -52,8 +52,7 @@ class _FixAcceptCelebrationState extends State<FixAcceptCelebration>
     _armed = true;
     // Inherited-widget reads belong here, not initState. Static banner under
     // reduce motion — dismiss by tap only, no pending timer.
-    _reduceMotion =
-        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    _reduceMotion = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
     if (_reduceMotion) return;
     _confetti = AnimationController(
       vsync: this,
@@ -98,10 +97,7 @@ class _FixAcceptCelebrationState extends State<FixAcceptCelebration>
               padding: const EdgeInsets.all(AppSpacing.xl),
               child: _reduceMotion
                   ? _banner()
-                  : FixScaleIn(
-                      from: 0.6,
-                      child: _banner(),
-                    ),
+                  : FixScaleIn(from: 0.6, child: _banner()),
             ),
           ],
         ),
@@ -110,169 +106,176 @@ class _FixAcceptCelebrationState extends State<FixAcceptCelebration>
   }
 
   Widget _banner() => Container(
-        constraints: const BoxConstraints(maxWidth: 380),
-        decoration: BoxDecoration(
-          color: AppColors.surfaceContainerLowest,
-          borderRadius: BorderRadius.circular(AppRadius.large),
-          border: Border.all(color: AppColors.borderDefault),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.18),
-              blurRadius: 24,
-              offset: const Offset(0, 8),
+    constraints: const BoxConstraints(maxWidth: 380),
+    decoration: BoxDecoration(
+      color: AppColors.surfaceContainerLowest,
+      borderRadius: BorderRadius.circular(AppRadius.large),
+      border: Border.all(color: AppColors.borderDefault),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.18),
+          blurRadius: 24,
+          offset: const Offset(0, 8),
+        ),
+      ],
+    ),
+    padding: const EdgeInsets.all(AppSpacing.lg),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Top Live Status Row
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.circle, size: 6, color: AppColors.primary),
+                  SizedBox(width: 4),
+                  Text(
+                    'Match Confirmed',
+                    style: TextStyle(
+                      color: AppColors.primary,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Text(
+              'FIXNOW LIVE',
+              style: TextStyle(
+                color: AppColors.textTertiary,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.5,
+              ),
             ),
           ],
         ),
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+
+        const SizedBox(height: AppSpacing.md),
+
+        // Spring Ripple Checkmark Icon
+        Stack(
+          alignment: Alignment.center,
           children: [
-            // Top Live Status Row
-            Row(
+            Container(
+              width: 76,
+              height: 76,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+            ),
+            Container(
+              width: 60,
+              height: 60,
+              decoration: const BoxDecoration(
+                color: AppColors.primary,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.check_rounded,
+                color: Colors.white,
+                size: 36,
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: AppSpacing.md),
+
+        Text(
+          'Provider accepted!',
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          widget.serviceName == null
+              ? 'Your professional is on it — tap to keep going.'
+              : 'Your ${widget.serviceName} pro is on it — tap to keep going.',
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: AppColors.textSecondary,
+            fontSize: 13,
+            height: 1.3,
+          ),
+        ),
+
+        const SizedBox(height: AppSpacing.md),
+
+        // Verified Trust Badges Strip (responsive Wrap)
+        Wrap(
+          spacing: 6,
+          runSpacing: 4,
+          alignment: WrapAlignment.center,
+          children: [
+            _buildMiniTrustBadge(Icons.shield_rounded, 'Aadhaar Verified'),
+            _buildMiniTrustBadge(Icons.verified_user_rounded, 'Police Checked'),
+          ],
+        ),
+
+        const SizedBox(height: AppSpacing.sm),
+
+        // High Visibility ETA Strip (FittedBox to guarantee zero overflow)
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(AppRadius.card),
+            border: Border.all(color: AppColors.borderDefault),
+          ),
+          child: const FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.circle, size: 6, color: AppColors.primary),
-                      SizedBox(width: 4),
-                      Text(
-                        'Match Confirmed',
-                        style: TextStyle(
-                          color: AppColors.primary,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const Text(
-                  'FIXNOW LIVE',
-                  style: TextStyle(
-                    color: AppColors.textTertiary,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: AppSpacing.md),
-
-            // Spring Ripple Checkmark Icon
-            Stack(
-              alignment: Alignment.center,
-              children: [
-                Container(
-                  width: 76,
-                  height: 76,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.12),
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: const BoxDecoration(
-                    color: AppColors.primary,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.check_rounded,
-                    color: Colors.white,
-                    size: 36,
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: AppSpacing.md),
-
-            Text(
-              'Provider accepted!',
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 20,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              widget.serviceName == null
-                  ? 'Your professional is on it — tap to keep going.'
-                  : 'Your ${widget.serviceName} pro is on it — tap to keep going.',
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 13,
-                height: 1.3,
-              ),
-            ),
-
-            const SizedBox(height: AppSpacing.md),
-
-            // Verified Trust Badges Strip (responsive Wrap)
-            Wrap(
-              spacing: 6,
-              runSpacing: 4,
-              alignment: WrapAlignment.center,
-              children: [
-                _buildMiniTrustBadge(Icons.shield_rounded, 'Aadhaar Verified'),
-                _buildMiniTrustBadge(Icons.verified_user_rounded, 'Police Checked'),
-              ],
-            ),
-
-            const SizedBox(height: AppSpacing.sm),
-
-            // High Visibility ETA Strip (FittedBox to guarantee zero overflow)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              decoration: BoxDecoration(
-                color: AppColors.surfaceContainerLow,
-                borderRadius: BorderRadius.circular(AppRadius.card),
-                border: Border.all(color: AppColors.borderDefault),
-              ),
-              child: const FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        Icon(Icons.near_me_rounded, color: AppColors.primary, size: 16),
-                        SizedBox(width: 6),
-                        Text(
-                          'ETA ~15 Mins',
-                          style: TextStyle(
-                            color: AppColors.primary,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ],
+                    Icon(
+                      Icons.near_me_rounded,
+                      color: AppColors.primary,
+                      size: 16,
                     ),
-                    SizedBox(width: 12),
+                    SizedBox(width: 6),
                     Text(
-                      'Dispatched to your gate',
-                      style: TextStyle(color: AppColors.textSecondary, fontSize: 11),
+                      'ETA ~15 Mins',
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ],
                 ),
-              ),
+                SizedBox(width: 12),
+                Text(
+                  'Dispatched to your gate',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
-      );
+      ],
+    ),
+  );
 
   Widget _buildMiniTrustBadge(IconData icon, String text) {
     return Container(
@@ -304,8 +307,7 @@ class _FixAcceptCelebrationState extends State<FixAcceptCelebration>
 /// same burst. Transform + opacity only — translate/rotate per particle, no
 /// blend modes, no saveLayer.
 class _ConfettiPainter extends CustomPainter {
-  _ConfettiPainter({required this.progress})
-      : _particles = _buildParticles();
+  _ConfettiPainter({required this.progress}) : _particles = _buildParticles();
 
   final double progress;
   final List<_Particle> _particles;
@@ -345,14 +347,12 @@ class _ConfettiPainter extends CustomPainter {
             40 * progress, // gentle gravity
       );
       final paint = Paint()
-        ..color = particle.color
-            .withValues(alpha: progress < 0.6 ? 1 : 1 - (progress - 0.6) / 0.4);
+        ..color = particle.color.withValues(
+          alpha: progress < 0.6 ? 1 : 1 - (progress - 0.6) / 0.4,
+        );
       canvas
         ..save()
-        ..translate(
-          center.dx + offset.dx,
-          center.dy + offset.dy,
-        )
+        ..translate(center.dx + offset.dx, center.dy + offset.dy)
         ..rotate(particle.rotation * progress)
         ..drawRect(
           Rect.fromCenter(

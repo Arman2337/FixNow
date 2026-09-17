@@ -99,9 +99,9 @@ class _MatchRadarViewState extends State<MatchRadarView>
                 key: ValueKey(stageText(reduce)),
                 stageText(reduce),
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
               ),
             ),
             if (widget.categoryName != null) ...[
@@ -161,11 +161,7 @@ class _RadarPainter extends CustomPainter {
       );
     }
 
-    canvas.drawCircle(
-      center,
-      10,
-      Paint()..color = AppColors.primary,
-    );
+    canvas.drawCircle(center, 10, Paint()..color = AppColors.primary);
     canvas.drawCircle(
       center,
       26,
@@ -193,12 +189,10 @@ class _RadarPainter extends CustomPainter {
       final dist = (pos - center).distance;
       final triggerFraction = dist / maxRadius;
       final alpha = (progress >= triggerFraction * 0.7)
-          ? (0.3 +
-                  0.5 *
-                      math
-                          .sin((progress * 4 * math.pi) + dist)
-                          .abs())
-              .clamp(0.2, 0.9)
+          ? (0.3 + 0.5 * math.sin((progress * 4 * math.pi) + dist).abs()).clamp(
+              0.2,
+              0.9,
+            )
           : 0.15;
 
       canvas.drawCircle(
@@ -255,8 +249,10 @@ class _FlipOtpDigitsState extends State<FlipOtpDigits>
     )..forward();
     _controller.addListener(() {
       // One light tick as each digit lands (skill: feedback, not decoration).
-      final landed =
-          (_controller.value * digitCount).floor().clamp(0, digitCount);
+      final landed = (_controller.value * digitCount).floor().clamp(
+        0,
+        digitCount,
+      );
       while (_hapticsFired < landed) {
         HapticFeedback.lightImpact();
         _hapticsFired += 1;
@@ -404,7 +400,7 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton>
 
   void _holdStart(LongPressStartDetails details) {
     if (_confirmed) {
-        return;
+      return;
     }
     _controller.forward();
     _thump(HapticFeedback.selectionClick);
@@ -526,13 +522,13 @@ class _RingProgressPainter extends CustomPainter {
 /// ease-in-out transition (AppMotion.container family).
 /// ============================================================================
 Color statusTemperatureColor(String status) => switch (status) {
-      'REQUESTED' => AppColors.primary,
-      'ASSIGNED' => AppColors.primary,
-      'EN_ROUTE' => AppColors.success,
-      'IN_PROGRESS' => AppColors.warning,
-      'COMPLETED' => AppColors.rating,
-      _ => AppColors.textSecondary,
-    };
+  'REQUESTED' => AppColors.primary,
+  'ASSIGNED' => AppColors.primary,
+  'EN_ROUTE' => AppColors.success,
+  'IN_PROGRESS' => AppColors.warning,
+  'COMPLETED' => AppColors.rating,
+  _ => AppColors.textSecondary,
+};
 
 /// ============================================================================
 /// 5. FixFxZoomIn — Brand cinematic FX Zoom-in reveal
@@ -569,12 +565,7 @@ class _FixFxZoomInState extends State<FixFxZoomIn>
   late final Animation<double> _scaleAnimation = Tween<double>(
     begin: 0.2,
     end: 1.0,
-  ).animate(
-    CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOutBack,
-    ),
-  );
+  ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
   late final Animation<double> _fadeAnimation = CurvedAnimation(
     parent: _controller,
     curve: const Interval(0.0, 0.45, curve: Curves.easeIn),
@@ -610,10 +601,7 @@ class _FixFxZoomInState extends State<FixFxZoomIn>
       builder: (context, child) {
         return FadeTransition(
           opacity: _fadeAnimation,
-          child: Transform.scale(
-            scale: _scaleAnimation.value,
-            child: child,
-          ),
+          child: Transform.scale(scale: _scaleAnimation.value, child: child),
         );
       },
       child: widget.child,
@@ -684,14 +672,15 @@ class FixFxBrandHero extends StatelessWidget {
           const SizedBox(width: AppSpacing.md),
           Text(
             title,
-            style: (compact
-                    ? Theme.of(context).textTheme.titleLarge
-                    : Theme.of(context).textTheme.headlineMedium)
-                ?.copyWith(
-              fontWeight: FontWeight.w800,
-              color: AppColors.cream,
-              letterSpacing: -0.5,
-            ),
+            style:
+                (compact
+                        ? Theme.of(context).textTheme.titleLarge
+                        : Theme.of(context).textTheme.headlineMedium)
+                    ?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.cream,
+                      letterSpacing: -0.5,
+                    ),
           ),
         ],
       ),

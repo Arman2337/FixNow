@@ -3,13 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Widget host(Widget child) => MaterialApp(
-      home: Scaffold(
-        body: Padding(
-          padding: const EdgeInsets.all(16),
-          child: child,
-        ),
-      ),
-    );
+  home: Scaffold(
+    body: Padding(padding: const EdgeInsets.all(16), child: child),
+  ),
+);
 
 void main() {
   group('FixPriceBreakdownCard', () {
@@ -35,7 +32,10 @@ void main() {
       expect(find.text('₹499'), findsOneWidget);
       expect(find.text('GST (18% Goods & Services Tax)'), findsOneWidget);
       expect(find.text('₹89.82'), findsOneWidget);
-      expect(find.textContaining('Transparent Pricing Guarantee'), findsOneWidget);
+      expect(
+        find.textContaining('Transparent Pricing Guarantee'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('collapses and expands on toggle tap', (tester) async {
@@ -70,15 +70,11 @@ void main() {
       expect(find.text('Standard Service Labour'), findsNothing);
     });
 
-    testWidgets('displays price on request fallback when amount is 0',
-        (tester) async {
+    testWidgets('displays price on request fallback when amount is 0', (
+      tester,
+    ) async {
       await tester.pumpWidget(
-        host(
-          const FixPriceBreakdownCard(
-            amountMinor: 0,
-            currency: 'INR',
-          ),
-        ),
+        host(const FixPriceBreakdownCard(amountMinor: 0, currency: 'INR')),
       );
       await tester.pumpAndSettle();
 

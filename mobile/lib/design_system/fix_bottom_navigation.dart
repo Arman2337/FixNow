@@ -34,10 +34,8 @@ class FixBottomNavigation extends StatelessWidget {
               tween: Tween(begin: 0.65, end: 1.0),
               duration: const Duration(milliseconds: 400),
               curve: Curves.elasticOut,
-              builder: (context, scale, child) => Transform.scale(
-                scale: scale,
-                child: child,
-              ),
+              builder: (context, scale, child) =>
+                  Transform.scale(scale: scale, child: child),
               child: Icon(destinations[i].selectedIcon),
             ),
             label: destinations[i].label,

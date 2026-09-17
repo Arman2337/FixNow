@@ -65,7 +65,10 @@ class AvailableProvidersSheet extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               'Verified technicians ready for $serviceName',
-              style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 13,
+              ),
             ),
             const SizedBox(height: AppSpacing.lg),
 
@@ -151,7 +154,10 @@ class AvailableProvidersSheet extends StatelessWidget {
                           const SizedBox(width: 8),
                           Text(
                             '• $experience',
-                            style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
+                            style: const TextStyle(
+                              color: AppColors.textMuted,
+                              fontSize: 12,
+                            ),
                           ),
                         ],
                       ),
@@ -167,9 +173,17 @@ class AvailableProvidersSheet extends StatelessWidget {
               children: [
                 _metricChip(Icons.work_history_outlined, jobs),
                 _metricChip(Icons.navigation_outlined, distance),
-                _metricChip(Icons.schedule_outlined, eta, color: AppColors.primary),
+                _metricChip(
+                  Icons.schedule_outlined,
+                  eta,
+                  color: AppColors.primary,
+                ),
                 if (isEmergencyReady)
-                  _metricChip(Icons.bolt_rounded, 'Emergency Ready', color: AppColors.accentGold),
+                  _metricChip(
+                    Icons.bolt_rounded,
+                    'Emergency Ready',
+                    color: AppColors.accentGold,
+                  ),
               ],
             ),
             const SizedBox(height: AppSpacing.md),
@@ -216,7 +230,11 @@ class AvailableProvidersSheet extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             text,
-            style: TextStyle(color: effectiveColor, fontSize: 11, fontWeight: FontWeight.w500),
+            style: TextStyle(
+              color: effectiveColor,
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
       ),
@@ -245,7 +263,9 @@ class BookingConfirmedDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: AppColors.surfaceElevated,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.large)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.large),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.xl),
         child: Column(
@@ -260,7 +280,11 @@ class BookingConfirmedDialog extends StatelessWidget {
                   color: AppColors.successSoft,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 36),
+                child: const Icon(
+                  Icons.check_circle_rounded,
+                  color: AppColors.success,
+                  size: 36,
+                ),
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
@@ -272,7 +296,10 @@ class BookingConfirmedDialog extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               'We have assigned a top-rated verified professional for your $serviceName.',
-              style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 13,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppSpacing.lg),
@@ -285,25 +312,63 @@ class BookingConfirmedDialog extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Booking ID', style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
-                      Text(bookingId.substring(0, bookingId.length > 8 ? 8 : bookingId.length),
-                          style: const TextStyle(color: AppColors.accentGold, fontWeight: FontWeight.w700)),
+                      const Text(
+                        'Booking ID',
+                        style: TextStyle(
+                          color: AppColors.textMuted,
+                          fontSize: 12,
+                        ),
+                      ),
+                      Text(
+                        bookingId.substring(
+                          0,
+                          bookingId.length > 8 ? 8 : bookingId.length,
+                        ),
+                        style: const TextStyle(
+                          color: AppColors.accentGold,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 6),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Professional', style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
-                      Text(providerName, style: const TextStyle(color: AppColors.textOnLightPrimary, fontWeight: FontWeight.w600)),
+                      const Text(
+                        'Professional',
+                        style: TextStyle(
+                          color: AppColors.textMuted,
+                          fontSize: 12,
+                        ),
+                      ),
+                      Text(
+                        providerName,
+                        style: const TextStyle(
+                          color: AppColors.textOnLightPrimary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 6),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('ETA', style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
-                      Text('About $estimatedArrival', style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600)),
+                      const Text(
+                        'ETA',
+                        style: TextStyle(
+                          color: AppColors.textMuted,
+                          fontSize: 12,
+                        ),
+                      ),
+                      Text(
+                        'About $estimatedArrival',
+                        style: const TextStyle(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ],
                   ),
                 ],
@@ -342,7 +407,9 @@ class JobCompletedDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: AppColors.surfaceElevated,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.large)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.large),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.xl),
         child: Column(
@@ -357,7 +424,11 @@ class JobCompletedDialog extends StatelessWidget {
                   color: AppColors.primarySoft,
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: const Icon(Icons.task_alt_rounded, color: AppColors.primary, size: 32),
+                child: const Icon(
+                  Icons.task_alt_rounded,
+                  color: AppColors.primary,
+                  size: 32,
+                ),
               ),
             ),
             const SizedBox(height: AppSpacing.md),
@@ -396,7 +467,11 @@ class JobCompletedDialog extends StatelessWidget {
               ),
               child: const Row(
                 children: [
-                  Icon(Icons.shield_rounded, color: AppColors.accentGold, size: 22),
+                  Icon(
+                    Icons.shield_rounded,
+                    color: AppColors.accentGold,
+                    size: 22,
+                  ),
                   SizedBox(width: AppSpacing.md),
                   Expanded(
                     child: Column(
@@ -412,7 +487,10 @@ class JobCompletedDialog extends StatelessWidget {
                         ),
                         Text(
                           '30-day warranty on all eligible repair work.',
-                          style: TextStyle(color: AppColors.textSecondary, fontSize: 11),
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 11,
+                          ),
                         ),
                       ],
                     ),
@@ -439,8 +517,18 @@ class JobCompletedDialog extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: AppColors.textMuted, fontSize: 12)),
-          Text(value, style: const TextStyle(color: AppColors.textOnLightPrimary, fontWeight: FontWeight.w600, fontSize: 13)),
+          Text(
+            label,
+            style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              color: AppColors.textOnLightPrimary,
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+            ),
+          ),
         ],
       ),
     );
@@ -485,7 +573,9 @@ class _ReviewRatingDialogState extends State<ReviewRatingDialog> {
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: AppColors.surfaceElevated,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.large)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.large),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.xl),
         child: Column(
@@ -500,7 +590,10 @@ class _ReviewRatingDialogState extends State<ReviewRatingDialog> {
             const SizedBox(height: 4),
             Text(
               'How was your experience with ${widget.providerName}?',
-              style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 13,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppSpacing.lg),
@@ -513,7 +606,9 @@ class _ReviewRatingDialogState extends State<ReviewRatingDialog> {
                     iconSize: 32,
                     padding: const EdgeInsets.symmetric(horizontal: 4),
                     icon: Icon(
-                      i <= _rating ? Icons.star_rounded : Icons.star_outline_rounded,
+                      i <= _rating
+                          ? Icons.star_rounded
+                          : Icons.star_outline_rounded,
                       color: AppColors.rating,
                     ),
                     onPressed: () => setState(() => _rating = i),
@@ -535,7 +630,9 @@ class _ReviewRatingDialogState extends State<ReviewRatingDialog> {
                     selectedColor: AppColors.primarySoft,
                     checkmarkColor: AppColors.primary,
                     labelStyle: TextStyle(
-                      color: _selectedTags.contains(tag) ? AppColors.primary : AppColors.textSecondary,
+                      color: _selectedTags.contains(tag)
+                          ? AppColors.primary
+                          : AppColors.textSecondary,
                       fontSize: 11,
                     ),
                     onSelected: (selected) {
@@ -556,7 +653,10 @@ class _ReviewRatingDialogState extends State<ReviewRatingDialog> {
             TextField(
               controller: _comment,
               maxLines: 3,
-              style: const TextStyle(color: AppColors.textOnLightPrimary, fontSize: 13),
+              style: const TextStyle(
+                color: AppColors.textOnLightPrimary,
+                fontSize: 13,
+              ),
               decoration: const InputDecoration(
                 hintText: 'Add an optional note about the repair quality...',
               ),

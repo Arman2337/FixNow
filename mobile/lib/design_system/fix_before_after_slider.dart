@@ -44,8 +44,10 @@ class _FixBeforeAfterSliderState extends State<FixBeforeAfterSlider> {
   void _handleDrag(DragUpdateDetails details, double totalWidth) {
     if (totalWidth <= 0) return;
     setState(() {
-      _sliderPosition =
-          (_sliderPosition + details.delta.dx / totalWidth).clamp(0.02, 0.98);
+      _sliderPosition = (_sliderPosition + details.delta.dx / totalWidth).clamp(
+        0.02,
+        0.98,
+      );
     });
   }
 
@@ -71,7 +73,8 @@ class _FixBeforeAfterSliderState extends State<FixBeforeAfterSlider> {
         fit: BoxFit.cover,
         width: double.infinity,
         height: double.infinity,
-        errorBuilder: (_, _, _) => _buildPlaceholder(fallbackLabel, fallbackIcon),
+        errorBuilder: (_, _, _) =>
+            _buildPlaceholder(fallbackLabel, fallbackIcon),
       );
     }
     return _buildPlaceholder(fallbackLabel, fallbackIcon);
@@ -157,7 +160,10 @@ class _FixBeforeAfterSliderState extends State<FixBeforeAfterSlider> {
                   top: 10,
                   left: 10,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.black.withValues(alpha: 0.65),
                       borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -180,7 +186,10 @@ class _FixBeforeAfterSliderState extends State<FixBeforeAfterSlider> {
                   top: 10,
                   right: 10,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.success.withValues(alpha: 0.85),
                       borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -223,7 +232,8 @@ class _FixBeforeAfterSliderState extends State<FixBeforeAfterSlider> {
                   top: (widget.height / 2) - 18,
                   left: dividerX - 18,
                   child: GestureDetector(
-                    onHorizontalDragUpdate: (details) => _handleDrag(details, width),
+                    onHorizontalDragUpdate: (details) =>
+                        _handleDrag(details, width),
                     child: Container(
                       width: 36,
                       height: 36,
@@ -254,7 +264,8 @@ class _FixBeforeAfterSliderState extends State<FixBeforeAfterSlider> {
                 Positioned.fill(
                   child: GestureDetector(
                     behavior: HitTestBehavior.translucent,
-                    onHorizontalDragUpdate: (details) => _handleDrag(details, width),
+                    onHorizontalDragUpdate: (details) =>
+                        _handleDrag(details, width),
                   ),
                 ),
               ],

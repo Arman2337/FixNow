@@ -99,8 +99,9 @@ class BookingTrackingController extends ChangeNotifier {
     }
     final coordinates = rawCoordinates
         .whereType<List>()
-        .where((point) =>
-            point.length >= 2 && point[0] is num && point[1] is num)
+        .where(
+          (point) => point.length >= 2 && point[0] is num && point[1] is num,
+        )
         .map(
           (point) => CustomerMapLocation(
             longitude: (point[0] as num).toDouble(),

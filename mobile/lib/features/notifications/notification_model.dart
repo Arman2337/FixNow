@@ -9,28 +9,28 @@ enum NotificationCategory {
   system;
 
   String get label => switch (this) {
-        NotificationCategory.all => 'All',
-        NotificationCategory.bookings => 'Bookings',
-        NotificationCategory.payments => 'Payments',
-        NotificationCategory.offers => 'Offers',
-        NotificationCategory.system => 'System',
-      };
+    NotificationCategory.all => 'All',
+    NotificationCategory.bookings => 'Bookings',
+    NotificationCategory.payments => 'Payments',
+    NotificationCategory.offers => 'Offers',
+    NotificationCategory.system => 'System',
+  };
 
   IconData get icon => switch (this) {
-        NotificationCategory.all => Icons.all_inbox_rounded,
-        NotificationCategory.bookings => Icons.calendar_month_rounded,
-        NotificationCategory.payments => Icons.receipt_long_rounded,
-        NotificationCategory.offers => Icons.local_offer_rounded,
-        NotificationCategory.system => Icons.shield_rounded,
-      };
+    NotificationCategory.all => Icons.all_inbox_rounded,
+    NotificationCategory.bookings => Icons.calendar_month_rounded,
+    NotificationCategory.payments => Icons.receipt_long_rounded,
+    NotificationCategory.offers => Icons.local_offer_rounded,
+    NotificationCategory.system => Icons.shield_rounded,
+  };
 
   Color get color => switch (this) {
-        NotificationCategory.all => AppColors.primary,
-        NotificationCategory.bookings => AppColors.primary,
-        NotificationCategory.payments => AppColors.success,
-        NotificationCategory.offers => AppColors.accentGold,
-        NotificationCategory.system => AppColors.info,
-      };
+    NotificationCategory.all => AppColors.primary,
+    NotificationCategory.bookings => AppColors.primary,
+    NotificationCategory.payments => AppColors.success,
+    NotificationCategory.offers => AppColors.accentGold,
+    NotificationCategory.system => AppColors.info,
+  };
 }
 
 class InAppNotification {
@@ -95,8 +95,11 @@ class InAppNotification {
       if (cat == null) return NotificationCategory.system;
       final lower = cat.toLowerCase();
       if (lower.contains('book')) return NotificationCategory.bookings;
-      if (lower.contains('pay') || lower.contains('invoice')) return NotificationCategory.payments;
-      if (lower.contains('offer') || lower.contains('promo') || lower.contains('coupon')) {
+      if (lower.contains('pay') || lower.contains('invoice'))
+        return NotificationCategory.payments;
+      if (lower.contains('offer') ||
+          lower.contains('promo') ||
+          lower.contains('coupon')) {
         return NotificationCategory.offers;
       }
       return NotificationCategory.system;
@@ -106,8 +109,15 @@ class InAppNotification {
       id: json['id']?.toString() ?? '',
       title: json['title']?.toString() ?? 'Notification',
       body: json['body']?.toString() ?? '',
-      category: parseCategory(json['category']?.toString() ?? json['kind']?.toString()),
-      timestamp: DateTime.tryParse(json['timestamp']?.toString() ?? json['createdAt']?.toString() ?? '') ??
+      category: parseCategory(
+        json['category']?.toString() ?? json['kind']?.toString(),
+      ),
+      timestamp:
+          DateTime.tryParse(
+            json['timestamp']?.toString() ??
+                json['createdAt']?.toString() ??
+                '',
+          ) ??
           DateTime.now(),
       isRead: json['isRead'] == true,
       bookingId: json['bookingId']?.toString(),
@@ -117,14 +127,14 @@ class InAppNotification {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'title': title,
-        'body': body,
-        'category': category.name,
-        'timestamp': timestamp.toIso8601String(),
-        'isRead': isRead,
-        'bookingId': bookingId,
-        'paymentId': paymentId,
-        'actionUrl': actionUrl,
-      };
+    'id': id,
+    'title': title,
+    'body': body,
+    'category': category.name,
+    'timestamp': timestamp.toIso8601String(),
+    'isRead': isRead,
+    'bookingId': bookingId,
+    'paymentId': paymentId,
+    'actionUrl': actionUrl,
+  };
 }

@@ -81,8 +81,13 @@ void main() {
   late LocationConsentController locationController;
 
   setUp(() {
-    discoveryController = ServiceDiscoveryController(_FakeCategories(sampleCategories), SubServiceRepository(MockApiTransport()));
-    locationController = LocationConsentController(_FakeLocationGateway(LocationPermissionState.granted));
+    discoveryController = ServiceDiscoveryController(
+      _FakeCategories(sampleCategories),
+      SubServiceRepository(MockApiTransport()),
+    );
+    locationController = LocationConsentController(
+      _FakeLocationGateway(LocationPermissionState.granted),
+    );
   });
 
   Widget wrapWidget(Widget child) {
@@ -92,106 +97,124 @@ void main() {
     );
   }
 
-  testWidgets('FixUniversalSearchBar renders input, clear button and filter chips', (tester) async {
-    final searchController = TextEditingController();
-    String query = '';
-    SearchSortOption sort = SearchSortOption.relevance;
-    SearchFilterOption filter = SearchFilterOption.all;
+  testWidgets(
+    'FixUniversalSearchBar renders input, clear button and filter chips',
+    (tester) async {
+      final searchController = TextEditingController();
+      String query = '';
+      SearchSortOption sort = SearchSortOption.relevance;
+      SearchFilterOption filter = SearchFilterOption.all;
 
-    await tester.pumpWidget(
-      wrapWidget(
-        StatefulBuilder(
-          builder: (context, setState) {
-            return FixUniversalSearchBar(
-              searchController: searchController,
-              onSearchChanged: (val) => setState(() => query = val),
-              onClear: () => setState(() {
-                searchController.clear();
-                query = '';
-              }),
-              activeSort: sort,
-              onSortChanged: (s) => setState(() => sort = s),
-              activeFilter: filter,
-              onFilterChanged: (f) => setState(() => filter = f),
-            );
-          },
+      await tester.pumpWidget(
+        wrapWidget(
+          StatefulBuilder(
+            builder: (context, setState) {
+              return FixUniversalSearchBar(
+                searchController: searchController,
+                onSearchChanged: (val) => setState(() => query = val),
+                onClear: () => setState(() {
+                  searchController.clear();
+                  query = '';
+                }),
+                activeSort: sort,
+                onSortChanged: (s) => setState(() => sort = s),
+                activeFilter: filter,
+                onFilterChanged: (f) => setState(() => filter = f),
+              );
+            },
+          ),
         ),
-      ),
-    );
+      );
 
-    expect(find.byKey(const Key('universal_search_input')), findsOneWidget);
-    expect(find.text('All Services'), findsOneWidget);
-    expect(find.text('⚡ Emergency'), findsOneWidget);
-    expect(find.text('Under ₹300'), findsOneWidget);
+      expect(find.byKey(const Key('universal_search_input')), findsOneWidget);
+      expect(find.text('All Services'), findsOneWidget);
+      expect(find.text('⚡ Emergency'), findsOneWidget);
+      expect(find.text('Under ₹300'), findsOneWidget);
 
-    // Enter query
-    await tester.enterText(find.byKey(const Key('universal_search_input')), 'plumber');
-    await tester.pump(const Duration(milliseconds: 50));
+      // Enter query
+      await tester.enterText(
+        find.byKey(const Key('universal_search_input')),
+        'plumber',
+      );
+      await tester.pump(const Duration(milliseconds: 50));
 
-    expect(query, 'plumber');
-    expect(find.byKey(const Key('universal_search_clear_button')), findsOneWidget);
+      expect(query, 'plumber');
+      expect(
+        find.byKey(const Key('universal_search_clear_button')),
+        findsOneWidget,
+      );
 
-    // Tap clear button
-    await tester.tap(find.byKey(const Key('universal_search_clear_button')));
-    await tester.pump(const Duration(milliseconds: 50));
+      // Tap clear button
+      await tester.tap(find.byKey(const Key('universal_search_clear_button')));
+      await tester.pump(const Duration(milliseconds: 50));
 
-    expect(searchController.text, '');
-    expect(query, '');
+      expect(searchController.text, '');
+      expect(query, '');
 
-    // Tap filter Under ₹300
-    await tester.tap(find.text('Under ₹300'));
-    await tester.pump(const Duration(milliseconds: 50));
+      // Tap filter Under ₹300
+      await tester.tap(find.text('Under ₹300'));
+      await tester.pump(const Duration(milliseconds: 50));
 
-    expect(filter, SearchFilterOption.under300);
-  });
+      expect(filter, SearchFilterOption.under300);
+    },
+  );
 
-  testWidgets('ServiceDiscoveryScreen live search filters sub-services and shows results', (tester) async {
-    tester.view.physicalSize = const Size(1080, 2400);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(() {
-      tester.view.resetPhysicalSize();
-      tester.view.resetDevicePixelRatio();
-    });
+  testWidgets(
+    'ServiceDiscoveryScreen live search filters sub-services and shows results',
+    (tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
 
-    await tester.pumpWidget(
-      wrapWidget(
-        ServiceDiscoveryScreen(
-          controller: discoveryController,
-          locationController: locationController,
+      await tester.pumpWidget(
+        wrapWidget(
+          ServiceDiscoveryScreen(
+            controller: discoveryController,
+            locationController: locationController,
+          ),
         ),
-      ),
-    );
-    await tester.pumpIdle();
+      );
+      await tester.pumpIdle();
 
-    // Default discovery shows popular services
-    expect(find.text('Popular services'), findsOneWidget);
+      // Default discovery shows popular services
+      expect(find.text('Popular services'), findsOneWidget);
 
-    // Type "tap" into universal search
-    await tester.enterText(find.byKey(const Key('universal_search_input')), 'tap');
-    await tester.pump(const Duration(milliseconds: 50));
+      // Type "tap" into universal search
+      await tester.enterText(
+        find.byKey(const Key('universal_search_input')),
+        'tap',
+      );
+      await tester.pump(const Duration(milliseconds: 50));
 
-    // Search results section appears
-    expect(find.textContaining('Search Results'), findsOneWidget);
-    expect(find.text('Tap & Mixer Repair'), findsOneWidget);
-    expect(find.text('₹149'), findsOneWidget);
+      // Search results section appears
+      expect(find.textContaining('Search Results'), findsOneWidget);
+      expect(find.text('Tap & Mixer Repair'), findsOneWidget);
+      expect(find.text('₹149'), findsOneWidget);
 
-    // Enter non-matching query
-    await tester.enterText(find.byKey(const Key('universal_search_input')), 'xyznonexistent999');
-    await tester.pump(const Duration(milliseconds: 50));
+      // Enter non-matching query
+      await tester.enterText(
+        find.byKey(const Key('universal_search_input')),
+        'xyznonexistent999',
+      );
+      await tester.pump(const Duration(milliseconds: 50));
 
-    expect(find.textContaining('No services found for'), findsOneWidget);
-    expect(find.text('Tap Repair'), findsOneWidget); // In suggested chips
+      expect(find.textContaining('No services found for'), findsOneWidget);
+      expect(find.text('Tap Repair'), findsOneWidget); // In suggested chips
 
-    // Clear search restores popular services
-    await tester.tap(find.byKey(const Key('universal_search_clear_button')));
-    await tester.pump(const Duration(milliseconds: 50));
+      // Clear search restores popular services
+      await tester.tap(find.byKey(const Key('universal_search_clear_button')));
+      await tester.pump(const Duration(milliseconds: 50));
 
-    expect(find.text('Popular services'), findsOneWidget);
-  });
+      expect(find.text('Popular services'), findsOneWidget);
+    },
+  );
 }
-
 
 class MockApiTransport implements ApiTransport {
   @override
-  Future<ApiResponse> send(ApiRequest request) async => const ApiResponse(statusCode: 200, body: []);
+  Future<ApiResponse> send(ApiRequest request) async =>
+      const ApiResponse(statusCode: 200, body: []);
 }

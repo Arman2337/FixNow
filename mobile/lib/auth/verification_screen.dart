@@ -86,7 +86,10 @@ class _VerificationScreenState extends State<VerificationScreen> {
           leading: IconButton(
             tooltip: 'Use another account',
             onPressed: loading ? null : widget.controller.logout,
-            icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+            icon: const Icon(
+              Icons.arrow_back_rounded,
+              color: AppColors.textPrimary,
+            ),
           ),
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -114,7 +117,10 @@ class _VerificationScreenState extends State<VerificationScreen> {
         body: SafeArea(
           top: false,
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.xs),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.lg,
+              vertical: AppSpacing.xs,
+            ),
             child: FixPageFrame(
               maxWidth: 460,
               child: Column(
@@ -147,7 +153,11 @@ class _VerificationScreenState extends State<VerificationScreen> {
                                 color: AppColors.primary,
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(Icons.lock_rounded, size: 13, color: Colors.white),
+                              child: const Icon(
+                                Icons.lock_rounded,
+                                size: 13,
+                                color: Colors.white,
+                              ),
                             ),
                           ],
                         ),
@@ -176,18 +186,30 @@ class _VerificationScreenState extends State<VerificationScreen> {
                             Flexible(
                               child: Text(
                                 'Enter code sent to ${widget.controller.verificationEmail ?? "your account"}',
-                                style: FixNowTypography.bodySmall.copyWith(color: AppColors.textSecondary),
+                                style: FixNowTypography.bodySmall.copyWith(
+                                  color: AppColors.textSecondary,
+                                ),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
                             TextButton(
-                              onPressed: loading ? null : widget.controller.logout,
+                              onPressed: loading
+                                  ? null
+                                  : widget.controller.logout,
                               style: TextButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(horizontal: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                ),
                                 minimumSize: Size.zero,
                                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                               ),
-                              child: const Text('Edit', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                              child: const Text(
+                                'Edit',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ),
                           ],
                         ),
@@ -198,7 +220,10 @@ class _VerificationScreenState extends State<VerificationScreen> {
                     const SizedBox(height: AppSpacing.sm),
                     // Dev Sandbox Bypass Pill
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.tertiaryFixed,
                         borderRadius: BorderRadius.circular(12),
@@ -209,11 +234,16 @@ class _VerificationScreenState extends State<VerificationScreen> {
                           Expanded(
                             child: Row(
                               children: [
-                                const Icon(Icons.bolt_rounded, size: 16, color: AppColors.tertiary),
+                                const Icon(
+                                  Icons.bolt_rounded,
+                                  size: 16,
+                                  color: AppColors.tertiary,
+                                ),
                                 const SizedBox(width: 6),
                                 Expanded(
                                   child: Semantics(
-                                    label: 'Local testing verification code 000000',
+                                    label:
+                                        'Local testing verification code 000000',
                                     child: const Text(
                                       'Local testing: use 000000.',
                                       style: TextStyle(
@@ -233,7 +263,10 @@ class _VerificationScreenState extends State<VerificationScreen> {
                             },
                             borderRadius: BorderRadius.circular(6),
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
                               decoration: BoxDecoration(
                                 color: AppColors.tertiaryContainer,
                                 borderRadius: BorderRadius.circular(6),
@@ -278,16 +311,22 @@ class _VerificationScreenState extends State<VerificationScreen> {
                                 decoration: BoxDecoration(
                                   color: isFilled
                                       ? AppColors.surfaceContainerLow
-                                      : (isCurrent ? AppColors.surfaceContainerLowest : AppColors.surfaceContainer),
+                                      : (isCurrent
+                                            ? AppColors.surfaceContainerLowest
+                                            : AppColors.surfaceContainer),
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
-                                    color: isCurrent ? AppColors.primary : AppColors.borderDefault,
+                                    color: isCurrent
+                                        ? AppColors.primary
+                                        : AppColors.borderDefault,
                                     width: isCurrent ? 2 : 1,
                                   ),
                                   boxShadow: isCurrent
                                       ? [
                                           BoxShadow(
-                                            color: AppColors.primary.withValues(alpha: 0.15),
+                                            color: AppColors.primary.withValues(
+                                              alpha: 0.15,
+                                            ),
                                             blurRadius: 6,
                                             offset: const Offset(0, 2),
                                           ),
@@ -301,7 +340,9 @@ class _VerificationScreenState extends State<VerificationScreen> {
                                           height: 24,
                                           decoration: BoxDecoration(
                                             color: AppColors.primary,
-                                            borderRadius: BorderRadius.circular(2),
+                                            borderRadius: BorderRadius.circular(
+                                              2,
+                                            ),
                                           ),
                                           // Simple blinking effect handled by flutter engine if we add an animation,
                                           // but for static fidelity we just draw the cursor line or a dot.
@@ -313,7 +354,8 @@ class _VerificationScreenState extends State<VerificationScreen> {
                                             fontWeight: FontWeight.w800,
                                             color: isFilled
                                                 ? AppColors.textPrimary
-                                                : AppColors.textSecondary.withValues(alpha: 0.4),
+                                                : AppColors.textSecondary
+                                                      .withValues(alpha: 0.4),
                                           ),
                                         ),
                                 ),
@@ -345,12 +387,16 @@ class _VerificationScreenState extends State<VerificationScreen> {
                               decoration: const InputDecoration(
                                 hintText: 'Enter 6 digits above',
                                 counterText: '',
-                                contentPadding: EdgeInsets.symmetric(vertical: 8),
+                                contentPadding: EdgeInsets.symmetric(
+                                  vertical: 8,
+                                ),
                               ),
                               validator: (value) =>
-                                  RegExp(r'^\d{6}$').hasMatch(value?.trim() ?? '')
-                                      ? null
-                                      : 'Enter the six-digit code.',
+                                  RegExp(
+                                    r'^\d{6}$',
+                                  ).hasMatch(value?.trim() ?? '')
+                                  ? null
+                                  : 'Enter the six-digit code.',
                             ),
                           ),
                           const SizedBox(height: 6),
@@ -378,7 +424,8 @@ class _VerificationScreenState extends State<VerificationScreen> {
                               ),
                             ],
                           ),
-                          if (widget.controller.errorMessage case final message?) ...[
+                          if (widget.controller.errorMessage
+                              case final message?) ...[
                             const SizedBox(height: AppSpacing.sm),
                             Semantics(
                               liveRegion: true,
@@ -390,7 +437,10 @@ class _VerificationScreenState extends State<VerificationScreen> {
                                 ),
                                 child: Text(
                                   message,
-                                  style: const TextStyle(color: AppColors.error, fontSize: 12),
+                                  style: const TextStyle(
+                                    color: AppColors.error,
+                                    fontSize: 12,
+                                  ),
                                 ),
                               ),
                             ),
@@ -405,7 +455,10 @@ class _VerificationScreenState extends State<VerificationScreen> {
                     children: [
                       Expanded(
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 8,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.surfaceContainerLow,
                             borderRadius: BorderRadius.circular(10),
@@ -415,11 +468,18 @@ class _VerificationScreenState extends State<VerificationScreen> {
                             children: [
                               Row(
                                 children: [
-                                  const Icon(Icons.schedule_rounded, size: 14, color: AppColors.textSecondary),
+                                  const Icon(
+                                    Icons.schedule_rounded,
+                                    size: 14,
+                                    color: AppColors.textSecondary,
+                                  ),
                                   const SizedBox(width: 4),
                                   Text(
                                     'Resend in',
-                                    style: FixNowTypography.caption.copyWith(color: AppColors.textSecondary, fontSize: 11),
+                                    style: FixNowTypography.caption.copyWith(
+                                      color: AppColors.textSecondary,
+                                      fontSize: 11,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -438,13 +498,23 @@ class _VerificationScreenState extends State<VerificationScreen> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed: loading || _secondsUntilResend > 0 ? null : _resendCode,
+                          onPressed: loading || _secondsUntilResend > 0
+                              ? null
+                              : _resendCode,
                           style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 8,
+                              horizontal: 8,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
                           ),
                           icon: const Icon(Icons.refresh_rounded, size: 14),
-                          label: const Text('Resend code', style: TextStyle(fontSize: 11)),
+                          label: const Text(
+                            'Resend code',
+                            style: TextStyle(fontSize: 11),
+                          ),
                         ),
                       ),
                     ],
@@ -471,7 +541,11 @@ class _VerificationScreenState extends State<VerificationScreen> {
                             ),
                             Row(
                               children: [
-                                const Icon(Icons.lock_person_rounded, size: 14, color: AppColors.primary),
+                                const Icon(
+                                  Icons.lock_person_rounded,
+                                  size: 14,
+                                  color: AppColors.primary,
+                                ),
                                 const SizedBox(width: 4),
                                 Text(
                                   'Encrypted 256-bit',
@@ -499,7 +573,9 @@ class _VerificationScreenState extends State<VerificationScreen> {
                                   ),
                                 ],
                                 image: const DecorationImage(
-                                  image: NetworkImage('https://lh3.googleusercontent.com/aida-public/AB6AXuBkmKmBr13p03fGtTEBOV-3rJJ_QzeSXCbKAbO-CxSdB_oIKmryOEfKoNRby_bgARQ1Gp6uNLNj6e6sFOzHl4J4m7-SQ3hGhGKmmFKnlAmgMGNklZpGet-uaU3e-Z4Vz9P8vYHmNOmPwoSFdQPX0Coe7Moifh0UpTizZrMo5w-3enpi63B0ErkL86KIm4ZFSJEEk-d1qwxHTDiv7PUL01921yu5jIeRFmUbL2RFN_QixkVs2N9xppvb'),
+                                  image: NetworkImage(
+                                    'https://lh3.googleusercontent.com/aida-public/AB6AXuBkmKmBr13p03fGtTEBOV-3rJJ_QzeSXCbKAbO-CxSdB_oIKmryOEfKoNRby_bgARQ1Gp6uNLNj6e6sFOzHl4J4m7-SQ3hGhGKmmFKnlAmgMGNklZpGet-uaU3e-Z4Vz9P8vYHmNOmPwoSFdQPX0Coe7Moifh0UpTizZrMo5w-3enpi63B0ErkL86KIm4ZFSJEEk-d1qwxHTDiv7PUL01921yu5jIeRFmUbL2RFN_QixkVs2N9xppvb',
+                                  ),
                                   fit: BoxFit.cover,
                                 ),
                               ),
@@ -520,7 +596,10 @@ class _VerificationScreenState extends State<VerificationScreen> {
                                   const SizedBox(height: 2),
                                   Text(
                                     'Protects account bookings, invoices, and field keys.',
-                                    style: FixNowTypography.caption.copyWith(color: AppColors.textSecondary, fontSize: 11),
+                                    style: FixNowTypography.caption.copyWith(
+                                      color: AppColors.textSecondary,
+                                      fontSize: 11,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -539,7 +618,9 @@ class _VerificationScreenState extends State<VerificationScreen> {
                                   ),
                                 ],
                                 image: const DecorationImage(
-                                  image: NetworkImage('https://lh3.googleusercontent.com/aida-public/AB6AXuAHdqWrYK6v7US1nQe3EoZoaVlUYoKfYAjzrft1Pz8nu4QHWWQIrj7jHS2DEWq7F_OL4_0J6WseaM_KrwoD3gXdvItmqroTOUjzUuHhWlwpYthIkBIBqHp1BrQlqaGd3TOzrbp3aUJytNkisA51JVztGIa9mfu61dCfdLr9fdNiYN2NVMbrH3JVCWZNt4eHSAGQbPpi3n1CqoHYoeE1yU_Uoses8zUwA9M9CgWe5-LgPk7IRUvLhsks'),
+                                  image: NetworkImage(
+                                    'https://lh3.googleusercontent.com/aida-public/AB6AXuAHdqWrYK6v7US1nQe3EoZoaVlUYoKfYAjzrft1Pz8nu4QHWWQIrj7jHS2DEWq7F_OL4_0J6WseaM_KrwoD3gXdvItmqroTOUjzUuHhWlwpYthIkBIBqHp1BrQlqaGd3TOzrbp3aUJytNkisA51JVztGIa9mfu61dCfdLr9fdNiYN2NVMbrH3JVCWZNt4eHSAGQbPpi3n1CqoHYoeE1yU_Uoses8zUwA9M9CgWe5-LgPk7IRUvLhsks',
+                                  ),
                                   fit: BoxFit.cover,
                                 ),
                               ),
@@ -552,7 +633,10 @@ class _VerificationScreenState extends State<VerificationScreen> {
                   const SizedBox(height: AppSpacing.md),
                   // Biometric Toggle Switch
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.surfaceContainerLowest,
                       borderRadius: BorderRadius.circular(12),
@@ -563,7 +647,11 @@ class _VerificationScreenState extends State<VerificationScreen> {
                       children: [
                         Row(
                           children: [
-                            const Icon(Icons.fingerprint_rounded, size: 20, color: AppColors.primary),
+                            const Icon(
+                              Icons.fingerprint_rounded,
+                              size: 20,
+                              color: AppColors.primary,
+                            ),
                             const SizedBox(width: 8),
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -578,7 +666,10 @@ class _VerificationScreenState extends State<VerificationScreen> {
                                 ),
                                 Text(
                                   'Enable Face ID / Fingerprint',
-                                  style: FixNowTypography.caption.copyWith(color: AppColors.textSecondary, fontSize: 10),
+                                  style: FixNowTypography.caption.copyWith(
+                                    color: AppColors.textSecondary,
+                                    fontSize: 10,
+                                  ),
                                 ),
                               ],
                             ),
@@ -587,7 +678,8 @@ class _VerificationScreenState extends State<VerificationScreen> {
                         Switch.adaptive(
                           value: _biometricEnabled,
                           activeTrackColor: AppColors.primary,
-                          onChanged: (val) => setState(() => _biometricEnabled = val),
+                          onChanged: (val) =>
+                              setState(() => _biometricEnabled = val),
                         ),
                       ],
                     ),
@@ -608,7 +700,10 @@ class _VerificationScreenState extends State<VerificationScreen> {
                   Text(
                     'By continuing, you confirm instant secure session generation.',
                     textAlign: TextAlign.center,
-                    style: FixNowTypography.caption.copyWith(color: AppColors.textSecondary, fontSize: 10),
+                    style: FixNowTypography.caption.copyWith(
+                      color: AppColors.textSecondary,
+                      fontSize: 10,
+                    ),
                   ),
                 ],
               ),

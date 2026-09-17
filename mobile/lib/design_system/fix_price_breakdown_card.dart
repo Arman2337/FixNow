@@ -3,11 +3,7 @@ import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:flutter/material.dart';
 
-enum PricingModelType {
-  fixed,
-  unit,
-  quote,
-}
+enum PricingModelType { fixed, unit, quote }
 
 /// A transparent, itemized pricing breakdown card conforming to DESIGN.md tokens.
 /// Automatically computes statutory GST (18%) and total customer payable amount.
@@ -55,7 +51,9 @@ class _FixPriceBreakdownCardState extends State<FixPriceBreakdownCard> {
     return '$minor ${widget.currency}';
   }
 
-  String get _badgeText => widget.modelLabel ?? switch (widget.modelType) {
+  String get _badgeText =>
+      widget.modelLabel ??
+      switch (widget.modelType) {
         PricingModelType.fixed => 'Standard Flat Rate',
         PricingModelType.unit => 'Unit Rate Card',
         PricingModelType.quote => 'On-Site Quote & Inspection',
@@ -73,15 +71,18 @@ class _FixPriceBreakdownCardState extends State<FixPriceBreakdownCard> {
         ),
         child: Row(
           children: [
-            const Icon(Icons.info_outline_rounded,
-                size: 20, color: AppColors.primary),
+            const Icon(
+              Icons.info_outline_rounded,
+              size: 20,
+              color: AppColors.primary,
+            ),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Text(
                 'Price on request — confirmed by the provider after inspection.',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.textOnLightPrimary,
-                    ),
+                  color: AppColors.textOnLightPrimary,
+                ),
               ),
             ),
           ],
@@ -111,7 +112,9 @@ class _FixPriceBreakdownCardState extends State<FixPriceBreakdownCard> {
                 decoration: BoxDecoration(
                   color: AppColors.primarySoft,
                   borderRadius: BorderRadius.circular(AppRadius.pill),
-                  border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+                  border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.2),
+                  ),
                 ),
                 child: Text(
                   _badgeText,
@@ -127,7 +130,10 @@ class _FixPriceBreakdownCardState extends State<FixPriceBreakdownCard> {
                   onTap: () => setState(() => _expanded = !_expanded),
                   borderRadius: BorderRadius.circular(6),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 2,
+                    ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -166,9 +172,9 @@ class _FixPriceBreakdownCardState extends State<FixPriceBreakdownCard> {
                 child: Text(
                   'Estimated Total',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: AppColors.textOnLightPrimary,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    color: AppColors.textOnLightPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
               Text(
@@ -209,8 +215,11 @@ class _FixPriceBreakdownCardState extends State<FixPriceBreakdownCard> {
             ),
             Row(
               children: [
-                const Icon(Icons.shield_outlined,
-                    size: 14, color: AppColors.verified),
+                const Icon(
+                  Icons.shield_outlined,
+                  size: 14,
+                  color: AppColors.verified,
+                ),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
@@ -234,28 +243,27 @@ class _FixPriceBreakdownCardState extends State<FixPriceBreakdownCard> {
     required String label,
     required String amount,
     Color? amountColor,
-  }) =>
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                color: AppColors.textOnSurfaceSecondary,
-              ),
-            ),
+  }) => Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+      Expanded(
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: AppColors.textOnSurfaceSecondary,
           ),
-          const SizedBox(width: 8),
-          Text(
-            amount,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: amountColor ?? AppColors.textOnLightPrimary,
-            ),
-          ),
-        ],
-      );
+        ),
+      ),
+      const SizedBox(width: 8),
+      Text(
+        amount,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: amountColor ?? AppColors.textOnLightPrimary,
+        ),
+      ),
+    ],
+  );
 }

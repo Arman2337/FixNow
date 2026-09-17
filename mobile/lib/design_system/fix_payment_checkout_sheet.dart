@@ -8,12 +8,7 @@ import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:flutter/material.dart';
 
 /// Supported payment methods in FixNow.
-enum PaymentMethodType {
-  upi,
-  card,
-  cash,
-  wallet,
-}
+enum PaymentMethodType { upi, card, cash, wallet }
 
 /// A world-class interactive mobile checkout sheet with UPI, Card, Cash on Delivery,
 /// optional technician tipping, and a celebratory 60fps payment success animation.
@@ -41,7 +36,8 @@ class FixPaymentCheckoutSheet extends StatefulWidget {
     required String paymentMethod,
     required int totalMinor,
     required int tipMinor,
-  })? onProcessPayment;
+  })?
+  onProcessPayment;
 
   final VoidCallback? onViewInvoice;
   final VoidCallback? onDone;
@@ -58,7 +54,8 @@ class FixPaymentCheckoutSheet extends StatefulWidget {
       required String paymentMethod,
       required int totalMinor,
       required int tipMinor,
-    })? onProcessPayment,
+    })?
+    onProcessPayment,
     VoidCallback? onViewInvoice,
     VoidCallback? onDone,
   }) {
@@ -179,7 +176,9 @@ class _FixPaymentCheckoutSheetState extends State<FixPaymentCheckoutSheet>
       constraints: BoxConstraints(maxHeight: maxHeight),
       decoration: const BoxDecoration(
         color: AppColors.backgroundPrimary,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.card)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppRadius.card),
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black54,
@@ -227,16 +226,24 @@ class _FixPaymentCheckoutSheetState extends State<FixPaymentCheckoutSheet>
                 children: [
                   Text(
                     'Checkout & Pay',
-                    style: FixNowTypography.heading2.copyWith(color: AppColors.textPrimary),
+                    style: FixNowTypography.heading2.copyWith(
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Row(
                     children: [
-                      const Icon(Icons.shield_rounded, size: 13, color: AppColors.success),
+                      const Icon(
+                        Icons.shield_rounded,
+                        size: 13,
+                        color: AppColors.success,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         '100% Safe & Encrypted • FixNow Guarantee',
-                        style: FixNowTypography.caption.copyWith(color: Colors.white70),
+                        style: FixNowTypography.caption.copyWith(
+                          color: Colors.white70,
+                        ),
                       ),
                     ],
                   ),
@@ -266,16 +273,25 @@ class _FixPaymentCheckoutSheetState extends State<FixPaymentCheckoutSheet>
                     decoration: BoxDecoration(
                       color: AppColors.danger.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(AppRadius.small),
-                      border: Border.all(color: AppColors.danger.withValues(alpha: 0.4)),
+                      border: Border.all(
+                        color: AppColors.danger.withValues(alpha: 0.4),
+                      ),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.error_outline_rounded, color: AppColors.danger, size: 20),
+                        const Icon(
+                          Icons.error_outline_rounded,
+                          color: AppColors.danger,
+                          size: 20,
+                        ),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
                             _errorMessage!,
-                            style: const TextStyle(color: Colors.white, fontSize: 13),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                            ),
                           ),
                         ),
                       ],
@@ -388,28 +404,50 @@ class _FixPaymentCheckoutSheetState extends State<FixPaymentCheckoutSheet>
                 ),
                 child: Text(
                   widget.proName,
-                  style: const TextStyle(color: AppColors.focus, fontSize: 11, fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                    color: AppColors.focus,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],
           ),
           const Divider(color: Colors.white10, height: 16),
-          _buildRow('Base Service & Labour', _formatPaise(widget.baseAmountMinor)),
+          _buildRow(
+            'Base Service & Labour',
+            _formatPaise(widget.baseAmountMinor),
+          ),
           if (widget.sparePartsMinor > 0)
-            _buildRow('Approved Spare Parts', _formatPaise(widget.sparePartsMinor)),
+            _buildRow(
+              'Approved Spare Parts',
+              _formatPaise(widget.sparePartsMinor),
+            ),
           _buildRow('GST (18% Goods & Services Tax)', _formatPaise(_gstMinor)),
           if (_selectedTipMinor > 0)
-            _buildRow('Technician Appreciation Tip', _formatPaise(_selectedTipMinor),
-                valueColor: AppColors.accentGold),
+            _buildRow(
+              'Technician Appreciation Tip',
+              _formatPaise(_selectedTipMinor),
+              valueColor: AppColors.accentGold,
+            ),
           const Divider(color: Colors.white10, height: 14),
-          _buildRow('Total Amount', _formatPaise(_grandTotalMinor),
-              valueColor: AppColors.focus, isBold: true),
+          _buildRow(
+            'Total Amount',
+            _formatPaise(_grandTotalMinor),
+            valueColor: AppColors.focus,
+            isBold: true,
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildRow(String label, String value, {Color? valueColor, bool isBold = false}) {
+  Widget _buildRow(
+    String label,
+    String value, {
+    Color? valueColor,
+    bool isBold = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
@@ -444,11 +482,18 @@ class _FixPaymentCheckoutSheetState extends State<FixPaymentCheckoutSheet>
       children: [
         Row(
           children: [
-            const Icon(Icons.favorite_rounded, size: 16, color: AppColors.accentGold),
+            const Icon(
+              Icons.favorite_rounded,
+              size: 16,
+              color: AppColors.accentGold,
+            ),
             const SizedBox(width: 6),
             Text(
               'Tip Your Technician (Optional)',
-              style: FixNowTypography.title.copyWith(color: AppColors.textPrimary, fontSize: 14),
+              style: FixNowTypography.title.copyWith(
+                color: AppColors.textPrimary,
+                fontSize: 14,
+              ),
             ),
           ],
         ),
@@ -501,7 +546,10 @@ class _FixPaymentCheckoutSheetState extends State<FixPaymentCheckoutSheet>
       children: [
         Text(
           'Select Payment Method',
-          style: FixNowTypography.title.copyWith(color: AppColors.textPrimary, fontSize: 14),
+          style: FixNowTypography.title.copyWith(
+            color: AppColors.textPrimary,
+            fontSize: 14,
+          ),
         ),
         const SizedBox(height: AppSpacing.sm),
         _buildMethodCard(
@@ -599,7 +647,10 @@ class _FixPaymentCheckoutSheetState extends State<FixPaymentCheckoutSheet>
                       if (badge != null) ...[
                         const SizedBox(width: 6),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 1,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.accentGold,
                             borderRadius: BorderRadius.circular(4),
@@ -717,9 +768,16 @@ class _FixPaymentCheckoutSheetState extends State<FixPaymentCheckoutSheet>
             ),
             child: Column(
               children: [
-                _buildReceiptRow('Transaction Ref', 'TXN-${widget.bookingId.substring(0, math.min(8, widget.bookingId.length)).toUpperCase()}'),
+                _buildReceiptRow(
+                  'Transaction Ref',
+                  'TXN-${widget.bookingId.substring(0, math.min(8, widget.bookingId.length)).toUpperCase()}',
+                ),
                 _buildReceiptRow('Booking ID', widget.bookingId),
-                _buildReceiptRow('Status', 'VERIFIED & PAID', valueColor: AppColors.success),
+                _buildReceiptRow(
+                  'Status',
+                  'VERIFIED & PAID',
+                  valueColor: AppColors.success,
+                ),
               ],
             ),
           ),
@@ -740,7 +798,8 @@ class _FixPaymentCheckoutSheetState extends State<FixPaymentCheckoutSheet>
                     },
                   ),
                 ),
-              if (widget.onViewInvoice != null) const SizedBox(width: AppSpacing.md),
+              if (widget.onViewInvoice != null)
+                const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: FixButton(
                   label: 'Done',
@@ -765,7 +824,10 @@ class _FixPaymentCheckoutSheetState extends State<FixPaymentCheckoutSheet>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: Colors.white54, fontSize: 12)),
+          Text(
+            label,
+            style: const TextStyle(color: Colors.white54, fontSize: 12),
+          ),
           Text(
             value,
             style: TextStyle(

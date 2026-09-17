@@ -85,10 +85,7 @@ class HttpChatRepository implements ChatRepository {
       ApiRequest(
         method: ApiMethod.post,
         path: 'bookings/$bookingId/messages',
-        body: {
-          'messageText': messageText,
-          'clientMessageId': ?clientMessageId,
-        },
+        body: {'messageText': messageText, 'clientMessageId': ?clientMessageId},
         bearerToken: await _token(),
       ),
     );

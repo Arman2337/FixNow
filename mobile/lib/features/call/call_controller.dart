@@ -78,10 +78,12 @@ class CallController extends ChangeNotifier {
       final data = projection.data['data'];
       if (data is! Map) return;
 
-      final incomingBookingId = data['bookingId']?.toString() ??
+      final incomingBookingId =
+          data['bookingId']?.toString() ??
           projection.data['resourceId']?.toString();
       if (incomingBookingId != null &&
-          incomingBookingId.trim().toLowerCase() != bookingId.trim().toLowerCase()) {
+          incomingBookingId.trim().toLowerCase() !=
+              bookingId.trim().toLowerCase()) {
         return;
       }
 
@@ -155,7 +157,9 @@ class CallController extends ChangeNotifier {
     _isVoiceAudioActive = true;
     _voiceSub?.cancel();
     final callId = _currentSession?.id ?? '';
-    debugPrint('[CallController] Starting voice audio for booking=$bookingId, callId=$callId');
+    debugPrint(
+      '[CallController] Starting voice audio for booking=$bookingId, callId=$callId',
+    );
 
     // Ensure booking channel is subscribed so we receive remote voice frames
     realtimeClient?.subscribeBooking(bookingId);
@@ -165,7 +169,8 @@ class CallController extends ChangeNotifier {
       _voiceSub = realtimeClient!.voiceFrames.listen((frame) {
         final frameBookingId = frame['bookingId']?.toString();
         if (frameBookingId != null &&
-            frameBookingId.trim().toLowerCase() != bookingId.trim().toLowerCase()) {
+            frameBookingId.trim().toLowerCase() !=
+                bookingId.trim().toLowerCase()) {
           return;
         }
         final base64Chunk = frame['data']?.toString();
@@ -178,10 +183,13 @@ class CallController extends ChangeNotifier {
                 _isRemoteSpeaking = true;
                 notifyListeners();
               }
-              _remoteSpeakingTimer = Timer(const Duration(milliseconds: 400), () {
-                _isRemoteSpeaking = false;
-                notifyListeners();
-              });
+              _remoteSpeakingTimer = Timer(
+                const Duration(milliseconds: 400),
+                () {
+                  _isRemoteSpeaking = false;
+                  notifyListeners();
+                },
+              );
             }
             CallAudioService.playVoiceChunk(bytes);
           } catch (e) {
@@ -261,7 +269,8 @@ class CallController extends ChangeNotifier {
       _errorMessage = 'Could not place audio call. Please check connection.';
       CallAudioService.stop();
       _stopPollingReconciliation();
-      _currentSession = _currentSession?.copyWith(status: CallStatus.failed) ??
+      _currentSession =
+          _currentSession?.copyWith(status: CallStatus.failed) ??
           CallSession(
             id: 'failed',
             bookingId: bookingId,

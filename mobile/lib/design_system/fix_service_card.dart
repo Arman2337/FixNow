@@ -158,10 +158,10 @@ class FixServiceCard extends StatelessWidget {
   bool get _isAfterHours => state == FixServiceCardState.afterHours;
 
   String get _defaultActionLabel => switch (state) {
-        FixServiceCardState.available => 'Book',
-        FixServiceCardState.inDemand => 'Book anyway',
-        FixServiceCardState.afterHours => 'Schedule',
-      };
+    FixServiceCardState.available => 'Book',
+    FixServiceCardState.inDemand => 'Book anyway',
+    FixServiceCardState.afterHours => 'Schedule',
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -178,13 +178,17 @@ class FixServiceCard extends StatelessWidget {
               Expanded(
                 flex: 3,
                 child: ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.card)),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(AppRadius.card),
+                  ),
                   child: Image.asset(
                     imageUrl!,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) => Container(
                       color: AppColors.surfaceContainer,
-                      child: Center(child: Icon(icon, color: AppColors.primary, size: 28)),
+                      child: Center(
+                        child: Icon(icon, color: AppColors.primary, size: 28),
+                      ),
                     ),
                   ),
                 ),
@@ -209,7 +213,11 @@ class FixServiceCard extends StatelessWidget {
                               color: AppColors.surfaceContainer,
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: Icon(icon, color: AppColors.primary, size: 22),
+                            child: Icon(
+                              icon,
+                              color: AppColors.primary,
+                              size: 22,
+                            ),
                           )
                         else
                           Container(
@@ -219,7 +227,11 @@ class FixServiceCard extends StatelessWidget {
                               color: AppColors.surfaceContainer,
                               borderRadius: BorderRadius.circular(6),
                             ),
-                            child: Icon(icon, color: AppColors.primary, size: 14),
+                            child: Icon(
+                              icon,
+                              color: AppColors.primary,
+                              size: 14,
+                            ),
                           ),
                         const SizedBox(width: 4),
                         Flexible(
@@ -307,7 +319,11 @@ class FixServiceCard extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.md),
           ],
-          const Divider(height: 1, thickness: 1, color: AppColors.borderDefault),
+          const Divider(
+            height: 1,
+            thickness: 1,
+            color: AppColors.borderDefault,
+          ),
           const SizedBox(height: AppSpacing.md),
           _Foot(
             priceFrom: priceFrom,
@@ -317,8 +333,9 @@ class FixServiceCard extends StatelessWidget {
             actionIcon: _isAfterHours ? Icons.calendar_today_rounded : null,
             // "Book →": a forward arrow trails the booking CTAs; the
             // after-hours "Schedule" keeps its leading calendar glyph instead.
-            actionTrailingIcon:
-                _isAfterHours ? null : Icons.arrow_forward_rounded,
+            actionTrailingIcon: _isAfterHours
+                ? null
+                : Icons.arrow_forward_rounded,
             actionVariant: _isAfterHours
                 ? FixButtonVariant.secondary
                 : FixButtonVariant.primary,
@@ -385,10 +402,7 @@ class _TopRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (heroTag != null)
-          Hero(tag: heroTag!, child: tile)
-        else
-          tile,
+        if (heroTag != null) Hero(tag: heroTag!, child: tile) else tile,
         const SizedBox(width: AppSpacing.md),
         Expanded(
           child: Column(
@@ -435,10 +449,7 @@ class _TopRow extends StatelessWidget {
         ),
         const SizedBox(width: AppSpacing.sm),
         // Nudge the chevron down so it sits at the tile's vertical centre.
-        const Padding(
-          padding: EdgeInsets.only(top: 14),
-          child: _Chevron(),
-        ),
+        const Padding(padding: EdgeInsets.only(top: 14), child: _Chevron()),
       ],
     );
   }
@@ -455,7 +466,10 @@ class _PriorityBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 3),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: 3,
+      ),
       decoration: BoxDecoration(
         color: AppColors.accentGoldSoft,
         borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -464,7 +478,11 @@ class _PriorityBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.emergency_rounded, size: 12, color: AppColors.onAccentGold),
+          const Icon(
+            Icons.emergency_rounded,
+            size: 12,
+            color: AppColors.onAccentGold,
+          ),
           const SizedBox(width: 4),
           Text(
             label,
@@ -583,7 +601,11 @@ class _MetaRow extends StatelessWidget {
           const SizedBox(width: 7),
           _DotSeparator(),
           const SizedBox(width: 7),
-          Icon(Icons.schedule_rounded, size: 13, color: AppColors.textOnSurfaceMuted),
+          Icon(
+            Icons.schedule_rounded,
+            size: 13,
+            color: AppColors.textOnSurfaceMuted,
+          ),
           const SizedBox(width: 4),
           Flexible(
             child: Text(
@@ -679,24 +701,25 @@ class _LiveStrip extends StatelessWidget {
             AppColors.textOnSurfaceSecondary,
           )
         : switch (state) {
-      FixServiceCardState.available => (
-          AppColors.successSoft,
-          AppColors.success.withValues(alpha: 0.20),
-          AppColors.success,
-        ),
-      FixServiceCardState.inDemand => (
-          AppColors.accentGoldSoft,
-          AppColors.borderGold,
-          AppColors.accentGold,
-        ),
-      FixServiceCardState.afterHours => (
-          AppColors.surfaceCream,
-          AppColors.borderDefault,
-          AppColors.textOnSurfaceMuted,
-        ),
-    };
+            FixServiceCardState.available => (
+              AppColors.successSoft,
+              AppColors.success.withValues(alpha: 0.20),
+              AppColors.success,
+            ),
+            FixServiceCardState.inDemand => (
+              AppColors.accentGoldSoft,
+              AppColors.borderGold,
+              AppColors.accentGold,
+            ),
+            FixServiceCardState.afterHours => (
+              AppColors.surfaceCream,
+              AppColors.borderDefault,
+              AppColors.textOnSurfaceMuted,
+            ),
+          };
 
-    final showStack = showProStack &&
+    final showStack =
+        showProStack &&
         !_verifiedFallback &&
         state != FixServiceCardState.afterHours &&
         prosAvailable > 0;
@@ -879,7 +902,10 @@ class _SurgeChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 2),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: 2,
+      ),
       decoration: BoxDecoration(
         color: AppColors.accentGoldHover,
         borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -1176,6 +1202,8 @@ String _formatCompactCount(int value) {
   if (value < 1000) return value.toString();
   final thousands = value / 1000.0;
   final oneDp = thousands.toStringAsFixed(1);
-  final trimmed = oneDp.endsWith('.0') ? oneDp.substring(0, oneDp.length - 2) : oneDp;
+  final trimmed = oneDp.endsWith('.0')
+      ? oneDp.substring(0, oneDp.length - 2)
+      : oneDp;
   return '${trimmed}k';
 }

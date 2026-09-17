@@ -5,10 +5,12 @@ import 'package:flutter/services.dart';
 class CallAudioService {
   CallAudioService._();
 
-  static const MethodChannel _toneChannel =
-      MethodChannel('com.fixnow.mobile/audio_tone');
-  static const MethodChannel _voiceChannel =
-      MethodChannel('com.fixnow.mobile/voice_stream');
+  static const MethodChannel _toneChannel = MethodChannel(
+    'com.fixnow.mobile/audio_tone',
+  );
+  static const MethodChannel _voiceChannel = MethodChannel(
+    'com.fixnow.mobile/voice_stream',
+  );
 
   static void Function(Uint8List)? _onVoiceChunkCallback;
   static bool _handlerInstalled = false;
@@ -63,7 +65,9 @@ class CallAudioService {
     _ensureHandlerInstalled();
     _onVoiceChunkCallback = onVoiceChunk;
     try {
-      await _voiceChannel.invokeMethod('startVoiceStream', {'isSpeaker': isSpeaker});
+      await _voiceChannel.invokeMethod('startVoiceStream', {
+        'isSpeaker': isSpeaker,
+      });
     } catch (e) {
       debugPrint('[CallAudioService] Failed to start voice stream: $e');
     }
@@ -90,7 +94,9 @@ class CallAudioService {
   /// Toggles speakerphone on/off.
   static Future<void> setSpeaker(bool isSpeaker) async {
     try {
-      await _voiceChannel.invokeMethod('setSpeakerphone', {'isSpeaker': isSpeaker});
+      await _voiceChannel.invokeMethod('setSpeakerphone', {
+        'isSpeaker': isSpeaker,
+      });
     } catch (e) {
       debugPrint('[CallAudioService] Failed to set speakerphone: $e');
     }

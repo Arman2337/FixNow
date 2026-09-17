@@ -144,10 +144,12 @@ class ProblemDiagnosisController extends ChangeNotifier {
       // If we don't have an image, we wouldn't call analyzeImage.
       return;
     }
-    await _analyze(() => _repository.analyzeImage(
-      image: _imagePart(image),
-      textDescription: textDescription,
-    ));
+    await _analyze(
+      () => _repository.analyzeImage(
+        image: _imagePart(image),
+        textDescription: textDescription,
+      ),
+    );
   }
 
   Future<void> analyzeVoice() async {

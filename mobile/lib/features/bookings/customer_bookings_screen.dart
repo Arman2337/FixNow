@@ -40,7 +40,6 @@ class CustomerBookingsScreen extends StatefulWidget {
 class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
   _BookingFilter _filter = _BookingFilter.active;
 
-
   @override
   void initState() {
     super.initState();
@@ -102,9 +101,7 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
                       Container(
                         width: 44,
                         height: 44,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                        ),
+                        decoration: const BoxDecoration(shape: BoxShape.circle),
                         alignment: Alignment.center,
                         child: const Icon(
                           Icons.notifications_none_rounded,
@@ -146,8 +143,6 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
           ),
           const SizedBox(height: AppSpacing.md),
 
-
-
           if (widget.schedulesController != null)
             _SchedulesSection(
               controller: widget.schedulesController!,
@@ -159,12 +154,15 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
                 final all = widget.controller.bookings;
                 final counts = <_BookingFilter, int>{
                   _BookingFilter.all: all.length,
-                  _BookingFilter.active:
-                      all.where((b) => b.statusValue.isActive).length,
-                  _BookingFilter.completed:
-                      all.where((b) => b.statusValue.isCompleted).length,
-                  _BookingFilter.cancelled:
-                      all.where((b) => b.statusValue.isCancelled).length,
+                  _BookingFilter.active: all
+                      .where((b) => b.statusValue.isActive)
+                      .length,
+                  _BookingFilter.completed: all
+                      .where((b) => b.statusValue.isCompleted)
+                      .length,
+                  _BookingFilter.cancelled: all
+                      .where((b) => b.statusValue.isCancelled)
+                      .length,
                 };
                 return _BookingFilterBar(
                   selected: _filter,
@@ -214,9 +212,7 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
                   : [
                       ..._filteredBookings().map(
                         (booking) => Padding(
-                          padding: const EdgeInsets.only(
-                            bottom: AppSpacing.md,
-                          ),
+                          padding: const EdgeInsets.only(bottom: AppSpacing.md),
                           child: _BookingCard(
                             booking: booking,
                             onTap: widget.onBookingSelected == null
@@ -361,7 +357,6 @@ class _BookingFilterBar extends StatelessWidget {
   };
 }
 
-
 class _BookingCard extends StatelessWidget {
   const _BookingCard({
     required this.booking,
@@ -431,7 +426,9 @@ class _BookingCard extends StatelessWidget {
                                 height: 12,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: AppColors.primary.withValues(alpha: 0.2),
+                                  color: AppColors.primary.withValues(
+                                    alpha: 0.2,
+                                  ),
                                 ),
                               ),
                               Container(
@@ -453,7 +450,7 @@ class _BookingCard extends StatelessWidget {
                             fontSize: 11,
                             fontWeight: FontWeight.w800,
                             letterSpacing: 0.5,
-),
+                          ),
                         ),
                       ],
                     ),
@@ -469,7 +466,7 @@ class _BookingCard extends StatelessWidget {
                       child: Text(
                         '#FX-${booking.id.length > 5 ? booking.id.substring(0, 5).toUpperCase() : booking.id.toUpperCase()}',
                         style: const TextStyle(
-color: AppColors.outline,
+                          color: AppColors.outline,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                           letterSpacing: 0.3,
@@ -478,7 +475,7 @@ color: AppColors.outline,
                     ),
                   ],
                 ),
-                
+
                 // Job Title & Subtitle
                 Padding(
                   padding: const EdgeInsets.only(top: 4, bottom: AppSpacing.sm),
@@ -488,7 +485,7 @@ color: AppColors.outline,
                       Text(
                         booking.description,
                         style: const TextStyle(
-color: AppColors.textPrimary,
+                          color: AppColors.textPrimary,
                           fontSize: 20,
                           fontWeight: FontWeight.w600,
                           letterSpacing: -0.2,
@@ -630,7 +627,7 @@ color: AppColors.textPrimary,
                               child: const Text(
                                 '••••',
                                 style: TextStyle(
-fontSize: 20,
+                                  fontSize: 20,
                                   fontWeight: FontWeight.w700,
                                   color: AppColors.primary,
                                   letterSpacing: 1.5,
@@ -643,7 +640,7 @@ fontSize: 20,
                     ],
                   ),
                 ),
-                
+
                 // Security Note
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 4),
@@ -712,10 +709,7 @@ fontSize: 20,
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                            icon: const Icon(
-                              Icons.call_rounded,
-                              size: 20,
-                            ),
+                            icon: const Icon(Icons.call_rounded, size: 20),
                             label: const Text(
                               'Call Specialist',
                               style: TextStyle(
@@ -739,36 +733,36 @@ fontSize: 20,
   }
 
   Widget _buildUnknownCard(BuildContext context) => Semantics(
-        button: onTap != null,
-        label: 'Booking status unavailable. Open details',
-        child: FixCard(
-          onTap: onTap,
-          semanticLabel: 'Booking status unavailable',
-          child: Row(
-            children: [
-              const Icon(Icons.help_outline_rounded, color: AppColors.warning),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Status unavailable',
-                      style: TextStyle(fontWeight: FontWeight.w700),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      booking.description,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
+    button: onTap != null,
+    label: 'Booking status unavailable. Open details',
+    child: FixCard(
+      onTap: onTap,
+      semanticLabel: 'Booking status unavailable',
+      child: Row(
+        children: [
+          const Icon(Icons.help_outline_rounded, color: AppColors.warning),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Status unavailable',
+                  style: TextStyle(fontWeight: FontWeight.w700),
                 ),
-              ),
-            ],
+                const SizedBox(height: 4),
+                Text(
+                  booking.description,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
           ),
-        ),
-      );
+        ],
+      ),
+    ),
+  );
 
   Widget _buildCompletedCard(BuildContext context) {
     return Semantics(
@@ -831,7 +825,7 @@ fontSize: 20,
                     Text(
                       '#FX-${booking.id.length > 5 ? booking.id.substring(0, 5).toUpperCase() : booking.id.toUpperCase()}',
                       style: const TextStyle(
-color: AppColors.outline,
+                        color: AppColors.outline,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 0.3,
@@ -839,7 +833,7 @@ color: AppColors.outline,
                     ),
                   ],
                 ),
-                
+
                 // Title and Price Row
                 Padding(
                   padding: const EdgeInsets.only(top: 8, bottom: AppSpacing.sm),
@@ -856,7 +850,7 @@ color: AppColors.outline,
                               Text(
                                 booking.description,
                                 style: const TextStyle(
-color: AppColors.textPrimary,
+                                  color: AppColors.textPrimary,
                                   fontSize: 20,
                                   fontWeight: FontWeight.w600,
                                   letterSpacing: -0.2,
@@ -879,8 +873,7 @@ color: AppColors.textPrimary,
                       ),
                       const Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                        ],
+                        children: [],
                       ),
                     ],
                   ),
@@ -908,9 +901,9 @@ color: AppColors.textPrimary,
                           ),
                           SizedBox(width: 6),
                           Text(
-                            booking.scheduledAt != null 
-                              ? '${booking.scheduledAt!.day}/${booking.scheduledAt!.month}/${booking.scheduledAt!.year}' 
-                              : 'Recently',
+                            booking.scheduledAt != null
+                                ? '${booking.scheduledAt!.day}/${booking.scheduledAt!.month}/${booking.scheduledAt!.year}'
+                                : 'Recently',
                             style: TextStyle(
                               color: AppColors.textSecondary,
                               fontSize: 12,
@@ -920,11 +913,7 @@ color: AppColors.textPrimary,
                       ),
                       Row(
                         children: [
-                          Icon(
-                            Icons.star,
-                            size: 16,
-                            color: Colors.amber,
-                          ),
+                          Icon(Icons.star, size: 16, color: Colors.amber),
                           SizedBox(width: 4),
                           Text(
                             'Completed',
@@ -940,7 +929,7 @@ color: AppColors.textPrimary,
                     ],
                   ),
                 ),
-                
+
                 // Action Buttons Grid
                 Padding(
                   padding: const EdgeInsets.only(top: AppSpacing.md),
@@ -1076,7 +1065,7 @@ color: AppColors.textPrimary,
                     Text(
                       '#FX-${booking.id.length > 5 ? booking.id.substring(0, 5).toUpperCase() : booking.id.toUpperCase()}',
                       style: const TextStyle(
-color: AppColors.outline,
+                        color: AppColors.outline,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 0.3,
@@ -1084,7 +1073,7 @@ color: AppColors.outline,
                     ),
                   ],
                 ),
-                
+
                 // Title and Refund Row
                 Padding(
                   padding: const EdgeInsets.only(top: 8, bottom: AppSpacing.sm),
@@ -1101,7 +1090,7 @@ color: AppColors.outline,
                               Text(
                                 booking.description,
                                 style: const TextStyle(
-color: AppColors.textPrimary,
+                                  color: AppColors.textPrimary,
                                   fontSize: 20,
                                   fontWeight: FontWeight.w600,
                                   letterSpacing: -0.2,
@@ -1124,13 +1113,12 @@ color: AppColors.textPrimary,
                       ),
                       const Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                        ],
+                        children: [],
                       ),
                     ],
                   ),
                 ),
-                
+
                 // Refund Policy Disclaimer
                 Container(
                   padding: const EdgeInsets.all(10),
@@ -1175,7 +1163,7 @@ color: AppColors.textPrimary,
                     ],
                   ),
                 ),
-                
+
                 // Help Button
                 Padding(
                   padding: const EdgeInsets.only(top: AppSpacing.sm),
@@ -1207,7 +1195,6 @@ color: AppColors.textPrimary,
       ),
     );
   }
-
 }
 
 class _EmptyBookings extends StatelessWidget {
@@ -1243,7 +1230,7 @@ class _EmptyBookings extends StatelessWidget {
         const Text(
           'No Bookings Found',
           style: TextStyle(
-fontSize: 20,
+            fontSize: 20,
             fontWeight: FontWeight.w600,
             color: AppColors.textPrimary,
           ),
@@ -1252,10 +1239,7 @@ fontSize: 20,
         const Text(
           "We couldn't find any service history matching your query or selected filter.",
           textAlign: TextAlign.center,
-          style: TextStyle(
-            color: AppColors.outline,
-            fontSize: 12,
-          ),
+          style: TextStyle(color: AppColors.outline, fontSize: 12),
         ),
         if (onReset != null) ...[
           const SizedBox(height: AppSpacing.md),
@@ -1272,10 +1256,7 @@ fontSize: 20,
             ),
             child: const Text(
               'Reset Filters',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
             ),
           ),
         ],
@@ -1316,7 +1297,10 @@ class _Failure extends StatelessWidget {
 /// FN-112: repeating services with manage controls. Each upcoming visit is
 /// booked only when the customer confirms it.
 class _SchedulesSection extends StatefulWidget {
-  const _SchedulesSection({required this.controller, this.onOccurrenceConfirmed});
+  const _SchedulesSection({
+    required this.controller,
+    this.onOccurrenceConfirmed,
+  });
   final SchedulesController controller;
 
   /// Called after a confirmed occurrence becomes a real booking.
@@ -1339,8 +1323,7 @@ class _SchedulesSectionState extends State<_SchedulesSection> {
     builder: (context, _) {
       final controller = widget.controller;
       return switch (controller.status) {
-        SchedulesStatus.initial ||
-        SchedulesStatus.loading => const Padding(
+        SchedulesStatus.initial || SchedulesStatus.loading => const Padding(
           padding: EdgeInsets.only(bottom: AppSpacing.lg),
           child: Center(
             child: CircularProgressIndicator(
@@ -1445,20 +1428,21 @@ class _ScheduleCardState extends State<_ScheduleCard> {
     }
     return FixCard(
       tone: schedule.isActive ? FixCardTone.elevated : FixCardTone.standard,
-      semanticLabel: 'Repeating ${schedule.cadence == 'WEEKLY' ? 'weekly' : 'monthly'} service',
+      semanticLabel:
+          'Repeating ${schedule.cadence == 'WEEKLY' ? 'weekly' : 'monthly'} service',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.event_repeat_rounded,
-                  color: Theme.of(context).colorScheme.primary),
+              Icon(
+                Icons.event_repeat_rounded,
+                color: Theme.of(context).colorScheme.primary,
+              ),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
-                  schedule.cadence == 'WEEKLY'
-                      ? 'Every week'
-                      : 'Every month',
+                  schedule.cadence == 'WEEKLY' ? 'Every week' : 'Every month',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
               ),
@@ -1479,7 +1463,8 @@ class _ScheduleCardState extends State<_ScheduleCard> {
           const SizedBox(height: AppSpacing.md),
           Text(
             switch ((schedule.isActive, nextVisit)) {
-              (true, final visit?) => 'Next visit: $visit — confirm to book it.',
+              (true, final visit?) =>
+                'Next visit: $visit — confirm to book it.',
               _ => 'Paused. Resume to see your next visit.',
             },
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -1514,8 +1499,7 @@ class _ScheduleCardState extends State<_ScheduleCard> {
                   icon: Icons.pause_circle_outline_rounded,
                   variant: FixButtonVariant.secondary,
                   isLoading: controller.working,
-                  onPressed: () =>
-                      controller.updateStatus(schedule, 'pause'),
+                  onPressed: () => controller.updateStatus(schedule, 'pause'),
                 ),
               if (!schedule.isActive)
                 FixButton(
@@ -1523,8 +1507,7 @@ class _ScheduleCardState extends State<_ScheduleCard> {
                   icon: Icons.play_circle_outline_rounded,
                   variant: FixButtonVariant.secondary,
                   isLoading: controller.working,
-                  onPressed: () =>
-                      controller.updateStatus(schedule, 'resume'),
+                  onPressed: () => controller.updateStatus(schedule, 'resume'),
                 ),
               TextButton(
                 onPressed: controller.working

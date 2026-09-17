@@ -67,7 +67,10 @@ void main() {
     // The acceptance beat: REQUESTED → ASSIGNED.
     socket.emitProjection(status: 'ASSIGNED', sequence: 2);
     await Future<void>.delayed(Duration.zero);
-    expect(controller.acceptedBooking.value, '22222222-2222-4222-8222-222222222222');
+    expect(
+      controller.acceptedBooking.value,
+      '22222222-2222-4222-8222-222222222222',
+    );
     expect(controller.bookings.single.status, 'ASSIGNED');
     // Projection rebuilds must carry forward location and schedule fields.
     expect(controller.bookings.single.locationLatitude, 17.385);
@@ -77,7 +80,10 @@ void main() {
     // One-shot: later transitions do not re-fire.
     socket.emitProjection(status: 'EN_ROUTE', sequence: 3);
     await Future<void>.delayed(Duration.zero);
-    expect(controller.acceptedBooking.value, '22222222-2222-4222-8222-222222222222');
+    expect(
+      controller.acceptedBooking.value,
+      '22222222-2222-4222-8222-222222222222',
+    );
 
     controller.dispose();
   });

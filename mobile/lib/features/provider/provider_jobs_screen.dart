@@ -126,10 +126,8 @@ class _ProviderJobsScreenState extends State<ProviderJobsScreen> {
               _buildHistorySummaryPill(historyJobs),
               const SizedBox(height: AppSpacing.md),
               ...historyJobs.map(
-                (job) => _HistoryJobCard(
-                  job: job,
-                  controller: widget.controller,
-                ),
+                (job) =>
+                    _HistoryJobCard(job: job, controller: widget.controller),
               ),
             ] else ...[
               // Assigned Jobs: Top Urgent Next Job Card first
@@ -151,14 +149,16 @@ class _ProviderJobsScreenState extends State<ProviderJobsScreen> {
                   ),
                 ),
                 const SizedBox(height: AppSpacing.sm),
-                ...assignedJobs.skip(1).map(
-                  (job) => _UpcomingJobCard(
-                    job: job,
-                    controller: widget.controller,
-                    chatRepository: widget.chatRepository,
-                    callRepository: widget.callRepository,
-                  ),
-                ),
+                ...assignedJobs
+                    .skip(1)
+                    .map(
+                      (job) => _UpcomingJobCard(
+                        job: job,
+                        controller: widget.controller,
+                        chatRepository: widget.chatRepository,
+                        callRepository: widget.callRepository,
+                      ),
+                    ),
               ],
             ],
             const SizedBox(height: AppSpacing.xl),
@@ -233,12 +233,13 @@ class _ProviderJobsScreenState extends State<ProviderJobsScreen> {
                         children: [
                           Flexible(
                             child: Text(
-                              widget.controller.profile?.displayName ?? 'Provider',
+                              widget.controller.profile?.displayName ??
+                                  'Provider',
                               style: const TextStyle(
                                 color: AppColors.textPrimary,
                                 fontSize: 16,
                                 fontWeight: FontWeight.w700,
-),
+                              ),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
@@ -251,16 +252,11 @@ class _ProviderJobsScreenState extends State<ProviderJobsScreen> {
                         ],
                       ),
                       Text(
-                        '${widget.controller.skills.isNotEmpty
-                                ? widget.controller.skills
-                                    .take(2)
-                                    .map((s) => s.categoryName)
-                                    .join(' & ')
-                                : 'Service Professional'} • FixNow Pro',
+                        '${widget.controller.skills.isNotEmpty ? widget.controller.skills.take(2).map((s) => s.categoryName).join(' & ') : 'Service Professional'} • FixNow Pro',
                         style: const TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 11,
-),
+                        ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ],
@@ -314,7 +310,7 @@ class _ProviderJobsScreenState extends State<ProviderJobsScreen> {
                           : AppColors.textSecondary,
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
-),
+                    ),
                   ),
                 ],
               ),
@@ -327,7 +323,10 @@ class _ProviderJobsScreenState extends State<ProviderJobsScreen> {
 
   Widget _buildEmergencyOnCallBanner() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 10),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: 10,
+      ),
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(12),
@@ -384,8 +383,8 @@ class _ProviderJobsScreenState extends State<ProviderJobsScreen> {
           final label = index == 0
               ? 'TODAY'
               : index == 1
-                  ? 'TOM'
-                  : _weekdayShort(date.weekday);
+              ? 'TOM'
+              : _weekdayShort(date.weekday);
 
           return Padding(
             padding: EdgeInsets.only(right: index < days.length - 1 ? 8 : 0),
@@ -402,9 +401,7 @@ class _ProviderJobsScreenState extends State<ProviderJobsScreen> {
                       : AppColors.surfaceContainerLow,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: isSelected
-                        ? AppColors.primary
-                        : AppColors.border,
+                    color: isSelected ? AppColors.primary : AppColors.border,
                   ),
                 ),
                 child: Column(
@@ -444,8 +441,8 @@ class _ProviderJobsScreenState extends State<ProviderJobsScreen> {
                             color: isSelected
                                 ? AppColors.primaryFixed
                                 : (index == 0 && activeJobCount > 0)
-                                    ? AppColors.primary
-                                    : AppColors.borderStrong,
+                                ? AppColors.primary
+                                : AppColors.borderStrong,
                           ),
                         ),
                         if (index == 0 && activeJobCount > 1) ...[
@@ -500,7 +497,7 @@ class _ProviderJobsScreenState extends State<ProviderJobsScreen> {
                             color: Colors.black.withValues(alpha: 0.05),
                             blurRadius: 4,
                             offset: const Offset(0, 1),
-                          )
+                          ),
                         ]
                       : null,
                 ),
@@ -509,7 +506,9 @@ class _ProviderJobsScreenState extends State<ProviderJobsScreen> {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 12,
-                    fontWeight: !_showHistory ? FontWeight.w800 : FontWeight.w600,
+                    fontWeight: !_showHistory
+                        ? FontWeight.w800
+                        : FontWeight.w600,
                     color: !_showHistory
                         ? AppColors.textPrimary
                         : AppColors.textSecondary,
@@ -536,7 +535,7 @@ class _ProviderJobsScreenState extends State<ProviderJobsScreen> {
                             color: Colors.black.withValues(alpha: 0.05),
                             blurRadius: 4,
                             offset: const Offset(0, 1),
-                          )
+                          ),
                         ]
                       : null,
                 ),
@@ -545,7 +544,9 @@ class _ProviderJobsScreenState extends State<ProviderJobsScreen> {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 12,
-                    fontWeight: _showHistory ? FontWeight.w800 : FontWeight.w600,
+                    fontWeight: _showHistory
+                        ? FontWeight.w800
+                        : FontWeight.w600,
                     color: _showHistory
                         ? AppColors.textPrimary
                         : AppColors.textSecondary,
@@ -561,7 +562,10 @@ class _ProviderJobsScreenState extends State<ProviderJobsScreen> {
 
   Widget _buildWorkingRadiusShortcut() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 10),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: 10,
+      ),
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(12),
@@ -588,10 +592,7 @@ class _ProviderJobsScreenState extends State<ProviderJobsScreen> {
             children: const [
               Text(
                 '09:00 - 19:30',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: AppColors.textSecondary,
-                ),
+                style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
               ),
               SizedBox(width: 4),
               Icon(
@@ -700,9 +701,7 @@ class _TopUrgentJobCard extends StatelessWidget {
         color: AppColors.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isEnRoute
-              ? AppColors.errorContainer
-              : AppColors.border,
+          color: isEnRoute ? AppColors.errorContainer : AppColors.border,
           width: isEnRoute ? 1.5 : 1,
         ),
         boxShadow: [
@@ -744,8 +743,8 @@ class _TopUrgentJobCard extends StatelessWidget {
                       isEnRoute
                           ? 'Priority Dispatch • En Route'
                           : isInProgress
-                              ? 'In Progress • Service Active'
-                              : 'Assigned • Ready for Dispatch',
+                          ? 'In Progress • Service Active'
+                          : 'Assigned • Ready for Dispatch',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
@@ -799,7 +798,10 @@ class _TopUrgentJobCard extends StatelessWidget {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            providerServiceName(controller.categories, job.serviceCategoryId),
+                            providerServiceName(
+                              controller.categories,
+                              job.serviceCategoryId,
+                            ),
                             style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w800,
@@ -821,7 +823,10 @@ class _TopUrgentJobCard extends StatelessWidget {
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.surfaceContainerLow,
                         borderRadius: BorderRadius.circular(16),
@@ -905,7 +910,11 @@ class _TopUrgentJobCard extends StatelessWidget {
                       ),
                       Row(
                         children: const [
-                          Icon(Icons.near_me_rounded, size: 14, color: AppColors.textPrimary),
+                          Icon(
+                            Icons.near_me_rounded,
+                            size: 14,
+                            color: AppColors.textPrimary,
+                          ),
                           SizedBox(width: 3),
                           Text(
                             'Navigate',
@@ -916,7 +925,11 @@ class _TopUrgentJobCard extends StatelessWidget {
                             ),
                           ),
                           SizedBox(width: 4),
-                          Icon(Icons.chevron_right_rounded, size: 18, color: AppColors.textPrimary),
+                          Icon(
+                            Icons.chevron_right_rounded,
+                            size: 18,
+                            color: AppColors.textPrimary,
+                          ),
                         ],
                       ),
                     ],
@@ -936,7 +949,8 @@ class _TopUrgentJobCard extends StatelessWidget {
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
-                        (job.locationLatitude != null && job.locationLongitude != null)
+                        (job.locationLatitude != null &&
+                                job.locationLongitude != null)
                             ? 'Coordinates: ${job.locationLatitude!.toStringAsFixed(4)}, ${job.locationLongitude!.toStringAsFixed(4)}'
                             : 'Customer service location on record',
                         style: const TextStyle(
@@ -964,17 +978,19 @@ class _TopUrgentJobCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(10),
                         child: ProviderLiveMap(
                           showOverlay: false,
+                          route: controller.currentRoute,
                           customerLocation: CustomerMapLocation(
                             latitude: job.locationLatitude ?? 23.0225,
                             longitude: job.locationLongitude ?? 72.5714,
                           ),
-                          providerLocation: ProviderMapLocation(
-                            latitude: (job.locationLatitude ?? 23.0225) - 0.005,
-                            longitude: (job.locationLongitude ?? 72.5714) - 0.005,
-                            accuracyMeters: 0,
-                            capturedAt: DateTime.now(),
-                            receivedAt: DateTime.now(),
-                          ),
+                          providerLocation: controller.currentLocation ??
+                              ProviderMapLocation(
+                                latitude: (job.locationLatitude ?? 23.0225) - 0.005,
+                                longitude: (job.locationLongitude ?? 72.5714) - 0.005,
+                                accuracyMeters: 0,
+                                capturedAt: DateTime.now(),
+                                receivedAt: DateTime.now(),
+                              ),
                         ),
                       ),
                       Positioned(
@@ -993,7 +1009,11 @@ class _TopUrgentJobCard extends StatelessWidget {
                           ),
                           child: const Padding(
                             padding: EdgeInsets.all(6.0),
-                            child: Icon(Icons.fullscreen_rounded, size: 20, color: AppColors.textPrimary),
+                            child: Icon(
+                              Icons.fullscreen_rounded,
+                              size: 20,
+                              color: AppColors.textPrimary,
+                            ),
                           ),
                         ),
                       ),
@@ -1014,14 +1034,18 @@ class _TopUrgentJobCard extends StatelessWidget {
                           trailingIcon: Icons.arrow_forward_rounded,
                           onPressed: () async {
                             if (job.status == 'EN_ROUTE') {
-                              final otp = await _requestServiceStartOtp(context);
+                              final otp = await _requestServiceStartOtp(
+                                context,
+                              );
                               if (otp != null) {
                                 await controller.verifyOtpAndStartJob(job, otp);
                               }
                               return;
                             }
                             if (job.status == 'IN_PROGRESS') {
-                              if (!JobProofRepository.instance.hasProof(job.id)) {
+                              if (!JobProofRepository.instance.hasProof(
+                                job.id,
+                              )) {
                                 await JobProofVerificationDialog.show(
                                   context,
                                   bookingId: job.id,
@@ -1103,7 +1127,8 @@ class _TopUrgentJobCard extends StatelessWidget {
                 ),
 
                 // Job Proof Viewer Card
-                if (JobProofRepository.instance.getProof(job.id) case final proof?) ...[
+                if (JobProofRepository.instance.getProof(job.id)
+                    case final proof?) ...[
                   const SizedBox(height: AppSpacing.md),
                   JobProofViewerCard(proof: proof),
                 ],
@@ -1118,7 +1143,9 @@ class _TopUrgentJobCard extends StatelessWidget {
                     onPressed: () => JobProofVerificationDialog.show(
                       context,
                       bookingId: job.id,
-                      initialProof: JobProofRepository.instance.getProof(job.id),
+                      initialProof: JobProofRepository.instance.getProof(
+                        job.id,
+                      ),
                     ),
                   ),
                 ],
@@ -1143,7 +1170,10 @@ class _TopUrgentJobCard extends StatelessWidget {
                   ),
                   if (controller.actionError case final message?) ...[
                     const SizedBox(height: AppSpacing.sm),
-                    Text(message, style: const TextStyle(color: AppColors.danger)),
+                    Text(
+                      message,
+                      style: const TextStyle(color: AppColors.danger),
+                    ),
                   ],
                 ],
 
@@ -1225,7 +1255,10 @@ class _UpcomingJobCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      providerServiceName(controller.categories, job.serviceCategoryId),
+                      providerServiceName(
+                        controller.categories,
+                        job.serviceCategoryId,
+                      ),
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
@@ -1251,7 +1284,11 @@ class _UpcomingJobCard extends StatelessWidget {
             children: [
               Row(
                 children: const [
-                  Icon(Icons.checklist_rounded, size: 14, color: AppColors.primary),
+                  Icon(
+                    Icons.checklist_rounded,
+                    size: 14,
+                    color: AppColors.primary,
+                  ),
                   SizedBox(width: 4),
                   Text(
                     'Standard Checklist',
@@ -1274,7 +1311,10 @@ class _UpcomingJobCard extends StatelessWidget {
                   ),
                 ),
                 style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
@@ -1374,7 +1414,8 @@ class _HistoryJobCard extends StatelessWidget {
               ),
             ],
           ),
-          if (JobProofRepository.instance.getProof(job.id) case final proof?) ...[
+          if (JobProofRepository.instance.getProof(job.id)
+              case final proof?) ...[
             const SizedBox(height: AppSpacing.sm),
             JobProofViewerCard(proof: proof),
           ],
@@ -1406,7 +1447,14 @@ class _MapGridPainter extends CustomPainter {
 
     final path = Path()
       ..moveTo(20, size.height - 20)
-      ..cubicTo(size.width * 0.3, size.height * 0.8, size.width * 0.6, 20, size.width - 20, 25);
+      ..cubicTo(
+        size.width * 0.3,
+        size.height * 0.8,
+        size.width * 0.6,
+        20,
+        size.width - 20,
+        25,
+      );
 
     canvas.drawPath(path, routePaint);
   }
@@ -1475,7 +1523,10 @@ class _LiveTrackingBlock extends StatelessWidget {
               ),
               if (sharing)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.success,
                     borderRadius: BorderRadius.circular(20),
@@ -1511,9 +1562,7 @@ class _LiveTrackingBlock extends StatelessWidget {
                 sharing
                     ? Icons.location_on_rounded
                     : Icons.location_off_outlined,
-                color: sharing
-                    ? AppColors.primary
-                    : AppColors.textSecondary,
+                color: sharing ? AppColors.primary : AppColors.textSecondary,
                 size: 20,
               ),
               const SizedBox(width: AppSpacing.sm),
@@ -1523,7 +1572,9 @@ class _LiveTrackingBlock extends StatelessWidget {
                       ? 'Location sharing active'
                       : 'Location sharing is off',
                   style: TextStyle(
-                    color: sharing ? AppColors.textPrimary : AppColors.textSecondary,
+                    color: sharing
+                        ? AppColors.textPrimary
+                        : AppColors.textSecondary,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -1535,8 +1586,8 @@ class _LiveTrackingBlock extends StatelessWidget {
             published
                 ? 'Location shared successfully. Send an update when your position changes.'
                 : sharing
-                    ? 'The customer can follow your arrival after your first update.'
-                    : 'Share your location while travelling so the customer can follow your arrival.',
+                ? 'The customer can follow your arrival after your first update.'
+                : 'Share your location while travelling so the customer can follow your arrival.',
             style: const TextStyle(color: AppColors.textSecondary),
           ),
         ],
@@ -1699,7 +1750,8 @@ class _CancelJobButtonState extends State<_CancelJobButton> {
           } catch (_) {
             if (mounted) {
               setState(() {
-                error = 'The job could not be cancelled. Refresh and try again.';
+                error =
+                    'The job could not be cancelled. Refresh and try again.';
               });
             }
           } finally {

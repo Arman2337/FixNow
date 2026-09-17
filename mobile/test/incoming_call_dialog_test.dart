@@ -35,14 +35,14 @@ class _FakeCallRepository implements CallRepository {
 
   @override
   Future<CallSession> initiateCall(String bookingId) async => CallSession(
-        id: 'call-1',
-        bookingId: bookingId,
-        callerUserId: 'provider-1',
-        callerRole: 'PROVIDER',
-        calleeUserId: 'customer-1',
-        status: CallStatus.ringing,
-        startedAt: DateTime.now(),
-      );
+    id: 'call-1',
+    bookingId: bookingId,
+    callerUserId: 'provider-1',
+    callerRole: 'PROVIDER',
+    calleeUserId: 'customer-1',
+    status: CallStatus.ringing,
+    startedAt: DateTime.now(),
+  );
 
   @override
   Future<CallSession> rejectCall(String bookingId, String callId) async =>
@@ -58,21 +58,21 @@ class _FakeCallRepository implements CallRepository {
 }
 
 CallSession _session() => CallSession(
-      id: 'call-ringing',
-      bookingId: 'booking-123',
-      callerUserId: 'provider-1',
-      callerRole: 'PROVIDER',
-      calleeUserId: 'customer-1',
-      status: CallStatus.ringing,
-      startedAt: DateTime.now(),
-    );
+  id: 'call-ringing',
+  bookingId: 'booking-123',
+  callerUserId: 'provider-1',
+  callerRole: 'PROVIDER',
+  calleeUserId: 'customer-1',
+  status: CallStatus.ringing,
+  startedAt: DateTime.now(),
+);
 
 Widget _host(Widget child, {bool disableAnimations = false}) => MaterialApp(
-      home: MediaQuery(
-        data: MediaQueryData(disableAnimations: disableAnimations),
-        child: Scaffold(body: child),
-      ),
-    );
+  home: MediaQuery(
+    data: MediaQueryData(disableAnimations: disableAnimations),
+    child: Scaffold(body: child),
+  ),
+);
 
 void main() {
   testWidgets('renders caller title, action buttons, and wave rings', (

@@ -32,6 +32,14 @@ export class UpsertProviderProfileDto {
   baseLongitude!: number;
 }
 
+export class UpdateProviderLocationDto {
+  @IsLatitude()
+  latitude!: number;
+
+  @IsLongitude()
+  longitude!: number;
+}
+
 export class CoverageCheckDto {
   @IsLatitude()
   latitude!: number;

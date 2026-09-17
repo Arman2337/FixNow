@@ -27,10 +27,8 @@ class FixRescheduleSheet extends StatefulWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => FixRescheduleSheet(
-        booking: booking,
-        controller: controller,
-      ),
+      builder: (context) =>
+          FixRescheduleSheet(booking: booking, controller: controller),
     );
   }
 
@@ -68,7 +66,9 @@ class _FixRescheduleSheetState extends State<FixRescheduleSheet> {
   Future<void> _submitReschedule() async {
     final targetDate = _schedule.targetScheduledAt;
     if (targetDate == null) {
-      setState(() => _error = 'Please select a valid scheduled date and arrival slot.');
+      setState(
+        () => _error = 'Please select a valid scheduled date and arrival slot.',
+      );
       return;
     }
 
@@ -90,12 +90,18 @@ class _FixRescheduleSheetState extends State<FixRescheduleSheet> {
             backgroundColor: AppColors.surfaceElevated,
             content: Row(
               children: [
-                const Icon(Icons.check_circle_rounded, color: AppColors.success),
+                const Icon(
+                  Icons.check_circle_rounded,
+                  color: AppColors.success,
+                ),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
                     'Booking rescheduled to ${_schedule.formattedSummary}',
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],
@@ -155,8 +161,11 @@ class _FixRescheduleSheetState extends State<FixRescheduleSheet> {
                           color: AppColors.primarySoft,
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(Icons.event_repeat_rounded,
-                            color: AppColors.primary, size: 20),
+                        child: const Icon(
+                          Icons.event_repeat_rounded,
+                          color: AppColors.primary,
+                          size: 20,
+                        ),
                       ),
                       const SizedBox(width: AppSpacing.sm),
                       const Text(
@@ -170,8 +179,10 @@ class _FixRescheduleSheetState extends State<FixRescheduleSheet> {
                     ],
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close_rounded,
-                        color: AppColors.textSecondary),
+                    icon: const Icon(
+                      Icons.close_rounded,
+                      color: AppColors.textSecondary,
+                    ),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                 ],
@@ -187,8 +198,11 @@ class _FixRescheduleSheetState extends State<FixRescheduleSheet> {
                 ),
                 child: const Row(
                   children: [
-                    Icon(Icons.lock_reset_rounded,
-                        color: AppColors.primary, size: 20),
+                    Icon(
+                      Icons.lock_reset_rounded,
+                      color: AppColors.primary,
+                      size: 20,
+                    ),
                     SizedBox(width: 10),
                     Expanded(
                       child: Column(
@@ -255,13 +269,17 @@ class _FixRescheduleSheetState extends State<FixRescheduleSheet> {
                       initialValue: _selectedReason,
                       dropdownColor: AppColors.surfaceContainerLowest,
                       style: const TextStyle(
-                          color: AppColors.textPrimary, fontSize: 13),
+                        color: AppColors.textPrimary,
+                        fontSize: 13,
+                      ),
                       decoration: InputDecoration(
                         isDense: true,
                         filled: true,
                         fillColor: AppColors.surfaceContainerLowest,
                         contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 10),
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                           borderSide: BorderSide(
@@ -276,7 +294,9 @@ class _FixRescheduleSheetState extends State<FixRescheduleSheet> {
                         ),
                       ),
                       items: _commonReasons
-                          .map((r) => DropdownMenuItem(value: r, child: Text(r)))
+                          .map(
+                            (r) => DropdownMenuItem(value: r, child: Text(r)),
+                          )
                           .toList(),
                       onChanged: (val) {
                         if (val != null) setState(() => _selectedReason = val);
@@ -294,18 +314,24 @@ class _FixRescheduleSheetState extends State<FixRescheduleSheet> {
                     color: AppColors.danger.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                        color: AppColors.danger.withValues(alpha: 0.4)),
+                      color: AppColors.danger.withValues(alpha: 0.4),
+                    ),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.error_outline_rounded,
-                          color: AppColors.danger, size: 16),
+                      const Icon(
+                        Icons.error_outline_rounded,
+                        color: AppColors.danger,
+                        size: 16,
+                      ),
                       const SizedBox(width: AppSpacing.xs),
                       Expanded(
                         child: Text(
                           msg,
                           style: const TextStyle(
-                              color: AppColors.danger, fontSize: 12),
+                            color: AppColors.danger,
+                            fontSize: 12,
+                          ),
                         ),
                       ),
                     ],

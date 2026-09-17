@@ -17,17 +17,37 @@ class _FakeProviderRepository implements ProviderRepository {
   Future<List<CustomerBooking>> jobs() async => [];
 
   @override
+  Future<void> acceptBooking(String bookingId) async {}
+
+  @override
+  Future<ProviderProfile> updateLocation(double lat, double lng) async {
+    return const ProviderProfile(
+      displayName: 'Test',
+      bio: 'Test Bio',
+      serviceRadiusKm: 10,
+      baseLatitude: 0,
+      baseLongitude: 0,
+    );
+  }
+
+  @override
   Future<ProviderProfile?> profile() async => null;
 
   @override
-  Future<CustomerBooking> updateJobStatus(CustomerBooking job, String status) async {
+  Future<CustomerBooking> updateJobStatus(
+    CustomerBooking job,
+    String status,
+  ) async {
     lastUpdatedJob = job;
     lastUpdatedStatus = status;
     return job.copyWith(status: status, version: job.version + 1);
   }
 
   @override
-  Future<CustomerBooking> verifyOtpAndStartJob(CustomerBooking job, String otp) async {
+  Future<CustomerBooking> verifyOtpAndStartJob(
+    CustomerBooking job,
+    String otp,
+  ) async {
     lastUpdatedJob = job;
     lastVerifiedOtp = otp;
     return job.copyWith(status: 'IN_PROGRESS', version: job.version + 1);
@@ -39,7 +59,8 @@ class _FakeProviderRepository implements ProviderRepository {
   }
 
   @override
-  Future<ProviderAvailability> availability() async => throw UnimplementedError();
+  Future<ProviderAvailability> availability() async =>
+      throw UnimplementedError();
 
   @override
   Future<List<Map<String, Object?>>> categories() async => [];
@@ -51,10 +72,16 @@ class _FakeProviderRepository implements ProviderRepository {
   Future<ProviderProfile> saveProfile(ProviderProfile profile) async => profile;
 
   @override
-  Future<ProviderAvailability> setStatus(ProviderAvailability current, String status) async => current;
+  Future<ProviderAvailability> setStatus(
+    ProviderAvailability current,
+    String status,
+  ) async => current;
 
   @override
-  Future<ProviderAvailability> setWeekdaySchedule(ProviderAvailability current, bool enabled) async => current;
+  Future<ProviderAvailability> setWeekdaySchedule(
+    ProviderAvailability current,
+    bool enabled,
+  ) async => current;
 
   @override
   Future<ProviderAvailability> updateSchedule({
@@ -80,7 +107,8 @@ class _FakeProviderRepository implements ProviderRepository {
   Future<List<ProviderRequest>> availableRequests() async => [];
 
   @override
-  Future<CustomerBooking> acceptRequest(ProviderRequest request) async => throw UnimplementedError();
+  Future<CustomerBooking> acceptRequest(ProviderRequest request) async =>
+      throw UnimplementedError();
 
   @override
   Future<ProviderApplication> application() async => throw UnimplementedError();
@@ -89,7 +117,8 @@ class _FakeProviderRepository implements ProviderRepository {
   Future<ProviderAcceptTime?> acceptTime() async => null;
 
   @override
-  Future<ProviderApplication> submitApplication() async => throw UnimplementedError();
+  Future<ProviderApplication> submitApplication() async =>
+      throw UnimplementedError();
 }
 
 void main() {
@@ -115,13 +144,12 @@ void main() {
   }
 
   Widget wrapWidget(Widget child) {
-    return MaterialApp(
-      theme: AppTheme.dark,
-      home: child,
-    );
+    return MaterialApp(theme: AppTheme.dark, home: child);
   }
 
-  testWidgets('FixOtpInputSheet renders digit boxes and submits on 4 digits', (tester) async {
+  testWidgets('FixOtpInputSheet renders digit boxes and submits on 4 digits', (
+    tester,
+  ) async {
     String? submittedCode;
 
     await tester.pumpWidget(
@@ -150,94 +178,103 @@ void main() {
     expect(submittedCode, '4821');
   });
 
-  testWidgets('ProviderActiveJobCockpitScreen for ASSIGNED job triggers Start Journey', (tester) async {
-    final job = createJob('ASSIGNED');
-    controller.jobs = [job];
+  testWidgets(
+    'ProviderActiveJobCockpitScreen for ASSIGNED job triggers Start Journey',
+    (tester) async {
+      final job = createJob('ASSIGNED');
+      controller.jobs = [job];
 
-    await tester.pumpWidget(
-      wrapWidget(
-        ProviderActiveJobCockpitScreen(
-          job: job,
-          controller: controller,
+      await tester.pumpWidget(
+        wrapWidget(
+          ProviderActiveJobCockpitScreen(job: job, controller: controller),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
 
-    expect(find.text('Job Execution Cockpit'), findsOneWidget);
-    expect(find.text('Kitchen sink pipe is leaking heavily.'), findsOneWidget);
-    expect(find.text('Start Journey (On My Way)'), findsOneWidget);
+      expect(find.text('Job Execution Cockpit'), findsOneWidget);
+      expect(
+        find.text('Kitchen sink pipe is leaking heavily.'),
+        findsOneWidget,
+      );
+      expect(find.text('Start Journey (On My Way)'), findsOneWidget);
 
-    await tester.tap(find.byKey(const Key('cockpit_start_journey_button')));
-    await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('cockpit_start_journey_button')));
+      await tester.pumpAndSettle();
 
-    expect(repository.lastUpdatedStatus, 'EN_ROUTE');
-  });
+      expect(repository.lastUpdatedStatus, 'EN_ROUTE');
+    },
+  );
 
-  testWidgets('ProviderActiveJobCockpitScreen for EN_ROUTE job shows Enter Customer Start PIN', (tester) async {
-    final job = createJob('EN_ROUTE');
-    controller.jobs = [job];
+  testWidgets(
+    'ProviderActiveJobCockpitScreen for EN_ROUTE job shows Enter Customer Start PIN',
+    (tester) async {
+      final job = createJob('EN_ROUTE');
+      controller.jobs = [job];
 
-    await tester.pumpWidget(
-      wrapWidget(
-        ProviderActiveJobCockpitScreen(
-          job: job,
-          controller: controller,
+      await tester.pumpWidget(
+        wrapWidget(
+          ProviderActiveJobCockpitScreen(job: job, controller: controller),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
 
-    expect(find.text('Arrived at Location'), findsOneWidget);
-    expect(find.byKey(const Key('cockpit_verify_otp_button')), findsOneWidget);
+      expect(find.text('Arrived at Location'), findsOneWidget);
+      expect(
+        find.byKey(const Key('cockpit_verify_otp_button')),
+        findsOneWidget,
+      );
 
-    // Tap verify button to open sheet
-    await tester.tap(find.byKey(const Key('cockpit_verify_otp_button')));
-    await tester.pumpAndSettle();
+      // Tap verify button to open sheet
+      await tester.tap(find.byKey(const Key('cockpit_verify_otp_button')));
+      await tester.pumpAndSettle();
 
-    expect(find.text('Customer Service Code'), findsOneWidget);
+      expect(find.text('Customer Service Code'), findsOneWidget);
 
-    // Enter 4 digits
-    await tester.enterText(find.byKey(const Key('otp_hidden_input')), '7362');
-    await tester.pumpAndSettle();
+      // Enter 4 digits
+      await tester.enterText(find.byKey(const Key('otp_hidden_input')), '7362');
+      await tester.pumpAndSettle();
 
-    expect(repository.lastVerifiedOtp, '7362');
-  });
+      expect(repository.lastVerifiedOtp, '7362');
+    },
+  );
 
-  testWidgets('ProviderActiveJobCockpitScreen for IN_PROGRESS job displays photos and complete service', (tester) async {
-    final job = createJob('IN_PROGRESS');
-    controller.jobs = [job];
+  testWidgets(
+    'ProviderActiveJobCockpitScreen for IN_PROGRESS job displays photos and complete service',
+    (tester) async {
+      final job = createJob('IN_PROGRESS');
+      controller.jobs = [job];
 
-    await tester.pumpWidget(
-      wrapWidget(
-        ProviderActiveJobCockpitScreen(
-          job: job,
-          controller: controller,
+      await tester.pumpWidget(
+        wrapWidget(
+          ProviderActiveJobCockpitScreen(job: job, controller: controller),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
 
-    expect(find.text('Service in Progress'), findsOneWidget);
-    expect(find.byKey(const Key('cockpit_complete_service_button')), findsOneWidget);
-    expect(find.text('Add Before & After Photos'), findsOneWidget);
-  });
+      expect(find.text('Service in Progress'), findsOneWidget);
+      expect(
+        find.byKey(const Key('cockpit_complete_service_button')),
+        findsOneWidget,
+      );
+      expect(find.text('Add Before & After Photos'), findsOneWidget);
+    },
+  );
 
-  testWidgets('ProviderActiveJobCockpitScreen for COMPLETED job shows celebration summary', (tester) async {
-    final job = createJob('COMPLETED');
-    controller.jobs = [job];
+  testWidgets(
+    'ProviderActiveJobCockpitScreen for COMPLETED job shows celebration summary',
+    (tester) async {
+      final job = createJob('COMPLETED');
+      controller.jobs = [job];
 
-    await tester.pumpWidget(
-      wrapWidget(
-        ProviderActiveJobCockpitScreen(
-          job: job,
-          controller: controller,
+      await tester.pumpWidget(
+        wrapWidget(
+          ProviderActiveJobCockpitScreen(job: job, controller: controller),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
 
-    expect(find.text('Job Completed'), findsOneWidget);
-    expect(find.text('Back to Workspace'), findsOneWidget);
-  });
+      expect(find.text('Job Completed'), findsOneWidget);
+      expect(find.text('Back to Workspace'), findsOneWidget);
+    },
+  );
 }

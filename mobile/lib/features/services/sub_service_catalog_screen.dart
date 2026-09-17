@@ -30,7 +30,8 @@ class SubServiceCatalogScreen extends StatefulWidget {
     String itemizedDescription,
     int calculatedPriceMinor,
     BookingLocationFix? location,
-  )? onProceedToBooking;
+  )?
+  onProceedToBooking;
 
   @override
   State<SubServiceCatalogScreen> createState() =>
@@ -52,9 +53,7 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
 
   Future<void> _loadSubServices() async {
     final repo = SubServiceRepository(widget.api);
-    final services = await repo.getSubServicesForCategory(
-      widget.category.slug,
-    );
+    final services = await repo.getSubServicesForCategory(widget.category.slug);
     if (mounted) {
       setState(() {
         _allSubServices = services;
@@ -78,9 +77,11 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
     if (_searchQuery.trim().isEmpty) return _allSubServices;
     final query = _searchQuery.toLowerCase();
     return _allSubServices
-        .where((item) =>
-            item.name.toLowerCase().contains(query) ||
-            item.description.toLowerCase().contains(query))
+        .where(
+          (item) =>
+              item.name.toLowerCase().contains(query) ||
+              item.description.toLowerCase().contains(query),
+        )
         .toList();
   }
 
@@ -153,7 +154,10 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
         elevation: 0,
         scrolledUnderElevation: 1,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+          icon: const Icon(
+            Icons.arrow_back_rounded,
+            color: AppColors.textPrimary,
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text(
@@ -180,9 +184,30 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
               // Breadcrumbs
               Row(
                 children: [
-                  const Text('Home', style: TextStyle(color: AppColors.textSecondary, fontSize: 11, fontWeight: FontWeight.w600)),
-                  const Padding(padding: EdgeInsets.symmetric(horizontal: 4), child: Icon(Icons.chevron_right_rounded, size: 14, color: AppColors.textSecondary)),
-                  Text(widget.category.name, style: const TextStyle(color: AppColors.textPrimary, fontSize: 11, fontWeight: FontWeight.w600)),
+                  const Text(
+                    'Home',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 4),
+                    child: Icon(
+                      Icons.chevron_right_rounded,
+                      size: 14,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  Text(
+                    widget.category.name,
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: AppSpacing.sm),
@@ -210,46 +235,50 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
               if (_isLoading)
                 const Padding(
                   padding: EdgeInsets.all(32.0),
-                  child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+                  child: Center(
+                    child: CircularProgressIndicator(color: AppColors.primary),
+                  ),
                 )
               else ...[
-
-              // Section Heading
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Select Services Needed',
-                    style: FixNowTypography.title.copyWith(
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceContainerLow,
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                    ),
-                    child: Text(
-                      '${_filteredServices.length} options',
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
+                // Section Heading
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Select Services Needed',
+                      style: FixNowTypography.title.copyWith(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                  ),
-                ],
-              ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceContainerLow,
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
+                      child: Text(
+                        '${_filteredServices.length} options',
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
 
-              const SizedBox(height: AppSpacing.sm),
-
-              // Sub-Service Items Cards
-              for (final item in _filteredServices) ...[
-                _buildSubServiceCard(item),
                 const SizedBox(height: AppSpacing.sm),
-              ],
+
+                // Sub-Service Items Cards
+                for (final item in _filteredServices) ...[
+                  _buildSubServiceCard(item),
+                  const SizedBox(height: AppSpacing.sm),
+                ],
               ],
             ],
           ),
@@ -315,7 +344,10 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.primary.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -323,7 +355,11 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.verified_rounded, size: 14, color: AppColors.primary),
+                          const Icon(
+                            Icons.verified_rounded,
+                            size: 14,
+                            color: AppColors.primary,
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             'Verified Master Professionals',
@@ -352,7 +388,8 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
                 Padding(
                   padding: const EdgeInsets.only(right: 32),
                   child: Text(
-                    (widget.category.description != null && widget.category.description!.isNotEmpty)
+                    (widget.category.description != null &&
+                            widget.category.description!.isNotEmpty)
                         ? widget.category.description!
                         : 'Instant diagnosis, upfront itemized pricing, and 30-day rework warranty on all replacements.',
                     style: const TextStyle(
@@ -389,17 +426,31 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
         style: const TextStyle(color: AppColors.textPrimary, fontSize: 13),
         decoration: InputDecoration(
           hintText: 'Search tap, flush, mixer, drain leak...',
-          hintStyle: const TextStyle(color: AppColors.textTertiary, fontSize: 13),
-          prefixIcon: const Icon(Icons.search_rounded, color: AppColors.textSecondary, size: 20),
+          hintStyle: const TextStyle(
+            color: AppColors.textTertiary,
+            fontSize: 13,
+          ),
+          prefixIcon: const Icon(
+            Icons.search_rounded,
+            color: AppColors.textSecondary,
+            size: 20,
+          ),
           suffixIcon: Container(
             margin: const EdgeInsets.all(8),
             decoration: const BoxDecoration(
               color: AppColors.surfaceContainer,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.mic_rounded, color: AppColors.textSecondary, size: 16),
+            child: const Icon(
+              Icons.mic_rounded,
+              color: AppColors.textSecondary,
+              size: 16,
+            ),
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 12,
+          ),
           border: InputBorder.none,
         ),
       ),
@@ -428,12 +479,19 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
               borderRadius: BorderRadius.circular(AppRadius.pill),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 150),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
-                  color: isSelected ? AppColors.primary : AppColors.surfaceContainerLowest,
+                  color: isSelected
+                      ? AppColors.primary
+                      : AppColors.surfaceContainerLowest,
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                   border: Border.all(
-                    color: isSelected ? AppColors.primary : AppColors.borderDefault,
+                    color: isSelected
+                        ? AppColors.primary
+                        : AppColors.borderDefault,
                   ),
                 ),
                 child: Text(
@@ -464,7 +522,11 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
           ),
           child: Row(
             children: [
-              const Icon(Icons.security_update_good_rounded, color: Color(0xFF16A34A), size: 18),
+              const Icon(
+                Icons.security_update_good_rounded,
+                color: Color(0xFF16A34A),
+                size: 18,
+              ),
               const SizedBox(width: 8),
               const Expanded(
                 child: Text(
@@ -477,7 +539,8 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
                 ),
               ),
               InkWell(
-                onTap: () => setState(() => _showGuideDrawer = !_showGuideDrawer),
+                onTap: () =>
+                    setState(() => _showGuideDrawer = !_showGuideDrawer),
                 child: Row(
                   children: [
                     Text(
@@ -490,7 +553,9 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
                       ),
                     ),
                     Icon(
-                      _showGuideDrawer ? Icons.expand_less_rounded : Icons.expand_more_rounded,
+                      _showGuideDrawer
+                          ? Icons.expand_less_rounded
+                          : Icons.expand_more_rounded,
                       size: 16,
                       color: const Color(0xFF15803D),
                     ),
@@ -524,7 +589,11 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 15),
+                    Icon(
+                      Icons.check_circle_rounded,
+                      color: Color(0xFF16A34A),
+                      size: 15,
+                    ),
                     SizedBox(width: 6),
                     Expanded(
                       child: Text.rich(
@@ -532,11 +601,19 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
                           children: [
                             TextSpan(
                               text: 'Inclusions: ',
-                              style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.textPrimary, fontSize: 11),
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                                fontSize: 11,
+                              ),
                             ),
                             TextSpan(
-                              text: 'Minor washers, thread seals, machine snaking, calibration & leak check.',
-                              style: TextStyle(color: AppColors.textSecondary, fontSize: 11),
+                              text:
+                                  'Minor washers, thread seals, machine snaking, calibration & leak check.',
+                              style: TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 11,
+                              ),
                             ),
                           ],
                         ),
@@ -548,7 +625,11 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.cancel_rounded, color: AppColors.error, size: 15),
+                    Icon(
+                      Icons.cancel_rounded,
+                      color: AppColors.error,
+                      size: 15,
+                    ),
                     SizedBox(width: 6),
                     Expanded(
                       child: Text.rich(
@@ -556,11 +637,19 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
                           children: [
                             TextSpan(
                               text: 'Exclusions: ',
-                              style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.textPrimary, fontSize: 11),
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                                fontSize: 11,
+                              ),
                             ),
                             TextSpan(
-                              text: 'Heavy replacement fixtures, ceramic basin replacements, and concealed masonry breakdown.',
-                              style: TextStyle(color: AppColors.textSecondary, fontSize: 11),
+                              text:
+                                  'Heavy replacement fixtures, ceramic basin replacements, and concealed masonry breakdown.',
+                              style: TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 11,
+                              ),
                             ),
                           ],
                         ),
@@ -620,14 +709,18 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
                             fit: BoxFit.cover,
                             errorBuilder: (_, __, ___) => Icon(
                               item.icon,
-                              color: qty > 0 ? AppColors.primary : AppColors.textSecondary,
+                              color: qty > 0
+                                  ? AppColors.primary
+                                  : AppColors.textSecondary,
                               size: 28,
                             ),
                           )
                         : Center(
                             child: Icon(
                               item.icon,
-                              color: qty > 0 ? AppColors.primary : AppColors.textSecondary,
+                              color: qty > 0
+                                  ? AppColors.primary
+                                  : AppColors.textSecondary,
                               size: 28,
                             ),
                           ),
@@ -636,7 +729,10 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
                     top: -4,
                     left: -4,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 5,
+                        vertical: 1.5,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.secondarySlate,
                         borderRadius: BorderRadius.circular(4),
@@ -662,7 +758,11 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.star_rounded, size: 14, color: AppColors.accentGold),
+                        const Icon(
+                          Icons.star_rounded,
+                          size: 14,
+                          color: AppColors.accentGold,
+                        ),
                         const SizedBox(width: 3),
                         const Text(
                           '4.8',
@@ -675,16 +775,28 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
                         const SizedBox(width: 4),
                         const Text(
                           '(1.2k)',
-                          style: TextStyle(color: AppColors.textSecondary, fontSize: 10),
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 10,
+                          ),
                         ),
                         if (item.badge != null) ...[
                           const Spacer(),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
-                              color: AppColors.accentGold.withValues(alpha: 0.15),
+                              color: AppColors.accentGold.withValues(
+                                alpha: 0.15,
+                              ),
                               borderRadius: BorderRadius.circular(4),
-                              border: Border.all(color: AppColors.accentGold.withValues(alpha: 0.3)),
+                              border: Border.all(
+                                color: AppColors.accentGold.withValues(
+                                  alpha: 0.3,
+                                ),
+                              ),
                             ),
                             child: Text(
                               item.badge!,
@@ -730,33 +842,43 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.formattedPrice,
-                    style: const TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  const Row(
-                    children: [
-                      Icon(Icons.verified_user_rounded, size: 11, color: AppColors.primary),
-                      SizedBox(width: 3),
-                      Text(
-                        '30-Day Warranty',
-                        style: TextStyle(
-                          color: AppColors.primary,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                        ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.formattedPrice,
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                    const SizedBox(height: 2),
+                    const Row(
+                      children: [
+                        Icon(
+                          Icons.verified_user_rounded,
+                          size: 11,
+                          color: AppColors.primary,
+                        ),
+                        SizedBox(width: 3),
+                        Expanded(
+                          child: Text(
+                            '30-Day Warranty',
+                            style: TextStyle(
+                              color: AppColors.primary,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
 
               // Add Button or Quantity Stepper
@@ -765,7 +887,10 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
                   onTap: () => _cart.add(item),
                   borderRadius: BorderRadius.circular(AppRadius.small),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.surfaceContainer,
                       borderRadius: BorderRadius.circular(AppRadius.small),
@@ -782,7 +907,11 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
                           ),
                         ),
                         SizedBox(width: 4),
-                        Icon(Icons.add_rounded, size: 16, color: AppColors.primary),
+                        Icon(
+                          Icons.add_rounded,
+                          size: 16,
+                          color: AppColors.primary,
+                        ),
                       ],
                     ),
                   ),
@@ -806,9 +935,15 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
                           height: 28,
                           decoration: BoxDecoration(
                             color: AppColors.surfaceContainerLow,
-                            borderRadius: BorderRadius.circular(AppRadius.small),
+                            borderRadius: BorderRadius.circular(
+                              AppRadius.small,
+                            ),
                           ),
-                          child: const Icon(Icons.remove_rounded, color: AppColors.textPrimary, size: 16),
+                          child: const Icon(
+                            Icons.remove_rounded,
+                            color: AppColors.textPrimary,
+                            size: 16,
+                          ),
                         ),
                       ),
                       Padding(
@@ -830,9 +965,15 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
                           height: 28,
                           decoration: BoxDecoration(
                             color: AppColors.surfaceContainerLow,
-                            borderRadius: BorderRadius.circular(AppRadius.small),
+                            borderRadius: BorderRadius.circular(
+                              AppRadius.small,
+                            ),
                           ),
-                          child: const Icon(Icons.add_rounded, color: AppColors.textPrimary, size: 16),
+                          child: const Icon(
+                            Icons.add_rounded,
+                            color: AppColors.textPrimary,
+                            size: 16,
+                          ),
                         ),
                       ),
                     ],
@@ -903,7 +1044,10 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
                           ),
                           Text(
                             'Government GST (${_cart.formattedGst})',
-                            style: const TextStyle(color: Colors.white60, fontSize: 10),
+                            style: const TextStyle(
+                              color: Colors.white60,
+                              fontSize: 10,
+                            ),
                           ),
                         ],
                       ),
@@ -927,7 +1071,10 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
                       onTap: _handleProceed,
                       borderRadius: BorderRadius.circular(AppRadius.pill),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.primary,
                           borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -944,7 +1091,11 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
                               ),
                             ),
                             SizedBox(width: 4),
-                            Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 14),
+                            Icon(
+                              Icons.arrow_forward_rounded,
+                              color: Colors.white,
+                              size: 14,
+                            ),
                           ],
                         ),
                       ),
@@ -978,7 +1129,9 @@ class _CartSummarySheet extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: const BoxDecoration(
         color: AppColors.surfaceContainerLowest,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.card)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppRadius.card),
+        ),
         border: Border(top: BorderSide(color: AppColors.borderDefault)),
       ),
       child: SafeArea(
@@ -1005,10 +1158,16 @@ class _CartSummarySheet extends StatelessWidget {
               children: [
                 Text(
                   'Cart Summary',
-                  style: FixNowTypography.heading2.copyWith(color: AppColors.textPrimary, fontSize: 18),
+                  style: FixNowTypography.heading2.copyWith(
+                    color: AppColors.textPrimary,
+                    fontSize: 18,
+                  ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close_rounded, color: AppColors.textSecondary),
+                  icon: const Icon(
+                    Icons.close_rounded,
+                    color: AppColors.textSecondary,
+                  ),
                   onPressed: () => Navigator.of(context).pop(),
                 ),
               ],
@@ -1029,18 +1188,29 @@ class _CartSummarySheet extends StatelessWidget {
                         children: [
                           Text(
                             item.subService.name,
-                            style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 13),
+                            style: const TextStyle(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                            ),
                           ),
                           Text(
                             '${item.subService.formattedPrice} × ${item.quantity}',
-                            style: const TextStyle(color: AppColors.textSecondary, fontSize: 11),
+                            style: const TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 11,
+                            ),
                           ),
                         ],
                       ),
                     ),
                     Text(
                       item.formattedTotal,
-                      style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 14),
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                      ),
                     ),
                   ],
                 ),
@@ -1054,7 +1224,11 @@ class _CartSummarySheet extends StatelessWidget {
             _buildSummaryRow('Government GST (18%)', cart.formattedGst),
             _buildSummaryRow('Technician Safety & Tool Kit', 'FREE'),
             const SizedBox(height: 6),
-            _buildSummaryRow('Estimated Total', cart.formattedGrandTotal, isBold: true),
+            _buildSummaryRow(
+              'Estimated Total',
+              cart.formattedGrandTotal,
+              isBold: true,
+            ),
 
             const SizedBox(height: AppSpacing.lg),
 
@@ -1075,12 +1249,15 @@ class _CartSummarySheet extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              color: isBold ? AppColors.textPrimary : AppColors.textSecondary,
-              fontSize: isBold ? 14 : 12,
-              fontWeight: isBold ? FontWeight.w700 : FontWeight.normal,
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                color: isBold ? AppColors.textPrimary : AppColors.textSecondary,
+                fontSize: isBold ? 14 : 12,
+                fontWeight: isBold ? FontWeight.w700 : FontWeight.normal,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
           Text(

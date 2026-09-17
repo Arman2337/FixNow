@@ -83,11 +83,17 @@ class _EmergencyConfirmScreenState extends State<EmergencyConfirmScreen> {
               onPressed: () {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('Dialing 24/7 Priority Emergency Hotline: 1800-123-4567'),
+                    content: Text(
+                      'Dialing 24/7 Priority Emergency Hotline: 1800-123-4567',
+                    ),
                   ),
                 );
               },
-              icon: const Icon(Icons.phone_in_talk_rounded, size: 14, color: AppColors.error),
+              icon: const Icon(
+                Icons.phone_in_talk_rounded,
+                size: 14,
+                color: AppColors.error,
+              ),
               label: const Text(
                 '24/7 Hotline',
                 style: TextStyle(
@@ -102,8 +108,8 @@ class _EmergencyConfirmScreenState extends State<EmergencyConfirmScreen> {
       ),
       body: ListenableBuilder(
         listenable: _controller,
-        builder: (context, _) => _controller.state ==
-                EmergencyFlowState.dispatched
+        builder: (context, _) =>
+            _controller.state == EmergencyFlowState.dispatched
             ? _DispatchedView(controller: _controller)
             : FixPageFrame(
                 child: ListView(
@@ -137,71 +143,72 @@ class _EmergencyConfirmScreenState extends State<EmergencyConfirmScreen> {
 
   /// 1. Critical Evacuation Advisory Card (Life Safety Notice)
   Widget _noticeCard(BuildContext context) => Container(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        decoration: BoxDecoration(
-          color: AppColors.errorContainer,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: AppColors.error.withValues(alpha: 0.25),
-            width: 1.2,
-          ),
-        ),
-        child: Semantics(
-          container: true,
-          label: 'Emergency service limitation notice',
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    padding: const EdgeInsets.all(AppSpacing.md),
+    decoration: BoxDecoration(
+      color: AppColors.errorContainer,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(
+        color: AppColors.error.withValues(alpha: 0.25),
+        width: 1.2,
+      ),
+    ),
+    child: Semantics(
+      container: true,
+      label: 'Emergency service limitation notice',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: const [
-                      Icon(Icons.warning_amber_rounded, color: AppColors.error, size: 18),
-                      SizedBox(width: 6),
-                      Text(
-                        'LIFE SAFETY NOTICE',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.6,
-                          color: AppColors.error,
-                        ),
-                      ),
-                    ],
+                children: const [
+                  Icon(
+                    Icons.warning_amber_rounded,
+                    color: AppColors.error,
+                    size: 18,
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.error.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Text(
-                      'IMMEDIATE',
-                      style: TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.error,
-                      ),
+                  SizedBox(width: 6),
+                  Text(
+                    'LIFE SAFETY NOTICE',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.6,
+                      color: AppColors.error,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 6),
-              Text(
-                kEmergencyNotice,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      height: 1.4,
-                      color: AppColors.onErrorContainer,
-                    ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppColors.error.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Text(
+                  'IMMEDIATE',
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.error,
+                  ),
+                ),
               ),
             ],
           ),
-        ),
-      );
+          const SizedBox(height: 6),
+          Text(
+            kEmergencyNotice,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              height: 1.4,
+              color: AppColors.onErrorContainer,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 
   /// Single Category Header
   Widget _categoryHeader(BuildContext context, ServiceCategory category) =>
@@ -227,9 +234,9 @@ class _EmergencyConfirmScreenState extends State<EmergencyConfirmScreen> {
             Expanded(
               child: Text(
                 '${category.name} — ${category.description ?? 'safety hazard'}',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
             ),
           ],
@@ -238,47 +245,46 @@ class _EmergencyConfirmScreenState extends State<EmergencyConfirmScreen> {
 
   /// 2. Emergency Hazard Selection Grid
   List<Widget> _categoryPicker(BuildContext context) => [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: const [
-            Text(
-              'Select Critical Hazard',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            Text(
-              'Tap to swap trigger',
-              style: TextStyle(
-                fontSize: 10,
-                color: AppColors.textSecondary,
-              ),
-            ),
-          ],
+    Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: const [
+        Text(
+          'Select Critical Hazard',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
+          ),
         ),
-        const SizedBox(height: AppSpacing.xs),
-        Wrap(
-          spacing: AppSpacing.sm,
-          runSpacing: AppSpacing.sm,
-          children: [
-            for (final category in widget.categories)
-              ChoiceChip(
-                label: Text(category.name),
-                selected: _selected.id == category.id,
-                onSelected: (_) => setState(() => _selected = category),
-              ),
-          ],
+        Text(
+          'Tap to swap trigger',
+          style: TextStyle(fontSize: 10, color: AppColors.textSecondary),
         ),
-      ];
+      ],
+    ),
+    const SizedBox(height: AppSpacing.xs),
+    Wrap(
+      spacing: AppSpacing.sm,
+      runSpacing: AppSpacing.sm,
+      children: [
+        for (final category in widget.categories)
+          ChoiceChip(
+            label: Text(category.name),
+            selected: _selected.id == category.id,
+            onSelected: (_) => setState(() => _selected = category),
+          ),
+      ],
+    ),
+  ];
 
   IconData _getHazardIcon(String name) {
     final lower = name.toLowerCase();
     if (lower.contains('electric') || lower.contains('spark')) {
       return Icons.bolt_rounded;
     }
-    if (lower.contains('plumb') || lower.contains('water') || lower.contains('flood')) {
+    if (lower.contains('plumb') ||
+        lower.contains('water') ||
+        lower.contains('flood')) {
       return Icons.water_damage_rounded;
     }
     if (lower.contains('gas') || lower.contains('leak')) {
@@ -289,32 +295,35 @@ class _EmergencyConfirmScreenState extends State<EmergencyConfirmScreen> {
 
   /// Description Input
   Widget _descriptionCard(BuildContext context) => FixCard(
-        tone: FixCardTone.secondary,
-        semanticLabel: 'Describe the emergency',
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('What is happening?', style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: AppSpacing.xs),
-            TextField(
-              controller: _description,
-              maxLines: 3,
-              maxLength: 500,
-              onChanged: (_) => setState(() {}),
-              decoration: const InputDecoration(
-                hintText: 'For example: strong smell of gas in the kitchen.',
-                border: OutlineInputBorder(),
-              ),
-            ),
-          ],
+    tone: FixCardTone.secondary,
+    semanticLabel: 'Describe the emergency',
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'What is happening?',
+          style: Theme.of(context).textTheme.titleMedium,
         ),
-      );
+        const SizedBox(height: AppSpacing.xs),
+        TextField(
+          controller: _description,
+          maxLines: 3,
+          maxLength: 500,
+          onChanged: (_) => setState(() {}),
+          decoration: const InputDecoration(
+            hintText: 'For example: strong smell of gas in the kitchen.',
+            border: OutlineInputBorder(),
+          ),
+        ),
+      ],
+    ),
+  );
 
   /// 5. Hold to Confirm Safety Trigger
   Widget _confirmButton(BuildContext context) {
     final busy =
         _controller.state == EmergencyFlowState.creating ||
-            _controller.state == EmergencyFlowState.resolvingLocation;
+        _controller.state == EmergencyFlowState.resolvingLocation;
     final ready = _description.text.trim().isNotEmpty && !busy;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -478,11 +487,7 @@ class _RadarGridPainter extends CustomPainter {
       Offset(center.dx, size.height),
       paint,
     );
-    canvas.drawLine(
-      Offset(0, center.dy),
-      Offset(size.width, center.dy),
-      paint,
-    );
+    canvas.drawLine(Offset(0, center.dy), Offset(size.width, center.dy), paint);
 
     // Concentric rings
     canvas.drawCircle(center, 22, paint);
@@ -527,9 +532,9 @@ class _DispatchedView extends StatelessWidget {
             'Alert sent',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
-                ),
+              fontWeight: FontWeight.w800,
+              color: AppColors.textPrimary,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
@@ -538,9 +543,9 @@ class _DispatchedView extends StatelessWidget {
                 : 'Alerting verified professionals nearby — wave ${status.currentWave}.',
             textAlign: TextAlign.center,
             semanticsLabel: 'Emergency alert progress',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textSecondary,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
           ),
           const SizedBox(height: AppSpacing.md),
           if (controller.showFallback && status != null)
@@ -554,15 +559,18 @@ class _DispatchedView extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.warning_amber_rounded, color: AppColors.danger),
+                  const Icon(
+                    Icons.warning_amber_rounded,
+                    color: AppColors.danger,
+                  ),
                   const SizedBox(width: AppSpacing.md),
                   Expanded(
                     child: Text(
                       status.guidance ?? '',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppColors.onErrorContainer,
-                            fontWeight: FontWeight.w600,
-                          ),
+                        color: AppColors.onErrorContainer,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ],
@@ -572,9 +580,9 @@ class _DispatchedView extends StatelessWidget {
             Text(
               'Keep this screen open or check Bookings — you will see the moment a professional accepts.',
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
             ),
           const SizedBox(height: AppSpacing.lg),
 
@@ -620,7 +628,10 @@ class _DispatchedView extends StatelessWidget {
                     ),
                     const SizedBox(width: 6),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(10),
@@ -640,14 +651,21 @@ class _DispatchedView extends StatelessWidget {
                 const _RadarSweepBox(),
                 const SizedBox(height: AppSpacing.sm),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.surfaceContainerLow,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.cell_tower, size: 18, color: AppColors.primary),
+                      const Icon(
+                        Icons.cell_tower,
+                        size: 18,
+                        color: AppColors.primary,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         'Wave ${status?.currentWave ?? 1} Broadcast: ',
@@ -689,7 +707,11 @@ class _DispatchedView extends StatelessWidget {
               children: [
                 Row(
                   children: const [
-                    Icon(Icons.pin_drop_rounded, size: 18, color: AppColors.primary),
+                    Icon(
+                      Icons.pin_drop_rounded,
+                      size: 18,
+                      color: AppColors.primary,
+                    ),
                     SizedBox(width: 6),
                     Text(
                       'DISPATCH ADDRESS',
@@ -713,14 +735,21 @@ class _DispatchedView extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.surfaceContainerLow,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
                     children: const [
-                      Icon(Icons.signpost_rounded, size: 15, color: AppColors.tertiary),
+                      Icon(
+                        Icons.signpost_rounded,
+                        size: 15,
+                        color: AppColors.tertiary,
+                      ),
                       SizedBox(width: 6),
                       Expanded(
                         child: Text(
@@ -786,9 +815,9 @@ class _DispatchedView extends StatelessWidget {
           Text(
             'You can cancel any time from your Bookings list while no professional is on the way.',
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.textSecondary,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
           ),
           const SizedBox(height: AppSpacing.xl),
         ],
@@ -815,10 +844,7 @@ class _DispatchedView extends StatelessWidget {
           Container(
             width: 28,
             height: 28,
-            decoration: BoxDecoration(
-              color: bgColor,
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: bgColor, shape: BoxShape.circle),
             child: Icon(icon, size: 16, color: iconColor),
           ),
           const SizedBox(height: 4),
@@ -832,10 +858,7 @@ class _DispatchedView extends StatelessWidget {
           ),
           Text(
             label,
-            style: const TextStyle(
-              fontSize: 9,
-              color: AppColors.textSecondary,
-            ),
+            style: const TextStyle(fontSize: 9, color: AppColors.textSecondary),
           ),
         ],
       ),

@@ -30,7 +30,11 @@ class FixCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final usesLightSurface = switch (tone) {
-      FixCardTone.standard || FixCardTone.secondary || FixCardTone.cream || FixCardTone.gold || FixCardTone.emergency => true,
+      FixCardTone.standard ||
+      FixCardTone.secondary ||
+      FixCardTone.cream ||
+      FixCardTone.gold ||
+      FixCardTone.emergency => true,
       FixCardTone.elevated => false,
     };
     final bgColor = switch (tone) {
@@ -42,11 +46,13 @@ class FixCard extends StatelessWidget {
       FixCardTone.cream => AppColors.cream,
     };
 
-    final effectiveBorderColor = borderColor ?? switch (tone) {
-      FixCardTone.emergency => AppColors.emergency,
-      FixCardTone.gold => AppColors.borderGold,
-      _ => AppColors.borderDefault,
-    };
+    final effectiveBorderColor =
+        borderColor ??
+        switch (tone) {
+          FixCardTone.emergency => AppColors.emergency,
+          FixCardTone.gold => AppColors.borderGold,
+          _ => AppColors.borderDefault,
+        };
 
     final radius = borderRadius ?? AppRadius.cardBorder;
 
@@ -58,9 +64,9 @@ class FixCard extends StatelessWidget {
         : AppColors.textSecondary;
 
     final content = Theme(
-      data: Theme.of(context).copyWith(
-        textTheme: FixNowTypography.textTheme(foreground, supporting),
-      ),
+      data: Theme.of(
+        context,
+      ).copyWith(textTheme: FixNowTypography.textTheme(foreground, supporting)),
       child: IconTheme(
         data: IconThemeData(color: foreground),
         // A light card sits inside the app's dark theme. Use a complete
@@ -85,11 +91,7 @@ class FixCard extends StatelessWidget {
         ),
       ),
       child: onTap != null
-          ? InkWell(
-              onTap: onTap,
-              borderRadius: radius,
-              child: content,
-            )
+          ? InkWell(onTap: onTap, borderRadius: radius, child: content)
           : content,
     );
 

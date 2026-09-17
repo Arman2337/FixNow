@@ -12,12 +12,7 @@ enum SearchSortOption {
   popular,
 }
 
-enum SearchFilterOption {
-  all,
-  under300,
-  under500,
-  emergency,
-}
+enum SearchFilterOption { all, under300, under500, emergency }
 
 /// Universal live search and filter bar for service discovery (FN-130) matching Stitch UI.
 class FixUniversalSearchBar extends StatelessWidget {
@@ -98,40 +93,47 @@ class FixUniversalSearchBar extends StatelessWidget {
                       onPressed: onClear,
                     )
                   : (onAiDiagnose != null
-                      ? Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                          child: InkWell(
-                            onTap: onAiDiagnose,
-                            borderRadius: BorderRadius.circular(100),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12),
-                              decoration: BoxDecoration(
-                                color: AppColors.primary.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(100),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: const [
-                                  Text(
-                                    'Ask AI',
-                                    style: TextStyle(
+                        ? Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 6,
+                            ),
+                            child: InkWell(
+                              onTap: onAiDiagnose,
+                              borderRadius: BorderRadius.circular(100),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary.withValues(
+                                    alpha: 0.1,
+                                  ),
+                                  borderRadius: BorderRadius.circular(100),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: const [
+                                    Text(
+                                      'Ask AI',
+                                      style: TextStyle(
+                                        color: AppColors.primary,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                    SizedBox(width: 4),
+                                    Icon(
+                                      Icons.auto_awesome_rounded,
                                       color: AppColors.primary,
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 13,
-),
-                                  ),
-                                  SizedBox(width: 4),
-                                  Icon(
-                                    Icons.auto_awesome_rounded,
-                                    color: AppColors.primary,
-                                    size: 16,
-                                  ),
-                                ],
+                                      size: 16,
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                        )
-                      : null),
+                          )
+                        : null),
               border: InputBorder.none,
               enabledBorder: InputBorder.none,
               focusedBorder: InputBorder.none,

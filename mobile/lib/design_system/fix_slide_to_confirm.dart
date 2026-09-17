@@ -44,14 +44,15 @@ class _FixSlideToConfirmState extends State<FixSlideToConfirm>
   @override
   void initState() {
     super.initState();
-    _resetController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 220),
-    )..addListener(() {
-        setState(() {
-          _dragPosition = _resetAnimation.value;
+    _resetController =
+        AnimationController(
+          vsync: this,
+          duration: const Duration(milliseconds: 220),
+        )..addListener(() {
+          setState(() {
+            _dragPosition = _resetAnimation.value;
+          });
         });
-      });
   }
 
   @override
@@ -66,7 +67,8 @@ class _FixSlideToConfirmState extends State<FixSlideToConfirm>
     setState(() {
       _dragPosition = (_dragPosition + details.delta.dx).clamp(0.0, maxDrag);
     });
-    if (_dragPosition >= maxDrag * 0.5 && _dragPosition - details.delta.dx < maxDrag * 0.5) {
+    if (_dragPosition >= maxDrag * 0.5 &&
+        _dragPosition - details.delta.dx < maxDrag * 0.5) {
       HapticFeedback.selectionClick();
     }
   }
@@ -103,7 +105,8 @@ class _FixSlideToConfirmState extends State<FixSlideToConfirm>
 
   @override
   Widget build(BuildContext context) {
-    final reduceMotion = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
     final thumbSize = widget.height - 8.0;
 
     return LayoutBuilder(
@@ -159,7 +162,9 @@ class _FixSlideToConfirmState extends State<FixSlideToConfirm>
 
               // Draggable Thumb
               Positioned(
-                left: 4.0 + (reduceMotion && _isConfirmed ? maxDrag : _dragPosition),
+                left:
+                    4.0 +
+                    (reduceMotion && _isConfirmed ? maxDrag : _dragPosition),
                 child: GestureDetector(
                   onHorizontalDragUpdate: (d) => _onDragUpdate(d, maxDrag),
                   onHorizontalDragEnd: (_) => _onDragEnd(maxDrag),
@@ -167,12 +172,17 @@ class _FixSlideToConfirmState extends State<FixSlideToConfirm>
                     width: thumbSize,
                     height: thumbSize,
                     decoration: BoxDecoration(
-                      color: _isConfirmed ? widget.confirmedColor : widget.thumbColor,
+                      color: _isConfirmed
+                          ? widget.confirmedColor
+                          : widget.thumbColor,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: (_isConfirmed ? widget.confirmedColor : widget.thumbColor)
-                              .withValues(alpha: 0.45),
+                          color:
+                              (_isConfirmed
+                                      ? widget.confirmedColor
+                                      : widget.thumbColor)
+                                  .withValues(alpha: 0.45),
                           blurRadius: 10,
                           offset: const Offset(0, 3),
                         ),
@@ -189,7 +199,9 @@ class _FixSlideToConfirmState extends State<FixSlideToConfirm>
                               ),
                             )
                           : Icon(
-                              _isConfirmed ? Icons.check_rounded : Icons.keyboard_double_arrow_right_rounded,
+                              _isConfirmed
+                                  ? Icons.check_rounded
+                                  : Icons.keyboard_double_arrow_right_rounded,
                               color: Colors.white,
                               size: 22,
                             ),

@@ -1,4 +1,3 @@
-
 import 'package:fixnow_mobile/auth/auth_session.dart';
 import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_motion.dart';
@@ -9,10 +8,7 @@ import 'package:fixnow_mobile/design_system/fix_page_frame.dart';
 import 'package:flutter/material.dart';
 
 class WelcomeScreen extends StatefulWidget {
-  const WelcomeScreen({
-    required this.onContinue,
-    super.key,
-  });
+  const WelcomeScreen({required this.onContinue, super.key});
 
   /// Called when the user proceeds. [isRegister] is true for the primary CTA,
   /// and false if they tap 'Sign In'.
@@ -151,19 +147,21 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                     children: [
                                       TextSpan(
                                         text: 'Fix',
-                                        style: FixNowTypography.headlineLg.copyWith(
-                                          color: AppColors.textPrimary,
-                                          fontWeight: FontWeight.w700,
-                                          letterSpacing: -0.5,
-                                        ),
+                                        style: FixNowTypography.headlineLg
+                                            .copyWith(
+                                              color: AppColors.textPrimary,
+                                              fontWeight: FontWeight.w700,
+                                              letterSpacing: -0.5,
+                                            ),
                                       ),
                                       TextSpan(
                                         text: 'Now',
-                                        style: FixNowTypography.headlineLg.copyWith(
-                                          color: AppColors.primary,
-                                          fontWeight: FontWeight.w700,
-                                          letterSpacing: -0.5,
-                                        ),
+                                        style: FixNowTypography.headlineLg
+                                            .copyWith(
+                                              color: AppColors.primary,
+                                              fontWeight: FontWeight.w700,
+                                              letterSpacing: -0.5,
+                                            ),
                                       ),
                                     ],
                                   ),
@@ -249,8 +247,12 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                         width: 48,
                                         height: 48,
                                         decoration: BoxDecoration(
-                                          color: Colors.white.withValues(alpha: 0.15),
-                                          borderRadius: BorderRadius.circular(12),
+                                          color: Colors.white.withValues(
+                                            alpha: 0.15,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
                                         ),
                                         child: Icon(
                                           Icons.verified_rounded,
@@ -261,27 +263,31 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                       const SizedBox(width: 12),
                                       Flexible(
                                         child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             Text(
                                               'ZERO DELAY GUARANTEE',
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
-                                              style: FixNowTypography.labelSmall.copyWith(
-                                                color: AppColors.primaryFixedDim,
-                                                letterSpacing: 0.8,
-                                                fontWeight: FontWeight.w600,
-                                              ),
+                                              style: FixNowTypography.labelSmall
+                                                  .copyWith(
+                                                    color: AppColors
+                                                        .primaryFixedDim,
+                                                    letterSpacing: 0.8,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
                                             ),
                                             const SizedBox(height: 2),
                                             Text(
                                               '15-Min Dispatch',
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
-                                              style: FixNowTypography.headlineMd.copyWith(
-                                                color: Colors.white,
-                                                fontWeight: FontWeight.w700,
-                                              ),
+                                              style: FixNowTypography.headlineMd
+                                                  .copyWith(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.w700,
+                                                  ),
                                             ),
                                           ],
                                         ),
@@ -299,7 +305,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                         vertical: 4,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: Colors.white.withValues(alpha: 0.2),
+                                        color: Colors.white.withValues(
+                                          alpha: 0.2,
+                                        ),
                                         borderRadius: BorderRadius.circular(20),
                                       ),
                                       child: Row(
@@ -312,11 +320,12 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                           const SizedBox(width: 6),
                                           Text(
                                             'LIVE RADAR',
-                                            style: FixNowTypography.dataMono.copyWith(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.w600,
-                                              letterSpacing: 0.4,
-                                            ),
+                                            style: FixNowTypography.dataMono
+                                                .copyWith(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.w600,
+                                                  letterSpacing: 0.4,
+                                                ),
                                           ),
                                         ],
                                       ),
@@ -340,67 +349,47 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                         children: [
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 4),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  'CHOOSE ACCOUNT MODE',
-                                  style: FixNowTypography.labelSmall.copyWith(
-                                    color: AppColors.textSecondary,
-                                    letterSpacing: 0.8,
-                                  ),
-                                ),
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.touch_app_rounded,
-                                      size: 14,
-                                      color: AppColors.primary,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      'Tap to select',
-                                      style: FixNowTypography.bodySmall.copyWith(
-                                        color: AppColors.primary,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
+                            child: Text(
+                              'CHOOSE YOUR ACCOUNT TYPE',
+                              style: FixNowTypography.labelSmall.copyWith(
+                                color: AppColors.textSecondary,
+                                letterSpacing: 1.2,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                           ),
-                          const SizedBox(height: AppSpacing.sm),
-                          _StitchRoleCard(
-                            title: 'I Need a Service',
-                            subtitle: 'Homeowners & Residents',
-                            description:
-                                'Book verified electricians, plumbers & AC technicians '
-                                'in 15 mins. Transparent pricing & 30-day warranty.',
-                            tag: 'Popular',
-                            benefitChips: const [
-                              _BenefitChip(icon: Icons.schedule_rounded, text: '15-Min Arrival'),
-                              _BenefitChip(icon: Icons.security_rounded, text: '30-Day Coverage'),
+                          const SizedBox(height: 12),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: _StitchRoleCard(
+                                  title: 'I need a service',
+                                  subtitle: 'For homeowners\nand residents',
+                                  icon: Icons.person_rounded,
+                                  selected: _selected == AccountRole.customer,
+                                  onTap: () => setState(
+                                    () => _selected = AccountRole.customer,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _StitchRoleCard(
+                                  title: 'I am a professional',
+                                  subtitle:
+                                      'For technicians\nand service providers',
+                                  icon: Icons.work_rounded,
+                                  selected:
+                                      _selected ==
+                                      AccountRole.providerApplicant,
+                                  onTap: () => setState(
+                                    () => _selected =
+                                        AccountRole.providerApplicant,
+                                  ),
+                                ),
+                              ),
                             ],
-                            icon: Icons.home_repair_service_rounded,
-                            selected: _selected == AccountRole.customer,
-                            onTap: () => setState(() => _selected = AccountRole.customer),
-                          ),
-                          const SizedBox(height: AppSpacing.sm),
-                          _StitchRoleCard(
-                            title: 'I Am a Service Professional',
-                            subtitle: 'Technicians, Contractors & Crews',
-                            description:
-                                'Join 5,000+ verified tradespeople. Instant daily '
-                                'payouts, flexible hours & zero commission on spare parts.',
-                            benefitChips: const [
-                              _BenefitChip(icon: Icons.payments_rounded, text: 'Daily Payout'),
-                              _BenefitChip(icon: Icons.percent_rounded, text: '0% Spares Cut'),
-                            ],
-                            icon: Icons.construction_rounded,
-                            selected: _selected == AccountRole.providerApplicant,
-                            onTap: () => setState(() => _selected = AccountRole.providerApplicant),
                           ),
                         ],
                       ),
@@ -419,12 +408,15 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                               height: 54,
                               width: double.infinity,
                               child: ElevatedButton(
-                                onPressed: () => widget.onContinue(_selected, true),
+                                onPressed: () =>
+                                    widget.onContinue(_selected, true),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.primary,
                                   foregroundColor: AppColors.onPrimary,
                                   elevation: 3,
-                                  shadowColor: AppColors.primary.withValues(alpha: 0.3),
+                                  shadowColor: AppColors.primary.withValues(
+                                    alpha: 0.3,
+                                  ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
@@ -458,7 +450,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                               ),
                               const SizedBox(width: 6),
                               GestureDetector(
-                                onTap: () => widget.onContinue(_selected, false),
+                                onTap: () =>
+                                    widget.onContinue(_selected, false),
                                 child: Text(
                                   'Sign in',
                                   style: FixNowTypography.headlineMd.copyWith(
@@ -486,11 +479,15 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                               Expanded(
                                 child: Container(
                                   height: 1,
-                                  color: AppColors.outlineVariant.withValues(alpha: 0.4),
+                                  color: AppColors.outlineVariant.withValues(
+                                    alpha: 0.4,
+                                  ),
                                 ),
                               ),
                               Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                ),
                                 child: Text(
                                   'TRUSTED SAFE NETWORK',
                                   style: FixNowTypography.dataMono.copyWith(
@@ -504,7 +501,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                               Expanded(
                                 child: Container(
                                   height: 1,
-                                  color: AppColors.outlineVariant.withValues(alpha: 0.4),
+                                  color: AppColors.outlineVariant.withValues(
+                                    alpha: 0.4,
+                                  ),
                                 ),
                               ),
                             ],
@@ -585,9 +584,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               color: badgeColor,
               shape: BoxShape.circle,
             ),
-            child: Center(
-              child: Icon(icon, size: 16, color: iconColor),
-            ),
+            child: Center(child: Icon(icon, size: 16, color: iconColor)),
           ),
           const SizedBox(height: 4),
           Text(
@@ -622,226 +619,117 @@ class _StitchRoleCard extends StatelessWidget {
   const _StitchRoleCard({
     required this.title,
     required this.subtitle,
-    required this.description,
     required this.icon,
     required this.selected,
     required this.onTap,
-    this.tag,
-    this.benefitChips = const [],
   });
 
   final String title;
   final String subtitle;
-  final String description;
   final IconData icon;
   final bool selected;
   final VoidCallback onTap;
-  final String? tag;
-  final List<_BenefitChip> benefitChips;
 
   @override
-  Widget build(BuildContext context) => Semantics(
-    button: true,
-    selected: selected,
-    label: '$title. $description',
-    child: GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeInOut,
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: selected
-              ? AppColors.surfaceContainerLowest
-              : AppColors.surfaceContainer,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: selected ? 0.08 : 0.03),
-              blurRadius: selected ? 12 : 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: AnimatedOpacity(
+  Widget build(BuildContext context) {
+    final borderColor = selected ? AppColors.primary : AppColors.border;
+    final bgColor = selected
+        ? AppColors.primary.withValues(alpha: 0.05)
+        : AppColors.surfaceContainerLowest;
+
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: '$title. $subtitle',
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          opacity: selected ? 1.0 : 0.9,
+          curve: Curves.easeInOut,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: borderColor, width: 1.5),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Expanded(
-                    child: Row(
-                      children: [
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: selected
-                                ? AppColors.primary
-                                : AppColors.surfaceContainerHigh,
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Color(0x0A000000),
-                                blurRadius: 4,
-                                offset: Offset(0, 1),
-                              ),
-                            ],
-                          ),
-                          child: Icon(
-                            icon,
-                            color: selected ? AppColors.onPrimary : AppColors.textPrimary,
-                            size: 18,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Flexible(
-                                    child: Text(
-                                      title,
-                                      style: FixNowTypography.headlineMd.copyWith(
-                                        color: AppColors.textPrimary,
-                                        fontSize: 15,
-                                      ),
-                                    ),
-                                  ),
-                                  if (tag != null) ...[
-                                    const SizedBox(width: 8),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 2,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.primaryFixed,
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                      child: Text(
-                                        tag!,
-                                        style: FixNowTypography.labelSmall.copyWith(
-                                          color: AppColors.onPrimaryFixed,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                subtitle,
-                                style: FixNowTypography.bodySmall.copyWith(
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? AppColors.primary.withValues(alpha: 0.15)
+                          : const Color(0xFFEDF1FB),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      icon,
+                      color: selected
+                          ? AppColors.primary
+                          : const Color(0xFF4A5568),
+                      size: 26,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 150),
+                  Container(
                     width: 24,
                     height: 24,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: selected ? AppColors.primary : AppColors.surfaceContainerHighest,
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0x0A000000),
-                          blurRadius: 4,
-                          offset: Offset(0, 1),
-                        ),
-                      ],
+                      color: selected ? AppColors.primary : Colors.transparent,
+                      border: Border.all(
+                        color: selected
+                            ? AppColors.primary
+                            : const Color(0xFFCBD5E0),
+                        width: 1.5,
+                      ),
                     ),
                     child: selected
                         ? const Icon(
                             Icons.check_rounded,
-                            color: AppColors.onPrimary,
+                            color: Colors.white,
                             size: 16,
                           )
                         : null,
                   ),
                 ],
               ),
-              Padding(
-                padding: const EdgeInsets.only(left: 56, top: 12),
-                child: Text(
-                  description,
-                  style: FixNowTypography.body.copyWith(
-                    color: AppColors.textSecondary,
-                    height: 1.5,
-                  ),
+              const SizedBox(height: 24),
+              Text(
+                title,
+                style: FixNowTypography.headlineMd.copyWith(
+                  color: const Color(0xFF1A202C),
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                  height: 1.2,
+                  letterSpacing: -0.3,
                 ),
               ),
-              if (benefitChips.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(left: 56, top: 12),
-                  child: Wrap(
-                    spacing: 8,
-                    runSpacing: 6,
-                    children: benefitChips.map((chip) {
-                      return Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: selected
-                              ? AppColors.surfaceContainer
-                              : AppColors.surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(chip.icon, size: 13, color: AppColors.primary),
-                            const SizedBox(width: 4),
-                            Text(
-                              chip.text,
-                              style: FixNowTypography.dataMono.copyWith(
-                                color: AppColors.textPrimary,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                  ),
+              const SizedBox(height: 6),
+              Text(
+                subtitle,
+                style: FixNowTypography.bodySmall.copyWith(
+                  color: const Color(0xFF718096),
+                  fontSize: 13,
+                  height: 1.3,
+                  fontWeight: FontWeight.w500,
                 ),
+              ),
             ],
           ),
         ),
       ),
-    ),
-  );
-}
-
-class _BenefitChip {
-  const _BenefitChip({required this.icon, required this.text});
-  final IconData icon;
-  final String text;
+    );
+  }
 }
 
 // ─── _PingDot: Stitch animate-ping equivalent ────────────────────────────────
 class _PingDot extends StatefulWidget {
-  const _PingDot({
-    this.color = AppColors.primary,
-    this.size = 8.0,
-  });
+  const _PingDot({this.color = AppColors.primary, this.size = 8.0});
 
   final Color color;
   final double size;

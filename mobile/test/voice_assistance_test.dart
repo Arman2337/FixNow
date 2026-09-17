@@ -78,11 +78,11 @@ void main() {
     'denied and permanently denied microphone permissions stay recoverable',
     () async {
       final denied = VoiceInputController(
-      recognition: _Recognition(),
-      permission: _Permission(
-        PermissionStatus.denied,
-        afterRequest: PermissionStatus.denied,
-      ),
+        recognition: _Recognition(),
+        permission: _Permission(
+          PermissionStatus.denied,
+          afterRequest: PermissionStatus.denied,
+        ),
       );
       await denied.start();
       expect(denied.state, VoiceInputState.permissionDenied);

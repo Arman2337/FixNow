@@ -41,13 +41,19 @@ class BookingDetailScreen extends StatelessWidget {
             flexibleSpace: FlexibleSpaceBar(
               background: ClipRect(
                 child: BackdropFilter(
-                  filter: ColorFilter.mode(Colors.black.withValues(alpha: 0.0), BlendMode.dst),
+                  filter: ColorFilter.mode(
+                    Colors.black.withValues(alpha: 0.0),
+                    BlendMode.dst,
+                  ),
                 ),
               ),
             ),
             elevation: 0,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+              icon: const Icon(
+                Icons.arrow_back_rounded,
+                color: AppColors.textPrimary,
+              ),
               onPressed: () => Navigator.of(context).pop(),
             ),
             titleSpacing: 0,
@@ -59,7 +65,7 @@ class BookingDetailScreen extends StatelessWidget {
                     color: AppColors.primary,
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
-letterSpacing: -0.5,
+                    letterSpacing: -0.5,
                   ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
@@ -77,7 +83,7 @@ letterSpacing: -0.5,
                     color: AppColors.textPrimary,
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
-letterSpacing: -0.5,
+                    letterSpacing: -0.5,
                   ),
                 ),
               ],
@@ -113,7 +119,7 @@ letterSpacing: -0.5,
                                 color: AppColors.textSecondary,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
-letterSpacing: 0.5,
+                                letterSpacing: 0.5,
                               ),
                             ),
                             const SizedBox(height: 2),
@@ -123,13 +129,16 @@ letterSpacing: 0.5,
                                 color: AppColors.textPrimary,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
-),
+                              ),
                             ),
                           ],
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: panel.color.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(999),
@@ -157,7 +166,7 @@ letterSpacing: 0.5,
                                 color: panel.color,
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
-letterSpacing: 0.5,
+                                letterSpacing: 0.5,
                               ),
                             ),
                           ],
@@ -167,12 +176,12 @@ letterSpacing: 0.5,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),
-                
+
                 // Timeline
                 _BookingProgress(status: booking.status),
                 const SizedBox(height: AppSpacing.md),
-                
-                // Assigned Professional 
+
+                // Assigned Professional
                 if (const {
                   BookingStatusValue.assigned,
                   BookingStatusValue.enRoute,
@@ -193,7 +202,11 @@ letterSpacing: 0.5,
                             color: AppColors.primarySoft,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.handyman_rounded, color: AppColors.primary, size: 20),
+                          child: const Icon(
+                            Icons.handyman_rounded,
+                            color: AppColors.primary,
+                            size: 20,
+                          ),
                         ),
                         const SizedBox(width: AppSpacing.md),
                         const Expanded(
@@ -208,10 +221,14 @@ letterSpacing: 0.5,
                                       color: AppColors.textPrimary,
                                       fontSize: 14,
                                       fontWeight: FontWeight.w600,
-),
+                                    ),
                                   ),
                                   SizedBox(width: 4),
-                                  Icon(Icons.verified, color: AppColors.primary, size: 16),
+                                  Icon(
+                                    Icons.verified,
+                                    color: AppColors.primary,
+                                    size: 16,
+                                  ),
                                 ],
                               ),
                               SizedBox(height: 2),
@@ -220,7 +237,7 @@ letterSpacing: 0.5,
                                 style: TextStyle(
                                   color: AppColors.textSecondary,
                                   fontSize: 12,
-),
+                                ),
                               ),
                             ],
                           ),
@@ -260,7 +277,7 @@ letterSpacing: 0.5,
                               color: AppColors.primary,
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
-),
+                            ),
                           ),
                         ),
                       ],
@@ -289,9 +306,15 @@ letterSpacing: 0.5,
                         height: 4,
                         decoration: const BoxDecoration(
                           gradient: LinearGradient(
-                            colors: [AppColors.primary, AppColors.primarySoft, AppColors.primaryFixedDim],
+                            colors: [
+                              AppColors.primary,
+                              AppColors.primarySoft,
+                              AppColors.primaryFixedDim,
+                            ],
                           ),
-                          borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+                          borderRadius: BorderRadius.vertical(
+                            top: Radius.circular(12),
+                          ),
                         ),
                       ),
                       Padding(
@@ -301,7 +324,11 @@ letterSpacing: 0.5,
                           children: [
                             Row(
                               children: [
-                                const Icon(Icons.build_circle_rounded, color: AppColors.primary, size: 24),
+                                const Icon(
+                                  Icons.build_circle_rounded,
+                                  color: AppColors.primary,
+                                  size: 24,
+                                ),
                                 const SizedBox(width: AppSpacing.sm),
                                 Text(
                                   _category(booking.serviceCategoryId),
@@ -309,7 +336,7 @@ letterSpacing: 0.5,
                                     color: AppColors.textPrimary,
                                     fontSize: 16,
                                     fontWeight: FontWeight.w700,
-),
+                                  ),
                                 ),
                               ],
                             ),
@@ -319,11 +346,14 @@ letterSpacing: 0.5,
                               style: const TextStyle(
                                 color: AppColors.textSecondary,
                                 fontSize: 14,
-height: 1.4,
+                                height: 1.4,
                               ),
                             ),
                             const SizedBox(height: AppSpacing.lg),
-                            const Divider(height: 1, color: AppColors.surfaceContainerHigh),
+                            const Divider(
+                              height: 1,
+                              color: AppColors.surfaceContainerHigh,
+                            ),
                             const SizedBox(height: AppSpacing.md),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -337,7 +367,7 @@ height: 1.4,
                                         color: AppColors.textSecondary,
                                         fontSize: 11,
                                         fontWeight: FontWeight.w600,
-letterSpacing: 0.5,
+                                        letterSpacing: 0.5,
                                       ),
                                     ),
                                     const SizedBox(height: 2),
@@ -347,7 +377,7 @@ letterSpacing: 0.5,
                                         color: AppColors.textPrimary,
                                         fontSize: 14,
                                         fontWeight: FontWeight.w500,
-),
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -360,20 +390,24 @@ letterSpacing: 0.5,
                                         color: AppColors.textSecondary,
                                         fontSize: 11,
                                         fontWeight: FontWeight.w600,
-letterSpacing: 0.5,
+                                        letterSpacing: 0.5,
                                       ),
                                     ),
                                     const SizedBox(height: 2),
                                     Row(
                                       children: [
-                                        const Icon(Icons.tag_rounded, color: AppColors.primary, size: 14),
+                                        const Icon(
+                                          Icons.tag_rounded,
+                                          color: AppColors.primary,
+                                          size: 14,
+                                        ),
                                         Text(
                                           _shortId(booking.id),
                                           style: const TextStyle(
                                             color: AppColors.textPrimary,
                                             fontSize: 14,
                                             fontWeight: FontWeight.w600,
-),
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -387,8 +421,9 @@ letterSpacing: 0.5,
                     ],
                   ),
                 ),
-                
-                if (JobProofRepository.instance.getProof(booking.id) case final proof?) ...[
+
+                if (JobProofRepository.instance.getProof(booking.id)
+                    case final proof?) ...[
                   const SizedBox(height: AppSpacing.md),
                   JobProofViewerCard(proof: proof),
                 ],
@@ -403,7 +438,11 @@ letterSpacing: 0.5,
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.info_outline_rounded, color: AppColors.textSecondary, size: 20),
+                      const Icon(
+                        Icons.info_outline_rounded,
+                        color: AppColors.textSecondary,
+                        size: 20,
+                      ),
                       const SizedBox(width: AppSpacing.sm),
                       const Expanded(
                         child: Text(
@@ -411,7 +450,7 @@ letterSpacing: 0.5,
                           style: TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 13,
-),
+                          ),
                         ),
                       ),
                     ],
@@ -423,7 +462,8 @@ letterSpacing: 0.5,
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    if (booking.statusValue.isCompleted && onBookAgain != null) ...[
+                    if (booking.statusValue.isCompleted &&
+                        onBookAgain != null) ...[
                       FixButton(
                         label: 'Book Again',
                         icon: Icons.refresh_rounded,
@@ -439,10 +479,11 @@ letterSpacing: 0.5,
                       ),
                       const SizedBox(height: AppSpacing.sm),
                     ],
-                    if (onReschedule != null && const {
-                      BookingStatusValue.requested,
-                      BookingStatusValue.assigned,
-                    }.contains(booking.statusValue)) ...[
+                    if (onReschedule != null &&
+                        const {
+                          BookingStatusValue.requested,
+                          BookingStatusValue.assigned,
+                        }.contains(booking.statusValue)) ...[
                       FixButton(
                         label: 'Reschedule Date / Time',
                         icon: Icons.event_repeat_rounded,
@@ -460,17 +501,19 @@ letterSpacing: 0.5,
                       ),
                       const SizedBox(height: AppSpacing.sm),
                     ],
-                    if (booking.statusValue.isCompleted && reviewRepository != null) ...[
+                    if (booking.statusValue.isCompleted &&
+                        reviewRepository != null) ...[
                       BookingReviewPanel(
                         booking: booking,
                         repository: reviewRepository!,
                       ),
                       const SizedBox(height: AppSpacing.sm),
                     ],
-                    if (onCancel != null && const {
-                      BookingStatusValue.requested,
-                      BookingStatusValue.assigned,
-                    }.contains(booking.statusValue)) ...[
+                    if (onCancel != null &&
+                        const {
+                          BookingStatusValue.requested,
+                          BookingStatusValue.assigned,
+                        }.contains(booking.statusValue)) ...[
                       _CancelButton(booking: booking, onCancel: onCancel!),
                     ],
                   ],
@@ -487,18 +530,44 @@ letterSpacing: 0.5,
 
   static String _formatScheduledTime(DateTime dt) {
     final local = dt.toLocal();
-    final hour = local.hour > 12 ? local.hour - 12 : (local.hour == 0 ? 12 : local.hour);
+    final hour = local.hour > 12
+        ? local.hour - 12
+        : (local.hour == 0 ? 12 : local.hour);
     final ampm = local.hour >= 12 ? 'PM' : 'AM';
     final minute = local.minute.toString().padLeft(2, '0');
     return '${local.day}/${local.month}/${local.year} at $hour:$minute $ampm';
   }
 
-  static ({IconData icon, Color color, String title}) _statusPanel(BookingStatusValue value) => switch (value) {
-    BookingStatusValue.requested => (icon: Icons.radar_rounded, color: AppColors.primary, title: 'Requested'),
-    BookingStatusValue.assigned || BookingStatusValue.enRoute || BookingStatusValue.inProgress => (icon: Icons.route_rounded, color: AppColors.primary, title: 'Active'),
-    BookingStatusValue.completed => (icon: Icons.check_circle_rounded, color: AppColors.success, title: 'Completed'),
-    BookingStatusValue.cancelled => (icon: Icons.cancel_rounded, color: AppColors.danger, title: 'Cancelled'),
-    BookingStatusValue.unknown => (icon: Icons.help_outline_rounded, color: AppColors.warning, title: 'Status unavailable'),
+  static ({IconData icon, Color color, String title}) _statusPanel(
+    BookingStatusValue value,
+  ) => switch (value) {
+    BookingStatusValue.requested => (
+      icon: Icons.radar_rounded,
+      color: AppColors.primary,
+      title: 'Requested',
+    ),
+    BookingStatusValue.assigned ||
+    BookingStatusValue.enRoute ||
+    BookingStatusValue.inProgress => (
+      icon: Icons.route_rounded,
+      color: AppColors.primary,
+      title: 'Active',
+    ),
+    BookingStatusValue.completed => (
+      icon: Icons.check_circle_rounded,
+      color: AppColors.success,
+      title: 'Completed',
+    ),
+    BookingStatusValue.cancelled => (
+      icon: Icons.cancel_rounded,
+      color: AppColors.danger,
+      title: 'Cancelled',
+    ),
+    BookingStatusValue.unknown => (
+      icon: Icons.help_outline_rounded,
+      color: AppColors.warning,
+      title: 'Status unavailable',
+    ),
   };
   static String _category(String value) => value
       .replaceAll('_', ' ')
@@ -513,7 +582,8 @@ letterSpacing: 0.5,
     return short.toUpperCase();
   }
 
-  static String _date(DateTime value) => '${value.day}/${value.month}/${value.year}';
+  static String _date(DateTime value) =>
+      '${value.day}/${value.month}/${value.year}';
 }
 
 class _BookingProgress extends StatelessWidget {
@@ -550,7 +620,13 @@ class _BookingProgress extends StatelessWidget {
           children: [
             Icon(Icons.cancel_rounded, color: AppColors.danger),
             SizedBox(width: AppSpacing.sm),
-            Text('Booking was cancelled.', style: TextStyle(color: AppColors.danger, fontWeight: FontWeight.w600)),
+            Text(
+              'Booking was cancelled.',
+              style: TextStyle(
+                color: AppColors.danger,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ],
         ),
       );
@@ -567,7 +643,11 @@ class _BookingProgress extends StatelessWidget {
           children: [
             Icon(Icons.help_outline_rounded, color: AppColors.warning),
             SizedBox(width: AppSpacing.sm),
-            Expanded(child: Text('Booking status is unavailable. Refresh to get the latest update.')),
+            Expanded(
+              child: Text(
+                'Booking status is unavailable. Refresh to get the latest update.',
+              ),
+            ),
           ],
         ),
       );
@@ -595,7 +675,7 @@ class _BookingProgress extends StatelessWidget {
               color: AppColors.textPrimary,
               fontSize: 16,
               fontWeight: FontWeight.w700,
-),
+            ),
           ),
           const SizedBox(height: AppSpacing.lg),
           for (var index = 0; index < stages.length; index++)
@@ -641,20 +721,26 @@ class _ProgressRow extends StatelessWidget {
                 height: 24,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: isCurrent 
+                  color: isCurrent
                       ? AppColors.primary
-                      : (isComplete ? AppColors.primarySoft : AppColors.surfaceContainerHighest),
-                  border: isCurrent 
+                      : (isComplete
+                            ? AppColors.primarySoft
+                            : AppColors.surfaceContainerHighest),
+                  border: isCurrent
                       ? Border.all(color: AppColors.primaryFixedDim, width: 2)
                       : null,
                 ),
                 child: Center(
                   child: Icon(
-                    isComplete && !isCurrent ? Icons.check_rounded : Icons.circle,
+                    isComplete && !isCurrent
+                        ? Icons.check_rounded
+                        : Icons.circle,
                     size: 14,
-                    color: isCurrent 
-                        ? Colors.white 
-                        : (isComplete ? AppColors.primary : AppColors.outlineVariant),
+                    color: isCurrent
+                        ? Colors.white
+                        : (isComplete
+                              ? AppColors.primary
+                              : AppColors.outlineVariant),
                   ),
                 ),
               ),
@@ -683,10 +769,12 @@ class _ProgressRow extends StatelessWidget {
                   style: TextStyle(
                     color: isCurrent
                         ? AppColors.primary
-                        : (isComplete ? AppColors.textPrimary : AppColors.textSecondary),
+                        : (isComplete
+                              ? AppColors.textPrimary
+                              : AppColors.textSecondary),
                     fontSize: 14,
                     fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w600,
-),
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -694,7 +782,7 @@ class _ProgressRow extends StatelessWidget {
                   style: const TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 12,
-),
+                  ),
                 ),
               ],
             ),
@@ -731,10 +819,17 @@ class _CancelButtonState extends State<_CancelButton> {
           ),
           child: Row(
             children: [
-              const Icon(Icons.error_outline_rounded, color: AppColors.danger, size: 16),
+              const Icon(
+                Icons.error_outline_rounded,
+                color: AppColors.danger,
+                size: 16,
+              ),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(message, style: const TextStyle(color: AppColors.danger, fontSize: 12)),
+                child: Text(
+                  message,
+                  style: const TextStyle(color: AppColors.danger, fontSize: 12),
+                ),
               ),
             ],
           ),
@@ -760,7 +855,8 @@ class _CancelButtonState extends State<_CancelButton> {
             if (mounted) {
               setState(() {
                 loading = false;
-                error = 'The booking could not be cancelled. Refresh and try again.';
+                error =
+                    'The booking could not be cancelled. Refresh and try again.';
               });
             }
           }

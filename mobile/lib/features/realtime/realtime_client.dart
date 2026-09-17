@@ -68,7 +68,8 @@ class RealtimeClient extends ChangeNotifier {
 
   Stream<RealtimeProjection> get projections => _projections.stream;
   Stream<Map<String, Object?>> get voiceFrames => _voiceFrames.stream;
-  bool get isConnected => _socket != null && (_readyCompleter?.isCompleted ?? false);
+  bool get isConnected =>
+      _socket != null && (_readyCompleter?.isCompleted ?? false);
 
   Future<void> subscribeBooking(String bookingId) async {
     _bookingId = bookingId;

@@ -133,7 +133,9 @@ Future<void> _openAndAttachPhoto(WidgetTester tester) async {
 
   // Analyze stays disabled until something is attached.
   expect(
-    tester.widget<FixButton>(find.widgetWithText(FixButton, 'Analyze')).onPressed,
+    tester
+        .widget<FixButton>(find.widgetWithText(FixButton, 'Analyze'))
+        .onPressed,
     isNull,
   );
 
@@ -161,8 +163,9 @@ void main() {
     expect(find.text('returned:plumbing'), findsOneWidget);
   });
 
-  testWidgets('an ungrounded result falls back to browsing and pops nothing',
-      (tester) async {
+  testWidgets('an ungrounded result falls back to browsing and pops nothing', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       MaterialApp(
         home: _Launcher(response: _analysis(serviceCategoryId: null)),

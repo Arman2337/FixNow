@@ -26,10 +26,8 @@ class FixShareInvoiceSheet extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => FixShareInvoiceSheet(
-        invoice: invoice,
-        onSavePdf: onSavePdf,
-      ),
+      builder: (_) =>
+          FixShareInvoiceSheet(invoice: invoice, onSavePdf: onSavePdf),
     );
   }
 
@@ -42,7 +40,9 @@ class FixShareInvoiceSheet extends StatelessWidget {
     return Container(
       decoration: const BoxDecoration(
         color: AppColors.surfaceElevated,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.bottomSheet)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppRadius.bottomSheet),
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black54,
@@ -83,9 +83,15 @@ class FixShareInvoiceSheet extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: AppColors.primary.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                  border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.3),
+                  ),
                 ),
-                child: const Icon(Icons.receipt_long_rounded, color: AppColors.primary, size: 24),
+                child: const Icon(
+                  Icons.receipt_long_rounded,
+                  color: AppColors.primary,
+                  size: 24,
+                ),
               ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
@@ -106,7 +112,10 @@ class FixShareInvoiceSheet extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.success.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(4),
@@ -125,7 +134,10 @@ class FixShareInvoiceSheet extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       'Official Tax Invoice • $fileName ($sizeKb KB)',
-                      style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                      ),
                     ),
                   ],
                 ),
@@ -188,7 +200,8 @@ class FixShareInvoiceSheet extends StatelessWidget {
             icon: Icons.copy_rounded,
             iconColor: AppColors.accentGold,
             title: 'Copy Invoice Summary & Verification Link',
-            subtitle: 'Includes GST breakdown, SAC code 9987 & online verification ref',
+            subtitle:
+                'Includes GST breakdown, SAC code 9987 & online verification ref',
             onTap: () {
               Navigator.pop(context);
               final text = FixPdfInvoiceBuilder.generateShareSummary(invoice);
@@ -238,13 +251,18 @@ class FixShareInvoiceSheet extends StatelessWidget {
             child: OutlinedButton(
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 12),
-                side: BorderSide(color: AppColors.borderDefault.withValues(alpha: 0.2)),
+                side: BorderSide(
+                  color: AppColors.borderDefault.withValues(alpha: 0.2),
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppRadius.medium),
                 ),
               ),
               onPressed: () => Navigator.pop(context),
-              child: const Text('Close', style: TextStyle(color: AppColors.textSecondary)),
+              child: const Text(
+                'Close',
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
             ),
           ),
         ],
@@ -259,7 +277,9 @@ class FixShareInvoiceSheet extends StatelessWidget {
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
-          side: BorderSide(color: AppColors.borderDefault.withValues(alpha: 0.2)),
+          side: BorderSide(
+            color: AppColors.borderDefault.withValues(alpha: 0.2),
+          ),
         ),
         content: Row(
           children: [
@@ -307,7 +327,9 @@ class _ShareOptionTile extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppColors.backgroundSecondary.withValues(alpha: 0.4),
             borderRadius: BorderRadius.circular(AppRadius.medium),
-            border: Border.all(color: AppColors.borderDefault.withValues(alpha: 0.1)),
+            border: Border.all(
+              color: AppColors.borderDefault.withValues(alpha: 0.1),
+            ),
           ),
           child: Row(
             children: [
@@ -336,12 +358,19 @@ class _ShareOptionTile extends StatelessWidget {
                     const SizedBox(height: 1),
                     Text(
                       subtitle,
-                      style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
+                      style: const TextStyle(
+                        color: AppColors.textMuted,
+                        fontSize: 11,
+                      ),
                     ),
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted, size: 18),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: AppColors.textMuted,
+                size: 18,
+              ),
             ],
           ),
         ),

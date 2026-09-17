@@ -46,7 +46,9 @@ class FixImage extends StatelessWidget {
         semanticLabel: semanticLabel,
         errorBuilder: (_, _, _) => _buildPlaceholder(),
       );
-    } else if (imageUrl != null && imageUrl!.trim().isNotEmpty && imageUrl!.startsWith('http')) {
+    } else if (imageUrl != null &&
+        imageUrl!.trim().isNotEmpty &&
+        imageUrl!.startsWith('http')) {
       content = Image.network(
         imageUrl!,
         width: width,
@@ -74,10 +76,7 @@ class FixImage extends StatelessWidget {
       content = _buildPlaceholder();
     }
 
-    return ClipRRect(
-      borderRadius: effectiveRadius,
-      child: content,
-    );
+    return ClipRRect(borderRadius: effectiveRadius, child: content);
   }
 
   Widget _buildPlaceholder() {
@@ -146,7 +145,9 @@ class FixAvatar extends StatelessWidget {
     final size = radius * 2;
 
     Widget avatarContent;
-    if (imageUrl != null && imageUrl!.trim().isNotEmpty && imageUrl!.startsWith('http')) {
+    if (imageUrl != null &&
+        imageUrl!.trim().isNotEmpty &&
+        imageUrl!.startsWith('http')) {
       avatarContent = Image.network(
         imageUrl!,
         width: size,
@@ -162,11 +163,7 @@ class FixAvatar extends StatelessWidget {
       clipBehavior: Clip.none,
       children: [
         ClipOval(
-          child: SizedBox(
-            width: size,
-            height: size,
-            child: avatarContent,
-          ),
+          child: SizedBox(width: size, height: size, child: avatarContent),
         ),
         if (verified)
           Positioned(
@@ -196,7 +193,7 @@ class FixAvatar extends StatelessWidget {
       child: Text(
         _initials,
         style: TextStyle(
-fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.bold,
           fontSize: radius * 0.8,
           color: AppColors.primary,
         ),

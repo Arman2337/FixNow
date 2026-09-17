@@ -22,8 +22,11 @@ import 'package:fixnow_mobile/features/chat/chat_controller.dart';
 import 'package:fixnow_mobile/features/chat/chat_repository.dart';
 import 'package:fixnow_mobile/features/provider/provider_controller.dart';
 import 'package:fixnow_mobile/features/realtime/realtime_client.dart';
+import 'package:fixnow_mobile/features/location/map_navigation_launcher.dart';
+import 'package:fixnow_mobile/features/provider/provider_navigation_map_screen.dart';
+import 'package:fixnow_mobile/features/tracking/booking_tracking.dart';
+import 'package:fixnow_mobile/features/tracking/provider_live_map.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 /// Comprehensive interactive job execution cockpit for service technicians (FN-129).
 /// Guides the technician through the full real-world lifecycle:
@@ -308,35 +311,31 @@ class _ProviderActiveJobCockpitScreenState
     );
   }
 
-  static const MethodChannel _navChannel =
-      MethodChannel('com.fixnow.mobile/navigation');
-
   Future<void> _openMaps(CustomerBooking job) async {
-    final lat = job.locationLatitude ?? 12.9716;
-    final lng = job.locationLongitude ?? 77.5946;
+    final lat = job.locationLatitude ?? 23.0225;
+    final lng = job.locationLongitude ?? 72.5714;
+    final shortId = job.id.replaceAll('-', '');
+    final label = 'Customer Location #${shortId.length > 8 ? shortId.substring(0, 8) : shortId}';
 
-    try {
-      await _navChannel.invokeMethod('openNavigation', {
-        'latitude': lat,
-        'longitude': lng,
-        'label': 'Customer Location #${job.id.substring(0, 8)}',
-      });
-    } on MissingPluginException {
-      if (!mounted) return;
-      showFixBanner(
-        ScaffoldMessenger.of(context),
-        message:
-            'Navigating to lat: ${lat.toStringAsFixed(4)}, lng: ${lng.toStringAsFixed(4)}',
-        actionLabel: 'DISMISS',
-      );
-    } catch (_) {
-      if (!mounted) return;
-      showFixBanner(
-        ScaffoldMessenger.of(context),
-        message:
-            'Navigating to lat: ${lat.toStringAsFixed(4)}, lng: ${lng.toStringAsFixed(4)}',
-      );
-    }
+    await MapNavigationLauncher.launchNavigation(
+      context: context,
+      latitude: lat,
+      longitude: lng,
+      label: label,
+    );
+  }
+
+  void _openNavigationMap(BuildContext context, CustomerBooking job) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ProviderNavigationMapScreen(
+          job: job,
+          controller: widget.controller,
+          chatRepository: widget.chatRepository,
+          callRepository: widget.callRepository,
+        ),
+      ),
+    );
   }
 
   @override
@@ -418,6 +417,12 @@ class _ProviderActiveJobCockpitScreenState
 
               // 3. Status-Specific Lifecycle Action Card
               _buildLifecycleActionCard(context, job),
+
+              // 4. Transit Route Map Card for in-flight jobs
+              if (const {'ASSIGNED', 'EN_ROUTE'}.contains(job.status)) ...[
+                const SizedBox(height: AppSpacing.lg),
+                _buildTransitMapCard(context, job),
+              ],
             ],
           ),
         );
@@ -585,24 +590,41 @@ class _ProviderActiveJobCockpitScreenState
           const Divider(color: AppColors.borderDefault),
           const SizedBox(height: AppSpacing.sm),
 
-          // Location details
-          Row(
-            children: [
-              const Icon(Icons.location_on_rounded, color: AppColors.emergency, size: 20),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  locationText,
-                  style: const TextStyle(fontSize: 13, color: AppColors.cream),
-                ),
+          // Location details (tap to open full map)
+          InkWell(
+            onTap: () => _openNavigationMap(context, job),
+            borderRadius: BorderRadius.circular(AppRadius.card),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                children: [
+                  const Icon(Icons.location_on_rounded, color: AppColors.emergency, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      locationText,
+                      style: const TextStyle(fontSize: 13, color: AppColors.cream),
+                    ),
+                  ),
+                  const Icon(Icons.open_in_new_rounded, size: 14, color: AppColors.textSecondary),
+                ],
               ),
-            ],
+            ),
           ),
           const SizedBox(height: AppSpacing.md),
 
-          // Action row: Navigate, Chat, Call
+          // Action row: Route Map, Navigate, Chat, Call
           Row(
             children: [
+              Expanded(
+                child: FixButton(
+                  label: 'Route Map',
+                  icon: Icons.map_rounded,
+                  variant: FixButtonVariant.secondary,
+                  onPressed: () => _openNavigationMap(context, job),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: FixButton(
                   label: 'Navigate',
@@ -624,6 +646,119 @@ class _ProviderActiveJobCockpitScreenState
                 onPressed: () => _openCall(context, job),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTransitMapCard(BuildContext context, CustomerBooking job) {
+    final lat = job.locationLatitude ?? 23.0225;
+    final lng = job.locationLongitude ?? 72.5714;
+    final provLat = widget.controller.profile?.baseLatitude ?? (lat - 0.025);
+    final provLng = widget.controller.profile?.baseLongitude ?? (lng - 0.02);
+
+    return FixCard(
+      tone: FixCardTone.elevated,
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.route_rounded, color: AppColors.primary, size: 18),
+                  SizedBox(width: 6),
+                  Text(
+                    'Transit Route Preview',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.cream,
+                    ),
+                  ),
+                ],
+              ),
+              TextButton.icon(
+                onPressed: () => _openNavigationMap(context, job),
+                icon: const Icon(Icons.fullscreen_rounded, size: 16),
+                label: const Text('Expand', style: TextStyle(fontSize: 12)),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          InkWell(
+            onTap: () => _openNavigationMap(context, job),
+            borderRadius: BorderRadius.circular(AppRadius.card),
+            child: Container(
+              height: 140,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(AppRadius.card),
+                border: Border.all(color: AppColors.borderDefault),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(AppRadius.card),
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        child: ProviderLiveMap(
+                          showOverlay: false,
+                          isProviderPerspective: true,
+                          customerLocation: CustomerMapLocation(
+                            latitude: lat,
+                            longitude: lng,
+                          ),
+                          providerLocation: ProviderMapLocation(
+                            latitude: provLat,
+                            longitude: provLng,
+                            accuracyMeters: 5.0,
+                            capturedAt: DateTime.now(),
+                            receivedAt: DateTime.now(),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: 8,
+                      right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.backgroundPrimary.withValues(alpha: 0.88),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.white24),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.touch_app_rounded,
+                              size: 14,
+                              color: AppColors.cream,
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              'Tap to open full route map',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.cream,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ],
       ),

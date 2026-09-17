@@ -10,6 +10,8 @@ import 'package:fixnow_mobile/features/bookings/job_proof_service.dart';
 import 'package:fixnow_mobile/design_system/fix_job_proof_dialog.dart';
 import 'package:fixnow_mobile/features/call/call_repository.dart';
 import 'package:fixnow_mobile/features/chat/chat_repository.dart';
+import 'package:fixnow_mobile/features/location/map_navigation_launcher.dart';
+import 'package:fixnow_mobile/features/provider/provider_navigation_map_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_active_job_cockpit_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_controller.dart';
 import 'package:flutter/material.dart';
@@ -163,6 +165,48 @@ class _JobCard extends StatelessWidget {
                   ),
                 ),
               ),
+              if (const {'ASSIGNED', 'EN_ROUTE'}.contains(job.status)) ...[
+                const SizedBox(height: AppSpacing.sm),
+                Row(
+                  children: [
+                    Expanded(
+                      child: FixButton(
+                        label: 'Route Map',
+                        icon: Icons.map_rounded,
+                        variant: FixButtonVariant.secondary,
+                        onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => ProviderNavigationMapScreen(
+                              job: job,
+                              controller: controller,
+                              chatRepository: chatRepository,
+                              callRepository: callRepository,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: FixButton(
+                        label: 'Navigate',
+                        icon: Icons.directions_rounded,
+                        variant: FixButtonVariant.secondary,
+                        onPressed: () {
+                          final lat = job.locationLatitude ?? 23.0225;
+                          final lng = job.locationLongitude ?? 72.5714;
+                          MapNavigationLauncher.launchNavigation(
+                            context: context,
+                            latitude: lat,
+                            longitude: lng,
+                            label: 'Customer Location #${_shortId(job.id)}',
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ],
             if (!readOnly && action != null) ...[
               const SizedBox(height: AppSpacing.sm),

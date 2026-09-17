@@ -101,6 +101,64 @@ class ProviderController extends ChangeNotifier {
     );
   }
 
+  Timer? _requestPollingTimer;
+
+  Future<void> _syncLocationOnce() async {
+    try {
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.always ||
+          permission == LocationPermission.whileInUse) {
+        final position = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.high,
+            timeLimit: Duration(seconds: 4),
+          ),
+        );
+        profile = await repository.updateLocation(
+          position.latitude,
+          position.longitude,
+        );
+      }
+    } catch (_) {}
+  }
+
+  void _startRequestPolling() {
+    _requestPollingTimer?.cancel();
+    _requestPollingTimer = Timer.periodic(const Duration(seconds: 4), (_) async {
+      if (availability?.status != 'online') return;
+      try {
+        final newRequests = await repository.availableRequests();
+        if (!_areRequestsEqual(requests, newRequests)) {
+          requests = newRequests;
+          notifyListeners();
+        }
+        final newJobs = await repository.jobs();
+        if (newJobs.length != jobs.length ||
+            newJobs.any((nj) => !jobs.any((j) => j.id == nj.id && j.status == nj.status))) {
+          jobs = newJobs;
+          notifyListeners();
+        }
+      } catch (_) {}
+    });
+  }
+
+  void _stopRequestPolling() {
+    _requestPollingTimer?.cancel();
+    _requestPollingTimer = null;
+  }
+
+  bool _areRequestsEqual(List<ProviderRequest> a, List<ProviderRequest> b) {
+    if (identical(a, b)) return true;
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i].id != b[i].id || a[i].version != b[i].version) return false;
+    }
+    return true;
+  }
+
   void _startLocationTracking() {
     _locationTimer?.cancel();
     _locationTimer = Timer.periodic(const Duration(seconds: 30), (timer) async {
@@ -140,12 +198,14 @@ class ProviderController extends ChangeNotifier {
       if (verified) {
         availability = await repository.availability();
         if (availability?.status == 'online') {
+          await _syncLocationOnce();
           _startLocationTracking();
+          _startRequestPolling();
         }
         jobs = await repository.jobs();
         try {
           requests = await repository.availableRequests();
-        } on ApiException {
+        } catch (_) {
           requests = const [];
           actionError =
               'Incoming requests are temporarily unavailable. Refresh to try again.';
@@ -200,30 +260,15 @@ class ProviderController extends ChangeNotifier {
     if (current == null) return;
     availability = await repository.setStatus(current, status);
     if (status.toLowerCase() == 'online') {
-      try {
-        var permission = await Geolocator.checkPermission();
-        if (permission == LocationPermission.denied) {
-          permission = await Geolocator.requestPermission();
-        }
-        if (permission == LocationPermission.always ||
-            permission == LocationPermission.whileInUse) {
-          final position = await Geolocator.getCurrentPosition(
-            locationSettings: const LocationSettings(
-              accuracy: LocationAccuracy.high,
-            ),
-          );
-          profile = await repository.updateLocation(
-            position.latitude,
-            position.longitude,
-          );
-        }
-      } catch (_) {}
+      await _syncLocationOnce();
       _startLocationTracking();
+      _startRequestPolling();
       try {
         await refreshRequests();
       } catch (_) {}
     } else {
       _stopLocationTracking();
+      _stopRequestPolling();
       requests = const [];
     }
     notifyListeners();
@@ -278,8 +323,9 @@ class ProviderController extends ChangeNotifier {
     final client = realtime;
     final current = jobs.firstWhere((j) => j.id == job.id, orElse: () => job);
     if (client == null ||
-        (job.status != 'EN_ROUTE' && current.status != 'EN_ROUTE'))
+        (job.status != 'EN_ROUTE' && current.status != 'EN_ROUTE')) {
       return;
+    }
     actionError = null;
     try {
       await client.subscribeBooking(job.id);
@@ -414,6 +460,7 @@ class ProviderController extends ChangeNotifier {
   void dispose() {
     _realtimeSub?.cancel();
     _stopLocationTracking();
+    _stopRequestPolling();
     realtime?.dispose();
     super.dispose();
   }

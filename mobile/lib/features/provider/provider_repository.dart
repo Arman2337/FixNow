@@ -232,7 +232,14 @@ class ProviderRepository {
       );
     }
     return rows
-        .map((row) => ProviderRequest.fromJson(_map(row)))
+        .map((row) {
+          try {
+            return ProviderRequest.fromJson(_map(row));
+          } catch (_) {
+            return null;
+          }
+        })
+        .whereType<ProviderRequest>()
         .toList(growable: false);
   }
 

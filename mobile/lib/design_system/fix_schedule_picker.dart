@@ -174,14 +174,18 @@ class _FixSchedulePickerCardState extends State<FixSchedulePickerCard> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Select Execution Mode',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: AppColors.textPrimary,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
+              Expanded(
+                child: Text(
+                  'Select Execution Mode',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
+              const SizedBox(width: 8),
               const Text(
                 'Real-Time SLA',
                 style: TextStyle(
@@ -239,7 +243,7 @@ class _FixSchedulePickerCardState extends State<FixSchedulePickerCard> {
                   subtitle: 'Pick Slot',
                   icon: Icons.calendar_month_rounded,
                   isSelected: !_schedule.isNow,
-                  subtitleColor: AppColors.textSecondary,
+                  subtitleColor: AppColors.primaryFixed,
                   metadata: Text(
                     'Tomorrow onwards',
                     style: TextStyle(
@@ -292,9 +296,9 @@ class _FixSchedulePickerCardState extends State<FixSchedulePickerCard> {
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.05),
+                          color: AppColors.surfaceContainerLow,
                           borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: Colors.white12),
+                          border: Border.all(color: AppColors.borderDefault),
                         ),
                         child: const Icon(
                           Icons.chevron_left_rounded,
@@ -320,9 +324,9 @@ class _FixSchedulePickerCardState extends State<FixSchedulePickerCard> {
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.05),
+                          color: AppColors.surfaceContainerLow,
                           borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: Colors.white12),
+                          border: Border.all(color: AppColors.borderDefault),
                         ),
                         child: const Icon(
                           Icons.chevron_right_rounded,
@@ -408,12 +412,12 @@ class _FixSchedulePickerCardState extends State<FixSchedulePickerCard> {
                           decoration: BoxDecoration(
                             color: isSelected
                                 ? AppColors.primary
-                                : AppColors.backgroundPrimary,
+                                : AppColors.surfaceContainerLowest,
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
                               color: isSelected
                                   ? AppColors.primary
-                                  : Colors.white12,
+                                  : AppColors.borderDefault,
                             ),
                             boxShadow: isSelected
                                 ? [
@@ -449,8 +453,10 @@ class _FixSchedulePickerCardState extends State<FixSchedulePickerCard> {
                                 '${date.day} ${_shortMonth(date.month)}',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  color: Colors.white,
+                                style: TextStyle(
+                                  color: isSelected
+                                      ? Colors.white
+                                      : AppColors.textPrimary,
                                   fontSize: 13,
                                   fontWeight: FontWeight.w800,
                                 ),
@@ -555,17 +561,18 @@ class _FixSchedulePickerCardState extends State<FixSchedulePickerCard> {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.primary.withValues(alpha: 0.15)
+              ? AppColors.primary.withValues(alpha: 0.12)
               : isPast
-              ? Colors.white.withValues(alpha: 0.02)
-              : AppColors.backgroundPrimary,
+              ? AppColors.surfaceContainerLow.withValues(alpha: 0.5)
+              : AppColors.surfaceContainerLowest,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: isSelected
                 ? AppColors.primary
                 : isPast
-                ? Colors.white.withValues(alpha: 0.05)
-                : Colors.white12,
+                ? AppColors.borderDefault.withValues(alpha: 0.4)
+                : AppColors.borderDefault,
+            width: isSelected ? 1.5 : 1.0,
           ),
         ),
         child: Row(
@@ -574,10 +581,10 @@ class _FixSchedulePickerCardState extends State<FixSchedulePickerCard> {
               slot.icon,
               size: 18,
               color: isPast
-                  ? Colors.white24
+                  ? AppColors.textDisabled
                   : isSelected
                   ? AppColors.primary
-                  : Colors.white70,
+                  : AppColors.textSecondary,
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -587,10 +594,10 @@ class _FixSchedulePickerCardState extends State<FixSchedulePickerCard> {
                     slot.label,
                     style: TextStyle(
                       color: isPast
-                          ? Colors.white24
+                          ? AppColors.textDisabled
                           : isSelected
                           ? AppColors.primary
-                          : Colors.white,
+                          : AppColors.textPrimary,
                       fontWeight: FontWeight.w700,
                       fontSize: 13,
                     ),
@@ -604,14 +611,14 @@ class _FixSchedulePickerCardState extends State<FixSchedulePickerCard> {
                         slot.timeRange,
                         style: TextStyle(
                           color: isPast
-                              ? Colors.white24
+                              ? AppColors.textDisabled
                               : isSelected
                               ? AppColors.primary
                               : AppColors.textSecondary,
                           fontSize: 11,
                           fontWeight: isSelected
                               ? FontWeight.w600
-                              : FontWeight.w400,
+                              : FontWeight.w500,
                         ),
                       ),
                       if (isPast)
@@ -635,10 +642,10 @@ class _FixSchedulePickerCardState extends State<FixSchedulePickerCard> {
                   : Icons.radio_button_unchecked_rounded,
               size: 16,
               color: isPast
-                  ? Colors.white10
+                  ? AppColors.textDisabled.withValues(alpha: 0.3)
                   : isSelected
                   ? AppColors.primary
-                  : Colors.white30,
+                  : AppColors.textTertiary,
             ),
           ],
         ),

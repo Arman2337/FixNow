@@ -1,3 +1,4 @@
+import 'package:fixnow_mobile/features/services/sub_service_item.dart';
 import 'package:fixnow_mobile/api/api_client.dart';
 import 'package:fixnow_mobile/features/ai/price_estimate_repository.dart';
 import 'package:fixnow_mobile/features/bookings/booking_controller.dart';
@@ -38,7 +39,7 @@ Widget host({
   home: Scaffold(
     body: SizedBox(
       height: 2400,
-      child: ServiceRequestScreen(
+      child: ServiceRequestScreen(addressRepository: SavedAddressRepository(api: ApiTransport(MockClient()), accessToken: () async => ''), 
         category: category,
         controller: BookingController(
           BookingRepository(api: transport, accessToken: () async => null),
@@ -152,4 +153,10 @@ void main() {
     expect(find.text('Base price'), findsOneWidget);
     expect(find.textContaining('price-estimate'), findsNothing);
   });
+}
+
+
+class MockClient implements HttpClient {
+  @override
+  Future<HttpResponse> send(HttpRequest request) async => HttpResponse(200, {});
 }

@@ -791,7 +791,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Flexible(
+                    Expanded(
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -804,7 +804,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                             ),
                           ),
                           const SizedBox(width: 6),
-                          Flexible(
+                          Expanded(
                             child: Text(
                               'JOB IN PROGRESS • $categoryTitle',
                               style: const TextStyle(
@@ -903,10 +903,10 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                             children: [
                               Flexible(
                                 child: Text(
-                                  'Active • ${active.status}',
+                                  'Active • ${active.status.replaceAll('_', ' ')}',
                                   style: const TextStyle(
                                     color: Colors.white,
-                                    fontSize: 14,
+                                    fontSize: 13,
                                     fontWeight: FontWeight.w700,
                                   ),
                                   overflow: TextOverflow.ellipsis,
@@ -915,7 +915,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                               const SizedBox(width: 6),
                               Container(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
+                                  horizontal: 5,
                                   vertical: 2,
                                 ),
                                 decoration: BoxDecoration(
@@ -923,11 +923,12 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
-                                  active.serviceCategoryId.toUpperCase(),
+                                  '#${active.id.length > 6 ? active.id.substring(0, 6).toUpperCase() : active.id.toUpperCase()}',
                                   style: const TextStyle(
                                     color: Colors.white70,
                                     fontSize: 9,
                                     fontWeight: FontWeight.bold,
+                                    letterSpacing: 0.5,
                                   ),
                                 ),
                               ),

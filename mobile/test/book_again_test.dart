@@ -1,3 +1,4 @@
+import 'package:fixnow_mobile/features/services/sub_service_item.dart';
 import 'package:fixnow_mobile/api/api_client.dart';
 import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_theme.dart';
@@ -185,7 +186,7 @@ void main() {
       MaterialApp(
         theme: AppTheme.dark,
         home: Scaffold(
-          body: ServiceRequestScreen(
+          body: ServiceRequestScreen(addressRepository: SavedAddressRepository(api: ApiTransport(MockClient()), accessToken: () async => ''), 
             category: _category,
             controller: controller,
             locationProvider: _FixedLocation(),
@@ -235,7 +236,7 @@ void main() {
       MaterialApp(
         theme: AppTheme.dark,
         home: Scaffold(
-          body: ServiceRequestScreen(
+          body: ServiceRequestScreen(addressRepository: SavedAddressRepository(api: ApiTransport(MockClient()), accessToken: () async => ''), 
             category: _category,
             controller: controller,
             locationProvider: _FixedLocation(),
@@ -296,4 +297,10 @@ void main() {
       expect(selected?.id, 'bbbbbbbb-2222-4222-8222-222222222222');
     },
   );
+}
+
+
+class MockClient implements HttpClient {
+  @override
+  Future<HttpResponse> send(HttpRequest request) async => HttpResponse(200, {});
 }

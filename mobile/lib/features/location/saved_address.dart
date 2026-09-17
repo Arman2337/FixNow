@@ -49,10 +49,29 @@ class SavedAddress {
     AddressLabel.other => customTitle.isNotEmpty ? customTitle : 'Other',
   };
 
-  String get formattedSnippet => '$flatBuilding, $streetArea';
+  String get formattedSnippet {
+    final parts = [flatBuilding, streetArea].where((s) => s.trim().isNotEmpty).toList();
+    return parts.join(', ');
+  }
 
-  String get formattedFull =>
-      '$flatBuilding, $streetArea${landmark != null && landmark!.isNotEmpty ? ' (Near $landmark)' : ''}, $city - $postalCode';
+  String get formattedFull {
+    final areaPart = [
+      flatBuilding,
+      streetArea,
+      if (landmark != null && landmark!.trim().isNotEmpty) '(Near $landmark)',
+    ].where((s) => s.trim().isNotEmpty).toList();
+
+    final cityZip = [
+      if (city.trim().isNotEmpty && postalCode.trim().isNotEmpty)
+        '$city - $postalCode'
+      else ...[
+        if (city.trim().isNotEmpty) city,
+        if (postalCode.trim().isNotEmpty) postalCode,
+      ],
+    ];
+
+    return [...areaPart, ...cityZip].join(', ');
+  }
 
   SavedAddress copyWith({
     String? id,

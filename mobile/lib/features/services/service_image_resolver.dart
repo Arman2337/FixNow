@@ -45,6 +45,6 @@ class ServiceImageResolver {
       'pest_control': 'assets/images/services/pest_control.jpg',
     };
 
-    return assetMap[slug];
+    return assetMap[slug] ?? 'assets/images/services/handyman.jpg';
   }
 }

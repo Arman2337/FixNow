@@ -1,3 +1,4 @@
+import 'package:fixnow_mobile/features/services/sub_service_item.dart';
 import 'package:fixnow_mobile/api/api_client.dart';
 import 'package:fixnow_mobile/design_system/app_theme.dart';
 import 'package:fixnow_mobile/features/profile/customer_profile.dart';
@@ -16,7 +17,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.dark,
-        home: Scaffold(body: CustomerProfileScreen(controller: controller)),
+        home: Scaffold(body: CustomerProfileScreen(addressRepository: SavedAddressRepository(api: ApiTransport(MockClient()), accessToken: () async => ''), controller: controller)),
       ),
     );
     await tester.pump();
@@ -46,7 +47,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.dark,
-        home: Scaffold(body: CustomerProfileScreen(controller: controller)),
+        home: Scaffold(body: CustomerProfileScreen(addressRepository: SavedAddressRepository(api: ApiTransport(MockClient()), accessToken: () async => ''), controller: controller)),
       ),
     );
     await tester.pump();
@@ -62,7 +63,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.dark,
-        home: Scaffold(body: CustomerProfileScreen(controller: controller)),
+        home: Scaffold(body: CustomerProfileScreen(addressRepository: SavedAddressRepository(api: ApiTransport(MockClient()), accessToken: () async => ''), controller: controller)),
       ),
     );
     await tester.pump();
@@ -92,4 +93,10 @@ class FakeProfileRepository implements CustomerProfileRepository {
     profile = CustomerProfile(displayName: displayName);
     return profile;
   }
+}
+
+
+class MockClient implements HttpClient {
+  @override
+  Future<HttpResponse> send(HttpRequest request) async => HttpResponse(200, {});
 }

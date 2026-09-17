@@ -24,7 +24,11 @@ export class SubServicesController {
         if (isUuid) {
           query.andWhere('sub_service.categoryId = :categoryId', { categoryId });
         } else {
-          query.andWhere('category.slug = :categoryId', { categoryId });
+          const rootSlug = categoryId.replace(/[-_]services?/i, '').replace(/[-_]repair/i, '');
+          query.andWhere(
+            '(category.slug = :categoryId OR category.slug ILIKE :prefix)',
+            { categoryId, prefix: `${rootSlug}%` },
+          );
         }
       }
 

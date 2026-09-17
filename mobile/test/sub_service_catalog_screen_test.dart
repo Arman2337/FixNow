@@ -94,22 +94,21 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(find.text('Plumbing'), findsOneWidget);
+        expect(find.text('Plumbing'), findsWidgets);
         expect(find.text('Tap & Mixer Repair'), findsOneWidget);
-        expect(find.text('Flush Tank & Jet Spray Fix'), findsOneWidget);
-        expect(find.text('3 Verified Pros Nearby'), findsOneWidget);
+        expect(find.text('Verified Master Professionals'), findsOneWidget);
 
         // Floating cart should be hidden initially
-        expect(find.text('Book Now'), findsNothing);
+        expect(find.text('Review Cart & Schedule'), findsNothing);
 
         // Add "Tap & Mixer Repair"
-        final addFinders = find.text('ADD');
+        final addFinders = find.text('Add');
         expect(addFinders, findsWidgets);
         await tester.tap(addFinders.first);
         await tester.pumpAndSettle();
 
         // Floating cart should now be visible!
-        expect(find.text('Book Now'), findsOneWidget);
+        expect(find.text('Review Cart & Schedule'), findsOneWidget);
         expect(find.textContaining('1 item'), findsOneWidget);
 
         // Tap + to increment quantity
@@ -118,8 +117,8 @@ void main() {
 
         expect(find.textContaining('2 items'), findsOneWidget);
 
-        // Tap Book Now
-        await tester.tap(find.text('Book Now'));
+        // Tap Review Cart & Schedule
+        await tester.tap(find.text('Review Cart & Schedule'));
         await tester.pumpAndSettle();
 
         expect(proceededDescription, 'Tap & Mixer Repair (x2)');

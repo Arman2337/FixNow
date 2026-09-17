@@ -140,13 +140,13 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Arrival Schedule'), findsOneWidget);
-      expect(find.text('Book for Now'), findsOneWidget);
-      expect(find.text('Schedule for Later'), findsOneWidget);
-      expect(find.textContaining('Immediate dispatch'), findsOneWidget);
+      expect(find.text('Select Execution Mode'), findsOneWidget);
+      expect(find.text('INSTANT SOS'), findsOneWidget);
+      expect(find.text('SCHEDULE'), findsOneWidget);
+      expect(find.text('15-Min Arrival'), findsOneWidget);
 
-      // Tap Schedule for Later
-      await tester.tap(find.text('Schedule for Later'));
+      // Tap Schedule
+      await tester.tap(find.text('SCHEDULE'));
       await tester.pumpAndSettle();
 
       expect(active?.isNow, isFalse);
@@ -226,13 +226,13 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // Tap Schedule for Later
+        // Tap Schedule
         await tester.scrollUntilVisible(
-          find.text('Schedule for Later'),
+          find.text('SCHEDULE'),
           300,
           scrollable: find.byType(Scrollable).first,
         );
-        await tester.tap(find.text('Schedule for Later'));
+        await tester.tap(find.text('SCHEDULE'));
         await tester.pumpAndSettle();
 
         // Submit booking

@@ -239,20 +239,16 @@ class ProviderRequest {
     final description = json['description'];
     final createdAt = DateTime.tryParse(json['createdAt']?.toString() ?? '');
     final distance = json['distanceKm'];
-    if (id is! String ||
-        category is! String ||
-        description is! String ||
-        createdAt == null ||
-        distance is! num) {
+    if (id is! String || category is! String || createdAt == null) {
       throw const FormatException();
     }
     return ProviderRequest(
       id: id,
       serviceCategoryId: category,
-      description: description,
+      description: description?.toString() ?? 'Service Request',
       createdAt: createdAt,
       version: (json['version'] as num?)?.toInt() ?? 1,
-      distanceKm: distance.toDouble(),
+      distanceKm: (distance as num?)?.toDouble() ?? 0.0,
     );
   }
 }

@@ -117,6 +117,10 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
   late final SavedAddressRepository _savedAddresses;
   final Map<String, BookingTrackingController> _trackingControllers = {};
 
+  /// Last status seen per booking while its detail/tracking route is open, so
+  /// the payment page can be surfaced exactly once on a live completion.
+  final Map<String, String> _lastSeenBookingStatus = {};
+
   /// FN-062: app-wide messenger so foreground pushes can surface as banners
   /// from any screen.
   final GlobalKey<ScaffoldMessengerState> _messengerKey =
@@ -675,6 +679,37 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
           (b) => b.id == booking.id,
           orElse: () => booking,
         );
+        // When the provider confirms the job done while the customer watches,
+        // surface the payment section once. A previously-completed booking
+        // opened later has no recorded prior status and never triggers this.
+        final previousStatus = _lastSeenBookingStatus[currentBooking.id];
+        _lastSeenBookingStatus[currentBooking.id] = currentBooking.status;
+        final justCompleted =
+            currentBooking.status == 'COMPLETED' &&
+            previousStatus != null &&
+            previousStatus != 'COMPLETED';
+        if (justCompleted) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            _navigatorKey.currentState?.push(
+              MaterialPageRoute(
+                builder: (_) => InvoiceScreen(
+                  repository: InvoiceRepository(
+                    _api,
+                    accessToken: _auth.validAccessToken,
+                  ),
+                  localPaymentRepository: LocalPaymentRepository(
+                    _api,
+                    accessToken: _auth.validAccessToken,
+                  ),
+                  localPaymentBypassEnabled:
+                      AppEnvironment.current == AppEnvironment.development,
+                  bookingId: currentBooking.id,
+                ),
+              ),
+            );
+          });
+        }
         final active = {
           'ASSIGNED',
           'EN_ROUTE',

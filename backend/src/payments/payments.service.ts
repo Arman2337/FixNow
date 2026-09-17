@@ -474,6 +474,27 @@ export class PaymentsService {
     };
   }
 
+  /**
+   * Whether the caller's booking has a PAID payment order. The join on
+   * provider_id scopes the answer to bookings the caller is assigned to;
+   * anything else reads as unpaid.
+   */
+  async providerBookingPaymentStatus(
+    providerId: string,
+    bookingId: string,
+  ): Promise<{ bookingId: string; paid: boolean }> {
+    const rows = await this.dataSource.query<
+      Array<{ status?: string }>
+    >(
+      `SELECT o.status
+       FROM payment_orders o
+       JOIN bookings b ON b.id = o.booking_id
+       WHERE o.booking_id = $1 AND b.provider_id = $2`,
+      [bookingId, providerId],
+    );
+    return { bookingId, paid: rows[0]?.status === 'PAID' };
+  }
+
   private async appendEvent(
     orderId: string,
     eventType: string,

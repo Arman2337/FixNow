@@ -495,7 +495,10 @@ class _BookingCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 4),
-                      Row(
+                      Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 6,
+                        runSpacing: 4,
                         children: [
                           const Text(
                             'Scheduled for Immediate Response',
@@ -504,7 +507,6 @@ class _BookingCard extends StatelessWidget {
                               fontSize: 12,
                             ),
                           ),
-                          const SizedBox(width: 6),
                           Container(
                             width: 4,
                             height: 4,
@@ -513,7 +515,6 @@ class _BookingCard extends StatelessWidget {
                               color: AppColors.outlineVariant,
                             ),
                           ),
-                          const SizedBox(width: 6),
                           const Text(
                             'Standard Warranty Included',
                             style: TextStyle(

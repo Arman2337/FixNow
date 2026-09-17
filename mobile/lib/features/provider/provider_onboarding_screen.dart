@@ -811,17 +811,12 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
                                       DropdownButtonHideUnderline(
                                         child: DropdownButton<String>(
                                           isDense: true,
-                                          value:
-                                              widget
-                                                  .controller
-                                                  .skills
-                                                  .isNotEmpty
-                                              ? widget
-                                                    .controller
-                                                    .skills
-                                                    .first
-                                                    .categoryId
-                                              : null,
+                                          value: (() {
+                                            if (widget.controller.skills.isEmpty) return null;
+                                            final currentSkill = widget.controller.skills.first.categoryId;
+                                            final exists = widget.controller.categories.any((cat) => cat['id'] == currentSkill);
+                                            return exists ? currentSkill : null;
+                                          })(),
                                           hint: const Text(
                                             'Select Skill',
                                             style: TextStyle(
@@ -830,28 +825,14 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
                                               fontWeight: FontWeight.w600,
                                             ),
                                           ),
-                                          items: const [
-                                            DropdownMenuItem(
-                                              value: 'plumbing',
-                                              child: Text('Plumbing'),
-                                            ),
-                                            DropdownMenuItem(
-                                              value: 'electrical',
-                                              child: Text('Electrical'),
-                                            ),
-                                            DropdownMenuItem(
-                                              value: 'cleaning',
-                                              child: Text('Cleaning'),
-                                            ),
-                                            DropdownMenuItem(
-                                              value: 'carpentry',
-                                              child: Text('Carpentry'),
-                                            ),
-                                            DropdownMenuItem(
-                                              value: 'appliances',
-                                              child: Text('Appliance Repair'),
-                                            ),
-                                          ],
+                                          items: widget.controller.categories
+                                              .map(
+                                                (cat) => DropdownMenuItem<String>(
+                                                  value: cat['id'] as String,
+                                                  child: Text(cat['name'] as String? ?? 'Unknown'),
+                                                ),
+                                              )
+                                              .toList(),
                                           onChanged: (val) {
                                             if (val != null) {
                                               widget.controller

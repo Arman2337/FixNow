@@ -14,6 +14,7 @@ class BookingTrackingController extends ChangeNotifier {
   final BookingTrackingSource source;
   final RealtimeClient? realtime;
   StreamSubscription<RealtimeProjection>? _projectionSubscription;
+  bool _otpFetchInFlight = false;
   TrackingConnection connection = TrackingConnection.connecting;
   BookingTracking? tracking;
   String? message;
@@ -134,9 +135,46 @@ class BookingTrackingController extends ChangeNotifier {
       if (reconciled == null || next.sequence >= reconciled.sequence) {
         _applyTracking(next);
       }
-      return;
+    } else {
+      _applyTracking(next);
     }
-    _applyTracking(next);
+    await _ensureServiceStartOtp(next);
+  }
+
+  /// The OTP only exists once the provider is en route, which usually happens
+  /// while the customer is already watching this screen — the snapshot taken
+  /// earlier has none. Fetch it on the en-route transition.
+  Future<void> _ensureServiceStartOtp(BookingTracking next) async {
+    if (next.status != 'EN_ROUTE' || _otpFetchInFlight) return;
+    final current = tracking;
+    if (current == null || current.serviceStartOtp != null) return;
+    _otpFetchInFlight = true;
+    try {
+      final otp = await source.fetchServiceStartOtp(bookingId);
+      final latest = tracking;
+      if (otp != null &&
+          latest != null &&
+          latest.status == 'EN_ROUTE' &&
+          latest.serviceStartOtp == null) {
+        tracking = BookingTracking(
+          bookingId: latest.bookingId,
+          status: latest.status,
+          sequence: latest.sequence,
+          locationAvailability: latest.locationAvailability,
+          estimatedMinutes: latest.estimatedMinutes,
+          providerLocation: latest.providerLocation,
+          customerLocation: latest.customerLocation,
+          route: latest.route,
+          serviceStartOtp: otp,
+        );
+        notifyListeners();
+      }
+    } catch (_) {
+      // The backend rejects the request until the en-route transition is
+      // committed; the next projection retries.
+    } finally {
+      _otpFetchInFlight = false;
+    }
   }
 
   void _applyTracking(BookingTracking next) {

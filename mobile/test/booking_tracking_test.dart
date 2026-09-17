@@ -44,6 +44,22 @@ void main() {
     );
   });
 
+  test('fetches the service-start OTP when a projection goes en route', () async {
+    final source = _Source(_tracking(sequence: 1, status: 'ACCEPTED'));
+    final controller = BookingTrackingController(
+      bookingId: 'booking-1',
+      source: source,
+    );
+    await controller.loadSnapshot();
+    expect(controller.tracking?.serviceStartOtp, isNull);
+
+    source.otp = '4821';
+    await controller.applyRealtime(_tracking(sequence: 2, status: 'EN_ROUTE'));
+
+    expect(controller.tracking?.serviceStartOtp, '4821');
+    expect(source.otpCalls, 1);
+  });
+
   test(
     'keeps a newer live projection after reconciling a sequence gap',
     () async {
@@ -158,13 +174,14 @@ void main() {
 
 BookingTracking _tracking({
   required int sequence,
+  String status = 'EN_ROUTE',
   LocationAvailability availability = LocationAvailability.live,
   int? eta = 12,
   ProviderMapLocation? provider,
   CustomerMapLocation? customer,
 }) => BookingTracking(
   bookingId: 'booking-1',
-  status: 'EN_ROUTE',
+  status: status,
   sequence: sequence,
   locationAvailability: availability,
   estimatedMinutes: eta,
@@ -176,9 +193,17 @@ class _Source implements BookingTrackingSource {
   _Source(this.value);
   BookingTracking value;
   int calls = 0;
+  String? otp;
+  int otpCalls = 0;
   @override
   Future<BookingTracking> fetchSnapshot(String bookingId) async {
     calls += 1;
     return value;
+  }
+
+  @override
+  Future<String?> fetchServiceStartOtp(String bookingId) async {
+    otpCalls += 1;
+    return otp;
   }
 }

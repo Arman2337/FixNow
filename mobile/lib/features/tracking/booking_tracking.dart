@@ -66,4 +66,8 @@ class BookingTracking {
 
 abstract interface class BookingTrackingSource {
   Future<BookingTracking> fetchSnapshot(String bookingId);
+
+  /// Returns the 4-digit service-start OTP, or null when the booking is not
+  /// en route yet.
+  Future<String?> fetchServiceStartOtp(String bookingId);
 }

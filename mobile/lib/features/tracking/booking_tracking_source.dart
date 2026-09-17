@@ -40,18 +40,7 @@ class ApiBookingTrackingSource implements BookingTrackingSource {
         .firstWhere((item) => item.id == bookingId);
     String? serviceStartOtp;
     if (booking.status == 'EN_ROUTE') {
-      final otpResponse = await api.send(
-        ApiRequest(
-          method: ApiMethod.post,
-          path: 'bookings/$bookingId/service-start-otp',
-          bearerToken: token,
-        ),
-      );
-      final body = otpResponse.body;
-      final value = body is Map ? body['otp'] : null;
-      if (value is String && RegExp(r'^\d{4}$').hasMatch(value)) {
-        serviceStartOtp = value;
-      }
+      serviceStartOtp = await fetchServiceStartOtp(bookingId);
     }
     return BookingTracking(
       bookingId: booking.id,
@@ -67,5 +56,29 @@ class ApiBookingTrackingSource implements BookingTrackingSource {
           : null,
       serviceStartOtp: serviceStartOtp,
     );
+  }
+
+  @override
+  Future<String?> fetchServiceStartOtp(String bookingId) async {
+    final token = await accessToken();
+    if (token == null) {
+      throw const ApiException(
+        ApiFailureKind.unauthorized,
+        'Sign in required.',
+      );
+    }
+    final otpResponse = await api.send(
+      ApiRequest(
+        method: ApiMethod.post,
+        path: 'bookings/$bookingId/service-start-otp',
+        bearerToken: token,
+      ),
+    );
+    final body = otpResponse.body;
+    final value = body is Map ? body['otp'] : null;
+    if (value is String && RegExp(r'^\d{4}$').hasMatch(value)) {
+      return value;
+    }
+    return null;
   }
 }

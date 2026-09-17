@@ -97,6 +97,7 @@ class _IncomingCallDialogState extends State<IncomingCallDialog>
       autoStart: false,
       initialSpeakerOn: true,
     );
+    _controller.addListener(_onCallStateChanged);
 
     // If caller cancels before we answer, auto-dismiss
     _realtimeSub = widget.realtimeClient?.projections.listen((p) {
@@ -109,6 +110,22 @@ class _IncomingCallDialogState extends State<IncomingCallDialog>
         }
       }
     });
+  }
+
+  /// Covers the case where realtime signals are unavailable (e.g. on web):
+  /// the controller's reconciliation poll flips the session to a terminal
+  /// status when the server no longer reports an active call.
+  void _onCallStateChanged() {
+    final status = _controller.status;
+    if (status == CallStatus.ended ||
+        status == CallStatus.rejected ||
+        status == CallStatus.failed ||
+        status == CallStatus.missed) {
+      Future.microtask(() {
+        CallAudioService.stop();
+        if (mounted) Navigator.of(context).maybePop();
+      });
+    }
   }
 
   @override
@@ -133,6 +150,7 @@ class _IncomingCallDialogState extends State<IncomingCallDialog>
 
   @override
   void dispose() {
+    _controller.removeListener(_onCallStateChanged);
     if (_controller.currentSession?.status != CallStatus.connected) {
       CallAudioService.stop();
       // Nobody took ownership (auto-dismiss or a failed answer): stop the

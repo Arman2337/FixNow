@@ -148,6 +148,16 @@ class CallController extends ChangeNotifier {
           _stopDurationTicker();
           notifyListeners();
         }
+      } else if (_currentSession?.status == CallStatus.ringing) {
+        // The server no longer reports an active call, so it was rejected,
+        // missed, or closed. Realtime signals can be unavailable (e.g. on
+        // web), so the ring state must reconcile through this poll too.
+        _stopPollingReconciliation();
+        CallAudioService.stop();
+        _stopVoiceAudio();
+        _currentSession = _currentSession?.copyWith(status: CallStatus.ended);
+        _stopDurationTicker();
+        notifyListeners();
       }
     } catch (_) {}
   }

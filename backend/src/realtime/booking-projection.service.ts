@@ -157,7 +157,7 @@ export class BookingProjectionService {
       for (const subscription of state.subscriptions.values()) {
         if (
           subscription.channel === 'booking' &&
-          subscription.resourceId === bookingId
+          subscription.resourceId?.toLowerCase() === bookingId.toLowerCase()
         ) {
           client.send(
             JSON.stringify({

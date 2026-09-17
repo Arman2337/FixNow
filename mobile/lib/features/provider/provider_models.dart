@@ -28,6 +28,28 @@ class ProviderApplication {
       );
 }
 
+class ProviderStats {
+  const ProviderStats({
+    required this.rating,
+    required this.completedJobs,
+    required this.earningsMinor,
+    required this.acceptanceRate,
+  });
+  final double rating;
+  final int completedJobs;
+  final int earningsMinor;
+  final int acceptanceRate;
+
+  factory ProviderStats.fromJson(Map<String, Object?> json) {
+    return ProviderStats(
+      rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
+      completedJobs: (json['completedJobs'] as num?)?.toInt() ?? 0,
+      earningsMinor: (json['earningsMinor'] as num?)?.toInt() ?? 0,
+      acceptanceRate: (json['acceptanceRate'] as num?)?.toInt() ?? 0,
+    );
+  }
+}
+
 class ProviderProfile {
   const ProviderProfile({
     required this.displayName,
@@ -35,21 +57,29 @@ class ProviderProfile {
     required this.serviceRadiusKm,
     required this.baseLatitude,
     required this.baseLongitude,
+    this.stats,
   });
   final String displayName;
   final String? bio;
   final double serviceRadiusKm;
   final double baseLatitude;
   final double baseLongitude;
+  final ProviderStats? stats;
 
-  factory ProviderProfile.fromJson(Map<String, Object?> json) =>
-      ProviderProfile(
-        displayName: json['displayName'] as String,
-        bio: json['bio'] as String?,
-        serviceRadiusKm: (json['serviceRadiusKm'] as num).toDouble(),
-        baseLatitude: (json['baseLatitude'] as num).toDouble(),
-        baseLongitude: (json['baseLongitude'] as num).toDouble(),
-      );
+  factory ProviderProfile.fromJson(Map<String, Object?> json) {
+    ProviderStats? stats;
+    if (json['stats'] != null) {
+      stats = ProviderStats.fromJson(json['stats'] as Map<String, Object?>);
+    }
+    return ProviderProfile(
+      displayName: json['displayName'] as String,
+      bio: json['bio'] as String?,
+      serviceRadiusKm: (json['serviceRadiusKm'] as num).toDouble(),
+      baseLatitude: (json['baseLatitude'] as num).toDouble(),
+      baseLongitude: (json['baseLongitude'] as num).toDouble(),
+      stats: stats,
+    );
+  }
 }
 
 class ProviderAvailability {

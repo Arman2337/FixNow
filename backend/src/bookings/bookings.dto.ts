@@ -11,12 +11,25 @@ import {
   IsEnum,
   MaxLength,
   Matches,
+  IsArray,
+  ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import {
   BookingStatus,
   CreateBookingRequest,
+  CreateBookingLineItemRequest,
 } from '../../../shared/booking-lifecycle.types';
+
+export class CreateBookingLineItemDto implements CreateBookingLineItemRequest {
+  @IsUUID()
+  @IsNotEmpty()
+  subServiceId: string;
+
+  @IsInt()
+  @Min(1)
+  quantity: number;
+}
 
 export class CreateBookingDto implements CreateBookingRequest {
   @IsUUID()
@@ -41,6 +54,12 @@ export class CreateBookingDto implements CreateBookingRequest {
   @IsOptional()
   @IsDateString()
   scheduledAt?: string | null;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateBookingLineItemDto)
+  lineItems?: CreateBookingLineItemDto[];
 }
 
 export class UpdateBookingStatusDto {

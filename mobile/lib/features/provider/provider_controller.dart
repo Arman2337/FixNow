@@ -56,6 +56,15 @@ class ProviderController extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> submitApplication() async {
+    try {
+      application = await repository.submitApplication();
+      notifyListeners();
+    } catch (_) {
+      throw Exception('Application could not be submitted. Try again.');
+    }
+  }
+
   Future<void> saveProfile(ProviderProfile value) async {
     profile = await repository.saveProfile(value);
     notifyListeners();

@@ -7,11 +7,13 @@ import {
   DeleteDateColumn,
   VersionColumn,
   Unique,
+  OneToMany,
 } from 'typeorm';
 import {
   BookingStatus,
   VALID_BOOKING_TRANSITIONS,
 } from '../../../../shared/booking-lifecycle.types';
+import { BookingLineItem } from './booking-line-item.entity';
 
 @Entity('bookings')
 @Unique('UQ_bookings_customer_idempotency', ['customerId', 'idempotencyKey'])
@@ -80,6 +82,12 @@ export class Booking {
 
   @VersionColumn()
   version: number;
+
+  @OneToMany(() => BookingLineItem, (lineItem) => lineItem.booking, {
+    cascade: true,
+    eager: true,
+  })
+  lineItems?: BookingLineItem[];
 
   @Column('varchar', {
     name: 'cancellation_reason',

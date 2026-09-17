@@ -226,54 +226,195 @@ class _BookingReviewPanelState extends State<BookingReviewPanel> {
         ),
       );
     }
-    return FixCard(
-      semanticLabel: 'Rate this completed service',
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.outline.withValues(alpha: 0.08),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            'How was your experience?',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          const Text(
-            'Your feedback is optional and helps us understand completed service quality.',
+          // Specialist Header Pod
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 20,
+                backgroundColor: AppColors.primarySoft,
+                child: const Icon(Icons.person_rounded,
+                    color: AppColors.primary, size: 22),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          'Verified Specialist',
+                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
+                              ),
+                        ),
+                        const SizedBox(width: 4),
+                        const Icon(Icons.verified_rounded,
+                            color: AppColors.primary, size: 14),
+                      ],
+                    ),
+                    Text(
+                      'How was your experience?',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: AppSpacing.md),
-          Wrap(
-            spacing: AppSpacing.xs,
-            children: List.generate(5, (index) {
-              final stars = index + 1;
-              return Semantics(
-                button: true,
-                selected: _rating == stars,
-                label: '$stars ${stars == 1 ? 'star' : 'stars'}',
-                child: IconButton(
-                  tooltip: '$stars ${stars == 1 ? 'star' : 'stars'}',
-                  iconSize: 36,
-                  color: AppColors.accentGold,
-                  onPressed: _submitting
-                      ? null
-                      : () => setState(() => _rating = stars),
-                  icon: FixAnimatedStar(
-                    filled: (_rating ?? 0) >= stars,
-                    size: 36,
-                    color: AppColors.accentGold,
-                  ),
+
+          // Interactive Star Rating & Pill
+          Center(
+            child: Column(
+              children: [
+                Wrap(
+                  spacing: 4,
+                  children: List.generate(5, (index) {
+                    final stars = index + 1;
+                    return Semantics(
+                      button: true,
+                      selected: _rating == stars,
+                      label: '$stars ${stars == 1 ? 'star' : 'stars'}',
+                      child: IconButton(
+                        tooltip: '$stars ${stars == 1 ? 'star' : 'stars'}',
+                        iconSize: 36,
+                        color: AppColors.accentGold,
+                        onPressed: _submitting
+                            ? null
+                            : () => setState(() => _rating = stars),
+                        icon: FixAnimatedStar(
+                          filled: (_rating ?? 0) >= stars,
+                          size: 36,
+                          color: AppColors.accentGold,
+                        ),
+                      ),
+                    );
+                  }),
                 ),
-              );
-            }),
+                if (_rating != null) ...[
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: AppColors.accentGoldSoft,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      _rating == 5
+                          ? '5.0 - Excellent Work!'
+                          : '$_rating.0 Rating',
+                      style: const TextStyle(
+                        color: AppColors.tertiary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: AppSpacing.md),
+
+          const Text(
+            'What went especially well? (Tap to add)',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              'Punctual',
+              'Clean Workspace',
+              'Fair Cost',
+              'Polite & Professional',
+              'Clear Explanation',
+            ].map((compliment) {
+              final isSelected = _text.text.contains(compliment);
+              return ActionChip(
+                label: Text(compliment, style: const TextStyle(fontSize: 11)),
+                backgroundColor: isSelected
+                    ? AppColors.primarySoft
+                    : AppColors.surfaceContainerLow,
+                side: BorderSide(
+                  color: isSelected
+                      ? AppColors.primary
+                      : AppColors.outline.withValues(alpha: 0.15),
+                ),
+                onPressed: () {
+                  setState(() {
+                    if (isSelected) {
+                      _text.text = _text.text
+                          .replaceAll(compliment, '')
+                          .replaceAll(RegExp(r'\s+'), ' ')
+                          .trim();
+                    } else {
+                      final prefix =
+                          _text.text.isEmpty ? '' : '${_text.text}, ';
+                      _text.text = '$prefix$compliment';
+                    }
+                  });
+                },
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: AppSpacing.md),
+
+          // Feedback notes
           TextField(
             controller: _text,
             enabled: !_submitting,
             maxLength: 1000,
-            maxLines: 4,
+            maxLines: 3,
             textCapitalization: TextCapitalization.sentences,
-            decoration: const InputDecoration(
+            style: const TextStyle(color: AppColors.textPrimary, fontSize: 13),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: AppColors.surfaceContainerLow,
               labelText: 'Optional feedback',
-              hintText: 'Write a short review',
+              hintText: 'What went especially well with the service?',
+              contentPadding: const EdgeInsets.all(12),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: AppColors.outline.withValues(alpha: 0.15),
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: AppColors.outline.withValues(alpha: 0.15),
+                ),
+              ),
             ),
           ),
           if (_error case final message?) ...[
@@ -281,6 +422,49 @@ class _BookingReviewPanelState extends State<BookingReviewPanel> {
             Text(message, style: const TextStyle(color: AppColors.danger)),
           ],
           const SizedBox(height: AppSpacing.sm),
+
+          // 30-Day Workmanship Warranty Banner
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceContainerHigh,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Row(
+              children: [
+                Icon(
+                  Icons.verified_user_rounded,
+                  color: AppColors.primary,
+                  size: 20,
+                ),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '30-Day Workmanship Warranty',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      Text(
+                        'Free re-visit guarantee activated upon review submission.',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+
           FixButton(
             label: 'Submit review',
             icon: Icons.send_rounded,

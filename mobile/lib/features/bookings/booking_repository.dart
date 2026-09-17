@@ -46,6 +46,27 @@ class BookingRepository {
     }
   }
 
+  Future<CustomerBooking> get(String id) async {
+    final response = await _api.send(
+      ApiRequest(
+        method: ApiMethod.get,
+        path: 'bookings/$id',
+        bearerToken: await _token(),
+      ),
+    );
+    final body = response.body is Map<String, dynamic>
+        ? response.body! as Map<String, dynamic>
+        : null;
+    final raw = body?['booking'];
+    if (raw is! Map) {
+      throw const ApiException(
+        ApiFailureKind.invalidResponse,
+        'The booking response was invalid.',
+      );
+    }
+    return CustomerBooking.fromJson(Map<String, Object?>.from(raw));
+  }
+
   Future<CustomerBooking> create({
     required String serviceCategoryId,
     required String description,

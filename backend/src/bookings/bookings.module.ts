@@ -4,6 +4,7 @@ import { Booking } from './domain/booking.entity';
 import { BookingEvent } from './domain/booking-event.entity';
 import { BookingMessage } from './domain/booking-message.entity';
 import { BookingCall } from './domain/booking-call.entity';
+import { BookingLineItem } from './domain/booking-line-item.entity';
 import { RecurringSchedule } from './domain/recurring-schedule.entity';
 import { ServiceCategoryEntity } from '../services/service-category.entity';
 import { BookingsController } from './bookings.controller';
@@ -24,6 +25,7 @@ import { TrustModule } from '../trust/trust.module';
   imports: [
     TypeOrmModule.forFeature([
       Booking,
+      BookingLineItem,
       BookingEvent,
       BookingMessage,
       BookingCall,

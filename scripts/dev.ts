@@ -3,7 +3,7 @@ import { spawn, spawnSync, type Subprocess } from "bun";
 const args = process.argv.slice(2);
 const isBackendOnly = args.includes("--backend-only") || args.includes("--no-flutter");
 const isProxyOnly = args.includes("--proxy-only");
-const flutterWebPort = process.env.FLUTTER_WEB_PORT || "51354";
+const flutterWebPort = process.env.FLUTTER_WEB_PORT || "51355";
 
 console.log(`\x1b[36m
   ╔══════════════════════════════════════════════════════════════════╗

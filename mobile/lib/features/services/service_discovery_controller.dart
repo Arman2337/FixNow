@@ -1,5 +1,6 @@
 import 'package:fixnow_mobile/api/api_client.dart';
 import 'package:fixnow_mobile/features/services/service_category.dart';
+import 'package:fixnow_mobile/features/services/sub_service_item.dart';
 import 'package:flutter/foundation.dart';
 
 abstract interface class ServiceCategoryRepository {
@@ -37,16 +38,23 @@ class ApiServiceCategoryRepository implements ServiceCategoryRepository {
 enum DiscoveryStatus { initial, loading, ready, empty, offline, error }
 
 class ServiceDiscoveryController extends ChangeNotifier {
-  ServiceDiscoveryController(this._repository);
+  ServiceDiscoveryController(this._repository, this._subServiceRepository);
   final ServiceCategoryRepository _repository;
+  final SubServiceRepository _subServiceRepository;
   DiscoveryStatus status = DiscoveryStatus.initial;
   List<ServiceCategory> categories = const [];
+  List<SubServiceItem> allSubServices = const [];
 
   Future<void> load() async {
     status = DiscoveryStatus.loading;
     notifyListeners();
     try {
       categories = await _repository.active();
+      try {
+        allSubServices = await _subServiceRepository.getAllSubServices();
+      } catch (_) {
+        allSubServices = const [];
+      }
       status = categories.isEmpty
           ? DiscoveryStatus.empty
           : DiscoveryStatus.ready;

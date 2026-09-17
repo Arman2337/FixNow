@@ -105,7 +105,7 @@ class _FixOtpInputSheetState extends State<FixOtpInputSheet> {
                   children: [
                     Text(
                       'Customer Service Code',
-                      style: AppTypography.heading3.copyWith(
+                      style: FixNowTypography.heading3.copyWith(
                         color: AppColors.cream,
                         fontSize: 18,
                       ),
@@ -113,7 +113,7 @@ class _FixOtpInputSheetState extends State<FixOtpInputSheet> {
                     const SizedBox(height: 2),
                     Text(
                       'Ask the customer for the 4-digit code',
-                      style: AppTypography.caption.copyWith(
+                      style: FixNowTypography.caption.copyWith(
                         color: AppColors.textSecondary,
                       ),
                     ),

@@ -1,3 +1,43 @@
+enum BookingStatusValue {
+  requested,
+  assigned,
+  enRoute,
+  inProgress,
+  completed,
+  cancelled,
+  unknown;
+
+  static BookingStatusValue parse(String raw) => switch (raw.trim().toUpperCase()) {
+        'REQUESTED' => BookingStatusValue.requested,
+        'ASSIGNED' => BookingStatusValue.assigned,
+        'EN_ROUTE' => BookingStatusValue.enRoute,
+        'IN_PROGRESS' => BookingStatusValue.inProgress,
+        'COMPLETED' => BookingStatusValue.completed,
+        'CANCELLED' => BookingStatusValue.cancelled,
+        _ => BookingStatusValue.unknown,
+      };
+
+  bool get isActive => const {
+        BookingStatusValue.requested,
+        BookingStatusValue.assigned,
+        BookingStatusValue.enRoute,
+        BookingStatusValue.inProgress,
+      }.contains(this);
+
+  bool get isCompleted => this == BookingStatusValue.completed;
+  bool get isCancelled => this == BookingStatusValue.cancelled;
+
+  String get label => switch (this) {
+        BookingStatusValue.requested => 'Matching specialists',
+        BookingStatusValue.assigned => 'Provider assigned',
+        BookingStatusValue.enRoute => 'En route',
+        BookingStatusValue.inProgress => 'Work in progress',
+        BookingStatusValue.completed => 'Completed',
+        BookingStatusValue.cancelled => 'Cancelled',
+        BookingStatusValue.unknown => 'Status unavailable',
+      };
+}
+
 class CustomerBooking {
   const CustomerBooking({
     required this.id,
@@ -19,6 +59,8 @@ class CustomerBooking {
   final double? locationLatitude;
   final double? locationLongitude;
   final DateTime? scheduledAt;
+
+  BookingStatusValue get statusValue => BookingStatusValue.parse(status);
 
   CustomerBooking copyWith({
     String? id,

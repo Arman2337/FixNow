@@ -1,3 +1,4 @@
+import 'package:fixnow_mobile/features/services/sub_service_item.dart';
 import 'dart:async';
 
 import 'package:fixnow_mobile/api/api_client.dart';
@@ -46,6 +47,7 @@ void main() {
     final completer = Completer<List<ServiceCategory>>();
     final controller = ServiceDiscoveryController(
       PendingCategories(completer.future),
+      SubServiceRepository(MockApiTransport()),
     );
 
     final load = controller.load();
@@ -92,6 +94,7 @@ void main() {
           ),
         ),
       ]),
+      SubServiceRepository(MockApiTransport()),
     );
     final location = LocationConsentController(
       FakeLocationGateway(LocationPermissionState.granted),
@@ -146,6 +149,7 @@ void main() {
           slug: 'cleaning',
         ),
       ]),
+      SubServiceRepository(MockApiTransport()),
     );
     final location = LocationConsentController(
       FakeLocationGateway(LocationPermissionState.denied),
@@ -199,7 +203,7 @@ void main() {
       const [],
       error: const ApiException(ApiFailureKind.offline, 'offline'),
     );
-    final discovery = ServiceDiscoveryController(repository);
+    final discovery = ServiceDiscoveryController(repository, SubServiceRepository(MockApiTransport()));
     final location = LocationConsentController(
       FakeLocationGateway(LocationPermissionState.denied),
     );
@@ -236,6 +240,7 @@ void main() {
           iconName: 'plumbing',
         ),
       ]),
+      SubServiceRepository(MockApiTransport()),
     );
     final location = LocationConsentController(
       FakeLocationGateway(LocationPermissionState.granted),
@@ -288,7 +293,7 @@ void main() {
   ) async {
     final gateway = FakeLocationGateway(LocationPermissionState.denied);
     final location = LocationConsentController(gateway);
-    final discovery = ServiceDiscoveryController(FakeCategories([]));
+    final discovery = ServiceDiscoveryController(FakeCategories([]), SubServiceRepository(MockApiTransport()));
 
     await tester.pumpWidget(
       MaterialApp(
@@ -346,4 +351,10 @@ class PendingCategories implements ServiceCategoryRepository {
   final Future<List<ServiceCategory>> result;
   @override
   Future<List<ServiceCategory>> active() => result;
+}
+
+
+class MockApiTransport implements ApiTransport {
+  @override
+  Future<ApiResponse> send(ApiRequest request) async => const ApiResponse(statusCode: 200, body: []);
 }

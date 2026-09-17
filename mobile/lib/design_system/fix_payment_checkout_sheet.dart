@@ -227,7 +227,7 @@ class _FixPaymentCheckoutSheetState extends State<FixPaymentCheckoutSheet>
                 children: [
                   Text(
                     'Checkout & Pay',
-                    style: AppTypography.heading2.copyWith(color: AppColors.textPrimary),
+                    style: FixNowTypography.heading2.copyWith(color: AppColors.textPrimary),
                   ),
                   const SizedBox(height: 2),
                   Row(
@@ -236,7 +236,7 @@ class _FixPaymentCheckoutSheetState extends State<FixPaymentCheckoutSheet>
                       const SizedBox(width: 4),
                       Text(
                         '100% Safe & Encrypted • FixNow Guarantee',
-                        style: AppTypography.caption.copyWith(color: Colors.white70),
+                        style: FixNowTypography.caption.copyWith(color: Colors.white70),
                       ),
                     ],
                   ),
@@ -448,7 +448,7 @@ class _FixPaymentCheckoutSheetState extends State<FixPaymentCheckoutSheet>
             const SizedBox(width: 6),
             Text(
               'Tip Your Technician (Optional)',
-              style: AppTypography.title.copyWith(color: AppColors.textPrimary, fontSize: 14),
+              style: FixNowTypography.title.copyWith(color: AppColors.textPrimary, fontSize: 14),
             ),
           ],
         ),
@@ -501,7 +501,7 @@ class _FixPaymentCheckoutSheetState extends State<FixPaymentCheckoutSheet>
       children: [
         Text(
           'Select Payment Method',
-          style: AppTypography.title.copyWith(color: AppColors.textPrimary, fontSize: 14),
+          style: FixNowTypography.title.copyWith(color: AppColors.textPrimary, fontSize: 14),
         ),
         const SizedBox(height: AppSpacing.sm),
         _buildMethodCard(
@@ -679,7 +679,7 @@ class _FixPaymentCheckoutSheetState extends State<FixPaymentCheckoutSheet>
 
           Text(
             'Payment Successful!',
-            style: AppTypography.heading1.copyWith(
+            style: FixNowTypography.heading1.copyWith(
               color: AppColors.textPrimary,
               fontWeight: FontWeight.w800,
             ),

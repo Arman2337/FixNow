@@ -1,3 +1,5 @@
+import 'package:fixnow_mobile/api/api_client.dart';
+import 'package:fixnow_mobile/features/services/sub_service_item.dart';
 import 'package:fixnow_mobile/design_system/app_theme.dart';
 import 'package:fixnow_mobile/features/location/location_consent_controller.dart';
 import 'package:fixnow_mobile/features/services/fix_universal_search_bar.dart';
@@ -79,7 +81,7 @@ void main() {
   late LocationConsentController locationController;
 
   setUp(() {
-    discoveryController = ServiceDiscoveryController(_FakeCategories(sampleCategories));
+    discoveryController = ServiceDiscoveryController(_FakeCategories(sampleCategories), SubServiceRepository(MockApiTransport()));
     locationController = LocationConsentController(_FakeLocationGateway(LocationPermissionState.granted));
   });
 
@@ -186,4 +188,10 @@ void main() {
 
     expect(find.text('Popular services'), findsOneWidget);
   });
+}
+
+
+class MockApiTransport implements ApiTransport {
+  @override
+  Future<ApiResponse> send(ApiRequest request) async => const ApiResponse(statusCode: 200, body: []);
 }

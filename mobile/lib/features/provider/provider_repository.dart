@@ -33,6 +33,19 @@ class ProviderRepository {
         ),
       );
 
+  Future<ProviderApplication> submitApplication() async =>
+      ProviderApplication.fromJson(
+        _map(
+          (await _api.send(
+            ApiRequest(
+              method: ApiMethod.post,
+              path: 'provider-applications/me/submit',
+              bearerToken: await _token(),
+            ),
+          )).body,
+        ),
+      );
+
   /// FN-111: the caller's own rolling accept-time signal; null average means
   /// FixNow does not yet have enough accepted jobs to show it honestly.
   Future<ProviderAcceptTime?> acceptTime() async {

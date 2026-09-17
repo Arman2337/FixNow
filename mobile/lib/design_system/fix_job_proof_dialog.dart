@@ -204,7 +204,7 @@ class _JobProofVerificationDialogState
                       const SizedBox(width: 10),
                       Text(
                         'Job Verification Photos',
-                        style: AppTypography.heading2.copyWith(
+                        style: FixNowTypography.heading2.copyWith(
                           color: Colors.white,
                           fontSize: 18,
                         ),

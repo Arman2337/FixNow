@@ -1,7 +1,6 @@
 import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
-import 'package:fixnow_mobile/design_system/fix_card.dart';
 import 'package:fixnow_mobile/design_system/fix_schedule_picker.dart';
 import 'package:fixnow_mobile/features/bookings/booking.dart';
 import 'package:fixnow_mobile/features/bookings/booking_controller.dart';
@@ -118,8 +117,8 @@ class _FixRescheduleSheetState extends State<FixRescheduleSheet> {
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-        color: AppColors.backgroundPrimary,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        color: AppColors.surfaceContainerLowest,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
@@ -134,35 +133,36 @@ class _FixRescheduleSheetState extends State<FixRescheduleSheet> {
               // Drag Handle
               Center(
                 child: Container(
-                  width: 40,
+                  width: 44,
                   height: 4,
                   margin: const EdgeInsets.only(bottom: AppSpacing.md),
                   decoration: BoxDecoration(
-                    color: Colors.white24,
+                    color: AppColors.outline.withValues(alpha: 0.25),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
 
-              // Title
+              // Title Bar
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(AppSpacing.xs),
+                        padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(8),
+                          color: AppColors.primarySoft,
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(Icons.event_repeat_rounded, color: AppColors.primary),
+                        child: const Icon(Icons.event_repeat_rounded,
+                            color: AppColors.primary, size: 20),
                       ),
                       const SizedBox(width: AppSpacing.sm),
                       const Text(
                         'Reschedule Service',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: AppColors.textPrimary,
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
                         ),
@@ -170,16 +170,50 @@ class _FixRescheduleSheetState extends State<FixRescheduleSheet> {
                     ],
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close_rounded, color: Colors.white60),
+                    icon: const Icon(Icons.close_rounded,
+                        color: AppColors.textSecondary),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                 ],
               ),
               const SizedBox(height: AppSpacing.sm),
 
-              const Text(
-                'Keep your current booking and assigned provider. Choose a new date and arrival window that works best for you.',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+              // Info notice from Stitch
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceContainerLow,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.lock_reset_rounded,
+                        color: AppColors.primary, size: 20),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Guaranteed Slot Rebooking',
+                            style: TextStyle(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12,
+                            ),
+                          ),
+                          Text(
+                            'Zero fee rescheduling anytime prior to technician on-site arrival.',
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: AppSpacing.md),
 
@@ -196,16 +230,22 @@ class _FixRescheduleSheetState extends State<FixRescheduleSheet> {
               const SizedBox(height: AppSpacing.md),
 
               // Reason Selector
-              FixCard(
-                tone: FixCardTone.elevated,
-                semanticLabel: 'Reason for rescheduling',
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceContainerLow,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: AppColors.outline.withValues(alpha: 0.08),
+                  ),
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
                       'Reason for Rescheduling',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: AppColors.textPrimary,
                         fontWeight: FontWeight.w600,
                         fontSize: 13,
                       ),
@@ -213,12 +253,27 @@ class _FixRescheduleSheetState extends State<FixRescheduleSheet> {
                     const SizedBox(height: AppSpacing.xs),
                     DropdownButtonFormField<String>(
                       initialValue: _selectedReason,
-                      dropdownColor: AppColors.surfaceElevated,
-                      style: const TextStyle(color: Colors.white, fontSize: 13),
-                      decoration: const InputDecoration(
+                      dropdownColor: AppColors.surfaceContainerLowest,
+                      style: const TextStyle(
+                          color: AppColors.textPrimary, fontSize: 13),
+                      decoration: InputDecoration(
                         isDense: true,
-                        contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                        border: OutlineInputBorder(),
+                        filled: true,
+                        fillColor: AppColors.surfaceContainerLowest,
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 10),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(
+                            color: AppColors.outline.withValues(alpha: 0.15),
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(
+                            color: AppColors.outline.withValues(alpha: 0.15),
+                          ),
+                        ),
                       ),
                       items: _commonReasons
                           .map((r) => DropdownMenuItem(value: r, child: Text(r)))
@@ -236,18 +291,21 @@ class _FixRescheduleSheetState extends State<FixRescheduleSheet> {
                 Container(
                   padding: const EdgeInsets.all(AppSpacing.sm),
                   decoration: BoxDecoration(
-                    color: AppColors.danger.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColors.danger),
+                    color: AppColors.danger.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                        color: AppColors.danger.withValues(alpha: 0.4)),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.error_outline_rounded, color: AppColors.danger, size: 16),
+                      const Icon(Icons.error_outline_rounded,
+                          color: AppColors.danger, size: 16),
                       const SizedBox(width: AppSpacing.xs),
                       Expanded(
                         child: Text(
                           msg,
-                          style: const TextStyle(color: AppColors.danger, fontSize: 12),
+                          style: const TextStyle(
+                              color: AppColors.danger, fontSize: 12),
                         ),
                       ),
                     ],
@@ -256,16 +314,11 @@ class _FixRescheduleSheetState extends State<FixRescheduleSheet> {
                 const SizedBox(height: AppSpacing.md),
               ],
 
-              // CTA Buttons
+              // Primary Action CTA
               FixButton(
-                label: _submitting ? 'Updating schedule...' : 'Confirm New Arrival Time',
+                label: 'Confirm New Arrival Time',
                 icon: Icons.check_circle_outline_rounded,
                 onPressed: _submitting ? null : _submitReschedule,
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              TextButton(
-                onPressed: _submitting ? null : () => Navigator.of(context).pop(),
-                child: const Text('Keep Current Arrival Time', style: TextStyle(color: Colors.white60)),
               ),
             ],
           ),

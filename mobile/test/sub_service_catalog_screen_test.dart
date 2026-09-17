@@ -1,3 +1,4 @@
+import 'package:fixnow_mobile/api/api_client.dart';
 import 'package:fixnow_mobile/features/services/service_category.dart';
 import 'package:fixnow_mobile/features/services/sub_service_catalog_screen.dart';
 import 'package:fixnow_mobile/features/services/sub_service_item.dart';
@@ -82,7 +83,7 @@ void main() {
 
       await tester.pumpWidget(
         host(
-          SubServiceCatalogScreen(
+          SubServiceCatalogScreen(api: MockApiTransport(), 
             category: testCategory,
             onProceedToBooking: (cat, desc, price, loc) {
               proceededDescription = desc;
@@ -128,7 +129,7 @@ void main() {
     testWidgets('search query filters available sub-services', (tester) async {
       await tester.pumpWidget(
         host(
-          const SubServiceCatalogScreen(category: testCategory),
+          SubServiceCatalogScreen(api: MockApiTransport(), category: testCategory),
         ),
       );
       await tester.pumpAndSettle();
@@ -144,4 +145,10 @@ void main() {
       expect(find.text('Tap & Mixer Repair'), findsNothing);
     });
   });
+}
+
+
+class MockApiTransport implements ApiTransport {
+  @override
+  Future<ApiResponse> send(ApiRequest request) async => const ApiResponse(statusCode: 200, body: []);
 }

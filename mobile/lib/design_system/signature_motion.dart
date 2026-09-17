@@ -83,26 +83,12 @@ class _MatchRadarViewState extends State<MatchRadarView>
                         size: 56,
                       ),
                     )
-                  : Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        AnimatedBuilder(
-                          animation: _controller,
-                          builder: (context, _) => CustomPaint(
-                            size: const Size.fromHeight(240),
-                            painter: _RadarPainter(progress: _controller.value),
-                          ),
-                        ),
-                        AnimatedBuilder(
-                          animation: _controller,
-                          builder: (context, _) => Fix3DSpatialBeacon(
-                            size: 150,
-                            label: '',
-                            sublabel: '',
-                            progress: _controller.value,
-                          ),
-                        ),
-                      ],
+                  : AnimatedBuilder(
+                      animation: _controller,
+                      builder: (context, _) => CustomPaint(
+                        size: const Size.fromHeight(240),
+                        painter: _RadarPainter(progress: _controller.value),
+                      ),
                     ),
             ),
             const SizedBox(height: AppSpacing.lg),

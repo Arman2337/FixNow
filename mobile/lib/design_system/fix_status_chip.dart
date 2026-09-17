@@ -36,8 +36,8 @@ class FixStatusChip extends StatelessWidget {
     ),
     FixStatusTone.gold => (AppColors.ratingOnLight, AppColors.accentGoldSoft),
     // Filled chip: green text on a light-soft background would fail contrast,
-    // so live inverts — dark foreground on the live green (8.5:1).
-    FixStatusTone.live => (AppColors.backgroundPrimary, AppColors.live),
+    // so live inverts — dark foreground on the live green (>7:1).
+    FixStatusTone.live => (AppColors.secondarySlate, AppColors.live),
   };
 
   @override
@@ -70,7 +70,7 @@ class FixStatusChip extends StatelessWidget {
                 const SizedBox(width: AppSpacing.xs),
                 Text(
                   label,
-                  style: AppTypography.caption.copyWith(
+                  style: FixNowTypography.caption.copyWith(
                     color: foreground,
                     fontWeight: FontWeight.w600,
                   ),

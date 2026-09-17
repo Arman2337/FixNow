@@ -263,11 +263,23 @@ class ApiClient implements ApiTransport {
         ? ApiFailureKind.server
         : ApiFailureKind.invalidResponse;
     final code = body is Map<String, dynamic> ? body['code'] : null;
+    
+    String message = status >= 500
+        ? 'The service is temporarily unavailable.'
+        : 'The request could not be completed.';
+        
+    if (body is Map<String, dynamic>) {
+      final backendMessage = body['message'];
+      if (backendMessage is String) {
+        message = backendMessage;
+      } else if (backendMessage is List && backendMessage.isNotEmpty) {
+        message = backendMessage.join(', ');
+      }
+    }
+
     return ApiException(
       kind,
-      status >= 500
-          ? 'The service is temporarily unavailable.'
-          : 'The request could not be completed.',
+      message,
       code: code is String ? code : null,
       statusCode: status,
     );

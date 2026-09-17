@@ -59,7 +59,7 @@ class FixCard extends StatelessWidget {
 
     final content = Theme(
       data: Theme.of(context).copyWith(
-        textTheme: AppTypography.textTheme(foreground, supporting),
+        textTheme: FixNowTypography.textTheme(foreground, supporting),
       ),
       child: IconTheme(
         data: IconThemeData(color: foreground),

@@ -155,26 +155,12 @@ class _PendingViewState extends State<_PendingView> {
                 'An invoice is issued once a payment is completed for '
                 'this booking.',
           ),
-          if (_canPayLocally) ...[
+          if (widget.repository != null) ...[
             const SizedBox(height: AppSpacing.lg),
             FixButton(
               label: 'Pay Now (Interactive Checkout)',
               icon: Icons.payments_rounded,
               onPressed: () => _openCheckoutSheet(context),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            FixSecondaryButton(
-              label: 'Complete payment (local)',
-              icon: Icons.build_circle_outlined,
-              isLoading: _paying,
-              onPressed: _payLocally,
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            const Text(
-              'Local testing only — drives the fake gateway to a paid '
-              'invoice. Not available in production.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.textOnSurfaceSecondary),
             ),
           ],
         ],
@@ -215,23 +201,109 @@ class _InvoiceView extends StatelessWidget {
   Widget build(BuildContext context) => ListView(
     padding: const EdgeInsets.all(AppSpacing.pagePadding),
     children: [
+      // Company / GST Official Header
+      Container(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: AppColors.outline.withValues(alpha: 0.08),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.verified_user_rounded,
+                        color: AppColors.primary, size: 22),
+                    const SizedBox(width: 6),
+                    Text(
+                      'FixNow',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'FixNow Technologies Pvt Ltd',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  'GSTIN: ${FixPdfInvoiceBuilder.companyGstin}',
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 11,
+),
+                ),
+                const Text(
+                  'Bengaluru, Karnataka 560102',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: AppColors.surfaceContainerLow,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.receipt_long_rounded,
+                  color: AppColors.primary, size: 24),
+            ),
+          ],
+        ),
+      ),
+      const SizedBox(height: AppSpacing.md),
+
       FixPageHeader(
         eyebrow: 'INVOICE',
         title: invoice.invoiceNumber,
         description: 'Receipt for a completed payment on FixNow.',
       ),
-      const SizedBox(height: AppSpacing.lg),
-      FixCard(
-        tone: FixCardTone.elevated,
-        semanticLabel: 'Invoice amount ${invoice.amountLabel}',
+      const SizedBox(height: AppSpacing.md),
+
+      // Grand Total Banner Card
+      Container(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: AppColors.outline.withValues(alpha: 0.08),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'Amount paid',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: AppColors.textOnLightSecondary,
-              ),
+                    color: AppColors.textSecondary,
+                  ),
             ),
             const SizedBox(height: AppSpacing.xs),
             FixRollingTicker(
@@ -241,14 +313,15 @@ class _InvoiceView extends StatelessWidget {
               currencySymbol: invoice.currency == 'INR' ? '₹' : '${invoice.currency} ',
               showDecimals: (invoice.amountMinor % 100) != 0,
               style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                color: AppColors.textOnLightPrimary,
-                fontWeight: FontWeight.w800,
-              ),
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w800,
+                  ),
             ),
           ],
         ),
       ),
       const SizedBox(height: AppSpacing.md),
+
       FixCard(
         semanticLabel: 'Invoice details',
         child: Column(
@@ -262,6 +335,7 @@ class _InvoiceView extends StatelessWidget {
         ),
       ),
       const SizedBox(height: AppSpacing.md),
+
       FixCard(
         semanticLabel: 'GST Tax Breakdown',
         child: Column(
@@ -316,7 +390,52 @@ class _InvoiceView extends StatelessWidget {
           ],
         ),
       ),
+      const SizedBox(height: AppSpacing.md),
+
+      // 30-Day FixNow Trust Warranty Certificate Banner
+      Container(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [
+              AppColors.primary,
+              AppColors.primaryContainer,
+            ],
+          ),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Row(
+          children: [
+            Icon(Icons.workspace_premium_rounded,
+                color: AppColors.primaryFixed, size: 28),
+            SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '30-Day FixNow Shield Protection',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
+                  Text(
+                    'Free rework & dispute resolution guaranteed on this invoice.',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
       const SizedBox(height: AppSpacing.lg),
+
       FixButton(
         label: 'Download PDF Invoice',
         icon: Icons.download_rounded,

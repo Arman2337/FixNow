@@ -266,7 +266,7 @@ class BookingConfirmedDialog extends StatelessWidget {
             const SizedBox(height: AppSpacing.lg),
             Text(
               'Booking Confirmed!',
-              style: AppTypography.heading2.copyWith(color: AppColors.cream),
+              style: FixNowTypography.heading2.copyWith(color: AppColors.cream),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 4),
@@ -363,7 +363,7 @@ class JobCompletedDialog extends StatelessWidget {
             const SizedBox(height: AppSpacing.md),
             Text(
               'Service Completed!',
-              style: AppTypography.heading2.copyWith(color: AppColors.cream),
+              style: FixNowTypography.heading2.copyWith(color: AppColors.cream),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 4),
@@ -494,7 +494,7 @@ class _ReviewRatingDialogState extends State<ReviewRatingDialog> {
           children: [
             Text(
               'Rate your service',
-              style: AppTypography.heading3.copyWith(color: AppColors.cream),
+              style: FixNowTypography.heading3.copyWith(color: AppColors.cream),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 4),

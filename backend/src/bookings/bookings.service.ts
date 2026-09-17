@@ -18,6 +18,8 @@ import { LocationService } from '../location/location.service';
 import { BookingProjectionService } from '../realtime/booking-projection.service';
 import { DomainNotificationService } from '../notifications/domain/domain-notification.service';
 import { TrustService } from '../trust/trust.service';
+import { BookingLineItem } from './domain/booking-line-item.entity';
+import { SubServiceEntity } from '../services/sub-service.entity';
 
 export interface BookingHistoryPage {
   bookings: Booking[];
@@ -96,6 +98,27 @@ export class BookingsService {
           deletedAt: null,
         });
         const saved = await bookingRepository.save(booking);
+
+        if (normalizedInput.lineItems?.length) {
+          const lineItemRepo = manager.getRepository(BookingLineItem);
+          const subServiceRepo = manager.getRepository(SubServiceEntity);
+          
+          const lineItemsToSave = await Promise.all(
+            normalizedInput.lineItems.map(async (item) => {
+              const subService = await subServiceRepo.findOneBy({ id: item.subServiceId });
+              if (!subService) throw new NotFoundException(`SubService ${item.subServiceId} not found`);
+              return lineItemRepo.create({
+                bookingId: saved.id,
+                subServiceId: item.subServiceId,
+                quantity: item.quantity,
+                priceMinor: subService.priceMinor ?? 0,
+              });
+            })
+          );
+          await lineItemRepo.save(lineItemsToSave);
+          saved.lineItems = lineItemsToSave;
+        }
+
         await this.appendEvent(
           manager,
           saved,
@@ -608,6 +631,7 @@ export class BookingsService {
       locationLat: Number(input.locationLat.toFixed(7)),
       locationLng: Number(input.locationLng.toFixed(7)),
       scheduledAt,
+      lineItems: input.lineItems,
     };
   }
 

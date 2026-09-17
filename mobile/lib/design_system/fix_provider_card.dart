@@ -283,7 +283,7 @@ class _Identity extends StatelessWidget {
                 name,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: AppTypography.heading3.copyWith(
+                style: FixNowTypography.heading3.copyWith(
                   color: AppColors.textOnSurface,
                 ),
               ),
@@ -293,7 +293,7 @@ class _Identity extends StatelessWidget {
                   headline!,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTypography.body.copyWith(
+                  style: FixNowTypography.body.copyWith(
                     color: AppColors.textOnSurfaceSecondary,
                     fontWeight: FontWeight.w500,
                     fontSize: 13,
@@ -363,7 +363,7 @@ class _GradientAvatar extends StatelessWidget {
           ),
           child: Text(
             _initials,
-            style: AppTypography.heading3.copyWith(
+            style: FixNowTypography.heading3.copyWith(
               color: AppColors.onPrimary,
               fontSize: 24,
               fontWeight: FontWeight.w700,
@@ -427,7 +427,7 @@ class _StarRating extends StatelessWidget {
         const SizedBox(width: 6),
         Text(
           rating.toStringAsFixed(1),
-          style: AppTypography.label.copyWith(
+          style: FixNowTypography.label.copyWith(
             color: AppColors.textOnSurface,
             fontWeight: FontWeight.w700,
             fontSize: 13.5,
@@ -440,7 +440,7 @@ class _StarRating extends StatelessWidget {
               '· ${_formatCount(reviewCount!)}',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: AppTypography.caption.copyWith(
+              style: FixNowTypography.caption.copyWith(
                 color: AppColors.textOnSurfaceMuted,
                 fontSize: 12.5,
               ),
@@ -481,7 +481,7 @@ class _StartCode extends StatelessWidget {
           Text(
             'Your start code — share it only after they arrive',
             textAlign: TextAlign.center,
-            style: AppTypography.caption.copyWith(
+            style: FixNowTypography.caption.copyWith(
               color: AppColors.textOnSurfaceSecondary,
               fontSize: 12,
             ),
@@ -529,7 +529,7 @@ class _DigitBox extends StatelessWidget {
       ),
       child: Text(
         digit,
-        style: AppTypography.heading3.copyWith(
+        style: FixNowTypography.heading3.copyWith(
           color: AppColors.textOnSurface,
           fontSize: 24,
           fontWeight: FontWeight.w700,
@@ -584,7 +584,7 @@ class _LiveStrip extends StatelessWidget {
                 if (arrived || etaText == null)
                   Text(
                     title,
-                    style: AppTypography.label.copyWith(
+                    style: FixNowTypography.label.copyWith(
                       color: AppColors.textOnSurface,
                       fontWeight: FontWeight.w700,
                       fontSize: 15,
@@ -594,7 +594,7 @@ class _LiveStrip extends StatelessWidget {
                   Text.rich(
                     TextSpan(
                       text: title,
-                      style: AppTypography.label.copyWith(
+                      style: FixNowTypography.label.copyWith(
                         color: AppColors.textOnSurface,
                         fontWeight: FontWeight.w700,
                         fontSize: 15,
@@ -610,7 +610,7 @@ class _LiveStrip extends StatelessWidget {
                 const SizedBox(height: 1),
                 Text(
                   meta,
-                  style: AppTypography.caption.copyWith(
+                  style: FixNowTypography.caption.copyWith(
                     color: AppColors.textOnSurfaceSecondary,
                   ),
                 ),
@@ -631,7 +631,7 @@ class _LiveStrip extends StatelessWidget {
                 ),
                 child: Text(
                   distanceText!,
-                  style: AppTypography.caption.copyWith(
+                  style: FixNowTypography.caption.copyWith(
                     color: AppColors.onPrimary,
                     fontWeight: FontWeight.w700,
                   ),
@@ -719,7 +719,7 @@ class _StatTile extends StatelessWidget {
             prefix: stat.prefix,
             suffix: stat.suffix,
             fractionDigits: stat.fractionDigits,
-            style: AppTypography.heading3.copyWith(
+            style: FixNowTypography.heading3.copyWith(
               color: AppColors.textOnSurface,
               fontSize: 19,
               height: 1.0,
@@ -731,7 +731,7 @@ class _StatTile extends StatelessWidget {
             textAlign: TextAlign.center,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: AppTypography.caption.copyWith(
+            style: FixNowTypography.caption.copyWith(
               color: AppColors.textOnSurfaceMuted,
               fontSize: 10,
               fontWeight: FontWeight.w600,
@@ -758,7 +758,7 @@ class _Specialties extends StatelessWidget {
       children: [
         Text(
           'SPECIALISES IN',
-          style: AppTypography.caption.copyWith(
+          style: FixNowTypography.caption.copyWith(
             color: AppColors.textOnSurfaceMuted,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.6,
@@ -784,7 +784,7 @@ class _Specialties extends StatelessWidget {
                   ),
                   child: Text(
                     specialty,
-                    style: AppTypography.label.copyWith(
+                    style: FixNowTypography.label.copyWith(
                       color: AppColors.textOnSurface,
                       fontSize: 13,
                     ),
@@ -834,7 +834,7 @@ class _PriceRow extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: AppTypography.label.copyWith(
+                  style: FixNowTypography.label.copyWith(
                     color: AppColors.onAccentGold,
                     fontSize: 13,
                   ),
@@ -843,7 +843,7 @@ class _PriceRow extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     note!,
-                    style: AppTypography.caption.copyWith(
+                    style: FixNowTypography.caption.copyWith(
                       color: AppColors.onAccentGold.withValues(alpha: 0.75),
                       fontSize: 11,
                     ),
@@ -855,7 +855,7 @@ class _PriceRow extends StatelessWidget {
           const SizedBox(width: AppSpacing.sm),
           Text(
             '$currency$_amountText',
-            style: AppTypography.heading3.copyWith(
+            style: FixNowTypography.heading3.copyWith(
               color: AppColors.onAccentGold,
               fontWeight: FontWeight.w800,
               fontSize: 22,
@@ -1025,7 +1025,7 @@ class _FindingContent extends StatelessWidget {
             Flexible(
               child: Text(
                 'Matching you with a verified pro nearby…',
-                style: AppTypography.body.copyWith(
+                style: FixNowTypography.body.copyWith(
                   color: AppColors.textOnSurfaceSecondary,
                   fontWeight: FontWeight.w500,
                 ),

@@ -60,6 +60,13 @@ export class ProviderProfileResponseDto {
   createdAt!: Date;
 
   updatedAt!: Date;
+
+  stats?: {
+    rating: number;
+    completedJobs: number;
+    earningsMinor: number;
+    acceptanceRate: number;
+  };
 }
 
 export class CoverageCheckResponseDto {

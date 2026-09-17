@@ -140,8 +140,9 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
     return Scaffold(
       backgroundColor: AppColors.backgroundPrimary,
       appBar: AppBar(
-        backgroundColor: AppColors.backgroundSecondary,
+        backgroundColor: AppColors.surfaceContainerLowest,
         elevation: 0,
+        scrolledUnderElevation: 1,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
           onPressed: () => Navigator.of(context).pop(),
@@ -150,10 +151,11 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
         title: Row(
           children: [
             Stack(
+              clipBehavior: Clip.none,
               children: [
                 CircleAvatar(
                   radius: 18,
-                  backgroundColor: AppColors.primarySoft,
+                  backgroundColor: AppColors.primary.withValues(alpha: 0.12),
                   child: const Icon(
                     Icons.person_rounded,
                     color: AppColors.primary,
@@ -161,16 +163,16 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
                   ),
                 ),
                 Positioned(
-                  right: 0,
-                  bottom: 0,
+                  right: -1,
+                  bottom: -1,
                   child: Container(
                     width: 10,
                     height: 10,
                     decoration: BoxDecoration(
-                      color: AppColors.success,
+                      color: AppColors.primary,
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: AppColors.backgroundSecondary,
+                        color: AppColors.surfaceContainerLowest,
                         width: 1.5,
                       ),
                     ),
@@ -191,7 +193,7 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
                           style: const TextStyle(
                             color: AppColors.textPrimary,
                             fontSize: 15,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.w700,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -199,7 +201,7 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
                       const SizedBox(width: 4),
                       const Icon(
                         Icons.verified_rounded,
-                        color: AppColors.focus,
+                        color: AppColors.primary,
                         size: 14,
                       ),
                     ],
@@ -208,7 +210,8 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
                     'Booking #$bookingShortId',
                     style: const TextStyle(
                       color: AppColors.textSecondary,
-                      fontSize: 12,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ],
@@ -221,7 +224,7 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
             IconButton(
               icon: const Icon(
                 Icons.phone_outlined,
-                color: AppColors.accentGold,
+                color: AppColors.primary,
               ),
               tooltip: 'Call Pro',
               onPressed: () {
@@ -250,15 +253,15 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Shield Notice Bar
+            // Shield Notice Bar (Stitch)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              color: AppColors.backgroundSecondary.withValues(alpha: 0.5),
+              color: AppColors.surfaceContainerLow,
               child: Row(
                 children: const [
                   Icon(
                     Icons.shield_outlined,
-                    color: AppColors.focus,
+                    color: AppColors.primary,
                     size: 16,
                   ),
                   SizedBox(width: 8),
@@ -268,6 +271,7 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),
@@ -388,7 +392,7 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
                             ),
             ),
 
-            // 1-Tap Quick Responses
+            // 1-Tap Quick Responses (Stitch Pills)
             if (controller.canSend)
               Container(
                 height: 42,
@@ -401,8 +405,8 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
                   itemBuilder: (context, index) {
                     final chipText = _quickResponses[index];
                     return ActionChip(
-                      backgroundColor: AppColors.backgroundSecondary,
-                      side: const BorderSide(color: AppColors.borderStrong),
+                      backgroundColor: AppColors.surfaceContainerLowest,
+                      side: const BorderSide(color: AppColors.borderDefault),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.pill),
                       ),
@@ -411,6 +415,7 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
                         style: const TextStyle(
                           color: AppColors.textPrimary,
                           fontSize: 12,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                       onPressed: () {
@@ -428,16 +433,16 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
                 ),
               ),
 
-            // Input Bar
+            // Input Bar (Stitch Dock)
             Container(
               padding: const EdgeInsets.symmetric(
                 horizontal: AppSpacing.md,
                 vertical: AppSpacing.sm,
               ),
               decoration: const BoxDecoration(
-                color: AppColors.backgroundSecondary,
+                color: AppColors.surfaceContainerLowest,
                 border: Border(
-                  top: BorderSide(color: Color(0xFF1E293B)),
+                  top: BorderSide(color: AppColors.borderDefault),
                 ),
               ),
               child: Row(
@@ -445,9 +450,9 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
                   Expanded(
                     child: Container(
                       decoration: BoxDecoration(
-                        color: AppColors.backgroundPrimary,
+                        color: AppColors.surfaceContainerLow,
                         borderRadius: BorderRadius.circular(AppRadius.pill),
-                        border: Border.all(color: AppColors.borderStrong),
+                        border: Border.all(color: AppColors.borderDefault),
                       ),
                       child: TextField(
                         controller: _textController,
@@ -570,53 +575,114 @@ class _ChatBubble extends StatelessWidget {
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 4),
+        margin: const EdgeInsets.symmetric(vertical: 6),
         constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.75,
+          maxWidth: MediaQuery.of(context).size.width * 0.82,
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: isMe ? AppColors.primary : AppColors.surfaceElevated,
-          borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(16),
-            topRight: const Radius.circular(16),
-            bottomLeft: Radius.circular(isMe ? 16 : 4),
-            bottomRight: Radius.circular(isMe ? 4 : 16),
-          ),
-          border: isMe
-              ? null
-              : Border.all(color: const Color(0xFF263353), width: 1),
-        ),
-        child: Column(
-          crossAxisAlignment:
-              isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Text(
-              message.messageText,
-              style: const TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 14,
-                height: 1.3,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  _formatTime(message.createdAt.toLocal()),
-                  style: TextStyle(
-                    color: isMe
-                        ? Colors.white.withValues(alpha: 0.7)
-                        : AppColors.textSecondary,
+            if (!isMe) ...[
+              CircleAvatar(
+                radius: 14,
+                backgroundColor: AppColors.primarySoft,
+                child: Text(
+                  message.senderRole.isNotEmpty
+                      ? message.senderRole[0].toUpperCase()
+                      : 'P',
+                  style: const TextStyle(
                     fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
                   ),
                 ),
-                if (isMe) ...[
-                  const SizedBox(width: 4),
-                  _DeliveryTick(message: message),
+              ),
+              const SizedBox(width: 8),
+            ],
+            Flexible(
+              child: Column(
+                crossAxisAlignment:
+                    isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: isMe
+                          ? AppColors.primary
+                          : AppColors.surfaceContainerLowest,
+                      borderRadius: BorderRadius.only(
+                        topLeft: const Radius.circular(18),
+                        topRight: const Radius.circular(18),
+                        bottomLeft: Radius.circular(isMe ? 18 : 4),
+                        bottomRight: Radius.circular(isMe ? 4 : 18),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.04),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                      border: isMe
+                          ? null
+                          : Border.all(
+                              color: AppColors.outline.withValues(alpha: 0.08),
+                              width: 1,
+                            ),
+                    ),
+                    child: Text(
+                      message.messageText,
+                      style: TextStyle(
+                        color: isMe ? Colors.white : AppColors.textPrimary,
+                        fontSize: 14,
+                        height: 1.35,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Padding(
+                    padding: EdgeInsets.only(
+                        left: isMe ? 0 : 4, right: isMe ? 4 : 0),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _formatTime(message.createdAt.toLocal()),
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 11,
+                          ),
+                        ),
+                        if (!isMe && message.senderRole.isNotEmpty) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: AppColors.primarySoft,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              message.senderRole,
+                              style: const TextStyle(
+                                color: AppColors.primary,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                        if (isMe) ...[
+                          const SizedBox(width: 4),
+                          _DeliveryTick(message: message),
+                        ],
+                      ],
+                    ),
+                  ),
                 ],
-              ],
+              ),
             ),
           ],
         ),

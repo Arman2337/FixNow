@@ -14,14 +14,19 @@ class AuthApi {
     required String email,
     required String password,
     required AccountRole role,
+    String? mobile,
   }) async {
+    final body = <String, Object?>{'email': email.trim(), 'password': password};
+    if (mobile != null && mobile.trim().isNotEmpty) {
+      body['mobile'] = mobile.trim();
+    }
     final response = await _transport.send(
       ApiRequest(
         method: ApiMethod.post,
         path: role == AccountRole.customer
             ? 'auth/customer/login'
             : 'auth/provider/login',
-        body: {'email': email.trim(), 'password': password},
+        body: body,
       ),
     );
     return _parseSession(response.body, verificationEmail: email.trim());
@@ -31,14 +36,19 @@ class AuthApi {
     required String email,
     required String password,
     required AccountRole role,
+    String? mobile,
   }) async {
+    final body = <String, Object?>{'email': email.trim(), 'password': password};
+    if (mobile != null && mobile.trim().isNotEmpty) {
+      body['mobile'] = mobile.trim();
+    }
     final response = await _transport.send(
       ApiRequest(
         method: ApiMethod.post,
         path: role == AccountRole.customer
             ? 'auth/customer/register'
             : 'auth/provider/register',
-        body: {'email': email.trim(), 'password': password},
+        body: body,
       ),
     );
     return _parseSession(response.body, verificationEmail: email.trim());

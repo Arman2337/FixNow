@@ -87,6 +87,9 @@ class _FakeProviderRepository implements ProviderRepository {
 
   @override
   Future<ProviderAcceptTime?> acceptTime() async => null;
+
+  @override
+  Future<ProviderApplication> submitApplication() async => throw UnimplementedError();
 }
 
 void main() {

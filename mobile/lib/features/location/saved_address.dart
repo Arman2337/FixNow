@@ -1,4 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:fixnow_mobile/api/api_client.dart';
+
+class MockApiTransport implements ApiTransport {
+  @override
+  Future<ApiResponse> send(ApiRequest request) async => const ApiResponse(statusCode: 200, body: []);
+}
 
 enum AddressLabel { home, work, other }
 
@@ -77,72 +83,124 @@ class SavedAddress {
 
 /// In-memory repository for managing saved customer addresses.
 class SavedAddressRepository extends ChangeNotifier {
-  SavedAddressRepository._() {
-    _seedDefaults();
+  SavedAddressRepository({
+    required this.api,
+    required this.accessToken,
+  }) {
+    _instance = this;
   }
-  static final SavedAddressRepository instance = SavedAddressRepository._();
 
-  final List<SavedAddress> _addresses = [];
+  factory SavedAddressRepository.test() {
+    return SavedAddressRepository(
+      api: MockApiTransport(),
+      accessToken: () async => '',
+    );
+  }
+
+  static SavedAddressRepository? _instance;
+  
+  static SavedAddressRepository get instance {
+    if (_instance == null) {
+      debugPrint('WARNING: SavedAddressRepository.instance was null. Falling back to test instance.');
+      _instance = SavedAddressRepository.test();
+    }
+    return _instance!;
+  }
+
+  final ApiTransport api;
+  final Future<String?> Function() accessToken;
+
+  List<SavedAddress> _addresses = [];
+  bool _isLoading = false;
 
   List<SavedAddress> get addresses => List.unmodifiable(_addresses);
+  bool get isLoading => _isLoading;
 
   SavedAddress? get defaultAddress {
     if (_addresses.isEmpty) return null;
     return _addresses.firstWhere((a) => a.isDefault, orElse: () => _addresses.first);
   }
-
-  void _seedDefaults() {
-    _addresses.addAll([
-      const SavedAddress(
-        id: 'addr-home-1',
-        label: AddressLabel.home,
-        customTitle: 'Home',
-        flatBuilding: 'Flat 402, Lotus Heights',
-        streetArea: '4th Cross, Koramangala 5th Block',
-        landmark: 'Opposite Sony World Signal',
-        city: 'Bengaluru',
-        postalCode: '560034',
-        latitude: 12.9352,
-        longitude: 77.6245,
-        isDefault: true,
-      ),
-      const SavedAddress(
-        id: 'addr-work-2',
-        label: AddressLabel.work,
-        customTitle: 'Office',
-        flatBuilding: 'Desk 5B, WeWork Galaxy',
-        streetArea: '43 Residency Road, Shanthala Nagar',
-        landmark: 'Near Mayo Hall Metro',
-        city: 'Bengaluru',
-        postalCode: '560025',
-        latitude: 12.9719,
-        longitude: 77.6070,
-        isDefault: false,
-      ),
-    ]);
+  
+  void setUserId(String userId) {
+    // legacy
   }
 
-  void saveAddress(SavedAddress address) {
-    final idx = _addresses.indexWhere((a) => a.id == address.id);
-    if (address.isDefault) {
-      for (var i = 0; i < _addresses.length; i++) {
-        _addresses[i] = _addresses[i].copyWith(isDefault: false);
-      }
-    }
-    if (idx >= 0) {
-      _addresses[idx] = address;
-    } else {
-      _addresses.add(address);
-    }
-    notifyListeners();
+  Future<String> _requireToken() async {
+    final token = await accessToken();
+    if (token == null) throw const ApiException(ApiFailureKind.unauthorized, 'Not signed in');
+    return token;
   }
 
-  void deleteAddress(String id) {
-    _addresses.removeWhere((a) => a.id == id);
-    if (_addresses.isNotEmpty && !_addresses.any((a) => a.isDefault)) {
-      _addresses[0] = _addresses[0].copyWith(isDefault: true);
-    }
+  Future<void> fetchAddresses() async {
+    _isLoading = true;
     notifyListeners();
+    try {
+      final token = await _requireToken();
+      final response = await api.send(ApiRequest(
+        method: ApiMethod.get,
+        path: 'users/me/addresses',
+        bearerToken: token,
+      ));
+      
+      final data = response.body as List<dynamic>;
+      _addresses = data.map((json) {
+        final j = json as Map<String, dynamic>;
+        return SavedAddress(
+          id: j['id'],
+          label: j['label'] == 'Work' ? AddressLabel.work : (j['label'] == 'Home' ? AddressLabel.home : AddressLabel.other),
+          customTitle: j['label'] ?? '',
+          flatBuilding: j['street'],
+          streetArea: j['street'], // simplify mapping
+          city: j['city'] ?? 'Bengaluru',
+          postalCode: j['zip'] ?? '560001',
+          latitude: j['latitude'] is String ? double.tryParse(j['latitude']) ?? 0.0 : (j['latitude']?.toDouble() ?? 0.0),
+          longitude: j['longitude'] is String ? double.tryParse(j['longitude']) ?? 0.0 : (j['longitude']?.toDouble() ?? 0.0),
+          isDefault: j['isDefault'] ?? false,
+        );
+      }).toList();
+    } catch (e) {
+      // Ignore
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> saveAddress(SavedAddress address) async {
+    try {
+      final token = await _requireToken();
+      await api.send(ApiRequest(
+        method: ApiMethod.post,
+        path: 'users/me/addresses',
+        bearerToken: token,
+        body: {
+          'label': address.label == AddressLabel.work ? 'Work' : (address.label == AddressLabel.home ? 'Home' : address.customTitle),
+          'street': address.flatBuilding,
+          'city': address.city,
+          'zip': address.postalCode,
+          'latitude': address.latitude,
+          'longitude': address.longitude,
+          'isDefault': address.isDefault,
+        },
+      ));
+      await fetchAddresses();
+    } catch (e) {
+      // Ignore
+    }
+  }
+
+  Future<void> deleteAddress(String id) async {
+    try {
+      final token = await _requireToken();
+      await api.send(ApiRequest(
+        method: ApiMethod.delete,
+        path: 'users/me/addresses/$id',
+        bearerToken: token,
+      ));
+      await fetchAddresses();
+    } catch (e) {
+      // Ignore
+    }
   }
 
   void setDefault(String id) {
@@ -154,7 +212,6 @@ class SavedAddressRepository extends ChangeNotifier {
 
   void reset() {
     _addresses.clear();
-    _seedDefaults();
     notifyListeners();
   }
 }

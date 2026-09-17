@@ -37,8 +37,10 @@ class _StubRepository extends ProblemAnalysisRepository {
   final ProblemAnalysis response;
 
   @override
-  Future<ProblemAnalysis> analyzeImage({required MultipartFileData image}) async =>
-      response;
+  Future<ProblemAnalysis> analyzeImage({
+    required MultipartFileData image,
+    String? textDescription,
+  }) async => response;
 }
 
 class _StubImageGateway implements ImageCaptureGateway {

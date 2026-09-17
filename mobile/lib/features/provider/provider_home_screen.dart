@@ -44,6 +44,7 @@ class ProviderHomeScreen extends StatelessWidget {
     this.loadAcceptTime,
     this.onViewEarnings,
     this.notificationController,
+    this.onTechDesk,
     this.onOpenBooking,
     this.onOpenInvoice,
     super.key,
@@ -60,6 +61,7 @@ class ProviderHomeScreen extends StatelessWidget {
   final VoidCallback? onViewEarnings;
 
   final NotificationController? notificationController;
+  final VoidCallback? onTechDesk;
   final void Function(String bookingId)? onOpenBooking;
   final void Function(InAppNotification notification)? onOpenInvoice;
 
@@ -259,86 +261,135 @@ class ProviderHomeScreen extends StatelessWidget {
             if (loadAcceptTime != null)
               _AcceptTimeCard(load: loadAcceptTime!),
             const SizedBox(height: AppSpacing.md),
-            FixCard(
-              semanticLabel: 'Working schedule',
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
-                    'Working schedule',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: AppColors.textOnLightPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    availability?.scheduleSummary ?? 'No recurring hours set.',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textOnLightSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: FixButton(
-                          label: availability?.weeklyRules.isEmpty ?? true
-                              ? 'Set working hours'
-                              : 'Edit schedule',
-                          icon: Icons.calendar_month_rounded,
-                          variant: FixButtonVariant.secondary,
-                          onPressed: availability == null
-                              ? null
-                              : () => FixProviderWorkingHoursSheet.show(
-                                  context,
-                                  controller: controller,
+                  Expanded(
+                    child: InkWell(
+                      onTap: availability == null
+                          ? null
+                          : () => FixProviderWorkingHoursSheet.show(
+                              context,
+                              controller: controller,
+                            ),
+                      borderRadius: BorderRadius.circular(AppRadius.card),
+                      child: Container(
+                        padding: const EdgeInsets.all(AppSpacing.md),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(AppRadius.card),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primary.withValues(alpha: 0.2),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.2),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.calendar_month_rounded,
+                                color: Colors.white,
+                                size: 28,
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.xl),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Edit\nSchedule',
+                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w800,
+                                    height: 1.2,
+                                  ),
                                 ),
+                                const Icon(
+                                  Icons.chevron_right_rounded,
+                                  color: Colors.white70,
+                                  size: 24,
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
-                      if (availability?.weeklyRules.isNotEmpty ?? false) ...[
-                        const SizedBox(width: AppSpacing.sm),
-                        IconButton(
-                          tooltip: 'Clear recurring hours',
-                          icon: const Icon(Icons.delete_outline_rounded, color: AppColors.danger),
-                          onPressed: () => controller.setWeekdaySchedule(false),
-                        ),
-                      ],
-                    ],
+                    ),
                   ),
+                  if (onViewEarnings != null) ...[
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: InkWell(
+                        onTap: onViewEarnings,
+                        borderRadius: BorderRadius.circular(AppRadius.card),
+                        child: Container(
+                          padding: const EdgeInsets.all(AppSpacing.md),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary,
+                            borderRadius: BorderRadius.circular(AppRadius.card),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.primary.withValues(alpha: 0.2),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.2),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.account_balance_wallet_rounded,
+                                  color: Colors.white,
+                                  size: 28,
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.xl),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'View\nEarnings',
+                                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w800,
+                                      height: 1.2,
+                                    ),
+                                  ),
+                                  const Icon(
+                                    Icons.chevron_right_rounded,
+                                    color: Colors.white70,
+                                    size: 24,
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
-            if (onViewEarnings != null) ...[
-              const SizedBox(height: AppSpacing.md),
-              FixCard(
-                semanticLabel: 'Earnings',
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Earnings',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColors.textOnLightPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      'See a record of completed payments. Payouts are not available yet.',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.textOnLightSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    FixButton(
-                      label: 'View earnings',
-                      icon: Icons.account_balance_wallet_outlined,
-                      variant: FixButtonVariant.secondary,
-                      onPressed: onViewEarnings,
-                    ),
-                  ],
-                ),
-              ),
-            ],
             const SizedBox(height: AppSpacing.xxl),
             Row(
               children: [
@@ -346,7 +397,7 @@ class ProviderHomeScreen extends StatelessWidget {
                   child: Text(
                     'Incoming requests',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: AppColors.textOnDarkPrimary,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                 ),
@@ -475,7 +526,7 @@ class ProviderHomeScreen extends StatelessWidget {
             Text(
               'Assigned work',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: AppColors.textOnDarkPrimary,
+                color: AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: AppSpacing.md),
@@ -557,14 +608,33 @@ class ProviderHomeScreen extends StatelessWidget {
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
                           const SizedBox(height: AppSpacing.xs),
-                          Text(
-                            providerServiceName(
-                              controller.categories,
-                              job.serviceCategoryId,
-                            ),
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: AppColors.textSecondary,
-                            ),
+                          Row(
+                            children: [
+                              const Icon(Icons.handyman_rounded, size: 14, color: AppColors.textSecondary),
+                              const SizedBox(width: 6),
+                              Text(
+                                providerServiceName(
+                                  controller.categories,
+                                  job.serviceCategoryId,
+                                ),
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: AppSpacing.xs),
+                          Row(
+                            children: [
+                              const Icon(Icons.schedule_rounded, size: 14, color: AppColors.textSecondary),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Scheduled: ${_requestTime(job.scheduledAt ?? job.createdAt)}',
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: AppSpacing.sm),
                           Row(

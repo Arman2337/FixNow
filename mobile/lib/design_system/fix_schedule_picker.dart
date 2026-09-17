@@ -170,86 +170,91 @@ class _FixSchedulePickerCardState extends State<FixSchedulePickerCard> {
         children: [
           // Header
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                padding: const EdgeInsets.all(AppSpacing.xs),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(Icons.schedule_rounded, color: AppColors.primary, size: 20),
-              ),
-              const SizedBox(width: AppSpacing.sm),
               Text(
-                'Arrival Schedule',
+                'Select Execution Mode',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       color: AppColors.textPrimary,
                       fontWeight: FontWeight.w700,
+                      fontSize: 13,
                     ),
+              ),
+              const Text(
+                'Real-Time SLA',
+                style: TextStyle(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 11,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+
+          // Toggle Mode Cards
+          Row(
+            children: [
+              Expanded(
+                child: _ExecutionModeCard(
+                  title: 'Instant SOS',
+                  subtitle: '15-Min Arrival',
+                  icon: Icons.bolt_rounded,
+                  isSelected: _schedule.isNow,
+                  subtitleColor: AppColors.primaryFixed,
+                  metadata: Row(
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: const BoxDecoration(
+                          color: AppColors.primaryFixed,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '5 techs near',
+                        style: TextStyle(
+                          color: _schedule.isNow ? Colors.white.withValues(alpha: 0.8) : AppColors.textSecondary.withValues(alpha: 0.8),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  onTap: () {
+                    _updateSchedule(_schedule.copyWith(mode: ScheduleMode.now));
+                  },
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: _ExecutionModeCard(
+                  title: 'Schedule',
+                  subtitle: 'Pick Slot',
+                  icon: Icons.calendar_month_rounded,
+                  isSelected: !_schedule.isNow,
+                  subtitleColor: AppColors.textSecondary,
+                  metadata: Text(
+                    'Tomorrow onwards',
+                    style: TextStyle(
+                      color: !_schedule.isNow ? Colors.white.withValues(alpha: 0.8) : AppColors.textSecondary.withValues(alpha: 0.8),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  onTap: _selectScheduleLater,
+                ),
               ),
             ],
           ),
           const SizedBox(height: AppSpacing.md),
 
-          // Toggle Mode Segmented Control
-          Container(
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              color: AppColors.backgroundPrimary,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: Colors.white12),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _ModeTab(
-                    label: 'Book for Now',
-                    icon: Icons.bolt_rounded,
-                    isSelected: _schedule.isNow,
-                    onTap: () {
-                      _updateSchedule(_schedule.copyWith(mode: ScheduleMode.now));
-                    },
-                  ),
-                ),
-                Expanded(
-                  child: _ModeTab(
-                    label: 'Schedule for Later',
-                    icon: Icons.calendar_month_rounded,
-                    isSelected: !_schedule.isNow,
-                    onTap: _selectScheduleLater,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSpacing.md),
-
           if (_schedule.isNow) ...[
-            // Now summary
-            Container(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              decoration: BoxDecoration(
-                color: AppColors.accentGold.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppColors.accentGold.withValues(alpha: 0.3)),
-              ),
-              child: const Row(
-                children: [
-                  Icon(Icons.flash_on_rounded, color: AppColors.accentGold, size: 18),
-                  SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: Text(
-                      'Immediate dispatch — nearest verified technician arrives within ~15–30 mins.',
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            // Now summary removed since the ExecutionModeCard describes the 15-Min Arrival
           ] else ...[
             // Date Selector Strip
             Row(
@@ -620,62 +625,109 @@ class _FixSchedulePickerCardState extends State<FixSchedulePickerCard> {
       };
 }
 
-class _ModeTab extends StatelessWidget {
-  const _ModeTab({
-    required this.label,
+class _ExecutionModeCard extends StatelessWidget {
+  const _ExecutionModeCard({
+    required this.title,
+    required this.subtitle,
     required this.icon,
     required this.isSelected,
     required this.onTap,
+    required this.metadata,
+    required this.subtitleColor,
   });
 
-  final String label;
+  final String title;
+  final String subtitle;
   final IconData icon;
   final bool isSelected;
   final VoidCallback onTap;
+  final Widget metadata;
+  final Color subtitleColor;
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      borderRadius: BorderRadius.circular(8),
       onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        height: 112,
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.surfaceElevated : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-          border: isSelected ? Border.all(color: Colors.white24, width: 1) : null,
+          color: isSelected ? AppColors.primary : AppColors.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(12),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.3),
-                    blurRadius: 4,
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 6,
                     offset: const Offset(0, 2),
                   )
                 ]
               : null,
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Icon(
-              icon,
-              size: 16,
-              color: isSelected ? AppColors.accentGold : AppColors.textSecondary,
-            ),
-            const SizedBox(width: 6),
-            Flexible(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: isSelected ? Colors.white : AppColors.textSecondary,
-                  fontSize: 12,
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  icon,
+                  size: 24,
+                  color: isSelected ? AppColors.primaryFixed : AppColors.textSecondary,
                 ),
-              ),
+                if (isSelected)
+                  Container(
+                    width: 16,
+                    height: 16,
+                    decoration: const BoxDecoration(
+                      color: AppColors.onPrimary,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.check_rounded,
+                      size: 12,
+                      color: AppColors.primary,
+                    ),
+                  )
+                else
+                  Container(
+                    width: 16,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.borderDefault),
+                    ),
+                  ),
+              ],
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title.toUpperCase(),
+                  style: TextStyle(
+                    color: isSelected ? subtitleColor : AppColors.textSecondary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    color: isSelected ? Colors.white : AppColors.textPrimary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                metadata,
+              ],
             ),
           ],
         ),

@@ -139,32 +139,43 @@ class ProblemAnalysisRepository {
   final ApiTransport _transport;
   final Future<String?> Function()? _accessToken;
 
-  Future<ProblemAnalysis> analyzeImage({required MultipartFileData image}) =>
-      _upload('ai/problem-analysis/image', files: [image]);
+  Future<ProblemAnalysis> analyzeImage({
+    required MultipartFileData image,
+    String? textDescription,
+  }) => _upload(
+    'ai/problem-analysis/image',
+    files: [image],
+    textDescription: textDescription,
+  );
 
   Future<ProblemAnalysis> analyzeVoice({
     required MultipartFileData audio,
     String? languageHint,
+    String? textDescription,
   }) => _upload(
     'ai/problem-analysis/voice',
     files: [audio],
     languageHint: languageHint,
+    textDescription: textDescription,
   );
 
   Future<ProblemAnalysis> analyzeCombined({
     required MultipartFileData image,
     required MultipartFileData audio,
     String? languageHint,
+    String? textDescription,
   }) => _upload(
     'ai/problem-analysis/combined',
     files: [image, audio],
     languageHint: languageHint,
+    textDescription: textDescription,
   );
 
   Future<ProblemAnalysis> _upload(
     String path, {
     required List<MultipartFileData> files,
     String? languageHint,
+    String? textDescription,
   }) async {
     // Multipart upload lives on the concrete client, not the transport port.
     final client = _transport;
@@ -181,11 +192,16 @@ class ProblemAnalysisRepository {
         'Sign in to analyze a problem.',
       );
     }
+    final fields = <String, String>{
+      if (languageHint != null) 'languageHint': languageHint,
+      if (textDescription != null && textDescription.trim().isNotEmpty) 'textDescription': textDescription,
+    };
+
     final response = await client.uploadMultipart(
       path: path,
       bearerToken: token,
       files: files,
-      fields: languageHint == null ? null : {'languageHint': languageHint},
+      fields: fields.isEmpty ? null : fields,
     );
     // Endpoints answer 201; uploadMultipart already accepts any 2xx and mapped
     // non-2xx to an ApiException, so only the body shape remains to check.

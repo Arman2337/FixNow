@@ -54,15 +54,15 @@ Only these statuses are valid. A task cannot be completed while required validat
 
 # Project Progress
 
-Total Tasks: 133
-Completed: 117
+Total Tasks: 135
+Completed: 119
 In Progress: 0
 Blocked: 0
 Pending: 0
 Deferred: 14
 Cancelled: 2
-Current Task: None (FN-133 completed)
-Current Phase: Phase 16 — Production Operations & Commercial Polish (Completed)
+Current Task: None (FN-135 completed)
+Current Phase: Phase 17 — Stitch Trust Matrix Visual Redesign (Completed)
 Next Recommended Task: None
 
 2026-08-27 (session 2) FN-113 advisory price/signal surfacing verified complete and closed. Evidence in the working tree: the mobile advisory price estimate (`mobile/lib/features/ai/price_estimate_repository.dart` — repository + controller + honest states) is surfaced on the service-request screen (`service_request_screen.dart` `_buildPriceContent`: ESTIMATE range + explanation + "Advisory only — the final charge is confirmed..." disclaimer, honest static fallback, PRICE_ON_REQUEST abstention) and wired at both `app.dart` construction sites (category-select and Book-again) via `PriceEstimateRepository(_api, accessToken: _auth.validAccessToken)`; the admin trust queue (`admin/src/app/trust/page.tsx`) already renders the FN-060 rule codes; the provider accept-time signal is surfaced on provider home (`provider_home_screen.dart` via `GET trust/my-accept-time`, FN-111). Payments set to local-only per ADR-0016: `PAYMENT_PROVIDER` defaults to the deterministic `fake` gateway (now made explicit in `backend/.env`), which is prohibited in production by `env.validation.ts` startup validation, needs no live gateway credentials, and offers no payouts. The mobile client has no interactive checkout surface yet (only the read-only invoice screen; `JobCompletedDialog` is unwired), so a dev-gated local payment flow is recorded as FN-118 rather than scaffolded. FN-058/FN-059 remain Deferred (live vision/voice still gated on malware scan + signed DPA + vendor/model approval, ADR-0014; AI stays advisory-only, disabled by default). Validated 2026-08-27: flutter analyze 0 errors, flutter test 164/164; backend jest payments 35/35.
@@ -3394,4 +3394,40 @@ Branch: fix/e2e-calling-chat-provider-fixes
 ### Validation
 - Flutter Analyzer: `flutter analyze lib` passed with 0 issues.
 - Full Flutter test suite: **261 / 261 tests passed (100% green, 0 failures)**.
+
+---
+
+## Task FN-135: Stitch Visual Redesign ("FixNow Trust Matrix") Integration & End-to-End Verification
+
+### Changes Delivered
+- **Stitch Design Tokens & Foundations**:
+  - Ingested 33 Stitch screens and token definitions into `.stitch_reference/`.
+  - Implemented Trust Matrix palette: Deep Emerald (`#006948`), Slate (`#0F172A`), Crisp Neutral Canvas (`#F8F9FF`), Gold Accents (`#F59E0B`).
+  - Integrated Plus Jakarta Sans (headlines) and Inter (body) typography in Flutter and Next.js Admin.
+  - Built reusable image abstraction (`FixImage` and `FixAvatar`) with monogram and category icon fallbacks; eliminated all fake remote placeholder images.
+- **Admin Portal Redesign (`admin/`)**:
+  - Modernized `globals.css` with CSS custom properties (`--primary: #006948`, `--background: #f8f9ff`, `--text-primary: #0b1c30`).
+  - Redesigned `admin-shell.tsx` with Deep Emerald brand header, glowing node status indicator ("LIVE DISPATCH RUNNING"), and navigation badges.
+  - Overhauled Operations Command Center (`page.tsx`) with Bento metric cards (Total Operations, Active Providers, Operations Load, Trust & Safety Score) and live incident grid.
+  - Redesigned Portal Staff Login (`login/page.tsx`) with Stitch Trust Matrix card layout and Zod schema validation.
+- **Mobile Frontend Redesign (`mobile/`)**:
+  - `service_discovery_screen.dart`: Stitch header with dynamic pro counter (`1 Pros Online`), universal search bar, filter chips, and clean monogram category cards.
+  - `sub_service_catalog_screen.dart`: Converted to Stitch light canvas with emerald add/quantity steppers and sliding cart itemizer sheet.
+  - `customer_bookings_screen.dart` & `booking_tracking_screen.dart`: Updated to high-contrast Obsidian text tokens (`textPrimary`, `textSecondary`).
+  - `role_selection_screen.dart` & `welcome_screen.dart`: Redesigned with Stitch cards, subtle micro-animations, and honest onboarding copy.
+  - `fix_address_selector.dart`: Restored input field contracts and wrapped bottom sheet in Material for flawless form interactions.
+- **Zero Mock Data & Real Backend Preservation**:
+  - All dynamic data across mobile and admin is sourced from live NestJS APIs and PostgreSQL entities. Zero fake mock data introduced.
+  - Intact authentication, session tokens, WebSocket events, and TypeORM schemas.
+
+### Validation
+- **Flutter Analyzer**: `flutter analyze lib/` passed with **0 issues** (clean).
+- **Mobile Test Suite**: **290 / 290 tests passed (100% green, 0 failures)**.
+- **Admin Test Suite**: **16 / 16 tests passed across 8 test files (100% green, 0 failures)**.
+- **Admin Production Build**: `npm run build` compiled cleanly (0 errors).
+- **Backend Test Suite**: **515 / 515 tests passed across 80 test suites (100% green, 0 failures)**.
+- **Browser Automation (E2E)**:
+  - Admin Portal verified at `http://localhost:3100`: Staff login, Bento metric cards, live node status, Providers queue, Services catalog, and Trust audits.
+  - Flutter Mobile Web verified at `http://localhost:51354`: Welcome screen, role selection, customer discovery with real live pros counter, and sub-service catalog cart itemization.
+
 

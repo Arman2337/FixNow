@@ -24,6 +24,7 @@ class _FakeRepository extends ProblemAnalysisRepository {
   MultipartFileData? lastImage;
   MultipartFileData? lastAudio;
   String? lastLanguageHint;
+  String? lastTextDescription;
   int calls = 0;
 
   Future<ProblemAnalysis> _answer() async {
@@ -33,8 +34,12 @@ class _FakeRepository extends ProblemAnalysisRepository {
   }
 
   @override
-  Future<ProblemAnalysis> analyzeImage({required MultipartFileData image}) {
+  Future<ProblemAnalysis> analyzeImage({
+    required MultipartFileData image,
+    String? textDescription,
+  }) {
     lastImage = image;
+    lastTextDescription = textDescription;
     return _answer();
   }
 
@@ -42,9 +47,11 @@ class _FakeRepository extends ProblemAnalysisRepository {
   Future<ProblemAnalysis> analyzeVoice({
     required MultipartFileData audio,
     String? languageHint,
+    String? textDescription,
   }) {
     lastAudio = audio;
     lastLanguageHint = languageHint;
+    lastTextDescription = textDescription;
     return _answer();
   }
 
@@ -53,10 +60,12 @@ class _FakeRepository extends ProblemAnalysisRepository {
     required MultipartFileData image,
     required MultipartFileData audio,
     String? languageHint,
+    String? textDescription,
   }) {
     lastImage = image;
     lastAudio = audio;
     lastLanguageHint = languageHint;
+    lastTextDescription = textDescription;
     return _answer();
   }
 }

@@ -87,40 +87,43 @@ class _BookingCallScreenState extends State<BookingCallScreen>
     final disableMotion = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundPrimary,
+      backgroundColor: AppColors.secondarySlate,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.sm,
+          ),
           child: Column(
             children: [
-              const SizedBox(height: AppSpacing.xxl),
+              const SizedBox(height: AppSpacing.xs),
 
               // Top Privacy Shield Badge
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 14,
-                  vertical: 6,
+                  vertical: 5,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceElevated,
+                  color: Colors.white.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                   border: Border.all(
-                    color: AppColors.borderStrong.withValues(alpha: 0.4),
+                    color: Colors.white.withValues(alpha: 0.15),
                   ),
                 ),
-                child: Row(
+                child: const Row(
                   mainAxisSize: MainAxisSize.min,
-                  children: const [
+                  children: [
                     Icon(
                       Icons.shield_rounded,
-                      color: AppColors.focus,
+                      color: AppColors.primaryFixed,
                       size: 14,
                     ),
                     SizedBox(width: 6),
                     Text(
                       'Masked In-App Audio • Numbers Protected',
                       style: TextStyle(
-                        color: AppColors.textSecondary,
+                        color: Colors.white70,
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                       ),
@@ -129,299 +132,479 @@ class _BookingCallScreenState extends State<BookingCallScreen>
                 ),
               ),
 
-              const Spacer(),
-              // Avatar with acoustic radar pulsation & live speaking ripples
-              AnimatedBuilder(
-                animation: _pulseController,
-                builder: (context, child) {
-                  final isSpeaking = controller.isRemoteSpeaking;
-                  final scale = (!disableMotion &&
-                          (status == CallStatus.ringing ||
-                              status == CallStatus.connected))
-                      ? (isSpeaking
-                          ? 1.05 + (_pulseController.value * 0.05)
-                          : 1.0 + (_pulseController.value * 0.06))
-                      : 1.0;
-                  final pulseAlpha = (!disableMotion &&
-                          (status == CallStatus.ringing ||
-                              status == CallStatus.connected))
-                      ? 0.3 * (1.0 - _pulseController.value)
-                      : 0.0;
-
-                  return Transform.scale(
-                    scale: scale,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        if (isSpeaking && !disableMotion) ...[
-                          Container(
-                            width: 172,
-                            height: 172,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: AppColors.success.withValues(alpha: 0.4),
-                                width: 2,
-                              ),
-                            ),
-                          ),
-                          Container(
-                            width: 152,
-                            height: 152,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: AppColors.success.withValues(alpha: 0.16),
-                            ),
-                          ),
-                        ] else if (pulseAlpha > 0)
-                          Container(
-                            width: 148,
-                            height: 148,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: AppColors.primary.withValues(
-                                alpha: pulseAlpha,
-                              ),
-                            ),
-                          ),
-                        Container(
-                          width: 120,
-                          height: 120,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: AppColors.surfaceElevated,
-                            boxShadow: isSpeaking
-                                ? [
-                                    BoxShadow(
-                                      color: AppColors.success.withValues(alpha: 0.45),
-                                      blurRadius: 18,
-                                      spreadRadius: 4,
-                                    ),
-                                  ]
-                                : null,
-                            border: Border.all(
-                              color: isSpeaking
-                                  ? AppColors.success
-                                  : (status == CallStatus.connected
-                                      ? AppColors.primary
-                                      : AppColors.borderStrong),
-                              width: isSpeaking ? 4 : 3,
-                            ),
-                          ),
-                          child: const Center(
-                            child: Icon(
-                              Icons.person_rounded,
-                              color: AppColors.textPrimary,
-                              size: 64,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-
-              const SizedBox(height: AppSpacing.md),
-
-              // Live Speaking or Reconnecting Feedback Badge
-              if (controller.isReconnecting)
-                Container(
-                  margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: AppColors.accentGold.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                    border: Border.all(color: AppColors.accentGold),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(
-                        width: 12,
-                        height: 12,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: AppColors.accentGold,
-                        ),
-                      ),
-                      SizedBox(width: 8),
-                      Text(
-                        'Reconnecting audio...',
-                        style: TextStyle(
-                          color: AppColors.accentGold,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-              else if (controller.isRemoteSpeaking)
-                Container(
-                  margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: AppColors.success.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                    border: Border.all(color: AppColors.success.withValues(alpha: 0.4)),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.graphic_eq_rounded,
-                        color: AppColors.success,
-                        size: 15,
-                      ),
-                      SizedBox(width: 6),
-                      Text(
-                        'Speaking...',
-                        style: TextStyle(
-                          color: AppColors.success,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
               const SizedBox(height: AppSpacing.sm),
 
-              // Recipient Name & Verification
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Flexible(
-                    child: Text(
-                      widget.providerName,
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 24,
-                        fontWeight: FontWeight.w700,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+              // Main Active Call Arena
+              Expanded(
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.md,
+                  ),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        AppColors.primary.withValues(alpha: 0.85),
+                        const Color(0xFF0F172A),
+                      ],
                     ),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.3),
+                        blurRadius: 16,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 6),
-                  const Icon(
-                    Icons.verified_rounded,
-                    color: AppColors.focus,
-                    size: 18,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Text(
-                widget.serviceTitle,
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 14,
-                ),
-              ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Live Timer Pill / Status Ticker
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: status == CallStatus.connected
+                                    ? AppColors.primaryFixed
+                                    : AppColors.accentGold,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              _statusLabel(status),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                fontFeatures: [FontFeature.tabularFigures()],
+                              ),
+                            ),
+                            if (status == CallStatus.connected) ...[
+                              const SizedBox(width: 6),
+                              const Text(
+                                'Active',
+                                style: TextStyle(
+                                  color: AppColors.primaryFixedDim,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
 
-              const SizedBox(height: 12),
+                      const Spacer(),
 
-              // Status Ticker
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: status == CallStatus.connected
-                      ? AppColors.success.withValues(alpha: 0.15)
-                      : AppColors.surfaceElevated,
-                  borderRadius: BorderRadius.circular(AppRadius.pill),
-                ),
-                child: Text(
-                  _statusLabel(status),
-                  style: TextStyle(
-                    color: status == CallStatus.connected
-                        ? AppColors.success
-                        : AppColors.textPrimary,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                  ),
-                ),
-              ),
+                      // Center Avatar with Radiating Pulsing Wave Rings
+                      AnimatedBuilder(
+                        animation: _pulseController,
+                        builder: (context, child) {
+                          final isSpeaking = controller.isRemoteSpeaking;
+                          final scale = (!disableMotion &&
+                                  (status == CallStatus.ringing ||
+                                      status == CallStatus.connected))
+                              ? (isSpeaking
+                                  ? 1.04 + (_pulseController.value * 0.04)
+                                  : 1.0 + (_pulseController.value * 0.04))
+                              : 1.0;
 
-              if (status == CallStatus.connected) ...[
-                const SizedBox(height: AppSpacing.sm),
-                FixAudioWaveform(
-                  isSpeaking: controller.isRemoteSpeaking,
-                  height: 32,
-                  activeColor: AppColors.success,
-                ),
-              ],
+                          return Transform.scale(
+                            scale: scale,
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                if (!disableMotion &&
+                                    (status == CallStatus.ringing ||
+                                        status == CallStatus.connected)) ...[
+                                  Container(
+                                    width: 130,
+                                    height: 130,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: AppColors.primaryFixed.withValues(
+                                        alpha: 0.12 * (1.0 - _pulseController.value),
+                                      ),
+                                    ),
+                                  ),
+                                  Container(
+                                    width: 112,
+                                    height: 112,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: AppColors.primaryFixedDim.withValues(
+                                        alpha: 0.2 * _pulseController.value,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                                Container(
+                                  width: 90,
+                                  height: 90,
+                                  padding: const EdgeInsets.all(3),
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    gradient: const LinearGradient(
+                                      colors: [
+                                        AppColors.primaryFixed,
+                                        Colors.white,
+                                        AppColors.primaryFixedDim,
+                                      ],
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(alpha: 0.3),
+                                        blurRadius: 12,
+                                      ),
+                                    ],
+                                  ),
+                                  child: CircleAvatar(
+                                    backgroundColor: AppColors.secondarySlate,
+                                    child: Text(
+                                      widget.providerName.isNotEmpty
+                                          ? widget.providerName[0].toUpperCase()
+                                          : 'P',
+                                      style: const TextStyle(
+                                        color: AppColors.primaryFixed,
+                                        fontSize: 34,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Positioned(
+                                  bottom: 0,
+                                  right: 18,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(3),
+                                    decoration: const BoxDecoration(
+                                      color: AppColors.primaryFixed,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.verified_rounded,
+                                      color: AppColors.onPrimaryFixed,
+                                      size: 14,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
 
-              const Spacer(),
+                      const SizedBox(height: AppSpacing.sm),
 
-              // In-Call Action Controls
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  // Mute Microphone Button
-                  _CallActionButton(
-                    icon: controller.isMuted
-                        ? Icons.mic_off_rounded
-                        : Icons.mic_rounded,
-                    label: controller.isMuted ? 'Unmute' : 'Mute',
-                    isActive: controller.isMuted,
-                    onPressed: status == CallStatus.connected ||
-                            status == CallStatus.ringing
-                        ? controller.toggleMute
-                        : null,
-                  ),
-
-                  // End Call Button (Large Red)
-                  InkWell(
-                    onTap: () {
-                      controller.hangup();
-                      Navigator.of(context).maybePop();
-                    },
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                    child: Container(
-                      width: 68,
-                      height: 68,
-                      decoration: const BoxDecoration(
-                        color: AppColors.danger,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Color(0x66FF4D4F),
-                            blurRadius: 16,
-                            offset: Offset(0, 4),
+                      // Technician Identifier & Rating
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              widget.providerName,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryFixedDim.withValues(alpha: 0.25),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.star_rounded,
+                                  color: AppColors.accentGold,
+                                  size: 13,
+                                ),
+                                SizedBox(width: 3),
+                                Text(
+                                  '4.9',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
-                      child: const Icon(
-                        Icons.call_end_rounded,
-                        color: Colors.white,
-                        size: 32,
-                      ),
-                    ),
-                  ),
 
-                  // Speakerphone Button
-                  _CallActionButton(
-                    icon: controller.isSpeakerOn
-                        ? Icons.volume_up_rounded
-                        : Icons.volume_down_rounded,
-                    label: 'Speaker',
-                    isActive: controller.isSpeakerOn,
-                    onPressed: status == CallStatus.connected ||
-                            status == CallStatus.ringing
-                        ? controller.toggleSpeaker
-                        : null,
+                      const SizedBox(height: 2),
+
+                      const Text(
+                        'FixNow Verified Specialist',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+
+                      const Spacer(),
+
+                      // Audio Waveform Visualizer
+                      if (status == CallStatus.connected) ...[
+                        FixAudioWaveform(
+                          isSpeaking: controller.isRemoteSpeaking,
+                          height: 26,
+                          activeColor: AppColors.primaryFixed,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          controller.isRemoteSpeaking
+                              ? 'Speaking with customer'
+                              : 'Direct Audio Stream Connected',
+                          style: const TextStyle(
+                            color: Colors.white60,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ] else if (controller.isReconnecting) ...[
+                        const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                              width: 12,
+                              height: 12,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.accentGold,
+                              ),
+                            ),
+                            SizedBox(width: 8),
+                            Text(
+                              'Reconnecting audio...',
+                              style: TextStyle(
+                                color: AppColors.accentGold,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
                   ),
-                ],
+                ),
               ),
 
-              const SizedBox(height: AppSpacing.xxl),
+              const SizedBox(height: AppSpacing.sm),
+
+              // Job Reference Card
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md,
+                  vertical: AppSpacing.sm,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceContainerLowest,
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceContainerLow,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.handyman_rounded,
+                        color: AppColors.primary,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Text(
+                                'Active Job Context',
+                                style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 1),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primarySoft,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  '#${widget.controller.bookingId.length > 8 ? widget.controller.bookingId.substring(0, 8) : widget.controller.bookingId}',
+                                  style: const TextStyle(
+                                    color: AppColors.primary,
+                                    fontSize: 10,
+fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            widget.serviceTitle,
+                            style: const TextStyle(
+                              color: AppColors.textPrimary,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: AppSpacing.sm),
+
+              // Circular Call Actions Grid
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md,
+                  vertical: AppSpacing.md,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceContainerLow,
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        // Mute Microphone Button
+                        _CallActionButton(
+                          icon: controller.isMuted
+                              ? Icons.mic_off_rounded
+                              : Icons.mic_rounded,
+                          label: controller.isMuted ? 'Unmute' : 'Mute',
+                          isActive: controller.isMuted,
+                          onPressed: status == CallStatus.connected ||
+                                  status == CallStatus.ringing
+                              ? controller.toggleMute
+                              : null,
+                        ),
+
+                        // Speakerphone Button
+                        _CallActionButton(
+                          icon: controller.isSpeakerOn
+                              ? Icons.volume_up_rounded
+                              : Icons.volume_down_rounded,
+                          label: 'Speaker',
+                          isActive: controller.isSpeakerOn,
+                          onPressed: status == CallStatus.connected ||
+                                  status == CallStatus.ringing
+                              ? controller.toggleSpeaker
+                              : null,
+                        ),
+
+                        // Keypad / Dialpad
+                        _CallActionButton(
+                          icon: Icons.dialpad_rounded,
+                          label: 'Keypad',
+                          isActive: false,
+                          onPressed: () {},
+                        ),
+
+                        // Live Chat
+                        _CallActionButton(
+                          icon: Icons.chat_bubble_rounded,
+                          label: 'Chat',
+                          isActive: false,
+                          onPressed: () {
+                            Navigator.of(context).maybePop();
+                          },
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: AppSpacing.md),
+
+                    // Large Crimson End Call CTA
+                    InkWell(
+                      onTap: () {
+                        controller.hangup();
+                        Navigator.of(context).maybePop();
+                      },
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                      child: Container(
+                        width: 64,
+                        height: 64,
+                        decoration: const BoxDecoration(
+                          color: AppColors.danger,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Color(0x55FF4D4F),
+                              blurRadius: 16,
+                              offset: Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.call_end_rounded,
+                          color: Colors.white,
+                          size: 30,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: AppSpacing.xs),
             ],
           ),
         ),

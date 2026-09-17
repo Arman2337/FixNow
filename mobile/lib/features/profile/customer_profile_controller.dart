@@ -1,3 +1,4 @@
+import 'package:fixnow_mobile/features/profile/customer_profile.dart';
 import 'package:fixnow_mobile/api/api_client.dart';
 import 'package:fixnow_mobile/features/profile/customer_profile_repository.dart';
 import 'package:flutter/foundation.dart';
@@ -18,12 +19,16 @@ class CustomerProfileController extends ChangeNotifier {
   final CustomerProfileRepository _repository;
   ProfileViewStatus status = ProfileViewStatus.initial;
   String displayName = '';
+  CustomerProfile? profile;
+  CustomerProfileStats? get stats => profile?.stats;
 
   Future<void> load() async {
     status = ProfileViewStatus.loading;
     notifyListeners();
     try {
-      displayName = (await _repository.read()).displayName ?? '';
+      profile = await _repository.read();
+      displayName = profile!.displayName ?? '';
+      status = ProfileViewStatus.ready;
       status = ProfileViewStatus.ready;
     } on ApiException catch (error) {
       status = _map(error);
@@ -43,7 +48,9 @@ class CustomerProfileController extends ChangeNotifier {
     status = ProfileViewStatus.saving;
     notifyListeners();
     try {
-      displayName = (await _repository.update(trimmed)).displayName ?? '';
+      final profile = await _repository.update(trimmed);
+      displayName = profile.displayName ?? '';
+      this.profile = profile;
       status = ProfileViewStatus.saved;
       notifyListeners();
       return true;

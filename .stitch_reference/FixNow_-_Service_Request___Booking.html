@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "on-surface-variant": "#3d4a42", "surface-tint": "#006c4a", "primary-fixed-dim": "#68dba9", "surface-container-lowest": "#ffffff", "inverse-primary": "#68dba9", "on-primary-fixed": "#002114", "primary-fixed": "#85f8c4", "outline-variant": "#bccac0", "primary": "#006948", "on-secondary-fixed-variant": "#3f465c", "on-primary-fixed-variant": "#005137", "inverse-surface": "#213145", "error-container": "#ffdad6", "tertiary-fixed-dim": "#ffb95f", "background": "#f8f9ff", "on-secondary-container": "#5c647a", "surface-variant": "#d3e4fe", "on-surface": "#0b1c30", "surface-container-high": "#dce9ff", "surface": "#f8f9ff", "tertiary-fixed": "#ffddb8", "on-background": "#0b1c30", "on-primary": "#ffffff", "surface-container": "#e5eeff", "on-tertiary": "#ffffff", "tertiary-container": "#a36700", "outline": "#6d7a72", "on-tertiary-fixed": "#2a1700", "on-secondary-fixed": "#131b2e", "secondary-container": "#dae2fd", "surface-dim": "#cbdbf5", "on-tertiary-fixed-variant": "#653e00", "surface-bright": "#f8f9ff", "on-secondary": "#ffffff", "error": "#ba1a1a", "surface-container-highest": "#d3e4fe", "surface-container-low": "#eff4ff", "secondary-fixed-dim": "#bec6e0", "tertiary": "#825100", "on-primary-container": "#f5fff7", "secondary": "#565e74", "secondary-fixed": "#dae2fd", "on-tertiary-container": "#fffbff", "primary-container": "#00855d", "on-error-container": "#93000a", "on-error": "#ffffff", "inverse-on-surface": "#eaf1ff" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "margin": "1rem", "space-xl": "2rem", "margin-tablet": "1.5rem", "gutter-desktop": "1.5rem", "space-sm": "0.5rem", "space-md": "1rem", "gutter": "1rem", "space-xs": "0.25rem", "space-lg": "1.5rem", "margin-desktop": "2rem" }, "fontFamily": { "label-sm": ["Inter"], "label-md": ["Inter"], "headline-lg": ["Plus Jakarta Sans"], "price-display": ["Plus Jakarta Sans"], "body-lg": ["Inter"], "headline-xl-mobile": ["Plus Jakarta Sans"], "headline-xl": ["Plus Jakarta Sans"], "data-mono": ["Inter"], "body-sm": ["Inter"], "headline-md": ["Plus Jakarta Sans"], "headline-lg-mobile": ["Plus Jakarta Sans"], "body-md": ["Inter"] }, "fontSize": { "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "600" }], "label-md": ["13px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "600" }], "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.015em", "fontWeight": "700" }], "price-display": ["24px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "700" }], "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }], "headline-xl-mobile": ["30px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "800" }], "headline-xl": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "800" }], "data-mono": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }], "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }], "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }], "headline-lg-mobile": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "700" }], "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }] } } } };</script><style>@layer base{html,body{width:100%;margin:0;padding:0;}body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}}::-webkit-scrollbar{display:none;}</style><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface text-on-surface font-body-md text-body-md flex flex-col min-h-screen"><header class="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] pt-safe"><div class="h-16 px-margin flex items-center justify-between"><div class="flex items-center gap-space-xs"><button class="w-11 h-11 -ml-space-xs flex items-center justify-center text-on-surface hover:text-primary transition-colors" onclick="history.back()"><span class="material-symbols-outlined">arrow_back</span></button><h1 class="font-headline-md text-headline-md text-on-surface font-semibold tracking-tight truncate max-w-[220px]">Schedule Appointment</h1></div><div class="flex items-center gap-space-sm"><button class="w-11 h-11 flex items-center justify-center text-on-surface-variant hover:text-on-surface rounded-full transition-colors"><span class="material-symbols-outlined">help_outline</span></button><img alt="Profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1UHetTjpd4BB1e8njLlIDDmUsYV1qxX9ZC_wim9sHsXYmSrYRkJpnyD1IHW75IXxc9pB2kik0nzNC98TRCklpEgiq7TkSpL4ITZqzFt8uLi5EyWXYQq9m4a8YI9wZ3o6xvQSkDtb6AI5-x28GAADr5cRCtuuSX9N5FrvCQ7MBueDjttVq6CBcCdMU6PRAQsRnz78gBoZeg_WCxKbdy42V0Um4AxVfE0kNiMNfOiHfuES63iQSWWA34hjob7XGOL3mAbPdCfF9El6g"/></div></div></header><main class="flex-1 flex flex-col relative w-full pt-16 bg-surface"><div class="flex flex-col w-full pb-28">
+<div class="px-margin pt-space-sm pb-space-xs flex items-center justify-between">
+<div class="flex items-center gap-1.5 overflow-hidden">
+<span class="font-label-sm text-label-sm text-on-surface-variant/70 shrink-0">Plumbing &amp; Sanitary</span>
+<span class="material-symbols-outlined text-sm text-on-surface-variant/40 shrink-0">chevron_right</span>
+<span class="font-label-sm text-label-sm text-primary font-semibold truncate">Tap &amp; Mixer Repair</span>
+</div>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed font-label-sm text-label-sm font-bold shadow-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+      LIVE
+    </span>
+</div>
+<div class="px-margin space-y-space-md mt-space-xs">
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm relative overflow-hidden">
+<div class="flex items-start justify-between gap-space-sm">
+<div class="flex gap-space-sm">
+<div class="w-12 h-12 rounded-lg bg-surface-container flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">faucet</span>
+</div>
+<div class="min-w-0">
+<div class="flex items-center gap-1.5">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-primary font-bold">Item 1 of 1</span>
+</div>
+<h2 class="font-headline-md text-body-lg font-bold text-on-surface truncate">Water Tap Repair &amp; Washer Replacement</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Qty: 1 Unit • Standard Fitting</p>
+</div>
+</div>
+<div class="text-right shrink-0">
+<span class="font-price-display text-headline-md font-bold text-on-surface">₹199</span>
+<button class="block font-label-sm text-label-sm text-primary font-bold hover:underline mt-0.5" type="button">Edit Cart</button>
+</div>
+</div>
+</div>
+<div class="bg-gradient-to-r from-primary/10 via-surface-container-high to-surface-container p-space-md rounded-xl shadow-sm relative overflow-hidden cursor-pointer active:scale-[0.99] transition-transform">
+<div class="flex items-center justify-between gap-space-sm">
+<div class="flex items-center gap-space-sm">
+<div class="w-9 h-9 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-sm shrink-0">
+<span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 1;">psychology</span>
+</div>
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-label-sm text-label-sm font-bold text-primary tracking-wide">FixAI Diagnostics</span>
+<span class="bg-primary text-on-primary font-label-sm text-[10px] px-1.5 py-0.2 rounded font-bold">98% MATCH</span>
+</div>
+<p class="font-body-sm text-body-sm font-semibold text-on-surface">Detected: Valve Thread Leakage</p>
+</div>
+</div>
+<div class="flex items-center text-primary font-label-sm text-label-sm font-bold shrink-0">
+<span>Report</span>
+<span class="material-symbols-outlined text-base">chevron_right</span>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm space-y-space-sm">
+<div class="flex items-center justify-between">
+<label class="font-label-md text-label-md font-bold text-on-surface flex items-center gap-1.5" for="issue-description">
+<span>Detailed Issue Description</span>
+<span class="text-error font-bold">*</span>
+</label>
+<span class="font-data-mono text-data-mono text-on-surface-variant/70">Audio/Photos Synced</span>
+</div>
+<div class="relative rounded-lg bg-surface-container-low p-space-sm focus-within:bg-surface-container transition-colors">
+<textarea class="w-full bg-transparent border-0 text-on-surface font-body-md text-body-md focus:outline-none resize-none leading-relaxed" id="issue-description" placeholder="Describe your issue in detail..." rows="3">Kitchen mixer tap dripping continuously under sink valve. Needs washer replacement and joint sealing.</textarea>
+<div class="flex items-center justify-between pt-2">
+<div class="flex items-center gap-2">
+<div class="inline-flex items-center gap-1.5 bg-surface-container-lowest px-2.5 py-1 rounded-full shadow-sm">
+<img class="w-4 h-4 rounded-full object-cover" data-alt="Close up view of stainless steel kitchen tap joint dripping water beads onto polished chrome drain under soft indoor warm lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA6sXI0t4Ci2GJPttu8QttdCzSboeGxTldYopsBdIYa5aZzsqEg6H6YIduf1Pnbgw2taQVeqptOTyq6KcYcxJimuSfTkPmIeGBnX34Q547p1_lDw66tB4FzuijDCdi8CumTvFELyXtDntCFlUYehS7Bp9LwsxqqbPAXDcVhxuk-BtNr7PV7ErJtgDa6HiH6nTUaOLb45f1fPaihCQoc7pcy8wQVjxLUykxbETu6n2CsNja16FQE9YFF"/>
+<span class="font-label-sm text-label-sm text-on-surface font-medium">leak_valve.jpg</span>
+<button class="text-on-surface-variant hover:text-error flex items-center" type="button"><span class="material-symbols-outlined text-xs">close</span></button>
+</div>
+<button class="inline-flex items-center gap-1 bg-surface-container-high px-2.5 py-1 rounded-full text-on-surface font-label-sm text-label-sm font-medium hover:bg-surface-dim active:scale-95 transition-all" type="button">
+<span class="material-symbols-outlined text-sm text-primary">add_a_photo</span>
+<span>Attach</span>
+</button>
+</div>
+<button class="w-9 h-9 rounded-full bg-primary-fixed text-on-primary-fixed flex items-center justify-center hover:bg-primary-fixed-dim active:scale-95 transition-all shadow-sm" id="mic-btn" type="button">
+<span class="material-symbols-outlined text-lg">mic</span>
+</button>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm">
+<div class="flex items-center justify-between mb-2">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-tertiary text-lg" style="font-variation-settings: 'FILL' 1;">insights</span>
+<h3 class="font-label-md text-label-md font-bold text-on-surface">Bellandur Historical Advisory Rate</h3>
+</div>
+<span class="font-data-mono text-data-mono font-bold text-tertiary bg-tertiary-fixed/60 px-2 py-0.5 rounded">140+ Repairs</span>
+</div>
+<div class="flex items-baseline justify-between">
+<div>
+<span class="font-price-display text-headline-lg font-extrabold text-on-surface">₹249 – ₹399</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Average complete repair invoice in your locality</p>
+</div>
+<div class="text-right">
+<span class="font-label-sm text-label-sm font-bold text-primary bg-primary-fixed/40 px-2 py-1 rounded-full inline-flex items-center gap-1">
+<span class="material-symbols-outlined text-xs font-bold">verified</span> Safe Price Band
+          </span>
+</div>
+</div>
+<div class="w-full bg-surface-container rounded-full h-2 mt-3 overflow-hidden flex">
+<div class="bg-outline-variant h-full w-[20%]"></div>
+<div class="bg-primary h-full w-[55%] rounded-full shadow-sm"></div>
+<div class="bg-tertiary-fixed-dim h-full w-[25%]"></div>
+</div>
+<div class="flex justify-between font-data-mono text-[10px] text-on-surface-variant/80 mt-1">
+<span>Min ₹149</span>
+<span class="font-bold text-primary">Typical Range</span>
+<span>Max ₹550</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm">
+<h3 class="font-label-md text-label-md font-bold text-on-surface mb-space-sm flex items-center justify-between">
+<span>Select Execution Mode</span>
+<span class="font-label-sm text-label-sm text-primary font-semibold">Real-Time SLA</span>
+</h3>
+<div class="grid grid-cols-2 gap-space-sm" id="scheduling-toggle">
+<div class="cursor-pointer p-3 rounded-xl bg-primary text-on-primary shadow-md relative overflow-hidden transition-all flex flex-col justify-between h-28" id="option-sos" onclick="toggleSchedule('sos')">
+<div class="flex items-start justify-between">
+<span class="material-symbols-outlined text-2xl text-primary-fixed" style="font-variation-settings: 'FILL' 1;">bolt</span>
+<span class="w-4 h-4 rounded-full bg-on-primary text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-xs font-black">check</span>
+</span>
+</div>
+<div>
+<span class="font-label-sm text-label-sm font-extrabold uppercase tracking-wide text-primary-fixed block">Instant SOS</span>
+<span class="font-body-sm text-body-sm font-bold leading-tight block mt-0.5">15-Min Arrival</span>
+<span class="font-data-mono text-[10px] text-on-primary/80 mt-1 flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-fixed animate-ping"></span> 5 techs near
+            </span>
+</div>
+</div>
+<div class="cursor-pointer p-3 rounded-xl bg-surface-container-low text-on-surface shadow-none relative overflow-hidden transition-all flex flex-col justify-between h-28 hover:bg-surface-container" id="option-later" onclick="toggleSchedule('later')">
+<div class="flex items-start justify-between">
+<span class="material-symbols-outlined text-2xl text-on-surface-variant">calendar_clock</span>
+<span class="w-4 h-4 rounded-full border border-outline-variant hidden items-center justify-center" id="later-check">
+<span class="material-symbols-outlined text-xs font-black text-primary">check</span>
+</span>
+</div>
+<div>
+<span class="font-label-sm text-label-sm font-extrabold uppercase tracking-wide text-on-surface-variant block">Schedule</span>
+<span class="font-body-sm text-body-sm font-bold leading-tight block mt-0.5">Pick Slot</span>
+<span class="font-data-mono text-[10px] text-on-surface-variant/80 mt-1 block truncate">Tomorrow onwards</span>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm">
+<div class="flex items-start justify-between gap-space-sm">
+<div class="flex gap-space-sm">
+<div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1;">pin_drop</span>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<h3 class="font-label-md text-label-md font-bold text-on-surface">Service Address</h3>
+<span class="inline-flex items-center gap-0.5 text-primary font-data-mono text-label-sm font-bold bg-primary-fixed/40 px-1.5 rounded">
+<span class="material-symbols-outlined text-xs">my_location</span> GPS ±3m
+              </span>
+</div>
+<p class="font-body-md text-body-md text-on-surface font-semibold mt-0.5">Flat 402, Green Glen Layout</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Bellandur, Outer Ring Road, Bengaluru 560103</p>
+</div>
+</div>
+<button class="font-label-sm text-label-sm text-primary font-bold hover:underline shrink-0 pt-0.5" type="button">Change</button>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded-lg bg-secondary-container text-on-secondary-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-xl">payments</span>
+</div>
+<div>
+<h3 class="font-label-md text-label-md font-bold text-on-surface">Pay After Service</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Zero advance fee • Pay via UPI / Card / Cash</p>
+</div>
+</div>
+</div>
+<div class="mt-space-sm pt-space-sm bg-surface-container-low rounded-lg p-2.5 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-xl" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+<div>
+<span class="font-label-sm text-label-sm font-bold text-on-surface block leading-tight">FixNow Escrow Protected</span>
+<span class="font-data-mono text-[11px] text-on-surface-variant">100% money backed 30-day rework warranty</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-primary text-sm">shield</span>
+</div>
+</div>
+</div>
+<div class="fixed bottom-0 left-0 right-0 z-40 bg-surface-container-lowest/95 backdrop-blur-md shadow-[0_-4px_16px_rgba(0,0,0,0.06)] pb-safe">
+<div class="max-w-md mx-auto px-margin py-3">
+<div class="flex items-center justify-between mb-2 px-1">
+<div class="flex items-baseline gap-1.5">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Base Total:</span>
+<span class="font-headline-md text-headline-md font-bold text-on-surface">₹199</span>
+<span class="font-data-mono text-label-sm text-on-surface-variant/70">+ GST (18%)</span>
+</div>
+<span class="font-data-mono text-label-sm font-bold text-primary flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-primary animate-ping"></span> Dispatch Live
+        </span>
+</div>
+<button class="w-full h-14 bg-primary text-on-primary rounded-xl font-headline-md text-body-lg font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary/20 active:scale-[0.98] transition-all" onclick="triggerBooking()" type="button">
+<span>Confirm &amp; Request Service</span>
+<span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<script>
+  function toggleSchedule(type) {
+    const sos = document.getElementById('option-sos');
+    const later = document.getElementById('option-later');
+    const laterCheck = document.getElementById('later-check');
+
+    if (type === 'sos') {
+      sos.className = "cursor-pointer p-3 rounded-xl bg-primary text-on-primary shadow-md relative overflow-hidden transition-all flex flex-col justify-between h-28";
+      sos.querySelector('.material-symbols-outlined').style.color = '#85f8c4';
+      sos.querySelector('.material-symbols-outlined').innerText = 'bolt';
+      sos.querySelector('span.w-4').classList.remove('hidden');
+      sos.querySelector('span.w-4').classList.add('flex');
+
+      later.className = "cursor-pointer p-3 rounded-xl bg-surface-container-low text-on-surface shadow-none relative overflow-hidden transition-all flex flex-col justify-between h-28 hover:bg-surface-container";
+      laterCheck.classList.add('hidden');
+      laterCheck.classList.remove('flex');
+    } else {
+      later.className = "cursor-pointer p-3 rounded-xl bg-primary text-on-primary shadow-md relative overflow-hidden transition-all flex flex-col justify-between h-28";
+      laterCheck.classList.remove('hidden');
+      laterCheck.classList.add('flex');
+
+      sos.className = "cursor-pointer p-3 rounded-xl bg-surface-container-low text-on-surface shadow-none relative overflow-hidden transition-all flex flex-col justify-between h-28 hover:bg-surface-container";
+      sos.querySelector('span.w-4').classList.add('hidden');
+      sos.querySelector('span.w-4').classList.remove('flex');
+    }
+  }
+
+  function triggerBooking() {
+    const btn = event.currentTarget;
+    btn.innerHTML = '<span class="material-symbols-outlined animate-spin">progress_activity</span><span>Securing Technician...</span>';
+    btn.classList.add('opacity-90');
+    setTimeout(() => {
+      btn.innerHTML = '<span class="material-symbols-outlined">check_circle</span><span>Dispatched! 14 Mins</span>';
+      btn.classList.remove('bg-primary');
+      btn.classList.add('bg-primary-container');
+    }, 1200);
+  }
+</script></main></body></html>

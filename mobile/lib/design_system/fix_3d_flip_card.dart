@@ -186,8 +186,7 @@ class _Fix3DFlipCardState extends State<Fix3DFlipCard>
           Text(
             widget.cardNumber,
             style: const TextStyle(
-              fontFamily: 'monospace',
-              fontSize: 16,
+fontSize: 16,
               letterSpacing: 2.2,
               fontWeight: FontWeight.w700,
               color: Colors.white,
@@ -303,8 +302,7 @@ class _Fix3DFlipCardState extends State<Fix3DFlipCard>
                   child: Text(
                     widget.cvv,
                     style: const TextStyle(
-                      fontFamily: 'monospace',
-                      fontWeight: FontWeight.w800,
+fontWeight: FontWeight.w800,
                       fontSize: 12,
                       color: Colors.black87,
                     ),

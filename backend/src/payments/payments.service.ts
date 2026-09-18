@@ -29,10 +29,6 @@ import { TrustService } from '../trust/trust.service';
 
 /** Booking states for which the customer may open a payment. */
 const PAYABLE_BOOKING_STATUSES: readonly string[] = [
-  BookingStatus.REQUESTED,
-  BookingStatus.ASSIGNED,
-  BookingStatus.EN_ROUTE,
-  BookingStatus.IN_PROGRESS,
   BookingStatus.COMPLETED,
 ];
 
@@ -82,8 +78,17 @@ export class PaymentsService {
         'This service is priced on request; online payment is unavailable',
       );
     }
+    
+    let totalMinor = category.priceAmount;
+    if (booking.lineItems && booking.lineItems.length > 0) {
+      totalMinor = booking.lineItems.reduce(
+        (sum, item) => sum + item.priceMinor * item.quantity,
+        category.priceAmount,
+      );
+    }
+
     const input: CreatePaymentOrderRequest = {
-      amountMinor: category.priceAmount,
+      amountMinor: totalMinor,
       currency,
       receipt,
       notes: { bookingId: booking.id },

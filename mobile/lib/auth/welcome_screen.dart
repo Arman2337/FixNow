@@ -238,99 +238,52 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                               ),
                             ),
                             Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
+                                Container(
+                                  width: 48,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(
+                                      alpha: 0.15,
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Icon(
+                                    Icons.handshake_rounded,
+                                    color: AppColors.primaryFixedDim,
+                                    size: 24,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
                                 Expanded(
-                                  child: Row(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      Container(
-                                        width: 48,
-                                        height: 48,
-                                        decoration: BoxDecoration(
-                                          color: Colors.white.withValues(
-                                            alpha: 0.15,
-                                          ),
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                        ),
-                                        child: Icon(
-                                          Icons.verified_rounded,
-                                          color: AppColors.primaryFixedDim,
-                                          size: 24,
-                                        ),
+                                      Text(
+                                        'WELCOME TO FIXNOW',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: FixNowTypography.labelSmall
+                                            .copyWith(
+                                              color: AppColors.primaryFixedDim,
+                                              letterSpacing: 1.2,
+                                              fontWeight: FontWeight.w700,
+                                            ),
                                       ),
-                                      const SizedBox(width: 12),
-                                      Flexible(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              'ZERO DELAY GUARANTEE',
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: FixNowTypography.labelSmall
-                                                  .copyWith(
-                                                    color: AppColors
-                                                        .primaryFixedDim,
-                                                    letterSpacing: 0.8,
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Repair service at your door step',
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: FixNowTypography.headlineMd
+                                            .copyWith(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w800,
                                             ),
-                                            const SizedBox(height: 2),
-                                            Text(
-                                              '15-Min Dispatch',
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: FixNowTypography.headlineMd
-                                                  .copyWith(
-                                                    color: Colors.white,
-                                                    fontWeight: FontWeight.w700,
-                                                  ),
-                                            ),
-                                          ],
-                                        ),
                                       ),
                                     ],
                                   ),
-                                ),
-                                const SizedBox(width: 8),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 10,
-                                        vertical: 4,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white.withValues(
-                                          alpha: 0.2,
-                                        ),
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          const _PingDot(
-                                            color: AppColors.primaryFixed,
-                                            size: 8,
-                                          ),
-                                          const SizedBox(width: 6),
-                                          Text(
-                                            'LIVE RADAR',
-                                            style: FixNowTypography.dataMono
-                                                .copyWith(
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.w600,
-                                                  letterSpacing: 0.4,
-                                                ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
                                 ),
                               ],
                             ),

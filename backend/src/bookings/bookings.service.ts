@@ -8,9 +8,9 @@ import {
 import { InjectDataSource } from '@nestjs/typeorm';
 import { createHash, createHmac, timingSafeEqual } from 'crypto';
 import { ConfigService } from '@nestjs/config';
-import { DataSource, EntityManager, IsNull, QueryFailedError } from 'typeorm';
+import { DataSource, EntityManager, IsNull, QueryFailedError, In } from 'typeorm';
 import { BookingStatus } from '../../../shared/booking-lifecycle.types';
-import { CreateBookingDto } from './bookings.dto';
+import { CreateBookingDto, CreateBookingLineItemDto } from './bookings.dto';
 import { BookingEvent } from './domain/booking-event.entity';
 import { Booking } from './domain/booking.entity';
 import { MatchingService } from '../matching/matching.service';
@@ -20,6 +20,7 @@ import { DomainNotificationService } from '../notifications/domain/domain-notifi
 import { TrustService } from '../trust/trust.service';
 import { BookingLineItem } from './domain/booking-line-item.entity';
 import { SubServiceEntity } from '../services/sub-service.entity';
+import { UserEntity } from '../users/user.entity';
 
 export interface BookingHistoryPage {
   bookings: Booking[];
@@ -263,6 +264,57 @@ export class BookingsService {
     return booking;
   }
 
+  async updateBookingLineItems(
+    bookingId: string,
+    providerId: string,
+    lineItemsInput: CreateBookingLineItemDto[],
+    expectedVersion: number,
+  ): Promise<Booking> {
+    const booking = await this.transition(
+      bookingId,
+      providerId,
+      expectedVersion,
+      async (booking, manager) => {
+        if (booking.providerId !== providerId) {
+          throw new ForbiddenException('You are not assigned to this booking');
+        }
+        if (booking.status === BookingStatus.COMPLETED || booking.status === BookingStatus.CANCELLED) {
+          throw new ConflictException('Cannot modify line items for a completed or cancelled booking');
+        }
+
+        const lineItemRepo = manager.getRepository(BookingLineItem);
+        const subServiceRepo = manager.getRepository(SubServiceEntity);
+        
+        // Remove existing line items for this booking
+        await lineItemRepo.delete({ bookingId: booking.id });
+        
+        // Add new line items
+        if (lineItemsInput.length > 0) {
+          const newLineItems = await Promise.all(
+            lineItemsInput.map(async (item) => {
+              const subService = await subServiceRepo.findOneBy({ id: item.subServiceId });
+              if (!subService || subService.priceMinor === undefined) {
+                throw new BadRequestException(`Invalid sub-service or price not set: ${item.subServiceId}`);
+              }
+              return lineItemRepo.create({
+                bookingId: booking.id,
+                subServiceId: item.subServiceId,
+                quantity: item.quantity,
+                priceMinor: subService.priceMinor ?? 0,
+              });
+            }),
+          );
+          await lineItemRepo.save(newLineItems);
+          booking.lineItems = newLineItems;
+        } else {
+          booking.lineItems = [];
+        }
+      },
+    );
+    await this.bookingProjections?.publishBooking(booking);
+    return booking;
+  }
+
   async cancelBooking(
     bookingId: string,
     userId: string,
@@ -482,6 +534,7 @@ export class BookingsService {
           })
         : booking,
     );
+    await this.populatePhones(page);
     const last = page.at(-1);
     return {
       bookings: page,
@@ -522,6 +575,7 @@ export class BookingsService {
       if (bookings.length === boundedLimit) break;
     }
 
+    await this.populatePhones(bookings.map((b) => b.booking));
     return { bookings };
   }
 
@@ -563,7 +617,7 @@ export class BookingsService {
     bookingId: string,
     actorUserId: string,
     expectedVersion: number,
-    mutate: (booking: Booking) => void,
+    mutate: (booking: Booking, manager: EntityManager) => void | Promise<void>,
     reason: string | null = null,
   ): Promise<Booking> {
     if (!Number.isInteger(expectedVersion) || expectedVersion < 1) {
@@ -580,7 +634,7 @@ export class BookingsService {
       }
 
       const fromStatus = booking.status;
-      mutate(booking);
+      await mutate(booking, manager);
       const result = await repository
         .createQueryBuilder()
         .update(Booking)
@@ -732,5 +786,22 @@ export class BookingsService {
     } catch {
       throw new BadRequestException('Invalid booking history cursor');
     }
+  }
+
+  private async populatePhones(bookings: Booking[]): Promise<void> {
+    if (bookings.length === 0) return;
+    const userIds = new Set<string>();
+    bookings.forEach((b) => {
+      userIds.add(b.customerId);
+      if (b.providerId) userIds.add(b.providerId);
+    });
+    const users = await this.dataSource.getRepository(UserEntity).find({
+      where: { id: In([...userIds]) },
+    });
+    const phoneMap = new Map(users.map((u) => [u.id, u.phone]));
+    bookings.forEach((b) => {
+      b.customerPhone = phoneMap.get(b.customerId) ?? null;
+      if (b.providerId) b.providerPhone = phoneMap.get(b.providerId) ?? null;
+    });
   }
 }

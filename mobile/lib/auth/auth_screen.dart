@@ -502,12 +502,12 @@ class _AuthScreenState extends State<AuthScreen>
                           const SizedBox(height: AppSpacing.md),
                         ],
 
-                        // Mobile Field (Optional)
+                        // Mobile Field (Mandatory)
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             const Text(
-                              'Mobile Number (Optional)',
+                              'Mobile Number',
                               style: TextStyle(
                                 color: AppColors.textPrimary,
                                 fontWeight: FontWeight.w600,
@@ -521,45 +521,51 @@ class _AuthScreenState extends State<AuthScreen>
                           decoration: BoxDecoration(
                             color: AppColors.surfaceContainerLowest,
                             borderRadius: BorderRadius.circular(8),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Color(0x05000000),
-                                blurRadius: 4,
-                                offset: Offset(0, 1),
-                              ),
-                            ],
+                            border: Border.all(
+                              color: AppColors.outlineVariant.withValues(alpha: 0.3),
+                            ),
                           ),
                           child: Row(
                             children: [
+                              const SizedBox(width: 12),
+                              Icon(
+                                Icons.smartphone_outlined,
+                                color: AppColors.textSecondary.withValues(alpha: 0.7),
+                                size: 20,
+                              ),
+                              Container(
+                                height: 24,
+                                width: 1,
+                                color: AppColors.outlineVariant.withValues(alpha: 0.3),
+                                margin: const EdgeInsets.symmetric(horizontal: 12),
+                              ),
                               // +91 Prefix Pill
                               Container(
-                                margin: const EdgeInsets.only(left: 8),
+                                margin: const EdgeInsets.only(top: 6, bottom: 6),
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
+                                  horizontal: 10,
+                                  vertical: 6,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: AppColors.surfaceContainer,
-                                  borderRadius: BorderRadius.circular(4),
+                                  color: Colors.green.withValues(alpha: 0.05),
+                                  borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Row(
                                   children: [
-                                    const Icon(
-                                      Icons.flag_circle_rounded,
-                                      size: 16,
-                                      color: Colors.orange,
-                                    ),
-                                    const SizedBox(width: 4),
+                                    const Text('🇮🇳', style: TextStyle(fontSize: 16)),
+                                    const SizedBox(width: 6),
                                     Text(
                                       '+91',
                                       style: FixNowTypography.dataMono.copyWith(
                                         color: AppColors.textPrimary,
                                         fontWeight: FontWeight.w600,
+                                        fontSize: 13,
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
+                              const SizedBox(width: 8),
                               Expanded(
                                 child: TextFormField(
                                   controller: _mobile,
@@ -570,7 +576,7 @@ class _AuthScreenState extends State<AuthScreen>
                                     color: AppColors.textPrimary,
                                   ),
                                   decoration: InputDecoration(
-                                    hintText: '98765 43210',
+                                    hintText: 'Enter your mobile number',
                                     hintStyle: TextStyle(
                                       color: AppColors.textSecondary.withValues(
                                         alpha: 0.5,
@@ -578,10 +584,14 @@ class _AuthScreenState extends State<AuthScreen>
                                     ),
                                     border: InputBorder.none,
                                     contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
+                                      horizontal: 0,
                                       vertical: 14,
                                     ),
                                   ),
+                                  validator: (value) =>
+                                      (value == null || value.trim().isEmpty)
+                                          ? 'Enter your mobile number.'
+                                          : null,
                                 ),
                               ),
                             ],

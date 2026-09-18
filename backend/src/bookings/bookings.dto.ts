@@ -62,6 +62,17 @@ export class CreateBookingDto implements CreateBookingRequest {
   lineItems?: CreateBookingLineItemDto[];
 }
 
+export class UpdateBookingLineItemsDto {
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateBookingLineItemDto)
+  lineItems: CreateBookingLineItemDto[];
+
+  @IsInt()
+  @Min(1)
+  expectedVersion: number;
+}
+
 export class UpdateBookingStatusDto {
   @IsEnum(BookingStatus)
   status: BookingStatus;

@@ -3,9 +3,9 @@ import { MigrationInterface, QueryRunner } from "typeorm";
 export class AddGuaranteeClaimToBookings1789749306782 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`ALTER TABLE "bookings" ADD "is_guarantee_claim" boolean NOT NULL DEFAULT false`);
-        await queryRunner.query(`ALTER TABLE "bookings" ADD "parent_booking_id" uuid`);
-        await queryRunner.query(`ALTER TABLE "bookings" ADD "cancellation_reason" character varying(500)`);
+        await queryRunner.query(`ALTER TABLE "bookings" ADD COLUMN IF NOT EXISTS "is_guarantee_claim" boolean NOT NULL DEFAULT false`);
+        await queryRunner.query(`ALTER TABLE "bookings" ADD COLUMN IF NOT EXISTS "parent_booking_id" uuid`);
+        await queryRunner.query(`ALTER TABLE "bookings" ADD COLUMN IF NOT EXISTS "cancellation_reason" character varying(500)`);
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {

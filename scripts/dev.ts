@@ -145,7 +145,35 @@ async function start() {
   const npmCmd = process.platform === "win32" ? "npm.cmd" : "npm";
   const flutterCmd = process.platform === "win32" ? "flutter.bat" : "flutter";
 
-  // 4. Start NestJS Backend
+  // 4. Run database migrations
+  console.log("📦 \x1b[1mChecking & running database migrations...\x1b[0m");
+  try {
+    const npxCmd = process.platform === "win32" ? "npx.cmd" : "npx";
+    const migrationResult = spawnSync({
+      cmd: [
+        npxCmd,
+        "ts-node",
+        "-r",
+        "tsconfig-paths/register",
+        "./node_modules/typeorm/cli.js",
+        "migration:run",
+        "-d",
+        "typeorm.config.ts",
+      ],
+      cwd: "backend",
+      stdout: "pipe",
+      stderr: "pipe",
+    });
+    if (migrationResult.exitCode === 0) {
+      console.log("   \x1b[32m✔ Database migrations are up to date.\x1b[0m");
+    } else {
+      console.log("   \x1b[33mℹ Database migrations check output:\x1b[0m\n", migrationResult.stderr.toString() || migrationResult.stdout.toString());
+    }
+  } catch (err: any) {
+    console.log("   \x1b[33mℹ Skipped database migrations run:\x1b[0m", err?.message);
+  }
+
+  // 5. Start NestJS Backend
   console.log("⚡ \x1b[1mStarting NestJS Backend API (Port 3300)...\x1b[0m");
   const backendProc = spawn({
     cmd: [npmCmd, "run", "start:dev"],

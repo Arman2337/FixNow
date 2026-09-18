@@ -101,10 +101,42 @@ class _FixProviderWorkingHoursSheetState
       initialTime: initial,
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
-          colorScheme: const ColorScheme.dark(
+          colorScheme: const ColorScheme.light(
             primary: AppColors.primary,
+            onPrimary: Colors.white,
             surface: AppColors.surfaceElevated,
-            onSurface: Colors.white,
+            onSurface: AppColors.textPrimary,
+            surfaceContainerHighest: AppColors.surfaceSecondary,
+            onSurfaceVariant: AppColors.textSecondary,
+          ),
+          timePickerTheme: TimePickerThemeData(
+            backgroundColor: AppColors.surfaceElevated,
+            dialBackgroundColor: AppColors.surfaceSecondary,
+            dialTextColor: WidgetStateColor.resolveWith((states) =>
+                states.contains(WidgetState.selected)
+                    ? Colors.white
+                    : AppColors.textPrimary),
+            dialHandColor: AppColors.primary,
+            hourMinuteColor: WidgetStateColor.resolveWith((states) =>
+                states.contains(WidgetState.selected)
+                    ? AppColors.primary
+                    : AppColors.surfaceSecondary),
+            hourMinuteTextColor: WidgetStateColor.resolveWith((states) =>
+                states.contains(WidgetState.selected)
+                    ? Colors.white
+                    : AppColors.textPrimary),
+            dayPeriodColor: WidgetStateColor.resolveWith((states) =>
+                states.contains(WidgetState.selected)
+                    ? AppColors.primarySoft
+                    : Colors.transparent),
+            dayPeriodTextColor: WidgetStateColor.resolveWith((states) =>
+                states.contains(WidgetState.selected)
+                    ? AppColors.primary
+                    : AppColors.textSecondary),
+            dayPeriodBorderSide: const BorderSide(color: AppColors.borderDefault),
+          ),
+          textButtonTheme: TextButtonThemeData(
+            style: TextButton.styleFrom(foregroundColor: AppColors.primary),
           ),
         ),
         child: child!,
@@ -538,7 +570,7 @@ class _FixProviderWorkingHoursSheetState
                 Text(
                   '$hourStr:$minuteStr $periodStr',
                   style: const TextStyle(
-                    color: Colors.white,
+                    color: AppColors.textPrimary,
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
                   ),

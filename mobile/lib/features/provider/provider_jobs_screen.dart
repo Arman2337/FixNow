@@ -13,6 +13,7 @@ import 'package:fixnow_mobile/features/chat/booking_chat_screen.dart';
 import 'package:fixnow_mobile/features/chat/chat_controller.dart';
 import 'package:fixnow_mobile/features/chat/chat_repository.dart';
 import 'package:fixnow_mobile/features/provider/provider_active_job_cockpit_screen.dart';
+import 'package:fixnow_mobile/features/provider/provider_full_screen_map.dart';
 import 'package:fixnow_mobile/features/provider/provider_controller.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking.dart';
 import 'package:fixnow_mobile/features/tracking/provider_live_map.dart';
@@ -908,29 +909,40 @@ class _TopUrgentJobCard extends StatelessWidget {
                           ),
                         ],
                       ),
-                      Row(
-                        children: const [
-                          Icon(
-                            Icons.near_me_rounded,
-                            size: 14,
-                            color: AppColors.textPrimary,
-                          ),
-                          SizedBox(width: 3),
-                          Text(
-                            'Navigate',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.textPrimary,
+                      InkWell(
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => ProviderFullScreenMapScreen(
+                              job: job,
+                              controller: controller,
                             ),
                           ),
-                          SizedBox(width: 4),
-                          Icon(
-                            Icons.chevron_right_rounded,
-                            size: 18,
-                            color: AppColors.textPrimary,
-                          ),
-                        ],
+                        ),
+                        borderRadius: BorderRadius.circular(4),
+                        child: Row(
+                          children: const [
+                            Icon(
+                              Icons.near_me_rounded,
+                              size: 14,
+                              color: AppColors.textPrimary,
+                            ),
+                            SizedBox(width: 3),
+                            Text(
+                              'Navigate',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            SizedBox(width: 4),
+                            Icon(
+                              Icons.chevron_right_rounded,
+                              size: 18,
+                              color: AppColors.textPrimary,
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -996,23 +1008,34 @@ class _TopUrgentJobCard extends StatelessWidget {
                       Positioned(
                         bottom: 8,
                         right: 8,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.1),
-                                blurRadius: 4,
+                        child: InkWell(
+                          onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => ProviderFullScreenMapScreen(
+                                job: job,
+                                controller: controller,
                               ),
-                            ],
+                            ),
                           ),
-                          child: const Padding(
-                            padding: EdgeInsets.all(6.0),
-                            child: Icon(
-                              Icons.fullscreen_rounded,
-                              size: 20,
-                              color: AppColors.textPrimary,
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.1),
+                                  blurRadius: 4,
+                                ),
+                              ],
+                            ),
+                            child: const Padding(
+                              padding: EdgeInsets.all(6.0),
+                              child: Icon(
+                                Icons.fullscreen_rounded,
+                                size: 20,
+                                color: AppColors.textPrimary,
+                              ),
                             ),
                           ),
                         ),

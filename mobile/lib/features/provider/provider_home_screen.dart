@@ -311,7 +311,19 @@ class ProviderHomeScreen extends StatelessWidget {
                                   size: 28,
                                 ),
                               ),
-                              const SizedBox(height: AppSpacing.xl),
+                              const SizedBox(height: AppSpacing.sm),
+                              Text(
+                                availability?.scheduleSummary ?? 'No schedule set',
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  height: 1.2,
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.md),
                               Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
@@ -378,7 +390,24 @@ class ProviderHomeScreen extends StatelessWidget {
                                     size: 28,
                                   ),
                                 ),
-                                const SizedBox(height: AppSpacing.xl),
+                                const SizedBox(height: AppSpacing.sm),
+                                Builder(
+                                  builder: (context) {
+                                    final earnings = controller.profile?.stats?.earningsMinor ?? 0;
+                                    final amount = (earnings / 100).toStringAsFixed(2);
+                                    return Text(
+                                      '₹$amount',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    );
+                                  },
+                                ),
+                                const SizedBox(height: AppSpacing.md),
                                 Row(
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,

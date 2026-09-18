@@ -11,9 +11,8 @@ import 'package:fixnow_mobile/features/call/call_controller.dart';
 import 'package:fixnow_mobile/features/call/call_repository.dart';
 import 'package:fixnow_mobile/features/call/call_session.dart';
 import 'package:fixnow_mobile/features/call/incoming_call_dialog.dart';
-import 'package:fixnow_mobile/features/chat/booking_chat_screen.dart';
-import 'package:fixnow_mobile/features/chat/chat_controller.dart';
-import 'package:fixnow_mobile/features/chat/chat_repository.dart';
+import 'package:fixnow_mobile/features/provider/provider_full_screen_map.dart';
+import 'package:fixnow_mobile/features/provider/provider_full_screen_map.dart';
 import 'package:fixnow_mobile/features/provider/provider_controller.dart';
 import 'package:fixnow_mobile/features/realtime/realtime_client.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking.dart';
@@ -21,6 +20,10 @@ import 'package:fixnow_mobile/features/tracking/provider_live_map.dart';
 import 'package:fixnow_mobile/features/provider/provider_home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+import 'package:fixnow_mobile/features/chat/booking_chat_screen.dart';
+import 'package:fixnow_mobile/features/chat/chat_controller.dart';
+import 'package:fixnow_mobile/features/chat/chat_repository.dart';
 
 class ProviderActiveJobCockpitScreen extends StatefulWidget {
   const ProviderActiveJobCockpitScreen({
@@ -51,6 +54,7 @@ class _ProviderActiveJobCockpitScreenState
   Timer? _paymentPollTimer;
   String? _paymentPollBookingId;
   bool? _customerPaid;
+  bool _hasArrived = false;
 
   @override
   void initState() {
@@ -279,12 +283,6 @@ class _ProviderActiveJobCockpitScreenState
     );
   }
 
-  static const MethodChannel _navChannel = MethodChannel(
-    'com.fixnow.mobile/navigation',
-  );
-
-  bool _isOpeningMaps = false;
-
   bool _hasDestination(CustomerBooking job) {
     final lat = job.locationLatitude;
     final lng = job.locationLongitude;
@@ -299,28 +297,14 @@ class _ProviderActiveJobCockpitScreenState
   }
 
   Future<void> _openMaps(CustomerBooking job) async {
-    if (_isOpeningMaps || !_hasDestination(job)) return;
-    setState(() => _isOpeningMaps = true);
-    try {
-      final opened = await _navChannel.invokeMethod<bool>('openNavigation', {
-        'latitude': job.locationLatitude,
-        'longitude': job.locationLongitude,
-        'label': 'Customer Location',
-      });
-      if (opened != true) throw StateError('Navigation unavailable');
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Could not open maps. Check that a maps app or browser is installed and try again.',
-            ),
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isOpeningMaps = false);
-    }
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ProviderFullScreenMapScreen(
+          job: job,
+          controller: widget.controller,
+        ),
+      ),
+    );
   }
 
   @override
@@ -453,7 +437,7 @@ class _ProviderActiveJobCockpitScreenState
     String pillText = 'WAITING FOR START';
     Color pillColor = AppColors.textSecondary;
     if (job.status == 'EN_ROUTE') {
-      pillText = 'Arrived At Location';
+      pillText = _hasArrived ? 'Arrived At Location' : 'En Route';
       pillColor = AppColors.primary;
     } else if (job.status == 'IN_PROGRESS') {
       pillText = 'Service In Progress';
@@ -832,6 +816,54 @@ class _ProviderActiveJobCockpitScreenState
     }
 
     if (job.status == 'EN_ROUTE') {
+      if (!_hasArrived) {
+        return Container(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceContainer,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: const [
+                  Icon(
+                    Icons.location_on_rounded,
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    'En Route to Customer',
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Navigate to the customer location and tap the button below when you arrive.',
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              FixButton(
+                label: 'Arrived at Destination',
+                icon: Icons.place_rounded,
+                onPressed: () {
+                  setState(() {
+                    _hasArrived = true;
+                  });
+                },
+              ),
+            ],
+          ),
+        );
+      }
+
       return Container(
         padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(

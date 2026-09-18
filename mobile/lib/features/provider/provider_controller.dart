@@ -499,4 +499,21 @@ class ProviderController extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<void> updateLineItems(
+    CustomerBooking job,
+    List<Map<String, dynamic>> lineItems,
+  ) async {
+    actionError = null;
+    notifyListeners();
+    try {
+      final updated = await repository.updateLineItems(job.id, lineItems);
+      jobs = [updated, ...jobs.where((item) => item.id != updated.id)];
+    } on ApiException {
+      actionError = 'Could not update extra charges. Try again.';
+      rethrow;
+    } finally {
+      notifyListeners();
+    }
+  }
 }

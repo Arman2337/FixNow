@@ -398,4 +398,20 @@ class ProviderRepository {
     );
     return CustomerBooking.fromJson(_map(body['booking']));
   }
+  Future<CustomerBooking> updateLineItems(
+    String bookingId,
+    List<Map<String, dynamic>> lineItems,
+  ) async {
+    final body = _map(
+      (await _api.send(
+        ApiRequest(
+          method: ApiMethod.put,
+          path: 'bookings/$bookingId/line-items',
+          bearerToken: await _token(),
+          body: {'lineItems': lineItems},
+        ),
+      )).body,
+    );
+    return CustomerBooking.fromJson(_map(body['booking']));
+  }
 }

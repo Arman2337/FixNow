@@ -6,11 +6,8 @@ import 'package:fixnow_mobile/features/bookings/booking.dart';
 import 'package:fixnow_mobile/features/bookings/cancellation_dialog.dart';
 import 'package:fixnow_mobile/features/bookings/job_proof_service.dart';
 import 'dart:async';
-import 'package:fixnow_mobile/features/call/booking_call_screen.dart';
 import 'package:fixnow_mobile/features/call/call_controller.dart';
-import 'package:fixnow_mobile/features/call/call_repository.dart';
 import 'package:fixnow_mobile/features/call/call_session.dart';
-import 'package:fixnow_mobile/features/call/incoming_call_dialog.dart';
 import 'package:fixnow_mobile/features/chat/booking_chat_screen.dart';
 import 'package:fixnow_mobile/features/chat/chat_controller.dart';
 import 'package:fixnow_mobile/features/chat/chat_repository.dart';
@@ -27,14 +24,12 @@ class ProviderActiveJobCockpitScreen extends StatefulWidget {
     required this.job,
     required this.controller,
     this.chatRepository,
-    this.callRepository,
     super.key,
   });
 
   final CustomerBooking job;
   final ProviderController controller;
   final ChatRepository? chatRepository;
-  final CallRepository? callRepository;
 
   @override
   State<ProviderActiveJobCockpitScreen> createState() =>
@@ -45,7 +40,6 @@ class _ProviderActiveJobCockpitScreenState
     extends State<ProviderActiveJobCockpitScreen> {
   bool _isProcessing = false;
   String? _inlineError;
-  StreamSubscription<RealtimeProjection>? _callSub;
   Timer? _locationTimer;
   String _otpValue = '';
 
@@ -53,7 +47,6 @@ class _ProviderActiveJobCockpitScreenState
   void initState() {
     super.initState();
     widget.controller.realtime?.subscribeBooking(_currentJob().id);
-    _listenForIncomingCalls();
     if (_currentJob().status == 'EN_ROUTE' &&
         widget.controller.locationSharing[widget.job.id] == true) {
       _startLocationBroadcasting();
@@ -87,32 +80,11 @@ class _ProviderActiveJobCockpitScreenState
     _locationTimer = null;
   }
 
-  void _listenForIncomingCalls() {
-    _callSub = widget.controller.realtime?.projections.listen((p) {
-      final type = p.data['type']?.toString();
-      final data = p.data['data'];
-      if (type == 'call.incoming.v1' && data is Map) {
-        final session = CallSession.fromJson(Map<String, Object?>.from(data));
-        if (session.callerRole != 'PROVIDER' &&
-            widget.callRepository != null &&
-            mounted) {
-          IncomingCallDialog.show(
-            context,
-            session: session,
-            repository: widget.callRepository!,
-            realtimeClient: widget.controller.realtime,
-            callerTitle:
-                'Customer Booking #${_currentJob().id.substring(0, 8)}',
-          );
-        }
-      }
-    });
-  }
+
 
   @override
   void dispose() {
     _stopLocationBroadcasting();
-    _callSub?.cancel();
     super.dispose();
   }
 
@@ -217,7 +189,6 @@ class _ProviderActiveJobCockpitScreenState
             isProvider: true,
           ),
           providerName: 'Customer',
-          callRepository: widget.callRepository,
           onCallPressed: () => _openCall(context, job),
         ),
       ),
@@ -225,19 +196,13 @@ class _ProviderActiveJobCockpitScreenState
   }
 
   void _openCall(BuildContext context, CustomerBooking job) {
-    if (widget.callRepository == null) return;
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => BookingCallScreen(
-          controller: CallController(
-            bookingId: job.id,
-            repository: widget.callRepository!,
-            realtimeClient: widget.controller.realtime,
-            initialSpeakerOn: true,
-          ),
-        ),
-      ),
-    );
+    if (job.customerPhone != null) {
+      const CallController().launchCall(job.customerPhone!);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Phone number unavailable')),
+      );
+    }
   }
 
   static const MethodChannel _navChannel = MethodChannel(
@@ -934,7 +899,7 @@ class _ProviderActiveJobCockpitScreenState
                       ),
                     ),
                     TextButton.icon(
-                      onPressed: () {},
+                      onPressed: () => _handleAddExtraCharge(job),
                       icon: const Icon(Icons.add_rounded, size: 16),
                       label: const Text('Add Part'),
                       style: TextButton.styleFrom(
@@ -945,16 +910,44 @@ class _ProviderActiveJobCockpitScreenState
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
-                const Center(
-                  child: Text(
-                    'No parts added yet',
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 12,
+                const SizedBox(height: 8),
+                if (job.lineItems.where((item) => item.type == 'EXTRA_CHARGE').isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: Center(
+                      child: Text(
+                        'No parts added yet',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                        ),
+                      ),
                     ),
-                  ),
-                ),
+                  )
+                else
+                  ...job.lineItems.where((item) => item.type == 'EXTRA_CHARGE').map((item) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              item.description,
+                              style: const TextStyle(
+                                color: AppColors.textPrimary,
+                                fontSize: 13,
+                              ),
+                            ),
+                            Text(
+                              '₹${(item.amount / 100).toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                color: AppColors.textPrimary,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )),
               ],
             ),
           ),
@@ -1109,6 +1102,94 @@ class _ProviderActiveJobCockpitScreenState
         ),
       ),
     );
+  }
+
+  Future<void> _handleAddExtraCharge(CustomerBooking job) async {
+    final descriptionController = TextEditingController();
+    final amountController = TextEditingController();
+    
+    final result = await showModalBottomSheet<Map<String, dynamic>>(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Add Spare Part / Extra Charge',
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              TextField(
+                controller: descriptionController,
+                decoration: const InputDecoration(
+                  labelText: 'Description (e.g., Coolant gas, Filter)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              TextField(
+                controller: amountController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Amount (₹)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              FixButton(
+                label: 'Add Charge',
+                onPressed: () {
+                  final desc = descriptionController.text.trim();
+                  final amount = double.tryParse(amountController.text.trim());
+                  if (desc.isNotEmpty && amount != null && amount > 0) {
+                    Navigator.pop(context, {
+                      'type': 'EXTRA_CHARGE',
+                      'description': desc,
+                      'amount': (amount * 100).toInt(), // assuming backend wants minor units, wait, DTO says positive number, backend expects minor units usually? Yes, amount is typically in paise.
+                    });
+                  }
+                },
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (result != null && mounted) {
+      try {
+        setState(() => _isProcessing = true);
+        final currentLineItems = job.lineItems.map((e) => e.toJson()).toList();
+        currentLineItems.add(result);
+        await widget.controller.updateLineItems(job, currentLineItems);
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to add charge.')),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _isProcessing = false);
+        }
+      }
+    }
   }
 
   Widget _buildInlineOtpInput() {

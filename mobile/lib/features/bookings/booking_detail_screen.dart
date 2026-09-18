@@ -7,7 +7,9 @@ import 'package:fixnow_mobile/features/bookings/booking_repository.dart';
 import 'package:fixnow_mobile/features/bookings/job_proof_service.dart';
 import 'package:fixnow_mobile/design_system/fix_job_proof_dialog.dart';
 import 'package:fixnow_mobile/features/ratings/booking_review_panel.dart';
+import 'package:fixnow_mobile/features/ratings/booking_review_panel.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class BookingDetailScreen extends StatelessWidget {
   const BookingDetailScreen({
@@ -18,6 +20,7 @@ class BookingDetailScreen extends StatelessWidget {
     this.reviewRepository,
     this.onBookAgain,
     this.onViewInvoice,
+    this.onSubmitClaim,
     super.key,
   });
   final CustomerBooking booking;
@@ -27,6 +30,7 @@ class BookingDetailScreen extends StatelessWidget {
   final BookingRepository? reviewRepository;
   final VoidCallback? onBookAgain;
   final VoidCallback? onViewInvoice;
+  final VoidCallback? onSubmitClaim;
 
   @override
   Widget build(BuildContext context) {
@@ -462,6 +466,54 @@ class BookingDetailScreen extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    if (booking.statusValue.isCompleted) ...[
+                      Container(
+                        padding: const EdgeInsets.all(AppSpacing.md),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.05),
+                          border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.verified, color: AppColors.primary),
+                            const SizedBox(width: AppSpacing.md),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'FixNow 30-Day Guarantee',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.primary,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Active until ${DateFormat('MMM d, yyyy').format(booking.createdAt.add(const Duration(days: 30)))}',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: onSubmitClaim,
+                              style: TextButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              ),
+                              child: const Text('Claim', style: TextStyle(fontWeight: FontWeight.bold)),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                    ],
                     if (booking.statusValue.isCompleted &&
                         onBookAgain != null) ...[
                       FixButton(
@@ -471,10 +523,10 @@ class BookingDetailScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: AppSpacing.sm),
                     ],
-                    if (onViewInvoice != null) ...[
+                    if (onViewInvoice != null && booking.statusValue.isCompleted) ...[
                       FixButton(
-                        label: 'Download PDF Invoice',
-                        icon: Icons.download_rounded,
+                        label: 'View / Pay Invoice',
+                        icon: Icons.receipt_long_rounded,
                         onPressed: onViewInvoice,
                       ),
                       const SizedBox(height: AppSpacing.sm),

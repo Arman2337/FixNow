@@ -186,7 +186,7 @@ void main() {
       MaterialApp(
         theme: AppTheme.dark,
         home: Scaffold(
-          body: ServiceRequestScreen(addressRepository: SavedAddressRepository(api: ApiTransport(MockClient()), accessToken: () async => ''), 
+          body: ServiceRequestScreen(
             category: _category,
             controller: controller,
             locationProvider: _FixedLocation(),
@@ -236,7 +236,7 @@ void main() {
       MaterialApp(
         theme: AppTheme.dark,
         home: Scaffold(
-          body: ServiceRequestScreen(addressRepository: SavedAddressRepository(api: ApiTransport(MockClient()), accessToken: () async => ''), 
+          body: ServiceRequestScreen(
             category: _category,
             controller: controller,
             locationProvider: _FixedLocation(),
@@ -300,7 +300,7 @@ void main() {
 }
 
 
-class MockClient implements HttpClient {
+class MockClient implements ApiTransport {
   @override
-  Future<HttpResponse> send(HttpRequest request) async => HttpResponse(200, {});
+  Future<ApiResponse> send(ApiRequest request) async => ApiResponse(statusCode: 200, body: {});
 }

@@ -11,8 +11,9 @@ import 'package:fixnow_mobile/features/call/call_controller.dart';
 import 'package:fixnow_mobile/features/call/call_repository.dart';
 import 'package:fixnow_mobile/features/call/call_session.dart';
 import 'package:fixnow_mobile/features/call/incoming_call_dialog.dart';
-import 'package:fixnow_mobile/features/provider/provider_full_screen_map.dart';
-import 'package:fixnow_mobile/features/provider/provider_full_screen_map.dart';
+import 'package:fixnow_mobile/features/chat/booking_chat_screen.dart';
+import 'package:fixnow_mobile/features/chat/chat_controller.dart';
+import 'package:fixnow_mobile/features/chat/chat_repository.dart';
 import 'package:fixnow_mobile/features/provider/provider_controller.dart';
 import 'package:fixnow_mobile/features/realtime/realtime_client.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking.dart';
@@ -20,10 +21,6 @@ import 'package:fixnow_mobile/features/tracking/provider_live_map.dart';
 import 'package:fixnow_mobile/features/provider/provider_home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
-import 'package:fixnow_mobile/features/chat/booking_chat_screen.dart';
-import 'package:fixnow_mobile/features/chat/chat_controller.dart';
-import 'package:fixnow_mobile/features/chat/chat_repository.dart';
 
 class ProviderActiveJobCockpitScreen extends StatefulWidget {
   const ProviderActiveJobCockpitScreen({
@@ -51,10 +48,6 @@ class _ProviderActiveJobCockpitScreenState
   StreamSubscription<RealtimeProjection>? _callSub;
   Timer? _locationTimer;
   String _otpValue = '';
-  Timer? _paymentPollTimer;
-  String? _paymentPollBookingId;
-  bool? _customerPaid;
-  bool _hasArrived = false;
 
   @override
   void initState() {
@@ -119,44 +112,8 @@ class _ProviderActiveJobCockpitScreenState
   @override
   void dispose() {
     _stopLocationBroadcasting();
-    _stopPaymentPolling();
     _callSub?.cancel();
     super.dispose();
-  }
-
-  /// The completed job's payment chip mirrors the real order status. Nothing
-  /// pushes the provider when the customer pays, so poll while the completed
-  /// panel is visible and stop as soon as the payment lands.
-  void _ensurePaymentPolling(String bookingId) {
-    if (_paymentPollBookingId == bookingId && _paymentPollTimer != null) {
-      return;
-    }
-    _stopPaymentPolling();
-    _paymentPollBookingId = bookingId;
-    _customerPaid = null;
-    unawaited(_refreshPaymentStatus(bookingId));
-    _paymentPollTimer = Timer.periodic(
-      const Duration(seconds: 10),
-      (_) => unawaited(_refreshPaymentStatus(bookingId)),
-    );
-  }
-
-  void _stopPaymentPolling() {
-    _paymentPollTimer?.cancel();
-    _paymentPollTimer = null;
-  }
-
-  Future<void> _refreshPaymentStatus(String bookingId) async {
-    try {
-      final paid = await widget.controller.repository.bookingPaymentPaid(
-        bookingId,
-      );
-      if (!mounted || _paymentPollBookingId != bookingId) return;
-      setState(() => _customerPaid = paid);
-      if (paid) _stopPaymentPolling();
-    } catch (_) {
-      // Status stays pending; the next tick retries.
-    }
   }
 
   CustomerBooking _currentJob() {
@@ -283,28 +240,20 @@ class _ProviderActiveJobCockpitScreenState
     );
   }
 
-  bool _hasDestination(CustomerBooking job) {
-    final lat = job.locationLatitude;
-    final lng = job.locationLongitude;
-    return lat != null &&
-        lng != null &&
-        lat.isFinite &&
-        lng.isFinite &&
-        lat >= -90 &&
-        lat <= 90 &&
-        lng >= -180 &&
-        lng <= 180;
-  }
+  static const MethodChannel _navChannel = MethodChannel(
+    'com.fixnow.mobile/navigation',
+  );
 
   Future<void> _openMaps(CustomerBooking job) async {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => ProviderFullScreenMapScreen(
-          job: job,
-          controller: widget.controller,
-        ),
-      ),
-    );
+    final lat = job.locationLatitude ?? 23.0225;
+    final lng = job.locationLongitude ?? 72.5714;
+    try {
+      await _navChannel.invokeMethod('openNavigation', {
+        'latitude': lat,
+        'longitude': lng,
+        'label': 'Customer Location #${job.id.substring(0, 8)}',
+      });
+    } catch (_) {}
   }
 
   @override
@@ -437,7 +386,7 @@ class _ProviderActiveJobCockpitScreenState
     String pillText = 'WAITING FOR START';
     Color pillColor = AppColors.textSecondary;
     if (job.status == 'EN_ROUTE') {
-      pillText = _hasArrived ? 'Arrived At Location' : 'En Route';
+      pillText = 'Arrived At Location';
       pillColor = AppColors.primary;
     } else if (job.status == 'IN_PROGRESS') {
       pillText = 'Service In Progress';
@@ -608,9 +557,9 @@ class _ProviderActiveJobCockpitScreenState
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 Text(
-                                  _hasDestination(job)
+                                  job.locationLatitude != null
                                       ? 'Location Available'
-                                      : 'Customer location unavailable',
+                                      : 'Address on file',
                                   style: const TextStyle(
                                     color: AppColors.textSecondary,
                                     fontSize: 11,
@@ -639,17 +588,16 @@ class _ProviderActiveJobCockpitScreenState
                   ],
                 ),
                 const SizedBox(height: 4),
-                if (_hasDestination(job))
-                  InkWell(
-                    onTap: () => _openMaps(job),
-                    child: Container(
-                      height: 110,
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceContainer,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Stack(
+                InkWell(
+                  onTap: () => _openMaps(job),
+                  child: Container(
+                    height: 110,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceContainer,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Stack(
                       children: [
                         Positioned.fill(
                           child: Container(
@@ -664,7 +612,21 @@ class _ProviderActiveJobCockpitScreenState
                                   showOverlay: false,
                                   route: widget.controller.currentRoute,
                                   providerLocation:
-                                      widget.controller.currentLocation,
+                                      widget.controller.currentLocation ??
+                                          (job.locationLatitude != null &&
+                                                  job.locationLongitude != null
+                                              ? ProviderMapLocation(
+                                                  latitude:
+                                                      job.locationLatitude! -
+                                                          0.005,
+                                                  longitude:
+                                                      job.locationLongitude! -
+                                                          0.005,
+                                                  accuracyMeters: 0,
+                                                  capturedAt: DateTime.now(),
+                                                  receivedAt: DateTime.now(),
+                                                )
+                                              : null),
                                   customerLocation:
                                       job.locationLatitude != null &&
                                               job.locationLongitude != null
@@ -690,7 +652,9 @@ class _ProviderActiveJobCockpitScreenState
                           bottom: 8,
                           left: 8,
                           child: GestureDetector(
-                            onTap: () => _openMaps(job),
+                            onTap: () {
+                              widget.controller.setLocationConsent(job, true);
+                            },
                             child: Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 8,
@@ -816,54 +780,6 @@ class _ProviderActiveJobCockpitScreenState
     }
 
     if (job.status == 'EN_ROUTE') {
-      if (!_hasArrived) {
-        return Container(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          decoration: BoxDecoration(
-            color: AppColors.surfaceContainer,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                children: const [
-                  Icon(
-                    Icons.location_on_rounded,
-                    color: AppColors.primary,
-                    size: 20,
-                  ),
-                  SizedBox(width: 8),
-                  Text(
-                    'En Route to Customer',
-                    style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                'Navigate to the customer location and tap the button below when you arrive.',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              FixButton(
-                label: 'Arrived at Destination',
-                icon: Icons.place_rounded,
-                onPressed: () {
-                  setState(() {
-                    _hasArrived = true;
-                  });
-                },
-              ),
-            ],
-          ),
-        );
-      }
-
       return Container(
         padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
@@ -1044,7 +960,6 @@ class _ProviderActiveJobCockpitScreenState
           ),
           const SizedBox(height: AppSpacing.md),
           FixButton(
-            key: const Key('cockpit_complete_service_button'),
             label: 'Complete Service',
             icon: Icons.check_circle_rounded,
             isLoading: _isProcessing,
@@ -1055,8 +970,6 @@ class _ProviderActiveJobCockpitScreenState
     }
 
     if (job.status == 'COMPLETED') {
-      _ensurePaymentPolling(job.id);
-      final paid = _customerPaid == true;
       return Container(
         padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
@@ -1064,14 +977,14 @@ class _ProviderActiveJobCockpitScreenState
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
-          children: [
-            const Icon(
+          children: const [
+            Icon(
               Icons.check_circle_rounded,
               color: AppColors.success,
               size: 48,
             ),
-            const SizedBox(height: 8),
-            const Text(
+            SizedBox(height: 8),
+            Text(
               'Job Successfully Completed',
               style: TextStyle(
                 color: AppColors.success,
@@ -1079,52 +992,16 @@ class _ProviderActiveJobCockpitScreenState
                 fontWeight: FontWeight.w700,
               ),
             ),
-            const SizedBox(height: 4),
-            const Text(
-              'Great work! This job is now complete.',
+            SizedBox(height: 4),
+            Text(
+              'Great work! Payment has been processed and added to your ledger.',
               textAlign: TextAlign.center,
               style: TextStyle(color: AppColors.success, fontSize: 13),
-            ),
-            const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: paid ? AppColors.successSoft : AppColors.warningSoft,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    paid
-                        ? Icons.check_circle_rounded
-                        : Icons.hourglass_top_rounded,
-                    size: 14,
-                    color: paid
-                        ? AppColors.successOnLight
-                        : AppColors.warningOnLight,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    paid
-                        ? 'Customer payment: Received'
-                        : 'Customer payment: Pending',
-                    style: TextStyle(
-                      color: paid
-                          ? AppColors.successOnLight
-                          : AppColors.warningOnLight,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
             ),
           ],
         ),
       );
     }
-    _stopPaymentPolling();
     return const SizedBox();
   }
 
@@ -1280,7 +1157,6 @@ class _ProviderActiveJobCockpitScreenState
           Opacity(
             opacity: 0,
             child: TextField(
-              key: const Key('otp_hidden_input'),
               keyboardType: TextInputType.number,
               maxLength: 4,
               cursorColor: Colors.transparent,

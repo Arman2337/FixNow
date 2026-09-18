@@ -191,13 +191,18 @@ export class BookingsService {
       },
     );
     await this.bookingProjections?.publishBooking(booking);
-    await this.notifySafely(() =>
-      this.domainNotifications!.notifyBookingEvent(
+    await this.notifySafely(async () => {
+      await this.domainNotifications!.notifyBookingEvent(
         booking,
         'customer',
         BookingStatus.ASSIGNED,
-      ),
-    );
+      );
+      await this.domainNotifications!.notifyBookingEvent(
+        booking,
+        'provider',
+        BookingStatus.ASSIGNED,
+      );
+    });
     return booking;
   }
 
@@ -228,9 +233,10 @@ export class BookingsService {
       await this.locationService?.invalidateBooking(bookingId);
     }
     await this.bookingProjections?.publishBooking(booking);
-    await this.notifySafely(() =>
-      this.domainNotifications!.notifyBookingEvent(booking, 'customer', status),
-    );
+    await this.notifySafely(async () => {
+      await this.domainNotifications!.notifyBookingEvent(booking, 'customer', status);
+      await this.domainNotifications!.notifyBookingEvent(booking, 'provider', status);
+    });
     return booking;
   }
 
@@ -271,13 +277,20 @@ export class BookingsService {
     );
     await this.locationService?.invalidateBooking(bookingId);
     await this.bookingProjections?.publishUnavailable(booking);
-    await this.notifySafely(() =>
-      this.domainNotifications!.notifyBookingEvent(
+    await this.notifySafely(async () => {
+      await this.domainNotifications!.notifyBookingEvent(
         booking,
         'customer',
         BookingStatus.CANCELLED,
-      ),
-    );
+      );
+      if (booking.providerId) {
+        await this.domainNotifications!.notifyBookingEvent(
+          booking,
+          'provider',
+          BookingStatus.CANCELLED,
+        );
+      }
+    });
     // FN-060: trust signal recording is best-effort, like notifications.
     await this.notifySafely(async () => {
       await this.trust?.evaluateCustomerCancellationSignal(booking.customerId);
@@ -328,13 +341,20 @@ export class BookingsService {
       reason ?? 'Rescheduled booking',
     );
     if (this.domainNotifications) {
-      await this.notifySafely(() =>
-        this.domainNotifications!.notifyBookingEvent(
+      await this.notifySafely(async () => {
+        await this.domainNotifications!.notifyBookingEvent(
           booking,
           'customer',
           booking.status,
-        ),
-      );
+        );
+        if (booking.providerId) {
+          await this.domainNotifications!.notifyBookingEvent(
+            booking,
+            'provider',
+            booking.status,
+          );
+        }
+      });
     }
     return booking;
   }
@@ -387,13 +407,18 @@ export class BookingsService {
     );
     await this.locationService?.invalidateBooking(bookingId);
     await this.bookingProjections?.publishBooking(booking);
-    await this.notifySafely(() =>
-      this.domainNotifications!.notifyBookingEvent(
+    await this.notifySafely(async () => {
+      await this.domainNotifications!.notifyBookingEvent(
         booking,
         'customer',
         BookingStatus.IN_PROGRESS,
-      ),
-    );
+      );
+      await this.domainNotifications!.notifyBookingEvent(
+        booking,
+        'provider',
+        BookingStatus.IN_PROGRESS,
+      );
+    });
     return booking;
   }
 

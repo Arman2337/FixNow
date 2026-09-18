@@ -4,11 +4,17 @@ import 'package:fixnow_mobile/notifications/push_enrollment.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-class FakeForegroundSource implements ForegroundPushSource {
+class FakeForegroundSource implements PushInteractionSource {
   final controller = StreamController<ForegroundPushMessage>.broadcast();
 
   @override
   Stream<ForegroundPushMessage> foregroundMessages() => controller.stream;
+
+  @override
+  Stream<ForegroundPushMessage> backgroundInteractions() => const Stream.empty();
+
+  @override
+  Future<ForegroundPushMessage?> initialInteraction() async => null;
 
   void emit(ForegroundPushMessage message) => controller.add(message);
 }

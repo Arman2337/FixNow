@@ -86,6 +86,7 @@ class _AuthScreenState extends State<AuthScreen>
         password: _password.text,
         role: widget.role,
         mobile: _mobile.text.trim().isNotEmpty ? _mobile.text : null,
+        fullName: _fullName.text.trim().isNotEmpty ? _fullName.text : null,
       );
     } else {
       await widget.controller.login(
@@ -119,28 +120,32 @@ class _AuthScreenState extends State<AuthScreen>
               color: AppColors.textPrimary,
             ),
           ),
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'FIXNOW ID',
-                style: FixNowTypography.dataMono.copyWith(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.8,
-                  fontSize: 11,
+          title: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'FIXNOW ID',
+                  style: FixNowTypography.dataMono.copyWith(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.8,
+                    fontSize: 11,
+                  ),
                 ),
-              ),
-              Text(
-                'Phone Login',
-                style: FixNowTypography.headlineMd.copyWith(
-                  color: AppColors.textPrimary,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: -0.5,
-                  fontSize: 20,
+                Text(
+                  'Phone Login',
+                  style: FixNowTypography.headlineMd.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: -0.5,
+                    fontSize: 20,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           actions: [
             Padding(
@@ -186,10 +191,12 @@ class _AuthScreenState extends State<AuthScreen>
                         ),
                       ],
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    child: Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      runSpacing: AppSpacing.xs,
                       children: [
                         Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             AnimatedBuilder(
                               animation: _pulseController,
@@ -208,18 +215,22 @@ class _AuthScreenState extends State<AuthScreen>
                               },
                             ),
                             const SizedBox(width: 6),
-                            Text(
-                              'DIRECT DISPATCH ACTIVE',
-                              style: FixNowTypography.labelSmall.copyWith(
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 11,
-                                letterSpacing: 0.8,
+                            Flexible(
+                              child: Text(
+                                'DIRECT DISPATCH ACTIVE',
+                                overflow: TextOverflow.ellipsis,
+                                style: FixNowTypography.labelSmall.copyWith(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 11,
+                                  letterSpacing: 0.8,
+                                ),
                               ),
                             ),
                           ],
                         ),
                         Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             const Icon(
                               Icons.verified_user_rounded,
@@ -227,12 +238,15 @@ class _AuthScreenState extends State<AuthScreen>
                               color: AppColors.primary,
                             ),
                             const SizedBox(width: 4),
-                            Text(
-                              'FixSafe Protected',
-                              style: FixNowTypography.dataMono.copyWith(
-                                color: AppColors.textSecondary,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 12,
+                            Flexible(
+                              child: Text(
+                                'FixSafe Protected',
+                                overflow: TextOverflow.ellipsis,
+                                style: FixNowTypography.dataMono.copyWith(
+                                  color: AppColors.textSecondary,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 12,
+                                ),
                               ),
                             ),
                           ],

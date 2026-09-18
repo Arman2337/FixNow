@@ -299,105 +299,113 @@ class _VerificationScreenState extends State<VerificationScreen> {
                       key: _formKey,
                       child: Column(
                         children: [
-                          // 6 Interactive Digits Row
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: List.generate(6, (index) {
-                              final isFilled = index < codeText.length;
-                              final isCurrent = index == codeText.length;
-                              return Container(
-                                width: 44,
-                                height: 52,
-                                decoration: BoxDecoration(
-                                  color: isFilled
-                                      ? AppColors.surfaceContainerLow
-                                      : (isCurrent
-                                            ? AppColors.surfaceContainerLowest
-                                            : AppColors.surfaceContainer),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: isCurrent
-                                        ? AppColors.primary
-                                        : AppColors.borderDefault,
-                                    width: isCurrent ? 2 : 1,
-                                  ),
-                                  boxShadow: isCurrent
-                                      ? [
-                                          BoxShadow(
-                                            color: AppColors.primary.withValues(
-                                              alpha: 0.15,
+                          Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              // 6 Interactive Digits Row
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: List.generate(6, (index) {
+                                  final isFilled = index < codeText.length;
+                                  final isCurrent = index == codeText.length;
+                                  return Container(
+                                    width: 44,
+                                    height: 52,
+                                    decoration: BoxDecoration(
+                                      color: isFilled
+                                          ? AppColors.surfaceContainerLow
+                                          : (isCurrent
+                                                ? AppColors.surfaceContainerLowest
+                                                : AppColors.surfaceContainer),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: isCurrent
+                                            ? AppColors.primary
+                                            : AppColors.borderDefault,
+                                        width: isCurrent ? 2 : 1,
+                                      ),
+                                      boxShadow: isCurrent
+                                          ? [
+                                              BoxShadow(
+                                                color: AppColors.primary.withValues(
+                                                  alpha: 0.15,
+                                                ),
+                                                blurRadius: 6,
+                                                offset: const Offset(0, 2),
+                                              ),
+                                            ]
+                                          : null,
+                                    ),
+                                    child: Center(
+                                      child: isCurrent
+                                          ? Container(
+                                              width: 2,
+                                              height: 24,
+                                              decoration: BoxDecoration(
+                                                color: AppColors.primary,
+                                                borderRadius: BorderRadius.circular(
+                                                  2,
+                                                ),
+                                              ),
+                                            )
+                                          : Text(
+                                              isFilled ? codeText[index] : '•',
+                                              style: TextStyle(
+                                                fontSize: 20,
+                                                fontWeight: FontWeight.w800,
+                                                color: isFilled
+                                                    ? AppColors.textPrimary
+                                                    : AppColors.textSecondary
+                                                          .withValues(alpha: 0.4),
+                                              ),
                                             ),
-                                            blurRadius: 6,
-                                            offset: const Offset(0, 2),
-                                          ),
-                                        ]
-                                      : null,
-                                ),
-                                child: Center(
-                                  child: isCurrent
-                                      ? Container(
-                                          width: 2,
-                                          height: 24,
-                                          decoration: BoxDecoration(
-                                            color: AppColors.primary,
-                                            borderRadius: BorderRadius.circular(
-                                              2,
-                                            ),
-                                          ),
-                                          // Simple blinking effect handled by flutter engine if we add an animation,
-                                          // but for static fidelity we just draw the cursor line or a dot.
-                                        )
-                                      : Text(
-                                          isFilled ? codeText[index] : '•',
-                                          style: TextStyle(
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.w800,
-                                            color: isFilled
-                                                ? AppColors.textPrimary
-                                                : AppColors.textSecondary
-                                                      .withValues(alpha: 0.4),
-                                          ),
+                                    ),
+                                  );
+                                }),
+                              ),
+                              // Hidden text field for keyboard input
+                              Positioned.fill(
+                                child: Opacity(
+                                  opacity: 0.0,
+                                  child: Semantics(
+                                    label: 'Six digit verification code',
+                                    textField: true,
+                                    child: TextFormField(
+                                      controller: _code,
+                                      enabled: !loading,
+                                      autofocus: true,
+                                      keyboardType: TextInputType.number,
+                                      inputFormatters: [
+                                        FilteringTextInputFormatter.digitsOnly,
+                                      ],
+                                      maxLength: 6,
+                                      textInputAction: TextInputAction.done,
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        color: AppColors.inputText,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: 8,
+                                      ),
+                                      decoration: const InputDecoration(
+                                        hintText: 'Enter 6 digits above',
+                                        counterText: '',
+                                        contentPadding: EdgeInsets.symmetric(
+                                          vertical: 8,
                                         ),
-                                ),
-                              );
-                            }),
-                          ),
-                          const SizedBox(height: AppSpacing.sm),
-                          // Hidden text field for keyboard input
-                          Semantics(
-                            label: 'Six digit verification code',
-                            textField: true,
-                            child: TextFormField(
-                              controller: _code,
-                              enabled: !loading,
-                              autofocus: true,
-                              keyboardType: TextInputType.number,
-                              inputFormatters: [
-                                FilteringTextInputFormatter.digitsOnly,
-                              ],
-                              maxLength: 6,
-                              textInputAction: TextInputAction.done,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                color: AppColors.inputText,
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 8,
-                              ),
-                              decoration: const InputDecoration(
-                                hintText: 'Enter 6 digits above',
-                                counterText: '',
-                                contentPadding: EdgeInsets.symmetric(
-                                  vertical: 8,
+                                        errorStyle: TextStyle(height: 0),
+                                      ),
+                                      validator: (value) =>
+                                          RegExp(
+                                            r'^\d{6}$',
+                                          ).hasMatch(value?.trim() ?? '')
+                                          ? null
+                                          : 'Enter the six-digit code.',
+                                    ),
+                                  ),
                                 ),
                               ),
-                              validator: (value) =>
-                                  RegExp(
-                                    r'^\d{6}$',
-                                  ).hasMatch(value?.trim() ?? '')
-                                  ? null
-                                  : 'Enter the six-digit code.',
-                            ),
+                            ],
                           ),
                           const SizedBox(height: 6),
                           Row(

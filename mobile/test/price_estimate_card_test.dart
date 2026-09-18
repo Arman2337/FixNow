@@ -39,7 +39,7 @@ Widget host({
   home: Scaffold(
     body: SizedBox(
       height: 2400,
-      child: ServiceRequestScreen(addressRepository: SavedAddressRepository(api: ApiTransport(MockClient()), accessToken: () async => ''), 
+      child: ServiceRequestScreen(
         category: category,
         controller: BookingController(
           BookingRepository(api: transport, accessToken: () async => null),
@@ -156,7 +156,7 @@ void main() {
 }
 
 
-class MockClient implements HttpClient {
+class MockClient implements ApiTransport {
   @override
-  Future<HttpResponse> send(HttpRequest request) async => HttpResponse(200, {});
+  Future<ApiResponse> send(ApiRequest request) async => ApiResponse(statusCode: 200, body: {});
 }

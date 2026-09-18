@@ -76,12 +76,10 @@ async function seed(client: PoolClient): Promise<void> {
   await ensureRole(client, 'verified_provider', 'Approved provider');
   await ensureRole(client, 'provider_reviewer', 'Provider verification reviewer');
   await ensureRole(client, 'operations_administrator', 'Operations administrator');
-  const category = await client.query<{ id: string }>(
-    'SELECT "id" FROM "service_categories" WHERE "slug" = $1',
-    ['plumbing'],
+  const categories = await client.query<{ id: string }>(
+    'SELECT "id" FROM "service_categories"'
   );
-  if (!category.rows[0]) throw new Error('The plumbing service category is missing; run migrations first');
-  const categoryId = category.rows[0].id;
+  if (categories.rows.length === 0) throw new Error('No service categories found; run migrations first');
 
   await createIdentity(client, ACCEPTANCE_IDENTITIES.reviewer, 'provider_reviewer');
   await createIdentity(
@@ -114,13 +112,15 @@ async function seed(client: PoolClient): Promise<void> {
     [ACCEPTANCE_IDENTITIES.providerA.id, ACCEPTANCE_IDENTITIES.providerB.id],
   );
   for (const provider of [ACCEPTANCE_IDENTITIES.providerA, ACCEPTANCE_IDENTITIES.providerB]) {
-    await client.query(
-      `INSERT INTO "provider_skills"
-        ("user_id", "service_category_id", "years_experience", "is_verified", "verification_notes")
-       VALUES ($1, $2, 5, true, 'Local acceptance fixture')
-       ON CONFLICT ("user_id", "service_category_id") DO UPDATE SET "is_verified" = true`,
-      [provider.id, categoryId],
-    );
+    for (const category of categories.rows) {
+      await client.query(
+        `INSERT INTO "provider_skills"
+          ("user_id", "service_category_id", "years_experience", "is_verified", "verification_notes")
+         VALUES ($1, $2, 5, true, 'Local acceptance fixture')
+         ON CONFLICT ("user_id", "service_category_id") DO UPDATE SET "is_verified" = true`,
+        [provider.id, category.id],
+      );
+    }
     await client.query(
       `INSERT INTO "provider_availability"
         ("user_id", "time_zone", "weekly_rules", "exceptions", "status", "status_expires_at", "version")

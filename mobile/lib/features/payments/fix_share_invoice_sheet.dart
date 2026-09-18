@@ -1,5 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
@@ -163,14 +166,15 @@ class FixShareInvoiceSheet extends StatelessWidget {
             iconColor: const Color(0xFF25D366), // WhatsApp Green
             title: 'Share via WhatsApp',
             subtitle: 'Send formatted receipt details and verified PDF link',
-            onTap: () {
+            onTap: () async {
               Navigator.pop(context);
               final text = FixPdfInvoiceBuilder.generateShareSummary(invoice);
-              Clipboard.setData(ClipboardData(text: text));
-              _showSnack(
-                context,
-                'Invoice summary ready for WhatsApp (copied to clipboard)',
-                icon: Icons.check_circle_rounded,
+              final dir = await getApplicationDocumentsDirectory();
+              final file = File('${dir.path}/$fileName');
+              await file.writeAsBytes(pdfBytes);
+              await Share.shareXFiles(
+                [XFile(file.path, mimeType: 'application/pdf')],
+                text: text,
               );
             },
           ),
@@ -182,14 +186,16 @@ class FixShareInvoiceSheet extends StatelessWidget {
             iconColor: AppColors.primary,
             title: 'Share via Email',
             subtitle: 'Email formal GST invoice to your accountant or company',
-            onTap: () {
+            onTap: () async {
               Navigator.pop(context);
               final text = FixPdfInvoiceBuilder.generateShareSummary(invoice);
-              Clipboard.setData(ClipboardData(text: text));
-              _showSnack(
-                context,
-                'Invoice details pre-formatted for Email (copied to clipboard)',
-                icon: Icons.mark_email_read_rounded,
+              final dir = await getApplicationDocumentsDirectory();
+              final file = File('${dir.path}/$fileName');
+              await file.writeAsBytes(pdfBytes);
+              await Share.shareXFiles(
+                [XFile(file.path, mimeType: 'application/pdf')],
+                subject: 'FixNow Invoice - ${invoice.invoiceNumber}',
+                text: text,
               );
             },
           ),
@@ -223,23 +229,36 @@ class FixShareInvoiceSheet extends StatelessWidget {
             subtitle: 'Downloads standard A4 PDF (${pdfBytes.length} bytes)',
             onTap: () async {
               Navigator.pop(context);
-              if (onSavePdf != null) {
-                final path = await onSavePdf!();
+              try {
+                if (onSavePdf != null) {
+                  final path = await onSavePdf!();
+                  if (context.mounted && path != null) {
+                    _showSnack(
+                      context,
+                      'Saved $fileName to $path',
+                      icon: Icons.file_download_done_rounded,
+                    );
+                  }
+                } else {
+                  final dir = await getApplicationDocumentsDirectory();
+                  final file = File('${dir.path}/$fileName');
+                  await file.writeAsBytes(pdfBytes);
+                  if (context.mounted) {
+                    _showSnack(
+                      context,
+                      'Downloaded $fileName ($sizeKb KB)',
+                      icon: Icons.file_download_done_rounded,
+                    );
+                  }
+                }
+              } catch (e) {
                 if (context.mounted) {
                   _showSnack(
                     context,
-                    path != null
-                        ? 'Saved $fileName to $path'
-                        : 'Downloaded $fileName successfully',
-                    icon: Icons.file_download_done_rounded,
+                    'Failed to save PDF: $e',
+                    icon: Icons.error_rounded,
                   );
                 }
-              } else {
-                _showSnack(
-                  context,
-                  'Downloaded $fileName ($sizeKb KB) to Downloads folder',
-                  icon: Icons.file_download_done_rounded,
-                );
               }
             },
           ),

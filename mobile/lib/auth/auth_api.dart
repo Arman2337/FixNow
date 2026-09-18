@@ -37,10 +37,14 @@ class AuthApi {
     required String password,
     required AccountRole role,
     String? mobile,
+    String? fullName,
   }) async {
     final body = <String, Object?>{'email': email.trim(), 'password': password};
     if (mobile != null && mobile.trim().isNotEmpty) {
       body['mobile'] = mobile.trim();
+    }
+    if (fullName != null && fullName.trim().isNotEmpty) {
+      body['fullName'] = fullName.trim();
     }
     final response = await _transport.send(
       ApiRequest(

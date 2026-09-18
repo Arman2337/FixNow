@@ -76,6 +76,7 @@ class AuthController extends ChangeNotifier {
         role: role,
         mobile: mobile,
       ),
+      email: email,
     );
   }
 
@@ -84,6 +85,7 @@ class AuthController extends ChangeNotifier {
     required String password,
     AccountRole role = AccountRole.customer,
     String? mobile,
+    String? fullName,
   }) async {
     errorMessage = null;
     _setStatus(AuthStatus.loading);
@@ -94,6 +96,7 @@ class AuthController extends ChangeNotifier {
         password: password,
         role: role,
         mobile: mobile,
+        fullName: fullName,
       );
       await _store.write(next);
       _session = next;
@@ -107,7 +110,8 @@ class AuthController extends ChangeNotifier {
       _setStatus(AuthStatus.verificationRequired);
     } on ApiException catch (error) {
       await _handleApiFailure(error);
-    } catch (_) {
+    } catch (e) {
+      errorMessage = 'An error occurred: $e';
       _setStatus(AuthStatus.failure);
     }
   }
@@ -152,19 +156,25 @@ class AuthController extends ChangeNotifier {
     }
   }
 
-  Future<void> _authenticate(Future<AuthSession> Function() action) async {
+  Future<void> _authenticate(Future<AuthSession> Function() action, {String? email}) async {
     errorMessage = null;
     _setStatus(AuthStatus.loading);
     try {
       final next = await action();
       await _store.write(next);
       _session = next;
-      verificationEmail = next.verificationEmail;
-      _setStatus(
-        next.verificationEmail == null
-            ? AuthStatus.authenticated
-            : AuthStatus.verificationRequired,
-      );
+      verificationEmail = next.verificationEmail ?? email;
+      
+      if (next.verificationEmail != null) {
+        try {
+          await _api.requestOtp(verificationEmail!);
+        } on ApiException {
+          errorMessage = 'We could not send the verification code. Try resend.';
+        }
+        _setStatus(AuthStatus.verificationRequired);
+      } else {
+        _setStatus(AuthStatus.authenticated);
+      }
     } on ApiException catch (error) {
       await _handleApiFailure(error);
     } catch (_) {

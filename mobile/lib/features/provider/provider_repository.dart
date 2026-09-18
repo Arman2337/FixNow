@@ -303,6 +303,16 @@ class ProviderRepository {
     );
   }
 
+  Future<void> removeSkill(String id) async {
+    await _api.send(
+      ApiRequest(
+        method: ApiMethod.delete,
+        path: 'provider-skills/$id',
+        bearerToken: await _token(),
+      ),
+    );
+  }
+
   Future<List<ProviderDocument>> documents() async {
     final body = _map(
       (await _api.send(

@@ -166,6 +166,7 @@ class _BookingCallScreenState extends State<BookingCallScreen>
                     children: [
                       // Live Timer Pill / Status Ticker
                       Container(
+                        constraints: const BoxConstraints(maxWidth: 280),
                         padding: const EdgeInsets.symmetric(
                           horizontal: 14,
                           vertical: 5,
@@ -188,13 +189,16 @@ class _BookingCallScreenState extends State<BookingCallScreen>
                               ),
                             ),
                             const SizedBox(width: 8),
-                            Text(
-                              _statusLabel(status),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                fontFeatures: [FontFeature.tabularFigures()],
+                            Flexible(
+                              child: Text(
+                                _statusLabel(status),
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  fontFeatures: [FontFeature.tabularFigures()],
+                                ),
                               ),
                             ),
                             if (status == CallStatus.connected) ...[

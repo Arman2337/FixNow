@@ -5,6 +5,7 @@ import 'package:fixnow_mobile/features/call/call_audio_service.dart';
 import 'package:fixnow_mobile/features/call/call_repository.dart';
 import 'package:fixnow_mobile/features/call/call_session.dart';
 import 'package:fixnow_mobile/features/realtime/realtime_client.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class CallController extends ChangeNotifier {
   CallController({
@@ -267,6 +268,11 @@ class CallController extends ChangeNotifier {
     notifyListeners();
 
     try {
+      final permStatus = await Permission.microphone.request();
+      if (permStatus != PermissionStatus.granted) {
+        throw Exception('Microphone permission is required to place calls.');
+      }
+
       final session = await repository.initiateCall(bookingId);
       _currentSession = session;
       _isLoading = false;
@@ -302,6 +308,11 @@ class CallController extends ChangeNotifier {
     CallAudioService.stop();
 
     try {
+      final permStatus = await Permission.microphone.request();
+      if (permStatus != PermissionStatus.granted) {
+        throw Exception('Microphone permission is required to answer calls.');
+      }
+
       final updated = await repository.answerCall(bookingId, session.id);
       _currentSession = updated;
       _startDurationTicker();

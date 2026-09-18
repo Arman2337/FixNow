@@ -22,6 +22,9 @@ class _FakeProviderRepository implements ProviderRepository {
   Future<void> acceptBooking(String bookingId) async {}
 
   @override
+  Future<void> removeSkill(String id) async {}
+
+  @override
   Future<bool> bookingPaymentPaid(String bookingId) async => false;
 
   @override

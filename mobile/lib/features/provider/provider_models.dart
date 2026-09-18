@@ -172,6 +172,25 @@ class ProviderAvailability {
 
     return '$daysStr, $timeStr $timeZone';
   }
+
+  String get timingSummary {
+    if (weeklyRules.isEmpty) {
+      return 'No recurring hours set.';
+    }
+    String timeStr = '09:00–17:00';
+    final intervals = weeklyRules.first['intervals'] as List?;
+    if (intervals != null && intervals.isNotEmpty) {
+      final firstInterval = Map<String, Object?>.from(intervals.first as Map);
+      final startMin = (firstInterval['startMinute'] as num?)?.toInt() ?? 540;
+      final endMin = (firstInterval['endMinute'] as num?)?.toInt() ?? 1020;
+      final startH = (startMin ~/ 60).toString().padLeft(2, '0');
+      final startM = (startMin % 60).toString().padLeft(2, '0');
+      final endH = (endMin ~/ 60).toString().padLeft(2, '0');
+      final endM = (endMin % 60).toString().padLeft(2, '0');
+      timeStr = '$startH:$startM–$endH:$endM';
+    }
+    return timeStr;
+  }
 }
 
 class ProviderSkill {

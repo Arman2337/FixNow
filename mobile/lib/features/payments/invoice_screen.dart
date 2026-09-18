@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 import 'package:fixnow_mobile/api/api_client.dart';
 import 'package:fixnow_mobile/config/app_environment.dart';
 import 'package:fixnow_mobile/design_system/app_colors.dart';
@@ -461,38 +463,53 @@ class _InvoiceView extends StatelessWidget {
     ],
   );
 
-  void _downloadPdf(BuildContext context) {
+  Future<void> _downloadPdf(BuildContext context) async {
     final bytes = FixPdfInvoiceBuilder.build(invoice);
     final fileName = FixPdfInvoiceBuilder.getFileName(invoice);
     final sizeKb = (bytes.length / 1024).toStringAsFixed(1);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: AppColors.surfaceElevated,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-          side: BorderSide(
-            color: AppColors.borderDefault.withValues(alpha: 0.2),
-          ),
-        ),
-        content: Row(
-          children: [
-            const Icon(
-              Icons.file_download_done_rounded,
-              color: AppColors.success,
-              size: 18,
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                'Downloaded $fileName ($sizeKb KB)',
-                style: const TextStyle(color: AppColors.cream, fontSize: 13),
+    
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      final file = File('${dir.path}/$fileName');
+      await file.writeAsBytes(bytes);
+      
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: AppColors.surfaceElevated,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+              side: BorderSide(
+                color: AppColors.borderDefault.withValues(alpha: 0.2),
               ),
             ),
-          ],
-        ),
-      ),
-    );
+            content: Row(
+              children: [
+                const Icon(
+                  Icons.file_download_done_rounded,
+                  color: AppColors.success,
+                  size: 18,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Downloaded $fileName ($sizeKb KB)',
+                    style: const TextStyle(color: AppColors.cream, fontSize: 13),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to download: $e')),
+        );
+      }
+    }
   }
 
   static String _date(DateTime value) {

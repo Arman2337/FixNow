@@ -14,6 +14,7 @@ import { UserRoleEntity } from '../users/user-role.entity';
 import { UserEntity } from '../users/user.entity';
 import { ProviderApplicationEntity } from '../providers/provider-application.entity';
 import { ProviderOnboardingStatus } from '../providers/provider-onboarding-status';
+import { CustomerProfileEntity } from '../users/customer-profile.entity';
 import {
   CUSTOMER_ROLE_ID,
   LOCAL_EMAIL_PROVIDER,
@@ -97,6 +98,14 @@ export class AuthService {
             expiresAt: null,
           }),
         );
+        if (input.fullName && input.fullName.trim().length > 0) {
+          await manager.save(
+            manager.create(CustomerProfileEntity, {
+              userId: createdUser.id,
+              displayName: input.fullName.trim(),
+            }),
+          );
+        }
         if (persona.providerApplicant) {
           await manager.save(
             manager.create(ProviderApplicationEntity, {

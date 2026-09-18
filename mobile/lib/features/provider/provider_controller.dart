@@ -239,6 +239,12 @@ class ProviderController extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> removeSkill(String id) async {
+    await repository.removeSkill(id);
+    skills = await repository.skills();
+    notifyListeners();
+  }
+
   Future<void> uploadDocument({
     required String type,
     required String name,

@@ -801,67 +801,98 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
                                         CrossAxisAlignment.start,
                                     children: [
                                       const Text(
-                                        'Primary Category',
+                                        'Services & Skills',
                                         style: TextStyle(
                                           color: AppColors.textSecondary,
                                           fontSize: 11,
                                           fontWeight: FontWeight.w600,
                                         ),
                                       ),
-                                      DropdownButtonHideUnderline(
-                                        child: DropdownButton<String>(
-                                          isDense: true,
-                                          value: (() {
-                                            if (widget.controller.skills.isEmpty) return null;
-                                            final currentSkill = widget.controller.skills.first.categoryId;
-                                            final exists = widget.controller.categories.any((cat) => cat['id'] == currentSkill);
-                                            return exists ? currentSkill : null;
-                                          })(),
-                                          hint: const Text(
-                                            'Select Skill',
-                                            style: TextStyle(
-                                              color: AppColors.textPrimary,
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                          items: widget.controller.categories
-                                              .map(
-                                                (cat) => DropdownMenuItem<String>(
-                                                  value: cat['id'] as String,
-                                                  child: Text(cat['name'] as String? ?? 'Unknown'),
+                                      const SizedBox(height: 8),
+                                      Wrap(
+                                        spacing: 8,
+                                        runSpacing: 8,
+                                        crossAxisAlignment: WrapCrossAlignment.center,
+                                        children: [
+                                          for (final skill in widget.controller.skills)
+                                            Chip(
+                                              label: Text(
+                                                skill.categoryName ?? 'Unknown',
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: AppColors.onAccentGold,
                                                 ),
-                                              )
-                                              .toList(),
-                                          onChanged: (val) {
-                                            if (val != null) {
-                                              widget.controller
-                                                  .addSkill(val)
-                                                  .then((_) {
-                                                    ScaffoldMessenger.of(
-                                                      context,
-                                                    ).showSnackBar(
-                                                      const SnackBar(
-                                                        content: Text(
-                                                          'Skill updated',
+                                              ),
+                                              backgroundColor: AppColors.accentGold,
+                                              deleteIconColor: AppColors.onAccentGold,
+                                              onDeleted: () {
+                                                widget.controller.removeSkill(skill.id).then((_) {
+                                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Skill removed')));
+                                                }).catchError((e) {
+                                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to remove skill')));
+                                                });
+                                              },
+                                            ),
+                                          if (widget.controller.categories.any((cat) => !widget.controller.skills.any((s) => s.categoryId == cat['id'])))
+                                            Theme(
+                                              data: Theme.of(context).copyWith(
+                                                canvasColor: AppColors.surfaceElevated,
+                                              ),
+                                              child: DropdownButtonHideUnderline(
+                                                child: DropdownButton<String>(
+                                                  isDense: true,
+                                                  hint: Container(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                                    decoration: BoxDecoration(
+                                                      border: Border.all(color: AppColors.primary),
+                                                      borderRadius: BorderRadius.circular(16),
+                                                    ),
+                                                    child: const Row(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        Icon(Icons.add, size: 14, color: AppColors.primary),
+                                                        SizedBox(width: 4),
+                                                        Text(
+                                                          'Add Skill',
+                                                          style: TextStyle(
+                                                            color: AppColors.primary,
+                                                            fontSize: 12,
+                                                            fontWeight: FontWeight.w600,
+                                                          ),
                                                         ),
-                                                      ),
-                                                    );
-                                                  })
-                                                  .catchError((e) {
-                                                    ScaffoldMessenger.of(
-                                                      context,
-                                                    ).showSnackBar(
-                                                      const SnackBar(
-                                                        content: Text(
-                                                          'Failed to update skill',
+                                                      ],
+                                                    ),
+                                                  ),
+                                                  icon: const SizedBox.shrink(),
+                                                  items: widget.controller.categories
+                                                      .where((cat) => !widget.controller.skills.any((s) => s.categoryId == cat['id']))
+                                                      .map(
+                                                        (cat) => DropdownMenuItem<String>(
+                                                          value: cat['id'] as String,
+                                                          child: Text(
+                                                            cat['name'] as String? ?? 'Unknown',
+                                                            style: const TextStyle(
+                                                              fontSize: 13,
+                                                              color: AppColors.textPrimary,
+                                                            ),
+                                                          ),
                                                         ),
-                                                      ),
-                                                    );
-                                                  });
-                                            }
-                                          },
-                                        ),
+                                                      )
+                                                      .toList(),
+                                                  onChanged: (val) {
+                                                    if (val != null) {
+                                                      widget.controller.addSkill(val).then((_) {
+                                                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Skill added')));
+                                                      }).catchError((e) {
+                                                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to add skill')));
+                                                      });
+                                                    }
+                                                  },
+                                                ),
+                                              ),
+                                            ),
+                                        ],
                                       ),
                                     ],
                                   ),
@@ -1224,10 +1255,44 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
                             },
                     ),
                     const SizedBox(height: AppSpacing.sm),
-                    FixButton(
-                      label: 'Save Draft & Exit',
-                      variant: FixButtonVariant.secondary,
-                      onPressed: widget.onSignOut,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: FixButton(
+                            label: 'Save Updates',
+                            variant: FixButtonVariant.primary,
+                            onPressed: () {
+                              final current = widget.controller.profile;
+                              widget.controller.saveProfile(
+                                ProviderProfile(
+                                  displayName: _nameController.text,
+                                  bio: _bioController.text,
+                                  serviceRadiusKm: current?.serviceRadiusKm ?? _sliderRadius ?? 12.0,
+                                  baseLatitude: current?.baseLatitude ?? 0.0,
+                                  baseLongitude: current?.baseLongitude ?? 0.0,
+                                  stats: current?.stats,
+                                ),
+                              ).then((_) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Updates saved successfully')),
+                                );
+                              }).catchError((e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Failed to save updates')),
+                                );
+                              });
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        Expanded(
+                          child: FixButton(
+                            label: 'Sign Out',
+                            variant: FixButtonVariant.secondary,
+                            onPressed: widget.onSignOut,
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: AppSpacing.xl),
                   ]),

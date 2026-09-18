@@ -119,8 +119,9 @@ class _FixPaymentCheckoutSheetState extends State<FixPaymentCheckoutSheet>
   }
 
   int get _subtotalMinor => widget.baseAmountMinor + widget.sparePartsMinor;
-  int get _gstMinor => (_subtotalMinor * 0.18).round();
-  int get _grandTotalMinor => _subtotalMinor + _gstMinor + _selectedTipMinor;
+  int get _gstMinor => ((_subtotalMinor / 1.18) * 0.18).round();
+  int get _baseServiceMinor => _subtotalMinor - _gstMinor;
+  int get _grandTotalMinor => _subtotalMinor + _selectedTipMinor;
 
   String _formatPaise(int minor) {
     final rupees = minor / 100;
@@ -419,7 +420,7 @@ class _FixPaymentCheckoutSheetState extends State<FixPaymentCheckoutSheet>
           const Divider(color: AppColors.borderDefault, height: 16),
           _buildRow(
             'Base Service & Labour',
-            _formatPaise(widget.baseAmountMinor),
+            _formatPaise(_baseServiceMinor),
           ),
           if (widget.sparePartsMinor > 0)
             _buildRow(

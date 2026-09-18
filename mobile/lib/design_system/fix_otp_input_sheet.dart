@@ -50,7 +50,13 @@ class _FixOtpInputSheetState extends State<FixOtpInputSheet> {
       });
       return;
     }
-    Navigator.of(context).pop(code);
+    
+    // Defer the pop to prevent unmounting the TextField while it's still processing the onChanged event
+    Future.microtask(() {
+      if (mounted) {
+        Navigator.of(context).pop(code);
+      }
+    });
   }
 
   @override

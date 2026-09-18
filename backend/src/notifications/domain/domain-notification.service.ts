@@ -45,6 +45,22 @@ export const BOOKING_NOTIFICATION_TEMPLATES: Readonly<
     title: 'FixNow',
     body: 'A new request is available near you.',
   },
+  'provider:ASSIGNED': {
+    title: 'FixNow',
+    body: 'You have accepted a new job.',
+  },
+  'provider:EN_ROUTE': {
+    title: 'FixNow',
+    body: 'You are marked as on the way.',
+  },
+  'provider:IN_PROGRESS': {
+    title: 'FixNow',
+    body: 'Your service is marked as started.',
+  },
+  'provider:COMPLETED': {
+    title: 'FixNow',
+    body: 'Your service was marked as completed.',
+  },
   'provider:CANCELLED': {
     title: 'FixNow',
     body: 'An assigned booking was cancelled.',
@@ -103,11 +119,21 @@ export class DomainNotificationService {
     const userId =
       audience === 'customer' ? booking.customerId : booking.providerId;
     if (!userId) return;
+    
+    const enrichedTemplate = {
+      ...template,
+      data: {
+        bookingId: booking.id,
+        status: status,
+        type: `booking:${audience}:${status}`,
+      }
+    };
+    
     await this.send(
       userId,
       `booking:${audience}:${status}`,
       `booking:${booking.id}:${audience}:${status}`,
-      template,
+      enrichedTemplate,
       booking.id,
     );
   }

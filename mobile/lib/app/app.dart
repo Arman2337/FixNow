@@ -128,6 +128,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
   final FirebasePushGateway _pushGateway = FirebasePushGateway();
   StreamSubscription<ForegroundPushMessage>? _foregroundPushSub;
+  StreamSubscription<ForegroundPushMessage>? _backgroundPushSub;
   _AuthEntryStep _authEntryStep = _AuthEntryStep.welcome;
   bool _registrationIntent = false;
   AccountRole _selectedRole = AccountRole.customer;
@@ -137,6 +138,8 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _initializeData();
+    
+    // Foreground messages (banner inside app)
     _foregroundPushSub = _pushGateway.foregroundMessages().listen((message) {
       if (message.data != null &&
           message.data!['type'] == 'booking:provider:REQUESTED') {
@@ -155,7 +158,64 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
         );
       }
     });
+
+    // Background interactions (user taps notification in system tray while app is running in background)
+    _backgroundPushSub = _pushGateway.backgroundInteractions().listen((message) {
+      _handlePushInteraction(message);
+    });
+
+    // Initial interaction (user taps notification while app is fully terminated)
+    _pushGateway.initialInteraction().then((message) {
+      if (message != null) {
+        // Delay slightly so the navigator has time to mount
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _handlePushInteraction(message);
+        });
+      }
+    });
+
     _bookings.acceptedBooking.addListener(_showAcceptCelebration);
+  }
+
+  void _handlePushInteraction(ForegroundPushMessage message) {
+    if (message.data == null) return;
+    final type = message.data!['type'];
+    if (type == 'booking:provider:REQUESTED') {
+      _navigatorKey.currentState?.push(
+        MaterialPageRoute(
+          fullscreenDialog: true,
+          builder: (context) => ProviderIncomingRequestScreen(
+            requestData: message.data!,
+            providerController: _provider,
+          ),
+        ),
+      );
+    } else if (type != null && (type as String).startsWith('booking:')) {
+      // General booking update - open booking tracking screen
+      final bookingId = message.data!['bookingId'];
+      if (bookingId != null) {
+        _navigatorKey.currentState?.push(
+          MaterialPageRoute(
+            builder: (context) => BookingTrackingScreen(
+              controller: _trackingController(bookingId),
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  BookingTrackingController _trackingController(String bookingId) {
+    return _trackingControllers.putIfAbsent(
+      bookingId,
+      () => BookingTrackingController(
+        bookingId: bookingId,
+        source: ApiBookingTrackingSource(
+          api: _api,
+          accessToken: _auth.validAccessToken,
+        ),
+      ),
+    );
   }
 
   /// One-shot celebrate overlay when realtime reports a provider acceptance.
@@ -262,6 +322,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     unawaited(_foregroundPushSub?.cancel());
+    unawaited(_backgroundPushSub?.cancel());
     _bookings.acceptedBooking.removeListener(_showAcceptCelebration);
     _notifications.dispose();
     _auth.dispose();

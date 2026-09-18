@@ -313,7 +313,7 @@ class ProviderHomeScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: AppSpacing.sm),
                               Text(
-                                availability?.scheduleSummary ?? 'No schedule set',
+                                availability?.timingSummary ?? 'No schedule set',
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
@@ -394,7 +394,7 @@ class ProviderHomeScreen extends StatelessWidget {
                                 Builder(
                                   builder: (context) {
                                     final earnings = controller.profile?.stats?.earningsMinor ?? 0;
-                                    final amount = (earnings / 100).toStringAsFixed(2);
+                                    final amount = (earnings ~/ 100).toString();
                                     return Text(
                                       '₹$amount',
                                       maxLines: 1,

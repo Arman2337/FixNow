@@ -532,8 +532,8 @@ Thank you for choosing FixNow!
   static String _rupees(int minor) {
     final val = minor / 100.0;
     return val % 1 == 0
-        ? 'INR ${val.toStringAsFixed(0)}'
-        : 'INR ${val.toStringAsFixed(2)}';
+        ? 'Rs. ${val.toStringAsFixed(0)}'
+        : 'Rs. ${val.toStringAsFixed(2)}';
   }
 
   static String _escape(String text) {

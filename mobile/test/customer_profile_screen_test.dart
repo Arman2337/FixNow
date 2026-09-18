@@ -17,7 +17,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.dark,
-        home: Scaffold(body: CustomerProfileScreen(addressRepository: SavedAddressRepository(api: ApiTransport(MockClient()), accessToken: () async => ''), controller: controller)),
+        home: Scaffold(body: CustomerProfileScreen(controller: controller)),
       ),
     );
     await tester.pump();
@@ -47,7 +47,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.dark,
-        home: Scaffold(body: CustomerProfileScreen(addressRepository: SavedAddressRepository(api: ApiTransport(MockClient()), accessToken: () async => ''), controller: controller)),
+        home: Scaffold(body: CustomerProfileScreen(controller: controller)),
       ),
     );
     await tester.pump();
@@ -63,7 +63,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.dark,
-        home: Scaffold(body: CustomerProfileScreen(addressRepository: SavedAddressRepository(api: ApiTransport(MockClient()), accessToken: () async => ''), controller: controller)),
+        home: Scaffold(body: CustomerProfileScreen(controller: controller)),
       ),
     );
     await tester.pump();
@@ -96,7 +96,7 @@ class FakeProfileRepository implements CustomerProfileRepository {
 }
 
 
-class MockClient implements HttpClient {
+class MockClient implements ApiTransport {
   @override
-  Future<HttpResponse> send(HttpRequest request) async => HttpResponse(200, {});
+  Future<ApiResponse> send(ApiRequest request) async => ApiResponse(statusCode: 200, body: {});
 }

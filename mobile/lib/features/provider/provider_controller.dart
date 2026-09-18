@@ -12,11 +12,12 @@ import 'package:geolocator/geolocator.dart';
 enum ProviderLoadState { loading, ready, failure }
 
 class ProviderController extends ChangeNotifier {
-  ProviderController(this.repository, {this.realtime}) {
+  ProviderController(this.repository, {this.realtime, this.currentUserId}) {
     _initRealtime();
   }
   final ProviderRepository repository;
   final RealtimeClient? realtime;
+  final String? Function()? currentUserId;
   StreamSubscription<RealtimeProjection>? _realtimeSub;
   ProviderLoadState state = ProviderLoadState.loading;
   ProviderApplication? application;
@@ -39,7 +40,6 @@ class ProviderController extends ChangeNotifier {
   ProviderMapLocation? currentLocation;
 
   Timer? _locationTimer;
-  Timer? _requestPollingTimer;
 
   final _incomingRequestsController = StreamController<Map<String, Object?>>.broadcast();
   Stream<Map<String, Object?>> get incomingRequests => _incomingRequestsController.stream;
@@ -206,8 +206,9 @@ class ProviderController extends ChangeNotifier {
       categories = await repository.categories();
       documents = verified ? const [] : await repository.documents();
       if (verified) {
-        if (profile != null) {
-          realtime?.subscribeAccount(profile!.id);
+        final userId = currentUserId?.call();
+        if (userId != null) {
+          realtime?.subscribeAccount(userId);
         }
         availability = await repository.availability();
         if (availability?.status == 'online') {

@@ -303,6 +303,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
     _provider = ProviderController(
       ProviderRepository(api: api, accessToken: _auth.validAccessToken),
       realtime: _createRealtimeClient(),
+      currentUserId: () => _auth.session?.userId,
     );
     _complaints = ComplaintsController(
       ComplaintsRepository(client: api, accessToken: _auth.validAccessToken),

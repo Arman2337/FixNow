@@ -503,101 +503,103 @@ class _AuthScreenState extends State<AuthScreen>
                         ],
 
                         // Mobile Field (Mandatory)
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              'Mobile Number',
-                              style: TextStyle(
-                                color: AppColors.textPrimary,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        Container(
-                          decoration: BoxDecoration(
-                            color: AppColors.surfaceContainerLowest,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: AppColors.outlineVariant.withValues(alpha: 0.3),
-                            ),
-                          ),
-                          child: Row(
+                        if (_register) ...[
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const SizedBox(width: 12),
-                              Icon(
-                                Icons.smartphone_outlined,
-                                color: AppColors.textSecondary.withValues(alpha: 0.7),
-                                size: 20,
-                              ),
-                              Container(
-                                height: 24,
-                                width: 1,
-                                color: AppColors.outlineVariant.withValues(alpha: 0.3),
-                                margin: const EdgeInsets.symmetric(horizontal: 12),
-                              ),
-                              // +91 Prefix Pill
-                              Container(
-                                margin: const EdgeInsets.only(top: 6, bottom: 6),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.green.withValues(alpha: 0.05),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Row(
-                                  children: [
-                                    const Text('🇮🇳', style: TextStyle(fontSize: 16)),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      '+91',
-                                      style: FixNowTypography.dataMono.copyWith(
-                                        color: AppColors.textPrimary,
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: TextFormField(
-                                  controller: _mobile,
-                                  enabled: !loading,
-                                  keyboardType: TextInputType.phone,
-                                  textInputAction: TextInputAction.next,
-                                  style: const TextStyle(
-                                    color: AppColors.textPrimary,
-                                  ),
-                                  decoration: InputDecoration(
-                                    hintText: 'Enter your mobile number',
-                                    hintStyle: TextStyle(
-                                      color: AppColors.textSecondary.withValues(
-                                        alpha: 0.5,
-                                      ),
-                                    ),
-                                    border: InputBorder.none,
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 0,
-                                      vertical: 14,
-                                    ),
-                                  ),
-                                  validator: (value) =>
-                                      (value == null || value.trim().isEmpty)
-                                          ? 'Enter your mobile number.'
-                                          : null,
+                              const Text(
+                                'Mobile Number',
+                                style: TextStyle(
+                                  color: AppColors.textPrimary,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
                                 ),
                               ),
                             ],
                           ),
-                        ),
-                        const SizedBox(height: AppSpacing.md),
+                          const SizedBox(height: 6),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceContainerLowest,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: AppColors.outlineVariant.withValues(alpha: 0.3),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                const SizedBox(width: 12),
+                                Icon(
+                                  Icons.smartphone_outlined,
+                                  color: AppColors.textSecondary.withValues(alpha: 0.7),
+                                  size: 20,
+                                ),
+                                Container(
+                                  height: 24,
+                                  width: 1,
+                                  color: AppColors.outlineVariant.withValues(alpha: 0.3),
+                                  margin: const EdgeInsets.symmetric(horizontal: 12),
+                                ),
+                                // +91 Prefix Pill
+                                Container(
+                                  margin: const EdgeInsets.only(top: 6, bottom: 6),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.green.withValues(alpha: 0.05),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Text('🇮🇳', style: TextStyle(fontSize: 16)),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        '+91',
+                                        style: FixNowTypography.dataMono.copyWith(
+                                          color: AppColors.textPrimary,
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: _mobile,
+                                    enabled: !loading,
+                                    keyboardType: TextInputType.phone,
+                                    textInputAction: TextInputAction.next,
+                                    style: const TextStyle(
+                                      color: AppColors.textPrimary,
+                                    ),
+                                    decoration: InputDecoration(
+                                      hintText: 'Enter your mobile number',
+                                      hintStyle: TextStyle(
+                                        color: AppColors.textSecondary.withValues(
+                                          alpha: 0.5,
+                                        ),
+                                      ),
+                                      border: InputBorder.none,
+                                      contentPadding: const EdgeInsets.symmetric(
+                                        horizontal: 0,
+                                        vertical: 14,
+                                      ),
+                                    ),
+                                    validator: (value) =>
+                                        (value == null || value.trim().isEmpty)
+                                            ? 'Enter your mobile number.'
+                                            : null,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                        ],
 
                         // Email Field (Mandatory)
                         Row(

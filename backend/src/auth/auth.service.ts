@@ -2,6 +2,7 @@ import {
   ConflictException,
   Injectable,
   UnauthorizedException,
+  BadRequestException,
 } from '@nestjs/common';
 import * as argon2 from 'argon2';
 import { DataSource } from 'typeorm';
@@ -57,6 +58,10 @@ export class AuthService {
       providerApplicant: boolean;
     },
   ): Promise<AuthenticationResponse> {
+    if (!input.mobile?.trim()) {
+      throw new BadRequestException('Mobile number is required for registration.');
+    }
+
     const passwordHash = await argon2.hash(input.password, {
       type: argon2.argon2id,
     });
@@ -73,6 +78,7 @@ export class AuthService {
         const createdUser = await manager.save(
           manager.create(UserEntity, {
             status: AccountStatus.PendingVerification,
+            phone: input.mobile?.trim() || null,
           }),
         );
         const identity = await manager.save(

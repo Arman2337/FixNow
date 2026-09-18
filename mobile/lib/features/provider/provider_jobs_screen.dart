@@ -6,9 +6,7 @@ import 'package:fixnow_mobile/features/bookings/booking.dart';
 import 'package:fixnow_mobile/features/bookings/cancellation_dialog.dart';
 import 'package:fixnow_mobile/features/bookings/job_proof_service.dart';
 import 'package:fixnow_mobile/design_system/fix_job_proof_dialog.dart';
-import 'package:fixnow_mobile/features/call/booking_call_screen.dart';
 import 'package:fixnow_mobile/features/call/call_controller.dart';
-import 'package:fixnow_mobile/features/call/call_repository.dart';
 import 'package:fixnow_mobile/features/chat/booking_chat_screen.dart';
 import 'package:fixnow_mobile/features/chat/chat_controller.dart';
 import 'package:fixnow_mobile/features/chat/chat_repository.dart';
@@ -27,14 +25,12 @@ class ProviderJobsScreen extends StatefulWidget {
     required this.controller,
     required this.showHistory,
     this.chatRepository,
-    this.callRepository,
     super.key,
   });
 
   final ProviderController controller;
   final bool showHistory;
   final ChatRepository? chatRepository;
-  final CallRepository? callRepository;
 
   @override
   State<ProviderJobsScreen> createState() => _ProviderJobsScreenState();
@@ -135,7 +131,6 @@ class _ProviderJobsScreenState extends State<ProviderJobsScreen> {
                 job: assignedJobs.first,
                 controller: widget.controller,
                 chatRepository: widget.chatRepository,
-                callRepository: widget.callRepository,
               ),
               // Subsequent upcoming jobs
               if (assignedJobs.length > 1) ...[
@@ -156,7 +151,6 @@ class _ProviderJobsScreenState extends State<ProviderJobsScreen> {
                         job: job,
                         controller: widget.controller,
                         chatRepository: widget.chatRepository,
-                        callRepository: widget.callRepository,
                       ),
                     ),
               ],
@@ -676,13 +670,11 @@ class _TopUrgentJobCard extends StatelessWidget {
     required this.job,
     required this.controller,
     this.chatRepository,
-    this.callRepository,
   });
 
   final CustomerBooking job;
   final ProviderController controller;
   final ChatRepository? chatRepository;
-  final CallRepository? callRepository;
 
   @override
   Widget build(BuildContext context) {
@@ -1075,32 +1067,30 @@ class _TopUrgentJobCard extends StatelessWidget {
                                   isProvider: true,
                                 ),
                                 providerName: 'Customer',
-                                callRepository: callRepository,
                               ),
                             ),
                           ),
                         ),
                       ),
                     ],
-                    if (callRepository != null) ...[
+                    if (job.status == 'ASSIGNED' ||
+                        job.status == 'EN_ROUTE' ||
+                        job.status == 'IN_PROGRESS') ...[
                       const SizedBox(width: AppSpacing.sm),
                       Expanded(
                         child: FixButton(
                           label: 'Call',
                           icon: Icons.call_rounded,
                           variant: FixButtonVariant.secondary,
-                          onPressed: () => Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => BookingCallScreen(
-                                controller: CallController(
-                                  bookingId: job.id,
-                                  repository: callRepository!,
-                                  realtimeClient: controller.realtime,
-                                  initialSpeakerOn: true,
-                                ),
-                              ),
-                            ),
-                          ),
+                          onPressed: () {
+                            if (job.customerPhone != null) {
+                              const CallController().launchCall(job.customerPhone!);
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Phone number unavailable')),
+                              );
+                            }
+                          },
                         ),
                       ),
                     ],
@@ -1120,7 +1110,6 @@ class _TopUrgentJobCard extends StatelessWidget {
                         job: job,
                         controller: controller,
                         chatRepository: chatRepository,
-                        callRepository: callRepository,
                       ),
                     ),
                   ),
@@ -1197,13 +1186,11 @@ class _UpcomingJobCard extends StatelessWidget {
     required this.job,
     required this.controller,
     this.chatRepository,
-    this.callRepository,
   });
 
   final CustomerBooking job;
   final ProviderController controller;
   final ChatRepository? chatRepository;
-  final CallRepository? callRepository;
 
   @override
   Widget build(BuildContext context) {
@@ -1306,7 +1293,6 @@ class _UpcomingJobCard extends StatelessWidget {
                       job: job,
                       controller: controller,
                       chatRepository: chatRepository,
-                      callRepository: callRepository,
                     ),
                   ),
                 ),

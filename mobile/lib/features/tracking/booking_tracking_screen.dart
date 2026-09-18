@@ -6,15 +6,10 @@ import 'package:fixnow_mobile/design_system/fix_banner.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
 import 'package:fixnow_mobile/design_system/fix_components.dart';
-import 'package:fixnow_mobile/features/call/booking_call_screen.dart';
 import 'package:fixnow_mobile/features/call/call_controller.dart';
-import 'package:fixnow_mobile/features/call/call_repository.dart';
-import 'package:fixnow_mobile/features/call/call_session.dart';
-import 'package:fixnow_mobile/features/call/incoming_call_dialog.dart';
 import 'package:fixnow_mobile/features/chat/booking_chat_screen.dart';
 import 'package:fixnow_mobile/features/chat/chat_controller.dart';
 import 'package:fixnow_mobile/features/chat/chat_repository.dart';
-import 'package:fixnow_mobile/features/realtime/realtime_client.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking_controller.dart';
 import 'package:fixnow_mobile/features/tracking/provider_live_map.dart';
@@ -24,14 +19,12 @@ class BookingTrackingScreen extends StatefulWidget {
   const BookingTrackingScreen({
     required this.controller,
     this.chatRepository,
-    this.callRepository,
     this.onOpenChat,
     this.onCallPressed,
     super.key,
   });
   final BookingTrackingController controller;
   final ChatRepository? chatRepository;
-  final CallRepository? callRepository;
   final void Function(BuildContext context, String bookingId)? onOpenChat;
   final void Function(BuildContext context, String bookingId)? onCallPressed;
   @override
@@ -39,39 +32,14 @@ class BookingTrackingScreen extends StatefulWidget {
 }
 
 class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
-  StreamSubscription<RealtimeProjection>? _callSub;
-
   @override
   void initState() {
     super.initState();
     widget.controller.loadSnapshot();
-    _listenForIncomingCalls();
-  }
-
-  void _listenForIncomingCalls() {
-    _callSub = widget.controller.realtime?.projections.listen((p) {
-      final type = p.data['type']?.toString();
-      final data = p.data['data'];
-      if (type == 'call.incoming.v1' && data is Map) {
-        final session = CallSession.fromJson(Map<String, Object?>.from(data));
-        if (session.callerRole != 'CUSTOMER' &&
-            widget.callRepository != null &&
-            mounted) {
-          IncomingCallDialog.show(
-            context,
-            session: session,
-            repository: widget.callRepository!,
-            realtimeClient: widget.controller.realtime,
-            callerTitle: 'Service Technician',
-          );
-        }
-      }
-    });
   }
 
   @override
   void dispose() {
-    _callSub?.cancel();
     super.dispose();
   }
 
@@ -1040,7 +1008,6 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
               repository: widget.chatRepository!,
               realtimeClient: widget.controller.realtime,
             ),
-            callRepository: widget.callRepository,
             onCallPressed: () => _startCall(context),
           ),
         ),
@@ -1063,26 +1030,9 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
       return;
     }
 
-    if (widget.callRepository != null) {
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => BookingCallScreen(
-            controller: CallController(
-              bookingId: bookingId,
-              repository: widget.callRepository!,
-              realtimeClient: widget.controller.realtime,
-              initialSpeakerOn: true,
-            ),
-          ),
-        ),
-      );
-      return;
+    if (widget.onCallPressed != null) {
+      widget.onCallPressed!(context, bookingId);
     }
-
-    showFixBanner(
-      ScaffoldMessenger.of(context),
-      message: 'In-app audio calling connecting...',
-    );
   }
 }
 

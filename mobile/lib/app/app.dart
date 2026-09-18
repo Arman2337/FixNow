@@ -58,12 +58,14 @@ import 'package:fixnow_mobile/features/emergency/emergency_repository.dart';
 import 'package:fixnow_mobile/features/payments/invoice_repository.dart';
 import 'package:fixnow_mobile/features/payments/invoice_screen.dart';
 import 'package:fixnow_mobile/features/payments/local_payment_repository.dart';
+import 'package:fixnow_mobile/features/guarantees/data/guarantee_repository.dart';
+import 'package:fixnow_mobile/features/guarantees/ui/submit_claim_screen.dart';
 
 import 'package:fixnow_mobile/features/realtime/realtime_client.dart';
 import 'package:fixnow_mobile/notifications/push_api.dart';
 import 'package:fixnow_mobile/notifications/push_enrollment.dart';
 import 'package:fixnow_mobile/features/chat/chat_repository.dart';
-import 'package:fixnow_mobile/features/call/call_repository.dart';
+import 'package:fixnow_mobile/features/call/call_controller.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking_controller.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking_screen.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking_source.dart';
@@ -113,7 +115,6 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
   late final PushEnrollmentController _push;
   late final NotificationController _notifications;
   late final ChatRepository _chatRepository;
-  late final CallRepository _callRepository;
   late final SavedAddressRepository _savedAddresses;
   final Map<String, BookingTrackingController> _trackingControllers = {};
 
@@ -320,10 +321,6 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
       accessToken: _auth.validAccessToken,
       currentUserId: () => _auth.session?.userId,
     );
-    _callRepository = HttpCallRepository(
-      api: api,
-      accessToken: _auth.validAccessToken,
-    );
     _savedAddresses = SavedAddressRepository(
       api: api,
       accessToken: _auth.validAccessToken,
@@ -428,7 +425,6 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
               providerHome: ProviderHomeScreen(
                 controller: _provider,
                 chatRepository: _chatRepository,
-                callRepository: _callRepository,
                 onTechDesk: () {
                   final nav = _navigatorKey.currentState;
                   if (nav == null) return;
@@ -514,13 +510,11 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
               providerJobs: ProviderJobsScreen(
                 controller: _provider,
                 chatRepository: _chatRepository,
-                callRepository: _callRepository,
                 showHistory: false,
               ),
               providerHistory: ProviderJobsScreen(
                 controller: _provider,
                 chatRepository: _chatRepository,
-                callRepository: _callRepository,
                 showHistory: true,
               ),
               providerProfile: ProviderOnboardingScreen(
@@ -804,6 +798,19 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
                 ),
               );
             },
+            onSubmitClaim: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => SubmitClaimScreen(
+                    bookingId: currentBooking.id,
+                    repository: GuaranteeRepository(
+                      _api,
+                      accessToken: _auth.validAccessToken,
+                    ),
+                  ),
+                ),
+              );
+            },
             onCancel:
                 const {'REQUESTED', 'ASSIGNED'}.contains(currentBooking.status)
                 ? (reason) => _bookings.cancel(currentBooking, reason)
@@ -853,7 +860,15 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
         return BookingTrackingScreen(
           controller: tracking,
           chatRepository: _chatRepository,
-          callRepository: _callRepository,
+          onCallPressed: (context, id) {
+            if (currentBooking.providerPhone != null) {
+              const CallController().launchCall(currentBooking.providerPhone!);
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Phone number unavailable')),
+              );
+            }
+          },
         );
       },
     );

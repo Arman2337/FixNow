@@ -27,6 +27,9 @@ export class Booking {
   @Column('uuid', { name: 'provider_id', nullable: true })
   providerId: string | null;
 
+  customerPhone?: string | null;
+  providerPhone?: string | null;
+
   @Column('uuid', { name: 'service_category_id' })
   serviceCategoryId: string;
 
@@ -83,7 +86,13 @@ export class Booking {
   @VersionColumn()
   version: number;
 
-  @OneToMany(() => BookingLineItem, (lineItem) => lineItem.booking, {
+  @Column('boolean', { name: 'is_guarantee_claim', default: false })
+  isGuaranteeClaim: boolean;
+
+  @Column('uuid', { name: 'parent_booking_id', nullable: true })
+  parentBookingId: string | null;
+
+  @OneToMany(() => BookingLineItem, (item) => item.booking, {
     cascade: true,
     eager: true,
   })

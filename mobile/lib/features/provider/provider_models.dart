@@ -243,6 +243,7 @@ class ProviderRequest {
     required this.createdAt,
     required this.version,
     required this.distanceKm,
+    this.customerPhone,
   });
 
   final String id;
@@ -251,6 +252,7 @@ class ProviderRequest {
   final DateTime createdAt;
   final int version;
   final double distanceKm;
+  final String? customerPhone;
 
   factory ProviderRequest.fromJson(Map<String, Object?> json) {
     final id = json['id'];
@@ -258,6 +260,7 @@ class ProviderRequest {
     final description = json['description'];
     final createdAt = DateTime.tryParse(json['createdAt']?.toString() ?? '');
     final distance = json['distanceKm'];
+    final customerPhone = json['customerPhone'] as String?;
     if (id is! String || category is! String || createdAt == null) {
       throw const FormatException();
     }
@@ -268,6 +271,7 @@ class ProviderRequest {
       createdAt: createdAt,
       version: (json['version'] as num?)?.toInt() ?? 1,
       distanceKm: (distance as num?)?.toDouble() ?? 0.0,
+      customerPhone: customerPhone,
     );
   }
 }

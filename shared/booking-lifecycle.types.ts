@@ -57,6 +57,8 @@ export interface BookingContract {
   createdAt: string;
   updatedAt: string;
   version: number;
+  customerPhone?: string | null;
+  providerPhone?: string | null;
   lineItems?: Array<{
     id: string;
     subServiceId: string;

@@ -40,7 +40,6 @@ class ProviderHomeScreen extends StatelessWidget {
   const ProviderHomeScreen({
     required this.controller,
     this.chatRepository,
-    this.callRepository,
     this.loadAcceptTime,
     this.onViewEarnings,
     this.notificationController,
@@ -51,7 +50,6 @@ class ProviderHomeScreen extends StatelessWidget {
   });
   final ProviderController controller;
   final ChatRepository? chatRepository;
-  final CallRepository? callRepository;
 
   /// FN-111: loads this provider's rolling accept-time signal; null hides
   /// the card entirely (including failures and insufficient data).
@@ -612,7 +610,6 @@ class ProviderHomeScreen extends StatelessWidget {
                             job: job,
                             controller: controller,
                             chatRepository: chatRepository,
-                            callRepository: callRepository,
                           ),
                         ),
                       ),

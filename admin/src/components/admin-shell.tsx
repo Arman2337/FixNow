@@ -8,6 +8,7 @@ const navigation = [
   { label: "Provider KYC Verification", href: "/providers", icon: "verified_user", roles: ["provider_reviewer", "operations_administrator", "auditor"] },
   { label: "Live Dispatches & Radar", href: "/bookings", icon: "fmd_good", roles: ["support_agent", "trust_safety_reviewer", "operations_administrator", "auditor"] },
   { label: "Complaints & Escrow", href: "/support", icon: "payments", roles: ["support_agent", "trust_safety_reviewer", "operations_administrator", "auditor"] },
+  { label: "Guarantee Claims", href: "/guarantees", icon: "verified", roles: ["support_agent", "trust_safety_reviewer", "operations_administrator", "auditor"] },
   { label: "Trust & Safety Moderation", href: "/trust", icon: "gavel", roles: ["trust_safety_reviewer", "operations_administrator"] },
   { label: "Categories & Pricing", href: "/services", icon: "tune", roles: ["service_catalog_manager", "operations_administrator", "auditor"] },
 ] as const;

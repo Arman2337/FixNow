@@ -13,10 +13,9 @@ import 'package:fixnow_mobile/features/bookings/booking_controller.dart';
 import 'package:fixnow_mobile/features/bookings/booking_schedule.dart';
 import 'package:fixnow_mobile/features/location/booking_location.dart';
 import 'package:fixnow_mobile/features/location/saved_address.dart';
+import 'package:fixnow_mobile/features/location/service_location_picker_sheet.dart';
 import 'package:fixnow_mobile/features/services/service_category.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
 
 class ServiceRequestScreen extends StatefulWidget {
   const ServiceRequestScreen({
@@ -55,9 +54,12 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
   BookingSchedule? _schedule;
   PriceEstimateController? _estimate;
 
+  String? _createdBookingId;
+
   @override
   void initState() {
     super.initState();
+    widget.controller.addListener(_onBookingChanged);
     _details.text = widget.initialDescription ?? '';
     final defaultAddr = SavedAddressRepository.instance.defaultAddress;
     if (defaultAddr != null &&
@@ -80,6 +82,19 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
 
   void _onEstimateChanged() {
     if (mounted) setState(() {});
+  }
+
+  void _onBookingChanged() {
+    if (!mounted || _createdBookingId == null || !_showRadar) return;
+    final booking = widget.controller.bookings
+        .where((b) => b.id == _createdBookingId)
+        .firstOrNull;
+    if (booking != null &&
+        const {'ASSIGNED', 'EN_ROUTE', 'IN_PROGRESS'}.contains(booking.status)) {
+      if (ModalRoute.of(context)?.isCurrent == true) {
+        Navigator.of(context).pop(booking);
+      }
+    }
   }
 
   /// FN-113: the price card shows the advisory estimate when one is
@@ -153,6 +168,7 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
 
   @override
   void dispose() {
+    widget.controller.removeListener(_onBookingChanged);
     _estimate?.dispose();
     _details.dispose();
     super.dispose();
@@ -178,7 +194,7 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
           await (widget.locationProvider ??
                   BookingLocationResolver(initialFix: widget.initialLocation))
               .resolve();
-      await widget.controller.create(
+      final booking = await widget.controller.create(
         serviceCategoryId: widget.category.id,
         description: _details.text,
         latitude: location.latitude,
@@ -186,9 +202,10 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
         scheduledAt: _schedule?.targetScheduledAt,
       );
       if (mounted) {
-        setState(
-          () => _showRadar = true,
-        ); // FN-040 made visible (signature motion)
+        setState(() {
+          _createdBookingId = booking.id;
+          _showRadar = true;
+        });
       }
     } on BookingLocationFailure {
       // A browser may have permission but no hardware location source. Let the
@@ -226,7 +243,17 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
         body: MatchRadarView(
           categoryName: widget.category.name,
           onFinished: () {
-            if (mounted) Navigator.of(context).pop(true);
+            if (!mounted) return;
+            final booking = widget.controller.bookings
+                .where((b) => b.id == _createdBookingId)
+                .firstOrNull;
+            if (booking != null &&
+                const {'ASSIGNED', 'EN_ROUTE', 'IN_PROGRESS'}
+                    .contains(booking.status)) {
+              Navigator.of(context).pop(booking);
+            } else {
+              Navigator.of(context).pop(true);
+            }
           },
         ),
       );
@@ -456,11 +483,9 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
   }
 
   Future<void> _chooseLocationOnMap() async {
-    final selected = await showModalBottomSheet<BookingLocationFix>(
-      context: context,
-      isScrollControlled: true,
-      builder: (_) =>
-          _ServiceLocationPicker(initialLocation: widget.initialLocation),
+    final selected = await ServiceLocationPickerSheet.show(
+      context,
+      initialLocation: widget.initialLocation ?? _confirmedLocation,
     );
     if (selected != null && mounted) {
       setState(() {
@@ -469,95 +494,4 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
       });
     }
   }
-}
-
-class _ServiceLocationPicker extends StatefulWidget {
-  const _ServiceLocationPicker({this.initialLocation});
-
-  final BookingLocationFix? initialLocation;
-
-  @override
-  State<_ServiceLocationPicker> createState() => _ServiceLocationPickerState();
-}
-
-class _ServiceLocationPickerState extends State<_ServiceLocationPicker> {
-  late LatLng _selected = widget.initialLocation == null
-      ? const LatLng(20.5937, 78.9629)
-      : LatLng(
-          widget.initialLocation!.latitude,
-          widget.initialLocation!.longitude,
-        );
-
-  @override
-  Widget build(BuildContext context) => SafeArea(
-    child: Padding(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'Confirm service location',
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          const Text(
-            'Tap your home or service address on the map. This pin is used only to match your provider.',
-          ),
-          const SizedBox(height: AppSpacing.md),
-          Semantics(
-            label:
-                'Service location map. Tap to place the service address pin.',
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(14),
-              child: SizedBox(
-                height: 320,
-                child: FlutterMap(
-                  options: MapOptions(
-                    initialCenter: _selected,
-                    initialZoom: widget.initialLocation == null ? 5 : 15,
-                    onTap: (_, point) => setState(() => _selected = point),
-                  ),
-                  children: [
-                    TileLayer(
-                      urlTemplate:
-                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                      userAgentPackageName: 'com.fixnow.app',
-                    ),
-                    MarkerLayer(
-                      markers: [
-                        Marker(
-                          point: _selected,
-                          width: 48,
-                          height: 48,
-                          child: const Icon(
-                            Icons.location_on,
-                            color: AppColors.primary,
-                            size: 42,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          FixPrimaryButton(
-            label: 'Use this service location',
-            icon: Icons.check_rounded,
-            onPressed: () => Navigator.of(context).pop(
-              BookingLocationFix(
-                latitude: _selected.latitude,
-                longitude: _selected.longitude,
-                accuracyMeters: 0,
-                timestamp: DateTime.now(),
-              ),
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
 }

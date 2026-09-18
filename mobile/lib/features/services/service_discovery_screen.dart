@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_motion.dart';
@@ -20,7 +21,6 @@ import 'package:fixnow_mobile/features/services/service_discovery_controller.dar
 import 'package:fixnow_mobile/features/bookings/booking_controller.dart';
 import 'package:fixnow_mobile/features/services/service_image_resolver.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geocoding/geocoding.dart';
@@ -32,6 +32,9 @@ import 'package:fixnow_mobile/features/ai/problem_analysis_repository.dart';
 import 'package:fixnow_mobile/features/ai/problem_diagnosis_controller.dart';
 import 'package:fixnow_mobile/features/ai/problem_diagnosis_screen.dart';
 import 'package:fixnow_mobile/design_system/fix_notification_bell.dart';
+import 'package:fixnow_mobile/design_system/fix_address_selector.dart';
+import 'package:fixnow_mobile/features/location/saved_address.dart';
+import 'package:fixnow_mobile/features/location/service_location_picker_sheet.dart';
 import 'package:fixnow_mobile/features/notifications/notification_center_screen.dart';
 import 'package:fixnow_mobile/features/notifications/notification_controller.dart';
 import 'package:fixnow_mobile/features/notifications/notification_model.dart';
@@ -69,10 +72,10 @@ class ServiceDiscoveryScreen extends StatefulWidget {
 class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
   String? _locationName;
   BookingLocationFix? _bookingLocation;
+  bool _isLoadingLocation = false;
   final _searchController = TextEditingController();
   SearchSortOption _sortOption = SearchSortOption.relevance;
   SearchFilterOption _filterOption = SearchFilterOption.all;
-  bool _isInstantTriage = true;
 
   bool get _isSearching =>
       _searchController.text.trim().isNotEmpty ||
@@ -84,7 +87,11 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
     super.initState();
     widget.controller.load();
     widget.locationController.addListener(_onLocationStateChanged);
-    _onLocationStateChanged();
+    if (widget.locationController.state == LocationPermissionState.unknown) {
+      widget.locationController.check();
+    } else {
+      _onLocationStateChanged();
+    }
   }
 
   @override
@@ -101,70 +108,93 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
     }
   }
 
-  Future<void> _fetchLocationName() async {
+  Future<void> _fetchLocationName({bool forceRefresh = false}) async {
+    if (_isLoadingLocation) return;
+    setState(() => _isLoadingLocation = true);
     try {
+      if (!kIsWeb && !forceRefresh && _bookingLocation == null) {
+        try {
+          final last = await Geolocator.getLastKnownPosition();
+          if (last != null && mounted) {
+            _bookingLocation = BookingLocationFix(
+              latitude: last.latitude,
+              longitude: last.longitude,
+              accuracyMeters: last.accuracy,
+              timestamp: last.timestamp,
+            );
+            unawaited(_reverseGeocode(last.latitude, last.longitude));
+            setState(() {});
+          }
+        } catch (_) {}
+      }
+
       final position = await Geolocator.getCurrentPosition(
         locationSettings: kIsWeb
             ? WebSettings(
-                accuracy: LocationAccuracy.low,
-                timeLimit: Duration(seconds: 5),
-                maximumAge: Duration(minutes: 5),
+                accuracy: LocationAccuracy.high,
+                timeLimit: const Duration(seconds: 10),
+                maximumAge: const Duration(minutes: 5),
               )
             : const LocationSettings(
-                accuracy: LocationAccuracy.low,
-                timeLimit: Duration(seconds: 5),
+                accuracy: LocationAccuracy.high,
+                timeLimit: Duration(seconds: 10),
               ),
       );
-      _bookingLocation = BookingLocationFix(
-        latitude: position.latitude,
-        longitude: position.longitude,
-        accuracyMeters: position.accuracy,
-        timestamp: position.timestamp,
-      );
-
-      if (kIsWeb) {
-        // The geocoding package has no web implementation, so resolve the
-        // place name over HTTP. Until it resolves, the header keeps the
-        // honest 'Current Location' label.
-        try {
-          final uri = Uri.parse(
-            'https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${position.latitude}&longitude=${position.longitude}&localityLanguage=en',
+      if (mounted) {
+        setState(() {
+          _bookingLocation = BookingLocationFix(
+            latitude: position.latitude,
+            longitude: position.longitude,
+            accuracyMeters: position.accuracy,
+            timestamp: position.timestamp,
           );
-          final response = await http
-              .get(uri)
-              .timeout(const Duration(seconds: 3));
-          if (response.statusCode == 200) {
-            final data = jsonDecode(response.body);
-            final city = data['city'] ?? data['locality'];
-            final state = data['principalSubdivision'] ?? data['countryName'];
-            if (mounted &&
-                city != null &&
-                city.toString().trim().isNotEmpty) {
-              setState(() {
-                _locationName = (state != null &&
-                        state.toString().trim().isNotEmpty)
-                    ? '${city.toString().trim()}, ${state.toString().trim()}'
-                    : city.toString().trim();
-              });
-            }
-          }
-        } catch (e) {
-          debugPrint('Web geocoding fallback failed: $e');
+        });
+        await _reverseGeocode(position.latitude, position.longitude);
+      }
+    } catch (e) {
+      // No fake fallback: an unfixed location stays null so the booking flow
+      // asks for a real fix or an explicit map pick instead of silently
+      // booking at a demo address.
+      debugPrint('Failed to fetch/geocode location: $e');
+    } finally {
+      if (mounted) setState(() => _isLoadingLocation = false);
+    }
+  }
+
+  Future<void> _reverseGeocode(double lat, double lng) async {
+    if (!kIsWeb) {
+      try {
+        final placemarks = await Geocoding()
+            .placemarkFromCoordinates(lat, lng)
+            .timeout(const Duration(seconds: 3));
+        if (placemarks.isNotEmpty) {
+          _updateLocationName(placemarks.first);
+          return;
         }
-      } else {
-        try {
-          final placemarks = await Geocoding()
-              .placemarkFromCoordinates(position.latitude, position.longitude)
-              .timeout(const Duration(seconds: 3));
-          if (placemarks.isNotEmpty) {
-            _updateLocationName(placemarks.first);
-          }
-        } catch (_) {
-          // Geocoder unavailable; header keeps the honest 'Current Location'.
+      } catch (_) {
+        // Geocoder service unavailable; fall through to HTTP geocoding
+      }
+    }
+
+    try {
+      final uri = Uri.parse(
+        'https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=$lat&longitude=$lng&localityLanguage=en',
+      );
+      final response = await http.get(uri).timeout(const Duration(seconds: 3));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final city = data['city'] ?? data['locality'];
+        final state = data['principalSubdivision'] ?? data['countryName'];
+        if (mounted && city != null && city.toString().trim().isNotEmpty) {
+          setState(() {
+            _locationName = (state != null && state.toString().trim().isNotEmpty)
+                ? '${city.toString().trim()}, ${state.toString().trim()}'
+                : city.toString().trim();
+          });
         }
       }
     } catch (e) {
-      debugPrint('Failed to fetch/geocode location: $e');
+      debugPrint('HTTP geocoding fallback failed: $e');
     }
   }
 
@@ -179,6 +209,68 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
         _locationName = '$city, $state';
       });
     }
+  }
+
+  void _showLocationOptionsSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => _CustomerLocationOptionsSheet(
+        currentLocationName: _locationName,
+        isLoading: _isLoadingLocation,
+        onRefreshLiveLocation: () {
+          Navigator.of(sheetContext).pop();
+          _fetchLocationName(forceRefresh: true);
+        },
+        onSelectSavedAddress: (addr) {
+          Navigator.of(sheetContext).pop();
+          setState(() {
+            _bookingLocation = BookingLocationFix(
+              latitude: addr.latitude,
+              longitude: addr.longitude,
+              accuracyMeters: 10,
+              timestamp: DateTime.now(),
+            );
+            _locationName = addr.formattedSnippet.isNotEmpty
+                ? addr.formattedSnippet
+                : addr.city;
+          });
+        },
+        onPickOnMap: () async {
+          Navigator.of(sheetContext).pop();
+          final picked = await ServiceLocationPickerSheet.show(
+            context,
+            initialLocation: _bookingLocation,
+          );
+          if (picked != null && mounted) {
+            setState(() {
+              _bookingLocation = picked;
+              _locationName =
+                  'Custom Pin (${picked.latitude.toStringAsFixed(3)}, ${picked.longitude.toStringAsFixed(3)})';
+            });
+            unawaited(_reverseGeocode(picked.latitude, picked.longitude));
+          }
+        },
+        onAddNewAddress: () async {
+          Navigator.of(sheetContext).pop();
+          final newAddr = await AddEditAddressModalSheet.show(context);
+          if (newAddr != null && mounted) {
+            setState(() {
+              _bookingLocation = BookingLocationFix(
+                latitude: newAddr.latitude,
+                longitude: newAddr.longitude,
+                accuracyMeters: 10,
+                timestamp: DateTime.now(),
+              );
+              _locationName = newAddr.formattedSnippet.isNotEmpty
+                  ? newAddr.formattedSnippet
+                  : newAddr.city;
+            });
+          }
+        },
+      ),
+    );
   }
 
   void _handleQuickService(String slug, String name) {
@@ -1396,7 +1488,9 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
         final isGranted =
             widget.locationController.state == LocationPermissionState.granted;
         final locationText = isGranted
-            ? (_locationName ?? 'Current Location')
+            ? (_isLoadingLocation && _locationName == null
+                ? 'Detecting live location...'
+                : (_locationName ?? 'Current Location'))
             : 'Enable Location';
         final onlineCount = widget.controller.categories.fold<int>(
           0,
@@ -1486,10 +1580,8 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
               onTap: () {
                 if (!isGranted) {
                   widget.locationController.request();
-                } else if (_locationName == null) {
-                  // The first position fix can time out while the browser
-                  // permission prompt is still open; tap retries the lookup.
-                  _fetchLocationName();
+                } else {
+                  _showLocationOptionsSheet();
                 }
               },
               borderRadius: BorderRadius.circular(14),
@@ -1503,10 +1595,20 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                           child: FlutterMap(
                             options: MapOptions(
                               initialCenter: LatLng(
-                                _bookingLocation?.latitude ?? 23.0225,
-                                _bookingLocation?.longitude ?? 72.5714,
+                                _bookingLocation?.latitude ??
+                                    SavedAddressRepository
+                                        .instance
+                                        .defaultAddress
+                                        ?.latitude ??
+                                    20.5937,
+                                _bookingLocation?.longitude ??
+                                    SavedAddressRepository
+                                        .instance
+                                        .defaultAddress
+                                        ?.longitude ??
+                                    78.9629,
                               ),
-                              initialZoom: 14.0,
+                              initialZoom: _bookingLocation != null ? 14.0 : 5.0,
                               interactionOptions: const InteractionOptions(
                                 flags: InteractiveFlag.none,
                               ),
@@ -1539,13 +1641,23 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                       ),
                       child: Row(
                         children: [
-                          Icon(
-                            Icons.near_me_rounded,
-                            color: isGranted
-                                ? AppColors.primaryFixed
-                                : AppColors.primary,
-                            size: 20,
-                          ),
+                          if (_isLoadingLocation)
+                            const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.primaryEmerald,
+                              ),
+                            )
+                          else
+                            Icon(
+                              Icons.near_me_rounded,
+                              color: isGranted
+                                  ? AppColors.primaryFixed
+                                  : AppColors.primary,
+                              size: 20,
+                            ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Column(
@@ -2258,4 +2370,319 @@ class _DiscoveryMessage extends StatelessWidget {
       ],
     ),
   );
+}
+
+class _CustomerLocationOptionsSheet extends StatelessWidget {
+  const _CustomerLocationOptionsSheet({
+    required this.currentLocationName,
+    required this.isLoading,
+    required this.onRefreshLiveLocation,
+    required this.onSelectSavedAddress,
+    required this.onPickOnMap,
+    required this.onAddNewAddress,
+  });
+
+  final String? currentLocationName;
+  final bool isLoading;
+  final VoidCallback onRefreshLiveLocation;
+  final ValueChanged<SavedAddress> onSelectSavedAddress;
+  final VoidCallback onPickOnMap;
+  final VoidCallback onAddNewAddress;
+
+  @override
+  Widget build(BuildContext context) {
+    final addresses = SavedAddressRepository.instance.addresses;
+
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Drag indicator
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Select Service Location',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+
+              // Option 1: Use Current Live Location (GPS)
+              InkWell(
+                onTap: isLoading ? null : onRefreshLiveLocation,
+                borderRadius: BorderRadius.circular(14),
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryEmerald.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: AppColors.primaryEmerald.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: const BoxDecoration(
+                          color: AppColors.primaryEmerald,
+                          shape: BoxShape.circle,
+                        ),
+                        child: isLoading
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(
+                                Icons.my_location_rounded,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Use Current Live Location',
+                              style: FixNowTypography.label.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              currentLocationName != null
+                                  ? 'Current: $currentLocationName'
+                                  : 'Detects real device GPS coordinates',
+                              style: FixNowTypography.bodySmall.copyWith(
+                                color: AppColors.textSecondary,
+                                fontSize: 12,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(
+                        Icons.chevron_right_rounded,
+                        color: AppColors.textSecondary,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // Option 2: Choose on Map
+              InkWell(
+                onTap: onPickOnMap,
+                borderRadius: BorderRadius.circular(14),
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceContainerLowest,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.borderDefault),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryFixed,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.map_rounded,
+                          color: AppColors.primary,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Choose on Map',
+                              style: FixNowTypography.label.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Place an exact pin on the map',
+                              style: FixNowTypography.bodySmall.copyWith(
+                                color: AppColors.textSecondary,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(
+                        Icons.chevron_right_rounded,
+                        color: AppColors.textSecondary,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              if (addresses.isNotEmpty) ...[
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Saved Addresses',
+                      style: FixNowTypography.label.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: onAddNewAddress,
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: const Text(
+                        '+ Add New',
+                        style: TextStyle(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 200),
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: addresses.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 8),
+                    itemBuilder: (context, index) {
+                      final addr = addresses[index];
+                      return InkWell(
+                        onTap: () => onSelectSavedAddress(addr),
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceContainerLow,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppColors.border),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                addr.icon,
+                                color: AppColors.primary,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      addr.labelText,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                    Text(
+                                      addr.formattedSnippet,
+                                      style: const TextStyle(
+                                        color: AppColors.textSecondary,
+                                        fontSize: 12,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              if (addr.isDefault)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primaryEmerald.withValues(
+                                      alpha: 0.12,
+                                    ),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: const Text(
+                                    'Default',
+                                    style: TextStyle(
+                                      color: AppColors.primaryEmerald,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

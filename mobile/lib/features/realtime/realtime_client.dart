@@ -108,6 +108,8 @@ class RealtimeClient extends ChangeNotifier {
     await _connect();
   }
 
+  Future<void> connect() => _connect();
+
   Future<void> sendPresence(bool online) =>
       _sendWithAck({'type': 'presence-update', 'online': online});
 
@@ -248,6 +250,19 @@ class RealtimeClient extends ChangeNotifier {
   }
 
   Future<void> _sendWithAck(Map<String, Object?> message) async {
+    if (_socket == null) {
+      await _connect();
+      if (_socket == null) {
+        throw StateError('offline');
+      }
+    }
+    if (_readyCompleter?.isCompleted == false) {
+      try {
+        await _readyCompleter!.future.timeout(const Duration(seconds: 3));
+      } catch (_) {
+        throw StateError('offline');
+      }
+    }
     final requestId = 'mobile-${++_requestSequence}';
     final acknowledgement = Completer<void>();
     _pendingAcks[requestId] = acknowledgement;

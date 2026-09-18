@@ -526,13 +526,8 @@ export class BookingsService {
 
     const rows = await query.getMany();
     const hasMore = rows.length > boundedLimit;
-    const page = rows.slice(0, boundedLimit).map((booking) =>
-      booking.providerId === userId && booking.customerId !== userId
-        ? Object.assign(new Booking(), booking, {
-            locationLat: null,
-            locationLng: null,
-          })
-        : booking,
+    const page = rows.map((booking) =>
+      this.redactDestinationFor(booking, userId),
     );
     await this.populatePhones(page);
     const last = page.at(-1);
@@ -546,6 +541,42 @@ export class BookingsService {
             })
           : null,
     };
+  }
+
+  /// Single-booking read for a participant (customer or assigned provider).
+  /// The tracking screen and booking detail routes resolve snapshots here.
+  async getBookingForUser(bookingId: string, userId: string): Promise<Booking> {
+    const booking = await this.dataSource
+      .getRepository(Booking)
+      .findOneBy({ id: bookingId });
+    if (!booking) throw new NotFoundException('Booking not found');
+    if (booking.customerId !== userId && booking.providerId !== userId) {
+      throw new ForbiddenException('Booking participants only');
+    }
+    return this.redactDestinationFor(booking, userId);
+  }
+
+  /// Providers do not receive the customer's exact destination until the job
+  /// is theirs and active — matching-stage requests and terminal history stay
+  /// coordinate-free, while ASSIGNED/EN_ROUTE/IN_PROGRESS jobs must carry the
+  /// destination or navigation and live tracking cannot work.
+  private redactDestinationFor(booking: Booking, userId: string): Booking {
+    const destinationAllowed: readonly string[] = [
+      BookingStatus.ASSIGNED,
+      BookingStatus.EN_ROUTE,
+      BookingStatus.IN_PROGRESS,
+    ];
+    if (
+      booking.providerId === userId &&
+      booking.customerId !== userId &&
+      !destinationAllowed.includes(booking.status)
+    ) {
+      return Object.assign(new Booking(), booking, {
+        locationLat: null,
+        locationLng: null,
+      });
+    }
+    return booking;
   }
 
   async getAvailableRequests(

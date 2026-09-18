@@ -900,29 +900,44 @@ class _TopUrgentJobCard extends StatelessWidget {
                           ),
                         ],
                       ),
-                      Row(
-                        children: const [
-                          Icon(
-                            Icons.near_me_rounded,
-                            size: 14,
-                            color: AppColors.textPrimary,
-                          ),
-                          SizedBox(width: 3),
-                          Text(
-                            'Navigate',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
+                      InkWell(
+                        onTap: () async {
+                          final opened = await openCustomerNavigation(job);
+                          if (!opened && context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Could not open maps. Check that a maps app is installed and the booking has a service address.',
+                                ),
+                              ),
+                            );
+                          }
+                        },
+                        borderRadius: BorderRadius.circular(10),
+                        child: Row(
+                          children: const [
+                            Icon(
+                              Icons.near_me_rounded,
+                              size: 14,
                               color: AppColors.textPrimary,
                             ),
-                          ),
-                          SizedBox(width: 4),
-                          Icon(
-                            Icons.chevron_right_rounded,
-                            size: 18,
-                            color: AppColors.textPrimary,
-                          ),
-                        ],
+                            SizedBox(width: 3),
+                            Text(
+                              'Navigate',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            SizedBox(width: 4),
+                            Icon(
+                              Icons.chevron_right_rounded,
+                              size: 18,
+                              color: AppColors.textPrimary,
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -971,18 +986,14 @@ class _TopUrgentJobCard extends StatelessWidget {
                         child: ProviderLiveMap(
                           showOverlay: false,
                           route: controller.currentRoute,
-                          customerLocation: CustomerMapLocation(
-                            latitude: job.locationLatitude ?? 23.0225,
-                            longitude: job.locationLongitude ?? 72.5714,
-                          ),
-                          providerLocation: controller.currentLocation ??
-                              ProviderMapLocation(
-                                latitude: (job.locationLatitude ?? 23.0225) - 0.005,
-                                longitude: (job.locationLongitude ?? 72.5714) - 0.005,
-                                accuracyMeters: 0,
-                                capturedAt: DateTime.now(),
-                                receivedAt: DateTime.now(),
-                              ),
+                          customerLocation: (job.locationLatitude != null &&
+                                  job.locationLongitude != null)
+                              ? CustomerMapLocation(
+                                  latitude: job.locationLatitude!,
+                                  longitude: job.locationLongitude!,
+                                )
+                              : null,
+                          providerLocation: controller.currentLocation,
                         ),
                       ),
                       Positioned(
@@ -1411,43 +1422,6 @@ class _HistoryJobCard extends StatelessWidget {
   }
 }
 
-class _MapGridPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = AppColors.border.withValues(alpha: 0.3)
-      ..strokeWidth = 1;
-
-    for (double x = 0; x < size.width; x += 20) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
-    }
-    for (double y = 0; y < size.height; y += 20) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
-    }
-
-    // Draw route line
-    final routePaint = Paint()
-      ..color = AppColors.primary.withValues(alpha: 0.4)
-      ..strokeWidth = 3
-      ..style = PaintingStyle.stroke;
-
-    final path = Path()
-      ..moveTo(20, size.height - 20)
-      ..cubicTo(
-        size.width * 0.3,
-        size.height * 0.8,
-        size.width * 0.6,
-        20,
-        size.width - 20,
-        25,
-      );
-
-    canvas.drawPath(path, routePaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
 
 String _weekdayShort(int weekday) => switch (weekday) {
   1 => 'MON',

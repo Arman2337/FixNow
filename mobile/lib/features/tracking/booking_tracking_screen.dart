@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
@@ -6,7 +5,6 @@ import 'package:fixnow_mobile/design_system/fix_banner.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
 import 'package:fixnow_mobile/design_system/fix_components.dart';
-import 'package:fixnow_mobile/features/call/call_controller.dart';
 import 'package:fixnow_mobile/features/chat/booking_chat_screen.dart';
 import 'package:fixnow_mobile/features/chat/chat_controller.dart';
 import 'package:fixnow_mobile/features/chat/chat_repository.dart';
@@ -1156,9 +1154,9 @@ class _TrackingCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      const Text(
-                        'Live Tracking',
-                        style: TextStyle(
+                      Text(
+                        _statusTitle(value.status),
+                        style: const TextStyle(
                           color: AppColors.textPrimary,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -1171,13 +1169,24 @@ class _TrackingCard extends StatelessWidget {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.surfaceContainerHigh,
+                          color: value.locationAvailability ==
+                                  LocationAvailability.live
+                              ? AppColors.primaryEmerald.withValues(alpha: 0.15)
+                              : AppColors.surfaceContainerHigh,
                           borderRadius: BorderRadius.circular(AppRadius.pill),
                         ),
-                        child: const Text(
-                          'GPS Active',
+                        child: Text(
+                          value.locationAvailability ==
+                                  LocationAvailability.live
+                              ? (value.providerLocation != null
+                                  ? 'Live location available'
+                                  : 'GPS Active')
+                              : 'Live location unavailable',
                           style: TextStyle(
-                            color: AppColors.textSecondary,
+                            color: value.locationAvailability ==
+                                    LocationAvailability.live
+                                ? AppColors.primaryEmerald
+                                : AppColors.textSecondary,
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
                           ),
@@ -1267,7 +1276,7 @@ class _TrackingCard extends StatelessWidget {
                             children: [
                               Text(
                                 value.estimatedMinutes == null
-                                    ? '--'
+                                    ? 'Unavailable'
                                     : '${value.estimatedMinutes} mins',
                                 style: const TextStyle(
                                   color: AppColors.primary,
@@ -1327,4 +1336,12 @@ class _TrackingCard extends StatelessWidget {
       ),
     );
   }
+
+  static String _statusTitle(String value) => switch (value.toUpperCase()) {
+    'EN_ROUTE' => 'Provider is on the way',
+    'IN_PROGRESS' => 'Service in progress',
+    'COMPLETED' => 'Service completed',
+    'CANCELLED' => 'Booking cancelled',
+    _ => 'Live Tracking',
+  };
 }

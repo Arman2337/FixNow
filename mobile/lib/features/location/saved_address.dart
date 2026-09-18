@@ -148,8 +148,9 @@ class SavedAddressRepository extends ChangeNotifier {
 
   Future<String> _requireToken() async {
     final token = await accessToken();
-    if (token == null)
+    if (token == null || token.isEmpty) {
       throw const ApiException(ApiFailureKind.unauthorized, 'Not signed in');
+    }
     return token;
   }
 
@@ -196,7 +197,27 @@ class SavedAddressRepository extends ChangeNotifier {
     }
   }
 
+  /// Test/demo seeding hook: addresses normally come from
+  /// `fetchAddresses()`; tests add fixtures synchronously through this.
+  @visibleForTesting
+  void seedAll(List<SavedAddress> addresses) {
+    _addresses.addAll(addresses);
+    notifyListeners();
+  }
+
   Future<void> saveAddress(SavedAddress address) async {
+    final idx = _addresses.indexWhere((a) => a.id == address.id);
+    if (address.isDefault) {
+      for (var i = 0; i < _addresses.length; i++) {
+        _addresses[i] = _addresses[i].copyWith(isDefault: false);
+      }
+    }
+    if (idx >= 0) {
+      _addresses[idx] = address;
+    } else {
+      _addresses.add(address);
+    }
+    notifyListeners();
     try {
       final token = await _requireToken();
       await api.send(
@@ -226,6 +247,11 @@ class SavedAddressRepository extends ChangeNotifier {
   }
 
   Future<void> deleteAddress(String id) async {
+    _addresses.removeWhere((a) => a.id == id);
+    if (_addresses.isNotEmpty && !_addresses.any((a) => a.isDefault)) {
+      _addresses[0] = _addresses[0].copyWith(isDefault: true);
+    }
+    notifyListeners();
     try {
       final token = await _requireToken();
       await api.send(

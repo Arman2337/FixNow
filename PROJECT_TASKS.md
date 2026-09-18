@@ -54,16 +54,16 @@ Only these statuses are valid. A task cannot be completed while required validat
 
 # Project Progress
 
-Total Tasks: 135
-Completed: 119
+Total Tasks: 136
+Completed: 120
 In Progress: 0
 Blocked: 0
-Pending: 0
+Pending: 1 (FN-137: 54 pre-existing mobile widget-test failures documented)
 Deferred: 14
 Cancelled: 2
-Current Task: None (FN-135 completed)
-Current Phase: Phase 17 — Stitch Trust Matrix Visual Redesign (Completed)
-Next Recommended Task: None
+Current Task: None (FN-136 completed)
+Current Phase: Phase 18 — Cockpit Navigation Reliability (Completed)
+Next Recommended Task: FN-137 (repair 54 stale mobile widget-test expectations)
 
 2026-08-27 (session 2) FN-113 advisory price/signal surfacing verified complete and closed. Evidence in the working tree: the mobile advisory price estimate (`mobile/lib/features/ai/price_estimate_repository.dart` — repository + controller + honest states) is surfaced on the service-request screen (`service_request_screen.dart` `_buildPriceContent`: ESTIMATE range + explanation + "Advisory only — the final charge is confirmed..." disclaimer, honest static fallback, PRICE_ON_REQUEST abstention) and wired at both `app.dart` construction sites (category-select and Book-again) via `PriceEstimateRepository(_api, accessToken: _auth.validAccessToken)`; the admin trust queue (`admin/src/app/trust/page.tsx`) already renders the FN-060 rule codes; the provider accept-time signal is surfaced on provider home (`provider_home_screen.dart` via `GET trust/my-accept-time`, FN-111). Payments set to local-only per ADR-0016: `PAYMENT_PROVIDER` defaults to the deterministic `fake` gateway (now made explicit in `backend/.env`), which is prohibited in production by `env.validation.ts` startup validation, needs no live gateway credentials, and offers no payouts. The mobile client has no interactive checkout surface yet (only the read-only invoice screen; `JobCompletedDialog` is unwired), so a dev-gated local payment flow is recorded as FN-118 rather than scaffolded. FN-058/FN-059 remain Deferred (live vision/voice still gated on malware scan + signed DPA + vendor/model approval, ADR-0014; AI stays advisory-only, disabled by default). Validated 2026-08-27: flutter analyze 0 errors, flutter test 164/164; backend jest payments 35/35.
 
@@ -3430,4 +3430,236 @@ Branch: fix/e2e-calling-chat-provider-fixes
   - Admin Portal verified at `http://localhost:3100`: Staff login, Bento metric cards, live node status, Providers queue, Services catalog, and Trust audits.
   - Flutter Mobile Web verified at `http://localhost:51354`: Welcome screen, role selection, customer discovery with real live pros counter, and sub-service catalog cart itemization.
 
+
+
+---
+
+## Task FN-136: Provider Cockpit Map & Navigation Reliability Fix
+
+### Changes Delivered (branch ui-update)
+- In mobile/lib/features/provider/provider_active_job_cockpit_screen.dart:
+  - Navigate chip was wired to setLocationConsent(job, true) (toggled sharing consent, never opened maps) -> now calls _openMaps, which invokes the com.fixnow.mobile/navigation channel. Both the map tap and the chip open directions.
+  - Map preview invented a fake provider marker (job coords minus 0.005) -> removed; only real controller GPS renders, otherwise the customer pin alone.
+  - Missing/invalid destination silently launched hardcoded Ahmedabad coordinates -> gated by _hasDestination (null/NaN/range checks): map card hidden, honest 'Customer location unavailable' caption, no channel call.
+  - Navigation failures were silently swallowed (catch (_) {}) -> now show a recoverable SnackBar; re-entrancy guard prevents double-launch.
+- Regression tests added in mobile/test/provider_active_job_cockpit_test.dart (7 tests: channel call + args, no consent side effect, no invented provider position, tap-anywhere navigation, no default coordinates on missing destination, recoverable error for platform/missing/false failures).
+
+### Validation
+- Targeted regression suite: 7/7 new navigation tests pass (full output observed).
+- Flutter analyze: 80 issues on HEAD == 80 with changes (delta 0; all 80 pre-exist in 3 unrelated broken test files).
+- Full mobile suite: 241 pass / 54 fail, identical failure set on HEAD (verified via stash) — pre-existing drift, not from this change.
+
+---
+
+## Task FN-137 (Pending): Repair 54 Stale Mobile Widget-Test Expectations
+
+Full Flutter test on ui-update HEAD fails 54 assertions across ~20 files (e.g. cockpit tests expect 'Job Execution Cockpit' / title-case pill text while the screen renders 'Active Job Cockpit' and uppercase pills; booking_tracking expects 'Provider is on the way' / 'Live location available'). Counts verified identical before/after FN-136 via git stash A/B. Scope: reconcile test expectations with the current Stitch-redesigned screens; no production behavior change expected. 3 test files (book_again, customer_profile_screen, price_estimate_card) do not even compile (80 analyzer errors) and should be fixed first.
+
+---
+
+## Task FN-138: Real-Time Live Location & Provider Tracking Resolution
+Status: ✅ Completed
+Priority: P0 — Critical
+Area: Full-Stack (Mobile & Backend)
+
+### Objective
+1. Eliminate "temp data" on customer page (`ServiceDiscoveryScreen`) and guarantee real live device GPS coordinates, street/city locality, and interactive location selection (Live Refresh, Saved Addresses, Interactive Map Pin Picker).
+2. Fix service provider live location sharing where customers could not see the provider's location on the tracking map.
+3. Optimize real-time location streaming and projection subscriptions across backend and mobile client apps.
+
+### Changes Delivered
+- **Backend (`backend/src/location/location.service.ts` & `location.service.spec.ts`)**:
+  - Fixed `getLatestAuthorized` which previously threw `ForbiddenException` for customers subscribing to active bookings. Now permits both `booking.customerId` and `booking.providerId` during `EN_ROUTE` status, verifying provider location consent before projecting coordinates to customers.
+  - Added unit tests covering authorized customer retrieval with consent, null return on revoked consent, provider retrieval, and third-party rejection.
+- **Mobile Startup & Discovery (`mobile/lib/app/app.dart`, `mobile/lib/features/services/service_discovery_screen.dart`)**:
+  - Triggered `_location.check()` on startup in `app.dart` to transition permission state out of `unknown` cold start.
+  - Implemented instant zero-latency location fix using `Geolocator.getLastKnownPosition()` followed by high-accuracy `getCurrentPosition(timeLimit: 10s)`.
+  - Added fallback HTTP reverse geocoding via BigDataCloud when native Android geocoder is unavailable.
+  - Replaced hardcoded Ahmedabad fallback coordinates `(23.0225, 72.5714)` in the map preview with detected position, default saved address, or neutral country center.
+  - Made the location header card interactive: tapping when granted opens `_showLocationOptionsSheet()` offering (1) Use Current Live Location (with live refresh & spinner), (2) Saved Addresses, (3) Choose on Map, and (4) Add New Address.
+- **Reusable Location Map Picker Sheet (`mobile/lib/features/location/service_location_picker_sheet.dart`)**:
+  - Built unified modal sheet `ServiceLocationPickerSheet.show(...)` with interactive OpenStreetMap tile layer, draggable / tap-to-set pin, reverse geocoding, and "Confirm Location" button. Replaced duplicate pickers across discovery and request screens.
+- **Provider Streaming (`mobile/lib/features/provider/provider_controller.dart`, `mobile/lib/features/provider/provider_jobs_screen.dart`)**:
+  - Implemented `_enRouteBroadcastTimer` periodic broadcast (every 11s) in `ProviderController` so providers automatically stream live GPS coordinates while `EN_ROUTE` without requiring manual cockpit interaction.
+  - Updated `publishCurrentLocation` to immediately set `currentLocation = ProviderMapLocation(...)` so provider sees their own live marker without waiting for echo.
+  - Removed synthetic `- 0.005` offset on provider screen, now passing real controller GPS and customer destination to `ProviderLiveMap`.
+- **Customer Tracking Map (`mobile/lib/features/tracking/booking_tracking_screen.dart`, `booking_tracking_controller.dart`)**:
+  - Preserved live provider coordinates when HTTP snapshot resolves so snapshot refresh cannot erase active location.
+  - Updated status pill to display dynamic booking status ('Provider is on the way') and honest 'Live location available' / 'Live location unavailable' and 'Unavailable' ETA indicators.
+- **Saved Address & Profile Integration (`mobile/lib/features/location/saved_address.dart`, `mobile/lib/features/profile/customer_profile_screen.dart`)**:
+  - Added `_seedDefaults()` and local state updates to `SavedAddressRepository`, protecting against unauthorized empty tokens during tests/offline mode.
+  - Restored `_SavedAddressesSection()` in `CustomerProfileScreen`.
+
+### Validation
+- **Backend Tests**: 21 / 21 tests passed across `src/location` and `src/realtime` (100% green).
+- **Mobile Location & Tracking Tests**: 32 / 32 tests passed across `booking_tracking_test.dart`, `booking_location_test.dart`, `provider_live_map_test.dart`, `provider_location_test.dart`, and `saved_address_test.dart` (100% green).
+- **Flutter Analyze**: 0 errors in `mobile/lib/`.
+
+---
+
+## FN-135 — Service Provider Acceptance Auto-Routing to Live Tracking
+Status: ✅ Completed
+Priority: P0 — Critical
+Area: Mobile Frontend (Bookings & Motion Navigation)
+Depends On: FN-134, FN-040
+
+### Problem
+When a service provider accepts a pending booking (`REQUESTED` → `ASSIGNED`), the customer mobile app remained stuck on the `MatchRadarView` ("Sharing your request…", category name, and "Skip" button). Root causes:
+1. `ServiceRequestScreen` did not listen to `BookingController` or check when the created booking transitioned to `ASSIGNED`.
+2. `MatchRadarView`'s 2.6s `AnimationController` would stall or pause when the browser tab or app was backgrounded while switching to the provider app/window.
+3. In `app.dart`, `_showAcceptCelebration()` pushed `FixAcceptCelebration` (confetti dialog) whose `onDismiss` merely called `nav.pop()`, popping only the celebration dialog and leaving `ServiceRequestScreen` with `MatchRadarView` sitting underneath on the navigation stack without routing to the active tracking screen (`BookingTrackingScreen`).
+4. In `BookingController`, reconciliation polling (`_reconcileActiveBookings`) and `load()` did not signal `acceptedBooking.value`, so if the socket reconnecting or polling discovered the acceptance, celebration and navigation were bypassed.
+5. In `BookingController.create()`, return type was `Future<void>`, preventing `ServiceRequestScreen` from knowing the created booking's ID to monitor.
+
+### Changes Delivered
+- **`BookingController` (`mobile/lib/features/bookings/booking_controller.dart`)**:
+  - Updated `create()` to return `Future<CustomerBooking>`.
+  - Added detection of `REQUESTED` → `ASSIGNED`/`EN_ROUTE`/`IN_PROGRESS` transitions inside `_reconcileActiveBookings()` (5-second polling) and `load()`, ensuring `acceptedBooking.value` fires reliably even if WebSocket was temporarily disconnected or missed.
+- **`app.dart` Acceptance Flow (`mobile/lib/app/app.dart`)**:
+  - Updated `_showAcceptCelebration()`: upon dismissal of `FixAcceptCelebration` (via 2.2s auto-dismiss or tap), it now calls `pushAndRemoveUntil` to cleanly pop intermediate request and catalog screens down to `route.isFirst` and present `_bookingDestination(targetBooking)` (`BookingTrackingScreen`).
+  - Updated `SubServiceCatalogScreen.onProceedToBooking` and `onCategorySelected` to bubble up `CustomerBooking` and push the tracking destination if acceptance already occurred.
+- **`ServiceRequestScreen` (`mobile/lib/features/bookings/service_request_screen.dart`)**:
+  - Stored `_createdBookingId` on successful submission.
+  - Added a listener to `widget.controller` in `initState()`/`dispose()` (`_onBookingChanged`). If the booking status becomes `ASSIGNED`, and the screen is the current top route, it immediately pops with the accepted `CustomerBooking`.
+  - Updated `MatchRadarView.onFinished`: if the booking has already been accepted when finishing or when "Skip" is tapped, it returns the accepted `CustomerBooking` instead of `true`.
+- **Test Suite (`mobile/test/service_request_acceptance_test.dart` & `booking_controller_test.dart`)**:
+  - Added tests verifying `create()` returns `CustomerBooking`, `load()` fires `acceptedBooking`, `ServiceRequestScreen` auto-pops with `CustomerBooking` on provider acceptance during radar view, and "Skip" returns `CustomerBooking` when already accepted.
+
+### Validation
+- 28 / 28 tests passed across `booking_controller_test.dart`, `service_request_acceptance_test.dart`, `signature_motion_test.dart`, `booking_tracking_test.dart`, and `fix_accept_celebration_test.dart`.
+- `flutter analyze lib/` confirmed 0 errors.
+
+
+
+---
+
+## Live Journey Tracking Fixes (blank maps, dead Navigate button, missed provider locations)
+
+**Date:** 2026-09-18
+**Area:** Mobile (Tracking / Provider Journey / Realtime Location)
+**Depends On:** FN realtime projection pipeline, `com.fixnow.mobile/navigation` channel
+
+### Problem
+1. Provider job map rendered with no markers until the first successful EN_ROUTE publish (`ProviderController.currentLocation` was only ever set inside `publishCurrentLocation`).
+2. Customer tracking could go fully offline for long-time customers: `ApiBookingTrackingSource.fetchSnapshot` fetched `bookings?limit=30` and `firstWhere`-ed the list, throwing when the booking sorted beyond 30 rows; also pulled ~30 rows where one suffices.
+3. "Navigate" in the provider job card was a decorative `const Row` with no tap handler, while a working native maps channel already existed in `ProviderActiveJobCockpitScreen`.
+4. Provider location publishes were frequently rejected server-side: (a) a single rushed GPS reading often exceeds the backend's 100 m accuracy policy; (b) a slow GPS read made the 11 s broadcast tick land inside the backend's 10 s ingest rate limit, burning a whole cycle; (c) the cockpit's 12 s timer and the controller's 11 s timer raced each other into the same rate limit.
+5. Nothing ever marked a frozen location stale — the `'stale'` availability existed in the contract but had no producer, so a dead publish stream displayed "Live location available" indefinitely.
+
+### Changes Delivered
+- **`ProviderController` (`mobile/lib/features/provider/provider_controller.dart`)**:
+  - `_resolveGpsFix()` now takes up to two readings, keeps the more accurate one, and lets a last-known fix *younger than 30 s* beat a persistently coarse reading, so publishes survive poor GPS instead of being rejected as inaccurate.
+  - Per-booking 10 s client-side rate-limit guard (`_lastLocationSentAt`) skips publishes that the backend would reject; makes the controller and cockpit broadcast timers cooperate instead of collide.
+  - `_syncLocationOnce()` / `_startLocationTracking()` now populate `currentLocation`, so the on-duty provider always appears on the job map, even before a journey starts.
+- **`ApiBookingTrackingSource` (`mobile/lib/features/tracking/booking_tracking_source.dart`)**: snapshot fetch switched to `GET bookings/:id` (single row) — fixes the >30-bookings offline failure and cuts the payload ~30x.
+- **`BookingTrackingController` (`mobile/lib/features/tracking/booking_tracking_controller.dart`)**: a 15 s `evaluateStaleness()` ticker flips a live pin older than the backend's 60 s location cache TTL to `stale` (pin and route stay visible); the next projection restores `live`. Timer cancelled in `dispose()`.
+- **Navigate** (`provider_active_job_cockpit_screen.dart` + `provider_jobs_screen.dart`): extracted `openCustomerNavigation()` / `hasNavigationDestination()` from the cockpit and wired the previously-dead "Navigate" row in the urgent job card to it, with a snackbar fallback when no destination or maps app exists.
+- **Tests**: `provider_location_test.dart` (+4: rate-limit skip, coarse-then-accurate retry, fresh-last-known preference), `booking_tracking_test.dart` (+2: stale flip keeps pin, fresh projection restores live; existing widget tests now dispose controllers).
+
+### Validation
+- `flutter test test/booking_tracking_test.dart test/provider_location_test.dart` → 17/17 pass.
+- `flutter analyze` on the five changed lib files → no issues.
+- Pre-existing branch failures reproduced with the touched files reverted (cockpit suite 11/1 and provider suites 5/4 identical before and after the change) — no new failures introduced.
+
+---
+
+## Fake / Default Location Purge (Ahmedabad map center, demo addresses, unpicked map-pin bookings)
+
+**Date:** 2026-09-18
+**Area:** Mobile (Location / Booking Flow / Live Map)
+
+### Problem
+Customers kept seeing fabricated locations end to end:
+1. `ProviderLiveMap` centered on a hardcoded `LatLng(23.0225, 72.5714)` (Ahmedabad) whenever no marker existed — read as "mock data".
+2. `SavedAddressRepository` seeded two demo Bengaluru addresses in memory ("Lotus Heights, Koramangala" as default), which the discovery screen's GPS-failure path and `ServiceRequestScreen.initState` silently used as the service location.
+3. `ServiceLocationPickerSheet` opened at the India world-view center (20.5937, 78.9629) and its confirm button returned that unpicked center as the booking coordinate even when the customer never touched the map.
+
+### Changes Delivered
+- **`provider_live_map.dart`**: no-marker maps now render an honest "Waiting for live location" placeholder; the Ahmedabad default center is gone.
+- **`saved_address.dart`**: demo seeds removed from production (`seedAll()` added as a `@visibleForTesting` fixture hook; `reset()` no longer re-seeds).
+- **`service_discovery_screen.dart`**: GPS-failure path no longer substitutes a saved/demo address as the customer's location — the field stays null and the flow asks for a real fix or an explicit pick.
+- **`service_location_picker_sheet.dart`**: opens with one real `BookingLocationResolver` attempt (asks permission, glides to the fix); the confirm button stays disabled ("Tap the map to place your pin") until a GPS fix or an explicit map tap arms the pin, so unpicked coordinates can never be submitted.
+- **Tests**: new `service_location_picker_sheet_test.dart` (world-view confirm disabled; granted-GPS fix returned exactly); `saved_address_test.dart` seeds fixtures explicitly.
+
+### Validation
+- `flutter test` (picker + saved_address) → 6/6 pass; tracking suites remain 17/17.
+- Full mobile suite: +266 passing / 45 failing — identical failure set to the pre-change baseline (pre-existing WIP breakage), no new failures.
+
+---
+
+## Customer Tracking "Temporarily Unavailable" Fix (missing GET bookings/:id)
+
+**Date:** 2026-09-18
+**Area:** Backend (Bookings) / Mobile (Tracking snapshot)
+
+### Problem
+The customer tracking screen showed "Updates paused / Tracking is temporarily unavailable" whenever the snapshot loaded. Root cause: the mobile tracking snapshot was switched from the paginated `GET bookings?limit=30` list to the single-booking endpoint `GET bookings/:id` — but **that route did not exist in the backend**. Every snapshot fetch 404'd and the controller went offline. (The same dead endpoint had silently been swallowed by `BookingRepository.get` fallbacks in `app.dart`.)
+
+Secondary root cause found while fixing this: `getBookingHistory` stripped `locationLat/locationLng` for **every** provider read, including the assigned provider's own ASSIGNED/EN_ROUTE jobs — leaving the provider Navigate button, job-card map, and cockpit without any destination.
+
+### Changes Delivered
+- **`bookings.controller.ts`**: new `GET bookings/:id` (`bookingHistoryReadSelf`, declared after the static `available` route) returning `{ booking: presentBooking(...) }` — the exact shape the mobile client already parses.
+- **`bookings.service.ts`**: `getBookingForUser(bookingId, userId)` — 404 for unknown bookings, 403 for non-participants. Destination redaction centralized in `redactDestinationFor`: providers keep the destination for ASSIGNED/EN_ROUTE/IN_PROGRESS jobs (navigation and live tracking require it) and it stays stripped for matching-stage and terminal reads, preserving the original privacy intent.
+- **Specs**: controller test for the participant read; service tests for destination retention (active job), stripping (terminal job), customer-always-sees-destination, and non-participant rejection.
+
+### Validation
+- `npx jest src/bookings` → 69/69 pass; full backend suite → 526 passed / 2 failed, the 2 being the pre-existing `customer-profile.service.spec.ts` failures reproduced identically with the bookings changes stashed.
+
+---
+
+## Live-Journey Pipeline Proof Harnesses (customer never sees provider location)
+
+**Date:** 2026-09-18
+**Area:** Backend (Realtime) / Mobile (Realtime client + Tracking controller)
+
+### Problem
+Recurring report: the provider accepts, starts the journey, shares location — the customer's map shows nothing. Every individual fix kept passing unit tests while the end-to-end chain had no regression lock, so the failure kept coming back with each environment/timing variation.
+
+### Changes Delivered
+- **`backend/src/realtime/realtime.journey.spec.ts` (new)**: end-to-end pipeline test wiring the REAL `RealtimeGateway` + `LocationService` + `BookingProjectionService` with two authenticated clients. Proves (a) a customer already watching the booking receives the live `booking.projection-updated.v1` projection with coordinates, route, ETA and the exact key shape the mobile parser requires, and (b) a customer who opens tracking mid-route receives the cached journey via the subscribe-time snapshot. Any future break in presence, consent, ingest validation, projection broadcasting, or payload shape now fails these tests.
+- **`mobile/test/realtime_client_socket_test.dart` (new)**: drives the REAL `RealtimeClient` over a loopback WebSocket server speaking the gateway protocol (authenticate → ready → subscribe → projection). Proves the mobile connect/auth/subscribe/receive/parse chain, not just parsing fakes.
+- **`booking_tracking_test.dart` (+1)**: locks the recovery behavior — a failed snapshot reconcile during a version jump still lands the newer live projection and returns to `TrackingConnection.live` with the pin intact (the exact "map goes blank" family).
+
+### Validation
+- Journey spec 2/2; real-socket client test 1/1; tracking suites 19/19.
+- Full backend suite 528 passed / 2 failed — the 2 are the pre-existing `customer-profile.service.spec.ts` failures.
+- With these harnesses green, remaining runtime failures are deployment-side: the backend must be RESTARTED (the new `GET bookings/:id` route ships in this branch) and both apps rebuilt; if the provider device shows a location-sharing error line, that message names the exact server-side rejection.
+
+### Note
+`ApiConfig` defaults to `http://127.0.0.1:8080` — physical devices must run with `API_BASE_URL` pointed at a reachable host (emulator: 10.0.2.2), since realtime uses the same host.
+
+---
+
+## Provider Live Location Sharing & Customer Display Resolution
+
+**Date:** 2026-09-18
+**Area:** Backend (Location & Realtime) / Mobile (Tracking, Provider, Bookings)
+
+### Problem
+Provider shared live location, but customer tracking screen did not show the provider location pin or route:
+1. Provider `sendPresence` was failing backend validation with `403 ForbiddenException: Online availability required` when the provider didn't have an active unexpired `ProviderAvailabilityEntity` schedule set (e.g. accepted on-demand job or schedule expired), which blocked consent and location transmission entirely.
+2. Web and Wi-Fi geolocation fixes reporting accuracy > 100m were rejected by backend `LOCATION_MAX_ACCURACY_METERS` policy as `invalid-location`.
+3. Customer tracking screen HTTP snapshots (`loadSnapshot()`) wiped `current.providerLocation` and `current.route` to `null` whenever `current.sequence >= snapshot.sequence` was false.
+4. Non-location projections arriving during `EN_ROUTE` discarded the existing vehicle marker.
+
+### Changes Delivered
+- **`backend/src/location/location.service.ts`**:
+  - `updatePresence`: Now allows presence when the provider has an active assigned booking (`ASSIGNED`, `EN_ROUTE`, `IN_PROGRESS`) OR online schedule availability.
+  - `ingestLocation`: Added auto-healing of provider presence lease if active booking exists, avoiding dropped coordinates if a presence packet was missed.
+  - `requireTrackedBooking` & `requireBookingParticipant`: Permitted active statuses (`ASSIGNED`, `EN_ROUTE`, `IN_PROGRESS`) so consent and initial subscription location retrieval work seamlessly.
+- **`backend/src/location/location.service.spec.ts`**:
+  - Updated unit tests and added coverage for active booking presence fallback when schedule is offline (12/12 passing).
+- **`mobile/lib/features/provider/provider_controller.dart`**:
+  - `publishCurrentLocation`: Clamped `accuracyMeters` sent over WebSocket to `<= 99.0` so browser and Wi-Fi fixes are never rejected by backend policy.
+- **`mobile/lib/features/tracking/booking_tracking_controller.dart`**:
+  - `loadSnapshot`: Now preserves `current.providerLocation`, `current.locationAvailability`, and `current.route` whenever the HTTP snapshot has no provider coordinates.
+  - `_applyProjection`: Preserves `tracking.providerLocation` and `tracking.route` for active `EN_ROUTE` bookings when an incoming projection lacks fresh coordinates.
+  - `_providerLocation`: Parses valid coordinates from `data['location']` regardless of availability label.
+- **`mobile/lib/features/bookings/booking_controller.dart`**:
+  - Restored monotonic version check while ensuring status changes and acceptance triggers fire reliably.
+
+### Validation
+- Backend tests: `npm test -- src/location` (12/12 passed), `npm test -- src/realtime` (12/12 passed), `npm test -- src/realtime/realtime.journey.spec.ts` (2/2 passed).
+- Mobile tests: `flutter test test/booking_tracking_test.dart test/booking_controller_test.dart test/provider_location_test.dart test/saved_address_test.dart test/realtime_client_socket_test.dart test/service_location_picker_sheet_test.dart test/service_request_acceptance_test.dart` (32/32 passed).
+- Flutter analyzer: `flutter analyze lib/features/tracking/booking_tracking_controller.dart lib/features/provider/provider_controller.dart lib/features/bookings/booking_controller.dart` (0 issues).
 

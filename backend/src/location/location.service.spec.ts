@@ -9,6 +9,7 @@ import { LocationService } from './location.service';
 
 const PROVIDER_ID = '00000000-0000-4000-8000-000000000001';
 const OTHER_PROVIDER_ID = '00000000-0000-4000-8000-000000000002';
+const CUSTOMER_ID = '00000000-0000-4000-8000-000000000003';
 const BOOKING_ID = '00000000-0000-4000-8000-000000000010';
 const NOW = new Date('2026-08-13T12:00:00.000Z');
 
@@ -27,6 +28,12 @@ describe('LocationService', () => {
     roles: ['verified_provider'],
   };
 
+  const customer: AuthorizationPrincipal = {
+    userId: CUSTOMER_ID,
+    sessionId: '00000000-0000-4000-8000-000000000030',
+    roles: ['customer'],
+  };
+
   beforeEach(() => {
     cacheValues = new Map();
     cache = {
@@ -43,6 +50,7 @@ describe('LocationService', () => {
     booking = {
       id: BOOKING_ID,
       providerId: PROVIDER_ID,
+      customerId: CUSTOMER_ID,
       status: BookingStatus.EN_ROUTE,
     };
     availability = {
@@ -83,9 +91,21 @@ describe('LocationService', () => {
       ),
     ).rejects.toBeInstanceOf(ForbiddenException);
     availability.status = ProviderAvailabilityStatus.Offline;
+    bookingRepository.findOne.mockResolvedValueOnce(null);
     await expect(
       service.updatePresence(provider, { online: true }, NOW),
     ).rejects.toBeInstanceOf(ForbiddenException);
+  });
+
+  it('allows presence when provider has an active assigned booking even if schedule is offline', async () => {
+    availability.status = ProviderAvailabilityStatus.Offline;
+    booking.status = BookingStatus.EN_ROUTE;
+    await expect(
+      service.updatePresence(provider, { online: true }, NOW),
+    ).resolves.toEqual({
+      online: true,
+      expiresAt: '2026-08-13T12:00:45.000Z',
+    });
   });
 
   it('creates a bounded presence lease and invalidates location when going offline', async () => {
@@ -193,6 +213,71 @@ describe('LocationService', () => {
       60_000,
     );
     expect(bookingRepository.findOne).toHaveBeenCalledTimes(1);
+  });
+
+  it('allows the customer of the booking to retrieve latest authorized location when consent is granted', async () => {
+    seedAuthorization();
+    const point = {
+      providerId: PROVIDER_ID,
+      bookingId: BOOKING_ID,
+      sequence: 1,
+      capturedAt: NOW.toISOString(),
+      receivedAt: NOW.toISOString(),
+      latitude: 22.3072,
+      longitude: 73.1812,
+      accuracyMeters: 18,
+    };
+    cacheValues.set(`location:v1:latest:${BOOKING_ID}`, point);
+
+    const result = await service.getLatestAuthorized(customer, BOOKING_ID);
+    expect(result).toEqual(point);
+  });
+
+  it('returns null to customer if location consent is not granted', async () => {
+    cacheValues.set(`location:v1:presence:${PROVIDER_ID}`, { online: true });
+    // consent is not set or false
+    const point = {
+      providerId: PROVIDER_ID,
+      bookingId: BOOKING_ID,
+      sequence: 1,
+      capturedAt: NOW.toISOString(),
+      receivedAt: NOW.toISOString(),
+      latitude: 22.3072,
+      longitude: 73.1812,
+      accuracyMeters: 18,
+    };
+    cacheValues.set(`location:v1:latest:${BOOKING_ID}`, point);
+
+    const result = await service.getLatestAuthorized(customer, BOOKING_ID);
+    expect(result).toBeNull();
+  });
+
+  it('allows the assigned provider to retrieve latest location', async () => {
+    const point = {
+      providerId: PROVIDER_ID,
+      bookingId: BOOKING_ID,
+      sequence: 1,
+      capturedAt: NOW.toISOString(),
+      receivedAt: NOW.toISOString(),
+      latitude: 22.3072,
+      longitude: 73.1812,
+      accuracyMeters: 18,
+    };
+    cacheValues.set(`location:v1:latest:${BOOKING_ID}`, point);
+
+    const result = await service.getLatestAuthorized(provider, BOOKING_ID);
+    expect(result).toEqual(point);
+  });
+
+  it('rejects third-party user who is neither customer nor provider', async () => {
+    const stranger: AuthorizationPrincipal = {
+      userId: '00000000-0000-4000-8000-000000000099',
+      sessionId: '00000000-0000-4000-8000-000000000099',
+      roles: ['customer'],
+    };
+    await expect(
+      service.getLatestAuthorized(stranger, BOOKING_ID),
+    ).rejects.toBeInstanceOf(ForbiddenException);
   });
 
   function seedAuthorization(): void {

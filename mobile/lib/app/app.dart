@@ -262,13 +262,38 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
         barrierDismissible: true,
         barrierLabel: 'Provider accepted',
         barrierColor: Colors.transparent,
-        pageBuilder: (context, animation, secondaryAnimation) =>
+        pageBuilder: (dialogContext, animation, secondaryAnimation) =>
             FixAcceptCelebration(
               serviceName: serviceName,
-              onDismiss: () => nav.pop(),
+              onDismiss: () {
+                if (Navigator.of(dialogContext).canPop()) {
+                  Navigator.of(dialogContext).pop();
+                }
+              },
             ),
       ),
-    );
+    ).then((_) async {
+      if (!mounted) return;
+      var targetBooking = booking;
+      if (targetBooking == null) {
+        targetBooking = _bookings.bookings
+            .where((b) => b.id == bookingId)
+            .firstOrNull;
+      }
+      if (targetBooking == null) {
+        try {
+          targetBooking = await _bookings.repository.get(bookingId);
+        } catch (_) {}
+      }
+      if (targetBooking != null && _navigatorKey.currentState != null) {
+        _navigatorKey.currentState!.pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (_) => _bookingDestination(targetBooking!),
+          ),
+          (route) => route.isFirst,
+        );
+      }
+    });
   }
 
   void _initializeData() {
@@ -326,6 +351,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
       accessToken: _auth.validAccessToken,
     );
     _auth.restore();
+    unawaited(_location.check());
   }
 
   @override
@@ -543,7 +569,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
                 accessToken: _auth.validAccessToken,
               ),
               onCategorySelected: (category, location) async {
-                final created = await Navigator.of(context).push<bool>(
+                final result = await Navigator.of(context).push<dynamic>(
                   MaterialPageRoute(
                     builder: (_) => SubServiceCatalogScreen(
                       category: category,
@@ -556,8 +582,8 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
                             priceMinor,
                             loc,
                           ) async {
-                            final reqCreated = await Navigator.of(context)
-                                .push<bool>(
+                            final reqResult = await Navigator.of(context)
+                                .push<dynamic>(
                                   MaterialPageRoute(
                                     builder: (_) => ServiceRequestScreen(
                                       category: updatedCategory,
@@ -572,14 +598,20 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
                                     ),
                                   ),
                                 );
-                            if (reqCreated == true && context.mounted) {
-                              Navigator.of(context).pop(true);
+                            if (reqResult != null && context.mounted) {
+                              Navigator.of(context).pop(reqResult);
                             }
                           },
                     ),
                   ),
                 );
-                if (created == true && context.mounted) {
+                if (result is CustomerBooking && context.mounted) {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => _bookingDestination(result),
+                    ),
+                  );
+                } else if (result == true && context.mounted) {
                   showFixBanner(
                     ScaffoldMessenger.of(context),
                     tone: FixBannerTone.success,

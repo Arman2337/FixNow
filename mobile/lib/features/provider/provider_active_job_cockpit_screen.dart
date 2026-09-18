@@ -7,12 +7,10 @@ import 'package:fixnow_mobile/features/bookings/cancellation_dialog.dart';
 import 'package:fixnow_mobile/features/bookings/job_proof_service.dart';
 import 'dart:async';
 import 'package:fixnow_mobile/features/call/call_controller.dart';
-import 'package:fixnow_mobile/features/call/call_session.dart';
 import 'package:fixnow_mobile/features/chat/booking_chat_screen.dart';
 import 'package:fixnow_mobile/features/chat/chat_controller.dart';
 import 'package:fixnow_mobile/features/chat/chat_repository.dart';
 import 'package:fixnow_mobile/features/provider/provider_controller.dart';
-import 'package:fixnow_mobile/features/realtime/realtime_client.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking.dart';
 import 'package:fixnow_mobile/features/tracking/provider_live_map.dart';
 import 'package:fixnow_mobile/features/provider/provider_home_screen.dart';
@@ -205,20 +203,27 @@ class _ProviderActiveJobCockpitScreenState
     }
   }
 
-  static const MethodChannel _navChannel = MethodChannel(
-    'com.fixnow.mobile/navigation',
-  );
+  bool _isOpeningMaps = false;
 
   Future<void> _openMaps(CustomerBooking job) async {
-    final lat = job.locationLatitude ?? 23.0225;
-    final lng = job.locationLongitude ?? 72.5714;
+    if (_isOpeningMaps) return;
+    setState(() => _isOpeningMaps = true);
     try {
-      await _navChannel.invokeMethod('openNavigation', {
-        'latitude': lat,
-        'longitude': lng,
-        'label': 'Customer Location #${job.id.substring(0, 8)}',
-      });
-    } catch (_) {}
+      final opened = await openCustomerNavigation(job);
+      if (!opened) throw StateError('Navigation unavailable');
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Could not open maps. Check that a maps app or browser is installed and try again.',
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isOpeningMaps = false);
+    }
   }
 
   @override
@@ -1261,5 +1266,39 @@ class _ProviderActiveJobCockpitScreenState
         ],
       ),
     );
+  }
+}
+
+const MethodChannel _navigationChannel = MethodChannel(
+  'com.fixnow.mobile/navigation',
+);
+
+/// Whether the booking carries a usable destination for turn-by-turn
+/// navigation. Bookings created before coordinates were captured have none.
+bool hasNavigationDestination(CustomerBooking job) {
+  final lat = job.locationLatitude;
+  final lng = job.locationLongitude;
+  return lat != null &&
+      lng != null &&
+      lat.isFinite &&
+      lng.isFinite &&
+      lat >= -90 &&
+      lat <= 90 &&
+      lng >= -180 &&
+      lng <= 180;
+}
+
+/// Opens the customer's booked address in the device maps app. Returns false
+/// when the booking has no usable destination or no maps app is available.
+Future<bool> openCustomerNavigation(CustomerBooking job) async {
+  if (!hasNavigationDestination(job)) return false;
+  try {
+    return await _navigationChannel.invokeMethod<bool>('openNavigation', {
+      'latitude': job.locationLatitude,
+      'longitude': job.locationLongitude,
+      'label': 'Customer Location',
+    }) ?? false;
+  } catch (_) {
+    return false;
   }
 }

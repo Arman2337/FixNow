@@ -231,4 +231,21 @@ export class BookingsController {
       ),
     };
   }
+
+  /// Declared after the static routes so `available` is not captured as an id.
+  @Get(':id')
+  @RequireOwnPermission(PERMISSIONS.bookingHistoryReadSelf)
+  async getBooking(
+    @Req() req: AuthorizedRequest,
+    @Param('id') bookingId: string,
+  ): Promise<BookingResponse> {
+    const userId = req.authorizationPrincipal!.userId;
+    const booking = await this.bookingsService.getBookingForUser(
+      bookingId,
+      userId,
+    );
+    return {
+      booking: presentBooking(booking),
+    };
+  }
 }

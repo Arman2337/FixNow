@@ -300,12 +300,45 @@ class _ProviderLiveMapState extends State<ProviderLiveMap>
             widget.customerLocation!.latitude,
             widget.customerLocation!.longitude,
           );
+    // Nothing to show yet: no markers, no invented default center — say so.
+    if (provider == null && customer == null) {
+      return Semantics(
+        label: 'Live location is not available yet',
+        child: ClipRRect(
+          borderRadius: AppRadius.cardBorder,
+          child: SizedBox(
+            height: 348,
+            child: Container(
+              color: AppColors.surfaceContainerHigh,
+              alignment: Alignment.center,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.radar_rounded,
+                    color: AppColors.textSecondary,
+                    size: 28,
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    'Waiting for live location',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
     final center = provider != null && customer != null
         ? LatLng(
             (provider.latitude + customer.latitude) / 2,
             (provider.longitude + customer.longitude) / 2,
           )
-        : (provider ?? customer ?? const LatLng(23.0225, 72.5714));
+        : (provider ?? customer!);
     return Semantics(
       label: customer == null
           ? 'Live provider location map'

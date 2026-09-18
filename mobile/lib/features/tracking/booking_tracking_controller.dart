@@ -14,6 +14,7 @@ class BookingTrackingController extends ChangeNotifier {
   final BookingTrackingSource source;
   final RealtimeClient? realtime;
   StreamSubscription<RealtimeProjection>? _projectionSubscription;
+  Timer? _stalenessTimer;
   bool _otpFetchInFlight = false;
   TrackingConnection connection = TrackingConnection.connecting;
   BookingTracking? tracking;
@@ -23,13 +24,35 @@ class BookingTrackingController extends ChangeNotifier {
     connection = TrackingConnection.reconciling;
     notifyListeners();
     try {
-      tracking = await source.fetchSnapshot(bookingId);
+      final snapshot = await source.fetchSnapshot(bookingId);
+      final current = tracking;
+      if (current != null && current.providerLocation != null) {
+        tracking = BookingTracking(
+          bookingId: snapshot.bookingId,
+          status: snapshot.status,
+          sequence: snapshot.sequence,
+          locationAvailability: snapshot.providerLocation != null
+              ? snapshot.locationAvailability
+              : current.locationAvailability,
+          estimatedMinutes: current.estimatedMinutes ?? snapshot.estimatedMinutes,
+          providerLocation: snapshot.providerLocation ?? current.providerLocation,
+          customerLocation: snapshot.customerLocation ?? current.customerLocation,
+          route: current.route ?? snapshot.route,
+          serviceStartOtp: snapshot.serviceStartOtp ?? current.serviceStartOtp,
+        );
+      } else {
+        tracking = snapshot;
+      }
       _projectionSubscription ??= realtime?.projections.listen(
         _applyProjection,
       );
       await realtime?.subscribeBooking(bookingId);
       connection = TrackingConnection.live;
       message = null;
+      _stalenessTimer ??= Timer.periodic(
+        const Duration(seconds: 15),
+        (_) => evaluateStaleness(),
+      );
     } catch (_) {
       connection = TrackingConnection.offline;
       message = 'Tracking is temporarily unavailable.';
@@ -39,6 +62,16 @@ class BookingTrackingController extends ChangeNotifier {
 
   Future<void> _applyProjection(RealtimeProjection projection) async {
     final data = projection.data;
+    final parsedLoc = _providerLocation(data);
+    final preservedLoc = parsedLoc ??
+        ((data['status'] == 'EN_ROUTE' || tracking?.status == 'EN_ROUTE')
+            ? tracking?.providerLocation
+            : null);
+    final parsedRoute = _route(data);
+    final preservedRoute = parsedRoute ??
+        ((data['status'] == 'EN_ROUTE' || tracking?.status == 'EN_ROUTE')
+            ? tracking?.route
+            : null);
     final next = BookingTracking(
       bookingId: data['bookingId']?.toString() ?? '',
       status: data['status']?.toString() ?? '',
@@ -46,13 +79,16 @@ class BookingTrackingController extends ChangeNotifier {
       locationAvailability: switch (data['locationAvailability']) {
         'live' => LocationAvailability.live,
         'stale' => LocationAvailability.stale,
-        _ => LocationAvailability.unavailable,
+        _ => preservedLoc != null
+            ? (tracking?.locationAvailability ?? LocationAvailability.live)
+            : LocationAvailability.unavailable,
       },
       estimatedMinutes: ((data['eta'] as Map?)?['estimatedMinutes'] as num?)
-          ?.toInt(),
-      providerLocation: _providerLocation(data),
+              ?.toInt() ??
+          tracking?.estimatedMinutes,
+      providerLocation: preservedLoc,
       customerLocation: tracking?.customerLocation,
-      route: _route(data),
+      route: preservedRoute,
       serviceStartOtp: data['status'] == 'EN_ROUTE'
           ? tracking?.serviceStartOtp
           : null,
@@ -61,7 +97,6 @@ class BookingTrackingController extends ChangeNotifier {
   }
 
   ProviderMapLocation? _providerLocation(Map<String, Object?> data) {
-    if (data['locationAvailability'] != 'live') return null;
     final location = data['location'];
     if (location is! Map) return null;
     final latitude = location['latitude'];
@@ -190,9 +225,38 @@ class BookingTrackingController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// A "live" pin older than the backend's location cache TTL is no longer
+  /// real time — the provider stopped sending (app backgrounded, poor GPS).
+  /// Keep the last pin and route on screen but stop calling them live; the
+  /// next projection restores availability.
+  void evaluateStaleness() {
+    final current = tracking;
+    final receivedAt = current?.providerLocation?.receivedAt;
+    if (current == null ||
+        receivedAt == null ||
+        current.status != 'EN_ROUTE' ||
+        current.locationAvailability != LocationAvailability.live ||
+        DateTime.now().difference(receivedAt) <= const Duration(seconds: 60)) {
+      return;
+    }
+    tracking = BookingTracking(
+      bookingId: current.bookingId,
+      status: current.status,
+      sequence: current.sequence,
+      locationAvailability: LocationAvailability.stale,
+      estimatedMinutes: current.estimatedMinutes,
+      providerLocation: current.providerLocation,
+      customerLocation: current.customerLocation,
+      route: current.route,
+      serviceStartOtp: current.serviceStartOtp,
+    );
+    notifyListeners();
+  }
+
   @override
   void dispose() {
     unawaited(_projectionSubscription?.cancel());
+    _stalenessTimer?.cancel();
     realtime?.dispose();
     super.dispose();
   }

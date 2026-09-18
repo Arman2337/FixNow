@@ -282,6 +282,127 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
             ],
           ),
 
+          // Profile editing / Status
+          if (widget.controller.status == ProfileViewStatus.loading)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(AppSpacing.xl),
+                child: CircularProgressIndicator(
+                  semanticsLabel: 'Loading profile',
+                ),
+              ),
+            )
+          else if (_failed)
+            _ProfileFailure(
+              status: widget.controller.status,
+              onRetry: widget.controller.load,
+            )
+          else
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceContainerLowest,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: AppColors.outline.withValues(alpha: 0.12),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: AppColors.primarySoft,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.person_rounded,
+                            color: AppColors.primary,
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        const Text(
+                          'Personal details',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    const Text(
+                      'Display name',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    TextFormField(
+                      controller: _nameController,
+                      style: const TextStyle(color: AppColors.inputText),
+                      cursorColor: AppColors.primary,
+                      maxLength: 80,
+                      autofillHints: const [AutofillHints.name],
+                      textInputAction: TextInputAction.done,
+                      decoration: const InputDecoration(
+                        hintText: 'How should we address you?',
+                      ),
+                      validator: (value) {
+                        final candidate = value?.trim() ?? '';
+                        if (candidate.isEmpty) return 'Enter a display name.';
+                        if (candidate.contains(RegExp(r'[\x00-\x1F\x7F]'))) {
+                          return 'Remove unsupported characters.';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    FixButton(
+                      label: 'Save profile',
+                      isLoading:
+                          widget.controller.status == ProfileViewStatus.saving,
+                      onPressed: () async {
+                        if (_formKey.currentState?.validate() ?? false) {
+                          await widget.controller.save(_nameController.text);
+                        }
+                      },
+                    ),
+                    if (widget.controller.status ==
+                        ProfileViewStatus.saved) ...[
+                      const SizedBox(height: AppSpacing.sm),
+                      const Align(
+                        alignment: Alignment.centerLeft,
+                        child: FixStatusChip(
+                          label: 'Profile saved',
+                          icon: Icons.check_circle_outline,
+                          tone: FixStatusTone.success,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          const SizedBox(height: AppSpacing.sm),
+          const _SavedAddressesSection(),
           // Payment Methods & FastPay Card
           const SizedBox(height: AppSpacing.sm),
           Container(

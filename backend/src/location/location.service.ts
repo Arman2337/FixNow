@@ -57,8 +57,23 @@ export class LocationService {
       availability.status !== ProviderAvailabilityStatus.Offline &&
       !!availability.statusExpiresAt &&
       availability.statusExpiresAt.getTime() > now.getTime();
-    if (!available)
-      throw new ForbiddenException('Online availability required');
+    if (!available) {
+      const activeBooking = await this.dataSource
+        .getRepository(Booking)
+        .findOne({
+          where: {
+            providerId: principal.userId,
+            status: In([
+              BookingStatus.ASSIGNED,
+              BookingStatus.EN_ROUTE,
+              BookingStatus.IN_PROGRESS,
+            ]),
+          },
+        });
+      if (!activeBooking) {
+        throw new ForbiddenException('Online availability required');
+      }
+    }
     const ttl = this.numberConfig('LOCATION_PRESENCE_TTL_MS', 45_000);
     await this.cache.set(
       this.presenceKey(principal.userId),
@@ -113,7 +128,39 @@ export class LocationService {
     this.assertProvider(principal);
     this.validateLocation(update, now);
     await this.requireTrackedBooking(update.bookingId, principal.userId);
-    if (!(await this.cache.get(this.presenceKey(principal.userId))))
+    let presence = await this.cache.get(this.presenceKey(principal.userId));
+    if (!presence) {
+      const availability = await this.dataSource
+        .getRepository(ProviderAvailabilityEntity)
+        .findOne({ where: { userId: principal.userId } });
+      const available =
+        availability &&
+        availability.status !== ProviderAvailabilityStatus.Offline &&
+        !!availability.statusExpiresAt &&
+        availability.statusExpiresAt.getTime() > now.getTime();
+      const hasActiveBooking = await this.dataSource
+        .getRepository(Booking)
+        .findOne({
+          where: {
+            providerId: principal.userId,
+            status: In([
+              BookingStatus.ASSIGNED,
+              BookingStatus.EN_ROUTE,
+              BookingStatus.IN_PROGRESS,
+            ]),
+          },
+        });
+      if (available || hasActiveBooking) {
+        const ttl = this.numberConfig('LOCATION_PRESENCE_TTL_MS', 45_000);
+        await this.cache.set(
+          this.presenceKey(principal.userId),
+          { online: true, refreshedAt: now.toISOString() },
+          ttl,
+        );
+        presence = { online: true };
+      }
+    }
+    if (!presence)
       throw new ForbiddenException('Current provider presence required');
     const consent = await this.cache.get<ConsentEvidence>(
       this.consentKey(update.bookingId),
@@ -162,8 +209,19 @@ export class LocationService {
     principal: AuthorizationPrincipal,
     bookingId: string,
   ): Promise<CachedProviderLocation | null> {
-    this.assertProvider(principal);
-    await this.requireTrackedBooking(bookingId, principal.userId);
+    this.assertUuid(bookingId);
+    const booking = await this.requireBookingParticipant(
+      bookingId,
+      principal.userId,
+    );
+    if (booking.customerId === principal.userId) {
+      const consent = await this.cache.get<ConsentEvidence>(
+        this.consentKey(bookingId),
+      );
+      if (!consent?.granted) {
+        return null;
+      }
+    }
     return (
       (await this.cache.get<CachedProviderLocation>(
         this.locationKey(bookingId),
@@ -190,11 +248,37 @@ export class LocationService {
       .getRepository(Booking)
       .findOne({ where: { id: bookingId } });
     if (!booking) throw new NotFoundException('Booking not found');
+    const allowedStatuses: BookingStatus[] = [
+      BookingStatus.ASSIGNED,
+      BookingStatus.EN_ROUTE,
+      BookingStatus.IN_PROGRESS,
+    ];
     if (
       booking.providerId !== providerId ||
-      booking.status !== BookingStatus.EN_ROUTE
+      !allowedStatuses.includes(booking.status as BookingStatus)
     )
       throw new ForbiddenException('Active travel booking required');
+  }
+
+  private async requireBookingParticipant(
+    bookingId: string,
+    userId: string,
+  ): Promise<Booking> {
+    const booking = await this.dataSource
+      .getRepository(Booking)
+      .findOne({ where: { id: bookingId } });
+    if (!booking) throw new NotFoundException('Booking not found');
+    const allowedStatuses: BookingStatus[] = [
+      BookingStatus.ASSIGNED,
+      BookingStatus.EN_ROUTE,
+      BookingStatus.IN_PROGRESS,
+    ];
+    if (
+      (booking.providerId !== userId && booking.customerId !== userId) ||
+      !allowedStatuses.includes(booking.status as BookingStatus)
+    )
+      throw new ForbiddenException('Active travel booking required');
+    return booking;
   }
 
   private validateLocation(update: ProviderLocationUpdate, now: Date): void {

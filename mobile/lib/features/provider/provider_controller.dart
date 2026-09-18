@@ -34,28 +34,35 @@ class ProviderController extends ChangeNotifier {
   final Set<String> _publishingLocation = {};
   bool refreshingRequests = false;
   final Map<String, int> _locationSequences = {};
+  final Map<String, DateTime> _lastLocationSentAt = {};
   final Map<String, bool> locationSharing = {};
 
   DrivingRoute? currentRoute;
   ProviderMapLocation? currentLocation;
 
   Timer? _locationTimer;
+  Timer? _enRouteBroadcastTimer;
+
+  static const Duration _gpsTimeout = Duration(seconds: 8);
 
   final _incomingRequestsController = StreamController<Map<String, Object?>>.broadcast();
   Stream<Map<String, Object?>> get incomingRequests => _incomingRequestsController.stream;
 
   void _initRealtime() {
     _realtimeSub = realtime?.projections.listen((projection) {
-      if (projection.data['type'] == 'booking.tracking.v1') {
+      if (projection.data['type'] == 'booking.projection-updated.v1') {
         final data = projection.data['data'];
-        if (data is Map<String, Object?>) {
-          final newRoute = _parseRoute(data);
-          final newLocation = _parseLocation(data);
-          if (newRoute != null || newLocation != null) {
-            if (newRoute != null) currentRoute = newRoute;
-            if (newLocation != null) currentLocation = newLocation;
-            notifyListeners();
-          }
+        if (data is! Map) return;
+        final bookingId = data['bookingId'];
+        if (bookingId is! String) return;
+        if (!_isTrackedJob(bookingId)) return;
+        final typed = Map<String, Object?>.from(data);
+        final newRoute = _parseRoute(typed);
+        final newLocation = _parseLocation(typed);
+        if (newRoute != null || newLocation != null) {
+          if (newRoute != null) currentRoute = newRoute;
+          if (newLocation != null) currentLocation = newLocation;
+          notifyListeners();
         }
       } else if (projection.data['type'] == 'provider.request.v1') {
         final data = projection.data['data'];
@@ -66,6 +73,9 @@ class ProviderController extends ChangeNotifier {
       }
     });
   }
+
+  bool _isTrackedJob(String bookingId) =>
+      jobs.any((j) => j.id.toLowerCase() == bookingId.toLowerCase());
 
   DrivingRoute? _parseRoute(Map<String, Object?> data) {
     final route = data['route'];
@@ -131,6 +141,13 @@ class ProviderController extends ChangeNotifier {
           position.latitude,
           position.longitude,
         );
+        currentLocation = ProviderMapLocation(
+          latitude: position.latitude,
+          longitude: position.longitude,
+          accuracyMeters: position.accuracy,
+          capturedAt: position.timestamp,
+          receivedAt: DateTime.now(),
+        );
       }
     } catch (_) {}
   }
@@ -185,6 +202,13 @@ class ProviderController extends ChangeNotifier {
             position.latitude,
             position.longitude,
           );
+          currentLocation = ProviderMapLocation(
+            latitude: position.latitude,
+            longitude: position.longitude,
+            accuracyMeters: position.accuracy,
+            capturedAt: position.timestamp,
+            receivedAt: DateTime.now(),
+          );
           notifyListeners();
         }
       } catch (_) {}
@@ -194,6 +218,43 @@ class ProviderController extends ChangeNotifier {
   void _stopLocationTracking() {
     _locationTimer?.cancel();
     _locationTimer = null;
+  }
+
+  void _checkEnRouteBroadcasting() {
+    final activeEnRouteJobs = jobs.where(
+      (j) => j.status == 'EN_ROUTE' && (locationSharing[j.id] ?? true),
+    ).toList();
+
+    if (activeEnRouteJobs.isEmpty) {
+      _stopEnRouteBroadcasting();
+      return;
+    }
+
+    if (_enRouteBroadcastTimer != null && _enRouteBroadcastTimer!.isActive) {
+      return;
+    }
+
+    for (final job in activeEnRouteJobs) {
+      unawaited(publishCurrentLocation(job));
+    }
+
+    _enRouteBroadcastTimer = Timer.periodic(const Duration(seconds: 11), (_) async {
+      final currentEnRoute = jobs.where(
+        (j) => j.status == 'EN_ROUTE' && (locationSharing[j.id] ?? true),
+      ).toList();
+      if (currentEnRoute.isEmpty) {
+        _stopEnRouteBroadcasting();
+        return;
+      }
+      for (final job in currentEnRoute) {
+        await publishCurrentLocation(job);
+      }
+    });
+  }
+
+  void _stopEnRouteBroadcasting() {
+    _enRouteBroadcastTimer?.cancel();
+    _enRouteBroadcastTimer = null;
   }
 
   Future<void> load({required bool verified}) async {
@@ -217,6 +278,7 @@ class ProviderController extends ChangeNotifier {
           _startRequestPolling();
         }
         jobs = await repository.jobs();
+        _checkEnRouteBroadcasting();
         try {
           requests = await repository.availableRequests();
         } catch (_) {
@@ -328,6 +390,7 @@ class ProviderController extends ChangeNotifier {
       locationSharing[job.id] = true;
     }
     jobs = jobs.map((item) => item.id == updated.id ? updated : item).toList();
+    _checkEnRouteBroadcasting();
     notifyListeners();
     return updated;
   }
@@ -335,6 +398,7 @@ class ProviderController extends ChangeNotifier {
   Future<CustomerBooking> cancelJob(CustomerBooking job, String reason) async {
     final updated = await repository.cancelJob(job, reason);
     jobs = jobs.map((item) => item.id == updated.id ? updated : item).toList();
+    _checkEnRouteBroadcasting();
     notifyListeners();
     return updated;
   }
@@ -357,6 +421,7 @@ class ProviderController extends ChangeNotifier {
       );
       locationSharing[job.id] = granted;
       if (!granted) locationPublished.remove(job.id);
+      _checkEnRouteBroadcasting();
       notifyListeners();
       if (granted) await publishCurrentLocation(current);
     } catch (_) {
@@ -374,6 +439,7 @@ class ProviderController extends ChangeNotifier {
       jobs = jobs
           .map((item) => item.id == updated.id ? updated : item)
           .toList();
+      _checkEnRouteBroadcasting();
     } on ApiException catch (error) {
       actionError = error.statusCode == 403
           ? 'That OTP is incorrect. Ask the customer for the current service-start OTP.'
@@ -391,6 +457,16 @@ class ProviderController extends ChangeNotifier {
       return;
     }
 
+    // The backend rejects ingests within 10s of the previous one. A slow GPS
+    // read can make the 11s broadcast tick land inside that window — skipping
+    // here costs nothing, burning the cycle on a guaranteed rejection costs a
+    // whole update for the customer.
+    final lastSent = _lastLocationSentAt[job.id];
+    if (lastSent != null &&
+        DateTime.now().difference(lastSent) < const Duration(seconds: 10)) {
+      return;
+    }
+
     actionError = null;
     _publishingLocation.add(job.id);
     notifyListeners();
@@ -398,7 +474,7 @@ class ProviderController extends ChangeNotifier {
       final sequence = (_locationSequences[job.id] ?? 0) + 1;
       _locationSequences[job.id] = sequence;
 
-      // Always ensure presence and consent are recorded before sending coordinates
+      // Ensure presence and consent are recorded before sending coordinates
       await client.subscribeBooking(job.id);
       await client.sendPresence(true);
       await client.sendLocationConsent(
@@ -406,46 +482,110 @@ class ProviderController extends ChangeNotifier {
         granted: true,
         noticeVersion: '2026-08-13',
       );
+      if (locationSharing[job.id] == false) {
+        locationPublished.remove(job.id);
+        return;
+      }
       locationSharing[job.id] = true;
 
-      // User requested: simulate provider ~25 km away from customer location for testing with 2 devices
-      double latitude;
-      double longitude;
-      const double accuracy = 5.0;
+      // Respect an explicit revoke that happened while this publish was in flight.
+      if (locationSharing[job.id] != true) return;
 
-      final custLat = current.locationLatitude ?? job.locationLatitude;
-      final custLng = current.locationLongitude ?? job.locationLongitude;
-
-      if (custLat != null && custLng != null) {
-        // Delta for 25.0 km: deltaLat = 0.187° (~20.8 km), deltaLng = 0.135° (~13.8 km) -> 24.96 km ~ 25 km
-        // Smoothly advances 2% closer with each periodic tick
-        final progress = ((sequence - 1) * 0.02).clamp(0.0, 0.85);
-        final factor = 1.0 - progress;
-        latitude = custLat + (0.187 * factor);
-        longitude = custLng + (0.135 * factor);
-      } else {
-        // Fallback default coordinates (Ahmedabad city base + 25km offset)
-        latitude = 23.0268278 + 0.187;
-        longitude = 73.0698506 + 0.135;
-      }
-
+      final fix = await _resolveGpsFix();
+      if (locationSharing[job.id] != true) return;
+      currentLocation = ProviderMapLocation(
+        latitude: fix.latitude,
+        longitude: fix.longitude,
+        accuracyMeters: fix.accuracy,
+        capturedAt: fix.timestamp,
+        receivedAt: DateTime.now(),
+      );
+      final clampedAccuracy = fix.accuracy > 0
+          ? (fix.accuracy > 99.0 ? 99.0 : fix.accuracy)
+          : 10.0;
       await client.sendLocation(
         bookingId: job.id,
         sequence: sequence,
-        capturedAt: DateTime.now(),
-        latitude: latitude,
-        longitude: longitude,
-        accuracyMeters: accuracy,
+        capturedAt: fix.timestamp,
+        latitude: fix.latitude,
+        longitude: fix.longitude,
+        accuracyMeters: clampedAccuracy,
       );
+      _lastLocationSentAt[job.id] = DateTime.now();
       locationPublished[job.id] = true;
     } on StateError catch (error) {
       actionError = _locationError(error.message.toString());
+    } on TimeoutException {
+      actionError =
+          'Location update timed out. Check your connection and try again.';
     } catch (_) {
       actionError =
           'Your current location could not be sent. Check connection and try again.';
     } finally {
       _publishingLocation.remove(job.id);
       notifyListeners();
+    }
+  }
+
+  /// The backend rejects fixes coarser than ~100m, so publishing a single
+  /// rushed reading often means the customer sees nothing at all. Take up to
+  /// two readings and keep the more accurate one; a fresh last-known fix may
+  /// beat a poor current one. An old last-known point is never sent — the
+  /// server rejects stale captures.
+  // ponytail: 100m mirrors the backend LOCATION_MAX_ACCURACY_METERS default;
+  // if that env diverges, this threshold needs to follow it.
+  static const int _maxFixAccuracyMeters = 100;
+
+  Future<Position> _resolveGpsFix() async {
+    if (!await Geolocator.isLocationServiceEnabled()) {
+      throw StateError('location-services-disabled');
+    }
+    final permission = await Geolocator.checkPermission();
+    if (permission != LocationPermission.always &&
+        permission != LocationPermission.whileInUse) {
+      throw StateError('location-permission-missing');
+    }
+    Position? best = await _tryCurrentPosition();
+    if (best == null || best.accuracy > _maxFixAccuracyMeters) {
+      await Future<void>.delayed(const Duration(milliseconds: 1500));
+      final second = await _tryCurrentPosition();
+      if (second != null && (best == null || second.accuracy < best.accuracy)) {
+        best = second;
+      }
+    }
+    if (!kIsWeb) {
+      try {
+        final last = await Geolocator.getLastKnownPosition();
+        if (last != null &&
+            DateTime.now().difference(last.timestamp) <=
+                const Duration(seconds: 30) &&
+            (best == null || last.accuracy < best.accuracy)) {
+          best = last;
+        }
+      } catch (_) {}
+    }
+    if (best == null) {
+      throw StateError('location-fix-unavailable');
+    }
+    return best;
+  }
+
+  Future<Position?> _tryCurrentPosition() async {
+    try {
+      return await Geolocator.getCurrentPosition(
+        locationSettings: kIsWeb
+            ? WebSettings(
+                accuracy: LocationAccuracy.high,
+                timeLimit: _gpsTimeout,
+                maximumAge: _gpsTimeout,
+              )
+            : const LocationSettings(
+                accuracy: LocationAccuracy.high,
+                timeLimit: _gpsTimeout,
+              ),
+      );
+    } catch (_) {
+      return null;
     }
   }
 
@@ -459,6 +599,8 @@ class ProviderController extends ChangeNotifier {
       'Location sharing needs an online provider and an active EN ROUTE job.',
     'invalid-location' =>
       'The browser location was not accurate enough. Try again after updating location.',
+    'offline' =>
+      'Realtime connection is offline. Reconnecting...',
     _ => 'Your current location could not be sent. Try again.',
   };
 
@@ -480,6 +622,7 @@ class ProviderController extends ChangeNotifier {
   void dispose() {
     _realtimeSub?.cancel();
     _stopLocationTracking();
+    _stopEnRouteBroadcasting();
     _stopRequestPolling();
     realtime?.dispose();
     super.dispose();

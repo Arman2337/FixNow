@@ -173,4 +173,32 @@ export class BookingProjectionService {
       }
     }
   }
+
+  publishAccountSignal(
+    userId: string,
+    signalType: string,
+    data: Readonly<Record<string, unknown>>,
+  ): void {
+    const occurredAt = new Date().toISOString();
+    for (const [client, state] of this.registry.entries()) {
+      if (client.readyState !== WebSocket.OPEN) continue;
+      for (const subscription of state.subscriptions.values()) {
+        if (
+          subscription.channel === 'account' &&
+          subscription.resourceId === userId
+        ) {
+          client.send(
+            JSON.stringify({
+              type: signalType,
+              eventId: randomUUID(),
+              subscriptionId: subscription.id,
+              resourceId: userId,
+              occurredAt,
+              data,
+            }),
+          );
+        }
+      }
+    }
+  }
 }

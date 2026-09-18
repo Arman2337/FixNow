@@ -174,6 +174,18 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
       }
     });
 
+    _provider.incomingRequests.listen((requestData) {
+      _navigatorKey.currentState?.push(
+        MaterialPageRoute(
+          fullscreenDialog: true,
+          builder: (context) => ProviderIncomingRequestScreen(
+            requestData: requestData,
+            providerController: _provider,
+          ),
+        ),
+      );
+    });
+
     _bookings.acceptedBooking.addListener(_showAcceptCelebration);
   }
 

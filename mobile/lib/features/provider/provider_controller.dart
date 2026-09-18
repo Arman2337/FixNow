@@ -39,6 +39,10 @@ class ProviderController extends ChangeNotifier {
   ProviderMapLocation? currentLocation;
 
   Timer? _locationTimer;
+  Timer? _requestPollingTimer;
+
+  final _incomingRequestsController = StreamController<Map<String, Object?>>.broadcast();
+  Stream<Map<String, Object?>> get incomingRequests => _incomingRequestsController.stream;
 
   void _initRealtime() {
     _realtimeSub = realtime?.projections.listen((projection) {
@@ -52,6 +56,12 @@ class ProviderController extends ChangeNotifier {
             if (newLocation != null) currentLocation = newLocation;
             notifyListeners();
           }
+        }
+      } else if (projection.data['type'] == 'provider.request.v1') {
+        final data = projection.data['data'];
+        if (data is Map<String, Object?>) {
+          refreshRequests();
+          _incomingRequestsController.add(data);
         }
       }
     });
@@ -196,6 +206,9 @@ class ProviderController extends ChangeNotifier {
       categories = await repository.categories();
       documents = verified ? const [] : await repository.documents();
       if (verified) {
+        if (profile != null) {
+          realtime?.subscribeAccount(profile!.id);
+        }
         availability = await repository.availability();
         if (availability?.status == 'online') {
           await _syncLocationOnce();

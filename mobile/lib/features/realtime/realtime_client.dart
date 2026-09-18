@@ -90,6 +90,24 @@ class RealtimeClient extends ChangeNotifier {
     await _connect();
   }
 
+  Future<void> subscribeAccount(String userId) async {
+    _closed = false;
+    if (_socket != null) {
+      if (_readyCompleter?.isCompleted == false) {
+        try {
+          await _readyCompleter!.future;
+        } catch (_) {}
+      }
+      await _send({
+        'type': 'subscribe',
+        'channel': 'account',
+        'resourceId': userId,
+      });
+      return;
+    }
+    await _connect();
+  }
+
   Future<void> sendPresence(bool online) =>
       _sendWithAck({'type': 'presence-update', 'online': online});
 

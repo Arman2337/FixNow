@@ -130,17 +130,40 @@ export class BookingsService {
         return saved;
       });
       await this.notifySafely(async () => {
-        if (!this.domainNotifications) return;
+        if (!this.domainNotifications && !this.bookingProjections) return;
         const eligible = await this.matchingService.findEligibleProviders(
           created.locationLat!,
           created.locationLng!,
           created.serviceCategoryId,
           50,
         );
-        await this.domainNotifications.notifyProvidersOfAvailableRequest(
-          created,
-          eligible.map(({ providerId }) => providerId),
-        );
+        const providerIds = eligible.map(({ providerId }) => providerId);
+        
+        if (this.domainNotifications) {
+          await this.domainNotifications.notifyProvidersOfAvailableRequest(
+            created,
+            providerIds,
+          );
+        }
+
+        if (this.bookingProjections) {
+          let totalMinor = 0;
+          if (created.lineItems) {
+            totalMinor = created.lineItems.reduce((sum, item) => sum + item.priceMinor * item.quantity, 0);
+          }
+          const data = {
+            bookingId: created.id,
+            serviceCategoryId: created.serviceCategoryId,
+            locationLat: created.locationLat ? created.locationLat.toString() : '',
+            locationLng: created.locationLng ? created.locationLng.toString() : '',
+            description: created.description ?? '',
+            priceMinor: totalMinor.toString(),
+            type: 'booking:provider:REQUESTED',
+          };
+          for (const providerId of providerIds.slice(0, 20)) {
+            this.bookingProjections.publishAccountSignal(providerId, 'provider.request.v1', data);
+          }
+        }
       });
       return created;
     } catch (error: unknown) {

@@ -51,7 +51,7 @@ class _ProviderActiveJobCockpitScreenState
     super.initState();
     widget.controller.realtime?.subscribeBooking(_currentJob().id);
     if (_currentJob().status == 'EN_ROUTE' &&
-        widget.controller.locationSharing[widget.job.id] == true) {
+        (widget.controller.locationSharing[widget.job.id] ?? true)) {
       _startLocationBroadcasting();
     }
   }
@@ -777,6 +777,9 @@ class _ProviderActiveJobCockpitScreenState
     }
 
     if (job.status == 'EN_ROUTE') {
+      final isSharing = widget.controller.locationSharing[job.id] ?? true;
+      final isPublishing = widget.controller.isPublishingLocation(job.id);
+      final currentLoc = widget.controller.currentLocation;
       return Container(
         padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
@@ -842,6 +845,80 @@ class _ProviderActiveJobCockpitScreenState
               onPressed: _isProcessing
                   ? null
                   : () => _handleVerifyOtp(job, _otpValue),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.sm,
+                vertical: 6,
+              ),
+              decoration: BoxDecoration(
+                color: isSharing
+                    ? AppColors.primaryEmerald.withValues(alpha: 0.08)
+                    : AppColors.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: isSharing
+                      ? AppColors.primaryEmerald.withValues(alpha: 0.3)
+                      : AppColors.outline.withValues(alpha: 0.1),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: isSharing
+                          ? AppColors.primaryEmerald
+                          : AppColors.textSecondary,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      isSharing
+                          ? (currentLoc != null
+                              ? 'Live GPS shared with customer (${currentLoc.latitude.toStringAsFixed(4)}, ${currentLoc.longitude.toStringAsFixed(4)})'
+                              : 'Broadcasting live GPS to customer')
+                          : 'Location sharing is paused',
+                      style: TextStyle(
+                        color: isSharing
+                            ? AppColors.primaryEmerald
+                            : AppColors.textSecondary,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    iconSize: 18,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    tooltip: isPublishing
+                        ? 'Publishing GPS...'
+                        : 'Update GPS now',
+                    icon: isPublishing
+                        ? const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.primaryEmerald,
+                            ),
+                          )
+                        : const Icon(
+                            Icons.refresh_rounded,
+                            size: 18,
+                            color: AppColors.primaryEmerald,
+                          ),
+                    onPressed: isPublishing
+                        ? null
+                        : () => widget.controller.publishCurrentLocation(job),
+                  ),
+                ],
+              ),
             ),
           ],
         ),

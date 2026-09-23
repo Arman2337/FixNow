@@ -5,6 +5,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:fixnow_mobile/api/api_client.dart';
 import 'package:fixnow_mobile/notifications/push_api.dart';
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 /// Compile-time gate. Push stays fully inert (no Firebase calls, no native
 /// configuration requirement) unless the build explicitly enables it.
@@ -60,13 +61,31 @@ class FirebasePushGateway implements PushGateway, PushInteractionSource {
 
   @override
   Future<bool> requestPermission() async {
-    final settings = await FirebaseMessaging.instance.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
-    return settings.authorizationStatus == AuthorizationStatus.authorized ||
-        settings.authorizationStatus == AuthorizationStatus.provisional;
+    try {
+      final status = await Permission.notification.status;
+      if (!status.isGranted) {
+        final result = await Permission.notification.request();
+        if (result.isPermanentlyDenied || result.isDenied) {
+          return false;
+        }
+      }
+    } catch (_) {}
+    try {
+      final settings = await FirebaseMessaging.instance.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+      return settings.authorizationStatus == AuthorizationStatus.authorized ||
+          settings.authorizationStatus == AuthorizationStatus.provisional;
+    } catch (_) {
+      try {
+        final status = await Permission.notification.status;
+        return status.isGranted;
+      } catch (_) {
+        return false;
+      }
+    }
   }
 
   @override

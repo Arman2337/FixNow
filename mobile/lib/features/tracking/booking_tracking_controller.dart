@@ -49,10 +49,15 @@ class BookingTrackingController extends ChangeNotifier {
       await realtime?.subscribeBooking(bookingId);
       connection = TrackingConnection.live;
       message = null;
-      _stalenessTimer ??= Timer.periodic(
-        const Duration(seconds: 15),
-        (_) => evaluateStaleness(),
-      );
+      if (tracking?.status == 'EN_ROUTE') {
+        _stalenessTimer ??= Timer.periodic(
+          const Duration(seconds: 15),
+          (_) => evaluateStaleness(),
+        );
+      } else {
+        _stalenessTimer?.cancel();
+        _stalenessTimer = null;
+      }
     } catch (_) {
       connection = TrackingConnection.offline;
       message = 'Tracking is temporarily unavailable.';
@@ -216,6 +221,15 @@ class BookingTrackingController extends ChangeNotifier {
     tracking = next;
     connection = TrackingConnection.live;
     message = null;
+    if (next.status == 'EN_ROUTE') {
+      _stalenessTimer ??= Timer.periodic(
+        const Duration(seconds: 15),
+        (_) => evaluateStaleness(),
+      );
+    } else {
+      _stalenessTimer?.cancel();
+      _stalenessTimer = null;
+    }
     notifyListeners();
   }
 

@@ -561,7 +561,10 @@ class ProviderController extends ChangeNotifier {
     if (!await Geolocator.isLocationServiceEnabled()) {
       throw StateError('location-services-disabled');
     }
-    final permission = await Geolocator.checkPermission();
+    var permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
     if (permission != LocationPermission.always &&
         permission != LocationPermission.whileInUse) {
       throw StateError('location-permission-missing');
@@ -577,11 +580,13 @@ class ProviderController extends ChangeNotifier {
     if (!kIsWeb) {
       try {
         final last = await Geolocator.getLastKnownPosition();
-        if (last != null &&
-            DateTime.now().difference(last.timestamp) <=
-                const Duration(seconds: 30) &&
-            (best == null || last.accuracy < best.accuracy)) {
-          best = last;
+        if (last != null) {
+          if (best == null ||
+              (DateTime.now().difference(last.timestamp) <=
+                      const Duration(seconds: 45) &&
+                  last.accuracy < best.accuracy)) {
+            best = last;
+          }
         }
       } catch (_) {}
     }

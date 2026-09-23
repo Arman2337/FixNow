@@ -14,6 +14,7 @@ import {
   VALID_BOOKING_TRANSITIONS,
 } from '../../../../shared/booking-lifecycle.types';
 import { BookingLineItem } from './booking-line-item.entity';
+import type { BookingItemSnapshot } from './booking-items';
 
 @Entity('bookings')
 @Unique('UQ_bookings_customer_idempotency', ['customerId', 'idempotencyKey'])
@@ -49,6 +50,16 @@ export class Booking {
 
   @Column('varchar', { length: 2000 })
   description: string;
+
+  /** Itemized task snapshot; null for bookings created without line items. */
+  @Column('jsonb', { nullable: true })
+  items: BookingItemSnapshot[] | null;
+
+  @Column('int', { name: 'total_amount_minor', nullable: true })
+  totalAmountMinor: number | null;
+
+  @Column('int', { name: 'estimated_duration_minutes', nullable: true })
+  estimatedDurationMinutes: number | null;
 
   @Column('decimal', { name: 'location_lat', precision: 10, scale: 7 })
   locationLat: number | null;

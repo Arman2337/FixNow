@@ -4,6 +4,7 @@ import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/app_typography.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
+import 'package:fixnow_mobile/features/bookings/booking.dart';
 import 'package:fixnow_mobile/features/location/booking_location.dart';
 import 'package:fixnow_mobile/features/services/service_category.dart';
 import 'package:fixnow_mobile/features/services/sub_service_item.dart';
@@ -30,8 +31,8 @@ class SubServiceCatalogScreen extends StatefulWidget {
     String itemizedDescription,
     int calculatedPriceMinor,
     BookingLocationFix? location,
-  )?
-  onProceedToBooking;
+    List<BookingItemDraft> items,
+  )? onProceedToBooking;
 
   @override
   State<SubServiceCatalogScreen> createState() =>
@@ -118,6 +119,17 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
         description,
         totalMinor,
         widget.initialLocation,
+        _cart.items
+            .map(
+              (item) => BookingItemDraft(
+                id: item.subService.id,
+                name: item.subService.name,
+                quantity: item.quantity,
+                unitPriceMinor: item.subService.priceMinor,
+                durationMinutes: item.subService.durationMinutes,
+              ),
+            )
+            .toList(growable: false),
       );
     }
   }

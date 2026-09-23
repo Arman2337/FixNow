@@ -135,11 +135,10 @@ export class BookingCallsService {
       throw new NotFoundException('Booking not found');
     }
 
-    if (
-      booking.customerId !== userId &&
-      booking.providerId !== userId
-    ) {
-      throw new ForbiddenException('Not authorized to access calls on this booking');
+    if (booking.customerId !== userId && booking.providerId !== userId) {
+      throw new ForbiddenException(
+        'Not authorized to access calls on this booking',
+      );
     }
 
     const call = await this.callsRepo.findOne({

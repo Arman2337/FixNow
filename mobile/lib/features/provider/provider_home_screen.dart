@@ -9,7 +9,6 @@ import 'package:fixnow_mobile/design_system/fix_page_frame.dart';
 import 'package:fixnow_mobile/design_system/fix_schedule_hours_sheet.dart';
 import 'package:fixnow_mobile/design_system/fix_state_views.dart';
 import 'package:fixnow_mobile/design_system/fix_status_chip.dart';
-import 'package:fixnow_mobile/features/call/call_repository.dart';
 import 'package:fixnow_mobile/features/chat/chat_repository.dart';
 import 'package:fixnow_mobile/features/notifications/notification_center_screen.dart';
 import 'package:fixnow_mobile/features/notifications/notification_controller.dart';
@@ -40,6 +39,7 @@ class ProviderHomeScreen extends StatelessWidget {
   const ProviderHomeScreen({
     required this.controller,
     this.chatRepository,
+    this.callRepository,
     this.loadAcceptTime,
     this.onViewEarnings,
     this.notificationController,
@@ -50,6 +50,7 @@ class ProviderHomeScreen extends StatelessWidget {
   });
   final ProviderController controller;
   final ChatRepository? chatRepository;
+  final dynamic callRepository;
 
   /// FN-111: loads this provider's rolling accept-time signal; null hides
   /// the card entirely (including failures and insufficient data).
@@ -69,6 +70,7 @@ class ProviderHomeScreen extends StatelessWidget {
         ? controller
         : Listenable.merge([controller, notificationController!]),
     builder: (context, _) {
+      final requestsSectionKey = GlobalKey();
       if (controller.state == ProviderLoadState.loading) {
         return const Center(
           child: CircularProgressIndicator(
@@ -174,7 +176,16 @@ class ProviderHomeScreen extends StatelessWidget {
                 _IncomingRequestBanner(
                   count: controller.requests.length,
                   firstRequest: controller.requests.first,
-                  onTap: () {},
+                  onTap: () {
+                    final targetContext = requestsSectionKey.currentContext;
+                    if (targetContext != null) {
+                      Scrollable.ensureVisible(
+                        targetContext,
+                        duration: const Duration(milliseconds: 400),
+                        curve: Curves.easeInOut,
+                      );
+                    }
+                  },
                 ),
 
               Container(
@@ -191,7 +202,7 @@ class ProviderHomeScreen extends StatelessWidget {
                   children: [
                     Icon(
                       Icons.trending_up_rounded,
-                      color: AppColors.accentGold,
+                      color: Color(0xFF92400E),
                       size: 18,
                     ),
                     SizedBox(width: 8),
@@ -199,9 +210,9 @@ class ProviderHomeScreen extends StatelessWidget {
                       child: Text(
                         'High demand nearby · stay online for faster matching',
                         style: TextStyle(
-                          color: AppColors.accentGold,
+                          color: Color(0xFF92400E),
                           fontSize: 12,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
@@ -439,6 +450,7 @@ class ProviderHomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.xxl),
               Row(
+                key: requestsSectionKey,
                 children: [
                   Expanded(
                     child: Text(
@@ -960,12 +972,15 @@ class _IncomingRequestBanner extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.accentGoldSoft,
+        color: AppColors.surfaceElevated,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.borderGold, width: 1.2),
+        border: Border.all(
+          color: AppColors.accentGold.withValues(alpha: 0.45),
+          width: 1.2,
+        ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.accentGold.withValues(alpha: 0.15),
+            color: AppColors.accentGold.withValues(alpha: 0.12),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
@@ -987,12 +1002,15 @@ class _IncomingRequestBanner extends StatelessWidget {
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: AppColors.accentGold.withValues(alpha: 0.25),
+                    color: AppColors.accentGold.withValues(alpha: 0.18),
                     shape: BoxShape.circle,
+                    border: Border.all(
+                      color: AppColors.accentGold.withValues(alpha: 0.3),
+                    ),
                   ),
                   child: const Icon(
                     Icons.radar_rounded,
-                    size: 20,
+                    size: 18,
                     color: AppColors.accentGold,
                   ),
                 ),
@@ -1003,21 +1021,24 @@ class _IncomingRequestBanner extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          Text(
-                            count == 1
-                                ? 'New Request Available!'
-                                : '$count New Requests Available!',
-                            style: const TextStyle(
-                              color: AppColors.cream,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 13,
+                          Flexible(
+                            child: Text(
+                              count == 1
+                                  ? 'New Request Available!'
+                                  : '$count New Requests Available!',
+                              style: const TextStyle(
+                                color: AppColors.cream,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           const SizedBox(width: 6),
                           Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 5,
-                              vertical: 1,
+                              vertical: 1.5,
                             ),
                             decoration: BoxDecoration(
                               color: AppColors.accentGold,
@@ -1029,12 +1050,13 @@ class _IncomingRequestBanner extends StatelessWidget {
                                 color: Colors.black,
                                 fontSize: 8.5,
                                 fontWeight: FontWeight.w800,
+                                letterSpacing: 0.4,
                               ),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 3),
                       Text(
                         '${firstRequest.distanceKm.toStringAsFixed(1)} km away · Tap to review and accept',
                         style: const TextStyle(
@@ -1047,9 +1069,10 @@ class _IncomingRequestBanner extends StatelessWidget {
                     ],
                   ),
                 ),
+                const SizedBox(width: AppSpacing.xs),
                 const Icon(
                   Icons.arrow_forward_ios_rounded,
-                  size: 14,
+                  size: 13,
                   color: AppColors.accentGold,
                 ),
               ],

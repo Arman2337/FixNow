@@ -10,9 +10,18 @@ import { createHash, createHmac, timingSafeEqual } from 'crypto';
 import { ConfigService } from '@nestjs/config';
 import { DataSource, EntityManager, IsNull, QueryFailedError, In } from 'typeorm';
 import { BookingStatus } from '../../../shared/booking-lifecycle.types';
-import { CreateBookingDto, CreateBookingLineItemDto } from './bookings.dto';
+import {
+  CreateBookingDto,
+  CreateBookingLineItemDto,
+  UpdateBookingItemsDto,
+} from './bookings.dto';
 import { BookingEvent } from './domain/booking-event.entity';
 import { Booking } from './domain/booking.entity';
+import { PaymentOrder } from '../payments/domain/payment-order.entity';
+import {
+  BookingItemSnapshot,
+  computeBookingTotals,
+} from './domain/booking-items';
 import { MatchingService } from '../matching/matching.service';
 import { LocationService } from '../location/location.service';
 import { BookingProjectionService } from '../realtime/booking-projection.service';
@@ -85,6 +94,10 @@ export class BookingsService {
           requestFingerprint: fingerprint,
           status: BookingStatus.REQUESTED,
           description: normalizedInput.description,
+          items: normalizedInput.items,
+          totalAmountMinor: normalizedInput.totals.totalMinor || null,
+          estimatedDurationMinutes:
+            normalizedInput.totals.estimatedDurationMinutes,
           locationLat: normalizedInput.locationLat,
           locationLng: normalizedInput.locationLng,
           scheduledAt: normalizedInput.scheduledAt
@@ -434,6 +447,71 @@ export class BookingsService {
     return booking;
   }
 
+  /**
+   * Replaces the booking's line items after the assigned provider finds
+   * more (or less) work on site. Totals and duration are recomputed
+   * server-side. ponytail: no customer-confirmation gate yet — the customer
+   * sees the revised items/pricing on their booking; add an approval step
+   * if disputes show up.
+   */
+  async updateBookingItems(
+    bookingId: string,
+    providerId: string,
+    input: UpdateBookingItemsDto,
+  ): Promise<Booking> {
+    const paymentOrder = await this.dataSource
+      .getRepository(PaymentOrder)
+      .exists({ where: { bookingId } });
+    if (paymentOrder) {
+      throw new ConflictException(
+        'A payment has already been initiated for this booking',
+      );
+    }
+    const booking = await this.transition(
+      bookingId,
+      providerId,
+      input.expectedVersion,
+      (candidate) => {
+        if (candidate.providerId !== providerId) {
+          throw new ForbiddenException('You are not assigned to this booking');
+        }
+        const allowed: BookingStatus[] = [
+          BookingStatus.ASSIGNED,
+          BookingStatus.EN_ROUTE,
+          BookingStatus.IN_PROGRESS,
+        ];
+        if (!allowed.includes(candidate.status)) {
+          throw new ConflictException(
+            'Services can only be adjusted while the job is active',
+          );
+        }
+        const items: BookingItemSnapshot[] = input.items.map((item) => ({
+          id: item.id.trim(),
+          name: item.name.trim(),
+          quantity: item.quantity,
+          unitPriceMinor: item.unitPriceMinor,
+          ...(typeof item.durationMinutes === 'number'
+            ? { durationMinutes: item.durationMinutes }
+            : {}),
+        }));
+        const totals = computeBookingTotals(items);
+        candidate.items = items;
+        candidate.totalAmountMinor = totals.totalMinor;
+        candidate.estimatedDurationMinutes = totals.estimatedDurationMinutes;
+      },
+      'Provider adjusted on-site services',
+    );
+    await this.bookingProjections?.publishBooking(booking);
+    await this.notifySafely(() =>
+      this.domainNotifications!.notifyBookingEvent(
+        booking,
+        'customer',
+        booking.status,
+      ),
+    );
+    return booking;
+  }
+
   async getServiceStartOtp(
     bookingId: string,
     customerId: string,
@@ -673,6 +751,9 @@ export class BookingsService {
           providerId: booking.providerId,
           status: booking.status,
           scheduledAt: booking.scheduledAt,
+          items: booking.items,
+          totalAmountMinor: booking.totalAmountMinor,
+          estimatedDurationMinutes: booking.estimatedDurationMinutes,
           assignedAt: booking.assignedAt,
           enRouteAt: booking.enRouteAt,
           startedAt: booking.startedAt,
@@ -758,9 +839,24 @@ export class BookingsService {
     if (scheduledAt && new Date(scheduledAt).getTime() <= Date.now()) {
       throw new BadRequestException('Scheduled time must be in the future');
     }
+    // Snapshots only the whitelisted fields; totals and duration are
+    // recomputed server-side and never taken from the client.
+    const items: BookingItemSnapshot[] | null = input.items?.length
+      ? input.items.map((item) => ({
+          id: item.id.trim(),
+          name: item.name.trim(),
+          quantity: item.quantity,
+          unitPriceMinor: item.unitPriceMinor,
+          ...(typeof item.durationMinutes === 'number'
+            ? { durationMinutes: item.durationMinutes }
+            : {}),
+        }))
+      : null;
     return {
       serviceCategoryId: input.serviceCategoryId,
       description,
+      items,
+      totals: computeBookingTotals(items),
       locationLat: Number(input.locationLat.toFixed(7)),
       locationLng: Number(input.locationLng.toFixed(7)),
       scheduledAt,

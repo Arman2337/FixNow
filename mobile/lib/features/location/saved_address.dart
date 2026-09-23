@@ -37,11 +37,13 @@ class SavedAddress {
   final double longitude;
   final bool isDefault;
 
-  IconData get icon => switch (label) {
-    AddressLabel.home => Icons.home_rounded,
-    AddressLabel.work => Icons.work_rounded,
-    AddressLabel.other => Icons.location_on_rounded,
-  };
+  IconData get icon => id == 'addr-current-live'
+      ? Icons.my_location_rounded
+      : switch (label) {
+          AddressLabel.home => Icons.home_rounded,
+          AddressLabel.work => Icons.work_rounded,
+          AddressLabel.other => Icons.location_on_rounded,
+        };
 
   String get labelText => switch (label) {
     AddressLabel.home => 'Home',
@@ -58,12 +60,12 @@ class SavedAddress {
     final areaPart = [
       flatBuilding,
       streetArea,
-      if (landmark != null && landmark!.trim().isNotEmpty) '(Near $landmark)',
+      if (landmark != null && landmark!.trim().isNotEmpty) '(Near )',
     ].where((s) => s.trim().isNotEmpty).toList();
 
     final cityZip = [
       if (city.trim().isNotEmpty && postalCode.trim().isNotEmpty)
-        '$city - $postalCode'
+        ' - '
       else ...[
         if (city.trim().isNotEmpty) city,
         if (postalCode.trim().isNotEmpty) postalCode,
@@ -105,6 +107,7 @@ class SavedAddressRepository extends ChangeNotifier {
   SavedAddressRepository({required this.api, required this.accessToken}) {
     _instance = this;
   }
+
 
   factory SavedAddressRepository.test() {
     return SavedAddressRepository(
@@ -211,11 +214,16 @@ class SavedAddressRepository extends ChangeNotifier {
       for (var i = 0; i < _addresses.length; i++) {
         _addresses[i] = _addresses[i].copyWith(isDefault: false);
       }
-    }
-    if (idx >= 0) {
-      _addresses[idx] = address;
+      if (idx >= 0) {
+        _addresses.removeAt(idx);
+      }
+      _addresses.insert(0, address);
     } else {
-      _addresses.add(address);
+      if (idx >= 0) {
+        _addresses[idx] = address;
+      } else {
+        _addresses.add(address);
+      }
     }
     notifyListeners();
     try {
@@ -268,10 +276,51 @@ class SavedAddressRepository extends ChangeNotifier {
   }
 
   void setDefault(String id) {
+    SavedAddress? target;
     for (var i = 0; i < _addresses.length; i++) {
-      _addresses[i] = _addresses[i].copyWith(isDefault: _addresses[i].id == id);
+      final isMatch = _addresses[i].id == id;
+      _addresses[i] = _addresses[i].copyWith(isDefault: isMatch);
+      if (isMatch) target = _addresses[i];
+    }
+    if (target != null) {
+      _addresses.removeWhere((a) => a.id == id);
+      _addresses.insert(0, target);
     }
     notifyListeners();
+  }
+
+  void setLiveLocationAddress({
+    required double latitude,
+    required double longitude,
+    String? area,
+    String? city,
+    String? state,
+    String? postalCode,
+  }) {
+    final liveCity =
+        (city != null && city.trim().isNotEmpty) ? city.trim() : 'Local Area';
+    final liveArea = (area != null && area.trim().isNotEmpty)
+        ? area.trim()
+        : ((state != null && state.trim().isNotEmpty)
+            ? state.trim()
+            : 'Current Area');
+    final livePostal = (postalCode != null && postalCode.trim().isNotEmpty)
+        ? postalCode.trim()
+        : '';
+
+    final live = SavedAddress(
+      id: 'addr-current-live',
+      label: AddressLabel.other,
+      customTitle: 'Current Location',
+      flatBuilding: 'Current Location',
+      streetArea: liveArea,
+      city: liveCity,
+      postalCode: livePostal,
+      latitude: latitude,
+      longitude: longitude,
+      isDefault: true,
+    );
+    saveAddress(live);
   }
 
   void reset() {

@@ -7,7 +7,6 @@ import 'package:fixnow_mobile/features/bookings/booking_repository.dart';
 import 'package:fixnow_mobile/features/bookings/job_proof_service.dart';
 import 'package:fixnow_mobile/design_system/fix_job_proof_dialog.dart';
 import 'package:fixnow_mobile/features/ratings/booking_review_panel.dart';
-import 'package:fixnow_mobile/features/ratings/booking_review_panel.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -353,6 +352,80 @@ class BookingDetailScreen extends StatelessWidget {
                                 height: 1.4,
                               ),
                             ),
+                            if (booking.items case final items? when items.isNotEmpty) ...[
+                              const SizedBox(height: AppSpacing.md),
+                              const Divider(
+                                height: 1,
+                                color: AppColors.surfaceContainerHigh,
+                              ),
+                              const SizedBox(height: AppSpacing.sm),
+                              const Text(
+                                'BOOKED SERVICES',
+                                style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.xs),
+                              for (final item in items)
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                    bottom: AppSpacing.xs,
+                                  ),
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          item.quantity == 1
+                                              ? item.name
+                                              : '\ × ',
+                                          style: const TextStyle(
+                                            color: AppColors.textPrimary,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ),
+                                      Text(
+                                        _money(item.lineTotalMinor),
+                                        style: const TextStyle(
+                                          color: AppColors.textPrimary,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              if (booking.pricing case final pricing?) ...[
+                                const SizedBox(height: AppSpacing.xs),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    const Text(
+                                      'Total (incl. GST)',
+                                      style: TextStyle(
+                                        color: AppColors.textPrimary,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    Text(
+                                      pricing.formattedTotal,
+                                      style: const TextStyle(
+                                        color: AppColors.primary,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ],
                             const SizedBox(height: AppSpacing.lg),
                             const Divider(
                               height: 1,
@@ -636,6 +709,9 @@ class BookingDetailScreen extends StatelessWidget {
 
   static String _date(DateTime value) =>
       '${value.day}/${value.month}/${value.year}';
+
+  static String _money(int minor) =>
+      '₹${(minor / 100).toStringAsFixed(minor % 100 == 0 ? 0 : 2)}';
 }
 
 class _BookingProgress extends StatelessWidget {

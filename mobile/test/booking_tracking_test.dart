@@ -280,6 +280,36 @@ void main() {
     expect(find.text('Live location available'), findsOneWidget);
     controller.dispose();
   });
+
+  testWidgets(
+    'hides transit journey map and shows on-site status when work has started',
+    (tester) async {
+      final controller = BookingTrackingController(
+        bookingId: 'booking-1',
+        source: _Source(
+          _tracking(
+            sequence: 2,
+            status: 'IN_PROGRESS',
+          ),
+        ),
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.dark,
+          home: BookingTrackingScreen(controller: controller),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(find.text('Service in progress'), findsOneWidget);
+      expect(find.text('Work started'), findsOneWidget);
+      expect(find.text('Technician is working on-site'), findsOneWidget);
+      // Transit map and provider journey are removed
+      expect(find.text('Provider journey'), findsNothing);
+      expect(find.text('Estimated arrival'), findsNothing);
+    },
+  );
 }
 
 BookingTracking _tracking({

@@ -16,6 +16,7 @@ import { BookingsService } from './bookings.service';
 import {
   CreateBookingDto,
   UpdateBookingStatusDto,
+  UpdateBookingItemsDto,
   CancelBookingDto,
   RescheduleBookingDto,
   BookingHistoryQueryDto,
@@ -100,6 +101,23 @@ export class BookingsController {
     return {
       booking: presentBooking(booking),
     };
+  }
+
+  @Patch(':id/items')
+  @HttpCode(HttpStatus.OK)
+  @RequireOwnPermission(PERMISSIONS.bookingUpdateStatus)
+  async updateItems(
+    @Param('id') bookingId: string,
+    @Req() req: AuthorizedRequest,
+    @Body() dto: UpdateBookingItemsDto,
+  ): Promise<BookingResponse> {
+    const providerId = req.authorizationPrincipal!.userId;
+    const booking = await this.bookingsService.updateBookingItems(
+      bookingId,
+      providerId,
+      dto,
+    );
+    return { booking: presentBooking(booking) };
   }
 
   @Put(':id/line-items')

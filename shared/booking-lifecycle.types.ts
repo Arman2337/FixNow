@@ -29,13 +29,45 @@ export interface CreateBookingLineItemRequest {
   quantity: number;
 }
 
+/**
+ * One itemized task line on a booking (e.g. "Tap & Mixer Repair" x2).
+ * `unitPriceMinor` and `durationMinutes` are per-unit. Amounts are paise.
+ * The backend recomputes all totals from these lines; client-computed
+ * totals are never trusted.
+ */
+export interface BookingItemContract {
+  id: string;
+  name: string;
+  quantity: number;
+  unitPriceMinor: number;
+  durationMinutes?: number | null;
+}
+
+/** Server-computed pricing snapshot derived from the booking's items. */
+export interface BookingPricingContract {
+  subtotalMinor: number;
+  gstMinor: number;
+  totalMinor: number;
+  currency: string;
+}
+
 export interface CreateBookingRequest {
   serviceCategoryId: string;
   description: string;
   locationLat: number;
   locationLng: number;
   scheduledAt?: string | null;
+  items?: BookingItemContract[] | null;
   lineItems?: CreateBookingLineItemRequest[];
+}
+
+/**
+ * Provider command to replace the booking's line items after finding more
+ * (or less) work on site. Totals are recomputed server-side.
+ */
+export interface UpdateBookingItemsRequest {
+  items: BookingItemContract[];
+  expectedVersion: number;
 }
 
 export interface BookingContract {
@@ -45,6 +77,9 @@ export interface BookingContract {
   serviceCategoryId: string;
   status: BookingStatus;
   description: string;
+  items: BookingItemContract[] | null;
+  pricing: BookingPricingContract | null;
+  estimatedDurationMinutes: number | null;
   locationLat: number | null;
   locationLng: number | null;
   scheduledAt: string | null;
@@ -85,6 +120,9 @@ export interface ProviderBookingRequestContract {
   serviceCategoryId: string;
   status: BookingStatus.REQUESTED;
   description: string;
+  items: BookingItemContract[] | null;
+  pricing: BookingPricingContract | null;
+  estimatedDurationMinutes: number | null;
   scheduledAt: string | null;
   createdAt: string;
   version: number;

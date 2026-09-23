@@ -8,6 +8,7 @@ import 'package:fixnow_mobile/design_system/fix_address_selector.dart';
 import 'package:fixnow_mobile/features/location/saved_address.dart';
 import 'package:fixnow_mobile/features/profile/customer_profile_controller.dart';
 import 'package:fixnow_mobile/notifications/push_enrollment.dart';
+import 'package:fixnow_mobile/notifications/push_settings_card.dart';
 import 'package:flutter/material.dart';
 
 class CustomerProfileScreen extends StatefulWidget {
@@ -31,8 +32,7 @@ class CustomerProfileScreen extends StatefulWidget {
 class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
-  bool _whatsAppAlerts = true;
-  bool _maskPhone = true;
+
 
   @override
   void initState() {
@@ -604,6 +604,8 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
             ),
           ),
           const SizedBox(height: AppSpacing.md),
+          PushSettingsCard(controller: widget.pushController),
+          const SizedBox(height: AppSpacing.md),
           if (widget.onSignOut != null) ...[
             const SizedBox(height: AppSpacing.lg),
             FixButton(
@@ -740,61 +742,8 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
     );
   }
 
-  Widget _buildToggleRow({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required bool value,
-    required ValueChanged<bool> onChanged,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.sm,
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: AppColors.surfaceContainer,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, size: 20, color: AppColors.textSecondary),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Switch.adaptive(
-            value: value,
-            activeTrackColor: AppColors.primary,
-            onChanged: onChanged,
-          ),
-        ],
-      ),
-    );
-  }
+
+
 
   bool get _failed => const {
     ProfileViewStatus.offline,
@@ -804,7 +753,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
 }
 
 class _SavedAddressesSection extends StatelessWidget {
-  const _SavedAddressesSection({super.key});
+  const _SavedAddressesSection();
 
   @override
   Widget build(BuildContext context) {

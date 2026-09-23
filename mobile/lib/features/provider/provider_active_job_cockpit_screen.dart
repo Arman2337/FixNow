@@ -1,3 +1,6 @@
+import 'package:fixnow_mobile/features/call/call_repository.dart';
+import 'package:fixnow_mobile/design_system/app_radius.dart';
+import 'package:fixnow_mobile/design_system/fix_banner.dart';
 import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
@@ -22,12 +25,14 @@ class ProviderActiveJobCockpitScreen extends StatefulWidget {
     required this.job,
     required this.controller,
     this.chatRepository,
+    this.callRepository,
     super.key,
   });
 
   final CustomerBooking job;
   final ProviderController controller;
   final ChatRepository? chatRepository;
+  final CallRepository? callRepository;
 
   @override
   State<ProviderActiveJobCockpitScreen> createState() =>
@@ -46,7 +51,7 @@ class _ProviderActiveJobCockpitScreenState
     super.initState();
     widget.controller.realtime?.subscribeBooking(_currentJob().id);
     if (_currentJob().status == 'EN_ROUTE' &&
-        widget.controller.locationSharing[widget.job.id] == true) {
+        (widget.controller.locationSharing[widget.job.id] ?? true)) {
       _startLocationBroadcasting();
     }
   }
@@ -199,6 +204,26 @@ class _ProviderActiveJobCockpitScreenState
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Phone number unavailable')),
+      );
+    }
+  }
+
+  Future<void> _openServiceAdjustment(CustomerBooking job) async {
+    final updated = await showModalBottomSheet<CustomerBooking>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _ServiceAdjustmentSheet(
+        job: job,
+        controller: widget.controller,
+      ),
+    );
+    if (updated != null && mounted) {
+      showFixBanner(
+        ScaffoldMessenger.of(context),
+        tone: FixBannerTone.success,
+        title: 'Services updated',
+        message: 'The customer now sees the revised services and total.',
       );
     }
   }
@@ -558,10 +583,28 @@ class _ProviderActiveJobCockpitScreenState
                   ],
                 ),
                 const SizedBox(height: 4),
-                InkWell(
-                  onTap: () => _openMaps(job),
-                  child: Container(
+                if (!hasNavigationDestination(job))
+                  Container(
                     height: 110,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceContainer,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    alignment: Alignment.center,
+                    child: const Text(
+                      'Customer location unavailable',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                      ),
+                    ),
+                  )
+                else
+                  InkWell(
+                    onTap: () => _openMaps(job),
+                    child: Container(
+                      height: 110,
                     width: double.infinity,
                     decoration: BoxDecoration(
                       color: AppColors.surfaceContainer,
@@ -582,21 +625,7 @@ class _ProviderActiveJobCockpitScreenState
                                   showOverlay: false,
                                   route: widget.controller.currentRoute,
                                   providerLocation:
-                                      widget.controller.currentLocation ??
-                                          (job.locationLatitude != null &&
-                                                  job.locationLongitude != null
-                                              ? ProviderMapLocation(
-                                                  latitude:
-                                                      job.locationLatitude! -
-                                                          0.005,
-                                                  longitude:
-                                                      job.locationLongitude! -
-                                                          0.005,
-                                                  accuracyMeters: 0,
-                                                  capturedAt: DateTime.now(),
-                                                  receivedAt: DateTime.now(),
-                                                )
-                                              : null),
+                                      widget.controller.currentLocation,
                                   customerLocation:
                                       job.locationLatitude != null &&
                                               job.locationLongitude != null
@@ -622,9 +651,7 @@ class _ProviderActiveJobCockpitScreenState
                           bottom: 8,
                           left: 8,
                           child: GestureDetector(
-                            onTap: () {
-                              widget.controller.setLocationConsent(job, true);
-                            },
+                            onTap: () => _openMaps(job),
                             child: Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 8,
@@ -750,6 +777,9 @@ class _ProviderActiveJobCockpitScreenState
     }
 
     if (job.status == 'EN_ROUTE') {
+      final isSharing = widget.controller.locationSharing[job.id] ?? true;
+      final isPublishing = widget.controller.isPublishingLocation(job.id);
+      final currentLoc = widget.controller.currentLocation;
       return Container(
         padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
@@ -815,6 +845,80 @@ class _ProviderActiveJobCockpitScreenState
               onPressed: _isProcessing
                   ? null
                   : () => _handleVerifyOtp(job, _otpValue),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.sm,
+                vertical: 6,
+              ),
+              decoration: BoxDecoration(
+                color: isSharing
+                    ? AppColors.primaryEmerald.withValues(alpha: 0.08)
+                    : AppColors.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: isSharing
+                      ? AppColors.primaryEmerald.withValues(alpha: 0.3)
+                      : AppColors.outline.withValues(alpha: 0.1),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: isSharing
+                          ? AppColors.primaryEmerald
+                          : AppColors.textSecondary,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      isSharing
+                          ? (currentLoc != null
+                              ? 'Live GPS shared with customer (${currentLoc.latitude.toStringAsFixed(4)}, ${currentLoc.longitude.toStringAsFixed(4)})'
+                              : 'Broadcasting live GPS to customer')
+                          : 'Location sharing is paused',
+                      style: TextStyle(
+                        color: isSharing
+                            ? AppColors.primaryEmerald
+                            : AppColors.textSecondary,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    iconSize: 18,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    tooltip: isPublishing
+                        ? 'Publishing GPS...'
+                        : 'Update GPS now',
+                    icon: isPublishing
+                        ? const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.primaryEmerald,
+                            ),
+                          )
+                        : const Icon(
+                            Icons.refresh_rounded,
+                            size: 18,
+                            color: AppColors.primaryEmerald,
+                          ),
+                    onPressed: isPublishing
+                        ? null
+                        : () => widget.controller.publishCurrentLocation(job),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -958,6 +1062,15 @@ class _ProviderActiveJobCockpitScreenState
           ),
           const SizedBox(height: AppSpacing.md),
           FixButton(
+            key: const Key('cockpit_adjust_services_button'),
+            label: 'Adjust Services & Price',
+            icon: Icons.tune_rounded,
+            variant: FixButtonVariant.secondary,
+            onPressed: () => _openServiceAdjustment(job),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          FixButton(
+            key: const Key('cockpit_complete_service_button'),
             label: 'Complete Service',
             icon: Icons.check_circle_rounded,
             isLoading: _isProcessing,
@@ -1243,6 +1356,7 @@ class _ProviderActiveJobCockpitScreenState
           Opacity(
             opacity: 0,
             child: TextField(
+              key: const Key('otp_hidden_input'),
               keyboardType: TextInputType.number,
               maxLength: 4,
               cursorColor: Colors.transparent,
@@ -1301,4 +1415,350 @@ Future<bool> openCustomerNavigation(CustomerBooking job) async {
   } catch (_) {
     return false;
   }
+}
+
+
+class _ServiceAdjustmentSheet extends StatefulWidget {
+  const _ServiceAdjustmentSheet({required this.job, required this.controller});
+
+  final CustomerBooking job;
+  final ProviderController controller;
+
+  @override
+  State<_ServiceAdjustmentSheet> createState() =>
+      _ServiceAdjustmentSheetState();
+}
+
+class _ServiceAdjustmentSheetState extends State<_ServiceAdjustmentSheet> {
+  late List<BookingItemDraft> _lines;
+  final _nameCtrl = TextEditingController();
+  final _priceCtrl = TextEditingController();
+  bool _saving = false;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.job.items != null && widget.job.items!.isNotEmpty) {
+      _lines = widget.job.items!.map((item) => item.toDraft()).toList();
+    } else if (widget.job.pricing != null &&
+        widget.job.pricing!.subtotalMinor > 0) {
+      _lines = [
+        BookingItemDraft(
+          id: 'initial-service',
+          name: widget.job.description.isNotEmpty
+              ? widget.job.description
+              : 'Base Service',
+          quantity: 1,
+          unitPriceMinor: widget.job.pricing!.subtotalMinor,
+          durationMinutes: widget.job.estimatedDurationMinutes,
+        ),
+      ];
+    } else {
+      _lines = [];
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _priceCtrl.dispose();
+    super.dispose();
+  }
+
+  String _money(int minor) =>
+      '₹${(minor / 100).toStringAsFixed(minor % 100 == 0 ? 0 : 2)}';
+
+  int get _subtotalMinor => _lines.fold(
+        0,
+        (sum, item) => sum + item.unitPriceMinor * item.quantity,
+      );
+
+  void _increment(int index) {
+    final line = _lines[index];
+    setState(() {
+      _lines[index] = BookingItemDraft(
+        id: line.id,
+        name: line.name,
+        quantity: line.quantity + 1,
+        unitPriceMinor: line.unitPriceMinor,
+        durationMinutes: line.durationMinutes,
+      );
+    });
+  }
+
+  void _decrement(int index) {
+    final line = _lines[index];
+    setState(() {
+      if (line.quantity > 1) {
+        _lines[index] = BookingItemDraft(
+          id: line.id,
+          name: line.name,
+          quantity: line.quantity - 1,
+          unitPriceMinor: line.unitPriceMinor,
+          durationMinutes: line.durationMinutes,
+        );
+      } else {
+        _lines.removeAt(index);
+      }
+    });
+  }
+
+  void _addCustomItem() {
+    final name = _nameCtrl.text.trim();
+    final rupees = double.tryParse(_priceCtrl.text.trim());
+    if (name.isEmpty || rupees == null || rupees < 0) return;
+    setState(() {
+      _lines = [
+        ..._lines,
+        BookingItemDraft(
+          id: 'on-site-${DateTime.now().millisecondsSinceEpoch}',
+          name: name,
+          quantity: 1,
+          unitPriceMinor: (rupees * 100).round(),
+        ),
+      ];
+    });
+    _nameCtrl.clear();
+    _priceCtrl.clear();
+  }
+
+  Future<void> _submit() async {
+    if (_lines.isEmpty || _saving) return;
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
+    final updated =
+        await widget.controller.updateJobItems(widget.job, _lines);
+    if (!mounted) return;
+    if (updated == null) {
+      setState(() {
+        _saving = false;
+        _error =
+            widget.controller.actionError ?? 'Services could not be updated.';
+      });
+      return;
+    }
+    Navigator.of(context).pop(updated);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding:
+          EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        decoration: const BoxDecoration(
+          color: AppColors.backgroundPrimary,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          border: Border(top: BorderSide(color: Colors.white12)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Adjust Services',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded, color: Colors.white70),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ],
+                ),
+                const Text(
+                  'Update the work actually done. The customer sees the revised list and total.',
+                  style: TextStyle(color: Colors.white54, fontSize: 12),
+                ),
+                const SizedBox(height: AppSpacing.md),
+
+                if (_lines.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
+                    child: Text(
+                      'No services on this booking yet. Add the work you are doing.',
+                      style: TextStyle(color: Colors.white54, fontSize: 13),
+                    ),
+                  )
+                else
+                  for (var i = 0; i < _lines.length; i++) ...[
+                    _buildLineRow(_lines[i], i),
+                    const SizedBox(height: AppSpacing.sm),
+                  ],
+
+                const SizedBox(height: AppSpacing.md),
+                const Divider(color: Colors.white12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Customer pays (incl. 18% GST)',
+                      style: TextStyle(color: Colors.white70, fontSize: 12),
+                    ),
+                    Text(
+                      _money((_subtotalMinor * 1.18).round()),
+                      style: const TextStyle(
+                        color: AppColors.focus,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.lg),
+
+                const Text(
+                  'Add work found on site',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: TextField(
+                        controller: _nameCtrl,
+                        style: const TextStyle(color: Colors.white, fontSize: 13),
+                        decoration: _sheetInput('e.g. New tap cartridge'),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      flex: 2,
+                      child: TextField(
+                        controller: _priceCtrl,
+                        keyboardType:
+                            const TextInputType.numberWithOptions(decimal: true),
+                        style: const TextStyle(color: Colors.white, fontSize: 13),
+                        decoration: _sheetInput('₹ price'),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    InkWell(
+                      onTap: _addCustomItem,
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                        ),
+                        child: const Icon(Icons.add_rounded,
+                            color: Colors.white, size: 20),
+                      ),
+                    ),
+                  ],
+                ),
+
+                if (_error != null) ...[
+                  const SizedBox(height: AppSpacing.md),
+                  Text(
+                    _error!,
+                    style: const TextStyle(color: AppColors.danger, fontSize: 12),
+                  ),
+                ],
+                const SizedBox(height: AppSpacing.lg),
+
+                FixButton(
+                  label: 'Update Booking',
+                  icon: Icons.check_rounded,
+                  isLoading: _saving,
+                  onPressed: _lines.isEmpty ? null : _submit,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLineRow(BookingItemDraft line, int index) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceElevated,
+        borderRadius: BorderRadius.circular(AppRadius.small),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  line.name,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
+                ),
+                Text(
+                  '${_money(line.unitPriceMinor)} × ${line.quantity} = '
+                  '${_money(line.unitPriceMinor * line.quantity)}',
+                  style: const TextStyle(color: Colors.white54, fontSize: 11),
+                ),
+              ],
+            ),
+          ),
+          InkWell(
+            onTap: () => _decrement(index),
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+            child: const Padding(
+              padding: EdgeInsets.all(6),
+              child: Icon(Icons.remove_rounded, color: Colors.white, size: 18),
+            ),
+          ),
+          InkWell(
+            onTap: () => _increment(index),
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+            child: const Padding(
+              padding: EdgeInsets.all(6),
+              child: Icon(Icons.add_rounded, color: Colors.white, size: 18),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  InputDecoration _sheetInput(String hint) => InputDecoration(
+        hintText: hint,
+        hintStyle: const TextStyle(color: Colors.white38, fontSize: 12),
+        filled: true,
+        fillColor: AppColors.surfaceElevated,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.small),
+          borderSide: const BorderSide(color: Colors.white12),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.small),
+          borderSide: const BorderSide(color: Colors.white12),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.small),
+          borderSide: const BorderSide(color: AppColors.primary),
+        ),
+      );
 }

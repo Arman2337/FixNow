@@ -75,6 +75,25 @@ void main() {
       expect(repo.addresses.length, 2);
       expect(repo.defaultAddress?.id, 'addr-home-1');
     });
+
+    test('setLiveLocationAddress updates default address to current location with GPS coordinates', () {
+      final repo = SavedAddressRepository.instance;
+      repo.setLiveLocationAddress(
+        latitude: 19.0760,
+        longitude: 72.8777,
+        area: 'Bandra West',
+        city: 'Mumbai',
+        state: 'Maharashtra',
+        postalCode: '400050',
+      );
+
+      expect(repo.defaultAddress?.id, 'addr-current-live');
+      expect(repo.defaultAddress?.customTitle, 'Current Location');
+      expect(repo.defaultAddress?.latitude, 19.0760);
+      expect(repo.defaultAddress?.longitude, 72.8777);
+      expect(repo.defaultAddress?.city, 'Mumbai');
+      expect(repo.addresses.first.id, 'addr-current-live');
+    });
   });
 
   group('SavedAddressSelectorCard', () {
@@ -101,6 +120,34 @@ void main() {
 
       expect(selected?.customTitle, 'Office');
       expect(find.textContaining('Desk 5B, WeWork Galaxy'), findsOneWidget);
+    });
+
+    testWidgets('auto-updates when live location is detected and saved to repository', (tester) async {
+      SavedAddress? selected;
+
+      await tester.pumpWidget(
+        host(
+          SavedAddressSelectorCard(
+            onAddressSelected: (addr) => selected = addr,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Flat 402, Lotus Heights'), findsOneWidget);
+
+      // Simulate live location detection
+      SavedAddressRepository.instance.setLiveLocationAddress(
+        latitude: 28.6139,
+        longitude: 77.2090,
+        area: 'Connaught Place',
+        city: 'New Delhi',
+      );
+      await tester.pumpAndSettle();
+
+      expect(selected?.id, 'addr-current-live');
+      expect(selected?.city, 'New Delhi');
+      expect(find.textContaining('New Delhi'), findsWidgets);
     });
   });
 

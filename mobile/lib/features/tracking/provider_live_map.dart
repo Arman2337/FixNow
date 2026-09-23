@@ -44,6 +44,7 @@ class ProviderLiveMap extends StatefulWidget {
     this.estimatedMinutes,
     this.distanceKm,
     this.showOverlay = true,
+    this.isProviderPerspective = false,
     super.key,
   });
 
@@ -53,6 +54,7 @@ class ProviderLiveMap extends StatefulWidget {
   final int? estimatedMinutes;
   final double? distanceKm;
   final bool showOverlay;
+  final bool isProviderPerspective;
 
   @override
   State<ProviderLiveMap> createState() => _ProviderLiveMapState();
@@ -552,6 +554,7 @@ class _ProviderLiveMapState extends State<ProviderLiveMap>
                     ),
                   ),
                 ),
+
               if (widget.showOverlay)
                 Positioned(
                   left: AppSpacing.md,
@@ -562,6 +565,7 @@ class _ProviderLiveMapState extends State<ProviderLiveMap>
                       hasCustomerLocation: customer != null,
                       estimatedMinutes: widget.estimatedMinutes,
                       distanceKm: widget.distanceKm,
+                      isProviderPerspective: widget.isProviderPerspective,
                     ),
                   ),
                 ),
@@ -578,11 +582,13 @@ class _JourneyOverlay extends StatelessWidget {
     required this.hasCustomerLocation,
     required this.estimatedMinutes,
     required this.distanceKm,
+    this.isProviderPerspective = false,
   });
 
   final bool hasCustomerLocation;
   final int? estimatedMinutes;
   final double? distanceKm;
+  final bool isProviderPerspective;
 
   @override
   Widget build(BuildContext context) => Container(
@@ -607,8 +613,10 @@ class _JourneyOverlay extends StatelessWidget {
             color: AppColors.primary,
             shape: BoxShape.circle,
           ),
-          child: const Icon(
-            Icons.handyman_rounded,
+          child: Icon(
+            isProviderPerspective
+                ? Icons.navigation_rounded
+                : Icons.handyman_rounded,
             color: AppColors.onPrimary,
             size: 20,
           ),
@@ -619,9 +627,13 @@ class _JourneyOverlay extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                hasCustomerLocation
-                    ? 'Provider is on the way'
-                    : 'Provider location is live',
+                isProviderPerspective
+                    ? (hasCustomerLocation
+                        ? 'Heading to customer destination'
+                        : 'Your location is active')
+                    : (hasCustomerLocation
+                        ? 'Provider is on the way'
+                        : 'Provider location is live'),
                 style: const TextStyle(
                   color: AppColors.textOnDarkPrimary,
                   fontWeight: FontWeight.w700,

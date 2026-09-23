@@ -86,7 +86,7 @@ describe('PaymentsService', () => {
     );
   };
 
-  const ownedBooking = (status = BookingStatus.REQUESTED) =>
+  const ownedBooking = (status = BookingStatus.COMPLETED) =>
     ({
       id: bookingId,
       customerId,

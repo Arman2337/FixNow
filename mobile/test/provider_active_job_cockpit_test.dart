@@ -63,15 +63,32 @@ class _FakeProviderRepository implements ProviderRepository {
 
   @override
   Future<CustomerBooking> updateLineItems(
-    CustomerBooking job,
-    List<LineItem> lineItems,
+    String bookingId,
+    List<Map<String, dynamic>> lineItems,
   ) async {
-    return job.copyWith(lineItems: lineItems, version: job.version + 1);
+    final job = lastUpdatedJob ?? CustomerBooking(
+      id: bookingId,
+      serviceCategoryId: 'plumbing',
+      status: 'IN_PROGRESS',
+      description: '',
+      createdAt: DateTime.now(),
+      version: 1,
+    );
+    return job.copyWith(version: job.version + 1);
   }
 
   @override
   Future<CustomerBooking> cancelJob(CustomerBooking job, String reason) async {
     return job.copyWith(status: 'CANCELLED', version: job.version + 1);
+  }
+
+  @override
+  Future<CustomerBooking> updateJobItems(
+    CustomerBooking job,
+    List<BookingItemDraft> items,
+  ) async {
+    lastUpdatedJob = job;
+    return job.copyWith(items: null, version: job.version + 1);
   }
 
   @override
@@ -146,6 +163,12 @@ void main() {
     controller = ProviderController(repository);
   });
 
+  tearDown(() {
+    try {
+      controller.dispose();
+    } catch (_) {}
+  });
+
   CustomerBooking createJob(String status) {
     return CustomerBooking(
       id: 'job-1234-5678-90ab',
@@ -179,7 +202,6 @@ void main() {
     tearDown(() {
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMethodCallHandler(channel, null);
-      controller.dispose();
     });
 
     Future<void> openCockpit(WidgetTester tester, CustomerBooking job) async {
@@ -294,6 +316,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(repository.lastUpdatedStatus, 'EN_ROUTE');
+      controller.dispose();
     },
   );
 
@@ -365,4 +388,44 @@ void main() {
       expect(find.text('Job Successfully Completed'), findsOneWidget);
     },
   );
+
+  testWidgets('ProviderActiveJobCockpitScreen allows opening and updating Adjust Services & Price with BookingLineItem', (tester) async {
+    final job = CustomerBooking(
+      id: 'job-1234-5678-90ab',
+      serviceCategoryId: 'plumbing',
+      status: 'IN_PROGRESS',
+      description: 'Kitchen sink pipe is leaking heavily.',
+      createdAt: DateTime.now(),
+      version: 1,
+      locationLatitude: 18.9220,
+      locationLongitude: 72.8347,
+      items: const [
+        BookingLineItem(
+          id: 'item-1',
+          name: 'Pipe Replacement',
+          quantity: 1,
+          unitPriceMinor: 49900,
+        ),
+      ],
+    );
+    controller.jobs = [job];
+
+    await tester.pumpWidget(
+      wrapWidget(
+        ProviderActiveJobCockpitScreen(
+          job: job,
+          controller: controller,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('cockpit_adjust_services_button')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('cockpit_adjust_services_button')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Adjust Services'), findsOneWidget);
+    expect(find.text('Pipe Replacement'), findsOneWidget);
+    expect(find.text('Update Booking'), findsOneWidget);
+  });
 }

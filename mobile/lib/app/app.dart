@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:fixnow_mobile/app/app_shell.dart';
 import 'package:fixnow_mobile/app/app_navigation.dart';
 import 'package:fixnow_mobile/api/api_client.dart';
@@ -227,6 +228,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
           api: _api,
           accessToken: _auth.validAccessToken,
         ),
+        realtime: _createRealtimeClient(),
       ),
     );
   }
@@ -351,12 +353,34 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
       accessToken: _auth.validAccessToken,
     );
     _auth.restore();
+    _auth.addListener(_handleAuthChange);
     unawaited(_location.check());
+    unawaited(_requestNotificationPermission());
+  }
+
+  void _handleAuthChange() {
+    if (_auth.isAuthenticated) {
+      unawaited(_requestNotificationPermission());
+    }
+  }
+
+  Future<void> _requestNotificationPermission() async {
+    try {
+      final status = await Permission.notification.status;
+      if (!status.isGranted) {
+        await Permission.notification.request();
+      }
+      await _pushGateway.requestPermission();
+      if (_auth.session != null) {
+        await _push.enable();
+      }
+    } catch (_) {}
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _auth.removeListener(_handleAuthChange);
     unawaited(_foregroundPushSub?.cancel());
     unawaited(_backgroundPushSub?.cancel());
     _bookings.acceptedBooking.removeListener(_showAcceptCelebration);
@@ -575,33 +599,34 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
                       category: category,
                       api: _api,
                       initialLocation: location,
-                      onProceedToBooking:
-                          (
-                            updatedCategory,
-                            description,
-                            priceMinor,
-                            loc,
-                          ) async {
-                            final reqResult = await Navigator.of(context)
-                                .push<dynamic>(
-                                  MaterialPageRoute(
-                                    builder: (_) => ServiceRequestScreen(
-                                      category: updatedCategory,
-                                      controller: _bookings,
-                                      initialLocation: loc,
-                                      initialDescription: description,
-                                      estimateRepository:
-                                          PriceEstimateRepository(
-                                            _api,
-                                            accessToken: _auth.validAccessToken,
-                                          ),
-                                    ),
-                                  ),
-                                );
-                            if (reqResult != null && context.mounted) {
-                              Navigator.of(context).pop(reqResult);
-                            }
-                          },
+                      onProceedToBooking: (
+                        updatedCategory,
+                        description,
+                        priceMinor,
+                        loc,
+                        items,
+                      ) async {
+                        final reqResult = await Navigator.of(context)
+                            .push<dynamic>(
+                              MaterialPageRoute(
+                                builder: (_) => ServiceRequestScreen(
+                                  category: updatedCategory,
+                                  controller: _bookings,
+                                  initialLocation: loc,
+                                  initialDescription: description,
+                                  initialItems: items,
+                                  estimateRepository:
+                                      PriceEstimateRepository(
+                                        _api,
+                                        accessToken: _auth.validAccessToken,
+                                      ),
+                                ),
+                              ),
+                            );
+                        if (reqResult != null && context.mounted) {
+                          Navigator.of(context).pop(reqResult);
+                        }
+                      },
                     ),
                   ),
                 );
@@ -878,17 +903,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
             ),
           );
         }
-        final tracking = _trackingControllers.putIfAbsent(
-          currentBooking.id,
-          () => BookingTrackingController(
-            bookingId: currentBooking.id,
-            source: ApiBookingTrackingSource(
-              api: _api,
-              accessToken: _auth.validAccessToken,
-            ),
-            realtime: _createRealtimeClient(),
-          ),
-        );
+        final tracking = _trackingController(currentBooking.id);
         return BookingTrackingScreen(
           controller: tracking,
           chatRepository: _chatRepository,

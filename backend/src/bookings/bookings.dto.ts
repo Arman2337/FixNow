@@ -9,16 +9,19 @@ import {
   IsUUID,
   IsInt,
   IsEnum,
+  IsArray,
+  ArrayMaxSize,
+  ArrayMinSize,
+  ValidateNested,
   MaxLength,
   Matches,
-  IsArray,
-  ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import {
   BookingStatus,
   CreateBookingRequest,
   CreateBookingLineItemRequest,
+  UpdateBookingItemsRequest,
 } from '../../../shared/booking-lifecycle.types';
 
 export class CreateBookingLineItemDto implements CreateBookingLineItemRequest {
@@ -29,6 +32,32 @@ export class CreateBookingLineItemDto implements CreateBookingLineItemRequest {
   @IsInt()
   @Min(1)
   quantity: number;
+}
+
+export class BookingItemDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(120)
+  id: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(200)
+  name: string;
+
+  @IsInt()
+  @Min(1)
+  @Max(99)
+  quantity: number;
+
+  @IsInt()
+  @Min(0)
+  unitPriceMinor: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  durationMinutes?: number | null;
 }
 
 export class CreateBookingDto implements CreateBookingRequest {
@@ -57,6 +86,13 @@ export class CreateBookingDto implements CreateBookingRequest {
 
   @IsOptional()
   @IsArray()
+  @ArrayMaxSize(30)
+  @ValidateNested({ each: true })
+  @Type(() => BookingItemDto)
+  items?: BookingItemDto[] | null;
+
+  @IsOptional()
+  @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CreateBookingLineItemDto)
   lineItems?: CreateBookingLineItemDto[];
@@ -76,6 +112,19 @@ export class UpdateBookingLineItemsDto {
 export class UpdateBookingStatusDto {
   @IsEnum(BookingStatus)
   status: BookingStatus;
+
+  @IsInt()
+  @Min(1)
+  expectedVersion: number;
+}
+
+export class UpdateBookingItemsDto implements UpdateBookingItemsRequest {
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(30)
+  @ValidateNested({ each: true })
+  @Type(() => BookingItemDto)
+  items: BookingItemDto[];
 
   @IsInt()
   @Min(1)

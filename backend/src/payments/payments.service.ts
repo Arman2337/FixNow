@@ -73,17 +73,18 @@ export class PaymentsService {
     // "price on request" rather than guessed.
     const currency =
       category?.priceCurrency === 'INR' ? category.priceCurrency : null;
-    if (!category?.priceAmount || !currency) {
-      throw new ConflictException(
-        'This service is priced on request; online payment is unavailable',
-      );
-    }
-    
-    let totalMinor = category.priceAmount;
+    // The itemized booking total is authoritative; the category's published
+    // price is only a fallback for bookings created without line items.
+    let totalMinor = booking.totalAmountMinor ?? category?.priceAmount ?? 0;
     if (booking.lineItems && booking.lineItems.length > 0) {
       totalMinor = booking.lineItems.reduce(
         (sum, item) => sum + item.priceMinor * item.quantity,
-        category.priceAmount,
+        category?.priceAmount ?? 0,
+      );
+    }
+    if (!totalMinor || !currency) {
+      throw new ConflictException(
+        'This service is priced on request; online payment is unavailable',
       );
     }
 

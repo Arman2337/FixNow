@@ -63,6 +63,7 @@ describe('AuthService', () => {
     const result = await service.registerCustomer({
       email: 'customer@example.com',
       password: 'Correct Horse Battery Staple!',
+      mobile: '+919876543210',
     });
 
     expect(result).toEqual({
@@ -100,6 +101,7 @@ describe('AuthService', () => {
       service.registerCustomer({
         email: 'customer@example.com',
         password: 'Correct Horse Battery Staple!',
+        mobile: '+919876543210',
       }),
     ).rejects.toEqual(new ConflictException('Unable to create account'));
   });
@@ -108,6 +110,7 @@ describe('AuthService', () => {
     const result = await service.registerProvider({
       email: 'provider@example.com',
       password: 'Correct Horse Battery Staple!',
+      mobile: '+919876543210',
     });
 
     const providerCreate = manager.create.mock.calls.find(

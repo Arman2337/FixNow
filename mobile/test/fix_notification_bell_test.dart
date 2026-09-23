@@ -7,21 +7,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Widget host(Widget child, {bool disableAnimations = false}) => MaterialApp(
-      theme: AppTheme.dark,
-      home: MediaQuery(
-        data: MediaQueryData(disableAnimations: disableAnimations),
-        child: Scaffold(body: Center(child: child)),
-      ),
-    );
+  theme: AppTheme.dark,
+  home: MediaQuery(
+    data: MediaQueryData(disableAnimations: disableAnimations),
+    child: Scaffold(body: Center(child: child)),
+  ),
+);
 
 InAppNotification _push(String id) => InAppNotification(
-      id: id,
-      title: 'Booking Update',
-      body: 'Provider accepted.',
-      category: NotificationCategory.bookings,
-      timestamp: DateTime.now(),
-      isRead: false,
-    );
+  id: id,
+  title: 'Booking Update',
+  body: 'Provider accepted.',
+  category: NotificationCategory.bookings,
+  timestamp: DateTime.now(),
+  isRead: false,
+);
 
 void main() {
   testWidgets('new notification shows badge, active icon, and shake', (
@@ -32,7 +32,9 @@ void main() {
     controller.clearAll();
     controller.markAllAsRead();
 
-    await tester.pumpWidget(host(FixNotificationBellIcon(controller: controller)));
+    await tester.pumpWidget(
+      host(FixNotificationBellIcon(controller: controller)),
+    );
     await tester.pumpAndSettle();
     expect(find.text('0'), findsNothing);
     expect(find.byIcon(Icons.notifications_outlined), findsOneWidget);
@@ -54,7 +56,9 @@ void main() {
     controller.markAllAsRead();
     controller.addNotification(_push('dyn-read-1'));
 
-    await tester.pumpWidget(host(FixNotificationBellIcon(controller: controller)));
+    await tester.pumpWidget(
+      host(FixNotificationBellIcon(controller: controller)),
+    );
     await tester.pumpAndSettle();
     expect(find.text('1'), findsOneWidget);
 

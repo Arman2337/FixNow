@@ -8,9 +8,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Widget host(Widget child) => MaterialApp(
-      theme: AppTheme.dark,
-      home: Scaffold(body: child),
-    );
+  theme: AppTheme.dark,
+  home: Scaffold(body: child),
+);
 
 void main() {
   group('NotificationModel', () {
@@ -116,192 +116,200 @@ void main() {
   });
 
   group('NotificationCenterScreen widget', () {
-    testWidgets('renders activity list, filters by tab, and opens booking detail',
-        (tester) async {
-      tester.view.physicalSize = const Size(800, 2400);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.resetPhysicalSize);
+    testWidgets(
+      'renders activity list, filters by tab, and opens booking detail',
+      (tester) async {
+        tester.view.physicalSize = const Size(800, 2400);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
 
-      final repository = NotificationRepository();
-      final controller = NotificationController(repository);
-      await controller.load();
+        final repository = NotificationRepository();
+        final controller = NotificationController(repository);
+        await controller.load();
 
-      String? openedBookingId;
+        String? openedBookingId;
 
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.dark,
-          home: NotificationCenterScreen(
-            controller: controller,
-            onOpenBooking: (id) => openedBookingId = id,
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.dark,
+            home: NotificationCenterScreen(
+              controller: controller,
+              onOpenBooking: (id) => openedBookingId = id,
+            ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      expect(find.text('Notifications & Activity'), findsOneWidget);
-      expect(find.text('All'), findsOneWidget);
-      expect(find.text('Bookings'), findsOneWidget);
-      expect(find.text('Payments'), findsOneWidget);
-      expect(find.text('Offers'), findsOneWidget);
-
-      // Tap on Bookings filter chip
-      await tester.tap(find.text('Bookings'));
-      await tester.pumpAndSettle();
-
-      expect(controller.selectedCategory, NotificationCategory.bookings);
-
-      // Tap on booking notification card
-      final bookingCard = find.text('Booking Confirmed & Assigned');
-      expect(bookingCard, findsOneWidget);
-      await tester.tap(bookingCard);
-      await tester.pumpAndSettle();
-
-      expect(openedBookingId, 'booking-seed-1');
-
-      // Test "Mark read" button
-      if (controller.unreadCount > 0) {
-        await tester.tap(find.text('Mark read'));
+        );
         await tester.pumpAndSettle();
-        expect(controller.unreadCount, 0);
-      }
-    });
 
-    testWidgets('displays comforting empty state when category has no notifications',
-        (tester) async {
-      tester.view.physicalSize = const Size(800, 2400);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.resetPhysicalSize);
+        expect(find.text('Notifications & Activity'), findsOneWidget);
+        expect(find.text('All'), findsOneWidget);
+        expect(find.text('Bookings'), findsOneWidget);
+        expect(find.text('Payments'), findsOneWidget);
+        expect(find.text('Offers'), findsOneWidget);
 
-      final repository = NotificationRepository();
-      final controller = NotificationController(repository);
-      await controller.load();
-      controller.clearAll();
+        // Tap on Bookings filter chip
+        await tester.tap(find.text('Bookings'));
+        await tester.pumpAndSettle();
 
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.dark,
-          home: NotificationCenterScreen(
-            controller: controller,
+        expect(controller.selectedCategory, NotificationCategory.bookings);
+
+        // Tap on booking notification card
+        final bookingCard = find.text('Booking Confirmed & Assigned');
+        expect(bookingCard, findsOneWidget);
+        await tester.tap(bookingCard);
+        await tester.pumpAndSettle();
+
+        expect(openedBookingId, 'booking-seed-1');
+
+        // Test "Mark read" button
+        if (controller.unreadCount > 0) {
+          await tester.tap(find.text('Mark read'));
+          await tester.pumpAndSettle();
+          expect(controller.unreadCount, 0);
+        }
+      },
+    );
+
+    testWidgets(
+      'displays comforting empty state when category has no notifications',
+      (tester) async {
+        tester.view.physicalSize = const Size(800, 2400);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
+
+        final repository = NotificationRepository();
+        final controller = NotificationController(repository);
+        await controller.load();
+        controller.clearAll();
+
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.dark,
+            home: NotificationCenterScreen(controller: controller),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      expect(find.text('You are all caught up!'), findsOneWidget);
-    });
+        expect(find.text('You are all caught up!'), findsOneWidget);
+      },
+    );
 
-    testWidgets('read notifications maintain high-contrast dark theme surfaces without white-on-white text',
-        (tester) async {
-      tester.view.physicalSize = const Size(800, 2400);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.resetPhysicalSize);
+    testWidgets(
+      'read notifications maintain high-contrast dark theme surfaces without white-on-white text',
+      (tester) async {
+        tester.view.physicalSize = const Size(800, 2400);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
 
-      final repository = NotificationRepository();
-      final controller = NotificationController(repository);
-      await controller.load();
+        final repository = NotificationRepository();
+        final controller = NotificationController(repository);
+        await controller.load();
 
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.dark,
-          home: NotificationCenterScreen(controller: controller),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      // Verify unread notifications
-      expect(find.text('Booking Confirmed & Assigned'), findsOneWidget);
-      expect(find.text('Seasonal Home Checkup'), findsOneWidget);
-
-      // Verify read notifications are rendered legibly
-      expect(find.text('Payment Invoice Ready'), findsOneWidget);
-      expect(find.text('Trust & Safety Assurance'), findsOneWidget);
-
-      // Find the text widget for read notification and verify it uses high contrast text color
-      final readTitle = tester.widget<Text>(find.text('Payment Invoice Ready'));
-      expect(readTitle.style?.color, isNotNull);
-      // Ensure text is high contrast cream/white (not dark text that blends into dark bg)
-      expect(readTitle.style!.color!.computeLuminance(), greaterThan(0.5));
-    });
-
-    testWidgets('renders View Invoice on payment notifications and triggers onOpenInvoice',
-        (tester) async {
-      tester.view.physicalSize = const Size(800, 2400);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.resetPhysicalSize);
-
-      final repository = NotificationRepository();
-      final controller = NotificationController(repository);
-      await controller.load();
-
-      InAppNotification? openedInvoice;
-
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.dark,
-          home: NotificationCenterScreen(
-            controller: controller,
-            onOpenInvoice: (item) => openedInvoice = item,
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.dark,
+            home: NotificationCenterScreen(controller: controller),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      // Switch to Payments tab
-      await tester.tap(find.text('Payments'));
-      await tester.pumpAndSettle();
+        // Verify unread notifications
+        expect(find.text('Booking Confirmed & Assigned'), findsOneWidget);
+        expect(find.text('Seasonal Home Checkup'), findsOneWidget);
 
-      // Verify View Invoice button is visible
-      expect(find.text('View Invoice'), findsOneWidget);
+        // Verify read notifications are rendered legibly
+        expect(find.text('Payment Invoice Ready'), findsOneWidget);
+        expect(find.text('Trust & Safety Assurance'), findsOneWidget);
 
-      // Tap on View Invoice / Payment notification
-      await tester.tap(find.text('Payment Invoice Ready'));
-      await tester.pumpAndSettle();
+        // Find the text widget for read notification and verify it uses high contrast text color
+        final readTitle = tester.widget<Text>(
+          find.text('Payment Invoice Ready'),
+        );
+        expect(readTitle.style?.color, isNotNull);
+        // Ensure text is high contrast cream/white (not dark text that blends into dark bg)
+        expect(readTitle.style!.color!.computeLuminance(), greaterThan(0.5));
+      },
+    );
 
-      expect(openedInvoice, isNotNull);
-      expect(openedInvoice?.title, 'Payment Invoice Ready');
-      expect(openedInvoice?.category, NotificationCategory.payments);
-    });
+    testWidgets(
+      'renders View Invoice on payment notifications and triggers onOpenInvoice',
+      (tester) async {
+        tester.view.physicalSize = const Size(800, 2400);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
 
-    testWidgets('displays fallback invoice modal when onOpenInvoice is not supplied',
-        (tester) async {
-      tester.view.physicalSize = const Size(800, 2400);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.resetPhysicalSize);
+        final repository = NotificationRepository();
+        final controller = NotificationController(repository);
+        await controller.load();
 
-      final repository = NotificationRepository();
-      final controller = NotificationController(repository);
-      await controller.load();
+        InAppNotification? openedInvoice;
 
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.dark,
-          home: NotificationCenterScreen(
-            controller: controller,
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.dark,
+            home: NotificationCenterScreen(
+              controller: controller,
+              onOpenInvoice: (item) => openedInvoice = item,
+            ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      // Switch to Payments tab
-      await tester.tap(find.text('Payments'));
-      await tester.pumpAndSettle();
+        // Switch to Payments tab
+        await tester.tap(find.text('Payments'));
+        await tester.pumpAndSettle();
 
-      // Tap on Payment Invoice Ready card
-      await tester.tap(find.text('Payment Invoice Ready'));
-      await tester.pumpAndSettle();
+        // Verify View Invoice button is visible
+        expect(find.text('View Invoice'), findsOneWidget);
 
-      // Modal sheet should be open
-      expect(find.text('Invoice INV-2026-0824'), findsOneWidget);
-      expect(find.text('Plumbing Service'), findsOneWidget);
-      expect(find.text('PAID'), findsOneWidget);
-      expect(find.text('₹649'), findsOneWidget);
+        // Tap on View Invoice / Payment notification
+        await tester.tap(find.text('Payment Invoice Ready'));
+        await tester.pumpAndSettle();
 
-      // Tap close button on modal
-      await tester.tap(find.text('Close'));
-      await tester.pumpAndSettle();
+        expect(openedInvoice, isNotNull);
+        expect(openedInvoice?.title, 'Payment Invoice Ready');
+        expect(openedInvoice?.category, NotificationCategory.payments);
+      },
+    );
 
-      expect(find.text('Invoice INV-2026-0824'), findsNothing);
-    });
+    testWidgets(
+      'displays fallback invoice modal when onOpenInvoice is not supplied',
+      (tester) async {
+        tester.view.physicalSize = const Size(800, 2400);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
+
+        final repository = NotificationRepository();
+        final controller = NotificationController(repository);
+        await controller.load();
+
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.dark,
+            home: NotificationCenterScreen(controller: controller),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Switch to Payments tab
+        await tester.tap(find.text('Payments'));
+        await tester.pumpAndSettle();
+
+        // Tap on Payment Invoice Ready card
+        await tester.tap(find.text('Payment Invoice Ready'));
+        await tester.pumpAndSettle();
+
+        // Modal sheet should be open
+        expect(find.text('Invoice INV-2026-0824'), findsOneWidget);
+        expect(find.text('Plumbing Service'), findsOneWidget);
+        expect(find.text('PAID'), findsOneWidget);
+        expect(find.text('₹649'), findsOneWidget);
+
+        // Tap close button on modal
+        await tester.tap(find.text('Close'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Invoice INV-2026-0824'), findsNothing);
+      },
+    );
   });
 }

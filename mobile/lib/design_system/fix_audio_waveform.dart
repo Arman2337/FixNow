@@ -66,7 +66,8 @@ class _FixAudioWaveformState extends State<FixAudioWaveform>
 
   @override
   Widget build(BuildContext context) {
-    final reduceMotion = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
 
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -76,7 +77,9 @@ class _FixAudioWaveformState extends State<FixAudioWaveform>
       decoration: BoxDecoration(
         color: AppColors.backgroundPrimary.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(color: AppColors.borderStrong.withValues(alpha: 0.25)),
+        border: Border.all(
+          color: AppColors.borderStrong.withValues(alpha: 0.25),
+        ),
       ),
       height: widget.height,
       child: AnimatedBuilder(
@@ -116,7 +119,9 @@ class _FixAudioWaveformState extends State<FixAudioWaveform>
       width: 4,
       height: barHeight,
       decoration: BoxDecoration(
-        color: widget.isSpeaking ? widget.activeColor : widget.idleColor.withValues(alpha: 0.4),
+        color: widget.isSpeaking
+            ? widget.activeColor
+            : widget.idleColor.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
     );

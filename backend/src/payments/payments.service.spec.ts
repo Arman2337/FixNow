@@ -147,6 +147,33 @@ describe('PaymentsService', () => {
     });
   });
 
+  describe('providerBookingPaymentStatus', () => {
+    it('reports paid only for a PAID order on the provider-assigned booking', async () => {
+      buildService();
+      dataSource.query.mockResolvedValue([{ status: 'PAID' }]);
+      await expect(
+        service.providerBookingPaymentStatus(otherUserId, bookingId),
+      ).resolves.toEqual({ bookingId, paid: true });
+      expect(dataSource.query).toHaveBeenCalledWith(
+        expect.stringContaining('b.provider_id = $2'),
+        [bookingId, otherUserId],
+      );
+    });
+
+    it('reports unpaid when there is no order or it is not PAID', async () => {
+      buildService();
+      dataSource.query.mockResolvedValue([]);
+      await expect(
+        service.providerBookingPaymentStatus(otherUserId, bookingId),
+      ).resolves.toEqual({ bookingId, paid: false });
+
+      dataSource.query.mockResolvedValue([{ status: 'CREATED' }]);
+      await expect(
+        service.providerBookingPaymentStatus(otherUserId, bookingId),
+      ).resolves.toEqual({ bookingId, paid: false });
+    });
+  });
+
   describe('createForBooking', () => {
     it('creates one CREATED order from the published category price', async () => {
       const order = await service.createForBooking(customerId, bookingId);

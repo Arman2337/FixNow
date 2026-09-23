@@ -65,13 +65,15 @@ export class BookingCallsService {
       throw new ForbiddenException('Not authorized to call on this booking');
     }
 
-    // Calling allowed strictly during assigned / en route transit states
-    const allowed = [BookingStatus.ASSIGNED, BookingStatus.EN_ROUTE].includes(
-      booking.status,
-    );
+    // Calling allowed strictly during assigned / en route transit states, and active service
+    const allowed = [
+      BookingStatus.ASSIGNED,
+      BookingStatus.EN_ROUTE,
+      BookingStatus.IN_PROGRESS,
+    ].includes(booking.status);
     if (!allowed) {
       throw new ConflictException(
-        'In-app audio calling is only allowed while provider is assigned or en route',
+        'In-app audio calling is only allowed while provider is assigned, en route, or active on the job',
       );
     }
 

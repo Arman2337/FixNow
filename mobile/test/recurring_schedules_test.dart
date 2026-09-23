@@ -80,9 +80,7 @@ void main() {
     tester,
   ) async {
     final schedules = SchedulesController(repo(_Transport()));
-    final bookings = BookingController(
-      repo(_Transport()),
-    );
+    final bookings = BookingController(repo(_Transport()));
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.dark,
@@ -132,9 +130,7 @@ void main() {
 
     expect(confirmedBooked, isTrue);
     expect(
-      transport.requests.any(
-        (request) => request.path.endsWith('/confirm'),
-      ),
+      transport.requests.any((request) => request.path.endsWith('/confirm')),
       isTrue,
     );
   });
@@ -142,10 +138,10 @@ void main() {
   testWidgets('an unavailable repeating-services section stays honest', (
     tester,
   ) async {
-    final schedules = SchedulesController(repo(_Transport(failSchedules: true)));
-    final bookings = BookingController(
-      repo(_Transport()),
+    final schedules = SchedulesController(
+      repo(_Transport(failSchedules: true)),
     );
+    final bookings = BookingController(repo(_Transport()));
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.dark,

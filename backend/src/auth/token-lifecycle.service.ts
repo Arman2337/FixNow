@@ -244,10 +244,9 @@ export class TokenLifecycleService {
   }
 
   private isLocalOtpBypassEnabled(): boolean {
-    return (
-      this.config.get<string>('NODE_ENV') === 'development' &&
-      this.config.get<string>('LOCAL_OTP_BYPASS_ENABLED') === 'true'
-    );
+    const isDev = this.config.get('NODE_ENV') === 'development';
+    const bypass = this.config.get('LOCAL_OTP_BYPASS_ENABLED');
+    return isDev && (bypass === 'true' || bypass === true);
   }
 
   private response(

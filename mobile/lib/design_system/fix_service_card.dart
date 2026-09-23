@@ -61,8 +61,16 @@ class FixServiceCard extends StatelessWidget {
     this.onTap,
     this.semanticLabel,
     this.heroTag,
+    this.imageUrl,
+    this.isGridTile = false,
     super.key,
   });
+
+  /// Optional image asset path for visual cards.
+  final String? imageUrl;
+
+  /// Whether to render as an adaptive Stitch touch grid tile.
+  final bool isGridTile;
 
   /// Optional tag for shared-element Hero transition into service details.
   final Object? heroTag;
@@ -150,13 +158,136 @@ class FixServiceCard extends StatelessWidget {
   bool get _isAfterHours => state == FixServiceCardState.afterHours;
 
   String get _defaultActionLabel => switch (state) {
-        FixServiceCardState.available => 'Book',
-        FixServiceCardState.inDemand => 'Book anyway',
-        FixServiceCardState.afterHours => 'Schedule',
-      };
+    FixServiceCardState.available => 'Book',
+    FixServiceCardState.inDemand => 'Book anyway',
+    FixServiceCardState.afterHours => 'Schedule',
+  };
 
   @override
   Widget build(BuildContext context) {
+    if (isGridTile) {
+      return FixCard(
+        tone: FixCardTone.cream,
+        onTap: onTap ?? onPrimaryAction,
+        semanticLabel: semanticLabel ?? _semanticLabel(),
+        padding: EdgeInsets.zero,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (imageUrl != null)
+              Expanded(
+                flex: 3,
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(AppRadius.card),
+                  ),
+                  child: Image.asset(
+                    imageUrl!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      color: AppColors.surfaceContainer,
+                      child: Center(
+                        child: Icon(icon, color: AppColors.primary, size: 28),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            Expanded(
+              flex: 4,
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (imageUrl == null)
+                          Container(
+                            width: 38,
+                            height: 38,
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceContainer,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Icon(
+                              icon,
+                              color: AppColors.primary,
+                              size: 22,
+                            ),
+                          )
+                        else
+                          Container(
+                            width: 24,
+                            height: 24,
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceContainer,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Icon(
+                              icon,
+                              color: AppColors.primary,
+                              size: 14,
+                            ),
+                          ),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: priceFrom != null
+                              ? Text(
+                                  '$priceCurrency${_formatPrice(priceFrom!)}',
+                                  style: const TextStyle(
+                                    color: AppColors.primary,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 14,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                )
+                              : const Text(
+                                  'Price on request',
+                                  style: TextStyle(
+                                    color: AppColors.textSecondary,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                        ),
+                      ],
+                    ),
+                    const Spacer(),
+                    Text(
+                      name,
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (description != null)
+                      Text(
+                        description!,
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 11,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
     return FixCard(
       tone: FixCardTone.cream,
       onTap: onTap,
@@ -188,7 +319,11 @@ class FixServiceCard extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.md),
           ],
-          const Divider(height: 1, thickness: 1, color: AppColors.borderDefault),
+          const Divider(
+            height: 1,
+            thickness: 1,
+            color: AppColors.borderDefault,
+          ),
           const SizedBox(height: AppSpacing.md),
           _Foot(
             priceFrom: priceFrom,
@@ -198,8 +333,9 @@ class FixServiceCard extends StatelessWidget {
             actionIcon: _isAfterHours ? Icons.calendar_today_rounded : null,
             // "Book →": a forward arrow trails the booking CTAs; the
             // after-hours "Schedule" keeps its leading calendar glyph instead.
-            actionTrailingIcon:
-                _isAfterHours ? null : Icons.arrow_forward_rounded,
+            actionTrailingIcon: _isAfterHours
+                ? null
+                : Icons.arrow_forward_rounded,
             actionVariant: _isAfterHours
                 ? FixButtonVariant.secondary
                 : FixButtonVariant.primary,
@@ -266,10 +402,7 @@ class _TopRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (heroTag != null)
-          Hero(tag: heroTag!, child: tile)
-        else
-          tile,
+        if (heroTag != null) Hero(tag: heroTag!, child: tile) else tile,
         const SizedBox(width: AppSpacing.md),
         Expanded(
           child: Column(
@@ -279,7 +412,7 @@ class _TopRow extends StatelessWidget {
                 name,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: AppTypography.heading3.copyWith(
+                style: FixNowTypography.heading3.copyWith(
                   color: AppColors.textOnSurface,
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
@@ -292,7 +425,7 @@ class _TopRow extends StatelessWidget {
                   description!,
                   maxLines: descriptionMaxLines,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTypography.caption.copyWith(
+                  style: FixNowTypography.caption.copyWith(
                     color: AppColors.textOnSurfaceSecondary,
                     fontSize: 12.5,
                     height: descriptionMaxLines > 1 ? 1.35 : null,
@@ -316,10 +449,7 @@ class _TopRow extends StatelessWidget {
         ),
         const SizedBox(width: AppSpacing.sm),
         // Nudge the chevron down so it sits at the tile's vertical centre.
-        const Padding(
-          padding: EdgeInsets.only(top: 14),
-          child: _Chevron(),
-        ),
+        const Padding(padding: EdgeInsets.only(top: 14), child: _Chevron()),
       ],
     );
   }
@@ -336,7 +466,10 @@ class _PriorityBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 3),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: 3,
+      ),
       decoration: BoxDecoration(
         color: AppColors.accentGoldSoft,
         borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -345,11 +478,15 @@ class _PriorityBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.emergency_rounded, size: 12, color: AppColors.onAccentGold),
+          const Icon(
+            Icons.emergency_rounded,
+            size: 12,
+            color: AppColors.onAccentGold,
+          ),
           const SizedBox(width: 4),
           Text(
             label,
-            style: AppTypography.caption.copyWith(
+            style: FixNowTypography.caption.copyWith(
               color: AppColors.onAccentGold,
               fontWeight: FontWeight.w700,
               fontSize: 11,
@@ -444,7 +581,7 @@ class _MetaRow extends StatelessWidget {
         const SizedBox(width: 3),
         Text(
           rating.toStringAsFixed(1),
-          style: AppTypography.label.copyWith(
+          style: FixNowTypography.label.copyWith(
             color: AppColors.textOnSurface,
             fontWeight: FontWeight.w700,
             fontSize: 12.5,
@@ -454,7 +591,7 @@ class _MetaRow extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             '(${_formatCompactCount(reviewCount!)})',
-            style: AppTypography.caption.copyWith(
+            style: FixNowTypography.caption.copyWith(
               color: AppColors.textOnSurfaceMuted,
               fontSize: 12.5,
             ),
@@ -464,14 +601,18 @@ class _MetaRow extends StatelessWidget {
           const SizedBox(width: 7),
           _DotSeparator(),
           const SizedBox(width: 7),
-          Icon(Icons.schedule_rounded, size: 13, color: AppColors.textOnSurfaceMuted),
+          Icon(
+            Icons.schedule_rounded,
+            size: 13,
+            color: AppColors.textOnSurfaceMuted,
+          ),
           const SizedBox(width: 4),
           Flexible(
             child: Text(
               '$etaText away',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: AppTypography.caption.copyWith(
+              style: FixNowTypography.caption.copyWith(
                 color: AppColors.textOnSurfaceSecondary,
                 fontSize: 12.5,
               ),
@@ -560,24 +701,25 @@ class _LiveStrip extends StatelessWidget {
             AppColors.textOnSurfaceSecondary,
           )
         : switch (state) {
-      FixServiceCardState.available => (
-          AppColors.successSoft,
-          AppColors.success.withValues(alpha: 0.20),
-          AppColors.success,
-        ),
-      FixServiceCardState.inDemand => (
-          AppColors.accentGoldSoft,
-          AppColors.borderGold,
-          AppColors.accentGold,
-        ),
-      FixServiceCardState.afterHours => (
-          AppColors.surfaceCream,
-          AppColors.borderDefault,
-          AppColors.textOnSurfaceMuted,
-        ),
-    };
+            FixServiceCardState.available => (
+              AppColors.successSoft,
+              AppColors.success.withValues(alpha: 0.20),
+              AppColors.success,
+            ),
+            FixServiceCardState.inDemand => (
+              AppColors.accentGoldSoft,
+              AppColors.borderGold,
+              AppColors.accentGold,
+            ),
+            FixServiceCardState.afterHours => (
+              AppColors.surfaceCream,
+              AppColors.borderDefault,
+              AppColors.textOnSurfaceMuted,
+            ),
+          };
 
-    final showStack = showProStack &&
+    final showStack =
+        showProStack &&
         !_verifiedFallback &&
         state != FixServiceCardState.afterHours &&
         prosAvailable > 0;
@@ -624,7 +766,7 @@ class _LiveStrip extends StatelessWidget {
         children: [
           TextSpan(
             text: '$verifiedProsCount',
-            style: AppTypography.label.copyWith(
+            style: FixNowTypography.label.copyWith(
               color: AppColors.textOnSurface,
               fontWeight: FontWeight.w700,
               fontSize: 12.5,
@@ -632,7 +774,7 @@ class _LiveStrip extends StatelessWidget {
           ),
           TextSpan(
             text: verifiedProsCount == 1 ? ' verified pro' : ' verified pros',
-            style: AppTypography.label.copyWith(
+            style: FixNowTypography.label.copyWith(
               color: AppColors.textOnSurfaceSecondary,
               fontWeight: FontWeight.w600,
               fontSize: 12.5,
@@ -653,7 +795,7 @@ class _LiveStrip extends StatelessWidget {
             children: [
               TextSpan(
                 text: '$prosAvailable pros',
-                style: AppTypography.label.copyWith(
+                style: FixNowTypography.label.copyWith(
                   color: AppColors.success,
                   fontWeight: FontWeight.w700,
                   fontSize: 12.5,
@@ -661,7 +803,7 @@ class _LiveStrip extends StatelessWidget {
               ),
               TextSpan(
                 text: ' available now',
-                style: AppTypography.label.copyWith(
+                style: FixNowTypography.label.copyWith(
                   color: AppColors.textOnSurfaceSecondary,
                   fontWeight: FontWeight.w600,
                   fontSize: 12.5,
@@ -681,7 +823,7 @@ class _LiveStrip extends StatelessWidget {
                   children: [
                     TextSpan(
                       text: '$prosAvailable pros',
-                      style: AppTypography.label.copyWith(
+                      style: FixNowTypography.label.copyWith(
                         color: AppColors.onAccentGold,
                         fontWeight: FontWeight.w700,
                         fontSize: 12.5,
@@ -689,7 +831,7 @@ class _LiveStrip extends StatelessWidget {
                     ),
                     TextSpan(
                       text: ' nearby',
-                      style: AppTypography.label.copyWith(
+                      style: FixNowTypography.label.copyWith(
                         color: AppColors.textOnSurfaceSecondary,
                         fontWeight: FontWeight.w600,
                         fontSize: 12.5,
@@ -711,7 +853,7 @@ class _LiveStrip extends StatelessWidget {
           '${opens}book ahead',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: AppTypography.label.copyWith(
+          style: FixNowTypography.label.copyWith(
             color: AppColors.textOnSurfaceSecondary,
             fontWeight: FontWeight.w600,
             fontSize: 12.5,
@@ -760,14 +902,17 @@ class _SurgeChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 2),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: 2,
+      ),
       decoration: BoxDecoration(
         color: AppColors.accentGoldHover,
         borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Text(
         'BUSY',
-        style: AppTypography.caption.copyWith(
+        style: FixNowTypography.caption.copyWith(
           color: AppColors.onAccentGold,
           fontWeight: FontWeight.w700,
           fontSize: 10.5,
@@ -878,7 +1023,7 @@ class _ProAvatar extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: AppTypography.caption.copyWith(
+        style: FixNowTypography.caption.copyWith(
           color: AppColors.onPrimary,
           fontWeight: FontWeight.w700,
           fontSize: 9.5,
@@ -909,7 +1054,7 @@ class _MoreBubble extends StatelessWidget {
       ),
       child: Text(
         '+$extra',
-        style: AppTypography.caption.copyWith(
+        style: FixNowTypography.caption.copyWith(
           color: AppColors.onPrimary,
           fontWeight: FontWeight.w700,
           fontSize: 9,
@@ -957,7 +1102,7 @@ class _Foot extends StatelessWidget {
                   children: [
                     Text(
                       'from',
-                      style: AppTypography.caption.copyWith(
+                      style: FixNowTypography.caption.copyWith(
                         color: AppColors.textOnSurfaceMuted,
                         fontWeight: FontWeight.w500,
                         fontSize: 11,
@@ -966,7 +1111,7 @@ class _Foot extends StatelessWidget {
                     const SizedBox(width: 5),
                     Text(
                       '$priceCurrency${_formatPrice(priceFrom!)}',
-                      style: AppTypography.heading3.copyWith(
+                      style: FixNowTypography.heading3.copyWith(
                         color: AppColors.textOnSurface,
                         fontWeight: FontWeight.w800,
                         fontSize: 22,
@@ -980,7 +1125,7 @@ class _Foot extends StatelessWidget {
                   priceNote,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTypography.caption.copyWith(
+                  style: FixNowTypography.caption.copyWith(
                     color: AppColors.textOnSurfaceMuted,
                     fontSize: 10.5,
                   ),
@@ -1000,7 +1145,7 @@ class _Foot extends StatelessWidget {
                   'Price on request',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTypography.label.copyWith(
+                  style: FixNowTypography.label.copyWith(
                     color: AppColors.textOnSurface,
                     fontWeight: FontWeight.w700,
                     fontSize: 15,
@@ -1021,7 +1166,7 @@ class _Foot extends StatelessWidget {
                         'Confirmed before you book',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: AppTypography.caption.copyWith(
+                        style: FixNowTypography.caption.copyWith(
                           color: AppColors.textOnSurfaceMuted,
                           fontSize: 10.5,
                         ),
@@ -1057,6 +1202,8 @@ String _formatCompactCount(int value) {
   if (value < 1000) return value.toString();
   final thousands = value / 1000.0;
   final oneDp = thousands.toStringAsFixed(1);
-  final trimmed = oneDp.endsWith('.0') ? oneDp.substring(0, oneDp.length - 2) : oneDp;
+  final trimmed = oneDp.endsWith('.0')
+      ? oneDp.substring(0, oneDp.length - 2)
+      : oneDp;
   return '${trimmed}k';
 }

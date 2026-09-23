@@ -24,6 +24,7 @@ import { TrustModule } from './trust/trust.module';
 import { PushModule } from './notifications/push/push.module';
 import { PaymentsModule } from './payments/payments.module';
 import { EmergencyModule } from './emergency/emergency.module';
+import { GuaranteesModule } from './guarantees/guarantees.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { EmergencyModule } from './emergency/emergency.module';
     PushModule,
     PaymentsModule,
     EmergencyModule,
+    GuaranteesModule,
   ],
   controllers: [AppController],
   providers: [

@@ -5,7 +5,13 @@ import 'package:fixnow_mobile/features/emergency/emergency_repository.dart';
 import 'package:fixnow_mobile/features/location/booking_location.dart';
 import 'package:flutter/foundation.dart';
 
-enum EmergencyFlowState { idle, resolvingLocation, creating, dispatched, failed }
+enum EmergencyFlowState {
+  idle,
+  resolvingLocation,
+  creating,
+  dispatched,
+  failed,
+}
 
 /// FN-064: drives the deliberate two-step emergency journey (policy §3).
 /// After dispatch it polls the honest wave state every 10 seconds while the
@@ -23,7 +29,8 @@ class EmergencyController extends ChangeNotifier {
   String? errorMessage;
 
   bool get showFallback =>
-      state == EmergencyFlowState.dispatched && (status?.fallbackRequired ?? false);
+      state == EmergencyFlowState.dispatched &&
+      (status?.fallbackRequired ?? false);
 
   Future<bool> confirmAndDispatch({
     required String serviceCategoryId,

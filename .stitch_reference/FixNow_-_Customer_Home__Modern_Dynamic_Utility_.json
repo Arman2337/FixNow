@@ -1,0 +1,355 @@
+{
+  "screenshot": {
+    "name": "projects/6685748214955225380/screens/8e309df105c54b55b527d8cc7d20a159/fileEntries/screenshot",
+    "downloadUrl": "https://lh3.googleusercontent.com/aida/AEtjO1UJxLsaM7mj9n41pcrL37xeCggMhEOdcdDSU3CO-v4QHARXLO-LIZt1QgQvFW7IFJI-UAV7vNSGedrP5kh10A0pOyrGQlAcCl_S9csE_8_b-vAAX3Na9Q4Cu69zT78OUJEJjvyZqCtHaRQXhlkQkW4nuDi8fBySxLNcDSobWYEEjrpgWoieQL8tyBZi7pfXpgRcZZv8sSkaKTPBENzSWZFRt9V5iyVbHezlFuSz-Ds6kFttgLfBOtUSPko"
+  },
+  "htmlCode": {
+    "name": "projects/6685748214955225380/screens/8e309df105c54b55b527d8cc7d20a159/fileEntries/html",
+    "downloadUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sXzAwMDY1YjdlODJjYjY0YmQwMzM4NjAxYWZiMDM2YzIxEgsSBxCb4sXdtQMYAZIBIwoKcHJvamVjdF9pZBIVQhM2Njg1NzQ4MjE0OTU1MjI1Mzgw&filename=&opi=89354086",
+    "mimeType": "text/html"
+  },
+  "id": "8e309df105c54b55b527d8cc7d20a159",
+  "generatedBy": "HatterAgent",
+  "width": "780",
+  "height": "3258",
+  "title": "FixNow - Customer Home (Modern Dynamic Utility)",
+  "prompt": "Create Variant 2 of the FixNow Customer Home redesign: \"Sleek Modern Utility & Dynamic Triage\" (inspired by modern fintech & hyper-convenience apps like Revolut, Swiggy Instamart, and Apple Services).\n\nVisual Philosophy & Layout:\n1. Header & Location Matrix:\n- Compact, high-utility top bar with FixNow logo {{DATA:IMAGE:IMAGE_53}}, live location indicator with precision GPS status (\"📍 Green Glen Layout • Within 15-min radius\"), notification bell with ping indicator, and quick wallet/credit badge (\"FixCash: ₹150\").\n- High-contrast Hero search box: \"What do you need fixed today?\" with animated placeholder rotation and quick action buttons for \"Book Instant\" vs \"Schedule\".\n\n2. Emergency Priority Strip:\n- Prominent crimson & amber warning strip: \"🚨 Emergency Hazard? Gas leak, spark, or flood — 15 min emergency dispatch\" with prominent dialer action and hold-to-dispatch trigger.\n\n3. FixAI Smart Diagnostic Card:\n- Modern interactive card with camera viewfinder graphic: \"Instant Problem Scan — Upload a photo or short clip. FixAI detects faults, verifies parts needed, and locks honest prices in 10s\".\n\n4. Curated Service Hub (Segmented Categories):\n- Modern segmented visual grid with clean outline icons, badge pills (\"Most Booked\", \"Govt Verified\"), upfront rate cards (Plumbing ₹199, Electrical ₹199, AC Deep Clean ₹399, Appliance ₹249).\n- Real-time technician availability indicator showing \"89 Pros on duty in Bengaluru East\".\n\n5. Active Job Dynamic Island / Floating Sheet:\n- Sleek dark slate pill container: \"Rahul K. is 1.4 km away • Plumbing repair • Start PIN: 4821\" with instant progress arc and live chat shortcut.\n\n6. Frequently Booked & Community Favourites:\n- Horizontal swipe cards with high-density details: \"AC Master Service\", \"Ceiling Fan Installation\", \"Kitchen Drain Unclog\", each with verified customer star ratings, 30-day warranty seal, and express booking button.\n\n7. Trust Matrix Highlights:\n- Escrow safety badge, police verified pros, and zero-mark-up spare parts guarantee.\n\n8. Elegant Bottom Navigation:\n- Refined floating navigation bar with active indicators and smooth micro-interactions.",
+  "name": "projects/6685748214955225380/screens/8e309df105c54b55b527d8cc7d20a159",
+  "theme": {
+    "colorMode": "LIGHT",
+    "font": "PLUS_JAKARTA_SANS",
+    "roundness": "ROUND_EIGHT",
+    "customColor": "#059669",
+    "headlineFont": "PLUS_JAKARTA_SANS",
+    "bodyFont": "INTER",
+    "labelFont": "INTER",
+    "namedColors": {
+      "secondary_fixed_dim": "#bec6e0",
+      "surface_variant": "#d3e4fe",
+      "secondary_fixed": "#dae2fd",
+      "on_tertiary": "#ffffff",
+      "on_secondary_container": "#5c647a",
+      "on_surface_variant": "#3d4a42",
+      "inverse_surface": "#213145",
+      "primary_fixed": "#85f8c4",
+      "outline_variant": "#bccac0",
+      "primary_fixed_dim": "#68dba9",
+      "on_tertiary_fixed": "#2a1700",
+      "secondary_container": "#dae2fd",
+      "tertiary": "#825100",
+      "inverse_primary": "#68dba9",
+      "surface_bright": "#f8f9ff",
+      "surface_dim": "#cbdbf5",
+      "inverse_on_surface": "#eaf1ff",
+      "primary": "#006948",
+      "surface_container_high": "#dce9ff",
+      "surface": "#f8f9ff",
+      "on_secondary": "#ffffff",
+      "tertiary_container": "#a36700",
+      "on_primary": "#ffffff",
+      "on_error": "#ffffff",
+      "surface_container": "#e5eeff",
+      "on_secondary_fixed_variant": "#3f465c",
+      "on_error_container": "#93000a",
+      "outline": "#6d7a72",
+      "on_secondary_fixed": "#131b2e",
+      "surface_tint": "#006c4a",
+      "on_surface": "#0b1c30",
+      "background": "#f8f9ff",
+      "error": "#ba1a1a",
+      "on_tertiary_container": "#fffbff",
+      "on_primary_container": "#f5fff7",
+      "on_primary_fixed": "#002114",
+      "tertiary_fixed": "#ffddb8",
+      "surface_container_lowest": "#ffffff",
+      "on_background": "#0b1c30",
+      "primary_container": "#00855d",
+      "tertiary_fixed_dim": "#ffb95f",
+      "error_container": "#ffdad6",
+      "secondary": "#565e74",
+      "surface_container_low": "#eff4ff",
+      "surface_container_highest": "#d3e4fe",
+      "on_tertiary_fixed_variant": "#653e00",
+      "on_primary_fixed_variant": "#005137"
+    },
+    "colorVariant": "FIDELITY",
+    "overridePrimaryColor": "#059669",
+    "overrideSecondaryColor": "#0f172a",
+    "overrideTertiaryColor": "#f59e0b",
+    "overrideNeutralColor": "#64748b",
+    "spacingScale": 2,
+    "typography": {
+      "headline-lg": {
+        "fontFamily": "Plus Jakarta Sans",
+        "fontSize": "32px",
+        "fontWeight": "700",
+        "lineHeight": "40px",
+        "letterSpacing": "-0.015em"
+      },
+      "headline-lg-mobile": {
+        "fontFamily": "Plus Jakarta Sans",
+        "fontSize": "24px",
+        "fontWeight": "700",
+        "lineHeight": "32px",
+        "letterSpacing": "-0.015em"
+      },
+      "headline-md": {
+        "fontFamily": "Plus Jakarta Sans",
+        "fontSize": "20px",
+        "fontWeight": "600",
+        "lineHeight": "28px"
+      },
+      "price-display": {
+        "fontFamily": "Plus Jakarta Sans",
+        "fontSize": "24px",
+        "fontWeight": "700",
+        "lineHeight": "28px",
+        "letterSpacing": "-0.01em"
+      },
+      "headline-xl-mobile": {
+        "fontFamily": "Plus Jakarta Sans",
+        "fontSize": "30px",
+        "fontWeight": "800",
+        "lineHeight": "38px",
+        "letterSpacing": "-0.02em"
+      },
+      "data-mono": {
+        "fontFamily": "Inter",
+        "fontSize": "12px",
+        "fontWeight": "600",
+        "lineHeight": "16px",
+        "letterSpacing": "0.02em"
+      },
+      "label-md": {
+        "fontFamily": "Inter",
+        "fontSize": "13px",
+        "fontWeight": "600",
+        "lineHeight": "18px",
+        "letterSpacing": "0.01em"
+      },
+      "label-sm": {
+        "fontFamily": "Inter",
+        "fontSize": "11px",
+        "fontWeight": "600",
+        "lineHeight": "14px",
+        "letterSpacing": "0.04em"
+      },
+      "headline-xl": {
+        "fontFamily": "Plus Jakarta Sans",
+        "fontSize": "40px",
+        "fontWeight": "800",
+        "lineHeight": "48px",
+        "letterSpacing": "-0.02em"
+      },
+      "body-lg": {
+        "fontFamily": "Inter",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "24px"
+      },
+      "body-sm": {
+        "fontFamily": "Inter",
+        "fontSize": "12px",
+        "fontWeight": "400",
+        "lineHeight": "16px"
+      },
+      "body-md": {
+        "fontFamily": "Inter",
+        "fontSize": "14px",
+        "fontWeight": "400",
+        "lineHeight": "20px"
+      }
+    },
+    "spacing": {
+      "space-md": "1rem",
+      "space-sm": "0.5rem",
+      "margin-tablet": "1.5rem",
+      "gutter-desktop": "1.5rem",
+      "space-xs": "0.25rem",
+      "margin": "1rem",
+      "space-lg": "1.5rem",
+      "gutter": "1rem",
+      "space-xl": "2rem",
+      "margin-desktop": "2rem"
+    },
+    "headlineFontFamily": "Plus Jakarta Sans",
+    "bodyFontFamily": "Inter",
+    "labelFontFamily": "Inter"
+  },
+  "deviceType": "MOBILE",
+  "screenType": "DESIGN",
+  "screenMetadata": {
+    "agentType": "PRO_AGENT",
+    "status": "COMPLETE"
+  },
+  "designSystem": {
+    "name": "assets/dcf1b3b6a7e045faa14f08c38608e32f",
+    "designSystem": {
+      "displayName": "FixNow Trust Matrix",
+      "styleGuidelines": "### 🎨 Visual Identity: Safe\n- **Palette & Typography:** An instantly credible on-demand service ecosystem pairing crisp utilitarian micro-data typography with trustworthy emerald greens and friendly 12-16px component contours.\n\n## Brand & Style\n\nThis design system delivers an instantly credible, high-trust on-demand utility aesthetic built to withstand field conditions and high-stakes operational pressure. It serves three synchronized user archetypes: homeowners seeking rapid, transparent home repair; field technicians operating one-handed in varied light conditions; and dispatch administrators managing high-density real-time queues.\n\nThe visual style blends modern utilitarian minimalism with tactical precision. Clean canvas neutrals prioritize speed of parsing, while deep emerald tones communicate verified security, verified background checks, and resolution. Structural data layouts rely on micro-typographic indicators, tabbed currency formats, and high-visibility status pings to eliminate ambiguity across both bright outdoor service calls and desktop dispatch control centers.\n\n## Layout & Spacing\n\nThe layout model is anchored on an absolute 4px base increment, scaling cleanly between the technician field app, mobile web customer tracking, and the administrative dashboard:\n\n- **Mobile Viewports (under 768px)**: 4-column layout with 16px (`margin`) outer boundaries and 16px (`gutter`) between vertical stack cards. Fixed bottoms are reserved for primary action bars (CTA height 52px minimum, 12px safe-area margins).\n- **Tablet & Split-Screen Technicians (768px - 1024px)**: 8-column layout with 24px margins, allowing simultaneous viewing of map navigation and job acceptance sheets.\n- **Admin Portal (1024px+)**: 12-column layout with 32px canvas margins and 24px gutters. Workspaces split between persistent navigation (260px fixed width), a dynamic filter sub-rail, and responsive data tables.\n- **Vertical Hierarchy**: Internal card groups apply `space-sm` (8px), card-to-card relationships scale at `space-md` (16px), and disparate service categories breathe with `space-xl` (32px).\n\n## Elevation & Depth\n\nThis design system avoids heavy shadows, instead using crisp outlines and ambient surface shifts for outdoor and fluorescent visibility:\n\n- **Base Flat Surface (Level 0)**: Ground canvas rendered in `#F8FAFC`. Unhovered cards sit directly on this plane with a structural 1px border (`#E2E8F0`).\n- **Interactive Container (Level 1)**: Floating modular cards and list items set on `#FFFFFF`, framed by `border: 1px solid #E2E8F0` and accompanied by a tinted contact shadow: `box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.05), 0 1px 2px -1px rgba(15, 23, 42, 0.04)`.\n- **Active / Drag State (Level 2)**: For provider order pop-ups and active tracking trays: `box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.03)`.\n- **Modals, Hazard Alerts & Drawers (Level 3)**: SOS sheets, price confirmations, and admin slide-overs: `box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.12), 0 8px 10px -6px rgba(15, 23, 42, 0.06)` combined with a 40% `#0F172A` backdrop scrim.\n\n## Components\n\n### Buttons & Action Controls\n- **Primary CTA**: Background `#059669`, text `#FFFFFF`, 48px height on web, 54px on field screens. Hover: `#047857`, Active: `#0A5C36`. Radius: 12px.\n- **Secondary Neutral**: Background `#0F172A`, text `#FFFFFF`, used for provider job acceptance or route locks.\n- **Destructive / SOS**: Background `#DC2626`, text `#FFFFFF`. Applied with high-visibility icon pairing for field emergencies.\n- **Ghost Action**: Transparent base, 1px border `#E2E8F0`, text `#0F172A`.\n\n### Status Badges & Live Micro-Indicators\n- **En Route / Online Ping**: Background `#ECFDF5`, text `#065F46`, border `#A7F3D0`. Includes a real-time pulsing 6px circle using `#10B981`.\n- **In-Progress / Delayed**: Background `#FFFBEB`, text `#92400E`, border `#FDE68A`.\n- **Hazard / SOS**: Background `#FEF2F2`, text `#991B1B`, border `#FECACA`.\n- **Format**: Pill-shaped with `label-sm` typography and `padding: 4px 10px`.\n\n### Modular Cards & Job Tiles\n- **Technician Dispatch Card**: `#FFFFFF` background, 16px radius, bordered in `#E2E8F0`. Layout features customer location header, fixed tabular cost preview (`price-display`), and a primary dispatch trigger separated by a 1px internal rule (`#F1F5F9`).\n- **Provider Earnings Summary**: High-contrast card with `#0F172A` background, emerald green trend readouts, and tabular numeric figures.\n\n### Form Inputs & Selectors\n- **Input Fields**: 48px height, 8px radius, border 1px solid `#CBD5E1`, background `#FFFFFF`. Focus ring: 2px offset in `#059669`. Label positioned above using `label-md` in `#0F172A`.\n- **Checkboxes & Radios**: 20px hit targets with 4px inner rounding for checkboxes and full circular rounding for radio selections. Selected state: `#059669` fill with white indicator marks.\n\n### Data Tables (Web Admin Portal)\n- Row height: 56px with alternating hover effect (`#F8FAFC`).\n- Header cells: `label-sm` uppercase, text color `#64748B`, with explicit numeric column alignments matching cell values.",
+      "theme": {
+        "colorMode": "LIGHT",
+        "font": "PLUS_JAKARTA_SANS",
+        "roundness": "ROUND_EIGHT",
+        "customColor": "#059669",
+        "headlineFont": "PLUS_JAKARTA_SANS",
+        "bodyFont": "INTER",
+        "labelFont": "INTER",
+        "namedColors": {
+          "surface_container_high": "#dce9ff",
+          "on_secondary": "#ffffff",
+          "primary_fixed": "#85f8c4",
+          "tertiary_container": "#a36700",
+          "error_container": "#ffdad6",
+          "inverse_on_surface": "#eaf1ff",
+          "secondary_fixed_dim": "#bec6e0",
+          "surface_dim": "#cbdbf5",
+          "outline": "#6d7a72",
+          "primary_container": "#00855d",
+          "on_error": "#ffffff",
+          "on_primary_fixed": "#002114",
+          "on_surface_variant": "#3d4a42",
+          "on_tertiary": "#ffffff",
+          "secondary_container": "#dae2fd",
+          "on_surface": "#0b1c30",
+          "surface_bright": "#f8f9ff",
+          "background": "#f8f9ff",
+          "tertiary": "#825100",
+          "on_secondary_container": "#5c647a",
+          "surface_container": "#e5eeff",
+          "on_background": "#0b1c30",
+          "on_secondary_fixed_variant": "#3f465c",
+          "on_primary": "#ffffff",
+          "tertiary_fixed": "#ffddb8",
+          "inverse_primary": "#68dba9",
+          "surface_container_low": "#eff4ff",
+          "surface_container_lowest": "#ffffff",
+          "tertiary_fixed_dim": "#ffb95f",
+          "on_tertiary_fixed": "#2a1700",
+          "primary_fixed_dim": "#68dba9",
+          "error": "#ba1a1a",
+          "surface_variant": "#d3e4fe",
+          "on_tertiary_container": "#fffbff",
+          "secondary_fixed": "#dae2fd",
+          "surface_tint": "#006c4a",
+          "on_primary_fixed_variant": "#005137",
+          "inverse_surface": "#213145",
+          "surface_container_highest": "#d3e4fe",
+          "on_primary_container": "#f5fff7",
+          "primary": "#006948",
+          "on_error_container": "#93000a",
+          "on_tertiary_fixed_variant": "#653e00",
+          "outline_variant": "#bccac0",
+          "surface": "#f8f9ff",
+          "secondary": "#565e74",
+          "on_secondary_fixed": "#131b2e"
+        },
+        "designMd": "---\nname: FixNow Trust Matrix\ncolors:\n  surface: '#f8f9ff'\n  surface-dim: '#cbdbf5'\n  surface-bright: '#f8f9ff'\n  surface-container-lowest: '#ffffff'\n  surface-container-low: '#eff4ff'\n  surface-container: '#e5eeff'\n  surface-container-high: '#dce9ff'\n  surface-container-highest: '#d3e4fe'\n  on-surface: '#0b1c30'\n  on-surface-variant: '#3d4a42'\n  inverse-surface: '#213145'\n  inverse-on-surface: '#eaf1ff'\n  outline: '#6d7a72'\n  outline-variant: '#bccac0'\n  surface-tint: '#006c4a'\n  primary: '#006948'\n  on-primary: '#ffffff'\n  primary-container: '#00855d'\n  on-primary-container: '#f5fff7'\n  inverse-primary: '#68dba9'\n  secondary: '#565e74'\n  on-secondary: '#ffffff'\n  secondary-container: '#dae2fd'\n  on-secondary-container: '#5c647a'\n  tertiary: '#825100'\n  on-tertiary: '#ffffff'\n  tertiary-container: '#a36700'\n  on-tertiary-container: '#fffbff'\n  error: '#ba1a1a'\n  on-error: '#ffffff'\n  error-container: '#ffdad6'\n  on-error-container: '#93000a'\n  primary-fixed: '#85f8c4'\n  primary-fixed-dim: '#68dba9'\n  on-primary-fixed: '#002114'\n  on-primary-fixed-variant: '#005137'\n  secondary-fixed: '#dae2fd'\n  secondary-fixed-dim: '#bec6e0'\n  on-secondary-fixed: '#131b2e'\n  on-secondary-fixed-variant: '#3f465c'\n  tertiary-fixed: '#ffddb8'\n  tertiary-fixed-dim: '#ffb95f'\n  on-tertiary-fixed: '#2a1700'\n  on-tertiary-fixed-variant: '#653e00'\n  background: '#f8f9ff'\n  on-background: '#0b1c30'\n  surface-variant: '#d3e4fe'\ntypography:\n  headline-xl:\n    fontFamily: Plus Jakarta Sans\n    fontSize: 40px\n    fontWeight: '800'\n    lineHeight: 48px\n    letterSpacing: -0.02em\n  headline-xl-mobile:\n    fontFamily: Plus Jakarta Sans\n    fontSize: 30px\n    fontWeight: '800'\n    lineHeight: 38px\n    letterSpacing: -0.02em\n  headline-lg:\n    fontFamily: Plus Jakarta Sans\n    fontSize: 32px\n    fontWeight: '700'\n    lineHeight: 40px\n    letterSpacing: -0.015em\n  headline-lg-mobile:\n    fontFamily: Plus Jakarta Sans\n    fontSize: 24px\n    fontWeight: '700'\n    lineHeight: 32px\n    letterSpacing: -0.015em\n  headline-md:\n    fontFamily: Plus Jakarta Sans\n    fontSize: 20px\n    fontWeight: '600'\n    lineHeight: 28px\n  body-lg:\n    fontFamily: Inter\n    fontSize: 16px\n    fontWeight: '400'\n    lineHeight: 24px\n  body-md:\n    fontFamily: Inter\n    fontSize: 14px\n    fontWeight: '400'\n    lineHeight: 20px\n  body-sm:\n    fontFamily: Inter\n    fontSize: 12px\n    fontWeight: '400'\n    lineHeight: 16px\n  label-md:\n    fontFamily: Inter\n    fontSize: 13px\n    fontWeight: '600'\n    lineHeight: 18px\n    letterSpacing: 0.01em\n  label-sm:\n    fontFamily: Inter\n    fontSize: 11px\n    fontWeight: '600'\n    lineHeight: 14px\n    letterSpacing: 0.04em\n  price-display:\n    fontFamily: Plus Jakarta Sans\n    fontSize: 24px\n    fontWeight: '700'\n    lineHeight: 28px\n    letterSpacing: -0.01em\n  data-mono:\n    fontFamily: Inter\n    fontSize: 12px\n    fontWeight: '600'\n    lineHeight: 16px\n    letterSpacing: 0.02em\nrounded:\n  sm: 0.25rem\n  DEFAULT: 0.5rem\n  md: 0.75rem\n  lg: 1rem\n  xl: 1.5rem\n  full: 9999px\nspacing:\n  gutter: 1rem\n  gutter-desktop: 1.5rem\n  margin: 1rem\n  margin-tablet: 1.5rem\n  margin-desktop: 2rem\n  space-xs: 0.25rem\n  space-sm: 0.5rem\n  space-md: 1rem\n  space-lg: 1.5rem\n  space-xl: 2rem\n---\n\n## Brand & Style\n\nThis design system delivers an instantly credible, high-trust on-demand utility aesthetic built to withstand field conditions and high-stakes operational pressure. It serves three synchronized user archetypes: homeowners seeking rapid, transparent home repair; field technicians operating one-handed in varied light conditions; and dispatch administrators managing high-density real-time queues.\n\nThe visual style blends modern utilitarian minimalism with tactical precision. Clean canvas neutrals prioritize speed of parsing, while deep emerald tones communicate verified security, verified background checks, and resolution. Structural data layouts rely on micro-typographic indicators, tabbed currency formats, and high-visibility status pings to eliminate ambiguity across both bright outdoor service calls and desktop dispatch control centers.\n\n## Colors\n\nThe system uses an intentional color hierarchy that separates transactional assurance from operational warnings:\n\n- **Primary (`#059669` Emerald)**: Anchors verification badges, primary actions, active connection states, and live field tracking. Deep emerald (`#0A5C36`) serves as the elevated interactive press state, while bright emerald (`#10B981`) drives pulse beacons and dynamic online pings.\n- **Secondary (`#0F172A` Obsidian Slate)**: The dominant structural base for text hierarchy, system navigation bars, technical dashboard headers, and provider night-shift components.\n- **Tertiary (`#F59E0B` Dispatch Amber)**: Reserved strictly for urgent transactional updates, in-progress timers, technician ETA alerts, and verified customer ratings.\n- **System Hazard (`#DC2626` Crimson)**: A dedicated signal color applied exclusively to gas/electrical hazards, rapid dispatch cancellations, and technician SOS distress triggers.\n- **Neutrals & Surfaces**: Built from `#FFFFFF` (elevated cards), `#F8FAFC` (foundation canvas), `#F1F5F9` (sunken wells, readouts, and track backgrounds), with `#E2E8F0` defining structural boundary lines.\n\n## Typography\n\nTypography establishes an immediate perception of security and functional control:\n\n- **Display & Section Headers (`Plus Jakarta Sans`)**: Delivers friendly authority for customer service discovery, technician job titles, and dashboard milestone summaries. Its wide, open counters maintain readability at all sizes.\n- **Operational Copy & Tabular Data (`Inter`)**: All body text, data matrices, line items, and addresses use Inter. Numeric values (costs, job IDs, countdown timers) mandate tabular numbers (`font-feature-settings: 'tnum' 1`) to preserve vertical alignment during real-time dispatch changes and earnings calculations.\n- **Micro-Data Tokens**: `label-sm` and `data-mono` are tailored for compact chip contexts, job tags, status capsules, and distance markers without cluttering dense mobile displays.\n\n## Layout & Spacing\n\nThe layout model is anchored on an absolute 4px base increment, scaling cleanly between the technician field app, mobile web customer tracking, and the administrative dashboard:\n\n- **Mobile Viewports (under 768px)**: 4-column layout with 16px (`margin`) outer boundaries and 16px (`gutter`) between vertical stack cards. Fixed bottoms are reserved for primary action bars (CTA height 52px minimum, 12px safe-area margins).\n- **Tablet & Split-Screen Technicians (768px - 1024px)**: 8-column layout with 24px margins, allowing simultaneous viewing of map navigation and job acceptance sheets.\n- **Admin Portal (1024px+)**: 12-column layout with 32px canvas margins and 24px gutters. Workspaces split between persistent navigation (260px fixed width), a dynamic filter sub-rail, and responsive data tables.\n- **Vertical Hierarchy**: Internal card groups apply `space-sm` (8px), card-to-card relationships scale at `space-md` (16px), and disparate service categories breathe with `space-xl` (32px).\n\n## Elevation & Depth\n\nThis design system avoids heavy shadows, instead using crisp outlines and ambient surface shifts for outdoor and fluorescent visibility:\n\n- **Base Flat Surface (Level 0)**: Ground canvas rendered in `#F8FAFC`. Unhovered cards sit directly on this plane with a structural 1px border (`#E2E8F0`).\n- **Interactive Container (Level 1)**: Floating modular cards and list items set on `#FFFFFF`, framed by `border: 1px solid #E2E8F0` and accompanied by a tinted contact shadow: `box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.05), 0 1px 2px -1px rgba(15, 23, 42, 0.04)`.\n- **Active / Drag State (Level 2)**: For provider order pop-ups and active tracking trays: `box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.03)`.\n- **Modals, Hazard Alerts & Drawers (Level 3)**: SOS sheets, price confirmations, and admin slide-overs: `box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.12), 0 8px 10px -6px rgba(15, 23, 42, 0.06)` combined with a 40% `#0F172A` backdrop scrim.\n\n## Shapes\n\nThe shape hierarchy aligns with roundedness level 2, providing a clean balance between professional structure and consumer accessibility:\n\n- **Micro-Elements (8px / `rounded`)**: Applied to micro-badges, checkbox targets, data-entry text inputs, and tabular tags.\n- **Primary Containers & Job Cards (12px to 16px / `rounded-lg`)**: Forms the core visual frame for service booking cards, provider earning strips, and technician verification shields.\n- **Modal Sheets & Canvas Drawers (24px / `rounded-xl`)**: Top corners of bottom-sheet booking modals, live maps, and safety guides.\n- **Pill Contours (Full Radius)**: Applied exclusively to status indicator badges (e.g., \"Active\", \"Dispatched\"), live ETA capsules, and round utility action icons.\n\n## Components\n\n### Buttons & Action Controls\n- **Primary CTA**: Background `#059669`, text `#FFFFFF`, 48px height on web, 54px on field screens. Hover: `#047857`, Active: `#0A5C36`. Radius: 12px.\n- **Secondary Neutral**: Background `#0F172A`, text `#FFFFFF`, used for provider job acceptance or route locks.\n- **Destructive / SOS**: Background `#DC2626`, text `#FFFFFF`. Applied with high-visibility icon pairing for field emergencies.\n- **Ghost Action**: Transparent base, 1px border `#E2E8F0`, text `#0F172A`.\n\n### Status Badges & Live Micro-Indicators\n- **En Route / Online Ping**: Background `#ECFDF5`, text `#065F46`, border `#A7F3D0`. Includes a real-time pulsing 6px circle using `#10B981`.\n- **In-Progress / Delayed**: Background `#FFFBEB`, text `#92400E`, border `#FDE68A`.\n- **Hazard / SOS**: Background `#FEF2F2`, text `#991B1B`, border `#FECACA`.\n- **Format**: Pill-shaped with `label-sm` typography and `padding: 4px 10px`.\n\n### Modular Cards & Job Tiles\n- **Technician Dispatch Card**: `#FFFFFF` background, 16px radius, bordered in `#E2E8F0`. Layout features customer location header, fixed tabular cost preview (`price-display`), and a primary dispatch trigger separated by a 1px internal rule (`#F1F5F9`).\n- **Provider Earnings Summary**: High-contrast card with `#0F172A` background, emerald green trend readouts, and tabular numeric figures.\n\n### Form Inputs & Selectors\n- **Input Fields**: 48px height, 8px radius, border 1px solid `#CBD5E1`, background `#FFFFFF`. Focus ring: 2px offset in `#059669`. Label positioned above using `label-md` in `#0F172A`.\n- **Checkboxes & Radios**: 20px hit targets with 4px inner rounding for checkboxes and full circular rounding for radio selections. Selected state: `#059669` fill with white indicator marks.\n\n### Data Tables (Web Admin Portal)\n- Row height: 56px with alternating hover effect (`#F8FAFC`).\n- Header cells: `label-sm` uppercase, text color `#64748B`, with explicit numeric column alignments matching cell values.",
+        "colorVariant": "FIDELITY",
+        "overridePrimaryColor": "#059669",
+        "overrideSecondaryColor": "#0f172a",
+        "overrideTertiaryColor": "#f59e0b",
+        "overrideNeutralColor": "#64748b",
+        "spacingScale": 2,
+        "typography": {
+          "headline-lg-mobile": {
+            "fontFamily": "Plus Jakarta Sans",
+            "fontSize": "24px",
+            "fontWeight": "700",
+            "lineHeight": "32px",
+            "letterSpacing": "-0.015em"
+          },
+          "headline-md": {
+            "fontFamily": "Plus Jakarta Sans",
+            "fontSize": "20px",
+            "fontWeight": "600",
+            "lineHeight": "28px"
+          },
+          "price-display": {
+            "fontFamily": "Plus Jakarta Sans",
+            "fontSize": "24px",
+            "fontWeight": "700",
+            "lineHeight": "28px",
+            "letterSpacing": "-0.01em"
+          },
+          "data-mono": {
+            "fontFamily": "Inter",
+            "fontSize": "12px",
+            "fontWeight": "600",
+            "lineHeight": "16px",
+            "letterSpacing": "0.02em"
+          },
+          "headline-xl-mobile": {
+            "fontFamily": "Plus Jakarta Sans",
+            "fontSize": "30px",
+            "fontWeight": "800",
+            "lineHeight": "38px",
+            "letterSpacing": "-0.02em"
+          },
+          "headline-lg": {
+            "fontFamily": "Plus Jakarta Sans",
+            "fontSize": "32px",
+            "fontWeight": "700",
+            "lineHeight": "40px",
+            "letterSpacing": "-0.015em"
+          },
+          "body-md": {
+            "fontFamily": "Inter",
+            "fontSize": "14px",
+            "fontWeight": "400",
+            "lineHeight": "20px"
+          },
+          "body-sm": {
+            "fontFamily": "Inter",
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "lineHeight": "16px"
+          },
+          "label-sm": {
+            "fontFamily": "Inter",
+            "fontSize": "11px",
+            "fontWeight": "600",
+            "lineHeight": "14px",
+            "letterSpacing": "0.04em"
+          },
+          "label-md": {
+            "fontFamily": "Inter",
+            "fontSize": "13px",
+            "fontWeight": "600",
+            "lineHeight": "18px",
+            "letterSpacing": "0.01em"
+          },
+          "body-lg": {
+            "fontFamily": "Inter",
+            "fontSize": "16px",
+            "fontWeight": "400",
+            "lineHeight": "24px"
+          },
+          "headline-xl": {
+            "fontFamily": "Plus Jakarta Sans",
+            "fontSize": "40px",
+            "fontWeight": "800",
+            "lineHeight": "48px",
+            "letterSpacing": "-0.02em"
+          }
+        },
+        "spacing": {
+          "space-xs": "0.25rem",
+          "margin-tablet": "1.5rem",
+          "gutter-desktop": "1.5rem",
+          "space-sm": "0.5rem",
+          "gutter": "1rem",
+          "space-md": "1rem",
+          "margin": "1rem",
+          "space-xl": "2rem",
+          "space-lg": "1.5rem",
+          "margin-desktop": "2rem"
+        },
+        "headlineFontFamily": "Plus Jakarta Sans",
+        "bodyFontFamily": "Inter",
+        "labelFontFamily": "Inter"
+      }
+    },
+    "version": "1"
+  }
+}

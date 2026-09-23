@@ -4,7 +4,16 @@ import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/app_typography.dart';
 import 'package:flutter/material.dart';
 
-enum FixStatusTone { neutral, success, warning, danger, info, emergency, gold, live }
+enum FixStatusTone {
+  neutral,
+  success,
+  warning,
+  danger,
+  info,
+  emergency,
+  gold,
+  live,
+}
 
 class FixStatusChip extends StatelessWidget {
   const FixStatusChip({
@@ -36,8 +45,8 @@ class FixStatusChip extends StatelessWidget {
     ),
     FixStatusTone.gold => (AppColors.ratingOnLight, AppColors.accentGoldSoft),
     // Filled chip: green text on a light-soft background would fail contrast,
-    // so live inverts — dark foreground on the live green (8.5:1).
-    FixStatusTone.live => (AppColors.backgroundPrimary, AppColors.live),
+    // so live inverts — dark foreground on the live green (>7:1).
+    FixStatusTone.live => (AppColors.secondarySlate, AppColors.live),
   };
 
   @override
@@ -54,7 +63,9 @@ class FixStatusChip extends StatelessWidget {
             border: Border.all(
               color: tone == FixStatusTone.emergency
                   ? AppColors.emergency
-                  : (tone == FixStatusTone.gold ? AppColors.borderGold : Colors.transparent),
+                  : (tone == FixStatusTone.gold
+                        ? AppColors.borderGold
+                        : Colors.transparent),
               width: 1,
             ),
           ),
@@ -70,7 +81,7 @@ class FixStatusChip extends StatelessWidget {
                 const SizedBox(width: AppSpacing.xs),
                 Text(
                   label,
-                  style: AppTypography.caption.copyWith(
+                  style: FixNowTypography.caption.copyWith(
                     color: foreground,
                     fontWeight: FontWeight.w600,
                   ),
@@ -103,7 +114,9 @@ class FixVerificationBadge extends StatelessWidget {
     decoration: BoxDecoration(
       color: AppColors.successSoft,
       borderRadius: BorderRadius.circular(AppRadius.pill),
-      border: Border.all(color: AppColors.successOnLight.withValues(alpha: 0.3)),
+      border: Border.all(
+        color: AppColors.successOnLight.withValues(alpha: 0.3),
+      ),
     ),
     child: Row(
       mainAxisSize: MainAxisSize.min,

@@ -1,0 +1,1092 @@
+{
+  "htmlCode": {
+    "name": "projects/6685748214955225380/screens/60cff731b39b449e94a493d49adec058/fileEntries/html",
+    "downloadUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sXzAwMDY1YjczMzJiZmM3MGMwNzc5OWU3MDhiMzQ4NjIyEgsSBxCb4sXdtQMYAZIBIwoKcHJvamVjdF9pZBIVQhM2Njg1NzQ4MjE0OTU1MjI1Mzgw&filename=&opi=89354086",
+    "mimeType": "text/html"
+  },
+  "id": "60cff731b39b449e94a493d49adec058",
+  "generatedBy": "prototype_v2_agent",
+  "width": "390",
+  "height": "884",
+  "title": "FixNow - On-Demand Home Services & Dispatch Platform",
+  "name": "projects/6685748214955225380/screens/60cff731b39b449e94a493d49adec058",
+  "theme": {},
+  "deviceType": "MOBILE",
+  "screenType": "PROTOTYPE_V2",
+  "screenMetadata": {
+    "agentType": "PRO_AGENT",
+    "status": "COMPLETE",
+    "prototypeSpec": {
+      "initScreenId": "e685e6b8d290400d921e75ca3b4552d8",
+      "screenIds": [
+        "0479006c7ff34b7ca066cfd2bbadfe5e",
+        "0a1806fce67b47198911a384c153671d",
+        "0b143e36d2404325bc189ede2fad721d",
+        "0c92930c9f554915a7d8cce50340df28",
+        "15af75dcaad34212bfdb3856cb83843d",
+        "1a48a8cc654845769b33cd07eefea6fc",
+        "1f7f2b1e9bd5409fbc83e21f09af69a6",
+        "23ded89ebf0c4f989beae8e7c34f16fa",
+        "247923ffed9b4f0e903a342a073609d1",
+        "28ec48efba3741bfacd9535dffd6db2a",
+        "2d11c1c6e23e46cc834923d4249c2a79",
+        "43c44968cad04b6ab2add993d25334e5",
+        "4f474de2201a46148d359a03af3730c3",
+        "519b4fffe4e24cedb7999d295cace849",
+        "722cda2e953f48d5a8fc6e7a8d8d07fb",
+        "78c98d859d7e455f993b34c8ed1fb9f4",
+        "7dee001c1dd54bf493253f1b8606eec4",
+        "7e01af6871d240eb86e46e0238193323",
+        "844050ca93244cd296967678b53a675b",
+        "871d94d75df74d73931c56514a1d239f",
+        "95da5de4eb86423db9f4237123f75c39",
+        "a8d8c0d8c63c40749ed5d5708630da33",
+        "a9f67969f37141b196edd63f533cfb44",
+        "b23d3ddfa8794673920614884723874a",
+        "cfed79603f2649bfb68ad392c87c7793",
+        "d22920882d544341a248186180086059",
+        "dbf21901024f4db2a87ded84e564714a",
+        "e4f113f1f02840eea68bdd5c6dc77c35",
+        "e5b0133a2ec944e0b59ce70a32da13b9",
+        "e5c804109085468f949fcd3e9c375c7e",
+        "e685e6b8d290400d921e75ca3b4552d8",
+        "eac5e7a48151496ca3265b023ef56ab0"
+      ],
+      "links": {
+        "0b143e36d2404325bc189ede2fad721d": {
+          "links": [
+            {
+              "xpath": "//button[@aria-label='Go Back']",
+              "targetScreenId": "844050ca93244cd296967678b53a675b",
+              "transition": "PUSH_BACK",
+              "state": "default"
+            },
+            {
+              "xpath": "//button[@aria-label='Open in-job text chat']",
+              "targetScreenId": "0c92930c9f554915a7d8cce50340df28",
+              "transition": "PUSH",
+              "state": "default"
+            },
+            {
+              "xpath": "//button[@aria-label='Hang up voice call']",
+              "targetScreenId": "844050ca93244cd296967678b53a675b",
+              "transition": "PUSH_BACK",
+              "state": "default"
+            }
+          ]
+        },
+        "1f7f2b1e9bd5409fbc83e21f09af69a6": {
+          "links": [
+            {
+              "xpath": "//button[@aria-label='Go Back']",
+              "targetScreenId": "e685e6b8d290400d921e75ca3b4552d8",
+              "transition": "PUSH_BACK",
+              "state": "default"
+            },
+            {
+              "xpath": "//button[@id='btn-primary-action']",
+              "targetScreenId": "871d94d75df74d73931c56514a1d239f",
+              "transition": "PUSH",
+              "state": "default"
+            },
+            {
+              "xpath": "//button[contains(., 'Quick SMS OTP')]",
+              "targetScreenId": "871d94d75df74d73931c56514a1d239f",
+              "transition": "PUSH",
+              "state": "default"
+            }
+          ]
+        },
+        "2d11c1c6e23e46cc834923d4249c2a79": {
+          "links": [
+            {
+              "xpath": "//button[contains(., 'Auto-Book Recommended Mechanic')]",
+              "targetScreenId": "e4f113f1f02840eea68bdd5c6dc77c35",
+              "transition": "PUSH",
+              "state": "default"
+            },
+            {
+              "xpath": "//button[contains(., 'Pay ₹470.82')]",
+              "targetScreenId": "e5c804109085468f949fcd3e9c375c7e",
+              "transition": "PUSH",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='explore-home']",
+              "targetScreenId": "dbf21901024f4db2a87ded84e564714a",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='bookings']",
+              "targetScreenId": "0a1806fce67b47198911a384c153671d",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='profile-account']",
+              "targetScreenId": "a8d8c0d8c63c40749ed5d5708630da33",
+              "transition": "NONE",
+              "state": "default"
+            }
+          ]
+        },
+        "e5c804109085468f949fcd3e9c375c7e": {
+          "links": [
+            {
+              "xpath": "//button[@id='disputeBtn']",
+              "targetScreenId": "28ec48efba3741bfacd9535dffd6db2a",
+              "transition": "PUSH",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='explore']",
+              "targetScreenId": "dbf21901024f4db2a87ded84e564714a",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='bookings']",
+              "targetScreenId": "0a1806fce67b47198911a384c153671d",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='rewards']",
+              "targetScreenId": "1a48a8cc654845769b33cd07eefea6fc",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='profile']",
+              "targetScreenId": "a8d8c0d8c63c40749ed5d5708630da33",
+              "transition": "NONE",
+              "state": "default"
+            }
+          ]
+        },
+        "0c92930c9f554915a7d8cce50340df28": {
+          "links": [
+            {
+              "xpath": "//button[@aria-label='Go Back']",
+              "targetScreenId": "844050ca93244cd296967678b53a675b",
+              "transition": "PUSH_BACK",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[contains(., 'VoIP')]",
+              "targetScreenId": "0b143e36d2404325bc189ede2fad721d",
+              "transition": "SLIDE_UP",
+              "state": "default"
+            },
+            {
+              "xpath": "//button[contains(., 'View Job Details')]",
+              "targetScreenId": "844050ca93244cd296967678b53a675b",
+              "transition": "PUSH_BACK",
+              "state": "default"
+            }
+          ]
+        },
+        "7e01af6871d240eb86e46e0238193323": {
+          "links": [
+            {
+              "xpath": "//button[@id='submit-review-btn']",
+              "targetScreenId": "0a1806fce67b47198911a384c153671d",
+              "transition": "PUSH",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='explore-services']",
+              "targetScreenId": "dbf21901024f4db2a87ded84e564714a",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='active-bookings']",
+              "targetScreenId": "0a1806fce67b47198911a384c153671d",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='customer-profile']",
+              "targetScreenId": "a8d8c0d8c63c40749ed5d5708630da33",
+              "transition": "NONE",
+              "state": "default"
+            }
+          ]
+        },
+        "722cda2e953f48d5a8fc6e7a8d8d07fb": {
+          "links": [
+            {
+              "xpath": "//a[@data-path='overview-dashboard']",
+              "targetScreenId": "7dee001c1dd54bf493253f1b8606eec4",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='provider-kyc-verification']",
+              "targetScreenId": "b23d3ddfa8794673920614884723874a",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='live-dispatches-radar']",
+              "targetScreenId": "519b4fffe4e24cedb7999d295cace849",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='trust-safety-moderation']",
+              "targetScreenId": "4f474de2201a46148d359a03af3730c3",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='categories-pricing']",
+              "targetScreenId": "eac5e7a48151496ca3265b023ef56ab0",
+              "transition": "NONE",
+              "state": "default"
+            }
+          ]
+        },
+        "0479006c7ff34b7ca066cfd2bbadfe5e": {
+          "links": [
+            {
+              "xpath": "//a[@data-path='explore']",
+              "targetScreenId": "dbf21901024f4db2a87ded84e564714a",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//button[@aria-label='Notifications']",
+              "targetScreenId": "23ded89ebf0c4f989beae8e7c34f16fa",
+              "transition": "PUSH",
+              "state": "default"
+            },
+            {
+              "xpath": "//button[contains(., 'Start Journey')]",
+              "targetScreenId": "844050ca93244cd296967678b53a675b",
+              "transition": "PUSH",
+              "state": "default"
+            },
+            {
+              "xpath": "//button[@aria-label='Open Live Chat']",
+              "targetScreenId": "0c92930c9f554915a7d8cce50340df28",
+              "transition": "PUSH",
+              "state": "default"
+            },
+            {
+              "xpath": "//button[@aria-label='Call Customer']",
+              "targetScreenId": "0b143e36d2404325bc189ede2fad721d",
+              "transition": "SLIDE_UP",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='activity-rewards']",
+              "targetScreenId": "1a48a8cc654845769b33cd07eefea6fc",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='profile']",
+              "targetScreenId": "a8d8c0d8c63c40749ed5d5708630da33",
+              "transition": "NONE",
+              "state": "default"
+            }
+          ]
+        },
+        "247923ffed9b4f0e903a342a073609d1": {
+          "links": [
+            {
+              "xpath": "//button[@aria-label='Go Back']",
+              "targetScreenId": "dbf21901024f4db2a87ded84e564714a",
+              "transition": "PUSH_BACK",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='explore']",
+              "targetScreenId": "dbf21901024f4db2a87ded84e564714a",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='bookings']",
+              "targetScreenId": "0a1806fce67b47198911a384c153671d",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='rewards']",
+              "targetScreenId": "1a48a8cc654845769b33cd07eefea6fc",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='profile']",
+              "targetScreenId": "a8d8c0d8c63c40749ed5d5708630da33",
+              "transition": "NONE",
+              "state": "default"
+            }
+          ]
+        },
+        "cfed79603f2649bfb68ad392c87c7793": {
+          "links": [
+            {
+              "xpath": "//button[@id='btn-back']",
+              "targetScreenId": "844050ca93244cd296967678b53a675b",
+              "transition": "PUSH_BACK",
+              "state": "default"
+            },
+            {
+              "xpath": "//button[@id='btn-close']",
+              "targetScreenId": "844050ca93244cd296967678b53a675b",
+              "transition": "PUSH_BACK",
+              "state": "default"
+            },
+            {
+              "xpath": "//button[@id='btn-confirm-reschedule']",
+              "targetScreenId": "844050ca93244cd296967678b53a675b",
+              "transition": "PUSH_BACK",
+              "state": "default"
+            },
+            {
+              "xpath": "//button[@id='btn-confirm-cancel']",
+              "targetScreenId": "0a1806fce67b47198911a384c153671d",
+              "transition": "PUSH_BACK",
+              "state": "default"
+            }
+          ]
+        },
+        "519b4fffe4e24cedb7999d295cace849": {
+          "links": [
+            {
+              "xpath": "//a[@data-path='overview-dashboard']",
+              "targetScreenId": "7dee001c1dd54bf493253f1b8606eec4",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='provider-kyc-verification']",
+              "targetScreenId": "b23d3ddfa8794673920614884723874a",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='support-complaints-and-escrow']",
+              "targetScreenId": "722cda2e953f48d5a8fc6e7a8d8d07fb",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='trust-and-safety-moderation']",
+              "targetScreenId": "4f474de2201a46148d359a03af3730c3",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='service-categories-and-pricing']",
+              "targetScreenId": "eac5e7a48151496ca3265b023ef56ab0",
+              "transition": "NONE",
+              "state": "default"
+            }
+          ]
+        },
+        "e4f113f1f02840eea68bdd5c6dc77c35": {
+          "links": [
+            {
+              "xpath": "//button[contains(@onclick, 'history.back')]",
+              "targetScreenId": "d22920882d544341a248186180086059",
+              "transition": "PUSH_BACK",
+              "state": "default"
+            },
+            {
+              "xpath": "//button[contains(., 'Confirm & Request Service')]",
+              "targetScreenId": "a9f67969f37141b196edd63f533cfb44",
+              "transition": "SLIDE_UP",
+              "state": "default"
+            }
+          ]
+        },
+        "15af75dcaad34212bfdb3856cb83843d": {
+          "links": [
+            {
+              "xpath": "//button[@aria-label='Go Back']",
+              "targetScreenId": "dbf21901024f4db2a87ded84e564714a",
+              "transition": "PUSH_BACK",
+              "state": "default"
+            },
+            {
+              "xpath": "//button[contains(., 'Auto-Book Specialist')]",
+              "targetScreenId": "e4f113f1f02840eea68bdd5c6dc77c35",
+              "transition": "PUSH",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='bookings']",
+              "targetScreenId": "0a1806fce67b47198911a384c153671d",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='rewards']",
+              "targetScreenId": "1a48a8cc654845769b33cd07eefea6fc",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='profile']",
+              "targetScreenId": "a8d8c0d8c63c40749ed5d5708630da33",
+              "transition": "NONE",
+              "state": "default"
+            }
+          ]
+        },
+        "eac5e7a48151496ca3265b023ef56ab0": {
+          "links": [
+            {
+              "xpath": "//a[@data-path='overview-dashboard']",
+              "targetScreenId": "7dee001c1dd54bf493253f1b8606eec4",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='provider-kyc-verification']",
+              "targetScreenId": "b23d3ddfa8794673920614884723874a",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='live-dispatches-radar']",
+              "targetScreenId": "519b4fffe4e24cedb7999d295cace849",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='complaints-escrow']",
+              "targetScreenId": "722cda2e953f48d5a8fc6e7a8d8d07fb",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='trust-safety-moderation']",
+              "targetScreenId": "4f474de2201a46148d359a03af3730c3",
+              "transition": "NONE",
+              "state": "default"
+            }
+          ]
+        },
+        "1a48a8cc654845769b33cd07eefea6fc": {
+          "links": [
+            {
+              "xpath": "//a[@data-path='explore-home']",
+              "targetScreenId": "dbf21901024f4db2a87ded84e564714a",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='bookings']",
+              "targetScreenId": "0a1806fce67b47198911a384c153671d",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='profile-account']",
+              "targetScreenId": "a8d8c0d8c63c40749ed5d5708630da33",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//button[@aria-label='Notifications']",
+              "targetScreenId": "23ded89ebf0c4f989beae8e7c34f16fa",
+              "transition": "PUSH",
+              "state": "default"
+            }
+          ]
+        },
+        "a9f67969f37141b196edd63f533cfb44": {
+          "links": [
+            {
+              "xpath": "//button[@id='close-modal-btn']",
+              "targetScreenId": "844050ca93244cd296967678b53a675b",
+              "transition": "PUSH_BACK",
+              "state": "default"
+            },
+            {
+              "xpath": "//button[@id='track-gps-btn']",
+              "targetScreenId": "844050ca93244cd296967678b53a675b",
+              "transition": "PUSH",
+              "state": "default"
+            },
+            {
+              "xpath": "//button[@id='call-specialist-btn']",
+              "targetScreenId": "0b143e36d2404325bc189ede2fad721d",
+              "transition": "SLIDE_UP",
+              "state": "default"
+            },
+            {
+              "xpath": "//button[@id='chat-specialist-btn']",
+              "targetScreenId": "0c92930c9f554915a7d8cce50340df28",
+              "transition": "PUSH",
+              "state": "default"
+            }
+          ]
+        },
+        "b23d3ddfa8794673920614884723874a": {
+          "links": [
+            {
+              "xpath": "//a[@data-path='overview-dashboard']",
+              "targetScreenId": "7dee001c1dd54bf493253f1b8606eec4",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='live-booking-dispatches-and-sos-radar']",
+              "targetScreenId": "519b4fffe4e24cedb7999d295cace849",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='support-complaints-and-escrow']",
+              "targetScreenId": "722cda2e953f48d5a8fc6e7a8d8d07fb",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='trust-and-safety-moderation']",
+              "targetScreenId": "4f474de2201a46148d359a03af3730c3",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='service-categories-and-pricing']",
+              "targetScreenId": "eac5e7a48151496ca3265b023ef56ab0",
+              "transition": "NONE",
+              "state": "default"
+            }
+          ]
+        },
+        "dbf21901024f4db2a87ded84e564714a": {
+          "links": [
+            {
+              "xpath": "//button[@aria-label='Notifications']",
+              "targetScreenId": "23ded89ebf0c4f989beae8e7c34f16fa",
+              "transition": "PUSH",
+              "state": "default"
+            },
+            {
+              "xpath": "//button[contains(., 'Call SOS Dispatch')]",
+              "targetScreenId": "247923ffed9b4f0e903a342a073609d1",
+              "transition": "SLIDE_UP",
+              "state": "default"
+            },
+            {
+              "xpath": "//button[contains(., 'Scan with FixAI')]",
+              "targetScreenId": "15af75dcaad34212bfdb3856cb83843d",
+              "transition": "PUSH",
+              "state": "default"
+            },
+            {
+              "xpath": "//div[contains(., 'Plumbing') and contains(@class, 'cursor-pointer')]",
+              "targetScreenId": "d22920882d544341a248186180086059",
+              "transition": "PUSH",
+              "state": "default"
+            },
+            {
+              "xpath": "//button[contains(., 'Track Live')]",
+              "targetScreenId": "844050ca93244cd296967678b53a675b",
+              "transition": "PUSH",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='bookings']",
+              "targetScreenId": "0a1806fce67b47198911a384c153671d",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='activity-rewards']",
+              "targetScreenId": "1a48a8cc654845769b33cd07eefea6fc",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='profile-account']",
+              "targetScreenId": "a8d8c0d8c63c40749ed5d5708630da33",
+              "transition": "NONE",
+              "state": "default"
+            }
+          ]
+        },
+        "4f474de2201a46148d359a03af3730c3": {
+          "links": [
+            {
+              "xpath": "//a[@data-path='overview-dashboard']",
+              "targetScreenId": "7dee001c1dd54bf493253f1b8606eec4",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='provider-kyc-verification']",
+              "targetScreenId": "b23d3ddfa8794673920614884723874a",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='live-dispatches-radar']",
+              "targetScreenId": "519b4fffe4e24cedb7999d295cace849",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='complaints-escrow']",
+              "targetScreenId": "722cda2e953f48d5a8fc6e7a8d8d07fb",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='categories-pricing']",
+              "targetScreenId": "eac5e7a48151496ca3265b023ef56ab0",
+              "transition": "NONE",
+              "state": "default"
+            }
+          ]
+        },
+        "e5b0133a2ec944e0b59ce70a32da13b9": {
+          "links": [
+            {
+              "xpath": "//button[@id='submit-button']",
+              "targetScreenId": "78c98d859d7e455f993b34c8ed1fb9f4",
+              "transition": "PUSH",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='explore-home']",
+              "targetScreenId": "78c98d859d7e455f993b34c8ed1fb9f4",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='bookings']",
+              "targetScreenId": "0479006c7ff34b7ca066cfd2bbadfe5e",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='profile-account']",
+              "targetScreenId": "a8d8c0d8c63c40749ed5d5708630da33",
+              "transition": "NONE",
+              "state": "default"
+            }
+          ]
+        },
+        "d22920882d544341a248186180086059": {
+          "links": [
+            {
+              "xpath": "//button[@id='checkout-btn']",
+              "targetScreenId": "e4f113f1f02840eea68bdd5c6dc77c35",
+              "transition": "PUSH",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='explore']",
+              "targetScreenId": "dbf21901024f4db2a87ded84e564714a",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='bookings']",
+              "targetScreenId": "0a1806fce67b47198911a384c153671d",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='rewards']",
+              "targetScreenId": "1a48a8cc654845769b33cd07eefea6fc",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='profile']",
+              "targetScreenId": "a8d8c0d8c63c40749ed5d5708630da33",
+              "transition": "NONE",
+              "state": "default"
+            }
+          ]
+        },
+        "43c44968cad04b6ab2add993d25334e5": {
+          "links": [
+            {
+              "xpath": "//button[@type='submit']",
+              "targetScreenId": "7dee001c1dd54bf493253f1b8606eec4",
+              "transition": "PUSH",
+              "state": "default"
+            }
+          ]
+        },
+        "23ded89ebf0c4f989beae8e7c34f16fa": {
+          "links": [
+            {
+              "xpath": "//button[@aria-label='Go back']",
+              "targetScreenId": "dbf21901024f4db2a87ded84e564714a",
+              "transition": "PUSH_BACK",
+              "state": "default"
+            },
+            {
+              "xpath": "//button[contains(., 'Track GPS')]",
+              "targetScreenId": "844050ca93244cd296967678b53a675b",
+              "transition": "PUSH",
+              "state": "default"
+            },
+            {
+              "xpath": "//button[contains(., 'View Details')]",
+              "targetScreenId": "844050ca93244cd296967678b53a675b",
+              "transition": "PUSH",
+              "state": "default"
+            },
+            {
+              "xpath": "//button[contains(., 'View Case')]",
+              "targetScreenId": "28ec48efba3741bfacd9535dffd6db2a",
+              "transition": "PUSH",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='explore-services']",
+              "targetScreenId": "dbf21901024f4db2a87ded84e564714a",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='active-bookings']",
+              "targetScreenId": "0a1806fce67b47198911a384c153671d",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='messages']",
+              "targetScreenId": "0c92930c9f554915a7d8cce50340df28",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='customer-profile']",
+              "targetScreenId": "a8d8c0d8c63c40749ed5d5708630da33",
+              "transition": "NONE",
+              "state": "default"
+            }
+          ]
+        },
+        "28ec48efba3741bfacd9535dffd6db2a": {
+          "links": [
+            {
+              "xpath": "//button[@aria-label='Go Back']",
+              "targetScreenId": "0a1806fce67b47198911a384c153671d",
+              "transition": "PUSH_BACK",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='explore']",
+              "targetScreenId": "dbf21901024f4db2a87ded84e564714a",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='bookings']",
+              "targetScreenId": "0a1806fce67b47198911a384c153671d",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='rewards']",
+              "targetScreenId": "1a48a8cc654845769b33cd07eefea6fc",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='profile']",
+              "targetScreenId": "a8d8c0d8c63c40749ed5d5708630da33",
+              "transition": "NONE",
+              "state": "default"
+            }
+          ]
+        },
+        "78c98d859d7e455f993b34c8ed1fb9f4": {
+          "links": [
+            {
+              "xpath": "//button[@id='sosBtn']",
+              "targetScreenId": "247923ffed9b4f0e903a342a073609d1",
+              "transition": "SLIDE_UP",
+              "state": "default"
+            },
+            {
+              "xpath": "//button[@id='verifyJobBtn']",
+              "targetScreenId": "0479006c7ff34b7ca066cfd2bbadfe5e",
+              "transition": "PUSH",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='explore-home']",
+              "targetScreenId": "dbf21901024f4db2a87ded84e564714a",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='bookings']",
+              "targetScreenId": "0479006c7ff34b7ca066cfd2bbadfe5e",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='activity-rewards']",
+              "targetScreenId": "1a48a8cc654845769b33cd07eefea6fc",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='profile-account']",
+              "targetScreenId": "a8d8c0d8c63c40749ed5d5708630da33",
+              "transition": "NONE",
+              "state": "default"
+            }
+          ]
+        },
+        "a8d8c0d8c63c40749ed5d5708630da33": {
+          "links": [
+            {
+              "xpath": "//a[@data-path='explore-services']",
+              "targetScreenId": "dbf21901024f4db2a87ded84e564714a",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='active-bookings']",
+              "targetScreenId": "0a1806fce67b47198911a384c153671d",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='messages']",
+              "targetScreenId": "0c92930c9f554915a7d8cce50340df28",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//div[contains(., 'Help Center & Warranty FAQs')]/ancestor::div[contains(@class, 'cursor-pointer')]",
+              "targetScreenId": "95da5de4eb86423db9f4237123f75c39",
+              "transition": "PUSH",
+              "state": "default"
+            },
+            {
+              "xpath": "//div[contains(., 'Support Cases & Disputes')]/ancestor::div[contains(@class, 'cursor-pointer')]",
+              "targetScreenId": "28ec48efba3741bfacd9535dffd6db2a",
+              "transition": "PUSH",
+              "state": "default"
+            },
+            {
+              "xpath": "//button[contains(., 'Log Out')]",
+              "targetScreenId": "e685e6b8d290400d921e75ca3b4552d8",
+              "transition": "PUSH_BACK",
+              "state": "default"
+            }
+          ]
+        },
+        "95da5de4eb86423db9f4237123f75c39": {
+          "links": [
+            {
+              "xpath": "//button[@id='chat-trust-btn']",
+              "targetScreenId": "0c92930c9f554915a7d8cce50340df28",
+              "transition": "PUSH",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='explore-services']",
+              "targetScreenId": "dbf21901024f4db2a87ded84e564714a",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='active-bookings']",
+              "targetScreenId": "0a1806fce67b47198911a384c153671d",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='customer-profile']",
+              "targetScreenId": "a8d8c0d8c63c40749ed5d5708630da33",
+              "transition": "NONE",
+              "state": "default"
+            }
+          ]
+        },
+        "7dee001c1dd54bf493253f1b8606eec4": {
+          "links": [
+            {
+              "xpath": "//a[@data-path='provider-kyc-verification']",
+              "targetScreenId": "b23d3ddfa8794673920614884723874a",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='live-booking-dispatches-and-sos-radar']",
+              "targetScreenId": "519b4fffe4e24cedb7999d295cace849",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='support-complaints-and-escrow']",
+              "targetScreenId": "722cda2e953f48d5a8fc6e7a8d8d07fb",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='trust-and-safety-moderation']",
+              "targetScreenId": "4f474de2201a46148d359a03af3730c3",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='service-categories-and-pricing']",
+              "targetScreenId": "eac5e7a48151496ca3265b023ef56ab0",
+              "transition": "NONE",
+              "state": "default"
+            }
+          ]
+        },
+        "e685e6b8d290400d921e75ca3b4552d8": {
+          "links": [
+            {
+              "xpath": "//button[@id='primary-cta-btn']",
+              "targetScreenId": "1f7f2b1e9bd5409fbc83e21f09af69a6",
+              "transition": "PUSH",
+              "state": "default"
+            },
+            {
+              "xpath": "//button[contains(., 'Sign In')]",
+              "targetScreenId": "1f7f2b1e9bd5409fbc83e21f09af69a6",
+              "transition": "PUSH",
+              "state": "default"
+            }
+          ]
+        },
+        "0a1806fce67b47198911a384c153671d": {
+          "links": [
+            {
+              "xpath": "//a[@data-path='explore']",
+              "targetScreenId": "dbf21901024f4db2a87ded84e564714a",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='rewards']",
+              "targetScreenId": "1a48a8cc654845769b33cd07eefea6fc",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[@data-path='profile']",
+              "targetScreenId": "a8d8c0d8c63c40749ed5d5708630da33",
+              "transition": "NONE",
+              "state": "default"
+            },
+            {
+              "xpath": "//button[@aria-label='Notifications']",
+              "targetScreenId": "23ded89ebf0c4f989beae8e7c34f16fa",
+              "transition": "PUSH",
+              "state": "default"
+            },
+            {
+              "xpath": "//button[contains(., 'Track Live GPS')]",
+              "targetScreenId": "844050ca93244cd296967678b53a675b",
+              "transition": "PUSH",
+              "state": "default"
+            },
+            {
+              "xpath": "//button[contains(., 'Call Specialist')]",
+              "targetScreenId": "0b143e36d2404325bc189ede2fad721d",
+              "transition": "SLIDE_UP",
+              "state": "default"
+            },
+            {
+              "xpath": "//button[contains(., 'View Tax Invoice')]",
+              "targetScreenId": "e5c804109085468f949fcd3e9c375c7e",
+              "transition": "PUSH",
+              "state": "default"
+            },
+            {
+              "xpath": "//button[contains(., 'Schedule New Service')]",
+              "targetScreenId": "d22920882d544341a248186180086059",
+              "transition": "PUSH",
+              "state": "default"
+            },
+            {
+              "xpath": "//button[contains(., 'Need Help With This Job?')]",
+              "targetScreenId": "28ec48efba3741bfacd9535dffd6db2a",
+              "transition": "PUSH",
+              "state": "default"
+            }
+          ]
+        },
+        "871d94d75df74d73931c56514a1d239f": {
+          "links": [
+            {
+              "xpath": "//button[@aria-label='Go Back']",
+              "targetScreenId": "1f7f2b1e9bd5409fbc83e21f09af69a6",
+              "transition": "PUSH_BACK",
+              "state": "default"
+            },
+            {
+              "xpath": "//button[@id='submit-otp-btn']",
+              "targetScreenId": "dbf21901024f4db2a87ded84e564714a",
+              "transition": "PUSH",
+              "state": "default"
+            }
+          ]
+        },
+        "844050ca93244cd296967678b53a675b": {
+          "links": [
+            {
+              "xpath": "//button[@aria-label='Go Back']",
+              "targetScreenId": "0a1806fce67b47198911a384c153671d",
+              "transition": "PUSH_BACK",
+              "state": "default"
+            },
+            {
+              "xpath": "//button[@aria-label='Emergency SOS']",
+              "targetScreenId": "247923ffed9b4f0e903a342a073609d1",
+              "transition": "SLIDE_UP",
+              "state": "default"
+            },
+            {
+              "xpath": "//a[contains(., 'Call Rahul')]",
+              "targetScreenId": "0b143e36d2404325bc189ede2fad721d",
+              "transition": "SLIDE_UP",
+              "state": "default"
+            },
+            {
+              "xpath": "//button[contains(., 'Chat')]",
+              "targetScreenId": "0c92930c9f554915a7d8cce50340df28",
+              "transition": "PUSH",
+              "state": "default"
+            },
+            {
+              "xpath": "//button[contains(., 'Reschedule')]",
+              "targetScreenId": "cfed79603f2649bfb68ad392c87c7793",
+              "transition": "SLIDE_UP",
+              "state": "default"
+            },
+            {
+              "xpath": "//button[contains(., 'Cancel Booking')]",
+              "targetScreenId": "cfed79603f2649bfb68ad392c87c7793",
+              "transition": "SLIDE_UP",
+              "state": "default"
+            }
+          ]
+        }
+      },
+      "states": [
+        {
+          "name": "default"
+        }
+      ]
+    }
+  }
+}

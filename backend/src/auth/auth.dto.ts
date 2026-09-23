@@ -1,5 +1,5 @@
 import { Transform } from 'class-transformer';
-import { IsEmail, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsEmail, IsString, MaxLength, MinLength, IsOptional } from 'class-validator';
 import type { RoleCode } from '../common/authorization/permission-policies';
 
 export class EmailPasswordDto {
@@ -14,6 +14,15 @@ export class EmailPasswordDto {
   @MinLength(12)
   @MaxLength(128)
   password!: string;
+
+  @IsOptional()
+  @IsString()
+  mobile?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  fullName?: string;
 }
 
 export interface AuthenticationResponse {

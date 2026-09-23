@@ -28,6 +28,28 @@ class ProviderApplication {
       );
 }
 
+class ProviderStats {
+  const ProviderStats({
+    required this.rating,
+    required this.completedJobs,
+    required this.earningsMinor,
+    required this.acceptanceRate,
+  });
+  final double rating;
+  final int completedJobs;
+  final int earningsMinor;
+  final int acceptanceRate;
+
+  factory ProviderStats.fromJson(Map<String, Object?> json) {
+    return ProviderStats(
+      rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
+      completedJobs: (json['completedJobs'] as num?)?.toInt() ?? 0,
+      earningsMinor: (json['earningsMinor'] as num?)?.toInt() ?? 0,
+      acceptanceRate: (json['acceptanceRate'] as num?)?.toInt() ?? 0,
+    );
+  }
+}
+
 class ProviderProfile {
   const ProviderProfile({
     required this.displayName,
@@ -35,21 +57,29 @@ class ProviderProfile {
     required this.serviceRadiusKm,
     required this.baseLatitude,
     required this.baseLongitude,
+    this.stats,
   });
   final String displayName;
   final String? bio;
   final double serviceRadiusKm;
   final double baseLatitude;
   final double baseLongitude;
+  final ProviderStats? stats;
 
-  factory ProviderProfile.fromJson(Map<String, Object?> json) =>
-      ProviderProfile(
-        displayName: json['displayName'] as String,
-        bio: json['bio'] as String?,
-        serviceRadiusKm: (json['serviceRadiusKm'] as num).toDouble(),
-        baseLatitude: (json['baseLatitude'] as num).toDouble(),
-        baseLongitude: (json['baseLongitude'] as num).toDouble(),
-      );
+  factory ProviderProfile.fromJson(Map<String, Object?> json) {
+    ProviderStats? stats;
+    if (json['stats'] != null) {
+      stats = ProviderStats.fromJson(json['stats'] as Map<String, Object?>);
+    }
+    return ProviderProfile(
+      displayName: json['displayName'] as String,
+      bio: json['bio'] as String?,
+      serviceRadiusKm: (json['serviceRadiusKm'] as num).toDouble(),
+      baseLatitude: (json['baseLatitude'] as num).toDouble(),
+      baseLongitude: (json['baseLongitude'] as num).toDouble(),
+      stats: stats,
+    );
+  }
 }
 
 class ProviderAvailability {
@@ -77,12 +107,13 @@ class ProviderAvailability {
     if (weeklyRules.isEmpty) {
       return 'No recurring hours set.';
     }
-    final days = weeklyRules
-        .map((r) => (r['dayOfWeek'] as num?)?.toInt())
-        .whereType<int>()
-        .toSet()
-        .toList()
-      ..sort();
+    final days =
+        weeklyRules
+            .map((r) => (r['dayOfWeek'] as num?)?.toInt())
+            .whereType<int>()
+            .toSet()
+            .toList()
+          ..sort();
 
     String timeStr = '09:00–17:00';
     if (weeklyRules.isNotEmpty) {
@@ -99,13 +130,15 @@ class ProviderAvailability {
       }
     }
 
-    final isMonToFri = days.length == 5 &&
+    final isMonToFri =
+        days.length == 5 &&
         days.contains(1) &&
         days.contains(2) &&
         days.contains(3) &&
         days.contains(4) &&
         days.contains(5);
-    final isMonToSat = days.length == 6 &&
+    final isMonToSat =
+        days.length == 6 &&
         days.contains(1) &&
         days.contains(2) &&
         days.contains(3) &&
@@ -139,21 +172,43 @@ class ProviderAvailability {
 
     return '$daysStr, $timeStr $timeZone';
   }
+
+  String get timingSummary {
+    if (weeklyRules.isEmpty) {
+      return 'No recurring hours set.';
+    }
+    String timeStr = '09:00–17:00';
+    final intervals = weeklyRules.first['intervals'] as List?;
+    if (intervals != null && intervals.isNotEmpty) {
+      final firstInterval = Map<String, Object?>.from(intervals.first as Map);
+      final startMin = (firstInterval['startMinute'] as num?)?.toInt() ?? 540;
+      final endMin = (firstInterval['endMinute'] as num?)?.toInt() ?? 1020;
+      final startH = (startMin ~/ 60).toString().padLeft(2, '0');
+      final startM = (startMin % 60).toString().padLeft(2, '0');
+      final endH = (endMin ~/ 60).toString().padLeft(2, '0');
+      final endM = (endMin % 60).toString().padLeft(2, '0');
+      timeStr = '$startH:$startM–$endH:$endM';
+    }
+    return timeStr;
+  }
 }
 
 class ProviderSkill {
   const ProviderSkill({
     required this.id,
+    required this.categoryId,
     required this.categoryName,
     required this.verified,
   });
   final String id;
+  final String categoryId;
   final String categoryName;
   final bool verified;
   factory ProviderSkill.fromJson(Map<String, Object?> json) {
     final category = Map<String, Object?>.from(json['serviceCategory'] as Map);
     return ProviderSkill(
       id: json['id'] as String,
+      categoryId: category['id'] as String? ?? '',
       categoryName: category['name'] as String,
       verified: json['isVerified'] as bool,
     );
@@ -188,6 +243,7 @@ class ProviderRequest {
     required this.createdAt,
     required this.version,
     required this.distanceKm,
+    this.customerPhone,
   });
 
   final String id;
@@ -196,6 +252,7 @@ class ProviderRequest {
   final DateTime createdAt;
   final int version;
   final double distanceKm;
+  final String? customerPhone;
 
   factory ProviderRequest.fromJson(Map<String, Object?> json) {
     final id = json['id'];
@@ -203,20 +260,18 @@ class ProviderRequest {
     final description = json['description'];
     final createdAt = DateTime.tryParse(json['createdAt']?.toString() ?? '');
     final distance = json['distanceKm'];
-    if (id is! String ||
-        category is! String ||
-        description is! String ||
-        createdAt == null ||
-        distance is! num) {
+    final customerPhone = json['customerPhone'] as String?;
+    if (id is! String || category is! String || createdAt == null) {
       throw const FormatException();
     }
     return ProviderRequest(
       id: id,
       serviceCategoryId: category,
-      description: description,
+      description: description?.toString() ?? 'Service Request',
       createdAt: createdAt,
       version: (json['version'] as num?)?.toInt() ?? 1,
-      distanceKm: distance.toDouble(),
+      distanceKm: (distance as num?)?.toDouble() ?? 0.0,
+      customerPhone: customerPhone,
     );
   }
 }

@@ -29,10 +29,6 @@ import { TrustService } from '../trust/trust.service';
 
 /** Booking states for which the customer may open a payment. */
 const PAYABLE_BOOKING_STATUSES: readonly string[] = [
-  BookingStatus.REQUESTED,
-  BookingStatus.ASSIGNED,
-  BookingStatus.EN_ROUTE,
-  BookingStatus.IN_PROGRESS,
   BookingStatus.COMPLETED,
 ];
 
@@ -82,8 +78,17 @@ export class PaymentsService {
         'This service is priced on request; online payment is unavailable',
       );
     }
+    
+    let totalMinor = category.priceAmount;
+    if (booking.lineItems && booking.lineItems.length > 0) {
+      totalMinor = booking.lineItems.reduce(
+        (sum, item) => sum + item.priceMinor * item.quantity,
+        category.priceAmount,
+      );
+    }
+
     const input: CreatePaymentOrderRequest = {
-      amountMinor: category.priceAmount,
+      amountMinor: totalMinor,
       currency,
       receipt,
       notes: { bookingId: booking.id },
@@ -472,6 +477,27 @@ export class PaymentsService {
       paidOrderCount: grossRows[0]?.count ?? 0,
       note: 'Records of completed payments. Payouts are not available yet.',
     };
+  }
+
+  /**
+   * Whether the caller's booking has a PAID payment order. The join on
+   * provider_id scopes the answer to bookings the caller is assigned to;
+   * anything else reads as unpaid.
+   */
+  async providerBookingPaymentStatus(
+    providerId: string,
+    bookingId: string,
+  ): Promise<{ bookingId: string; paid: boolean }> {
+    const rows = await this.dataSource.query<
+      Array<{ status?: string }>
+    >(
+      `SELECT o.status
+       FROM payment_orders o
+       JOIN bookings b ON b.id = o.booking_id
+       WHERE o.booking_id = $1 AND b.provider_id = $2`,
+      [bookingId, providerId],
+    );
+    return { bookingId, paid: rows[0]?.status === 'PAID' };
   }
 
   private async appendEvent(

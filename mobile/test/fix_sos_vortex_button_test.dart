@@ -3,34 +3,39 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('FixSosVortexButton requires holding for full duration to trigger', (tester) async {
-    bool triggered = false;
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: FixSosVortexButton(
-            holdDuration: const Duration(milliseconds: 400),
-            onTriggered: () => triggered = true,
+  testWidgets(
+    'FixSosVortexButton requires holding for full duration to trigger',
+    (tester) async {
+      bool triggered = false;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: FixSosVortexButton(
+              holdDuration: const Duration(milliseconds: 400),
+              onTriggered: () => triggered = true,
+            ),
           ),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
 
-    expect(find.text('SOS'), findsOneWidget);
+      expect(find.text('SOS'), findsOneWidget);
 
-    // Short tap (<400ms) -> should NOT trigger
-    await tester.tap(find.text('SOS'));
-    await tester.pumpAndSettle();
-    expect(triggered, isFalse);
+      // Short tap (<400ms) -> should NOT trigger
+      await tester.tap(find.text('SOS'));
+      await tester.pumpAndSettle();
+      expect(triggered, isFalse);
 
-    // Long press holding full duration
-    final gesture = await tester.startGesture(tester.getCenter(find.text('SOS')));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 450));
-    await gesture.up();
-    await tester.pumpAndSettle();
+      // Long press holding full duration
+      final gesture = await tester.startGesture(
+        tester.getCenter(find.text('SOS')),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 450));
+      await gesture.up();
+      await tester.pumpAndSettle();
 
-    expect(triggered, isTrue);
-  });
+      expect(triggered, isTrue);
+    },
+  );
 }

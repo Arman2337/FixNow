@@ -24,12 +24,18 @@ export const VALID_BOOKING_TRANSITIONS: Readonly<
   [BookingStatus.CANCELLED]: [],
 };
 
+export interface CreateBookingLineItemRequest {
+  subServiceId: string;
+  quantity: number;
+}
+
 export interface CreateBookingRequest {
   serviceCategoryId: string;
   description: string;
   locationLat: number;
   locationLng: number;
   scheduledAt?: string | null;
+  lineItems?: CreateBookingLineItemRequest[];
 }
 
 export interface BookingContract {
@@ -51,6 +57,14 @@ export interface BookingContract {
   createdAt: string;
   updatedAt: string;
   version: number;
+  customerPhone?: string | null;
+  providerPhone?: string | null;
+  lineItems?: Array<{
+    id: string;
+    subServiceId: string;
+    quantity: number;
+    priceMinor: number;
+  }>;
 }
 
 export interface BookingResponse {

@@ -40,15 +40,16 @@ class _Fix3DTiltCardState extends State<Fix3DTiltCard>
   @override
   void initState() {
     super.initState();
-    _resetController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 320),
-    )..addListener(() {
-        setState(() {
-          _rotX = _resetAnimX.value;
-          _rotY = _resetAnimY.value;
+    _resetController =
+        AnimationController(
+          vsync: this,
+          duration: const Duration(milliseconds: 320),
+        )..addListener(() {
+          setState(() {
+            _rotX = _resetAnimX.value;
+            _rotY = _resetAnimY.value;
+          });
         });
-      });
   }
 
   @override
@@ -82,19 +83,19 @@ class _Fix3DTiltCardState extends State<Fix3DTiltCard>
 
   @override
   Widget build(BuildContext context) {
-    final reduceMotion = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
 
     if (reduceMotion) {
-      return GestureDetector(
-        onTap: widget.onTap,
-        child: widget.child,
-      );
+      return GestureDetector(onTap: widget.onTap, child: widget.child);
     }
 
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        final height = constraints.maxHeight.isFinite ? constraints.maxHeight : 180.0;
+        final height = constraints.maxHeight.isFinite
+            ? constraints.maxHeight
+            : 180.0;
         final size = Size(width, height);
 
         final transform = Matrix4.identity()
@@ -120,23 +121,24 @@ class _Fix3DTiltCardState extends State<Fix3DTiltCard>
                   Positioned.fill(
                     child: IgnorePointer(
                       child: ClipRRect(
-                        borderRadius: BorderRadius.circular(widget.borderRadius),
+                        borderRadius: BorderRadius.circular(
+                          widget.borderRadius,
+                        ),
                         child: DecoratedBox(
                           decoration: BoxDecoration(
                             border: widget.borderColor != null
                                 ? Border.all(color: widget.borderColor!)
                                 : null,
-                            borderRadius: BorderRadius.circular(widget.borderRadius),
+                            borderRadius: BorderRadius.circular(
+                              widget.borderRadius,
+                            ),
                             gradient: RadialGradient(
                               center: Alignment(
                                 (_pointerPos.dx * 2.0) - 1.0,
                                 (_pointerPos.dy * 2.0) - 1.0,
                               ),
                               radius: 0.85,
-                              colors: [
-                                widget.sheenColor,
-                                Colors.transparent,
-                              ],
+                              colors: [widget.sheenColor, Colors.transparent],
                               stops: const [0.0, 1.0],
                             ),
                           ),

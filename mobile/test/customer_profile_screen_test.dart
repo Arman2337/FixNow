@@ -1,3 +1,4 @@
+import 'package:fixnow_mobile/features/services/sub_service_item.dart';
 import 'package:fixnow_mobile/api/api_client.dart';
 import 'package:fixnow_mobile/design_system/app_theme.dart';
 import 'package:fixnow_mobile/features/profile/customer_profile.dart';
@@ -92,4 +93,10 @@ class FakeProfileRepository implements CustomerProfileRepository {
     profile = CustomerProfile(displayName: displayName);
     return profile;
   }
+}
+
+
+class MockClient implements ApiTransport {
+  @override
+  Future<ApiResponse> send(ApiRequest request) async => ApiResponse(statusCode: 200, body: {});
 }

@@ -40,17 +40,16 @@ class ProviderHomeScreen extends StatelessWidget {
   const ProviderHomeScreen({
     required this.controller,
     this.chatRepository,
-    this.callRepository,
     this.loadAcceptTime,
     this.onViewEarnings,
     this.notificationController,
+    this.onTechDesk,
     this.onOpenBooking,
     this.onOpenInvoice,
     super.key,
   });
   final ProviderController controller;
   final ChatRepository? chatRepository;
-  final CallRepository? callRepository;
 
   /// FN-111: loads this provider's rolling accept-time signal; null hides
   /// the card entirely (including failures and insufficient data).
@@ -60,6 +59,7 @@ class ProviderHomeScreen extends StatelessWidget {
   final VoidCallback? onViewEarnings;
 
   final NotificationController? notificationController;
+  final VoidCallback? onTechDesk;
   final void Function(String bookingId)? onOpenBooking;
   final void Function(InAppNotification notification)? onOpenInvoice;
 
@@ -132,469 +132,610 @@ class ProviderHomeScreen extends StatelessWidget {
                   ],
                 ],
               ),
-            const SizedBox(height: AppSpacing.md),
-
-            if (notificationController != null &&
-                notificationController!.notifications.any((n) => !n.isRead)) ...[
-              Builder(builder: (context) {
-                final unread = notificationController!.notifications
-                    .firstWhere((n) => !n.isRead);
-                return _ProviderNotificationBanner(
-                  notification: unread,
-                  onTap: () {
-                    notificationController!.markAsRead(unread.id);
-                    if (unread.category == NotificationCategory.payments) {
-                      onOpenInvoice?.call(unread);
-                    } else if (unread.bookingId != null) {
-                      onOpenBooking?.call(unread.bookingId!);
-                    } else {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => NotificationCenterScreen(
-                            controller: notificationController!,
-                            onOpenBooking: onOpenBooking,
-                            onOpenInvoice: onOpenInvoice,
-                          ),
-                        ),
-                      );
-                    }
-                  },
-                  onDismiss: () {
-                    notificationController!.markAsRead(unread.id);
-                  },
-                );
-              }),
-            ],
-
-            if (controller.requests.isNotEmpty)
-              _IncomingRequestBanner(
-                count: controller.requests.length,
-                firstRequest: controller.requests.first,
-                onTap: () {},
-              ),
-
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.md,
-                vertical: AppSpacing.sm,
-              ),
-              decoration: BoxDecoration(
-                color: AppColors.accentGoldSoft,
-                borderRadius: BorderRadius.circular(AppRadius.card),
-                border: Border.all(color: AppColors.borderGold),
-              ),
-              child: const Row(
-                children: [
-                  Icon(
-                    Icons.trending_up_rounded,
-                    color: AppColors.accentGold,
-                    size: 18,
-                  ),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'High demand nearby · stay online for faster matching',
-                      style: TextStyle(
-                        color: AppColors.accentGold,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-
-            FixCard(
-              tone: FixCardTone.elevated,
-              semanticLabel: 'Availability ${online ? 'online' : 'offline'}',
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: FixStatusChip(
-                          label: online ? 'Online' : 'Offline',
-                          icon: online
-                              ? Icons.online_prediction_rounded
-                              : Icons.offline_bolt_rounded,
-                          tone: online
-                              ? FixStatusTone.success
-                              : FixStatusTone.neutral,
-                        ),
-                      ),
-                      Switch.adaptive(
-                        value: online,
-                        onChanged: availability == null
-                            ? null
-                            : (value) async {
-                                final newStatus = value ? 'online' : 'offline';
-                                await controller.updateStatus(newStatus);
-                                if (context.mounted) {
-                                  showFixBanner(
-                                    ScaffoldMessenger.of(context),
-                                    message: value
-                                        ? 'You are now online. Receiving eligible jobs in your area.'
-                                        : 'You are now offline. Go online to receive customer requests.',
-                                    tone: value ? FixBannerTone.success : FixBannerTone.info,
-                                  );
-                                }
-                              },
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  Text(
-                    online
-                        ? 'Matching eligible requests in your service area.'
-                        : 'Go online to receive eligible requests nearby.',
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            if (loadAcceptTime != null)
-              _AcceptTimeCard(load: loadAcceptTime!),
-            const SizedBox(height: AppSpacing.md),
-            FixCard(
-              semanticLabel: 'Working schedule',
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Working schedule',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: AppColors.textOnLightPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    availability?.scheduleSummary ?? 'No recurring hours set.',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textOnLightSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: FixButton(
-                          label: availability?.weeklyRules.isEmpty ?? true
-                              ? 'Set working hours'
-                              : 'Edit schedule',
-                          icon: Icons.calendar_month_rounded,
-                          variant: FixButtonVariant.secondary,
-                          onPressed: availability == null
-                              ? null
-                              : () => FixProviderWorkingHoursSheet.show(
-                                  context,
-                                  controller: controller,
-                                ),
-                        ),
-                      ),
-                      if (availability?.weeklyRules.isNotEmpty ?? false) ...[
-                        const SizedBox(width: AppSpacing.sm),
-                        IconButton(
-                          tooltip: 'Clear recurring hours',
-                          icon: const Icon(Icons.delete_outline_rounded, color: AppColors.danger),
-                          onPressed: () => controller.setWeekdaySchedule(false),
-                        ),
-                      ],
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            if (onViewEarnings != null) ...[
               const SizedBox(height: AppSpacing.md),
-              FixCard(
-                semanticLabel: 'Earnings',
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Earnings',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColors.textOnLightPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      'See a record of completed payments. Payouts are not available yet.',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.textOnLightSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    FixButton(
-                      label: 'View earnings',
-                      icon: Icons.account_balance_wallet_outlined,
-                      variant: FixButtonVariant.secondary,
-                      onPressed: onViewEarnings,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-            const SizedBox(height: AppSpacing.xxl),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Incoming requests',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: AppColors.textOnDarkPrimary,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  tooltip: 'Refresh requests',
-                  onPressed: controller.refreshingRequests
-                      ? null
-                      : controller.refreshRequests,
-                  icon: controller.refreshingRequests
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.refresh_rounded),
+
+              if (notificationController != null &&
+                  notificationController!.notifications.any(
+                    (n) => !n.isRead,
+                  )) ...[
+                Builder(
+                  builder: (context) {
+                    final unread = notificationController!.notifications
+                        .firstWhere((n) => !n.isRead);
+                    return _ProviderNotificationBanner(
+                      notification: unread,
+                      onTap: () {
+                        notificationController!.markAsRead(unread.id);
+                        if (unread.category == NotificationCategory.payments) {
+                          onOpenInvoice?.call(unread);
+                        } else if (unread.bookingId != null) {
+                          onOpenBooking?.call(unread.bookingId!);
+                        } else {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => NotificationCenterScreen(
+                                controller: notificationController!,
+                                onOpenBooking: onOpenBooking,
+                                onOpenInvoice: onOpenInvoice,
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                      onDismiss: () {
+                        notificationController!.markAsRead(unread.id);
+                      },
+                    );
+                  },
                 ),
               ],
-            ),
-            const SizedBox(height: AppSpacing.md),
-            if (controller.actionError case final message?)
-              Padding(
-                padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                child: FixCard(
-                  tone: FixCardTone.secondary,
-                  semanticLabel: 'Request action failed',
-                  child: Text(
-                    message,
-                    style: const TextStyle(color: AppColors.danger),
-                  ),
+
+              if (controller.requests.isNotEmpty)
+                _IncomingRequestBanner(
+                  count: controller.requests.length,
+                  firstRequest: controller.requests.first,
+                  onTap: () {},
+                ),
+
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md,
+                  vertical: AppSpacing.sm,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.accentGoldSoft,
+                  borderRadius: BorderRadius.circular(AppRadius.card),
+                  border: Border.all(color: AppColors.borderGold),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(
+                      Icons.trending_up_rounded,
+                      color: AppColors.accentGold,
+                      size: 18,
+                    ),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'High demand nearby · stay online for faster matching',
+                        style: TextStyle(
+                          color: AppColors.accentGold,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            if (controller.requests.isEmpty)
-              const FixCard(
-                semanticLabel: 'No incoming requests',
+              const SizedBox(height: AppSpacing.lg),
+
+              FixCard(
+                tone: FixCardTone.elevated,
+                semanticLabel: 'Availability ${online ? 'online' : 'offline'}',
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(
-                      Icons.inbox_outlined,
-                      color: AppColors.textOnSurfaceMuted,
-                    ),
-                    SizedBox(height: AppSpacing.md),
-                    Text(
-                      'No new requests',
-                      style: TextStyle(
-                        color: AppColors.textOnSurface,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    SizedBox(height: AppSpacing.xs),
-                    Text(
-                      'Eligible nearby jobs will appear here while you are online.',
-                      style: TextStyle(color: AppColors.textOnSurfaceSecondary),
-                    ),
-                  ],
-                ),
-              )
-            else
-              ...controller.requests.map((request) {
-                final serviceName = providerServiceName(
-                  controller.categories,
-                  request.serviceCategoryId,
-                );
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                  child: FixCard(
-                    tone: FixCardTone.elevated,
-                    semanticLabel: 'Incoming service request',
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                    Row(
                       children: [
-                        const FixStatusChip(
-                          label: 'New request',
-                          icon: Icons.radar_rounded,
-                          tone: FixStatusTone.warning,
+                        Expanded(
+                          child: FixStatusChip(
+                            label: online ? 'Online' : 'Offline',
+                            icon: online
+                                ? Icons.online_prediction_rounded
+                                : Icons.offline_bolt_rounded,
+                            tone: online
+                                ? FixStatusTone.success
+                                : FixStatusTone.neutral,
+                          ),
                         ),
-                        const SizedBox(height: AppSpacing.md),
-                        Text(
-                          serviceName,
-                          style: Theme.of(context).textTheme.labelLarge,
-                        ),
-                        const SizedBox(height: AppSpacing.xs),
-                        Text(
-                          request.description,
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: AppSpacing.xs),
-                        Text(
-                          'About ${request.distanceKm.toStringAsFixed(1)} km away',
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: AppColors.textSecondary),
-                        ),
-                        const SizedBox(height: AppSpacing.xs),
-                        Text(
-                          'Requested ${_requestTime(request.createdAt)}',
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: AppColors.textSecondary),
-                        ),
-                        const SizedBox(height: AppSpacing.xs),
-                        Text(
-                          'Customer address and contact details appear only after you accept.',
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: AppColors.textSecondary),
-                        ),
-                        const SizedBox(height: AppSpacing.lg),
-                        FixButton(
-                          label: 'Accept request',
-                          icon: Icons.check_circle_outline_rounded,
-                          onPressed: () async {
-                            await controller.acceptRequest(request);
-                            if (context.mounted) {
-                              showFixBanner(
-                                ScaffoldMessenger.of(context),
-                                message: 'Request accepted! Preparing active job details.',
-                                tone: FixBannerTone.success,
-                              );
-                            }
-                          },
+                        Switch.adaptive(
+                          value: online,
+                          onChanged: availability == null
+                              ? null
+                              : (value) async {
+                                  final newStatus = value
+                                      ? 'online'
+                                      : 'offline';
+                                  await controller.updateStatus(newStatus);
+                                  if (context.mounted) {
+                                    showFixBanner(
+                                      ScaffoldMessenger.of(context),
+                                      message: value
+                                          ? 'You are now online. Receiving eligible jobs in your area.'
+                                          : 'You are now offline. Go online to receive customer requests.',
+                                      tone: value
+                                          ? FixBannerTone.success
+                                          : FixBannerTone.info,
+                                    );
+                                  }
+                                },
                         ),
                       ],
                     ),
-                  ),
-                );
-              }),
-            const SizedBox(height: AppSpacing.xxl),
-            Text(
-              'Assigned work',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: AppColors.textOnDarkPrimary,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            if (active.isEmpty)
-              const FixCard(
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.work_history_rounded,
-                      color: AppColors.textMuted,
-                    ),
-                    SizedBox(width: AppSpacing.md),
-                    Expanded(
-                      child: Text(
-                        'No active jobs. New assignments will appear here.',
-                      ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      online
+                          ? 'Matching eligible requests in your service area.'
+                          : 'Go online to receive eligible requests nearby.',
+                      style: Theme.of(context).textTheme.bodyLarge,
                     ),
                   ],
                 ),
-              )
-            else
-              ...active.map(
-                (job) => Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                  child: InkWell(
-                    key: Key('active_job_${job.id}'),
-                    borderRadius: BorderRadius.circular(AppRadius.card),
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => ProviderActiveJobCockpitScreen(
-                          job: job,
-                          controller: controller,
-                          chatRepository: chatRepository,
-                          callRepository: callRepository,
-                        ),
-                      ),
-                    ),
-                    child: FixCard(
-                      tone: FixCardTone.elevated,
-                      borderColor: AppColors.borderGold,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              FixStatusChip(
-                                label: job.status.replaceAll('_', ' '),
-                                icon: Icons.route_rounded,
-                                tone: job.status == 'IN_PROGRESS'
-                                    ? FixStatusTone.warning
-                                    : FixStatusTone.info,
+              ),
+              const SizedBox(height: AppSpacing.md),
+              if (loadAcceptTime != null)
+                _AcceptTimeCard(load: loadAcceptTime!),
+              const SizedBox(height: AppSpacing.md),
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      child: InkWell(
+                        onTap: availability == null
+                            ? null
+                            : () => FixProviderWorkingHoursSheet.show(
+                                context,
+                                controller: controller,
                               ),
-                              const Row(
+                        borderRadius: BorderRadius.circular(AppRadius.card),
+                        child: Container(
+                          padding: const EdgeInsets.all(AppSpacing.md),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary,
+                            borderRadius: BorderRadius.circular(AppRadius.card),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.primary.withValues(alpha: 0.2),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.2),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.calendar_month_rounded,
+                                  color: Colors.white,
+                                  size: 28,
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.sm),
+                              Text(
+                                availability?.timingSummary ?? 'No schedule set',
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  height: 1.2,
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.md),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
-                                    'Open Cockpit',
-                                    style: TextStyle(
-                                      color: AppColors.accentGold,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                                    'Edit\nSchedule',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w800,
+                                          height: 1.2,
+                                        ),
                                   ),
-                                  SizedBox(width: 4),
-                                  Icon(
-                                    Icons.arrow_forward_rounded,
-                                    size: 16,
-                                    color: AppColors.accentGold,
+                                  const Icon(
+                                    Icons.chevron_right_rounded,
+                                    color: Colors.white70,
+                                    size: 24,
                                   ),
                                 ],
                               ),
                             ],
                           ),
-                          const SizedBox(height: AppSpacing.sm),
+                        ),
+                      ),
+                    ),
+                    if (onViewEarnings != null) ...[
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: InkWell(
+                          onTap: onViewEarnings,
+                          borderRadius: BorderRadius.circular(AppRadius.card),
+                          child: Container(
+                            padding: const EdgeInsets.all(AppSpacing.md),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary,
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.card,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.primary.withValues(
+                                    alpha: 0.2,
+                                  ),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.2),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.account_balance_wallet_rounded,
+                                    color: Colors.white,
+                                    size: 28,
+                                  ),
+                                ),
+                                const SizedBox(height: AppSpacing.sm),
+                                Builder(
+                                  builder: (context) {
+                                    final earnings = controller.profile?.stats?.earningsMinor ?? 0;
+                                    final amount = (earnings ~/ 100).toString();
+                                    return Text(
+                                      '₹$amount',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    );
+                                  },
+                                ),
+                                const SizedBox(height: AppSpacing.md),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      'View\nEarnings',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium
+                                          ?.copyWith(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w800,
+                                            height: 1.2,
+                                          ),
+                                    ),
+                                    const Icon(
+                                      Icons.chevron_right_rounded,
+                                      color: Colors.white70,
+                                      size: 24,
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xxl),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Incoming requests',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Refresh requests',
+                    onPressed: controller.refreshingRequests
+                        ? null
+                        : controller.refreshRequests,
+                    icon: controller.refreshingRequests
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.refresh_rounded),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.md),
+              if (controller.actionError case final message?)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                  child: FixCard(
+                    tone: FixCardTone.secondary,
+                    semanticLabel: 'Request action failed',
+                    child: Text(
+                      message,
+                      style: const TextStyle(color: AppColors.danger),
+                    ),
+                  ),
+                ),
+              if (controller.requests.isEmpty)
+                const FixCard(
+                  semanticLabel: 'No incoming requests',
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.inbox_outlined,
+                        color: AppColors.textOnSurfaceMuted,
+                      ),
+                      SizedBox(height: AppSpacing.md),
+                      Text(
+                        'No new requests',
+                        style: TextStyle(
+                          color: AppColors.textOnSurface,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      SizedBox(height: AppSpacing.xs),
+                      Text(
+                        'Eligible nearby jobs will appear here while you are online.',
+                        style: TextStyle(
+                          color: AppColors.textOnSurfaceSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                ...controller.requests.map((request) {
+                  final serviceName = providerServiceName(
+                    controller.categories,
+                    request.serviceCategoryId,
+                  );
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                    child: FixCard(
+                      tone: FixCardTone.elevated,
+                      semanticLabel: 'Incoming service request',
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const FixStatusChip(
+                            label: 'New request',
+                            icon: Icons.radar_rounded,
+                            tone: FixStatusTone.warning,
+                          ),
+                          const SizedBox(height: AppSpacing.md),
                           Text(
-                            job.description,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
+                            serviceName,
+                            style: Theme.of(context).textTheme.labelLarge,
+                          ),
+                          const SizedBox(height: AppSpacing.xs),
+                          Text(
+                            request.description,
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
                           const SizedBox(height: AppSpacing.xs),
                           Text(
-                            providerServiceName(
-                              controller.categories,
-                              job.serviceCategoryId,
-                            ),
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: AppColors.textSecondary,
-                            ),
+                            'About ${request.distanceKm.toStringAsFixed(1)} km away',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: AppColors.textSecondary),
                           ),
-                          const SizedBox(height: AppSpacing.sm),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Job #${job.id.replaceAll('-', '').substring(0, 8).toUpperCase()}',
-                                style: Theme.of(context).textTheme.bodySmall,
-                              ),
-                              const Text(
-                                'Tap to update status / OTP',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: AppColors.textMuted,
-                                ),
-                              ),
-                            ],
+                          const SizedBox(height: AppSpacing.xs),
+                          Text(
+                            'Requested ${_requestTime(request.createdAt)}',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: AppColors.textSecondary),
+                          ),
+                          const SizedBox(height: AppSpacing.xs),
+                          Text(
+                            'Customer address and contact details appear only after you accept.',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: AppColors.textSecondary),
+                          ),
+                          const SizedBox(height: AppSpacing.lg),
+                          FixButton(
+                            label: 'Accept request',
+                            icon: Icons.check_circle_outline_rounded,
+                            onPressed: () async {
+                              await controller.acceptRequest(request);
+                              if (context.mounted) {
+                                showFixBanner(
+                                  ScaffoldMessenger.of(context),
+                                  message:
+                                      'Request accepted! Preparing active job details.',
+                                  tone: FixBannerTone.success,
+                                );
+                              }
+                            },
                           ),
                         ],
                       ),
                     ),
+                  );
+                }),
+              const SizedBox(height: AppSpacing.xxl),
+              Text(
+                'Assigned work',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(color: AppColors.textPrimary),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              if (active.isEmpty)
+                const FixCard(
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.work_history_rounded,
+                        color: AppColors.textMuted,
+                      ),
+                      SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: Text(
+                          'No active jobs. New assignments will appear here.',
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                ...active.map(
+                  (job) => Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                    child: InkWell(
+                      key: Key('active_job_${job.id}'),
+                      borderRadius: BorderRadius.circular(AppRadius.card),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => ProviderActiveJobCockpitScreen(
+                            job: job,
+                            controller: controller,
+                            chatRepository: chatRepository,
+                          ),
+                        ),
+                      ),
+                      child: FixCard(
+                        tone: FixCardTone.elevated,
+                        borderColor: AppColors.borderGold,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                FixStatusChip(
+                                  label: job.status.replaceAll('_', ' '),
+                                  icon: Icons.route_rounded,
+                                  tone: job.status == 'IN_PROGRESS'
+                                      ? FixStatusTone.warning
+                                      : FixStatusTone.info,
+                                ),
+                                const Row(
+                                  children: [
+                                    Text(
+                                      'Open Cockpit',
+                                      style: TextStyle(
+                                        color: AppColors.accentGold,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    SizedBox(width: 4),
+                                    Icon(
+                                      Icons.arrow_forward_rounded,
+                                      size: 16,
+                                      color: AppColors.accentGold,
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: AppSpacing.sm),
+                            Text(
+                              job.description,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: AppSpacing.xs),
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.handyman_rounded,
+                                  size: 14,
+                                  color: AppColors.textSecondary,
+                                ),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    providerServiceName(
+                                      controller.categories,
+                                      job.serviceCategoryId,
+                                    ),
+                                    style: Theme.of(context).textTheme.bodySmall
+                                        ?.copyWith(
+                                          color: AppColors.textSecondary,
+                                        ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: AppSpacing.xs),
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.schedule_rounded,
+                                  size: 14,
+                                  color: AppColors.textSecondary,
+                                ),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    'Scheduled: ${_requestTime(job.scheduledAt ?? job.createdAt)}',
+                                    style: Theme.of(context).textTheme.bodySmall
+                                        ?.copyWith(
+                                          color: AppColors.textSecondary,
+                                        ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: AppSpacing.sm),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    'Job #${job.id.replaceAll('-', '').substring(0, 8).toUpperCase()}',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodySmall,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                const Text(
+                                  'Tap to update status / OTP',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: AppColors.textMuted,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
-      ),
-    );
-  },
-);
+      );
+    },
+  );
 
   static String _requestTime(DateTime value) {
     final local = value.toLocal();
@@ -665,10 +806,7 @@ class _ProviderNotificationBanner extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surfaceElevated,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(
-          color: color.withValues(alpha: 0.4),
-          width: 1.2,
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.4), width: 1.2),
         boxShadow: [
           BoxShadow(
             color: color.withValues(alpha: 0.12),
@@ -698,7 +836,11 @@ class _ProviderNotificationBanner extends StatelessWidget {
                     shape: BoxShape.circle,
                     border: Border.all(color: color.withValues(alpha: 0.3)),
                   ),
-                  child: Icon(notification.category.icon, size: 18, color: color),
+                  child: Icon(
+                    notification.category.icon,
+                    size: 18,
+                    color: color,
+                  ),
                 ),
                 const SizedBox(width: AppSpacing.sm + 4),
                 Expanded(
@@ -720,7 +862,10 @@ class _ProviderNotificationBanner extends StatelessWidget {
                             ),
                           ),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 1.5,
+                            ),
                             decoration: BoxDecoration(
                               color: color.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(4),
@@ -752,11 +897,12 @@ class _ProviderNotificationBanner extends StatelessWidget {
                       Row(
                         children: [
                           Text(
-                            notification.category == NotificationCategory.payments
+                            notification.category ==
+                                    NotificationCategory.payments
                                 ? 'View Invoice'
                                 : notification.bookingId != null
-                                    ? 'View Booking'
-                                    : 'View Details',
+                                ? 'View Booking'
+                                : 'View Details',
                             style: TextStyle(
                               color: color,
                               fontSize: 11,
@@ -764,7 +910,11 @@ class _ProviderNotificationBanner extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 3),
-                          Icon(Icons.arrow_forward_rounded, size: 12, color: color),
+                          Icon(
+                            Icons.arrow_forward_rounded,
+                            size: 12,
+                            color: color,
+                          ),
                         ],
                       ),
                     ],
@@ -773,8 +923,15 @@ class _ProviderNotificationBanner extends StatelessWidget {
                 const SizedBox(width: AppSpacing.xs),
                 IconButton(
                   padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-                  icon: const Icon(Icons.close_rounded, size: 16, color: AppColors.textMuted),
+                  constraints: const BoxConstraints(
+                    minWidth: 28,
+                    minHeight: 28,
+                  ),
+                  icon: const Icon(
+                    Icons.close_rounded,
+                    size: 16,
+                    color: AppColors.textMuted,
+                  ),
                   tooltip: 'Dismiss notification',
                   onPressed: onDismiss,
                 ),
@@ -833,7 +990,11 @@ class _IncomingRequestBanner extends StatelessWidget {
                     color: AppColors.accentGold.withValues(alpha: 0.25),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.radar_rounded, size: 20, color: AppColors.accentGold),
+                  child: const Icon(
+                    Icons.radar_rounded,
+                    size: 20,
+                    color: AppColors.accentGold,
+                  ),
                 ),
                 const SizedBox(width: AppSpacing.md),
                 Expanded(
@@ -843,7 +1004,9 @@ class _IncomingRequestBanner extends StatelessWidget {
                       Row(
                         children: [
                           Text(
-                            count == 1 ? 'New Request Available!' : '$count New Requests Available!',
+                            count == 1
+                                ? 'New Request Available!'
+                                : '$count New Requests Available!',
                             style: const TextStyle(
                               color: AppColors.cream,
                               fontWeight: FontWeight.w700,
@@ -852,7 +1015,10 @@ class _IncomingRequestBanner extends StatelessWidget {
                           ),
                           const SizedBox(width: 6),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 5,
+                              vertical: 1,
+                            ),
                             decoration: BoxDecoration(
                               color: AppColors.accentGold,
                               borderRadius: BorderRadius.circular(4),
@@ -871,14 +1037,21 @@ class _IncomingRequestBanner extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         '${firstRequest.distanceKm.toStringAsFixed(1)} km away · Tap to review and accept',
-                        style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
                 ),
-                const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.accentGold),
+                const Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 14,
+                  color: AppColors.accentGold,
+                ),
               ],
             ),
           ),

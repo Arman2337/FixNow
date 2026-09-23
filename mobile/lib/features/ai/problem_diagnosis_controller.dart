@@ -41,10 +41,12 @@ class ProblemDiagnosisController extends ChangeNotifier {
 
   CapturedImage? _image;
   Uint8List? _audioWav;
+  String textDescription = '';
 
   Uint8List? get imageBytes => _image?.bytes;
   bool get hasImage => _image != null;
   bool get hasAudio => _audioWav != null;
+  bool get hasText => textDescription.trim().isNotEmpty;
   bool get isRecording => status == DiagnosisStatus.recording;
   bool get isAnalyzing => status == DiagnosisStatus.analyzing;
 
@@ -117,10 +119,16 @@ class ProblemDiagnosisController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setTextDescription(String text) {
+    textDescription = text;
+    notifyListeners();
+  }
+
   /// Clear captured media and any result back to the initial state.
   void reset() {
     _image = null;
     _audioWav = null;
+    textDescription = '';
     result = null;
     message = null;
     status = DiagnosisStatus.idle;
@@ -129,8 +137,19 @@ class ProblemDiagnosisController extends ChangeNotifier {
 
   Future<void> analyzeImage() async {
     final image = _image;
-    if (image == null) return;
-    await _analyze(() => _repository.analyzeImage(image: _imagePart(image)));
+    if (image == null && !hasText) return;
+    if (image == null) {
+      // Just text without image? No endpoint for text-only yet, we will map it to combined later or something.
+      // Wait, the UI only enables "Analyze" if hasImage or hasAudio (or hasText now).
+      // If we don't have an image, we wouldn't call analyzeImage.
+      return;
+    }
+    await _analyze(
+      () => _repository.analyzeImage(
+        image: _imagePart(image),
+        textDescription: textDescription,
+      ),
+    );
   }
 
   Future<void> analyzeVoice() async {
@@ -140,6 +159,7 @@ class ProblemDiagnosisController extends ChangeNotifier {
       () => _repository.analyzeVoice(
         audio: _audioPart(audio),
         languageHint: _languageHint,
+        textDescription: textDescription,
       ),
     );
   }
@@ -153,6 +173,7 @@ class ProblemDiagnosisController extends ChangeNotifier {
         image: _imagePart(image),
         audio: _audioPart(audio),
         languageHint: _languageHint,
+        textDescription: textDescription,
       ),
     );
   }

@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base { html, body { margin: 0; padding: 0; } body { overscroll-behavior: none; } main > :first-child { margin-top: 0 !important; } main > :last-child { margin-bottom: 0 !important; } } ::-webkit-scrollbar { display: none; }</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "on-secondary-container": "#5c647a", "on-tertiary-container": "#fffbff", "inverse-on-surface": "#eaf1ff", "on-secondary-fixed-variant": "#3f465c", "on-primary": "#ffffff", "primary-container": "#00855d", "on-primary-fixed-variant": "#005137", "surface-container-highest": "#d3e4fe", "on-secondary-fixed": "#131b2e", "surface-container-lowest": "#ffffff", "inverse-surface": "#213145", "secondary-container": "#dae2fd", "error": "#ba1a1a", "primary-fixed-dim": "#68dba9", "surface-variant": "#d3e4fe", "on-error": "#ffffff", "on-background": "#0b1c30", "primary": "#006948", "outline-variant": "#bccac0", "on-tertiary-fixed-variant": "#653e00", "secondary-fixed": "#dae2fd", "surface-container-high": "#dce9ff", "tertiary": "#825100", "on-primary-fixed": "#002114", "background": "#f8f9ff", "tertiary-fixed-dim": "#ffb95f", "tertiary-fixed": "#ffddb8", "on-tertiary-fixed": "#2a1700", "inverse-primary": "#68dba9", "surface-tint": "#006c4a", "primary-fixed": "#85f8c4", "tertiary-container": "#a36700", "surface-dim": "#cbdbf5", "secondary-fixed-dim": "#bec6e0", "on-primary-container": "#f5fff7", "outline": "#6d7a72", "error-container": "#ffdad6", "on-surface-variant": "#3d4a42", "on-tertiary": "#ffffff", "on-error-container": "#93000a", "surface": "#f8f9ff", "secondary": "#565e74", "surface-container-low": "#eff4ff", "surface-bright": "#f8f9ff", "surface-container": "#e5eeff", "on-surface": "#0b1c30", "on-secondary": "#ffffff" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "margin-desktop": "2rem", "space-xs": "0.25rem", "margin-tablet": "1.5rem", "margin": "1rem", "space-xl": "2rem", "gutter-desktop": "1.5rem", "space-lg": "1.5rem", "space-md": "1rem", "gutter": "1rem", "space-sm": "0.5rem" }, "fontFamily": { "price-display": [ "Plus Jakarta Sans" ], "headline-xl-mobile": [ "Plus Jakarta Sans" ], "data-mono": [ "Inter" ], "label-sm": [ "Inter" ], "body-sm": [ "Inter" ], "headline-lg-mobile": [ "Plus Jakarta Sans" ], "headline-lg": [ "Plus Jakarta Sans" ], "headline-md": [ "Plus Jakarta Sans" ], "body-md": [ "Inter" ], "label-md": [ "Inter" ], "headline-xl": [ "Plus Jakarta Sans" ], "body-lg": [ "Inter" ] }, "fontSize": { "price-display": [ "24px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "700" } ], "headline-xl-mobile": [ "30px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "800" } ], "headline-lg-mobile": [ "24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "700" } ], "headline-lg": [ "32px", { "lineHeight": "40px", "letterSpacing": "-0.015em", "fontWeight": "700" } ], "headline-md": [ "20px", { "lineHeight": "28px", "fontWeight": "600" } ], "headline-xl": [ "40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "800" } ], "data-mono": [ "12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" } ], "label-sm": [ "11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "600" } ], "body-sm": [ "12px", { "lineHeight": "16px", "fontWeight": "400" } ], "body-md": [ "14px", { "lineHeight": "20px", "fontWeight": "400" } ], "label-md": [ "13px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "600" } ], "body-lg": [ "16px", { "lineHeight": "24px", "fontWeight": "400" } ] } } } };</script></head><body class="bg-surface font-body-md text-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-full w-72 bg-surface-container-lowest border-r border-outline-variant/30 z-50 flex flex-col justify-between"><div class="flex flex-col"><div class="h-16 px-space-lg flex items-center border-b border-outline-variant/30 gap-space-sm"><div class="w-9 h-9 rounded-lg bg-primary flex items-center justify-center text-on-primary shadow-sm"><span class="material-symbols-outlined text-[20px]">build_circle</span></div><div><span class="font-headline-md text-headline-md font-bold tracking-tight text-on-surface">Fix<span class="text-primary">Now</span></span><span class="block font-label-sm text-label-sm uppercase tracking-widest text-on-surface-variant">Admin Portal</span></div></div><div class="px-space-md py-space-sm"><div class="px-space-sm py-space-xs font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Operations Engine</div></div><nav class="flex flex-col gap-space-xs px-space-md" data-active-classes="bg-primary-container text-on-primary-container font-semibold shadow-sm"><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" data-path="overview-dashboard" href="#"><span class="material-symbols-outlined text-[20px]">dashboard</span><span>Overview Dashboard</span></a><a class="flex items-center justify-between px-space-md py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" data-path="provider-kyc-verification" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px]">verified_user</span><span>Provider KYC Verification</span></div><span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded bg-secondary-container text-on-secondary-fixed-variant font-semibold">9 New</span></a><a class="flex items-center justify-between px-space-md py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" data-path="live-booking-dispatches-and-sos-radar" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px]">fmd_good</span><span>Live Dispatches &amp; Radar</span></div><span class="flex h-2 w-2 relative"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-error opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-error"></span></span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" data-path="support-complaints-and-escrow" href="#"><span class="material-symbols-outlined text-[20px]">payments</span><span>Complaints &amp; Escrow</span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" data-path="trust-and-safety-moderation" href="#"><span class="material-symbols-outlined text-[20px]">gavel</span><span>Trust &amp; Safety Moderation</span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" data-path="service-categories-and-pricing" href="#"><span class="material-symbols-outlined text-[20px]">tune</span><span>Categories &amp; Pricing</span></a></nav></div><div class="p-space-md border-t border-outline-variant/30"><div class="bg-surface-container-low p-space-md rounded-xl border border-outline-variant/20 flex flex-col gap-space-xs"><div class="flex items-center justify-between"><span class="font-label-sm text-label-sm font-semibold uppercase text-on-surface-variant">Dispatch Node</span><span class="font-label-sm text-label-sm text-primary font-bold">ONLINE</span></div><div class="font-data-mono text-data-mono text-on-surface-variant flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>us-east-cluster-04</div><div class="font-label-sm text-label-sm text-on-secondary-container mt-1">Avg Dispatch Latency: 1.4s</div></div></div></aside><div class="pl-72"><header class="fixed top-0 left-72 right-0 h-16 bg-surface-container-lowest/95 backdrop-blur-md border-b border-outline-variant/30 z-40 px-space-lg flex items-center justify-between"><div class="flex items-center gap-space-lg"><div class="relative w-80"><span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">search</span><input class="w-full pl-9 pr-4 py-1.5 rounded-lg bg-surface border border-outline-variant/40 font-body-sm text-body-sm text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none focus:border-primary" placeholder="Search job ID, tech license, client phone..." type="text"/></div><div class="hidden xl:flex items-center gap-space-md border-l border-outline-variant/30 pl-space-lg"><div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span><span class="font-label-sm text-label-sm text-on-surface-variant font-medium">Live Dispatches:</span><span class="font-data-mono text-data-mono font-bold text-on-surface">18</span></div><div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-secondary"></span><span class="font-label-sm text-label-sm text-on-surface-variant font-medium">Online Techs:</span><span class="font-data-mono text-data-mono font-bold text-on-surface">42</span></div><div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-primary-container"></span><span class="font-label-sm text-label-sm text-on-surface-variant font-medium">SLA:</span><span class="font-data-mono text-data-mono font-bold text-primary">99.2%</span></div></div></div><div class="flex items-center gap-space-md"><div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-error-container text-on-error-container border border-error/20"><span class="material-symbols-outlined text-[16px] animate-pulse text-error">emergency</span><span class="font-label-sm text-label-sm font-bold uppercase tracking-wide">1 SOS Active</span></div><button class="relative p-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors"><span class="material-symbols-outlined text-[22px]">notifications</span><span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-error"></span></button><div class="flex items-center gap-space-sm pl-space-sm border-l border-outline-variant/30"><div class="text-right hidden sm:block"><span class="block font-label-md text-label-md font-semibold text-on-surface leading-tight">Chief Dispatcher</span><span class="block font-label-sm text-label-sm text-on-surface-variant leading-none">Superadmin</span></div><img alt="Profile" class="w-8 h-8 rounded-full object-cover ring-1 ring-outline-variant/40" src="https://lh3.googleusercontent.com/aida/AEtjO1UHetTjpd4BB1e8njLlIDDmUsYV1qxX9ZC_wim9sHsXYmSrYRkJpnyD1IHW75IXxc9pB2kik0nzNC98TRCklpEgiq7TkSpL4ITZqzFt8uLi5EyWXYQq9m4a8YI9wZ3o6xvQSkDtb6AI5-x28GAADr5cRCtuuSX9N5FrvCQ7MBueDjttVq6CBcCdMU6PRAQsRnz78gBoZeg_WCxKbdy42V0Um4AxVfE0kNiMNfOiHfuES63iQSWWA34hjob7XGOL3mAbPdCfF9El6g"/></div></div></header><main class="w-full pt-16 bg-surface min-h-screen"><div class="flex flex-col w-full">
+<!-- Top Emergency SOS Tactical Banner -->
+<div class="w-full bg-error text-on-error p-space-md shadow-md relative overflow-hidden">
+<div class="absolute inset-0 bg-gradient-to-r from-error via-error-container/20 to-error pointer-events-none"></div>
+<div class="relative z-10 max-w-7xl mx-auto flex flex-col xl:flex-row items-start xl:items-center justify-between gap-space-md">
+<!-- Pulse & Title -->
+<div class="flex items-center gap-space-md">
+<div class="relative flex items-center justify-center w-12 h-12 rounded-xl bg-on-error/10">
+<span class="absolute w-full h-full rounded-xl bg-on-error/20 animate-ping"></span>
+<span class="material-symbols-outlined text-[28px] text-on-error" style="font-variation-settings: 'FILL' 1;">e911_emergency</span>
+</div>
+<div>
+<div class="flex items-center gap-space-xs">
+<span class="px-2 py-0.5 rounded text-label-sm font-label-sm bg-on-error text-error uppercase font-bold tracking-wider">CRITICAL ALERT</span>
+<span class="font-data-mono text-data-mono tracking-widest text-on-error/80 uppercase">INCIDENT #SOS-1092 • WAVE 1 PRIORITY BROADCAST</span>
+</div>
+<div class="font-headline-md text-headline-md text-on-error mt-0.5 font-bold">
+            Sparking Electrical Panel / Smoke Hazard — <span class="font-normal opacity-95">Green Glen Layout, Bellandur, Bangalore</span>
+</div>
+</div>
+</div>
+<!-- Telemetry escalation counters & Action -->
+<div class="flex flex-wrap items-center gap-space-md w-full xl:w-auto justify-between xl:justify-end">
+<div class="flex items-center gap-space-lg bg-black/20 px-space-md py-2 rounded-xl">
+<div>
+<div class="font-label-sm text-label-sm uppercase tracking-wider text-on-error/70">Candidate Pings</div>
+<div class="font-data-mono text-body-lg text-on-error font-bold flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-primary-fixed"></span> 3 Electricians Pinged
+            </div>
+</div>
+<div class="w-px h-8 bg-on-error/20"></div>
+<div>
+<div class="font-label-sm text-label-sm uppercase tracking-wider text-on-error/70">Escalation to Wave 2 (15km)</div>
+<div class="font-data-mono text-price-display text-on-error font-bold tracking-tight" id="sos-timer">01:42</div>
+</div>
+</div>
+<div class="flex items-center gap-space-xs">
+<button class="px-space-md py-2.5 rounded-lg bg-on-error text-error font-label-md text-label-md hover:bg-surface-container-lowest transition-colors flex items-center gap-1.5 shadow-sm font-bold" onclick="triggerEmergencyCall()">
+<span class="material-symbols-outlined text-[18px]">local_police</span>
+<span>Escalate 112 / 101</span>
+</button>
+<button class="px-space-md py-2.5 rounded-lg bg-black/30 text-on-error font-label-md text-label-md hover:bg-black/40 transition-colors flex items-center gap-1.5" onclick="toggleSosTelemetry()">
+<span class="material-symbols-outlined text-[18px]">cell_tower</span>
+<span>Dispatch Radar</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Operational Workspace Area -->
+<div class="p-space-lg max-w-[1720px] mx-auto w-full flex flex-col gap-space-lg">
+<!-- KPI / Status Filter Ribbon -->
+<div class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-space-md">
+<div class="flex items-center gap-2 overflow-x-auto pb-1 lg:pb-0">
+<button class="flex items-center gap-2 px-space-md py-2.5 rounded-xl bg-error-container text-on-error-container shadow-sm font-label-md text-label-md">
+<span class="w-2.5 h-2.5 rounded-full bg-error animate-pulse"></span>
+<span>Emergency SOS</span>
+<span class="px-1.5 py-0.5 rounded-full bg-error text-on-error font-data-mono text-label-sm">1</span>
+</button>
+<button class="flex items-center gap-2 px-space-md py-2.5 rounded-xl bg-primary-container text-on-primary font-label-md text-label-md shadow-sm">
+<span class="w-2.5 h-2.5 rounded-full bg-primary-fixed"></span>
+<span>Instant Dispatches</span>
+<span class="px-1.5 py-0.5 rounded-full bg-primary text-on-primary font-data-mono text-label-sm">12</span>
+</button>
+<button class="flex items-center gap-2 px-space-md py-2.5 rounded-xl bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors font-label-md text-label-md">
+<span>Scheduled Bookings</span>
+<span class="px-1.5 py-0.5 rounded-full bg-surface-container-highest text-on-surface-variant font-data-mono text-label-sm">34</span>
+</button>
+<button class="flex items-center gap-2 px-space-md py-2.5 rounded-xl bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors font-label-md text-label-md">
+<span>Completed (24h)</span>
+<span class="px-1.5 py-0.5 rounded-full bg-surface-container-highest text-on-surface-variant font-data-mono text-label-sm">142</span>
+</button>
+<button class="flex items-center gap-2 px-space-md py-2.5 rounded-xl bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors font-label-md text-label-md">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+<span>Flagged / Delayed</span>
+<span class="px-1.5 py-0.5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-data-mono text-label-sm">2</span>
+</button>
+</div>
+<!-- Quick Action Controls & Refresh -->
+<div class="flex items-center gap-space-sm self-end lg:self-auto">
+<div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-container-low text-on-surface-variant font-data-mono text-data-mono">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<span>STREAM: WSS-SECURE</span>
+</div>
+<button class="p-2 rounded-lg bg-surface-container text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors" title="Reload live matrix">
+<span class="material-symbols-outlined text-[20px]">refresh</span>
+</button>
+<button class="flex items-center gap-1.5 px-space-md py-2 rounded-lg bg-surface-container-highest text-on-surface font-label-md text-label-md hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-[18px]">filter_list</span>
+<span>Sector: Bangalore East</span>
+</button>
+</div>
+</div>
+<!-- Live Tactical Radar & Active Dispatcher Control Center -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-space-lg">
+<!-- Real-time Dispatch Map Canvas (8 Columns) -->
+<div class="xl:col-span-8 flex flex-col bg-surface-container-lowest rounded-2xl shadow-md overflow-hidden relative">
+<!-- Canvas Bar Over Map -->
+<div class="absolute top-space-md left-space-md right-space-md z-20 flex flex-wrap items-center justify-between gap-space-sm pointer-events-none">
+<div class="flex items-center gap-2 bg-surface-container-lowest/95 backdrop-blur-md px-3 py-1.5 rounded-xl shadow-md pointer-events-auto">
+<span class="material-symbols-outlined text-primary text-[20px]">radar</span>
+<span class="font-label-md text-label-md font-bold text-on-surface">Live Vector Tracking</span>
+<span class="text-on-surface-variant font-label-sm text-label-sm">• Active Track #DIS-8841</span>
+</div>
+<div class="flex items-center gap-2 pointer-events-auto">
+<div class="bg-surface-container-lowest/95 backdrop-blur-md px-3 py-1.5 rounded-xl shadow-md flex items-center gap-2">
+<span class="font-label-sm text-label-sm uppercase font-semibold text-on-surface-variant">Cluster Zoom</span>
+<span class="font-data-mono text-data-mono font-bold text-primary">14.8x</span>
+</div>
+<div class="bg-surface-container-lowest/95 backdrop-blur-md px-3 py-1.5 rounded-xl shadow-md flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-error animate-ping"></span>
+<span class="font-label-sm text-label-sm font-bold text-error">GEODELAY: 120ms</span>
+</div>
+</div>
+</div>
+<!-- Map Container -->
+<div class="w-full h-[460px] bg-cover bg-center relative flex items-center justify-center" data-location="Bellandur, Bangalore, India" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCa8zkN_IxkunVnSNYB4XRRVNLnwduMAGaXSv3-xyHU9jpwwXkinEn85YsmHE3PwywcalU-nkhkJQL5W-wgpOzdZp1iNE8sAL1W0cPQexglLfUz1FGL3Y8bxvOrTe0VjDtPgLhO0tl4lyJMc2mn_ja1ehTeT6wcKzvW7xbfbBvgJTJOPmxA4Lw7YjZ9A0mQyImttnxK35WPtt5feJLCbgFxGZn4q0gXM8DyJwFkiN9UP0poQKa4ZJ0g')">
+<!-- Synthetic Map Visual Layers & Vector Overlay -->
+<div class="absolute inset-0 bg-surface-dim/40 pointer-events-none"></div>
+<!-- Radar ping wave animations around customer location -->
+<div class="absolute flex items-center justify-center pointer-events-none" style="top: 38%; left: 62%;">
+<div class="w-48 h-48 rounded-full bg-error/10 animate-ping absolute"></div>
+<div class="w-32 h-32 rounded-full bg-error/20 animate-pulse absolute"></div>
+<!-- Customer Location Pin -->
+<div class="relative z-10 flex flex-col items-center">
+<div class="bg-error text-on-error px-2.5 py-1 rounded-lg text-label-sm font-label-sm font-bold shadow-xl flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">warning</span>
+<span>SOS Incident (Bellandur)</span>
+</div>
+<div class="w-4 h-4 bg-error rotate-45 -mt-2"></div>
+<div class="w-3 h-3 rounded-full bg-on-error ring-4 ring-error shadow-xl mt-0.5"></div>
+</div>
+</div>
+<!-- Technician en-route marker with vector trajectory -->
+<div class="absolute flex flex-col items-center pointer-events-none transition-all duration-1000" style="top: 56%; left: 34%;">
+<div class="bg-inverse-surface text-inverse-on-surface px-3 py-1.5 rounded-xl text-label-sm font-label-sm shadow-xl flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary-fixed animate-pulse"></span>
+<span class="font-bold">Tech Rajesh K.</span>
+<span class="bg-primary/40 px-1.5 py-0.5 rounded text-primary-fixed font-data-mono text-label-sm">32 km/h</span>
+</div>
+<div class="w-3 h-3 bg-inverse-surface rotate-45 -mt-1.5"></div>
+<div class="w-4 h-4 rounded-full bg-primary ring-4 ring-primary-fixed shadow-xl mt-0.5 flex items-center justify-center">
+<span class="material-symbols-outlined text-[10px] text-on-primary font-bold">navigation</span>
+</div>
+</div>
+<!-- SVG Vector Path Between Tech & Customer -->
+<svg class="absolute inset-0 w-full h-full pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<lineargradient id="vector-grad" x1="0%" x2="100%" y1="0%" y2="100%">
+<stop offset="0%" stop-color="#00855d" stop-opacity="0.9"></stop>
+<stop offset="100%" stop-color="#ba1a1a" stop-opacity="0.8"></stop>
+</lineargradient>
+</defs>
+<path class="animate-pulse" d="M 400 320 Q 520 280 720 220" fill="none" stroke="url(#vector-grad)" stroke-dasharray="6,6" stroke-width="4"></path>
+</svg>
+<!-- Floating Active Dispatch HUD Floating Card -->
+<div class="absolute bottom-space-md left-space-md right-space-md z-20 pointer-events-auto">
+<div class="bg-surface-container-lowest/95 backdrop-blur-md p-space-md rounded-2xl shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md">
+<img class="w-14 h-14 rounded-xl object-cover shadow-sm ring-2 ring-primary-container" data-alt="Portrait photo of licensed master electrician Rajesh Kumar wearing safe work gear and safety glasses, smiling in soft daylight" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC-dEmMjMNozFVw9xvz9UJvshHPcclzu_6g0JJO8rnIkP5miifEY-qyFyqi3lWf5xJf-GLirvPl5tBz-rnBIEh-aZ5TJ9ViKQl2Hn2ea1ryZm_dg8K_u3Fpp2Opzq9WyhlZGT2XaYlKKvsJ5qJwIsInTetoZ1D_ilZXFRnHp9YjqnUEK-ic7pcA6rlIL-17ldbzfp_lgmvDmUdirzFHEwWlFPPdrw08SrswM_Lav2NsYlsMBREXuC-h"/>
+<div>
+<div class="flex items-center gap-space-xs">
+<span class="font-label-md text-label-md font-bold text-on-surface">Rajesh Kumar (Grade A Wireman)</span>
+<span class="px-1.5 py-0.5 rounded bg-primary-container/20 text-primary text-label-sm font-label-sm font-bold flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[14px]">verified</span> Verified #EL-9921
+                    </span>
+</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-space-md mt-0.5">
+<span>En Route on Hero Electric E-Bike</span>
+<span>•</span>
+<span class="flex items-center text-tertiary font-bold"><span class="material-symbols-outlined text-[15px] mr-0.5">star</span>4.92 (480 jobs)</span>
+</div>
+</div>
+</div>
+<!-- Speed, ETA Ring & Actions -->
+<div class="flex items-center gap-space-lg w-full md:w-auto justify-between md:justify-end">
+<div class="flex items-center gap-space-md">
+<!-- Dynamic SVG Progress Ring for ETA -->
+<div class="relative w-12 h-12 flex items-center justify-center">
+<svg class="w-12 h-12 -rotate-90" viewbox="0 0 36 36">
+<path class="text-surface-container-high" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3.5"></path>
+<path class="text-primary" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="75, 100" stroke-linecap="round" stroke-width="3.5"></path>
+</svg>
+<span class="absolute font-data-mono text-label-sm font-bold text-primary">4m</span>
+</div>
+<div>
+<div class="font-label-sm text-label-sm text-on-surface-variant uppercase font-semibold">Live GPS ETA</div>
+<div class="font-price-display text-price-display text-on-surface font-extrabold leading-none">04:18 <span class="font-body-sm text-body-sm font-normal text-on-surface-variant">min</span></div>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface transition-colors" onclick="openMaskedBridge('Rajesh Kumar', '+91 98840 XXXXX')" title="VoIP Bridge Call">
+<span class="material-symbols-outlined text-[20px]">phone_in_talk</span>
+</button>
+<button class="px-space-md py-2.5 rounded-xl bg-primary text-on-primary font-label-md text-label-md hover:bg-primary-container transition-colors font-semibold flex items-center gap-1 shadow-sm" onclick="pingTechnician()">
+<span class="material-symbols-outlined text-[18px]">near_me</span>
+<span>Force Re-vector</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Radar Bottom Status Bar -->
+<div class="px-space-md py-2.5 bg-surface-container-low flex flex-wrap items-center justify-between gap-space-sm text-on-surface-variant font-label-sm text-label-sm">
+<div class="flex items-center gap-space-md">
+<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-primary-container"></span> Geofence: Outer Ring (2.4 km)</span>
+<span>•</span>
+<span>Target Site: Flat 402, Royal Palms, Green Glen</span>
+</div>
+<div class="font-data-mono text-data-mono">
+            COORDS: 12.9298° N, 77.6748° E • ACCURACY: ±3m
+          </div>
+</div>
+</div>
+<!-- Telemetry Drawer & Incident Diagnostic Panel (4 Columns) -->
+<div class="xl:col-span-4 flex flex-col gap-space-md">
+<!-- Live Telemetry Card -->
+<div class="bg-surface-container-lowest rounded-2xl p-space-md shadow-md flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[22px]">sensors</span>
+<span class="font-headline-md text-headline-md font-bold text-on-surface">Telemetry Deck</span>
+</div>
+<span class="px-2 py-0.5 rounded font-data-mono text-label-sm bg-primary-container text-on-primary font-bold">SOCKET LIVE</span>
+</div>
+<div class="grid grid-cols-2 gap-space-sm">
+<div class="p-space-sm rounded-xl bg-surface-container-low flex flex-col">
+<div class="flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm">
+<span>Customer Device</span>
+<span class="material-symbols-outlined text-[16px] text-primary">battery_5_bar</span>
+</div>
+<div class="font-headline-md text-headline-md font-bold text-on-surface mt-1">78%</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">4G VoLTE • Strong</div>
+</div>
+<div class="p-space-sm rounded-xl bg-surface-container-low flex flex-col">
+<div class="flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm">
+<span>Tech Phone Latency</span>
+<span class="material-symbols-outlined text-[16px] text-primary">wifi</span>
+</div>
+<div class="font-headline-md text-headline-md font-bold text-on-surface mt-1">42ms</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">5G Sub6 • GPS Locked</div>
+</div>
+<div class="p-space-sm rounded-xl bg-surface-container-low flex flex-col">
+<div class="flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm">
+<span>Masked VoIP Bridge</span>
+<span class="material-symbols-outlined text-[16px] text-primary">encrypted</span>
+</div>
+<div class="font-headline-md text-headline-md font-bold text-primary mt-1">STANDBY</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">Exotel #8040-0012</div>
+</div>
+<div class="p-space-sm rounded-xl bg-surface-container-low flex flex-col">
+<div class="flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm">
+<span>Start OTP Guard</span>
+<span class="material-symbols-outlined text-[16px] text-tertiary">pin</span>
+</div>
+<div class="font-headline-md text-headline-md font-bold text-on-surface mt-1">7492</div>
+<div class="font-label-sm text-label-sm text-tertiary font-bold">Awaiting Input on Arrival</div>
+</div>
+</div>
+<!-- Customer SOS Request Snapshot -->
+<div class="p-space-sm rounded-xl bg-surface-container-low flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm uppercase font-semibold text-on-surface-variant">Hazard Assessment</span>
+<span class="font-label-sm text-label-sm text-error font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">local_fire_department</span> Active Smoke Reported
+              </span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface">
+              "Main MCB tripped with loud spark and sulfur smell. Refrigerator line hot to touch. Senior citizen in premises."
+            </p>
+<div class="flex items-center gap-space-sm mt-1">
+<img class="w-16 h-12 object-cover rounded-lg shadow-sm" data-alt="Customer photo upload of scorched electrical distribution breaker board showing blackened wires and blown fuse" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDPAs4-QJaQ32QyT1khYpQPjVexWfYgEwVkxlpRj4FF0izxAUa87LUSCC_X_6N6g4MvXE-z1MkHgcSM6ID2a3tDx68FoAW1Er-nf-cb4az4X_IR_UZeD9KtvZidw5pLLR5T7G4xwGiqLfEOlOZcYEaqfx6_Nx0ufBypqfditlWaZtSSgPS0Ogw63CUhM1XNQEyM8ImN09LMGAzaCW0B6YgvoIP1hwVuI4Tw4-9YH7Tf1DZsxkVemwPj"/>
+<div class="font-label-sm text-label-sm text-on-surface-variant">
+<div>Client: <strong class="text-on-surface">Ananya Deshmukh</strong></div>
+<div>Registered: 3 Yrs • 24 Verified Orders</div>
+</div>
+</div>
+</div>
+<!-- Escalation Dispatch Button -->
+<div class="flex flex-col gap-2 pt-1">
+<button class="w-full py-2.5 rounded-xl bg-inverse-surface text-inverse-on-surface font-label-md text-label-md font-semibold hover:bg-black transition-colors flex items-center justify-center gap-2 shadow-sm" onclick="broadcastWaveTwo()">
+<span class="material-symbols-outlined text-[18px]">podcasts</span>
+<span>Force Trigger Wave 2 Broadcast (15km)</span>
+</button>
+<button class="w-full py-2 rounded-xl bg-error-container text-on-error-container font-label-md text-label-md hover:bg-error hover:text-on-error transition-colors flex items-center justify-center gap-2" onclick="triggerEmergencyCall()">
+<span class="material-symbols-outlined text-[18px]">call</span>
+<span>Patch to Bangalore Fire Services (101)</span>
+</button>
+</div>
+</div>
+<!-- Wave 1 Ping Candidates List -->
+<div class="bg-surface-container-lowest rounded-2xl p-space-md shadow-md flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md font-bold text-on-surface">Wave 1 Responders (Radius 3km)</span>
+<span class="font-data-mono text-data-mono text-primary font-bold">3 NOTIFIED</span>
+</div>
+<div class="space-y-2">
+<!-- Candidate 1: En route (Accepted) -->
+<div class="p-2 rounded-xl bg-primary-container/10 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-primary animate-pulse"></span>
+<div>
+<div class="font-label-md text-label-md font-bold text-on-surface">Rajesh K. (Accepted)</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">Dist: 1.2 km • ETA 4 mins</div>
+</div>
+</div>
+<span class="font-data-mono text-label-sm text-primary font-bold">PRIMARY</span>
+</div>
+<!-- Candidate 2: Standby backup -->
+<div class="p-2 rounded-xl bg-surface-container-low flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<div>
+<div class="font-label-md text-label-md text-on-surface">Vikram Murthy (Standby)</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">Dist: 2.1 km • ETA 8 mins</div>
+</div>
+</div>
+<button class="font-label-sm text-label-sm text-primary font-semibold hover:underline" onclick="manualReassign('Vikram Murthy')">Reassign</button>
+</div>
+<!-- Candidate 3: Standby backup -->
+<div class="p-2 rounded-xl bg-surface-container-low flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<div>
+<div class="font-label-md text-label-md text-on-surface">Sumeet Shenoy (Standby)</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">Dist: 2.8 km • ETA 11 mins</div>
+</div>
+</div>
+<button class="font-label-sm text-label-sm text-primary font-semibold hover:underline" onclick="manualReassign('Sumeet Shenoy')">Reassign</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Active Field Operations Live Queue Table -->
+<div class="bg-surface-container-lowest rounded-2xl shadow-md overflow-hidden flex flex-col">
+<!-- Table Header Bar -->
+<div class="px-space-lg py-space-md bg-surface-container-low flex flex-col md:flex-row items-start md:items-center justify-between gap-space-sm">
+<div>
+<div class="font-headline-md text-headline-md font-bold text-on-surface">All Ongoing Field Operations</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant">Real-time dynamic queue with automated SLA dispatch safeguards</div>
+</div>
+<div class="flex items-center gap-space-sm w-full md:w-auto">
+<div class="relative flex-1 md:w-64">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">filter_alt</span>
+<input class="w-full pl-9 pr-3 py-1.5 rounded-lg bg-surface-container-lowest font-body-sm text-body-sm text-on-surface focus:outline-none" placeholder="Filter technician or client..." type="text"/>
+</div>
+<button class="px-3 py-1.5 rounded-lg bg-surface-container text-on-surface font-label-md text-label-md hover:bg-surface-container-high transition-colors flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">download</span> Export CSV
+          </button>
+</div>
+</div>
+<!-- Table Content -->
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
+<th class="py-3 px-space-md font-semibold">Incident / Job ID</th>
+<th class="py-3 px-space-md font-semibold">Type &amp; Severity</th>
+<th class="py-3 px-space-md font-semibold">Customer &amp; Location</th>
+<th class="py-3 px-space-md font-semibold">Assigned Provider</th>
+<th class="py-3 px-space-md font-semibold">Live Stage</th>
+<th class="py-3 px-space-md font-semibold text-center">SOS</th>
+<th class="py-3 px-space-md font-semibold">SLA Health</th>
+<th class="py-3 px-space-md font-semibold text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y-0 text-on-surface font-body-sm text-body-sm">
+<!-- Row 1: Active SOS -->
+<tr class="bg-error-container/15 hover:bg-error-container/25 transition-colors">
+<td class="py-3.5 px-space-md font-data-mono text-data-mono font-bold text-error">
+                #SOS-1092
+              </td>
+<td class="py-3.5 px-space-md">
+<span class="px-2 py-0.5 rounded-full bg-error text-on-error font-label-sm text-label-sm font-bold uppercase inline-block">Electrical Fire</span>
+</td>
+<td class="py-3.5 px-space-md">
+<div class="font-bold text-on-surface">Ananya Deshmukh</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant truncate max-w-xs">Green Glen Layout, Bellandur</div>
+</td>
+<td class="py-3.5 px-space-md">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<div>
+<div class="font-bold text-on-surface">Rajesh Kumar</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">Tech ID: #TK-8401</div>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-space-md">
+<span class="px-2.5 py-1 rounded-full bg-primary-container text-on-primary font-label-sm text-label-sm font-bold flex items-center gap-1.5 w-fit">
+<span class="w-2 h-2 rounded-full bg-primary-fixed animate-ping"></span> En Route (ETA 4m)
+                </span>
+</td>
+<td class="py-3.5 px-space-md text-center">
+<span class="material-symbols-outlined text-error text-[20px] animate-pulse" style="font-variation-settings: 'FILL' 1;">emergency</span>
+</td>
+<td class="py-3.5 px-space-md">
+<div class="flex items-center gap-2">
+<div class="w-16 bg-surface-container-highest rounded-full h-1.5 overflow-hidden">
+<div class="bg-primary h-full w-[94%]"></div>
+</div>
+<span class="font-data-mono text-data-mono font-bold text-primary">94%</span>
+</div>
+</td>
+<td class="py-3.5 px-space-md text-right">
+<div class="flex items-center justify-end gap-1.5">
+<button class="p-1.5 rounded-lg bg-error text-on-error hover:bg-error-container hover:text-on-error-container transition-colors" onclick="triggerEmergencyCall()" title="Escalate 101/100">
+<span class="material-symbols-outlined text-[16px]">local_police</span>
+</button>
+<button class="p-1.5 rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors" onclick="openMaskedBridge('Rajesh Kumar', '+91 98840 XXXXX')" title="Contact Tech">
+<span class="material-symbols-outlined text-[16px]">phone</span>
+</button>
+<button class="p-1.5 rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors" onclick="forceRedispatch('#SOS-1092')" title="Force Re-dispatch">
+<span class="material-symbols-outlined text-[16px]">swap_horiz</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 2: Standard Instant Dispatch -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-3.5 px-space-md font-data-mono text-data-mono font-semibold text-on-surface">
+                #INS-4820
+              </td>
+<td class="py-3.5 px-space-md">
+<span class="px-2 py-0.5 rounded-full bg-surface-container-highest text-on-surface-variant font-label-sm text-label-sm font-semibold inline-block">Plumbing Burst</span>
+</td>
+<td class="py-3.5 px-space-md">
+<div class="font-bold text-on-surface">Karthik Narayanan</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant truncate max-w-xs">Indiranagar 100ft Road, 4th Block</div>
+</td>
+<td class="py-3.5 px-space-md">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<div>
+<div class="font-bold text-on-surface">Imran Syed</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">Tech ID: #TK-3119</div>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-space-md">
+<span class="px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm font-semibold flex items-center gap-1.5 w-fit">
+<span class="w-2 h-2 rounded-full bg-primary-container"></span> Work In Progress
+                </span>
+</td>
+<td class="py-3.5 px-space-md text-center text-on-surface-variant/40">
+                —
+              </td>
+<td class="py-3.5 px-space-md">
+<div class="flex items-center gap-2">
+<div class="w-16 bg-surface-container-highest rounded-full h-1.5 overflow-hidden">
+<div class="bg-primary h-full w-[99%]"></div>
+</div>
+<span class="font-data-mono text-data-mono font-bold text-primary">99%</span>
+</div>
+</td>
+<td class="py-3.5 px-space-md text-right">
+<div class="flex items-center justify-end gap-1.5">
+<button class="p-1.5 rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors" onclick="openMaskedBridge('Imran Syed', '+91 99011 XXXXX')" title="Contact Tech">
+<span class="material-symbols-outlined text-[16px]">phone</span>
+</button>
+<button class="p-1.5 rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors" onclick="forceRedispatch('#INS-4820')" title="Force Re-dispatch">
+<span class="material-symbols-outlined text-[16px]">swap_horiz</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 3: Delayed SLA Job -->
+<tr class="bg-tertiary-fixed/20 hover:bg-tertiary-fixed/30 transition-colors">
+<td class="py-3.5 px-space-md font-data-mono text-data-mono font-bold text-tertiary">
+                #INS-4818
+              </td>
+<td class="py-3.5 px-space-md">
+<span class="px-2 py-0.5 rounded-full bg-tertiary-container text-on-tertiary font-label-sm text-label-sm font-semibold inline-block">Gas Hob Leak Check</span>
+</td>
+<td class="py-3.5 px-space-md">
+<div class="font-bold text-on-surface">Meera Varma</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant truncate max-w-xs">HSR Layout Sector 2, 14th Main</div>
+</td>
+<td class="py-3.5 px-space-md">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-tertiary animate-pulse"></span>
+<div>
+<div class="font-bold text-on-surface">Tanvir Ahmed</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">Tech ID: #TK-5520</div>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-space-md">
+<span class="px-2.5 py-1 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm font-bold flex items-center gap-1.5 w-fit">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span> Delayed (+8m)
+                </span>
+</td>
+<td class="py-3.5 px-space-md text-center text-on-surface-variant/40">
+                —
+              </td>
+<td class="py-3.5 px-space-md">
+<div class="flex items-center gap-2">
+<div class="w-16 bg-surface-container-highest rounded-full h-1.5 overflow-hidden">
+<div class="bg-tertiary h-full w-[62%]"></div>
+</div>
+<span class="font-data-mono text-data-mono font-bold text-tertiary">62%</span>
+</div>
+</td>
+<td class="py-3.5 px-space-md text-right">
+<div class="flex items-center justify-end gap-1.5">
+<button class="p-1.5 rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors" onclick="openMaskedBridge('Tanvir Ahmed', '+91 97412 XXXXX')" title="Contact Tech">
+<span class="material-symbols-outlined text-[16px]">phone</span>
+</button>
+<button class="p-1.5 rounded-lg bg-primary text-on-primary hover:bg-primary-container transition-colors" onclick="forceRedispatch('#INS-4818')" title="Force Re-dispatch">
+<span class="material-symbols-outlined text-[16px]">bolt</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 4: Arrived State -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-3.5 px-space-md font-data-mono text-data-mono font-semibold text-on-surface">
+                #INS-4815
+              </td>
+<td class="py-3.5 px-space-md">
+<span class="px-2 py-0.5 rounded-full bg-surface-container-highest text-on-surface-variant font-label-sm text-label-sm font-semibold inline-block">Water Purifier Fault</span>
+</td>
+<td class="py-3.5 px-space-md">
+<div class="font-bold text-on-surface">Sunil Chhetri</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant truncate max-w-xs">Koramangala 5th Block, Jyoti Nivas Rd</div>
+</td>
+<td class="py-3.5 px-space-md">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<div>
+<div class="font-bold text-on-surface">Prakash D.</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">Tech ID: #TK-9021</div>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-space-md">
+<span class="px-2.5 py-1 rounded-full bg-surface-container-highest text-on-surface font-label-sm text-label-sm font-semibold flex items-center gap-1.5 w-fit">
+<span class="w-2 h-2 rounded-full bg-primary"></span> Arrived • OTP Pending
+                </span>
+</td>
+<td class="py-3.5 px-space-md text-center text-on-surface-variant/40">
+                —
+              </td>
+<td class="py-3.5 px-space-md">
+<div class="flex items-center gap-2">
+<div class="w-16 bg-surface-container-highest rounded-full h-1.5 overflow-hidden">
+<div class="bg-primary h-full w-[96%]"></div>
+</div>
+<span class="font-data-mono text-data-mono font-bold text-primary">96%</span>
+</div>
+</td>
+<td class="py-3.5 px-space-md text-right">
+<div class="flex items-center justify-end gap-1.5">
+<button class="p-1.5 rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors" onclick="openMaskedBridge('Prakash D.', '+91 94481 XXXXX')" title="Contact Tech">
+<span class="material-symbols-outlined text-[16px]">phone</span>
+</button>
+<button class="p-1.5 rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors" onclick="forceRedispatch('#INS-4815')" title="Force Re-dispatch">
+<span class="material-symbols-outlined text-[16px]">swap_horiz</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 5: Scheduled Transitioning to Dispatch -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-3.5 px-space-md font-data-mono text-data-mono font-semibold text-on-surface">
+                #SCH-9024
+              </td>
+<td class="py-3.5 px-space-md">
+<span class="px-2 py-0.5 rounded-full bg-surface-container-highest text-on-surface-variant font-label-sm text-label-sm font-semibold inline-block">AC Deep Service</span>
+</td>
+<td class="py-3.5 px-space-md">
+<div class="font-bold text-on-surface">Preeti Saxena</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant truncate max-w-xs">Whitefield Main Rd, Palm Meadows</div>
+</td>
+<td class="py-3.5 px-space-md">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<div>
+<div class="font-bold text-on-surface">Auto-Assigning...</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">Slot: 11:30 AM</div>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-space-md">
+<span class="px-2.5 py-1 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm font-semibold flex items-center gap-1.5 w-fit">
+<span class="w-2 h-2 rounded-full bg-secondary"></span> Dispatch Queued
+                </span>
+</td>
+<td class="py-3.5 px-space-md text-center text-on-surface-variant/40">
+                —
+              </td>
+<td class="py-3.5 px-space-md">
+<div class="flex items-center gap-2">
+<div class="w-16 bg-surface-container-highest rounded-full h-1.5 overflow-hidden">
+<div class="bg-primary h-full w-[100%]"></div>
+</div>
+<span class="font-data-mono text-data-mono font-bold text-primary">100%</span>
+</div>
+</td>
+<td class="py-3.5 px-space-md text-right">
+<div class="flex items-center justify-end gap-1.5">
+<button class="px-2.5 py-1 rounded-lg bg-surface-container text-on-surface font-label-sm text-label-sm hover:bg-surface-container-high transition-colors font-semibold" onclick="forceRedispatch('#SCH-9024')">
+                    Instant Match
+                  </button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Table Footer / Pagination -->
+<div class="px-space-lg py-space-sm bg-surface-container-low flex flex-wrap items-center justify-between gap-space-sm text-on-surface-variant font-label-sm text-label-sm">
+<div>
+          Showing <span class="font-bold text-on-surface">5</span> of <span class="font-bold text-on-surface">49</span> active missions in Bangalore East
+        </div>
+<div class="flex items-center gap-2">
+<button class="px-2.5 py-1 rounded bg-surface-container text-on-surface disabled:opacity-50">Prev</button>
+<span class="px-2 font-data-mono text-data-mono font-bold text-on-surface">Page 1 of 10</span>
+<button class="px-2.5 py-1 rounded bg-surface-container text-on-surface hover:bg-surface-container-high">Next</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Interactive Telemetry & Notification Modal / Toast Script -->
+<script>
+    // Live Countdown Timer for SOS Escalation
+    let secondsLeft = 102; // 01:42
+    const timerElem = document.getElementById('sos-timer');
+    if (timerElem) {
+      setInterval(() => {
+        if (secondsLeft > 0) {
+          secondsLeft--;
+          const mins = Math.floor(secondsLeft / 60);
+          const secs = secondsLeft % 60;
+          timerElem.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        } else {
+          timerElem.textContent = 'ESCALATING';
+          timerElem.classList.add('text-error-container', 'animate-pulse');
+        }
+      }, 1000);
+    }
+
+    function triggerEmergencyCall() {
+      const confirmDial = confirm("🚨 TACTICAL ESCALATION: Connect direct line to Bangalore Fire & Safety Command (101) for Incident #SOS-1092?");
+      if (confirmDial) {
+        alert("Emergency Protocol Engaged: Forwarding coordinates, hazardous smoke classification, and resident phone to Central Police/Fire Dispatch.");
+      }
+    }
+
+    function toggleSosTelemetry() {
+      window.scrollTo({ top: 380, behavior: 'smooth' });
+    }
+
+    function pingTechnician() {
+      alert("GPS Vector Update: Pinged Tech Rajesh K. Automated reroute coordinates sent via priority WebSocket channel.");
+    }
+
+    function openMaskedBridge(providerName, phone) {
+      alert(`Initiating Encrypted VoIP Bridge: Connecting Dispatch Desk to ${providerName} (${phone}) via Exotel virtual trunk.`);
+    }
+
+    function broadcastWaveTwo() {
+      const confirmed = confirm("Escalate Wave 2 Broadcast? This will dispatch notifications to all 24 Tier-1 electricians within a 15km perimeter.");
+      if (confirmed) {
+        alert("Wave 2 Dispatched: 24 additional providers pinged. Escalation timer refreshed.");
+      }
+    }
+
+    function manualReassign(techName) {
+      if (confirm(`Manually reassign incident #SOS-1092 to standby provider ${techName}?`)) {
+        alert(`Dispatched to ${techName}. Rajesh Kumar informed of stand-down.`);
+      }
+    }
+
+    function forceRedispatch(jobId) {
+      alert(`Redispatch triggered for ${jobId}. Querying optimal available nodes in cluster...`);
+    }
+  </script>
+</div></main></div></body></html>

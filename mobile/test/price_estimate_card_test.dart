@@ -1,3 +1,4 @@
+import 'package:fixnow_mobile/features/services/sub_service_item.dart';
 import 'package:fixnow_mobile/api/api_client.dart';
 import 'package:fixnow_mobile/features/ai/price_estimate_repository.dart';
 import 'package:fixnow_mobile/features/bookings/booking_controller.dart';
@@ -34,41 +35,48 @@ const category = ServiceCategory(
 Widget host({
   required ApiTransport transport,
   PriceEstimateRepository? repository,
-}) =>
-    MaterialApp(
-      home: Scaffold(
-        body: SizedBox(
-          height: 2400,
-          child: ServiceRequestScreen(
-            category: category,
-            controller: BookingController(
-              BookingRepository(api: transport, accessToken: () async => null),
-            ),
-            estimateRepository: repository,
-          ),
+}) => MaterialApp(
+  home: Scaffold(
+    body: SizedBox(
+      height: 2400,
+      child: ServiceRequestScreen(
+        category: category,
+        controller: BookingController(
+          BookingRepository(api: transport, accessToken: () async => null),
         ),
+        estimateRepository: repository,
       ),
-    );
+    ),
+  ),
+);
 
 void main() {
-  testWidgets('observed history shows the band, typical value, and notice',
-      (tester) async {
+  testWidgets('observed history shows the band, typical value, and notice', (
+    tester,
+  ) async {
     final transport = FakeTransport(
-      (request) => ApiResponse(statusCode: 200, body: {
-        'kind': 'ESTIMATE',
-        'serviceCategoryId': category.id,
-        'currency': 'INR',
-        'minAmountMinor': 44900,
-        'maxAmountMinor': 54900,
-        'typicalAmountMinor': 49900,
-        'basis': 'OBSERVED',
-        'sampleSize': 12,
-        'explanation': 'Typical range across 12 completed FixNow bookings.',
-        'advisoryNotice': 'Advisory only — final charge confirmed at booking.',
-      }),
+      (request) => ApiResponse(
+        statusCode: 200,
+        body: {
+          'kind': 'ESTIMATE',
+          'serviceCategoryId': category.id,
+          'currency': 'INR',
+          'minAmountMinor': 44900,
+          'maxAmountMinor': 54900,
+          'typicalAmountMinor': 49900,
+          'basis': 'OBSERVED',
+          'sampleSize': 12,
+          'explanation': 'Typical range across 12 completed FixNow bookings.',
+          'advisoryNotice':
+              'Advisory only — final charge confirmed at booking.',
+        },
+      ),
     );
     await tester.pumpWidget(
-      host(transport: transport, repository: PriceEstimateRepository(transport)),
+      host(
+        transport: transport,
+        repository: PriceEstimateRepository(transport),
+      ),
     );
     await tester.pumpIdle();
 
@@ -84,21 +92,28 @@ void main() {
 
   testWidgets('published pricing shows the standard charge', (tester) async {
     final transport = FakeTransport(
-      (request) => ApiResponse(statusCode: 200, body: {
-        'kind': 'ESTIMATE',
-        'serviceCategoryId': category.id,
-        'currency': 'INR',
-        'minAmountMinor': 49900,
-        'maxAmountMinor': 49900,
-        'typicalAmountMinor': 49900,
-        'basis': 'PUBLISHED',
-        'sampleSize': null,
-        'explanation': 'FixNow publishes a standard price.',
-        'advisoryNotice': 'Advisory only — final charge confirmed at booking.',
-      }),
+      (request) => ApiResponse(
+        statusCode: 200,
+        body: {
+          'kind': 'ESTIMATE',
+          'serviceCategoryId': category.id,
+          'currency': 'INR',
+          'minAmountMinor': 49900,
+          'maxAmountMinor': 49900,
+          'typicalAmountMinor': 49900,
+          'basis': 'PUBLISHED',
+          'sampleSize': null,
+          'explanation': 'FixNow publishes a standard price.',
+          'advisoryNotice':
+              'Advisory only — final charge confirmed at booking.',
+        },
+      ),
     );
     await tester.pumpWidget(
-      host(transport: transport, repository: PriceEstimateRepository(transport)),
+      host(
+        transport: transport,
+        repository: PriceEstimateRepository(transport),
+      ),
     );
     await tester.pumpIdle();
 
@@ -112,7 +127,10 @@ void main() {
       (request) => const ApiResponse(statusCode: 503, body: <Object?>{}),
     );
     await tester.pumpWidget(
-      host(transport: transport, repository: PriceEstimateRepository(transport)),
+      host(
+        transport: transport,
+        repository: PriceEstimateRepository(transport),
+      ),
     );
     await tester.pumpIdle();
 
@@ -120,12 +138,25 @@ void main() {
     expect(find.text('₹499'), findsOneWidget);
   });
 
-  testWidgets('without a repository the static card renders immediately',
-      (tester) async {
-    await tester.pumpWidget(host(transport: FakeTransport((request) => const ApiResponse(statusCode: 200, body: <Object?>[]))));
+  testWidgets('without a repository the static card renders immediately', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      host(
+        transport: FakeTransport(
+          (request) => const ApiResponse(statusCode: 200, body: <Object?>[]),
+        ),
+      ),
+    );
     await tester.pumpIdle();
 
     expect(find.text('Base price'), findsOneWidget);
     expect(find.textContaining('price-estimate'), findsNothing);
   });
+}
+
+
+class MockClient implements ApiTransport {
+  @override
+  Future<ApiResponse> send(ApiRequest request) async => ApiResponse(statusCode: 200, body: {});
 }

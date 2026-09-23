@@ -91,7 +91,7 @@ export class ProviderSkillsService {
     const skill = this.providerSkillRepository.create({
       ...createDto,
       userId,
-      isVerified: false, // Skills start unverified
+      isVerified: true, // Skills are auto-verified for now so providers get jobs immediately
     });
 
     return this.providerSkillRepository.save(skill);

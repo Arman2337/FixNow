@@ -115,9 +115,9 @@ describe('BookingCallsService', () => {
       expect(result.call.status).toBe('RINGING');
     });
 
-    it('rejects call when booking is IN_PROGRESS with ConflictException', async () => {
+    it('rejects call when booking is CANCELLED with ConflictException', async () => {
       bookingsRepo.findOne.mockResolvedValue(
-        mockBooking(BookingStatus.IN_PROGRESS),
+        mockBooking(BookingStatus.CANCELLED),
       );
 
       await expect(service.initiateCall(bookingId, customerId)).rejects.toThrow(

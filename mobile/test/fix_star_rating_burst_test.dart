@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('FixStarRatingBurst renders 5 stars and handles selection', (tester) async {
+  testWidgets('FixStarRatingBurst renders 5 stars and handles selection', (
+    tester,
+  ) async {
     int currentRating = 5;
     await tester.pumpWidget(
       MaterialApp(

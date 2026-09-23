@@ -1,4 +1,4 @@
-import { Controller, Get, Req } from '@nestjs/common';
+import { Controller, Get, Param, Req } from '@nestjs/common';
 import type { AuthorizedRequest } from '../common/authorization/authorization.guard';
 import { RequireOwnPermission } from '../common/authorization/authorization.decorators';
 import { PERMISSIONS } from '../common/authorization/permission-policies';
@@ -17,6 +17,18 @@ export class ProviderEarningsController {
   async earnings(@Req() request: AuthorizedRequest) {
     return await this.payments.providerEarnings(
       request.authorizationPrincipal!.userId,
+    );
+  }
+
+  @Get('me/bookings/:bookingId/payment-status')
+  @RequireOwnPermission(PERMISSIONS.providerEarningsReadSelf)
+  async bookingPaymentStatus(
+    @Param('bookingId') bookingId: string,
+    @Req() request: AuthorizedRequest,
+  ) {
+    return await this.payments.providerBookingPaymentStatus(
+      request.authorizationPrincipal!.userId,
+      bookingId,
     );
   }
 }

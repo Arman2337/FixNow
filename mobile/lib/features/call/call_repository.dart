@@ -42,8 +42,9 @@ class HttpCallRepository implements CallRepository {
     );
 
     final raw = response.body;
-    final Map<String, Object?>? body =
-        raw is Map ? Map<String, Object?>.from(raw) : null;
+    final Map<String, Object?>? body = raw is Map
+        ? Map<String, Object?>.from(raw)
+        : null;
     final callData = body?['call'];
     if (callData is! Map) {
       throw const ApiException(

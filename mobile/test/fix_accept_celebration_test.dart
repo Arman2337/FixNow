@@ -4,20 +4,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Widget host(Widget child, {bool disableAnimations = false}) => MaterialApp(
-      theme: AppTheme.dark,
-      home: MediaQuery(
-        data: MediaQueryData(disableAnimations: disableAnimations),
-        child: Scaffold(body: child),
-      ),
-    );
+  theme: AppTheme.dark,
+  home: MediaQuery(
+    data: MediaQueryData(disableAnimations: disableAnimations),
+    child: Scaffold(body: child),
+  ),
+);
 
 void main() {
   testWidgets('renders the acceptance banner copy', (tester) async {
     await tester.pumpWidget(
-      host(const FixAcceptCelebration(
-        serviceName: 'Plumbing',
-        onDismiss: _noop,
-      )),
+      host(
+        const FixAcceptCelebration(serviceName: 'Plumbing', onDismiss: _noop),
+      ),
     );
     await tester.pump();
 
@@ -48,8 +47,9 @@ void main() {
     expect(dismissed, isTrue);
   });
 
-  testWidgets('reduced motion renders a static banner with no timer',
-      (tester) async {
+  testWidgets('reduced motion renders a static banner with no timer', (
+    tester,
+  ) async {
     var dismissed = false;
     await tester.pumpWidget(
       host(
@@ -61,8 +61,11 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Provider accepted!'), findsOneWidget);
-    expect(dismissed, isFalse,
-        reason: 'static banner dismisses on tap only, never auto-dismisses');
+    expect(
+      dismissed,
+      isFalse,
+      reason: 'static banner dismisses on tap only, never auto-dismisses',
+    );
     await tester.tap(find.text('Provider accepted!'));
     expect(dismissed, isTrue);
   });

@@ -10,9 +10,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Widget host(Widget child) => MaterialApp(
-      theme: AppTheme.dark,
-      home: Scaffold(body: child),
-    );
+  theme: AppTheme.dark,
+  home: Scaffold(body: child),
+);
 
 void main() {
   final sampleBooking = CustomerBooking(
@@ -40,63 +40,78 @@ void main() {
         reason: 'Client requested afternoon visit',
       );
 
-      expect(fakeTransport.lastRequest?.path, 'bookings/booking-resched-1/reschedule');
-      expect(fakeTransport.lastBody?['newScheduledAt'], newTime.toUtc().toIso8601String());
+      expect(
+        fakeTransport.lastRequest?.path,
+        'bookings/booking-resched-1/reschedule',
+      );
+      expect(
+        fakeTransport.lastBody?['newScheduledAt'],
+        newTime.toUtc().toIso8601String(),
+      );
       expect(fakeTransport.lastBody?['expectedVersion'], 2);
-      expect(fakeTransport.lastBody?['reason'], 'Client requested afternoon visit');
+      expect(
+        fakeTransport.lastBody?['reason'],
+        'Client requested afternoon visit',
+      );
       expect(updated.id, 'booking-resched-1');
       expect(updated.scheduledAt, isNotNull);
     });
   });
 
   group('BookingDetailScreen reschedule integration', () {
-    testWidgets('displays scheduled badge and reschedule button for ASSIGNED booking',
-        (tester) async {
-      tester.view.physicalSize = const Size(800, 2400);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.resetPhysicalSize);
+    testWidgets(
+      'displays scheduled badge and reschedule button for ASSIGNED booking',
+      (tester) async {
+        tester.view.physicalSize = const Size(800, 2400);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
 
-      bool rescheduleTapped = false;
+        bool rescheduleTapped = false;
 
-      await tester.pumpWidget(
-        host(
-          BookingDetailScreen(
-            booking: sampleBooking,
-            onReschedule: () => rescheduleTapped = true,
+        await tester.pumpWidget(
+          host(
+            BookingDetailScreen(
+              booking: sampleBooking,
+              onReschedule: () => rescheduleTapped = true,
+            ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      expect(find.textContaining('Scheduled for:'), findsOneWidget);
-      expect(find.widgetWithText(FixButton, 'Reschedule booking'), findsOneWidget);
+        expect(find.textContaining('Scheduled for:'), findsOneWidget);
+        expect(
+          find.widgetWithText(FixButton, 'Reschedule booking'),
+          findsOneWidget,
+        );
 
-      await tester.tap(find.widgetWithText(FixButton, 'Reschedule booking'));
-      await tester.pumpAndSettle();
+        await tester.tap(find.widgetWithText(FixButton, 'Reschedule booking'));
+        await tester.pumpAndSettle();
 
-      expect(rescheduleTapped, isTrue);
-    });
+        expect(rescheduleTapped, isTrue);
+      },
+    );
 
-    testWidgets('hides reschedule button for COMPLETED booking', (tester) async {
+    testWidgets('hides reschedule button for COMPLETED booking', (
+      tester,
+    ) async {
       final completed = sampleBooking.copyWith(status: 'COMPLETED');
 
       await tester.pumpWidget(
-        host(
-          BookingDetailScreen(
-            booking: completed,
-            onReschedule: () {},
-          ),
-        ),
+        host(BookingDetailScreen(booking: completed, onReschedule: () {})),
       );
       await tester.pumpAndSettle();
 
-      expect(find.widgetWithText(FixButton, 'Reschedule booking'), findsNothing);
+      expect(
+        find.widgetWithText(FixButton, 'Reschedule booking'),
+        findsNothing,
+      );
     });
   });
 
   group('FixRescheduleSheet widget', () {
-    testWidgets('allows picking new arrival window and confirming reschedule',
-        (tester) async {
+    testWidgets('allows picking new arrival window and confirming reschedule', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(800, 2400);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -139,7 +154,10 @@ void main() {
       await tester.tap(find.text('Confirm New Arrival Time'));
       await tester.pumpAndSettle();
 
-      expect(fakeTransport.lastRequest?.path, 'bookings/booking-resched-1/reschedule');
+      expect(
+        fakeTransport.lastRequest?.path,
+        'bookings/booking-resched-1/reschedule',
+      );
     });
   });
 }
@@ -165,9 +183,10 @@ class _FakeTransport implements ApiTransport {
           'locationLat': 12.9716,
           'locationLng': 77.5946,
           'createdAt': '2026-08-28T00:00:00.000Z',
-          'scheduledAt': lastBody?['newScheduledAt'] ?? '2026-08-30T14:00:00.000Z',
+          'scheduledAt':
+              lastBody?['newScheduledAt'] ?? '2026-08-30T14:00:00.000Z',
           'version': 3,
-        }
+        },
       },
     );
   }

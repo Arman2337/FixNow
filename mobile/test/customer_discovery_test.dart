@@ -1,3 +1,4 @@
+import 'package:fixnow_mobile/features/services/sub_service_item.dart';
 import 'dart:async';
 
 import 'package:fixnow_mobile/api/api_client.dart';
@@ -46,6 +47,7 @@ void main() {
     final completer = Completer<List<ServiceCategory>>();
     final controller = ServiceDiscoveryController(
       PendingCategories(completer.future),
+      SubServiceRepository(MockApiTransport()),
     );
 
     final load = controller.load();
@@ -86,12 +88,10 @@ void main() {
           slug: 'plumbing',
           description: 'Leaks and pipe repairs',
           iconName: 'plumbing',
-          pricing: ServiceCategoryPricing(
-            amountMinor: 49900,
-            currency: 'INR',
-          ),
+          pricing: ServiceCategoryPricing(amountMinor: 49900, currency: 'INR'),
         ),
       ]),
+      SubServiceRepository(MockApiTransport()),
     );
     final location = LocationConsentController(
       FakeLocationGateway(LocationPermissionState.granted),
@@ -140,12 +140,9 @@ void main() {
   ) async {
     final discovery = ServiceDiscoveryController(
       FakeCategories([
-        const ServiceCategory(
-          id: '1',
-          name: 'Cleaning',
-          slug: 'cleaning',
-        ),
+        const ServiceCategory(id: '1', name: 'Cleaning', slug: 'cleaning'),
       ]),
+      SubServiceRepository(MockApiTransport()),
     );
     final location = LocationConsentController(
       FakeLocationGateway(LocationPermissionState.denied),
@@ -178,13 +175,17 @@ void main() {
     });
     expect(price.displayLabel, '₹499.99');
     expect(
-      const ServiceCategoryPricing(amountMinor: 49900, currency: 'INR')
-          .displayLabel,
+      const ServiceCategoryPricing(
+        amountMinor: 49900,
+        currency: 'INR',
+      ).displayLabel,
       '₹499',
     );
 
-    expect(() => ServiceCategoryPricing.fromJson(<String, dynamic>{}),
-        throwsFormatException);
+    expect(
+      () => ServiceCategoryPricing.fromJson(<String, dynamic>{}),
+      throwsFormatException,
+    );
     expect(
       () => ServiceCategoryPricing.fromJson({
         'amountMinor': '499',
@@ -199,7 +200,10 @@ void main() {
       const [],
       error: const ApiException(ApiFailureKind.offline, 'offline'),
     );
-    final discovery = ServiceDiscoveryController(repository);
+    final discovery = ServiceDiscoveryController(
+      repository,
+      SubServiceRepository(MockApiTransport()),
+    );
     final location = LocationConsentController(
       FakeLocationGateway(LocationPermissionState.denied),
     );
@@ -236,6 +240,7 @@ void main() {
           iconName: 'plumbing',
         ),
       ]),
+      SubServiceRepository(MockApiTransport()),
     );
     final location = LocationConsentController(
       FakeLocationGateway(LocationPermissionState.granted),
@@ -288,7 +293,10 @@ void main() {
   ) async {
     final gateway = FakeLocationGateway(LocationPermissionState.denied);
     final location = LocationConsentController(gateway);
-    final discovery = ServiceDiscoveryController(FakeCategories([]));
+    final discovery = ServiceDiscoveryController(
+      FakeCategories([]),
+      SubServiceRepository(MockApiTransport()),
+    );
 
     await tester.pumpWidget(
       MaterialApp(
@@ -346,4 +354,10 @@ class PendingCategories implements ServiceCategoryRepository {
   final Future<List<ServiceCategory>> result;
   @override
   Future<List<ServiceCategory>> active() => result;
+}
+
+class MockApiTransport implements ApiTransport {
+  @override
+  Future<ApiResponse> send(ApiRequest request) async =>
+      const ApiResponse(statusCode: 200, body: []);
 }

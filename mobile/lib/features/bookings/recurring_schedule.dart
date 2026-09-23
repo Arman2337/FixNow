@@ -68,7 +68,8 @@ class SchedulesController extends ChangeNotifier {
       schedules = rows;
       status = rows.isEmpty ? SchedulesStatus.empty : SchedulesStatus.ready;
     } on ApiException catch (error) {
-      status = error.kind == ApiFailureKind.offline ||
+      status =
+          error.kind == ApiFailureKind.offline ||
               error.kind == ApiFailureKind.timeout
           ? SchedulesStatus.offline
           : SchedulesStatus.error;
@@ -83,11 +84,10 @@ class SchedulesController extends ChangeNotifier {
   Future<String?> confirm(RecurringSchedule schedule) =>
       _run(() => _repository.confirmSchedule(schedule.id));
 
-  Future<void> updateStatus(RecurringSchedule schedule, String action) =>
-      _run(
-        () => _repository.scheduleAction(schedule.id, action),
-        reloadAfter: true,
-      );
+  Future<void> updateStatus(RecurringSchedule schedule, String action) => _run(
+    () => _repository.scheduleAction(schedule.id, action),
+    reloadAfter: true,
+  );
 
   Future<String?> _run(
     Future<Map<String, Object?>> Function() action, {

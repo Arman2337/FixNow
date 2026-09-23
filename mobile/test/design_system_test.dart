@@ -100,8 +100,9 @@ void main() {
     }
   });
 
-  testWidgets('eta ring renders minutes, dash for null, and static fallback',
-      (tester) async {
+  testWidgets('eta ring renders minutes, dash for null, and static fallback', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.dark,
@@ -128,9 +129,7 @@ void main() {
         theme: AppTheme.dark,
         home: MediaQuery(
           data: const MediaQueryData(disableAnimations: true),
-          child: Scaffold(
-            body: Center(child: EtaProgressRing(minutes: 7)),
-          ),
+          child: Scaffold(body: Center(child: EtaProgressRing(minutes: 7))),
         ),
       ),
     );
@@ -156,8 +155,9 @@ void main() {
     expect(size.width, greaterThanOrEqualTo(48));
   });
 
-  testWidgets('success morph shows the check, swaps the label, and disables',
-      (tester) async {
+  testWidgets('success morph shows the check, swaps the label, and disables', (
+    tester,
+  ) async {
     final semantics = tester.ensureSemantics();
     var taps = 0;
     await tester.pumpWidget(

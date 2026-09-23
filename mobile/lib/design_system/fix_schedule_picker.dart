@@ -60,7 +60,8 @@ class _FixSchedulePickerCardState extends State<FixSchedulePickerCard> {
     if (!mounted) return;
     final today = DateTime.now();
     final first = _upcomingDates.first;
-    final dayRolledOver = first.year != today.year ||
+    final dayRolledOver =
+        first.year != today.year ||
         first.month != today.month ||
         first.day != today.day;
     if (dayRolledOver) {
@@ -83,7 +84,9 @@ class _FixSchedulePickerCardState extends State<FixSchedulePickerCard> {
     if (available.isNotEmpty) {
       return schedule.copyWith(slot: available.first);
     }
-    final laterDays = _upcomingDates.where((d) => d.isAfter(schedule.date)).toList();
+    final laterDays = _upcomingDates
+        .where((d) => d.isAfter(schedule.date))
+        .toList();
     if (laterDays.isNotEmpty) {
       return schedule.copyWith(
         date: laterDays.first,
@@ -95,10 +98,9 @@ class _FixSchedulePickerCardState extends State<FixSchedulePickerCard> {
 
   BookingSchedule _computeInitialSchedule() {
     final today = _upcomingDates.first;
-    final availableTodaySlot = TimeSlot.standardSlots.cast<TimeSlot?>().firstWhere(
-      (slot) => !_isSlotPast(today, slot!),
-      orElse: () => null,
-    );
+    final availableTodaySlot = TimeSlot.standardSlots
+        .cast<TimeSlot?>()
+        .firstWhere((slot) => !_isSlotPast(today, slot!), orElse: () => null);
 
     if (availableTodaySlot != null) {
       return BookingSchedule(
@@ -170,86 +172,99 @@ class _FixSchedulePickerCardState extends State<FixSchedulePickerCard> {
         children: [
           // Header
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                padding: const EdgeInsets.all(AppSpacing.xs),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
+              Expanded(
+                child: Text(
+                  'Select Execution Mode',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
-                child: const Icon(Icons.schedule_rounded, color: AppColors.primary, size: 20),
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'Real-Time SLA',
+                style: TextStyle(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 11,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+
+          // Toggle Mode Cards
+          Row(
+            children: [
+              Expanded(
+                child: _ExecutionModeCard(
+                  title: 'Instant SOS',
+                  subtitle: '15-Min Arrival',
+                  icon: Icons.bolt_rounded,
+                  isSelected: _schedule.isNow,
+                  subtitleColor: AppColors.primaryFixed,
+                  metadata: Row(
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: const BoxDecoration(
+                          color: AppColors.primaryFixed,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '5 techs near',
+                        style: TextStyle(
+                          color: _schedule.isNow
+                              ? Colors.white.withValues(alpha: 0.8)
+                              : AppColors.textSecondary.withValues(alpha: 0.8),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  onTap: () {
+                    _updateSchedule(_schedule.copyWith(mode: ScheduleMode.now));
+                  },
+                ),
               ),
               const SizedBox(width: AppSpacing.sm),
-              Text(
-                'Arrival Schedule',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.w700,
+              Expanded(
+                child: _ExecutionModeCard(
+                  title: 'Schedule',
+                  subtitle: 'Pick Slot',
+                  icon: Icons.calendar_month_rounded,
+                  isSelected: !_schedule.isNow,
+                  subtitleColor: AppColors.primaryFixed,
+                  metadata: Text(
+                    'Tomorrow onwards',
+                    style: TextStyle(
+                      color: !_schedule.isNow
+                          ? Colors.white.withValues(alpha: 0.8)
+                          : AppColors.textSecondary.withValues(alpha: 0.8),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  onTap: _selectScheduleLater,
+                ),
               ),
             ],
           ),
           const SizedBox(height: AppSpacing.md),
 
-          // Toggle Mode Segmented Control
-          Container(
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              color: AppColors.backgroundPrimary,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: Colors.white12),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _ModeTab(
-                    label: 'Book for Now',
-                    icon: Icons.bolt_rounded,
-                    isSelected: _schedule.isNow,
-                    onTap: () {
-                      _updateSchedule(_schedule.copyWith(mode: ScheduleMode.now));
-                    },
-                  ),
-                ),
-                Expanded(
-                  child: _ModeTab(
-                    label: 'Schedule for Later',
-                    icon: Icons.calendar_month_rounded,
-                    isSelected: !_schedule.isNow,
-                    onTap: _selectScheduleLater,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSpacing.md),
-
           if (_schedule.isNow) ...[
-            // Now summary
-            Container(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              decoration: BoxDecoration(
-                color: AppColors.accentGold.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppColors.accentGold.withValues(alpha: 0.3)),
-              ),
-              child: const Row(
-                children: [
-                  Icon(Icons.flash_on_rounded, color: AppColors.accentGold, size: 18),
-                  SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: Text(
-                      'Immediate dispatch — nearest verified technician arrives within ~15–30 mins.',
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            // Now summary removed since the ExecutionModeCard describes the 15-Min Arrival
           ] else ...[
             // Date Selector Strip
             Row(
@@ -258,9 +273,9 @@ class _FixSchedulePickerCardState extends State<FixSchedulePickerCard> {
                 Text(
                   'Select Date',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textSecondary,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 Row(
                   mainAxisSize: MainAxisSize.min,
@@ -281,9 +296,9 @@ class _FixSchedulePickerCardState extends State<FixSchedulePickerCard> {
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.05),
+                          color: AppColors.surfaceContainerLow,
                           borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: Colors.white12),
+                          border: Border.all(color: AppColors.borderDefault),
                         ),
                         child: const Icon(
                           Icons.chevron_left_rounded,
@@ -309,9 +324,9 @@ class _FixSchedulePickerCardState extends State<FixSchedulePickerCard> {
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.05),
+                          color: AppColors.surfaceContainerLow,
                           borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: Colors.white12),
+                          border: Border.all(color: AppColors.borderDefault),
                         ),
                         child: const Icon(
                           Icons.chevron_right_rounded,
@@ -329,10 +344,15 @@ class _FixSchedulePickerCardState extends State<FixSchedulePickerCard> {
               height: 70,
               child: Listener(
                 onPointerSignal: (event) {
-                  if (event is PointerScrollEvent && event.scrollDelta.dy != 0) {
+                  if (event is PointerScrollEvent &&
+                      event.scrollDelta.dy != 0) {
                     if (!_dateScrollController.hasClients) return;
-                    final target = (_dateScrollController.offset + event.scrollDelta.dy)
-                        .clamp(0.0, _dateScrollController.position.maxScrollExtent);
+                    final target =
+                        (_dateScrollController.offset + event.scrollDelta.dy)
+                            .clamp(
+                              0.0,
+                              _dateScrollController.position.maxScrollExtent,
+                            );
                     _dateScrollController.jumpTo(target);
                   }
                 },
@@ -350,25 +370,34 @@ class _FixSchedulePickerCardState extends State<FixSchedulePickerCard> {
                     physics: const BouncingScrollPhysics(),
                     scrollDirection: Axis.horizontal,
                     itemCount: _upcomingDates.length,
-                    separatorBuilder: (context, index) => const SizedBox(width: AppSpacing.xs),
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(width: AppSpacing.xs),
                     itemBuilder: (context, index) {
                       final date = _upcomingDates[index];
-                      final isSelected = date.year == _schedule.date.year &&
+                      final isSelected =
+                          date.year == _schedule.date.year &&
                           date.month == _schedule.date.month &&
                           date.day == _schedule.date.day;
 
                       final now = DateTime.now();
-                      final isToday = date.year == now.year && date.month == now.month && date.day == now.day;
+                      final isToday =
+                          date.year == now.year &&
+                          date.month == now.month &&
+                          date.day == now.day;
                       final tomorrow = now.add(const Duration(days: 1));
-                      final isTomorrow = date.year == tomorrow.year && date.month == tomorrow.month && date.day == tomorrow.day;
+                      final isTomorrow =
+                          date.year == tomorrow.year &&
+                          date.month == tomorrow.month &&
+                          date.day == tomorrow.day;
 
                       final dayLabel = isToday
                           ? 'Today'
                           : isTomorrow
-                              ? 'Tomorrow'
-                              : BookingSchedule.getUpcomingDates()[index].weekday == 7
-                                  ? 'Sun'
-                                  : _scheduleDay(date.weekday);
+                          ? 'Tomorrow'
+                          : BookingSchedule.getUpcomingDates()[index].weekday ==
+                                7
+                          ? 'Sun'
+                          : _scheduleDay(date.weekday);
 
                       return InkWell(
                         borderRadius: BorderRadius.circular(10),
@@ -376,20 +405,29 @@ class _FixSchedulePickerCardState extends State<FixSchedulePickerCard> {
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
                           width: 76,
-                          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 6,
+                            horizontal: 4,
+                          ),
                           decoration: BoxDecoration(
-                            color: isSelected ? AppColors.primary : AppColors.backgroundPrimary,
+                            color: isSelected
+                                ? AppColors.primary
+                                : AppColors.surfaceContainerLowest,
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
-                              color: isSelected ? AppColors.primary : Colors.white12,
+                              color: isSelected
+                                  ? AppColors.primary
+                                  : AppColors.borderDefault,
                             ),
                             boxShadow: isSelected
                                 ? [
                                     BoxShadow(
-                                      color: AppColors.primary.withValues(alpha: 0.3),
+                                      color: AppColors.primary.withValues(
+                                        alpha: 0.3,
+                                      ),
                                       blurRadius: 8,
                                       offset: const Offset(0, 2),
-                                    )
+                                    ),
                                   ]
                                 : null,
                           ),
@@ -401,9 +439,13 @@ class _FixSchedulePickerCardState extends State<FixSchedulePickerCard> {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
-                                  color: isSelected ? Colors.white : AppColors.textSecondary,
+                                  color: isSelected
+                                      ? Colors.white
+                                      : AppColors.textSecondary,
                                   fontSize: 11,
-                                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                                  fontWeight: isSelected
+                                      ? FontWeight.w700
+                                      : FontWeight.w500,
                                 ),
                               ),
                               const SizedBox(height: 2),
@@ -411,8 +453,10 @@ class _FixSchedulePickerCardState extends State<FixSchedulePickerCard> {
                                 '${date.day} ${_shortMonth(date.month)}',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  color: Colors.white,
+                                style: TextStyle(
+                                  color: isSelected
+                                      ? Colors.white
+                                      : AppColors.textPrimary,
                                   fontSize: 13,
                                   fontWeight: FontWeight.w800,
                                 ),
@@ -432,9 +476,9 @@ class _FixSchedulePickerCardState extends State<FixSchedulePickerCard> {
             Text(
               'Select Preferred Arrival Window',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.textSecondary,
-                    fontWeight: FontWeight.w600,
-                  ),
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: AppSpacing.xs),
             for (final slot in TimeSlot.standardSlots) ...[
@@ -447,12 +491,19 @@ class _FixSchedulePickerCardState extends State<FixSchedulePickerCard> {
           // Active Schedule Indicator
           Builder(
             builder: (context) {
-              final allSlotsPast = !_schedule.isNow &&
-                  TimeSlot.standardSlots.every((s) => _isSlotPast(_schedule.date, s));
+              final allSlotsPast =
+                  !_schedule.isNow &&
+                  TimeSlot.standardSlots.every(
+                    (s) => _isSlotPast(_schedule.date, s),
+                  );
               if (allSlotsPast) {
                 return const Row(
                   children: [
-                    Icon(Icons.info_outline_rounded, color: AppColors.warning, size: 14),
+                    Icon(
+                      Icons.info_outline_rounded,
+                      color: AppColors.warning,
+                      size: 14,
+                    ),
                     SizedBox(width: 6),
                     Expanded(
                       child: Text(
@@ -469,7 +520,11 @@ class _FixSchedulePickerCardState extends State<FixSchedulePickerCard> {
               }
               return Row(
                 children: [
-                  const Icon(Icons.check_circle_outline_rounded, color: AppColors.success, size: 14),
+                  const Icon(
+                    Icons.check_circle_outline_rounded,
+                    color: AppColors.success,
+                    size: 14,
+                  ),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
@@ -506,17 +561,18 @@ class _FixSchedulePickerCardState extends State<FixSchedulePickerCard> {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.primary.withValues(alpha: 0.15)
+              ? AppColors.primary.withValues(alpha: 0.12)
               : isPast
-                  ? Colors.white.withValues(alpha: 0.02)
-                  : AppColors.backgroundPrimary,
+              ? AppColors.surfaceContainerLow.withValues(alpha: 0.5)
+              : AppColors.surfaceContainerLowest,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: isSelected
                 ? AppColors.primary
                 : isPast
-                    ? Colors.white.withValues(alpha: 0.05)
-                    : Colors.white12,
+                ? AppColors.borderDefault.withValues(alpha: 0.4)
+                : AppColors.borderDefault,
+            width: isSelected ? 1.5 : 1.0,
           ),
         ),
         child: Row(
@@ -525,10 +581,10 @@ class _FixSchedulePickerCardState extends State<FixSchedulePickerCard> {
               slot.icon,
               size: 18,
               color: isPast
-                  ? Colors.white24
+                  ? AppColors.textDisabled
                   : isSelected
-                      ? AppColors.primary
-                      : Colors.white70,
+                  ? AppColors.primary
+                  : AppColors.textSecondary,
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -538,10 +594,10 @@ class _FixSchedulePickerCardState extends State<FixSchedulePickerCard> {
                     slot.label,
                     style: TextStyle(
                       color: isPast
-                          ? Colors.white24
+                          ? AppColors.textDisabled
                           : isSelected
-                              ? AppColors.primary
-                              : Colors.white,
+                          ? AppColors.primary
+                          : AppColors.textPrimary,
                       fontWeight: FontWeight.w700,
                       fontSize: 13,
                     ),
@@ -555,12 +611,14 @@ class _FixSchedulePickerCardState extends State<FixSchedulePickerCard> {
                         slot.timeRange,
                         style: TextStyle(
                           color: isPast
-                              ? Colors.white24
+                              ? AppColors.textDisabled
                               : isSelected
-                                  ? AppColors.primary
-                                  : AppColors.textSecondary,
+                              ? AppColors.primary
+                              : AppColors.textSecondary,
                           fontSize: 11,
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                          fontWeight: isSelected
+                              ? FontWeight.w600
+                              : FontWeight.w500,
                         ),
                       ),
                       if (isPast)
@@ -579,13 +637,15 @@ class _FixSchedulePickerCardState extends State<FixSchedulePickerCard> {
             ),
             const SizedBox(width: 8),
             Icon(
-              isSelected ? Icons.radio_button_checked_rounded : Icons.radio_button_unchecked_rounded,
+              isSelected
+                  ? Icons.radio_button_checked_rounded
+                  : Icons.radio_button_unchecked_rounded,
               size: 16,
               color: isPast
-                  ? Colors.white10
+                  ? AppColors.textDisabled.withValues(alpha: 0.3)
                   : isSelected
-                      ? AppColors.primary
-                      : Colors.white30,
+                  ? AppColors.primary
+                  : AppColors.textTertiary,
             ),
           ],
         ),
@@ -594,88 +654,137 @@ class _FixSchedulePickerCardState extends State<FixSchedulePickerCard> {
   }
 
   static String _scheduleDay(int weekday) => switch (weekday) {
-        1 => 'Mon',
-        2 => 'Tue',
-        3 => 'Wed',
-        4 => 'Thu',
-        5 => 'Fri',
-        6 => 'Sat',
-        _ => 'Sun',
-      };
+    1 => 'Mon',
+    2 => 'Tue',
+    3 => 'Wed',
+    4 => 'Thu',
+    5 => 'Fri',
+    6 => 'Sat',
+    _ => 'Sun',
+  };
 
   static String _shortMonth(int month) => switch (month) {
-        1 => 'Jan',
-        2 => 'Feb',
-        3 => 'Mar',
-        4 => 'Apr',
-        5 => 'May',
-        6 => 'Jun',
-        7 => 'Jul',
-        8 => 'Aug',
-        9 => 'Sep',
-        10 => 'Oct',
-        11 => 'Nov',
-        12 => 'Dec',
-        _ => '',
-      };
+    1 => 'Jan',
+    2 => 'Feb',
+    3 => 'Mar',
+    4 => 'Apr',
+    5 => 'May',
+    6 => 'Jun',
+    7 => 'Jul',
+    8 => 'Aug',
+    9 => 'Sep',
+    10 => 'Oct',
+    11 => 'Nov',
+    12 => 'Dec',
+    _ => '',
+  };
 }
 
-class _ModeTab extends StatelessWidget {
-  const _ModeTab({
-    required this.label,
+class _ExecutionModeCard extends StatelessWidget {
+  const _ExecutionModeCard({
+    required this.title,
+    required this.subtitle,
     required this.icon,
     required this.isSelected,
     required this.onTap,
+    required this.metadata,
+    required this.subtitleColor,
   });
 
-  final String label;
+  final String title;
+  final String subtitle;
   final IconData icon;
   final bool isSelected;
   final VoidCallback onTap;
+  final Widget metadata;
+  final Color subtitleColor;
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      borderRadius: BorderRadius.circular(8),
       onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        height: 112,
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.surfaceElevated : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-          border: isSelected ? Border.all(color: Colors.white24, width: 1) : null,
+          color: isSelected ? AppColors.primary : AppColors.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(12),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.3),
-                    blurRadius: 4,
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 6,
                     offset: const Offset(0, 2),
-                  )
+                  ),
                 ]
               : null,
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Icon(
-              icon,
-              size: 16,
-              color: isSelected ? AppColors.accentGold : AppColors.textSecondary,
-            ),
-            const SizedBox(width: 6),
-            Flexible(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: isSelected ? Colors.white : AppColors.textSecondary,
-                  fontSize: 12,
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  icon,
+                  size: 24,
+                  color: isSelected
+                      ? AppColors.primaryFixed
+                      : AppColors.textSecondary,
                 ),
-              ),
+                if (isSelected)
+                  Container(
+                    width: 16,
+                    height: 16,
+                    decoration: const BoxDecoration(
+                      color: AppColors.onPrimary,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.check_rounded,
+                      size: 12,
+                      color: AppColors.primary,
+                    ),
+                  )
+                else
+                  Container(
+                    width: 16,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.borderDefault),
+                    ),
+                  ),
+              ],
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title.toUpperCase(),
+                  style: TextStyle(
+                    color: isSelected ? subtitleColor : AppColors.textSecondary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    color: isSelected ? Colors.white : AppColors.textPrimary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                metadata,
+              ],
             ),
           ],
         ),

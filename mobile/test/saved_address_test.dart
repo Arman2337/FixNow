@@ -10,13 +10,41 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Widget host(Widget child) => MaterialApp(
-      theme: AppTheme.dark,
-      home: Scaffold(body: child),
-    );
+  theme: AppTheme.dark,
+  home: Scaffold(body: child),
+);
 
 void main() {
   setUp(() {
-    SavedAddressRepository.instance.reset();
+    SavedAddressRepository.instance
+      ..reset()
+      ..seedAll(const [
+        SavedAddress(
+          id: 'addr-home-1',
+          label: AddressLabel.home,
+          customTitle: 'Home',
+          flatBuilding: 'Flat 402, Lotus Heights',
+          streetArea: '4th Cross, Koramangala 5th Block',
+          landmark: 'Opposite Sony World Signal',
+          city: 'Bengaluru',
+          postalCode: '560034',
+          latitude: 12.9352,
+          longitude: 77.6245,
+          isDefault: true,
+        ),
+        SavedAddress(
+          id: 'addr-work-2',
+          label: AddressLabel.work,
+          customTitle: 'Office',
+          flatBuilding: 'Desk 5B, WeWork Galaxy',
+          streetArea: '43 Residency Road, Shanthala Nagar',
+          landmark: 'Near Mayo Hall Metro',
+          city: 'Bengaluru',
+          postalCode: '560025',
+          latitude: 12.9719,
+          longitude: 77.6070,
+        ),
+      ]);
   });
 
   group('SavedAddressRepository', () {
@@ -117,8 +145,9 @@ void main() {
   });
 
   group('CustomerProfileScreen Saved Addresses integration', () {
-    testWidgets('displays saved addresses and allows deleting an address',
-        (tester) async {
+    testWidgets('displays saved addresses and allows deleting an address', (
+      tester,
+    ) async {
       final repository = FakeProfileRepository(
         const CustomerProfile(displayName: 'Rahul'),
       );

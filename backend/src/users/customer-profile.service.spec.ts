@@ -8,6 +8,14 @@ describe('CustomerProfileService', () => {
     findOneBy: jest.fn(),
     create: jest.fn((_entity, value: object) => ({ ...value })),
     save: jest.fn((value: object) => Promise.resolve(value)),
+    count: jest.fn().mockResolvedValue(0),
+    getRepository: jest.fn().mockReturnValue({
+      count: jest.fn().mockResolvedValue(0),
+      createQueryBuilder: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      getCount: jest.fn().mockResolvedValue(0),
+    }),
   };
   const dataSource = {
     transaction: jest.fn((work: (value: EntityManager) => unknown) =>
@@ -25,6 +33,11 @@ describe('CustomerProfileService', () => {
 
     await expect(service.read('user-1')).resolves.toEqual({
       displayName: null,
+      stats: {
+        activeWarranties: 0,
+        cashbackMinor: 0,
+        completedJobs: 0,
+      },
     });
     expect(manager.findOneBy).toHaveBeenCalledWith(CustomerProfileEntity, {
       userId: 'user-1',
@@ -41,6 +54,11 @@ describe('CustomerProfileService', () => {
 
     await expect(service.update('user-1', 'Ada')).resolves.toEqual({
       displayName: 'Ada',
+      stats: {
+        activeWarranties: 0,
+        cashbackMinor: 0,
+        completedJobs: 0,
+      },
     });
     expect(manager.create).toHaveBeenCalledWith(CustomerProfileEntity, {
       userId: 'user-1',

@@ -10,6 +10,9 @@ import { CustomerProfileController } from './customer-profile.controller';
 import { CustomerProfileEntity } from './customer-profile.entity';
 import { CustomerProfileService } from './customer-profile.service';
 
+import { CustomerAddressEntity } from './customer-address.entity';
+import { CustomerAddressesController } from './customer-addresses.controller';
+
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -19,9 +22,10 @@ import { CustomerProfileService } from './customer-profile.service';
       UserRoleEntity,
       CredentialEntity,
       CustomerProfileEntity,
+      CustomerAddressEntity,
     ]),
   ],
-  controllers: [CustomerProfileController],
+  controllers: [CustomerProfileController, CustomerAddressesController],
   providers: [UsersRepository, CustomerProfileService],
   exports: [UsersRepository],
 })

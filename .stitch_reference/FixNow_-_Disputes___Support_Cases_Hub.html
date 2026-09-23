@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&amp;family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "on-primary-fixed": "#002114", "on-primary-container": "#f5fff7", "surface": "#f8f9ff", "on-secondary-container": "#5c647a", "tertiary-container": "#a36700", "tertiary": "#825100", "on-secondary": "#ffffff", "on-primary": "#ffffff", "secondary": "#565e74", "surface-container-lowest": "#ffffff", "secondary-fixed": "#dae2fd", "surface-bright": "#f8f9ff", "outline": "#6d7a72", "inverse-primary": "#68dba9", "tertiary-fixed": "#ffddb8", "on-error-container": "#93000a", "inverse-on-surface": "#eaf1ff", "on-tertiary-container": "#fffbff", "outline-variant": "#bccac0", "on-secondary-fixed-variant": "#3f465c", "surface-tint": "#006c4a", "inverse-surface": "#213145", "on-secondary-fixed": "#131b2e", "secondary-fixed-dim": "#bec6e0", "on-tertiary-fixed": "#2a1700", "error-container": "#ffdad6", "surface-dim": "#cbdbf5", "on-tertiary-fixed-variant": "#653e00", "primary-fixed-dim": "#68dba9", "surface-container-highest": "#d3e4fe", "primary": "#006948", "error": "#ba1a1a", "on-error": "#ffffff", "tertiary-fixed-dim": "#ffb95f", "surface-container": "#e5eeff", "on-surface-variant": "#3d4a42", "primary-fixed": "#85f8c4", "surface-variant": "#d3e4fe", "primary-container": "#00855d", "background": "#f8f9ff", "surface-container-low": "#eff4ff", "on-background": "#0b1c30", "surface-container-high": "#dce9ff", "on-primary-fixed-variant": "#005137", "secondary-container": "#dae2fd", "on-tertiary": "#ffffff", "on-surface": "#0b1c30" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "gutter-desktop": "1.5rem", "space-sm": "0.5rem", "space-md": "1rem", "gutter": "1rem", "margin-tablet": "1.5rem", "margin-desktop": "2rem", "space-lg": "1.5rem", "space-xl": "2rem", "margin": "1rem", "space-xs": "0.25rem" }, "fontFamily": { "label-md": ["Inter"], "body-md": ["Inter"], "price-display": ["Plus Jakarta Sans"], "headline-md": ["Plus Jakarta Sans"], "body-lg": ["Inter"], "body-sm": ["Inter"], "headline-xl-mobile": ["Plus Jakarta Sans"], "headline-lg-mobile": ["Plus Jakarta Sans"], "data-mono": ["Inter"], "headline-xl": ["Plus Jakarta Sans"], "headline-lg": ["Plus Jakarta Sans"], "label-sm": ["Inter"] }, "fontSize": { "label-md": ["13px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "600" }], "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }], "price-display": ["24px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "700" }], "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }], "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }], "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }], "headline-xl-mobile": ["30px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "800" }], "headline-lg-mobile": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "700" }], "data-mono": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }], "headline-xl": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "800" }], "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.015em", "fontWeight": "700" }], "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "600" }] } } } }</script><style>@layer base{html,body{width:100%;margin:0;padding:0;min-height:100%;}body{overscroll-behavior-y:none;background-color:#f8f9ff;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style></head><body class="bg-surface font-body-md text-on-surface flex flex-col min-h-screen"><header class="fixed top-0 w-full z-50 bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] pt-safe"><div class="h-16 px-margin flex items-center justify-between gap-space-sm"><div class="flex items-center gap-space-sm min-w-0"><span class="font-headline-md text-headline-md text-primary tracking-tight shrink-0">FixNow</span><span class="font-body-md text-body-md text-outline-variant shrink-0">/</span><h1 class="font-headline-md text-headline-md text-on-surface truncate">Bookings</h1></div><div class="flex items-center gap-space-xs shrink-0"><button aria-label="Notifications" class="w-11 h-11 flex items-center justify-center text-on-surface-variant hover:text-on-surface relative rounded-full"><span class="material-symbols-outlined text-[24px]">notifications</span><span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-tertiary-container"></span></button><a class="flex items-center justify-center p-0.5 rounded-full hover:opacity-90" data-path="profile" href="#"><img alt="Profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1UHetTjpd4BB1e8njLlIDDmUsYV1qxX9ZC_wim9sHsXYmSrYRkJpnyD1IHW75IXxc9pB2kik0nzNC98TRCklpEgiq7TkSpL4ITZqzFt8uLi5EyWXYQq9m4a8YI9wZ3o6xvQSkDtb6AI5-x28GAADr5cRCtuuSX9N5FrvCQ7MBueDjttVq6CBcCdMU6PRAQsRnz78gBoZeg_WCxKbdy42V0Um4AxVfE0kNiMNfOiHfuES63iQSWWA34hjob7XGOL3mAbPdCfF9El6g"/></a></div></div></header><main class="flex-1 flex flex-col relative w-full pt-16 pb-20 bg-surface"><div class="flex flex-col w-full px-margin space-y-space-md pb-space-xl">
+<!-- Top Navigation & Action Header (No outer margins/padding, sits clean under fixed shell) -->
+<div class="flex items-center justify-between gap-space-xs pt-space-xs">
+<div class="flex items-center gap-space-sm min-w-0">
+<button aria-label="Go Back" class="w-10 h-10 rounded-full bg-surface-container-low flex items-center justify-center text-on-surface shadow-sm active:scale-95 transition-transform" type="button">
+<span class="material-symbols-outlined text-[20px]">arrow_back</span>
+</button>
+<div class="flex items-center gap-space-xs min-w-0">
+<img alt="FixNow Support Seal" class="w-7 h-7 object-contain shrink-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBpYDvB1TVHcu-u1RrBYHb6bJdUWfxxqEUjW-Goh_kwAQDniO1vCg8rd29m3n4gy1qqfat_nFb_mfUgxLvUYaIdM_q7j3NkRA6RfcGAfRTK63fuCYLf-9K8abwtsilJNtkOK7fp70mGUY65CHGdTojRVWHpkMn-RCbV8O3lhHyCS9L5pgN5bRoGlCeJ1cUhoV-p_2cHpRHT1R9hxriAsaWjRbxLXXoDCzXtl45TeowN0XJVvKz-uK9ibmlm5l-dzpT8-w"/>
+<div class="truncate">
+<h2 class="font-headline-md text-headline-md text-on-surface leading-tight truncate">Disputes &amp; Cases</h2>
+<span class="font-label-sm text-label-sm text-on-surface-variant block">Resolution Hub</span>
+</div>
+</div>
+</div>
+<button class="h-10 px-3.5 bg-primary text-on-primary rounded-xl font-label-md text-label-md flex items-center gap-1.5 shadow-sm active:scale-95 transition-transform shrink-0" id="btn-new-complaint" type="button">
+<span class="material-symbols-outlined text-[18px]">add_circle</span>
+<span>+ New Case</span>
+</button>
+</div>
+<!-- Fair Dispute Escrow Trust Banner -->
+<div class="bg-primary-container text-on-primary-container p-3.5 rounded-xl flex items-center gap-3 shadow-sm relative overflow-hidden">
+<div class="w-10 h-10 rounded-lg bg-primary/40 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[22px] text-on-primary" style="font-variation-settings: 'FILL' 1;">shield_lock</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-1.5">
+<span class="font-label-md text-label-md font-bold text-on-primary tracking-wide">FixNow Fair Dispute Guarantee</span>
+<span class="material-symbols-outlined text-[15px] text-primary-fixed">verified</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-primary-container/90 mt-0.5 line-clamp-1">
+        Escrow funds locked. 100% resolution guarantee or instant reversal to original source.
+      </p>
+</div>
+</div>
+<!-- Active Case Highlighted Card -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-md flex flex-col space-y-3.5">
+<!-- Header: Meta & Status Pill -->
+<div class="flex items-start justify-between gap-space-sm pb-1">
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-data-mono text-data-mono text-primary font-bold tracking-wider">#CASE-8821</span>
+<span class="text-outline-variant font-body-sm">•</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Job #FX-8921B</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-surface mt-0.5">AC Jet Servicing</h3>
+</div>
+<!-- In-Review Pill with Pulse Indicator -->
+<div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-tertiary-fixed text-on-tertiary-fixed shrink-0">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-tertiary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-tertiary"></span>
+</span>
+<span class="font-label-sm text-label-sm tracking-wide">IN_REVIEW</span>
+</div>
+</div>
+<!-- Assigned Specialist & SLA Notice -->
+<div class="bg-surface-container-low rounded-xl p-3 flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2.5 min-w-0">
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center text-primary shrink-0 font-headline-md text-label-md font-bold">
+            PV
+          </div>
+<div class="min-w-0">
+<span class="font-label-md text-label-md text-on-surface block truncate">Pooja V.</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant block truncate">FixNow Customer Trust Team</span>
+</div>
+</div>
+<span class="font-data-mono text-data-mono text-primary bg-primary-fixed/40 px-2 py-0.5 rounded-full shrink-0">Live Lead</span>
+</div>
+<div class="flex items-center gap-1.5 text-on-surface-variant font-body-sm text-body-sm pt-1">
+<span class="material-symbols-outlined text-[16px] text-tertiary">schedule</span>
+<span>Response guaranteed within 2 hours • Updated 18m ago</span>
+</div>
+</div>
+<!-- Interactive Dispute Lifecycle Resolution Timeline -->
+<div class="pt-1">
+<div class="flex items-center justify-between mb-3">
+<h4 class="font-label-md text-label-md text-on-surface tracking-wide">Resolution Milestones</h4>
+<span class="font-label-sm text-label-sm text-primary font-semibold">Stage 3 of 4</span>
+</div>
+<div class="relative pl-6 space-y-4">
+<!-- Connecting Vertical Guide Track -->
+<div class="absolute left-2.5 top-2 bottom-3 w-0.5 bg-outline-variant/40"></div>
+<!-- Step 1: Done -->
+<div class="relative flex items-start gap-3">
+<div class="absolute -left-6 top-0 w-5 h-5 rounded-full bg-primary text-on-primary flex items-center justify-center ring-4 ring-surface-container-lowest">
+<span class="material-symbols-outlined text-[13px]">check</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-on-surface">Complaint Filed</span>
+<span class="font-data-mono text-data-mono text-on-surface-variant">Sep 14, 12:10 PM</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Dispute packet created automatically from customer invoice challenge.</p>
+</div>
+</div>
+<!-- Step 2: Done -->
+<div class="relative flex items-start gap-3">
+<div class="absolute -left-6 top-0 w-5 h-5 rounded-full bg-primary text-on-primary flex items-center justify-center ring-4 ring-surface-container-lowest">
+<span class="material-symbols-outlined text-[13px]">check</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-on-surface">Evidence &amp; Bill Audited</span>
+<span class="font-data-mono text-data-mono text-on-surface-variant">Sep 14, 12:45 PM</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Automated OCR cross-matched unit rates with technician checklist logs.</p>
+</div>
+</div>
+<!-- Step 3: Active Pulse -->
+<div class="relative flex items-start gap-3">
+<div class="absolute -left-6 top-0.5 w-5 h-5 rounded-full bg-tertiary-container text-on-tertiary-container flex items-center justify-center ring-4 ring-surface-container-lowest shadow-sm">
+<span class="material-symbols-outlined text-[12px] animate-spin">refresh</span>
+</div>
+<div class="flex-1 min-w-0 bg-tertiary-fixed/30 p-2.5 rounded-lg">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-tertiary font-bold">Provider Clarification &amp; Audit</span>
+<span class="font-data-mono text-data-mono text-tertiary">In Progress</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface mt-0.5">Technician response window open. IoT run logs cross-verified.</p>
+</div>
+</div>
+<!-- Step 4: Pending -->
+<div class="relative flex items-start gap-3 opacity-60">
+<div class="absolute -left-6 top-0 w-5 h-5 rounded-full bg-surface-container-high text-on-surface-variant flex items-center justify-center ring-4 ring-surface-container-lowest">
+<span class="material-symbols-outlined text-[12px]">lock</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-on-surface">Resolution &amp; Escrow Adjustment / Refund</span>
+<span class="font-data-mono text-data-mono text-on-surface-variant">Pending</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Immediate wallet refund or warranty service re-dispatch.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Case Evidence & Particulars Box -->
+<div class="bg-surface-container-low rounded-xl p-3.5 space-y-3">
+<div>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider block">Disputed Item</span>
+<p class="font-label-md text-label-md text-on-surface mt-0.5 font-semibold">
+          Billing Discrepancy — Extra Gas Top-up Charged without Prior Consent
+        </p>
+</div>
+<!-- Evidence Attachment Thumbnails -->
+<div>
+<span class="font-label-sm text-label-sm text-on-surface-variant block mb-2">Attached Proof &amp; Telemetry (3 Files)</span>
+<div class="grid grid-cols-3 gap-2">
+<!-- Thumbnail 1: Pressure Gauge Pre -->
+<div class="relative aspect-square rounded-lg overflow-hidden bg-surface-container-high group">
+<img class="w-full h-full object-cover" data-alt="Close up sharp photograph of an analog refrigeration manifold pressure gauge displaying PSI level on a residential split air conditioner outdoor unit under sunlight." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDsUV51pQzJSszYanYPFHNvCYY2-sxc_0wpCQWI50QzQg6A_LlImNJPoGnmfVQ-l3Dcf2IhBjYz46uZwvQBDD4eF878bpeJmiFNTMJ4RQSRecEThywx7WkmT4xb7CK6iZOFt3Mrks1_IyCNkrb71MmLnxmlMjJOemQFLOCLLBhyJ5ZhbFo5Y_54ydVBCU2DQ-xJpMlZwRmQCd58BCXXT5IIIySFipim7h2BE-CDLy8GUjY2_7fv8aqy"/>
+<div class="absolute inset-0 bg-on-surface/40 flex items-center justify-center text-on-primary opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-[20px]">zoom_in</span>
+</div>
+<span class="absolute bottom-1 left-1 font-data-mono text-[10px] bg-on-surface/80 text-on-primary px-1.5 py-0.5 rounded">Gauge-1</span>
+</div>
+<!-- Thumbnail 2: Pressure Gauge Post -->
+<div class="relative aspect-square rounded-lg overflow-hidden bg-surface-container-high group">
+<img class="w-full h-full object-cover" data-alt="Technical photo of digital HVAC manifold gauge connected with yellow and blue hoses to air conditioner compressor valves showing pressure readings." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBu9ntWoh65O00EpIGD-ktNRinKr2_RCiZaavoqqR0vhaYy3jpNx3HqZzeuwIKlntD1sEa-iJ8PHaZtYasurJ8vRv-xyvJELO6Xy9r7s2zpUhUSKjndOxmAHFUy48SIiM0At_-LFgw8zRC_3hLH5ULlhYmFWb1OmsMGKa1kXssqQux738y_HVcYOyHuHn6nIO_3Dxp100qWI-B-WvayxOY4Skcm9-6CHkC9Xn7W_submm3xwI_G5nW-"/>
+<div class="absolute inset-0 bg-on-surface/40 flex items-center justify-center text-on-primary opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-[20px]">zoom_in</span>
+</div>
+<span class="absolute bottom-1 left-1 font-data-mono text-[10px] bg-on-surface/80 text-on-primary px-1.5 py-0.5 rounded">Gauge-2</span>
+</div>
+<!-- Thumbnail 3: Invoice Receipt -->
+<div class="relative aspect-square rounded-lg overflow-hidden bg-surface-container-high group">
+<img class="w-full h-full object-cover" data-alt="Detailed flat lay photo of printed job invoice receipt showing itemized maintenance line items with handwritten surcharge highlighted in ink." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCBvXY6FVIWDKPBowWq8eNK6URorKS2rUk7XIHHVMUJi5iNigyoUu8S6MbgbhbY7mEhoyKdE_dIncUg0cF2rAbqIHd6U9-XPNxflFEVtBK8SBOhnTacXNTPMe2lUQnQVlfF6BFPiQnKmowFm1POt2M28_zi9t_zmPkI97c-KEUtxctL2MmNOPzJGn1CBPDOOK8NIBd2MAY1v-zLaO684dpxXxUh-B8TwrA1aEVX24nK91a-13ZPsLwC"/>
+<div class="absolute inset-0 bg-on-surface/40 flex items-center justify-center text-on-primary opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-[20px]">zoom_in</span>
+</div>
+<span class="absolute bottom-1 left-1 font-data-mono text-[10px] bg-on-surface/80 text-on-primary px-1.5 py-0.5 rounded">Bill Slip</span>
+</div>
+</div>
+</div>
+<!-- Agent Internal Note Banner -->
+<div class="bg-surface-container-highest p-3 rounded-lg flex items-start gap-2.5">
+<span class="material-symbols-outlined text-[18px] text-primary shrink-0 mt-0.5">comment</span>
+<div class="min-w-0">
+<span class="font-label-sm text-label-sm text-primary font-bold">Support Agent Note:</span>
+<p class="font-body-sm text-body-sm text-on-surface mt-0.5">
+            “We have flagged the surcharge with Technician Rahul K. Reviewing telemetry logs from job intake.”
+          </p>
+</div>
+</div>
+</div>
+<!-- User Action Controls -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+<button class="h-12 px-4 rounded-xl bg-surface-container-high text-on-surface hover:bg-surface-container-highest active:scale-[0.98] transition-all flex items-center justify-center gap-2 font-label-md text-label-md" id="btn-add-evidence" type="button">
+<span class="material-symbols-outlined text-[20px] text-primary">attach_file</span>
+<span>Add Proof / Comments</span>
+</button>
+<button class="h-12 px-4 rounded-xl bg-primary text-on-primary hover:bg-primary-container active:scale-[0.98] transition-all flex items-center justify-center gap-2 font-label-md text-label-md shadow-sm" id="btn-callback" type="button">
+<span class="material-symbols-outlined text-[20px]">support_agent</span>
+<span>Instant Callback</span>
+</button>
+</div>
+</div>
+<!-- Past Resolved Complaints Section -->
+<div class="space-y-2.5 pt-2">
+<div class="flex items-center justify-between px-1">
+<h3 class="font-headline-md text-headline-md text-on-surface">Past Complaints History</h3>
+<span class="font-label-sm text-label-sm text-on-surface-variant">1 Resolved</span>
+</div>
+<!-- Resolved Case Accordion Card -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm">
+<div class="flex items-start justify-between gap-space-sm cursor-pointer" id="accordion-toggle">
+<div class="min-w-0">
+<div class="flex items-center gap-2">
+<span class="font-data-mono text-data-mono text-on-surface-variant">#CASE-7104</span>
+<span class="text-outline-variant font-body-sm">•</span>
+<span class="font-label-sm text-label-sm bg-primary-fixed text-on-primary-fixed px-2 py-0.5 rounded-full inline-flex items-center gap-1 font-semibold">
+<span class="material-symbols-outlined text-[13px]">check_circle</span>
+              Resolved
+            </span>
+</div>
+<h4 class="font-label-md text-label-md text-on-surface mt-1 truncate">Tap repair minor dripping rework</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Closed Aug 22 • Full Free Rework Completed</p>
+</div>
+<button aria-label="Toggle details" class="w-8 h-8 rounded-full bg-surface-container-low flex items-center justify-center text-on-surface-variant shrink-0" type="button">
+<span class="material-symbols-outlined text-[20px] transition-transform duration-200" id="accordion-icon">expand_more</span>
+</button>
+</div>
+<!-- Expanded Accordion Details (Toggled via JS) -->
+<div class="hidden pt-3.5 mt-3 border-t border-surface-container-high space-y-2 text-body-sm" id="accordion-content">
+<div class="flex justify-between items-center text-on-surface-variant">
+<span>Assigned Technician:</span>
+<span class="text-on-surface font-label-md">Vikram M. (Senior Plumber)</span>
+</div>
+<div class="flex justify-between items-center text-on-surface-variant">
+<span>Resolution Outcome:</span>
+<span class="text-primary font-label-md">Zero-Cost Ceramic Washer Replacement</span>
+</div>
+<div class="flex justify-between items-center text-on-surface-variant">
+<span>Customer Rating:</span>
+<span class="text-tertiary flex items-center gap-0.5 font-label-md">
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
+            5.0 (Satisfied)
+          </span>
+</div>
+</div>
+</div>
+</div>
+<!-- Floating Feedback Modal Dialog (Triggered on Click) -->
+<div class="fixed inset-0 z-50 bg-inverse-surface/40 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-4" id="modal-container">
+<div class="bg-surface-container-lowest w-full max-w-sm rounded-2xl p-space-md shadow-xl space-y-4">
+<div class="flex items-center justify-between">
+<h4 class="font-headline-md text-headline-md text-on-surface" id="modal-title">Attach Additional Proof</h4>
+<button class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface" id="modal-close" type="button">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant" id="modal-desc">
+        Upload clear photos of serial tags, digital bill meters, or write additional context for Agent Pooja.
+      </p>
+<div class="space-y-2">
+<textarea class="w-full h-24 p-2.5 rounded-lg bg-surface-container-low text-on-surface font-body-sm text-body-sm outline-none focus:ring-2 focus:ring-primary" placeholder="Write remarks here..."></textarea>
+</div>
+<div class="flex gap-2">
+<button class="flex-1 h-11 rounded-xl bg-surface-container-high text-on-surface font-label-md text-label-md" id="modal-cancel" type="button">
+          Cancel
+        </button>
+<button class="flex-1 h-11 rounded-xl bg-primary text-on-primary font-label-md text-label-md" id="modal-submit" type="button">
+          Submit
+        </button>
+</div>
+</div>
+</div>
+</div>
+<script>
+  // Micro-interactions & Accordion Toggle
+  document.addEventListener('DOMContentLoaded', () => {
+    const accordionToggle = document.getElementById('accordion-toggle');
+    const accordionContent = document.getElementById('accordion-content');
+    const accordionIcon = document.getElementById('accordion-icon');
+
+    if (accordionToggle && accordionContent && accordionIcon) {
+      accordionToggle.addEventListener('click', () => {
+        const isHidden = accordionContent.classList.contains('hidden');
+        if (isHidden) {
+          accordionContent.classList.remove('hidden');
+          accordionIcon.textContent = 'expand_less';
+        } else {
+          accordionContent.classList.add('hidden');
+          accordionIcon.textContent = 'expand_more';
+        }
+      });
+    }
+
+    // Modal Interaction
+    const modal = document.getElementById('modal-container');
+    const btnAddProof = document.getElementById('btn-add-evidence');
+    const btnCallback = document.getElementById('btn-callback');
+    const btnNewCase = document.getElementById('btn-new-complaint');
+    const modalClose = document.getElementById('modal-close');
+    const modalCancel = document.getElementById('modal-cancel');
+    const modalSubmit = document.getElementById('modal-submit');
+    const modalTitle = document.getElementById('modal-title');
+    const modalDesc = document.getElementById('modal-desc');
+
+    const openModal = (title, desc) => {
+      if (!modal) return;
+      modalTitle.textContent = title;
+      modalDesc.textContent = desc;
+      modal.classList.remove('hidden');
+    };
+
+    const closeModal = () => {
+      if (modal) modal.classList.add('hidden');
+    };
+
+    if (btnAddProof) {
+      btnAddProof.addEventListener('click', () => {
+        openModal('Add Proof / Photos', 'Upload pictures of meter or part receipts to escalate review speed.');
+      });
+    }
+
+    if (btnCallback) {
+      btnCallback.addEventListener('click', () => {
+        openModal('Request Callback', 'Our specialist Pooja will call your registered contact number in under 15 minutes.');
+      });
+    }
+
+    if (btnNewCase) {
+      btnNewCase.addEventListener('click', () => {
+        openModal('Initiate New Complaint', 'Select the past completed booking to raise an inquiry or request free rework.');
+      });
+    }
+
+    if (modalClose) modalClose.addEventListener('click', closeModal);
+    if (modalCancel) modalCancel.addEventListener('click', closeModal);
+    if (modalSubmit) {
+      modalSubmit.addEventListener('click', () => {
+        modalSubmit.textContent = 'Submitting...';
+        setTimeout(() => {
+          modalSubmit.textContent = 'Submitted!';
+          setTimeout(() => {
+            closeModal();
+            modalSubmit.textContent = 'Submit';
+          }, 600);
+        }, 800);
+      });
+    }
+  });
+</script></main><nav class="fixed bottom-0 w-full z-50 pb-safe bg-surface/90 backdrop-blur-xl shadow-[0_-2px_12px_rgba(0,0,0,0.05)]" data-active-classes="text-primary font-bold"><div class="flex justify-around items-center h-16 px-space-xs"><a class="flex flex-col items-center justify-center gap-space-xs w-16 h-12 text-on-surface-variant transition-colors" data-path="explore" href="#"><span class="material-symbols-outlined text-[24px]">explore</span><span class="font-label-sm text-label-sm">Explore</span></a><a aria-current="page" class="flex flex-col items-center justify-center gap-space-xs w-16 h-12 transition-colors text-primary font-bold" data-path="bookings" href="#"><span class="material-symbols-outlined text-[24px]">handyman</span><span class="font-label-sm text-label-sm">Bookings</span></a><a class="flex flex-col items-center justify-center gap-space-xs w-16 h-12 text-on-surface-variant transition-colors" data-path="rewards" href="#"><span class="material-symbols-outlined text-[24px]">verified</span><span class="font-label-sm text-label-sm">Rewards</span></a><a class="flex flex-col items-center justify-center gap-space-xs w-16 h-12 text-on-surface-variant transition-colors" data-path="profile" href="#"><span class="material-symbols-outlined text-[24px]">account_circle</span><span class="font-label-sm text-label-sm">Profile</span></a></div></nav></body></html>

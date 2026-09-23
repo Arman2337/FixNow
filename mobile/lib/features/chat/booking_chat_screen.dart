@@ -3,9 +3,6 @@ import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_motion.dart';
 import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
-import 'package:fixnow_mobile/features/call/booking_call_screen.dart';
-import 'package:fixnow_mobile/features/call/call_controller.dart';
-import 'package:fixnow_mobile/features/call/call_repository.dart';
 import 'package:fixnow_mobile/features/chat/chat_controller.dart';
 import 'package:fixnow_mobile/features/chat/chat_message.dart';
 
@@ -14,13 +11,11 @@ class BookingChatScreen extends StatefulWidget {
     super.key,
     required this.controller,
     this.providerName = 'Verified Professional',
-    this.callRepository,
     this.onCallPressed,
   });
 
   final ChatController controller;
   final String providerName;
-  final CallRepository? callRepository;
   final VoidCallback? onCallPressed;
 
   @override
@@ -140,20 +135,25 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
     return Scaffold(
       backgroundColor: AppColors.backgroundPrimary,
       appBar: AppBar(
-        backgroundColor: AppColors.backgroundSecondary,
+        backgroundColor: AppColors.surfaceContainerLowest,
         elevation: 0,
+        scrolledUnderElevation: 1,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+          icon: const Icon(
+            Icons.arrow_back_rounded,
+            color: AppColors.textPrimary,
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
         titleSpacing: 0,
         title: Row(
           children: [
             Stack(
+              clipBehavior: Clip.none,
               children: [
                 CircleAvatar(
                   radius: 18,
-                  backgroundColor: AppColors.primarySoft,
+                  backgroundColor: AppColors.primary.withValues(alpha: 0.12),
                   child: const Icon(
                     Icons.person_rounded,
                     color: AppColors.primary,
@@ -161,16 +161,16 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
                   ),
                 ),
                 Positioned(
-                  right: 0,
-                  bottom: 0,
+                  right: -1,
+                  bottom: -1,
                   child: Container(
                     width: 10,
                     height: 10,
                     decoration: BoxDecoration(
-                      color: AppColors.success,
+                      color: AppColors.primary,
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: AppColors.backgroundSecondary,
+                        color: AppColors.surfaceContainerLowest,
                         width: 1.5,
                       ),
                     ),
@@ -191,7 +191,7 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
                           style: const TextStyle(
                             color: AppColors.textPrimary,
                             fontSize: 15,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.w700,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -199,7 +199,7 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
                       const SizedBox(width: 4),
                       const Icon(
                         Icons.verified_rounded,
-                        color: AppColors.focus,
+                        color: AppColors.primary,
                         size: 14,
                       ),
                     ],
@@ -208,7 +208,8 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
                     'Booking #$bookingShortId',
                     style: const TextStyle(
                       color: AppColors.textSecondary,
-                      fontSize: 12,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ],
@@ -217,32 +218,11 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
           ],
         ),
         actions: [
-          if (widget.onCallPressed != null || widget.callRepository != null)
+          if (widget.onCallPressed != null)
             IconButton(
-              icon: const Icon(
-                Icons.phone_outlined,
-                color: AppColors.accentGold,
-              ),
+              icon: const Icon(Icons.phone_outlined, color: AppColors.primary),
               tooltip: 'Call Pro',
-              onPressed: () {
-                if (widget.onCallPressed != null) {
-                  widget.onCallPressed!();
-                } else if (widget.callRepository != null) {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => BookingCallScreen(
-                        controller: CallController(
-                          bookingId: widget.controller.bookingId,
-                          repository: widget.callRepository!,
-                          realtimeClient: widget.controller.realtimeClient,
-                          initialSpeakerOn: true,
-                        ),
-                        providerName: widget.providerName,
-                      ),
-                    ),
-                  );
-                }
-              },
+              onPressed: widget.onCallPressed,
             ),
           const SizedBox(width: 4),
         ],
@@ -250,15 +230,15 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Shield Notice Bar
+            // Shield Notice Bar (Stitch)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              color: AppColors.backgroundSecondary.withValues(alpha: 0.5),
+              color: AppColors.surfaceContainerLow,
               child: Row(
                 children: const [
                   Icon(
                     Icons.shield_outlined,
-                    color: AppColors.focus,
+                    color: AppColors.primary,
                     size: 16,
                   ),
                   SizedBox(width: 8),
@@ -268,6 +248,7 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),
@@ -278,7 +259,10 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
             // Read-Only Notice Bar if service is completed
             if (!controller.canSend)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 8,
+                ),
                 color: AppColors.accentGoldSoft,
                 child: Row(
                   children: const [
@@ -310,99 +294,100 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
                         color: AppColors.primary,
                       ),
                     )
-                  : controller.errorMessage != null && controller.messages.isEmpty
-                      ? Center(
-                          child: InkWell(
-                            onTap: controller.load,
-                            child: Padding(
-                              padding: const EdgeInsets.all(AppSpacing.lg),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(
-                                    Icons.refresh_rounded,
-                                    color: AppColors.textSecondary,
-                                    size: 32,
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    controller.errorMessage!,
-                                    style: const TextStyle(
-                                      color: AppColors.textSecondary,
-                                    ),
-                                  ),
-                                ],
+                  : controller.errorMessage != null &&
+                        controller.messages.isEmpty
+                  ? Center(
+                      child: InkWell(
+                        onTap: controller.load,
+                        child: Padding(
+                          padding: const EdgeInsets.all(AppSpacing.lg),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.refresh_rounded,
+                                color: AppColors.textSecondary,
+                                size: 32,
                               ),
+                              const SizedBox(height: 8),
+                              Text(
+                                controller.errorMessage!,
+                                style: const TextStyle(
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    )
+                  : controller.messages.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Icon(
+                            Icons.chat_bubble_outline_rounded,
+                            color: AppColors.textDisabled,
+                            size: 44,
+                          ),
+                          SizedBox(height: 12),
+                          Text(
+                            'No messages yet',
+                            style: TextStyle(
+                              color: AppColors.textPrimary,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
-                        )
-                      : controller.messages.isEmpty
-                          ? Center(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: const [
-                                  Icon(
-                                    Icons.chat_bubble_outline_rounded,
-                                    color: AppColors.textDisabled,
-                                    size: 44,
-                                  ),
-                                  SizedBox(height: 12),
-                                  Text(
-                                    'No messages yet',
-                                    style: TextStyle(
-                                      color: AppColors.textPrimary,
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  SizedBox(height: 4),
-                                  Text(
-                                    'Coordinate arrival, buzz codes, or gate instructions.',
-                                    style: TextStyle(
-                                      color: AppColors.textSecondary,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            )
-                          : ListView.builder(
-                              controller: _scrollController,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AppSpacing.md,
-                                vertical: AppSpacing.sm,
-                              ),
-                              itemCount: controller.messages.length,
-                              itemBuilder: (context, index) {
-                                final message = controller.messages[index];
-                                final bubble = _ChatBubble(message: message);
-                                final isNew =
-                                    _animateFrom >= 0 && index >= _animateFrom;
-                                return isNew
-                                    ? _BubbleEntrance(
-                                        isMe: message.isMe,
-                                        child: bubble,
-                                      )
-                                    : bubble;
-                              },
+                          SizedBox(height: 4),
+                          Text(
+                            'Coordinate arrival, buzz codes, or gate instructions.',
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 13,
                             ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.md,
+                        vertical: AppSpacing.sm,
+                      ),
+                      itemCount: controller.messages.length,
+                      itemBuilder: (context, index) {
+                        final message = controller.messages[index];
+                        final bubble = _ChatBubble(message: message);
+                        final isNew =
+                            _animateFrom >= 0 && index >= _animateFrom;
+                        return isNew
+                            ? _BubbleEntrance(isMe: message.isMe, child: bubble)
+                            : bubble;
+                      },
+                    ),
             ),
 
-            // 1-Tap Quick Responses
+            // 1-Tap Quick Responses (Stitch Pills)
             if (controller.canSend)
               Container(
                 height: 42,
                 margin: const EdgeInsets.only(bottom: 6),
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                  ),
                   itemCount: _quickResponses.length,
-                  separatorBuilder: (context, index) => const SizedBox(width: 8),
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(width: 8),
                   itemBuilder: (context, index) {
                     final chipText = _quickResponses[index];
                     return ActionChip(
-                      backgroundColor: AppColors.backgroundSecondary,
-                      side: const BorderSide(color: AppColors.borderStrong),
+                      backgroundColor: AppColors.surfaceContainerLowest,
+                      side: const BorderSide(color: AppColors.borderDefault),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.pill),
                       ),
@@ -411,14 +396,16 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
                         style: const TextStyle(
                           color: AppColors.textPrimary,
                           fontSize: 12,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                       onPressed: () {
                         if (chipText.endsWith('#')) {
                           _textController.text = chipText;
-                          _textController.selection = TextSelection.fromPosition(
-                            TextPosition(offset: chipText.length),
-                          );
+                          _textController.selection =
+                              TextSelection.fromPosition(
+                                TextPosition(offset: chipText.length),
+                              );
                         } else {
                           _sendMessage(chipText);
                         }
@@ -428,26 +415,24 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
                 ),
               ),
 
-            // Input Bar
+            // Input Bar (Stitch Dock)
             Container(
               padding: const EdgeInsets.symmetric(
                 horizontal: AppSpacing.md,
                 vertical: AppSpacing.sm,
               ),
               decoration: const BoxDecoration(
-                color: AppColors.backgroundSecondary,
-                border: Border(
-                  top: BorderSide(color: Color(0xFF1E293B)),
-                ),
+                color: AppColors.surfaceContainerLowest,
+                border: Border(top: BorderSide(color: AppColors.borderDefault)),
               ),
               child: Row(
                 children: [
                   Expanded(
                     child: Container(
                       decoration: BoxDecoration(
-                        color: AppColors.backgroundPrimary,
+                        color: AppColors.surfaceContainerLow,
                         borderRadius: BorderRadius.circular(AppRadius.pill),
-                        border: Border.all(color: AppColors.borderStrong),
+                        border: Border.all(color: AppColors.borderDefault),
                       ),
                       child: TextField(
                         controller: _textController,
@@ -459,8 +444,8 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
                         decoration: InputDecoration(
                           hintText: controller.canSend
                               ? (widget.controller.isProvider
-                                  ? 'Message customer...'
-                                  : 'Message your professional...')
+                                    ? 'Message customer...'
+                                    : 'Message your professional...')
                               : 'Chat is read-only',
                           hintStyle: const TextStyle(
                             color: AppColors.textDisabled,
@@ -570,53 +555,121 @@ class _ChatBubble extends StatelessWidget {
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 4),
+        margin: const EdgeInsets.symmetric(vertical: 6),
         constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.75,
+          maxWidth: MediaQuery.of(context).size.width * 0.82,
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: isMe ? AppColors.primary : AppColors.surfaceElevated,
-          borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(16),
-            topRight: const Radius.circular(16),
-            bottomLeft: Radius.circular(isMe ? 16 : 4),
-            bottomRight: Radius.circular(isMe ? 4 : 16),
-          ),
-          border: isMe
-              ? null
-              : Border.all(color: const Color(0xFF263353), width: 1),
-        ),
-        child: Column(
-          crossAxisAlignment:
-              isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Text(
-              message.messageText,
-              style: const TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 14,
-                height: 1.3,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  _formatTime(message.createdAt.toLocal()),
-                  style: TextStyle(
-                    color: isMe
-                        ? Colors.white.withValues(alpha: 0.7)
-                        : AppColors.textSecondary,
+            if (!isMe) ...[
+              CircleAvatar(
+                radius: 14,
+                backgroundColor: AppColors.primarySoft,
+                child: Text(
+                  message.senderRole.isNotEmpty
+                      ? message.senderRole[0].toUpperCase()
+                      : 'P',
+                  style: const TextStyle(
                     fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
                   ),
                 ),
-                if (isMe) ...[
-                  const SizedBox(width: 4),
-                  _DeliveryTick(message: message),
+              ),
+              const SizedBox(width: 8),
+            ],
+            Flexible(
+              child: Column(
+                crossAxisAlignment: isMe
+                    ? CrossAxisAlignment.end
+                    : CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isMe
+                          ? AppColors.primary
+                          : AppColors.surfaceContainerLowest,
+                      borderRadius: BorderRadius.only(
+                        topLeft: const Radius.circular(18),
+                        topRight: const Radius.circular(18),
+                        bottomLeft: Radius.circular(isMe ? 18 : 4),
+                        bottomRight: Radius.circular(isMe ? 4 : 18),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.04),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                      border: isMe
+                          ? null
+                          : Border.all(
+                              color: AppColors.outline.withValues(alpha: 0.08),
+                              width: 1,
+                            ),
+                    ),
+                    child: Text(
+                      message.messageText,
+                      style: TextStyle(
+                        color: isMe ? Colors.white : AppColors.textPrimary,
+                        fontSize: 14,
+                        height: 1.35,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Padding(
+                    padding: EdgeInsets.only(
+                      left: isMe ? 0 : 4,
+                      right: isMe ? 4 : 0,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _formatTime(message.createdAt.toLocal()),
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 11,
+                          ),
+                        ),
+                        if (!isMe && message.senderRole.isNotEmpty) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 1,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.primarySoft,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              message.senderRole,
+                              style: const TextStyle(
+                                color: AppColors.primary,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                        if (isMe) ...[
+                          const SizedBox(width: 4),
+                          _DeliveryTick(message: message),
+                        ],
+                      ],
+                    ),
+                  ),
                 ],
-              ],
+              ),
             ),
           ],
         ),

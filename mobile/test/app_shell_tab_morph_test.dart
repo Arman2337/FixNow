@@ -30,11 +30,11 @@ class _ProbeState extends State<_Probe> {
 }
 
 Widget _host(Widget child, {bool disableAnimations = false}) => MaterialApp(
-      home: MediaQuery(
-        data: MediaQueryData(disableAnimations: disableAnimations),
-        child: Scaffold(body: child),
-      ),
-    );
+  home: MediaQuery(
+    data: MediaQueryData(disableAnimations: disableAnimations),
+    child: Scaffold(body: child),
+  ),
+);
 
 void main() {
   // FlutterSecureStorage has no test shim by default — mock the channel.
@@ -43,7 +43,9 @@ void main() {
   TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
       .setMockMethodCallHandler(channel, (call) async => null);
 
-  testWidgets('switching tabs reveals the new pane and settles', (tester) async {
+  testWidgets('switching tabs reveals the new pane and settles', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       _host(
         AppShell(

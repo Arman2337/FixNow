@@ -5,7 +5,9 @@ import 'package:fixnow_mobile/features/provider/provider_active_job_cockpit_scre
 import 'package:fixnow_mobile/features/provider/provider_controller.dart';
 import 'package:fixnow_mobile/features/provider/provider_models.dart';
 import 'package:fixnow_mobile/features/provider/provider_repository.dart';
+import 'package:fixnow_mobile/features/tracking/provider_live_map.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 class _FakeProviderRepository implements ProviderRepository {
@@ -17,20 +19,54 @@ class _FakeProviderRepository implements ProviderRepository {
   Future<List<CustomerBooking>> jobs() async => [];
 
   @override
+  Future<void> acceptBooking(String bookingId) async {}
+
+  @override
+  Future<void> removeSkill(String id) async {}
+
+  @override
+  Future<bool> bookingPaymentPaid(String bookingId) async => false;
+
+  @override
+  Future<ProviderProfile> updateLocation(double lat, double lng) async {
+    return const ProviderProfile(
+      displayName: 'Test',
+      bio: 'Test Bio',
+      serviceRadiusKm: 10,
+      baseLatitude: 0,
+      baseLongitude: 0,
+    );
+  }
+
+  @override
   Future<ProviderProfile?> profile() async => null;
 
   @override
-  Future<CustomerBooking> updateJobStatus(CustomerBooking job, String status) async {
+  Future<CustomerBooking> updateJobStatus(
+    CustomerBooking job,
+    String status,
+  ) async {
     lastUpdatedJob = job;
     lastUpdatedStatus = status;
     return job.copyWith(status: status, version: job.version + 1);
   }
 
   @override
-  Future<CustomerBooking> verifyOtpAndStartJob(CustomerBooking job, String otp) async {
+  Future<CustomerBooking> verifyOtpAndStartJob(
+    CustomerBooking job,
+    String otp,
+  ) async {
     lastUpdatedJob = job;
     lastVerifiedOtp = otp;
     return job.copyWith(status: 'IN_PROGRESS', version: job.version + 1);
+  }
+
+  @override
+  Future<CustomerBooking> updateLineItems(
+    CustomerBooking job,
+    List<LineItem> lineItems,
+  ) async {
+    return job.copyWith(lineItems: lineItems, version: job.version + 1);
   }
 
   @override
@@ -39,7 +75,8 @@ class _FakeProviderRepository implements ProviderRepository {
   }
 
   @override
-  Future<ProviderAvailability> availability() async => throw UnimplementedError();
+  Future<ProviderAvailability> availability() async =>
+      throw UnimplementedError();
 
   @override
   Future<List<Map<String, Object?>>> categories() async => [];
@@ -51,10 +88,16 @@ class _FakeProviderRepository implements ProviderRepository {
   Future<ProviderProfile> saveProfile(ProviderProfile profile) async => profile;
 
   @override
-  Future<ProviderAvailability> setStatus(ProviderAvailability current, String status) async => current;
+  Future<ProviderAvailability> setStatus(
+    ProviderAvailability current,
+    String status,
+  ) async => current;
 
   @override
-  Future<ProviderAvailability> setWeekdaySchedule(ProviderAvailability current, bool enabled) async => current;
+  Future<ProviderAvailability> setWeekdaySchedule(
+    ProviderAvailability current,
+    bool enabled,
+  ) async => current;
 
   @override
   Future<ProviderAvailability> updateSchedule({
@@ -80,13 +123,18 @@ class _FakeProviderRepository implements ProviderRepository {
   Future<List<ProviderRequest>> availableRequests() async => [];
 
   @override
-  Future<CustomerBooking> acceptRequest(ProviderRequest request) async => throw UnimplementedError();
+  Future<CustomerBooking> acceptRequest(ProviderRequest request) async =>
+      throw UnimplementedError();
 
   @override
   Future<ProviderApplication> application() async => throw UnimplementedError();
 
   @override
   Future<ProviderAcceptTime?> acceptTime() async => null;
+
+  @override
+  Future<ProviderApplication> submitApplication() async =>
+      throw UnimplementedError();
 }
 
 void main() {
@@ -112,13 +160,92 @@ void main() {
   }
 
   Widget wrapWidget(Widget child) {
-    return MaterialApp(
-      theme: AppTheme.dark,
-      home: child,
-    );
+    return MaterialApp(theme: AppTheme.dark, home: child);
   }
 
-  testWidgets('FixOtpInputSheet renders digit boxes and submits on 4 digits', (tester) async {
+  group('cockpit navigation', () {
+    const channel = MethodChannel('com.fixnow.mobile/navigation');
+    final calls = <MethodCall>[];
+
+    setUp(() {
+      calls.clear();
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (call) async {
+            calls.add(call);
+            return true;
+          });
+    });
+
+    tearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, null);
+      controller.dispose();
+    });
+
+    Future<void> openCockpit(WidgetTester tester, CustomerBooking job) async {
+      controller.jobs = [job];
+      await tester.pumpWidget(wrapWidget(
+        ProviderActiveJobCockpitScreen(job: job, controller: controller),
+      ));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('Navigate opens directions without changing sharing consent', (tester) async {
+      await openCockpit(tester, createJob('ASSIGNED'));
+      await tester.tap(find.text('Navigate'));
+      await tester.pumpAndSettle();
+      expect(calls, hasLength(1));
+      expect(calls.single.method, 'openNavigation');
+      expect(calls.single.arguments['latitude'], 18.9220);
+      expect(calls.single.arguments['longitude'], 72.8347);
+      expect(controller.locationSharing, isEmpty);
+    });
+
+    testWidgets('preview does not invent a provider position', (tester) async {
+      await openCockpit(tester, createJob('ASSIGNED'));
+      final map = tester.widget<ProviderLiveMap>(find.byType(ProviderLiveMap));
+      expect(map.providerLocation, isNull);
+      expect(map.customerLocation?.latitude, 18.9220);
+    });
+
+    testWidgets('map preview also opens directions', (tester) async {
+      await openCockpit(tester, createJob('ASSIGNED'));
+      await tester.tapAt(tester.getCenter(find.byType(ProviderLiveMap)));
+      await tester.pumpAndSettle();
+      expect(calls, hasLength(1));
+    });
+
+    testWidgets('missing destination never launches default coordinates', (tester) async {
+      final job = CustomerBooking(
+        id: 'job-1234-5678-90ab', serviceCategoryId: 'plumbing',
+        status: 'ASSIGNED', description: 'Repair sink', createdAt: DateTime(2026), version: 1,
+      );
+      await openCockpit(tester, job);
+      expect(find.byType(ProviderLiveMap), findsNothing);
+      expect(find.text('Customer location unavailable'), findsOneWidget);
+      expect(calls, isEmpty);
+    });
+
+    for (final failure in ['platform', 'missing', 'false']) {
+      testWidgets('shows recoverable error for $failure navigation failure', (tester) async {
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(channel, (call) async {
+              if (failure == 'platform') throw PlatformException(code: 'NAVIGATION_ERROR');
+              if (failure == 'missing') throw MissingPluginException();
+              return false;
+            });
+        await openCockpit(tester, createJob('ASSIGNED'));
+        await tester.tap(find.text('Navigate'));
+        await tester.pumpAndSettle();
+        expect(find.textContaining('Could not open maps'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      });
+    }
+  });
+
+  testWidgets('FixOtpInputSheet renders digit boxes and submits on 4 digits', (
+    tester,
+  ) async {
     String? submittedCode;
 
     await tester.pumpWidget(
@@ -147,94 +274,95 @@ void main() {
     expect(submittedCode, '4821');
   });
 
-  testWidgets('ProviderActiveJobCockpitScreen for ASSIGNED job triggers Start Journey', (tester) async {
-    final job = createJob('ASSIGNED');
-    controller.jobs = [job];
+  testWidgets(
+    'ProviderActiveJobCockpitScreen for ASSIGNED job triggers Start Journey',
+    (tester) async {
+      final job = createJob('ASSIGNED');
+      controller.jobs = [job];
 
-    await tester.pumpWidget(
-      wrapWidget(
-        ProviderActiveJobCockpitScreen(
-          job: job,
-          controller: controller,
+      await tester.pumpWidget(
+        wrapWidget(
+          ProviderActiveJobCockpitScreen(job: job, controller: controller),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
 
-    expect(find.text('Job Execution Cockpit'), findsOneWidget);
-    expect(find.text('Kitchen sink pipe is leaking heavily.'), findsOneWidget);
-    expect(find.text('Start Journey (On My Way)'), findsOneWidget);
+      expect(find.text('Active Job Cockpit'), findsOneWidget);
+      expect(find.text('Start Journey (On My Way)'), findsOneWidget);
 
-    await tester.tap(find.byKey(const Key('cockpit_start_journey_button')));
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('Start Journey (On My Way)'));
+      await tester.pumpAndSettle();
 
-    expect(repository.lastUpdatedStatus, 'EN_ROUTE');
-  });
+      expect(repository.lastUpdatedStatus, 'EN_ROUTE');
+    },
+  );
 
-  testWidgets('ProviderActiveJobCockpitScreen for EN_ROUTE job shows Enter Customer Start PIN', (tester) async {
-    final job = createJob('EN_ROUTE');
-    controller.jobs = [job];
+  testWidgets(
+    'ProviderActiveJobCockpitScreen for EN_ROUTE job shows Enter Customer Start PIN',
+    (tester) async {
+      final job = createJob('EN_ROUTE');
+      controller.jobs = [job];
 
-    await tester.pumpWidget(
-      wrapWidget(
-        ProviderActiveJobCockpitScreen(
-          job: job,
-          controller: controller,
+      await tester.pumpWidget(
+        wrapWidget(
+          ProviderActiveJobCockpitScreen(job: job, controller: controller),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
 
-    expect(find.text('Arrived at Location'), findsOneWidget);
-    expect(find.byKey(const Key('cockpit_verify_otp_button')), findsOneWidget);
+      expect(find.text('ARRIVED AT LOCATION'), findsOneWidget);
+      expect(find.text('Verify PIN & Start Job'), findsOneWidget);
 
-    // Tap verify button to open sheet
-    await tester.tap(find.byKey(const Key('cockpit_verify_otp_button')));
-    await tester.pumpAndSettle();
+      // Inline 4-digit input feeds the verify flow directly
+      await tester.enterText(
+        find.byKey(const Key('otp_hidden_input')),
+        '7362',
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Verify PIN & Start Job'));
+      await tester.pumpAndSettle();
 
-    expect(find.text('Customer Service Code'), findsOneWidget);
+      expect(repository.lastVerifiedOtp, '7362');
+    },
+  );
 
-    // Enter 4 digits
-    await tester.enterText(find.byKey(const Key('otp_hidden_input')), '7362');
-    await tester.pumpAndSettle();
+  testWidgets(
+    'ProviderActiveJobCockpitScreen for IN_PROGRESS job displays photos and complete service',
+    (tester) async {
+      final job = createJob('IN_PROGRESS');
+      controller.jobs = [job];
 
-    expect(repository.lastVerifiedOtp, '7362');
-  });
-
-  testWidgets('ProviderActiveJobCockpitScreen for IN_PROGRESS job displays photos and complete service', (tester) async {
-    final job = createJob('IN_PROGRESS');
-    controller.jobs = [job];
-
-    await tester.pumpWidget(
-      wrapWidget(
-        ProviderActiveJobCockpitScreen(
-          job: job,
-          controller: controller,
+      await tester.pumpWidget(
+        wrapWidget(
+          ProviderActiveJobCockpitScreen(job: job, controller: controller),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
 
-    expect(find.text('Service in Progress'), findsOneWidget);
-    expect(find.byKey(const Key('cockpit_complete_service_button')), findsOneWidget);
-    expect(find.text('Add Before & After Photos'), findsOneWidget);
-  });
+      expect(find.text('SERVICE IN PROGRESS'), findsOneWidget);
+      expect(
+        find.byKey(const Key('cockpit_complete_service_button')),
+        findsOneWidget,
+      );
+      expect(find.text('Job Proof & Materials'), findsOneWidget);
+    },
+  );
 
-  testWidgets('ProviderActiveJobCockpitScreen for COMPLETED job shows celebration summary', (tester) async {
-    final job = createJob('COMPLETED');
-    controller.jobs = [job];
+  testWidgets(
+    'ProviderActiveJobCockpitScreen for COMPLETED job shows celebration summary',
+    (tester) async {
+      final job = createJob('COMPLETED');
+      controller.jobs = [job];
 
-    await tester.pumpWidget(
-      wrapWidget(
-        ProviderActiveJobCockpitScreen(
-          job: job,
-          controller: controller,
+      await tester.pumpWidget(
+        wrapWidget(
+          ProviderActiveJobCockpitScreen(job: job, controller: controller),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
 
-    expect(find.text('Job Completed'), findsOneWidget);
-    expect(find.text('Back to Workspace'), findsOneWidget);
-  });
+      expect(find.text('JOB COMPLETED'), findsOneWidget);
+      expect(find.text('Job Successfully Completed'), findsOneWidget);
+    },
+  );
 }

@@ -21,6 +21,15 @@ export class Invoice {
   @Column('timestamptz', { name: 'issued_at' })
   issuedAt!: Date;
 
+  @Column('integer', { name: 'subtotal_amount_minor', default: 0 })
+  subtotalAmountMinor!: number;
+
+  @Column('integer', { name: 'tax_amount_minor', default: 0 })
+  taxAmountMinor!: number;
+
+  @Column('integer', { name: 'discount_amount_minor', default: 0 })
+  discountAmountMinor!: number;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;
 }

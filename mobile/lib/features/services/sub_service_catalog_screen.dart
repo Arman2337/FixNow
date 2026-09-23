@@ -1,3 +1,4 @@
+import 'package:fixnow_mobile/api/api_client.dart';
 import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
@@ -13,6 +14,7 @@ import 'package:flutter/material.dart';
 class SubServiceCatalogScreen extends StatefulWidget {
   const SubServiceCatalogScreen({
     required this.category,
+    required this.api,
     this.initialLocation,
     this.onProceedToBooking,
     super.key,
@@ -20,6 +22,7 @@ class SubServiceCatalogScreen extends StatefulWidget {
 
   final ServiceCategory category;
   final BookingLocationFix? initialLocation;
+  final ApiTransport api;
 
   /// Callback when user confirms cart items to proceed to booking.
   final void Function(
@@ -27,7 +30,8 @@ class SubServiceCatalogScreen extends StatefulWidget {
     String itemizedDescription,
     int calculatedPriceMinor,
     BookingLocationFix? location,
-  )? onProceedToBooking;
+  )?
+  onProceedToBooking;
 
   @override
   State<SubServiceCatalogScreen> createState() =>
@@ -36,16 +40,26 @@ class SubServiceCatalogScreen extends StatefulWidget {
 
 class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
   late final ServiceCartController _cart;
-  late final List<SubServiceItem> _allSubServices;
+  List<SubServiceItem> _allSubServices = [];
+  bool _isLoading = true;
   String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
     _cart = ServiceCartController()..addListener(_onCartChanged);
-    _allSubServices = SubServiceCatalog.getSubServicesForCategory(
-      widget.category.slug,
-    );
+    _loadSubServices();
+  }
+
+  Future<void> _loadSubServices() async {
+    final repo = SubServiceRepository(widget.api);
+    final services = await repo.getSubServicesForCategory(widget.category.slug);
+    if (mounted) {
+      setState(() {
+        _allSubServices = services;
+        _isLoading = false;
+      });
+    }
   }
 
   void _onCartChanged() {
@@ -63,9 +77,11 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
     if (_searchQuery.trim().isEmpty) return _allSubServices;
     final query = _searchQuery.toLowerCase();
     return _allSubServices
-        .where((item) =>
-            item.name.toLowerCase().contains(query) ||
-            item.description.toLowerCase().contains(query))
+        .where(
+          (item) =>
+              item.name.toLowerCase().contains(query) ||
+              item.description.toLowerCase().contains(query),
+        )
         .toList();
   }
 
@@ -122,20 +138,35 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
     );
   }
 
+  bool _showGuideDrawer = false;
+  String _selectedFilter = 'all';
+
   @override
   Widget build(BuildContext context) {
+    final proCount = widget.category.verifiedProCount;
+    final rating = widget.category.rating ?? 4.8;
+    final reviewCount = widget.category.reviewCount;
+
     return Scaffold(
       backgroundColor: AppColors.backgroundPrimary,
       appBar: AppBar(
-        backgroundColor: AppColors.backgroundPrimary,
+        backgroundColor: AppColors.surfaceContainerLowest,
         elevation: 0,
+        scrolledUnderElevation: 1,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+          icon: const Icon(
+            Icons.arrow_back_rounded,
+            color: AppColors.textPrimary,
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Text(
-          widget.category.name,
-          style: AppTypography.heading2.copyWith(color: AppColors.textPrimary, fontSize: 18),
+        title: const Text(
+          'Services Catalog',
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         centerTitle: false,
       ),
@@ -144,53 +175,120 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
           // Main Scrollable List
           ListView(
             padding: const EdgeInsets.only(
-              left: AppSpacing.lg,
-              right: AppSpacing.lg,
+              left: AppSpacing.md,
+              right: AppSpacing.md,
               top: AppSpacing.sm,
-              bottom: 110, // padding for floating cart bar
+              bottom: 120, // padding for floating cart bar
             ),
             children: [
-              // Hero Guarantee Strip
-              _buildCategoryHeroStrip(),
-
-              const SizedBox(height: AppSpacing.md),
-
-              // Search Filter Field
-              _buildSearchField(),
-
-              const SizedBox(height: AppSpacing.lg),
-
-              // Section Heading
+              // Breadcrumbs
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Select Services Needed',
-                    style: AppTypography.title.copyWith(color: AppColors.textPrimary),
+                  const Text(
+                    'Home',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 4),
+                    child: Icon(
+                      Icons.chevron_right_rounded,
+                      size: 14,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                   Text(
-                    '${_filteredServices.length} options',
-                    style: const TextStyle(color: Colors.white60, fontSize: 12),
+                    widget.category.name,
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ],
               ),
+              const SizedBox(height: AppSpacing.sm),
+
+              // Stitch Header Card with verified pill & ambient background
+              _buildStitchHeaderCard(proCount, rating, reviewCount),
+
+              const SizedBox(height: AppSpacing.sm),
+
+              // Search Bar
+              _buildSearchField(),
+
+              const SizedBox(height: AppSpacing.sm),
+
+              // Filter Chips Row
+              _buildFilterChipsRow(),
+
+              const SizedBox(height: AppSpacing.sm),
+
+              // 30-Day FixNow Shield Guarantee Strip with Expandable Drawer
+              _buildShieldGuaranteeStrip(),
 
               const SizedBox(height: AppSpacing.md),
 
-              // Sub-Service Items Cards
-              for (final item in _filteredServices) ...[
-                _buildSubServiceCard(item),
-                const SizedBox(height: AppSpacing.md),
+              if (_isLoading)
+                const Padding(
+                  padding: EdgeInsets.all(32.0),
+                  child: Center(
+                    child: CircularProgressIndicator(color: AppColors.primary),
+                  ),
+                )
+              else ...[
+                // Section Heading
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Select Services Needed',
+                      style: FixNowTypography.title.copyWith(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceContainerLow,
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
+                      child: Text(
+                        '${_filteredServices.length} options',
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: AppSpacing.sm),
+
+                // Sub-Service Items Cards
+                for (final item in _filteredServices) ...[
+                  _buildSubServiceCard(item),
+                  const SizedBox(height: AppSpacing.sm),
+                ],
               ],
             ],
           ),
 
-          // Floating Sticky Cart Bar
+          // Floating Sticky Cart Bar (Stitch dark surface design)
           if (_cart.isNotEmpty)
             Positioned(
-              left: AppSpacing.lg,
-              right: AppSpacing.lg,
-              bottom: AppSpacing.lg,
+              left: AppSpacing.md,
+              right: AppSpacing.md,
+              bottom: AppSpacing.md,
               child: _buildFloatingCartBar(),
             ),
         ],
@@ -198,49 +296,108 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
     );
   }
 
-  Widget _buildCategoryHeroStrip() {
-    final proCount = widget.category.verifiedProCount;
-    final rating = widget.category.rating ?? 4.8;
+  Widget _buildStitchHeaderCard(int proCount, double rating, int reviewCount) {
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
+      clipBehavior: Clip.hardEdge,
       decoration: BoxDecoration(
-        color: AppColors.surfaceElevated,
+        color: AppColors.surfaceContainerLow,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: Colors.white10),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.15),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.verified_user_rounded, color: AppColors.focus, size: 20),
+        border: Border.all(color: AppColors.borderDefault),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
           ),
-          const SizedBox(width: 12),
-          Expanded(
+        ],
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            right: -24,
+            bottom: -24,
+            child: Container(
+              width: 128,
+              height: 128,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.primary.withValues(alpha: 0.1),
+              ),
+            ),
+          ),
+          Positioned(
+            right: 12,
+            bottom: 8,
+            child: Icon(
+              Icons.water_drop_rounded,
+              size: 72,
+              color: AppColors.primary.withValues(alpha: 0.08),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(AppSpacing.md),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  '${proCount > 0 ? proCount : 3} Verified Pros Nearby',
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13),
-                ),
-                const SizedBox(height: 2),
+                // Verified Pill Badge
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Icon(Icons.star_rounded, size: 14, color: AppColors.accentGold),
-                    const SizedBox(width: 3),
-                    Text(
-                      rating.toStringAsFixed(1),
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.verified_rounded,
+                            size: 14,
+                            color: AppColors.primary,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Verified Master Professionals',
+                            style: const TextStyle(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(width: 6),
-                    const Text('•', style: TextStyle(color: Colors.white30, fontSize: 12)),
-                    const SizedBox(width: 6),
-                    const Text('30-Day Work Warranty', style: TextStyle(color: AppColors.success, fontSize: 12)),
                   ],
+                ),
+                const SizedBox(height: 12),
+                // Title & Description
+                Text(
+                  widget.category.name,
+                  style: FixNowTypography.heading1.copyWith(
+                    color: AppColors.textPrimary,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Padding(
+                  padding: const EdgeInsets.only(right: 32),
+                  child: Text(
+                    (widget.category.description != null &&
+                            widget.category.description!.isNotEmpty)
+                        ? widget.category.description!
+                        : 'Instant diagnosis, upfront itemized pricing, and 30-day rework warranty on all replacements.',
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
+                      height: 1.35,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -251,29 +408,259 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
   }
 
   Widget _buildSearchField() {
-    return TextField(
-      onChanged: (val) => setState(() => _searchQuery = val),
-      style: const TextStyle(color: Colors.white, fontSize: 14),
-      decoration: InputDecoration(
-        hintText: 'Search tap, leak, unblock, install...',
-        hintStyle: const TextStyle(color: Colors.white38, fontSize: 13),
-        prefixIcon: const Icon(Icons.search_rounded, color: Colors.white54, size: 20),
-        filled: true,
-        fillColor: AppColors.surfaceElevated,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.pill),
-          borderSide: const BorderSide(color: Colors.white12),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.pill),
-          borderSide: const BorderSide(color: Colors.white12),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.pill),
-          borderSide: const BorderSide(color: AppColors.primary),
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(AppRadius.medium),
+        border: Border.all(color: AppColors.borderDefault),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 4,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: TextField(
+        onChanged: (val) => setState(() => _searchQuery = val),
+        style: const TextStyle(color: AppColors.textPrimary, fontSize: 13),
+        decoration: InputDecoration(
+          hintText: 'Search tap, flush, mixer, drain leak...',
+          hintStyle: const TextStyle(
+            color: AppColors.textTertiary,
+            fontSize: 13,
+          ),
+          prefixIcon: const Icon(
+            Icons.search_rounded,
+            color: AppColors.textSecondary,
+            size: 20,
+          ),
+          suffixIcon: Container(
+            margin: const EdgeInsets.all(8),
+            decoration: const BoxDecoration(
+              color: AppColors.surfaceContainer,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.mic_rounded,
+              color: AppColors.textSecondary,
+              size: 16,
+            ),
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 12,
+          ),
+          border: InputBorder.none,
         ),
       ),
+    );
+  }
+
+  Widget _buildFilterChipsRow() {
+    final filters = [
+      {'id': 'all', 'label': 'All Services'},
+      {'id': 'repair', 'label': 'Repair & Fixes'},
+      {'id': 'install', 'label': 'Installation'},
+      {'id': 'overhaul', 'label': 'Full Overhaul'},
+    ];
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: filters.map((f) {
+          final isSelected = _selectedFilter == f['id'];
+          return Padding(
+            padding: const EdgeInsets.only(right: 6),
+            child: InkWell(
+              onTap: () {
+                setState(() => _selectedFilter = f['id']!);
+              },
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? AppColors.primary
+                      : AppColors.surfaceContainerLowest,
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                  border: Border.all(
+                    color: isSelected
+                        ? AppColors.primary
+                        : AppColors.borderDefault,
+                  ),
+                ),
+                child: Text(
+                  f['label']!,
+                  style: TextStyle(
+                    color: isSelected ? Colors.white : AppColors.textSecondary,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildShieldGuaranteeStrip() {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF0FDF4), // soft emerald
+            borderRadius: BorderRadius.circular(AppRadius.card),
+            border: Border.all(color: const Color(0xFFBBF7D0)),
+          ),
+          child: Row(
+            children: [
+              const Icon(
+                Icons.security_update_good_rounded,
+                color: Color(0xFF16A34A),
+                size: 18,
+              ),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'Standard 30-Day FixNow Shield Included',
+                  style: TextStyle(
+                    color: Color(0xFF15803D),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+              InkWell(
+                onTap: () =>
+                    setState(() => _showGuideDrawer = !_showGuideDrawer),
+                child: Row(
+                  children: [
+                    Text(
+                      _showGuideDrawer ? 'Close Guide' : 'Shield Guide',
+                      style: const TextStyle(
+                        color: Color(0xFF15803D),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 11,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                    Icon(
+                      _showGuideDrawer
+                          ? Icons.expand_less_rounded
+                          : Icons.expand_more_rounded,
+                      size: 16,
+                      color: const Color(0xFF15803D),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Expandable Inclusions / Exclusions Guide Drawer
+        if (_showGuideDrawer)
+          Container(
+            margin: const EdgeInsets.only(top: 6),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceContainerLowest,
+              borderRadius: BorderRadius.circular(AppRadius.card),
+              border: Border.all(color: AppColors.borderDefault),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.02),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1),
+                ),
+              ],
+            ),
+            child: const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.check_circle_rounded,
+                      color: Color(0xFF16A34A),
+                      size: 15,
+                    ),
+                    SizedBox(width: 6),
+                    Expanded(
+                      child: Text.rich(
+                        TextSpan(
+                          children: [
+                            TextSpan(
+                              text: 'Inclusions: ',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                                fontSize: 11,
+                              ),
+                            ),
+                            TextSpan(
+                              text:
+                                  'Minor washers, thread seals, machine snaking, calibration & leak check.',
+                              style: TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 6),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.cancel_rounded,
+                      color: AppColors.error,
+                      size: 15,
+                    ),
+                    SizedBox(width: 6),
+                    Expanded(
+                      child: Text.rich(
+                        TextSpan(
+                          children: [
+                            TextSpan(
+                              text: 'Exclusions: ',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                                fontSize: 11,
+                              ),
+                            ),
+                            TextSpan(
+                              text:
+                                  'Heavy replacement fixtures, ceramic basin replacements, and concealed masonry breakdown.',
+                              style: TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+      ],
     );
   }
 
@@ -282,171 +669,317 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.surfaceElevated,
+        color: AppColors.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(
-          color: qty > 0 ? AppColors.primary : Colors.white10,
+          color: qty > 0 ? AppColors.primary : AppColors.borderDefault,
           width: qty > 0 ? 1.5 : 1.0,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Icon Tile
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: qty > 0
-                  ? AppColors.primary.withValues(alpha: 0.2)
-                  : Colors.white.withValues(alpha: 0.06),
-              borderRadius: BorderRadius.circular(AppRadius.small),
-            ),
-            child: Icon(item.icon, color: qty > 0 ? AppColors.focus : Colors.white70, size: 22),
-          ),
-          const SizedBox(width: 14),
-
-          // Details
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Icon/Image Tile with duration pill badge
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    width: 72,
+                    height: 72,
+                    clipBehavior: Clip.hardEdge,
+                    decoration: BoxDecoration(
+                      color: qty > 0
+                          ? AppColors.primary.withValues(alpha: 0.1)
+                          : AppColors.surfaceContainerLow,
+                      borderRadius: BorderRadius.circular(AppRadius.card),
+                    ),
+                    child: item.imageUrl != null
+                        ? Image.network(
+                            item.imageUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Icon(
+                              item.icon,
+                              color: qty > 0
+                                  ? AppColors.primary
+                                  : AppColors.textSecondary,
+                              size: 28,
+                            ),
+                          )
+                        : Center(
+                            child: Icon(
+                              item.icon,
+                              color: qty > 0
+                                  ? AppColors.primary
+                                  : AppColors.textSecondary,
+                              size: 28,
+                            ),
+                          ),
+                  ),
+                  Positioned(
+                    top: -4,
+                    left: -4,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 5,
+                        vertical: 1.5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.secondarySlate,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
                       child: Text(
-                        item.name,
+                        item.formattedDuration,
                         style: const TextStyle(
                           color: Colors.white,
+                          fontSize: 9,
                           fontWeight: FontWeight.w700,
-                          fontSize: 14,
                         ),
                       ),
                     ),
-                    if (item.badge != null) ...[
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: AppColors.accentGold.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(4),
-                          border: Border.all(color: AppColors.accentGold.withValues(alpha: 0.4)),
-                        ),
-                        child: Text(
-                          item.badge!,
-                          style: const TextStyle(
-                            color: AppColors.accentGold,
-                            fontSize: 9,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  item.description,
-                  style: const TextStyle(color: Colors.white60, fontSize: 12, height: 1.3),
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  ),
+                ],
+              ),
+              const SizedBox(width: 12),
+
+              // Details
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        Text(
-                          item.formattedPrice,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
+                        const Icon(
+                          Icons.star_rounded,
+                          size: 14,
+                          color: AppColors.accentGold,
+                        ),
+                        const SizedBox(width: 3),
+                        const Text(
+                          '4.8',
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 11,
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(4),
+                        const SizedBox(width: 4),
+                        const Text(
+                          '(1.2k)',
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 10,
                           ),
+                        ),
+                        if (item.badge != null) ...[
+                          const Spacer(),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.accentGold.withValues(
+                                alpha: 0.15,
+                              ),
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(
+                                color: AppColors.accentGold.withValues(
+                                  alpha: 0.3,
+                                ),
+                              ),
+                            ),
+                            child: Text(
+                              item.badge!,
+                              style: const TextStyle(
+                                color: Color(0xFF825100),
+                                fontSize: 9,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      item.name,
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      item.description,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 11,
+                        height: 1.3,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 10),
+
+          // Bottom Row: Price & Warranty + Add/Stepper
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.formattedPrice,
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    const Row(
+                      children: [
+                        Icon(
+                          Icons.verified_user_rounded,
+                          size: 11,
+                          color: AppColors.primary,
+                        ),
+                        SizedBox(width: 3),
+                        Expanded(
                           child: Text(
-                            '⏱ ${item.formattedDuration}',
-                            style: const TextStyle(color: Colors.white60, fontSize: 11),
+                            '30-Day Warranty',
+                            style: TextStyle(
+                              color: AppColors.primary,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
                     ),
-
-                    // Add / Quantity Stepper
-                    if (qty == 0)
-                      InkWell(
-                        onTap: () => _cart.add(item),
-                        borderRadius: BorderRadius.circular(AppRadius.pill),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: AppColors.primarySoft.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(AppRadius.pill),
-                            border: Border.all(color: AppColors.primary),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.add_rounded, size: 16, color: AppColors.focus),
-                              SizedBox(width: 4),
-                              Text(
-                                'ADD',
-                                style: TextStyle(
-                                  color: AppColors.focus,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 12,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                    else
-                      Container(
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            InkWell(
-                              onTap: () => _cart.decrement(item),
-                              borderRadius: BorderRadius.circular(AppRadius.pill),
-                              child: const Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                child: Icon(Icons.remove_rounded, color: Colors.white, size: 16),
-                              ),
-                            ),
-                            Text(
-                              '$qty',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w800,
-                                fontSize: 13,
-                              ),
-                            ),
-                            InkWell(
-                              onTap: () => _cart.add(item),
-                              borderRadius: BorderRadius.circular(AppRadius.pill),
-                              child: const Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                child: Icon(Icons.add_rounded, color: Colors.white, size: 16),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
                   ],
                 ),
-              ],
-            ),
+              ),
+
+              // Add Button or Quantity Stepper
+              if (qty == 0)
+                InkWell(
+                  onTap: () => _cart.add(item),
+                  borderRadius: BorderRadius.circular(AppRadius.small),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceContainer,
+                      borderRadius: BorderRadius.circular(AppRadius.small),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Add',
+                          style: TextStyle(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                          ),
+                        ),
+                        SizedBox(width: 4),
+                        Icon(
+                          Icons.add_rounded,
+                          size: 16,
+                          color: AppColors.primary,
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceContainerLowest,
+                    borderRadius: BorderRadius.circular(AppRadius.small),
+                    border: Border.all(color: AppColors.borderDefault),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      InkWell(
+                        onTap: () => _cart.decrement(item),
+                        borderRadius: BorderRadius.circular(AppRadius.small),
+                        child: Container(
+                          width: 28,
+                          height: 28,
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceContainerLow,
+                            borderRadius: BorderRadius.circular(
+                              AppRadius.small,
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.remove_rounded,
+                            color: AppColors.textPrimary,
+                            size: 16,
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text(
+                          '$qty',
+                          style: const TextStyle(
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                      InkWell(
+                        onTap: () => _cart.add(item),
+                        borderRadius: BorderRadius.circular(AppRadius.small),
+                        child: Container(
+                          width: 28,
+                          height: 28,
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceContainerLow,
+                            borderRadius: BorderRadius.circular(
+                              AppRadius.small,
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.add_rounded,
+                            color: AppColors.textPrimary,
+                            size: 16,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
           ),
         ],
       ),
@@ -455,82 +988,121 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
 
   Widget _buildFloatingCartBar() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.circular(AppRadius.pill),
+        color: AppColors.secondarySlate,
+        borderRadius: BorderRadius.circular(AppRadius.card),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.45),
+            color: Colors.black.withValues(alpha: 0.25),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
         ],
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // Left: Count & Price
-          GestureDetector(
-            onTap: _openCartSummarySheet,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: const BoxDecoration(
-                    color: Colors.white24,
-                    shape: BoxShape.circle,
+                // Count Badge + Details
+                GestureDetector(
+                  onTap: _openCartSummarySheet,
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 26,
+                        height: 26,
+                        decoration: const BoxDecoration(
+                          color: AppColors.primary,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Text(
+                            '${_cart.totalItemCount}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${_cart.totalItemCount} ${_cart.totalItemCount == 1 ? 'item' : 'items'} selected',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                            ),
+                          ),
+                          Text(
+                            'Government GST (${_cart.formattedGst})',
+                            style: const TextStyle(
+                              color: Colors.white60,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                  child: const Icon(Icons.shopping_bag_outlined, color: Colors.white, size: 16),
                 ),
-                const SizedBox(width: 10),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
+
+                // Grand total & Book Now CTA
+                Row(
                   children: [
                     Text(
-                      '${_cart.totalItemCount} ${_cart.totalItemCount == 1 ? 'item' : 'items'} • ${_cart.formattedGrandTotal}',
+                      _cart.formattedGrandTotal,
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w800,
-                        fontSize: 14,
+                        fontSize: 15,
                       ),
                     ),
-                    const Text(
-                      'Tap to review breakdown',
-                      style: TextStyle(color: Colors.white70, fontSize: 10),
+                    const SizedBox(width: 8),
+                    InkWell(
+                      onTap: _handleProceed,
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Review Cart & Schedule',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 13,
+                              ),
+                            ),
+                            SizedBox(width: 4),
+                            Icon(
+                              Icons.arrow_forward_rounded,
+                              color: Colors.white,
+                              size: 14,
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ],
                 ),
               ],
-            ),
-          ),
-
-          // Right: Button
-          InkWell(
-            onTap: _handleProceed,
-            borderRadius: BorderRadius.circular(AppRadius.pill),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(AppRadius.pill),
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Book Now',
-                    style: TextStyle(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 13,
-                    ),
-                  ),
-                  SizedBox(width: 4),
-                  Icon(Icons.arrow_forward_rounded, color: AppColors.primary, size: 15),
-                ],
-              ),
             ),
           ),
         ],
@@ -556,9 +1128,11 @@ class _CartSummarySheet extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: const BoxDecoration(
-        color: AppColors.backgroundPrimary,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.card)),
-        border: Border(top: BorderSide(color: Colors.white12)),
+        color: AppColors.surfaceContainerLowest,
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppRadius.card),
+        ),
+        border: Border(top: BorderSide(color: AppColors.borderDefault)),
       ),
       child: SafeArea(
         top: false,
@@ -573,7 +1147,7 @@ class _CartSummarySheet extends StatelessWidget {
                 width: 36,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.white24,
+                  color: AppColors.borderDefault,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -584,16 +1158,22 @@ class _CartSummarySheet extends StatelessWidget {
               children: [
                 Text(
                   'Cart Summary',
-                  style: AppTypography.heading2.copyWith(color: Colors.white, fontSize: 18),
+                  style: FixNowTypography.heading2.copyWith(
+                    color: AppColors.textPrimary,
+                    fontSize: 18,
+                  ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close_rounded, color: Colors.white70),
+                  icon: const Icon(
+                    Icons.close_rounded,
+                    color: AppColors.textSecondary,
+                  ),
                   onPressed: () => Navigator.of(context).pop(),
                 ),
               ],
             ),
 
-            const Divider(color: Colors.white12),
+            const Divider(color: AppColors.borderDefault),
 
             // Items List
             for (final item in cart.items) ...[
@@ -608,36 +1188,52 @@ class _CartSummarySheet extends StatelessWidget {
                         children: [
                           Text(
                             item.subService.name,
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13),
+                            style: const TextStyle(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                            ),
                           ),
                           Text(
                             '${item.subService.formattedPrice} × ${item.quantity}',
-                            style: const TextStyle(color: Colors.white60, fontSize: 11),
+                            style: const TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 11,
+                            ),
                           ),
                         ],
                       ),
                     ),
                     Text(
                       item.formattedTotal,
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14),
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                      ),
                     ),
                   ],
                 ),
               ),
             ],
 
-            const Divider(color: Colors.white12),
+            const Divider(color: AppColors.borderDefault),
 
             // Totals
-            _buildSummaryRow('Items Subtotal', cart.formattedSubtotal),
-            _buildSummaryRow('GST (18% Goods & Services Tax)', cart.formattedGst),
+            _buildSummaryRow('Item Subtotal', cart.formattedSubtotal),
+            _buildSummaryRow('Government GST (18%)', cart.formattedGst),
+            _buildSummaryRow('Technician Safety & Tool Kit', 'FREE'),
             const SizedBox(height: 6),
-            _buildSummaryRow('Estimated Total', cart.formattedGrandTotal, isBold: true),
+            _buildSummaryRow(
+              'Estimated Total',
+              cart.formattedGrandTotal,
+              isBold: true,
+            ),
 
             const SizedBox(height: AppSpacing.lg),
 
             FixButton(
-              label: 'Proceed to Booking (${cart.formattedGrandTotal})',
+              label: 'Review Cart & Schedule (${cart.formattedGrandTotal})',
               icon: Icons.arrow_forward_rounded,
               onPressed: onProceed,
             ),
@@ -653,18 +1249,21 @@ class _CartSummarySheet extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              color: isBold ? Colors.white : Colors.white70,
-              fontSize: isBold ? 14 : 12,
-              fontWeight: isBold ? FontWeight.w700 : FontWeight.normal,
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                color: isBold ? AppColors.textPrimary : AppColors.textSecondary,
+                fontSize: isBold ? 14 : 12,
+                fontWeight: isBold ? FontWeight.w700 : FontWeight.normal,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
           Text(
             value,
             style: TextStyle(
-              color: isBold ? AppColors.focus : Colors.white,
+              color: isBold ? AppColors.primary : AppColors.textPrimary,
               fontSize: isBold ? 16 : 12,
               fontWeight: isBold ? FontWeight.w800 : FontWeight.w600,
             ),

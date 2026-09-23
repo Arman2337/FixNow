@@ -171,7 +171,9 @@ class ChatController extends ChangeNotifier {
         clientMessageId: tempClientId,
       );
 
-      final idx = _messages.indexWhere((m) => m.clientMessageId == tempClientId);
+      final idx = _messages.indexWhere(
+        (m) => m.clientMessageId == tempClientId,
+      );
       if (idx >= 0) {
         _messages[idx] = sent.copyWith(isMe: true);
       } else {

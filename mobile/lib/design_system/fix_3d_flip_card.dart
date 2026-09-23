@@ -44,10 +44,7 @@ class _Fix3DFlipCardState extends State<Fix3DFlipCard>
       duration: const Duration(milliseconds: 700),
     );
     _flipAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _flipController,
-        curve: Curves.easeInOutCubic,
-      ),
+      CurvedAnimation(parent: _flipController, curve: Curves.easeInOutCubic),
     );
   }
 
@@ -70,7 +67,8 @@ class _Fix3DFlipCardState extends State<Fix3DFlipCard>
 
   @override
   Widget build(BuildContext context) {
-    final reduceMotion = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
 
     if (reduceMotion) {
       return GestureDetector(
@@ -118,11 +116,7 @@ class _Fix3DFlipCardState extends State<Fix3DFlipCard>
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF1E3A8A),
-            Color(0xFF0F172A),
-            Color(0xFF1E1B4B),
-          ],
+          colors: [Color(0xFF1E3A8A), Color(0xFF0F172A), Color(0xFF1E1B4B)],
         ),
         boxShadow: [
           BoxShadow(
@@ -186,7 +180,6 @@ class _Fix3DFlipCardState extends State<Fix3DFlipCard>
           Text(
             widget.cardNumber,
             style: const TextStyle(
-              fontFamily: 'monospace',
               fontSize: 16,
               letterSpacing: 2.2,
               fontWeight: FontWeight.w700,
@@ -260,11 +253,7 @@ class _Fix3DFlipCardState extends State<Fix3DFlipCard>
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF0F172A),
-            Color(0xFF1E293B),
-            Color(0xFF0F172A),
-          ],
+          colors: [Color(0xFF0F172A), Color(0xFF1E293B), Color(0xFF0F172A)],
         ),
         boxShadow: const [
           BoxShadow(
@@ -280,10 +269,7 @@ class _Fix3DFlipCardState extends State<Fix3DFlipCard>
         children: [
           const SizedBox(height: 20),
           // Magnetic stripe
-          Container(
-            height: 38,
-            color: Colors.black87,
-          ),
+          Container(height: 38, color: Colors.black87),
           const SizedBox(height: 16),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -292,10 +278,17 @@ class _Fix3DFlipCardState extends State<Fix3DFlipCard>
               children: [
                 const Text(
                   'CVV / CVC',
-                  style: TextStyle(fontSize: 10, color: Colors.white60, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Colors.white60,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(4),
@@ -303,7 +296,6 @@ class _Fix3DFlipCardState extends State<Fix3DFlipCard>
                   child: Text(
                     widget.cvv,
                     style: const TextStyle(
-                      fontFamily: 'monospace',
                       fontWeight: FontWeight.w800,
                       fontSize: 12,
                       color: Colors.black87,
@@ -318,7 +310,11 @@ class _Fix3DFlipCardState extends State<Fix3DFlipCard>
             padding: const EdgeInsets.only(left: 20, right: 20, bottom: 16),
             child: Row(
               children: [
-                const Icon(Icons.verified_user_rounded, size: 14, color: AppColors.success),
+                const Icon(
+                  Icons.verified_user_rounded,
+                  size: 14,
+                  color: AppColors.success,
+                ),
                 const SizedBox(width: 6),
                 Text(
                   'FixNow 256-Bit Escrow Vault Protected',

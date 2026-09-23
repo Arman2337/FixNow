@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base { html, body { margin: 0; padding: 0; } body { overscroll-behavior: none; } main > :first-child { margin-top: 0 !important; } main > :last-child { margin-bottom: 0 !important; } } ::-webkit-scrollbar { display: none; }</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "on-secondary-container": "#5c647a", "on-tertiary-container": "#fffbff", "inverse-on-surface": "#eaf1ff", "on-secondary-fixed-variant": "#3f465c", "on-primary": "#ffffff", "primary-container": "#00855d", "on-primary-fixed-variant": "#005137", "surface-container-highest": "#d3e4fe", "on-secondary-fixed": "#131b2e", "surface-container-lowest": "#ffffff", "inverse-surface": "#213145", "secondary-container": "#dae2fd", "error": "#ba1a1a", "primary-fixed-dim": "#68dba9", "surface-variant": "#d3e4fe", "on-error": "#ffffff", "on-background": "#0b1c30", "primary": "#006948", "outline-variant": "#bccac0", "on-tertiary-fixed-variant": "#653e00", "secondary-fixed": "#dae2fd", "surface-container-high": "#dce9ff", "tertiary": "#825100", "on-primary-fixed": "#002114", "background": "#f8f9ff", "tertiary-fixed-dim": "#ffb95f", "tertiary-fixed": "#ffddb8", "on-tertiary-fixed": "#2a1700", "inverse-primary": "#68dba9", "surface-tint": "#006c4a", "primary-fixed": "#85f8c4", "tertiary-container": "#a36700", "surface-dim": "#cbdbf5", "secondary-fixed-dim": "#bec6e0", "on-primary-container": "#f5fff7", "outline": "#6d7a72", "error-container": "#ffdad6", "on-surface-variant": "#3d4a42", "on-tertiary": "#ffffff", "on-error-container": "#93000a", "surface": "#f8f9ff", "secondary": "#565e74", "surface-container-low": "#eff4ff", "surface-bright": "#f8f9ff", "surface-container": "#e5eeff", "on-surface": "#0b1c30", "on-secondary": "#ffffff" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "margin-desktop": "2rem", "space-xs": "0.25rem", "margin-tablet": "1.5rem", "margin": "1rem", "space-xl": "2rem", "gutter-desktop": "1.5rem", "space-lg": "1.5rem", "space-md": "1rem", "gutter": "1rem", "space-sm": "0.5rem" }, "fontFamily": { "price-display": [ "Plus Jakarta Sans" ], "headline-xl-mobile": [ "Plus Jakarta Sans" ], "data-mono": [ "Inter" ], "label-sm": [ "Inter" ], "body-sm": [ "Inter" ], "headline-lg-mobile": [ "Plus Jakarta Sans" ], "headline-lg": [ "Plus Jakarta Sans" ], "headline-md": [ "Plus Jakarta Sans" ], "body-md": [ "Inter" ], "label-md": [ "Inter" ], "headline-xl": [ "Plus Jakarta Sans" ], "body-lg": [ "Inter" ] }, "fontSize": { "price-display": [ "24px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "700" } ], "headline-xl-mobile": [ "30px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "800" } ], "headline-lg-mobile": [ "24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "700" } ], "headline-lg": [ "32px", { "lineHeight": "40px", "letterSpacing": "-0.015em", "fontWeight": "700" } ], "headline-md": [ "20px", { "lineHeight": "28px", "fontWeight": "600" } ], "headline-xl": [ "40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "800" } ], "data-mono": [ "12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" } ], "label-sm": [ "11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "600" } ], "body-sm": [ "12px", { "lineHeight": "16px", "fontWeight": "400" } ], "body-md": [ "14px", { "lineHeight": "20px", "fontWeight": "400" } ], "label-md": [ "13px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "600" } ], "body-lg": [ "16px", { "lineHeight": "24px", "fontWeight": "400" } ] } } } };</script></head><body class="bg-surface font-body-md text-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-full w-72 bg-surface-container-lowest border-r border-outline-variant/30 z-50 flex flex-col justify-between"><div class="flex flex-col"><div class="h-16 px-space-lg flex items-center border-b border-outline-variant/30 gap-space-sm"><div class="w-9 h-9 rounded-lg bg-primary flex items-center justify-center text-on-primary shadow-sm"><span class="material-symbols-outlined text-[20px]">build_circle</span></div><div><span class="font-headline-md text-headline-md font-bold tracking-tight text-on-surface">Fix<span class="text-primary">Now</span></span><span class="block font-label-sm text-label-sm uppercase tracking-widest text-on-surface-variant">Admin Portal</span></div></div><div class="px-space-md py-space-sm"><div class="px-space-sm py-space-xs font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Operations Engine</div></div><nav class="flex flex-col gap-space-xs px-space-md" data-active-classes="bg-primary-container text-on-primary-container font-semibold shadow-sm"><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" data-path="overview-dashboard" href="#"><span class="material-symbols-outlined text-[20px]">dashboard</span><span>Overview Dashboard</span></a><a aria-current="page" class="flex items-center justify-between px-space-md py-2.5 rounded-lg transition-colors bg-primary-container text-on-primary-container font-semibold shadow-sm" data-path="provider-kyc-verification" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px]">verified_user</span><span>Provider KYC Verification</span></div><span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded bg-secondary-container text-on-secondary-fixed-variant font-semibold">9 New</span></a><a class="flex items-center justify-between px-space-md py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" data-path="live-booking-dispatches-and-sos-radar" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px]">fmd_good</span><span>Live Dispatches &amp; Radar</span></div><span class="flex h-2 w-2 relative"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-error opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-error"></span></span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" data-path="support-complaints-and-escrow" href="#"><span class="material-symbols-outlined text-[20px]">payments</span><span>Complaints &amp; Escrow</span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" data-path="trust-and-safety-moderation" href="#"><span class="material-symbols-outlined text-[20px]">gavel</span><span>Trust &amp; Safety Moderation</span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors" data-path="service-categories-and-pricing" href="#"><span class="material-symbols-outlined text-[20px]">tune</span><span>Categories &amp; Pricing</span></a></nav></div><div class="p-space-md border-t border-outline-variant/30"><div class="bg-surface-container-low p-space-md rounded-xl border border-outline-variant/20 flex flex-col gap-space-xs"><div class="flex items-center justify-between"><span class="font-label-sm text-label-sm font-semibold uppercase text-on-surface-variant">Dispatch Node</span><span class="font-label-sm text-label-sm text-primary font-bold">ONLINE</span></div><div class="font-data-mono text-data-mono text-on-surface-variant flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>us-east-cluster-04</div><div class="font-label-sm text-label-sm text-on-secondary-container mt-1">Avg Dispatch Latency: 1.4s</div></div></div></aside><div class="pl-72"><header class="fixed top-0 left-72 right-0 h-16 bg-surface-container-lowest/95 backdrop-blur-md border-b border-outline-variant/30 z-40 px-space-lg flex items-center justify-between"><div class="flex items-center gap-space-lg"><div class="relative w-80"><span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">search</span><input class="w-full pl-9 pr-4 py-1.5 rounded-lg bg-surface border border-outline-variant/40 font-body-sm text-body-sm text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none focus:border-primary" placeholder="Search job ID, tech license, client phone..." type="text"/></div><div class="hidden xl:flex items-center gap-space-md border-l border-outline-variant/30 pl-space-lg"><div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span><span class="font-label-sm text-label-sm text-on-surface-variant font-medium">Live Dispatches:</span><span class="font-data-mono text-data-mono font-bold text-on-surface">18</span></div><div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-secondary"></span><span class="font-label-sm text-label-sm text-on-surface-variant font-medium">Online Techs:</span><span class="font-data-mono text-data-mono font-bold text-on-surface">42</span></div><div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-primary-container"></span><span class="font-label-sm text-label-sm text-on-surface-variant font-medium">SLA:</span><span class="font-data-mono text-data-mono font-bold text-primary">99.2%</span></div></div></div><div class="flex items-center gap-space-md"><div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-error-container text-on-error-container border border-error/20"><span class="material-symbols-outlined text-[16px] animate-pulse text-error">emergency</span><span class="font-label-sm text-label-sm font-bold uppercase tracking-wide">1 SOS Active</span></div><button class="relative p-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors"><span class="material-symbols-outlined text-[22px]">notifications</span><span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-error"></span></button><div class="flex items-center gap-space-sm pl-space-sm border-l border-outline-variant/30"><div class="text-right hidden sm:block"><span class="block font-label-md text-label-md font-semibold text-on-surface leading-tight">Chief Dispatcher</span><span class="block font-label-sm text-label-sm text-on-surface-variant leading-none">Superadmin</span></div><img alt="Profile" class="w-8 h-8 rounded-full object-cover ring-1 ring-outline-variant/40" src="https://lh3.googleusercontent.com/aida/AEtjO1UHetTjpd4BB1e8njLlIDDmUsYV1qxX9ZC_wim9sHsXYmSrYRkJpnyD1IHW75IXxc9pB2kik0nzNC98TRCklpEgiq7TkSpL4ITZqzFt8uLi5EyWXYQq9m4a8YI9wZ3o6xvQSkDtb6AI5-x28GAADr5cRCtuuSX9N5FrvCQ7MBueDjttVq6CBcCdMU6PRAQsRnz78gBoZeg_WCxKbdy42V0Um4AxVfE0kNiMNfOiHfuES63iQSWWA34hjob7XGOL3mAbPdCfF9El6g"/></div></div></header><main class="w-full pt-16 bg-surface min-h-screen"><div class="flex flex-col w-full">
+<!-- Operational Queue Filter & Context Bar -->
+<div class="px-margin-desktop py-space-md bg-surface-container-lowest shadow-sm flex flex-col gap-space-md">
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md">
+<div class="w-10 h-10 rounded-xl bg-primary-container text-on-primary-container flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-[24px]">verified_user</span>
+</div>
+<div>
+<div class="flex items-center gap-space-sm">
+<h1 class="font-headline-md text-headline-md font-bold text-on-surface tracking-tight">Partner Verification &amp; KYC Audit Queue</h1>
+<span class="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-fixed-variant font-label-sm text-label-sm font-semibold">Live Pipeline</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Real-time biometric, statutory credentialing, and field criminal record validation suite</p>
+</div>
+</div>
+<!-- Quick Metrics Ribbon -->
+<div class="flex items-center gap-space-md">
+<div class="bg-surface-container-low px-space-md py-1.5 rounded-lg flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary text-[18px]">speed</span>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Mean Audit Time</span>
+<span class="font-data-mono text-data-mono text-on-surface font-bold">4m 18s</span>
+</div>
+</div>
+<div class="bg-surface-container-low px-space-md py-1.5 rounded-lg flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary-container text-[18px]">rule</span>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">UIDAI Match SLA</span>
+<span class="font-data-mono text-data-mono text-primary font-bold">99.8%</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Sub-navigation Tabs & High-Velocity Search Row -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md pt-space-xs">
+<div class="flex items-center gap-1 bg-surface-container p-1 rounded-xl w-fit" id="queueTabs">
+<button class="px-space-md py-1.5 rounded-lg font-label-md text-label-md transition-colors bg-surface-container-lowest text-on-surface font-semibold shadow-sm flex items-center gap-space-xs">
+<span>Pending Review</span>
+<span class="px-1.5 py-0.2 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-bold text-[11px]">14</span>
+</button>
+<button class="px-space-md py-1.5 rounded-lg font-label-md text-label-md transition-colors text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low flex items-center gap-space-xs">
+<span>Claimed by Me</span>
+<span class="px-1.5 py-0.2 rounded-full bg-secondary-fixed text-on-secondary-fixed font-semibold text-[11px]">3</span>
+</button>
+<button class="px-space-md py-1.5 rounded-lg font-label-md text-label-md transition-colors text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low flex items-center gap-space-xs">
+<span>Approved Today</span>
+<span class="px-1.5 py-0.2 rounded-full bg-primary-fixed text-on-primary-fixed font-semibold text-[11px]">28</span>
+</button>
+<button class="px-space-md py-1.5 rounded-lg font-label-md text-label-md transition-colors text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low flex items-center gap-space-xs">
+<span>Rejected / Escalated</span>
+<span class="px-1.5 py-0.2 rounded-full bg-error-container text-on-error-container font-semibold text-[11px]">2</span>
+</button>
+</div>
+<div class="relative w-full md:w-96">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">search</span>
+<input class="w-full pl-9 pr-8 py-2 rounded-xl bg-surface-container-low font-body-sm text-body-sm text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none focus:bg-surface-container-lowest focus:shadow-sm" placeholder="Search technician name, phone, trade license, or UUID..." type="text"/>
+<span class="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 text-on-surface-variant/60 text-[16px] cursor-pointer">tune</span>
+</div>
+</div>
+</div>
+<!-- Split Audit Dossier Layout -->
+<div class="p-margin-desktop grid grid-cols-1 xl:grid-cols-12 gap-gutter-desktop">
+<!-- LEFT PANE: Applicant Queue List (4 Columns) -->
+<div class="xl:col-span-4 flex flex-col gap-space-md">
+<div class="flex items-center justify-between px-space-xs">
+<div class="flex items-center gap-space-xs">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-bold">Awaiting Adjudication</span>
+<span class="w-2 h-2 rounded-full bg-primary animate-ping"></span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Sorted by High Risk Priority</span>
+</div>
+<!-- Applicant Card: Rahul K. (Active Selection) -->
+<div class="bg-surface-container-lowest p-space-md rounded-2xl shadow-md cursor-pointer transition-all relative overflow-hidden group">
+<div class="absolute top-0 left-0 bottom-0 w-1.5 bg-primary"></div>
+<div class="flex items-start justify-between gap-space-sm pl-space-xs">
+<div class="flex items-center gap-space-md">
+<div class="relative">
+<img class="w-12 h-12 rounded-xl object-cover shadow-sm" data-alt="Close up professional portrait of Rahul K., Indian male master plumber in his late thirties wearing navy workwear jacket smiling confidently against a crisp neutral studio backdrop." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBY6FZDm5HcquMTFqMygoo7bk8l76oZogl7HaeCGXUMIFveXUJU9PRWzfXJ3kn1HjBjU1qYk3PLGT0_4M5Lj3lrt4kwJ_5BIpX46U_NuqELj5lteLkGiQ15m0MqmVS5QsOs9t1RTATVEptGRILg39l6nRWxaEh0M0vjPG-ABxwbOCFRC9YgNdtVNJ01tBwExd5jmE48ypcMd5atJGle2E1ZEjoVKDEdnPngn2smx3gSyF7bmP4Qq9Hf"/>
+<span class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-primary flex items-center justify-center text-on-primary text-[10px]">
+<span class="material-symbols-outlined text-[11px]" style="font-variation-settings: 'FILL' 1;">check</span>
+</span>
+</div>
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-headline-md text-headline-md text-[16px] font-bold text-on-surface">Rahul K.</span>
+<span class="font-data-mono text-data-mono text-on-surface-variant/80">#9941</span>
+</div>
+<span class="font-label-sm text-label-sm text-primary font-semibold">Master Plumber • 8 yrs exp</span>
+</div>
+</div>
+<div class="text-right">
+<span class="font-price-display text-[18px] text-primary block">94<span class="text-on-surface-variant font-normal text-[12px]">/100</span></span>
+<span class="font-label-sm text-[10px] text-on-surface-variant uppercase tracking-wider">Trust Score</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-space-xs my-space-sm pl-space-xs pt-space-xs">
+<div class="flex items-center gap-1 font-body-sm text-[12px] text-on-surface-variant">
+<span class="material-symbols-outlined text-[15px] text-on-secondary-container">near_me</span>
+<span>12km coverage radius</span>
+</div>
+<div class="flex items-center gap-1 font-body-sm text-[12px] text-on-surface-variant">
+<span class="material-symbols-outlined text-[15px] text-on-secondary-container">schedule</span>
+<span>Submitted 2h ago</span>
+</div>
+</div>
+<!-- Verification Status Mini Pills -->
+<div class="flex flex-wrap gap-1.5 pl-space-xs pt-space-xs">
+<span class="px-2 py-0.5 rounded bg-primary/10 text-primary font-label-sm text-[11px] font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;">verified</span> DigiLocker Aadhaar
+          </span>
+<span class="px-2 py-0.5 rounded bg-primary/10 text-primary font-label-sm text-[11px] font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;">verified</span> NSDL PAN
+          </span>
+<span class="px-2 py-0.5 rounded bg-primary/10 text-primary font-label-sm text-[11px] font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;">local_police</span> PCC Valid
+          </span>
+</div>
+</div>
+<!-- Applicant Card: Manoj S. -->
+<div class="bg-surface-container-lowest p-space-md rounded-2xl shadow-sm hover:shadow-md cursor-pointer transition-all">
+<div class="flex items-start justify-between gap-space-sm">
+<div class="flex items-center gap-space-md">
+<div class="relative">
+<img class="w-12 h-12 rounded-xl object-cover" data-alt="Portrait headshot of Manoj S., certified electrician in his early forties with safety goggles rested on head wearing professional industrial grey polo in front of brightly lit workshop." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAd0ffJ5Elx4VwNh2SacK3P5cFDeGC0WAmzTovmDFMbl0pKjqilMQifk8T9FhRPq0LJHiIGbqhPbHy1vUn7UkyfWow2ULZ3paEPnaRwzrG1hot4ZyQC_9YI2p5sl8pc_K8Ig413fptGT4y7Gup1ePwXa0WueC6RM5RRtlySV85XfQoIflMgL53JnPe5rNcLCk8XCQtGT01G_6i4qeD8JontBNN2aVpbx4p67IoosT3SoycbG7gKId-i"/>
+<span class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-tertiary-container flex items-center justify-center text-on-tertiary text-[10px]">
+<span class="material-symbols-outlined text-[11px]">hourglass_empty</span>
+</span>
+</div>
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-headline-md text-headline-md text-[16px] font-bold text-on-surface">Manoj S.</span>
+<span class="font-data-mono text-data-mono text-on-surface-variant/80">#9938</span>
+</div>
+<span class="font-label-sm text-label-sm text-secondary font-semibold">Electrician &amp; HVAC • 5 yrs</span>
+</div>
+</div>
+<div class="text-right">
+<span class="font-price-display text-[18px] text-tertiary block">88<span class="text-on-surface-variant font-normal text-[12px]">/100</span></span>
+<span class="font-label-sm text-[10px] text-on-surface-variant uppercase tracking-wider">Trust Score</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-space-xs my-space-sm pt-space-xs">
+<div class="flex items-center gap-1 font-body-sm text-[12px] text-on-surface-variant">
+<span class="material-symbols-outlined text-[15px] text-on-secondary-container">near_me</span>
+<span>18km coverage radius</span>
+</div>
+<div class="flex items-center gap-1 font-body-sm text-[12px] text-on-surface-variant">
+<span class="material-symbols-outlined text-[15px] text-on-secondary-container">schedule</span>
+<span>Submitted 4h ago</span>
+</div>
+</div>
+<div class="flex flex-wrap gap-1.5 pt-space-xs">
+<span class="px-2 py-0.5 rounded bg-primary/10 text-primary font-label-sm text-[11px] font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;">verified</span> DigiLocker
+          </span>
+<span class="px-2 py-0.5 rounded bg-tertiary-fixed text-on-tertiary-fixed-variant font-label-sm text-[11px] font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">pending</span> PAN Name Review
+          </span>
+<span class="px-2 py-0.5 rounded bg-primary/10 text-primary font-label-sm text-[11px] font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;">local_police</span> PCC Clear
+          </span>
+</div>
+</div>
+<!-- Applicant Card: Suresh V. -->
+<div class="bg-surface-container-lowest p-space-md rounded-2xl shadow-sm hover:shadow-md cursor-pointer transition-all">
+<div class="flex items-start justify-between gap-space-sm">
+<div class="flex items-center gap-space-md">
+<div class="relative">
+<img class="w-12 h-12 rounded-xl object-cover" data-alt="Portrait photo of Suresh V., civil carpenter wearing khaki work vest standing in woodcraft carpentry workshop with tools hanging neatly in background, natural warm light." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBKTFOgXsgkAieDK7skBORwjuZsj5x7GxVvrT6_U4UJNgEtSrP-0feTxFpyTeUuZyCZu6gFoJcNtMjvH0U5PqACrQmwKcTy2IcdtPiXWyqTtxQE02_Ibw_Hl80kYDelx4yP6MyFsvZ53fKgjwRFpLP-OOHhgRs51fPkJzWuHW6P8PArgcAPF1icAuCuypD9r22by_QE0nZGvxQPPqchH1eA7me5Bj_1seRuLUw3oojd9GA7SbOOMFtC"/>
+<span class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-secondary flex items-center justify-center text-on-secondary text-[10px]">
+<span class="material-symbols-outlined text-[11px]">history</span>
+</span>
+</div>
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-headline-md text-headline-md text-[16px] font-bold text-on-surface">Suresh V.</span>
+<span class="font-data-mono text-data-mono text-on-surface-variant/80">#9925</span>
+</div>
+<span class="font-label-sm text-label-sm text-secondary font-semibold">Carpentry &amp; Civil • 3 yrs</span>
+</div>
+</div>
+<div class="text-right">
+<span class="font-price-display text-[18px] text-secondary block">79<span class="text-on-surface-variant font-normal text-[12px]">/100</span></span>
+<span class="font-label-sm text-[10px] text-on-surface-variant uppercase tracking-wider">Trust Score</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-space-xs my-space-sm pt-space-xs">
+<div class="flex items-center gap-1 font-body-sm text-[12px] text-on-surface-variant">
+<span class="material-symbols-outlined text-[15px] text-on-secondary-container">near_me</span>
+<span>8km coverage radius</span>
+</div>
+<div class="flex items-center gap-1 font-body-sm text-[12px] text-on-surface-variant">
+<span class="material-symbols-outlined text-[15px] text-on-secondary-container">schedule</span>
+<span>Submitted 6h ago</span>
+</div>
+</div>
+<div class="flex flex-wrap gap-1.5 pt-space-xs">
+<span class="px-2 py-0.5 rounded bg-primary/10 text-primary font-label-sm text-[11px] font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;">verified</span> Aadhaar Valid
+          </span>
+<span class="px-2 py-0.5 rounded bg-primary/10 text-primary font-label-sm text-[11px] font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;">verified</span> NSDL PAN
+          </span>
+<span class="px-2 py-0.5 rounded bg-secondary-container text-on-secondary-container font-label-sm text-[11px] font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">hourglass_bottom</span> PCC In-Transit
+          </span>
+</div>
+</div>
+<!-- Live Pipeline Stats Widget -->
+<div class="bg-surface-container p-space-md rounded-2xl flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm uppercase font-bold text-on-surface-variant">Verification Speed Today</span>
+<span class="font-label-sm text-label-sm text-primary font-semibold">+18.4% vs last wk</span>
+</div>
+<!-- SVG Sparkline Bar Chart -->
+<div class="h-14 w-full flex items-end justify-between gap-1.5 pt-2">
+<div class="w-full bg-surface-container-highest rounded-t h-[40%]"></div>
+<div class="w-full bg-surface-container-highest rounded-t h-[65%]"></div>
+<div class="w-full bg-surface-container-highest rounded-t h-[50%]"></div>
+<div class="w-full bg-surface-container-highest rounded-t h-[80%]"></div>
+<div class="w-full bg-primary-fixed-dim rounded-t h-[95%]"></div>
+<div class="w-full bg-primary rounded-t h-[75%]"></div>
+<div class="w-full bg-primary-container rounded-t h-[90%]"></div>
+</div>
+<div class="flex justify-between font-label-sm text-[10px] text-on-surface-variant uppercase">
+<span>08:00</span>
+<span>11:00</span>
+<span>14:00</span>
+<span>17:00</span>
+</div>
+</div>
+</div>
+<!-- RIGHT PANE: Active Deep-Dive Dossier (8 Columns) -->
+<div class="xl:col-span-8 flex flex-col gap-space-lg">
+<!-- Profile Header Dossier Tile -->
+<div class="bg-surface-container-lowest p-space-lg rounded-2xl shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-lg">
+<img class="w-16 h-16 rounded-2xl object-cover shadow-sm" data-alt="High quality professional headshot of technician Rahul K. wearing FixNow technical service uniform with embroidered company badge against clean studio backdrop." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBXVN41YCm9nxvk4zKdJa3mxn4GS21ySf_OTeWHgIV37n7X6kHEx44ZhZGTnWT8l-TKFvxo9hEYXPdqHfbK8vPEn9whGVEMr5TrvRTTV9vSY_IRDvV05e6m5KNoWW2P86WcYndczr8XoZIT-CQKTmS0pnKnwzTzCYPiFhV5RaPqmLNrKrGnc6Y_XVZPyjnGNl1bDPkptMqYbfkEsUd21mZz_zqIZ-_zERynVQstQsXwtTeVZxahHp5Y"/>
+<div>
+<div class="flex flex-wrap items-center gap-space-sm">
+<h2 class="font-headline-lg text-headline-lg text-[22px] font-bold text-on-surface tracking-tight">Rahul K.</h2>
+<span class="font-data-mono text-data-mono px-2 py-0.5 rounded bg-surface-container text-on-surface-variant font-bold">UUID: #APP-2026-9941</span>
+<span class="px-2.5 py-0.5 rounded-full bg-primary-container text-on-primary-container font-label-sm text-label-sm font-semibold flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-fixed animate-ping"></span> Live Session
+              </span>
+</div>
+<div class="flex flex-wrap items-center gap-x-space-md gap-y-1 font-body-sm text-body-sm text-on-surface-variant mt-1">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">call</span>+91 98452 33109</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">mail</span>rahul.plumb.pro@gmail.com</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">location_on</span>Indiranagar, Bengaluru, KA</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-space-sm self-start md:self-auto bg-surface-container-low px-space-md py-space-sm rounded-xl">
+<div class="text-right">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase block">Overall Trust Score</span>
+<span class="font-price-display text-price-display text-primary font-bold">94%</span>
+</div>
+<svg class="w-12 h-12 -rotate-90" viewbox="0 0 36 36">
+<path class="text-surface-container-highest" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3.5"></path>
+<path class="text-primary" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="94, 100" stroke-linecap="round" stroke-width="3.5"></path>
+</svg>
+</div>
+</div>
+<!-- Dossier Section 1: Identity & Biometric Verification (Aadhaar & PAN) -->
+<div class="bg-surface-container-lowest p-space-lg rounded-2xl shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary text-[22px]">badge</span>
+<div>
+<h3 class="font-headline-md text-headline-md text-[18px] font-bold text-on-surface">1. Statutory Identity Verification</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">DigiLocker API Direct Integration with UIDAI &amp; NSDL Databases</p>
+</div>
+</div>
+<span class="px-2.5 py-1 rounded bg-primary-container text-on-primary-container font-label-sm text-label-sm font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px]">verified</span> UIDAI &amp; NSDL VALIDATED
+          </span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-md pt-space-xs">
+<!-- Aadhaar Card Inspection Box -->
+<div class="bg-surface-container-low p-space-md rounded-xl flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md font-bold text-on-surface flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px] text-primary">fingerprint</span> Aadhaar Card (DigiLocker XML)
+              </span>
+<span class="font-data-mono text-data-mono text-primary font-bold">100% OCR MATCH</span>
+</div>
+<div class="relative rounded-lg overflow-hidden h-40 bg-surface-container-high group">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="Clear high resolution scan of Indian Aadhaar Identity Card with photo watermark holograms, government emblem, blurred privacy digits and official seal on clean desk." src="https://lh3.googleusercontent.com/aida-public/AB6AXuACtylr42NBu-E8E_Dwb483_sQwQoToHV35OjdrYIeyGEHi2ngZpHoqF3W2aFwURMkAtLlFVC3cUkuj9om_olyo2rW_jzM_XTsjUMxIaFUkqnxWBLSv3mxW2rCprporFxK9s1FeaUvXXgr7JEzkgBl2TejozQk7Vwb18YZYZze3fJHMyOtiCVvNF3xoNbo9lzgTX4A7jHDu_0a08AATaR0lJ6LFcet1kJb0a2PYvw1ZPfkFNbcrNSGb"/>
+<div class="absolute inset-0 bg-gradient-to-t from-inverse-surface/80 via-transparent to-transparent flex items-end p-space-sm">
+<div class="text-on-primary font-data-mono text-[11px] flex items-center justify-between w-full">
+<span>UID: XXXX-XXXX-4829</span>
+<span class="bg-primary/80 px-1.5 py-0.5 rounded text-[10px] font-bold">QR Verified</span>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-space-sm rounded-lg flex flex-col gap-1 text-[12px] font-body-sm">
+<div class="flex justify-between">
+<span class="text-on-surface-variant">Name on Card:</span>
+<span class="font-semibold text-on-surface">Rahul Kumar Prajapati</span>
+</div>
+<div class="flex justify-between">
+<span class="text-on-surface-variant">DOB / Age:</span>
+<span class="font-data-mono text-on-surface">14/07/1989 (35y)</span>
+</div>
+<div class="flex justify-between">
+<span class="text-on-surface-variant">UIDAI Match Hash:</span>
+<span class="font-data-mono text-primary font-bold">0x8FA2...E991 (Authentic)</span>
+</div>
+</div>
+</div>
+<!-- PAN Card Inspection Box -->
+<div class="bg-surface-container-low p-space-md rounded-xl flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md font-bold text-on-surface flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px] text-primary">credit_card</span> Income Tax PAN
+              </span>
+<span class="font-data-mono text-data-mono text-primary font-bold">NSDL ACTIVE</span>
+</div>
+<div class="relative rounded-lg overflow-hidden h-40 bg-surface-container-high group">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="Clear overhead scan of an official Indian Permanent Account Number PAN card showing Government of India insignia, signature band, and security holograms." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBTkVBo7JnN2x0VMQA9F-qqk4-x4JDFpxNzk2-nmha4cg1b0UEypK81apKcQAeXGNoW5xGgk5wHkfN9jMfmNR_uwHtJ-wljmY0AmIqUE2xxbUc7iURxrYcFmhRzBOnR6124Mp_jMQK_ATtuAlI865iuE33RCj08vrs0JPOwXx1Lgdfdak9cFxgSAOt-d2z_H8Xfi70A_fSW88vgHa9mTDaoDMaYAfuW7ARMGKzyP-zA3vWrQ4no73wq"/>
+<div class="absolute inset-0 bg-gradient-to-t from-inverse-surface/80 via-transparent to-transparent flex items-end p-space-sm">
+<div class="text-on-primary font-data-mono text-[11px] flex items-center justify-between w-full">
+<span>PAN: BDKPK****G</span>
+<span class="bg-primary/80 px-1.5 py-0.5 rounded text-[10px] font-bold">NSDL Synced</span>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-space-sm rounded-lg flex flex-col gap-1 text-[12px] font-body-sm">
+<div class="flex justify-between">
+<span class="text-on-surface-variant">NSDL Taxpayer Name:</span>
+<span class="font-semibold text-on-surface">Rahul Kumar Prajapati</span>
+</div>
+<div class="flex justify-between">
+<span class="text-on-surface-variant">Father's Name:</span>
+<span class="font-data-mono text-on-surface">Gopal Prajapati</span>
+</div>
+<div class="flex justify-between">
+<span class="text-on-surface-variant">Cross-Audit Status:</span>
+<span class="font-data-mono text-primary font-bold">Aadhaar-PAN Linked</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Dossier Section 2: Trade Competency & Certifications -->
+<div class="bg-surface-container-lowest p-space-lg rounded-2xl shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary text-[22px]">workspace_premium</span>
+<div>
+<h3 class="font-headline-md text-headline-md text-[18px] font-bold text-on-surface">2. Trade Competency &amp; Vocational Certifications</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Verified National Council for Vocational Training (NCVT) Accredited Document</p>
+</div>
+</div>
+<button class="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-surface-container-low text-on-surface font-label-sm text-label-sm font-semibold hover:bg-surface-container">
+<span class="material-symbols-outlined text-[16px]">open_in_new</span> Open Full Resolution PDF
+          </button>
+</div>
+<div class="bg-surface-container-low p-space-md rounded-xl flex flex-col md:flex-row gap-space-md items-center">
+<div class="relative w-full md:w-56 h-48 rounded-lg overflow-hidden bg-surface-container shadow-sm flex-shrink-0 group">
+<img class="w-full h-full object-cover" data-alt="Detailed diploma certificate from Government Industrial Training Institute ITI for plumbing technology with golden stamp, official signatures, and parchment texture background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAU1RKwIDTvu6bUa_x0l00h8SH8EBzdot6KKpa_SL0d7veu2Iqw3iY8tsH_lpVqW0lZGCVhO_ZcZb9HGgomenQgVF1bMEJcTwh_42Ewbus_KADccOJdU5k8VTHWzS6tJ6F_-yvftC5XlNXCHk-i-z-ywNaEeTzHTdwJlSAT35gKj2pJZnp1dXTJkI31ne4RGJHPkA9kcXsMuoqhxAm-KQqNN-_evsmTn45RxUJkxrAS1-M0dFHal93Y"/>
+<div class="absolute inset-0 bg-inverse-surface/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+<button class="p-2 rounded-full bg-surface-container-lowest text-on-surface shadow-md hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-[18px]">zoom_in</span>
+</button>
+<button class="p-2 rounded-full bg-surface-container-lowest text-on-surface shadow-md hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-[18px]">download</span>
+</button>
+</div>
+</div>
+<div class="flex flex-col gap-2 w-full">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md font-bold text-on-surface">Govt ITI Plumbing &amp; Sanitary Engineering Diploma</span>
+<span class="px-2 py-0.5 rounded bg-primary-fixed text-on-primary-fixed font-label-sm text-[11px] font-semibold">NCVT Level 4</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+              Issued by Bangalore Central Industrial Training Institute, Karnataka Board of Technical Examinations. Grade: Distinction (84.6%).
+            </p>
+<div class="grid grid-cols-2 sm:grid-cols-3 gap-space-xs mt-2 text-[12px] font-body-sm">
+<div class="p-2 rounded bg-surface-container-lowest">
+<span class="text-on-surface-variant block font-label-sm text-[10px]">CERTIFICATE ID</span>
+<span class="font-data-mono font-bold text-on-surface">ITI-KA-BLR-89240</span>
+</div>
+<div class="p-2 rounded bg-surface-container-lowest">
+<span class="text-on-surface-variant block font-label-sm text-[10px]">ISSUE DATE</span>
+<span class="font-data-mono font-bold text-on-surface">18 Aug 2016</span>
+</div>
+<div class="p-2 rounded bg-surface-container-lowest">
+<span class="text-on-surface-variant block font-label-sm text-[10px]">SPECIALIZATION</span>
+<span class="font-data-mono font-bold text-on-surface">Hydraulic / Pressurized</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Dossier Section 3: Police Clearance & Criminal Telemetry -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+<!-- Police Clearance Certificate (PCC) -->
+<div class="bg-surface-container-lowest p-space-md rounded-2xl shadow-sm flex flex-col justify-between gap-space-sm">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-space-xs">
+<div class="w-8 h-8 rounded-lg bg-primary-container text-on-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">local_police</span>
+</div>
+<div>
+<h4 class="font-label-md text-label-md font-bold text-on-surface">3. Police Clearance Check (PCC)</h4>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Bengaluru City Police Special Branch</span>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded bg-primary-fixed text-on-primary-fixed font-data-mono text-[11px] font-bold">STAMPED</span>
+</div>
+<div class="bg-surface-container-low p-space-sm rounded-xl flex items-center gap-space-md">
+<span class="material-symbols-outlined text-primary text-[36px]">verified</span>
+<div class="flex flex-col text-[12px] font-body-sm">
+<span class="font-bold text-on-surface">Ref: BCP/SB-VR/2026/04912</span>
+<span class="text-on-surface-variant">Dispatch verification conducted at Indiranagar Police Station.</span>
+<span class="font-data-mono text-primary font-bold mt-1">Valid Through: 14 January 2027</span>
+</div>
+</div>
+</div>
+<!-- Fraud & Incident Telemetry -->
+<div class="bg-surface-container-lowest p-space-md rounded-2xl shadow-sm flex flex-col justify-between gap-space-sm">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-space-xs">
+<div class="w-8 h-8 rounded-lg bg-primary-container text-on-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">security</span>
+</div>
+<div>
+<h4 class="font-label-md text-label-md font-bold text-on-surface">4. Background &amp; Fraud Telemetry</h4>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Multi-Platform Risk Registry</span>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded bg-primary/10 text-primary font-data-mono text-[11px] font-bold">0 HAZARDS</span>
+</div>
+<div class="bg-surface-container-low p-space-sm rounded-xl flex items-center gap-space-md">
+<div class="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center text-primary flex-shrink-0">
+<span class="material-symbols-outlined text-[24px]">gavel</span>
+</div>
+<div class="flex flex-col text-[12px] font-body-sm">
+<span class="font-bold text-on-surface">Clean Consumer Court &amp; CCTNS Record</span>
+<span class="text-on-surface-variant">0 municipal infractions, 0 identity anomalies across 14 connected partner networks.</span>
+</div>
+</div>
+</div>
+</div>
+<!-- AUDIT ACTION CONSOLE (Decision Matrix) -->
+<div class="bg-surface-container-lowest p-space-lg rounded-2xl shadow-md flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[22px]">admin_panel_settings</span>
+<h3 class="font-headline-md text-headline-md text-[18px] font-bold text-on-surface">Compliance Adjudication &amp; Partner Activation</h3>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-mono">Auditor ID: #ADM-CHIEF-04</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-md">
+<div class="md:col-span-2 flex flex-col gap-space-xs">
+<label class="font-label-sm text-label-sm font-bold uppercase text-on-surface-variant">Internal Auditor Compliance Notes</label>
+<input class="w-full px-space-md py-2.5 rounded-xl bg-surface-container-low font-body-sm text-body-sm text-on-surface focus:outline-none focus:bg-surface-container-lowest focus:shadow-sm" type="text" value="Aadhaar, PAN &amp; NCVT certificate cross-verified against State Database. Biometrics match 100%. Approved for Level 2 plumbing dispatch."/>
+</div>
+<div class="flex flex-col gap-space-xs">
+<label class="font-label-sm text-label-sm font-bold uppercase text-on-surface-variant">Rejection Reason (If Applicable)</label>
+<select class="w-full px-space-md py-2.5 rounded-xl bg-surface-container-low font-body-sm text-body-sm text-on-surface focus:outline-none focus:bg-surface-container-lowest">
+<option>-- Select Statutory Rejection Flag --</option>
+<option>Aadhaar / PAN Name Mismatch (&gt;15%)</option>
+<option>Expired Police Clearance Certificate</option>
+<option>Unaccredited Vocational Certification</option>
+<option>Illegible Photo / Biometric Mismatch</option>
+</select>
+</div>
+</div>
+<!-- Action Control Trigger Row -->
+<div class="flex flex-col sm:flex-row items-center justify-between gap-space-md pt-space-xs">
+<div class="flex items-center gap-space-sm w-full sm:w-auto">
+<!-- Approve Partner (Primary CTA) -->
+<button class="flex-1 sm:flex-initial px-space-xl py-3 rounded-xl bg-primary text-on-primary font-label-md text-label-md font-bold shadow-md hover:bg-primary-container transition-all flex items-center justify-center gap-2" id="approvePartnerBtn">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+              Approve Partner &amp; Unlock Job Feed
+            </button>
+<!-- Request Re-upload (Amber Secondary) -->
+<button class="px-space-md py-3 rounded-xl bg-tertiary-fixed text-on-tertiary-fixed-variant font-label-md text-label-md font-semibold hover:bg-tertiary-fixed-dim transition-all flex items-center justify-center gap-1.5">
+<span class="material-symbols-outlined text-[18px]">replay</span>
+              Request Re-upload
+            </button>
+</div>
+<!-- Reject Application (Destructive Action) -->
+<button class="w-full sm:w-auto px-space-md py-3 rounded-xl bg-error-container text-on-error-container font-label-md text-label-md font-semibold hover:bg-error hover:text-on-error transition-all flex items-center justify-center gap-1.5">
+<span class="material-symbols-outlined text-[18px]">cancel</span>
+            Reject Application
+          </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Statutory Compliance Footer Ribbon -->
+<div class="px-margin-desktop py-space-md bg-surface-container-lowest mt-space-md flex flex-col md:flex-row items-center justify-between gap-space-sm text-on-surface-variant font-label-sm text-label-sm">
+<div class="flex items-center gap-space-md">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-primary text-[16px]">verified</span>
+<span>Compliant with ADR-0016 Provider Onboarding Standards</span>
+</div>
+<span class="hidden md:inline">•</span>
+<span>Information Technology Act, 2000 Section 43A Compliant</span>
+</div>
+<div class="flex items-center gap-space-md font-data-mono text-[11px]">
+<span>DigiLocker Gateway v4.2.1</span>
+<span>NSDL Synced: 2 mins ago</span>
+<span class="px-2 py-0.5 rounded bg-surface-container text-on-surface-variant font-bold">256-BIT ENCRYPTION</span>
+</div>
+</div>
+</div>
+<script>
+  // Simple micro-interaction for approval feedback
+  const approveBtn = document.getElementById('approvePartnerBtn');
+  if (approveBtn) {
+    approveBtn.addEventListener('click', () => {
+      approveBtn.classList.remove('bg-primary');
+      approveBtn.classList.add('bg-primary-container');
+      approveBtn.innerHTML = `
+        <span class="material-symbols-outlined text-[20px] animate-spin">refresh</span>
+        Partner Activated &amp; Dispatched...
+      `;
+      setTimeout(() => {
+        approveBtn.innerHTML = `
+          <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+          Partner Active (#APP-9941 LIVE)
+        `;
+      }, 1200);
+    });
+  }
+</script></main></div></body></html>

@@ -67,7 +67,10 @@ void main() {
     // The acceptance beat: REQUESTED → ASSIGNED.
     socket.emitProjection(status: 'ASSIGNED', sequence: 2);
     await Future<void>.delayed(Duration.zero);
-    expect(controller.acceptedBooking.value, '22222222-2222-4222-8222-222222222222');
+    expect(
+      controller.acceptedBooking.value,
+      '22222222-2222-4222-8222-222222222222',
+    );
     expect(controller.bookings.single.status, 'ASSIGNED');
     // Projection rebuilds must carry forward location and schedule fields.
     expect(controller.bookings.single.locationLatitude, 17.385);
@@ -77,6 +80,53 @@ void main() {
     // One-shot: later transitions do not re-fire.
     socket.emitProjection(status: 'EN_ROUTE', sequence: 3);
     await Future<void>.delayed(Duration.zero);
+    expect(
+      controller.acceptedBooking.value,
+      '22222222-2222-4222-8222-222222222222',
+    );
+
+    controller.dispose();
+  });
+
+  test('create returns CustomerBooking', () async {
+    final controller = BookingController(
+      BookingRepository(
+        api: _Transport(),
+        accessToken: () async => 'token',
+      ),
+    );
+
+    final booking = await controller.create(
+      serviceCategoryId: '11111111-1111-4111-8111-111111111111',
+      description: 'Kitchen sink is leaking underneath.',
+      latitude: 17.385,
+      longitude: 78.4867,
+    );
+
+    expect(booking.id, '22222222-2222-4222-8222-222222222222');
+    expect(booking.status, 'REQUESTED');
+    expect(controller.bookings.first.id, booking.id);
+    controller.dispose();
+  });
+
+  test('load fires acceptedBooking when REQUESTED becomes ASSIGNED', () async {
+    var responseStatus = 'REQUESTED';
+    final transport = _DynamicTransport(getStatus: () => responseStatus);
+    final controller = BookingController(
+      BookingRepository(
+        api: transport,
+        accessToken: () async => 'token',
+      ),
+    );
+
+    await controller.load();
+    expect(controller.bookings.single.status, 'REQUESTED');
+    expect(controller.acceptedBooking.value, isNull);
+
+    // Provider accepts, next load/poll catches it:
+    responseStatus = 'ASSIGNED';
+    await controller.load();
+    expect(controller.bookings.single.status, 'ASSIGNED');
     expect(controller.acceptedBooking.value, '22222222-2222-4222-8222-222222222222');
 
     controller.dispose();
@@ -162,6 +212,34 @@ class _Transport implements ApiTransport {
           'description': 'Kitchen sink is leaking underneath.',
           'createdAt': '2026-08-13T12:00:00.000Z',
         },
+      },
+    );
+  }
+}
+
+class _DynamicTransport implements ApiTransport {
+  _DynamicTransport({required this.getStatus});
+  final String Function() getStatus;
+
+  @override
+  Future<ApiResponse> send(ApiRequest request) async {
+    return ApiResponse(
+      statusCode: 200,
+      body: {
+        'bookings': [
+          {
+            'id': '22222222-2222-4222-8222-222222222222',
+            'serviceCategoryId': '11111111-1111-4111-8111-111111111111',
+            'status': getStatus(),
+            'description': 'Kitchen sink is leaking underneath.',
+            'createdAt': '2026-09-08T09:00:00.000Z',
+            'version': 1,
+            'locationLat': 17.385,
+            'locationLng': 78.4867,
+            'scheduledAt': '2026-09-09T10:00:00.000Z',
+          },
+        ],
+        'nextCursor': null,
       },
     );
   }

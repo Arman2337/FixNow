@@ -199,7 +199,9 @@ void main() {
     },
   );
 
-  testWidgets('verified provider can dismiss notification banner', (tester) async {
+  testWidgets('verified provider can dismiss notification banner', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(800, 2400);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);

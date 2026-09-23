@@ -2,6 +2,7 @@ import {
   Controller,
   Post,
   Patch,
+  Put,
   Get,
   Body,
   Param,
@@ -21,6 +22,7 @@ import {
   AcceptBookingDto,
   VerifyServiceStartOtpDto,
   AvailableBookingQueryDto,
+  UpdateBookingLineItemsDto,
 } from './bookings.dto';
 import { RequireOwnPermission } from '../common/authorization/authorization.decorators';
 import { PERMISSIONS } from '../common/authorization/permission-policies';
@@ -92,6 +94,27 @@ export class BookingsController {
       bookingId,
       providerId,
       dto.status,
+      dto.expectedVersion,
+    );
+
+    return {
+      booking: presentBooking(booking),
+    };
+  }
+
+  @Put(':id/line-items')
+  @HttpCode(HttpStatus.OK)
+  @RequireOwnPermission(PERMISSIONS.bookingUpdateStatus)
+  async updateLineItems(
+    @Param('id') bookingId: string,
+    @Req() req: AuthorizedRequest,
+    @Body() dto: UpdateBookingLineItemsDto,
+  ): Promise<BookingResponse> {
+    const providerId = req.authorizationPrincipal!.userId;
+    const booking = await this.bookingsService.updateBookingLineItems(
+      bookingId,
+      providerId,
+      dto.lineItems,
       dto.expectedVersion,
     );
 
@@ -206,6 +229,23 @@ export class BookingsController {
       bookings: page.bookings.map(({ booking, distanceKm }) =>
         presentProviderBookingRequest(booking, distanceKm),
       ),
+    };
+  }
+
+  /// Declared after the static routes so `available` is not captured as an id.
+  @Get(':id')
+  @RequireOwnPermission(PERMISSIONS.bookingHistoryReadSelf)
+  async getBooking(
+    @Req() req: AuthorizedRequest,
+    @Param('id') bookingId: string,
+  ): Promise<BookingResponse> {
+    const userId = req.authorizationPrincipal!.userId;
+    const booking = await this.bookingsService.getBookingForUser(
+      bookingId,
+      userId,
+    );
+    return {
+      booking: presentBooking(booking),
     };
   }
 }

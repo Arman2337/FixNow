@@ -66,31 +66,35 @@ void main() {
     expect(controller.status, PushEnrollmentStatus.disabled);
   });
 
-  test('enable registers the device token with platform and lists devices', () async {
-    final transport = FakeTransport(
-      responses: [
-        const ApiResponse(statusCode: 200, body: []),
-        const ApiResponse(statusCode: 200, body: [
-          {
-            'id': 'device-1',
-            'platform': 'ANDROID',
-            'createdAt': '2026-08-24T00:00:00.000Z',
-          },
-        ]),
-      ],
-    );
-    final controller = controllerFor(transport);
-    await controller.enable();
-    expect(controller.status, PushEnrollmentStatus.ready);
-    expect(controller.devices.single.id, 'device-1');
-    final registerRequest = transport.requests
-        .firstWhere((request) => request.method == ApiMethod.put);
-    expect(registerRequest.path, 'notifications/push/devices');
-    expect(registerRequest.body, {
-      'token': 'f' * 64,
-      'platform': isNotEmpty,
-    });
-  });
+  test(
+    'enable registers the device token with platform and lists devices',
+    () async {
+      final transport = FakeTransport(
+        responses: [
+          const ApiResponse(statusCode: 200, body: []),
+          const ApiResponse(
+            statusCode: 200,
+            body: [
+              {
+                'id': 'device-1',
+                'platform': 'ANDROID',
+                'createdAt': '2026-08-24T00:00:00.000Z',
+              },
+            ],
+          ),
+        ],
+      );
+      final controller = controllerFor(transport);
+      await controller.enable();
+      expect(controller.status, PushEnrollmentStatus.ready);
+      expect(controller.devices.single.id, 'device-1');
+      final registerRequest = transport.requests.firstWhere(
+        (request) => request.method == ApiMethod.put,
+      );
+      expect(registerRequest.path, 'notifications/push/devices');
+      expect(registerRequest.body, {'token': 'f' * 64, 'platform': isNotEmpty});
+    },
+  );
 
   test('declined OS permission never contacts the backend', () async {
     final transport = FakeTransport();

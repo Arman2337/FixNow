@@ -8,9 +8,13 @@ import {
 import { InjectDataSource } from '@nestjs/typeorm';
 import { createHash, createHmac, timingSafeEqual } from 'crypto';
 import { ConfigService } from '@nestjs/config';
-import { DataSource, EntityManager, IsNull, QueryFailedError } from 'typeorm';
+import { DataSource, EntityManager, IsNull, QueryFailedError, In } from 'typeorm';
 import { BookingStatus } from '../../../shared/booking-lifecycle.types';
-import { CreateBookingDto, UpdateBookingItemsDto } from './bookings.dto';
+import {
+  CreateBookingDto,
+  CreateBookingLineItemDto,
+  UpdateBookingItemsDto,
+} from './bookings.dto';
 import { BookingEvent } from './domain/booking-event.entity';
 import { Booking } from './domain/booking.entity';
 import { PaymentOrder } from '../payments/domain/payment-order.entity';
@@ -23,6 +27,9 @@ import { LocationService } from '../location/location.service';
 import { BookingProjectionService } from '../realtime/booking-projection.service';
 import { DomainNotificationService } from '../notifications/domain/domain-notification.service';
 import { TrustService } from '../trust/trust.service';
+import { BookingLineItem } from './domain/booking-line-item.entity';
+import { SubServiceEntity } from '../services/sub-service.entity';
+import { UserEntity } from '../users/user.entity';
 
 export interface BookingHistoryPage {
   bookings: Booking[];
@@ -105,6 +112,27 @@ export class BookingsService {
           deletedAt: null,
         });
         const saved = await bookingRepository.save(booking);
+
+        if (normalizedInput.lineItems?.length) {
+          const lineItemRepo = manager.getRepository(BookingLineItem);
+          const subServiceRepo = manager.getRepository(SubServiceEntity);
+          
+          const lineItemsToSave = await Promise.all(
+            normalizedInput.lineItems.map(async (item) => {
+              const subService = await subServiceRepo.findOneBy({ id: item.subServiceId });
+              if (!subService) throw new NotFoundException(`SubService ${item.subServiceId} not found`);
+              return lineItemRepo.create({
+                bookingId: saved.id,
+                subServiceId: item.subServiceId,
+                quantity: item.quantity,
+                priceMinor: subService.priceMinor ?? 0,
+              });
+            })
+          );
+          await lineItemRepo.save(lineItemsToSave);
+          saved.lineItems = lineItemsToSave;
+        }
+
         await this.appendEvent(
           manager,
           saved,
@@ -116,17 +144,40 @@ export class BookingsService {
         return saved;
       });
       await this.notifySafely(async () => {
-        if (!this.domainNotifications) return;
+        if (!this.domainNotifications && !this.bookingProjections) return;
         const eligible = await this.matchingService.findEligibleProviders(
           created.locationLat!,
           created.locationLng!,
           created.serviceCategoryId,
           50,
         );
-        await this.domainNotifications.notifyProvidersOfAvailableRequest(
-          created,
-          eligible.map(({ providerId }) => providerId),
-        );
+        const providerIds = eligible.map(({ providerId }) => providerId);
+        
+        if (this.domainNotifications) {
+          await this.domainNotifications.notifyProvidersOfAvailableRequest(
+            created,
+            providerIds,
+          );
+        }
+
+        if (this.bookingProjections) {
+          let totalMinor = 0;
+          if (created.lineItems) {
+            totalMinor = created.lineItems.reduce((sum, item) => sum + item.priceMinor * item.quantity, 0);
+          }
+          const data = {
+            bookingId: created.id,
+            serviceCategoryId: created.serviceCategoryId,
+            locationLat: created.locationLat ? created.locationLat.toString() : '',
+            locationLng: created.locationLng ? created.locationLng.toString() : '',
+            description: created.description ?? '',
+            priceMinor: totalMinor.toString(),
+            type: 'booking:provider:REQUESTED',
+          };
+          for (const providerId of providerIds.slice(0, 20)) {
+            this.bookingProjections.publishAccountSignal(providerId, 'provider.request.v1', data);
+          }
+        }
       });
       return created;
     } catch (error: unknown) {
@@ -177,13 +228,18 @@ export class BookingsService {
       },
     );
     await this.bookingProjections?.publishBooking(booking);
-    await this.notifySafely(() =>
-      this.domainNotifications!.notifyBookingEvent(
+    await this.notifySafely(async () => {
+      await this.domainNotifications!.notifyBookingEvent(
         booking,
         'customer',
         BookingStatus.ASSIGNED,
-      ),
-    );
+      );
+      await this.domainNotifications!.notifyBookingEvent(
+        booking,
+        'provider',
+        BookingStatus.ASSIGNED,
+      );
+    });
     return booking;
   }
 
@@ -214,9 +270,61 @@ export class BookingsService {
       await this.locationService?.invalidateBooking(bookingId);
     }
     await this.bookingProjections?.publishBooking(booking);
-    await this.notifySafely(() =>
-      this.domainNotifications!.notifyBookingEvent(booking, 'customer', status),
+    await this.notifySafely(async () => {
+      await this.domainNotifications!.notifyBookingEvent(booking, 'customer', status);
+      await this.domainNotifications!.notifyBookingEvent(booking, 'provider', status);
+    });
+    return booking;
+  }
+
+  async updateBookingLineItems(
+    bookingId: string,
+    providerId: string,
+    lineItemsInput: CreateBookingLineItemDto[],
+    expectedVersion: number,
+  ): Promise<Booking> {
+    const booking = await this.transition(
+      bookingId,
+      providerId,
+      expectedVersion,
+      async (booking, manager) => {
+        if (booking.providerId !== providerId) {
+          throw new ForbiddenException('You are not assigned to this booking');
+        }
+        if (booking.status === BookingStatus.COMPLETED || booking.status === BookingStatus.CANCELLED) {
+          throw new ConflictException('Cannot modify line items for a completed or cancelled booking');
+        }
+
+        const lineItemRepo = manager.getRepository(BookingLineItem);
+        const subServiceRepo = manager.getRepository(SubServiceEntity);
+        
+        // Remove existing line items for this booking
+        await lineItemRepo.delete({ bookingId: booking.id });
+        
+        // Add new line items
+        if (lineItemsInput.length > 0) {
+          const newLineItems = await Promise.all(
+            lineItemsInput.map(async (item) => {
+              const subService = await subServiceRepo.findOneBy({ id: item.subServiceId });
+              if (!subService || subService.priceMinor === undefined) {
+                throw new BadRequestException(`Invalid sub-service or price not set: ${item.subServiceId}`);
+              }
+              return lineItemRepo.create({
+                bookingId: booking.id,
+                subServiceId: item.subServiceId,
+                quantity: item.quantity,
+                priceMinor: subService.priceMinor ?? 0,
+              });
+            }),
+          );
+          await lineItemRepo.save(newLineItems);
+          booking.lineItems = newLineItems;
+        } else {
+          booking.lineItems = [];
+        }
+      },
     );
+    await this.bookingProjections?.publishBooking(booking);
     return booking;
   }
 
@@ -257,13 +365,20 @@ export class BookingsService {
     );
     await this.locationService?.invalidateBooking(bookingId);
     await this.bookingProjections?.publishUnavailable(booking);
-    await this.notifySafely(() =>
-      this.domainNotifications!.notifyBookingEvent(
+    await this.notifySafely(async () => {
+      await this.domainNotifications!.notifyBookingEvent(
         booking,
         'customer',
         BookingStatus.CANCELLED,
-      ),
-    );
+      );
+      if (booking.providerId) {
+        await this.domainNotifications!.notifyBookingEvent(
+          booking,
+          'provider',
+          BookingStatus.CANCELLED,
+        );
+      }
+    });
     // FN-060: trust signal recording is best-effort, like notifications.
     await this.notifySafely(async () => {
       await this.trust?.evaluateCustomerCancellationSignal(booking.customerId);
@@ -314,13 +429,20 @@ export class BookingsService {
       reason ?? 'Rescheduled booking',
     );
     if (this.domainNotifications) {
-      await this.notifySafely(() =>
-        this.domainNotifications!.notifyBookingEvent(
+      await this.notifySafely(async () => {
+        await this.domainNotifications!.notifyBookingEvent(
           booking,
           'customer',
           booking.status,
-        ),
-      );
+        );
+        if (booking.providerId) {
+          await this.domainNotifications!.notifyBookingEvent(
+            booking,
+            'provider',
+            booking.status,
+          );
+        }
+      });
     }
     return booking;
   }
@@ -438,13 +560,18 @@ export class BookingsService {
     );
     await this.locationService?.invalidateBooking(bookingId);
     await this.bookingProjections?.publishBooking(booking);
-    await this.notifySafely(() =>
-      this.domainNotifications!.notifyBookingEvent(
+    await this.notifySafely(async () => {
+      await this.domainNotifications!.notifyBookingEvent(
         booking,
         'customer',
         BookingStatus.IN_PROGRESS,
-      ),
-    );
+      );
+      await this.domainNotifications!.notifyBookingEvent(
+        booking,
+        'provider',
+        BookingStatus.IN_PROGRESS,
+      );
+    });
     return booking;
   }
 
@@ -477,14 +604,10 @@ export class BookingsService {
 
     const rows = await query.getMany();
     const hasMore = rows.length > boundedLimit;
-    const page = rows.slice(0, boundedLimit).map((booking) =>
-      booking.providerId === userId && booking.customerId !== userId
-        ? Object.assign(new Booking(), booking, {
-            locationLat: null,
-            locationLng: null,
-          })
-        : booking,
+    const page = rows.map((booking) =>
+      this.redactDestinationFor(booking, userId),
     );
+    await this.populatePhones(page);
     const last = page.at(-1);
     return {
       bookings: page,
@@ -496,6 +619,42 @@ export class BookingsService {
             })
           : null,
     };
+  }
+
+  /// Single-booking read for a participant (customer or assigned provider).
+  /// The tracking screen and booking detail routes resolve snapshots here.
+  async getBookingForUser(bookingId: string, userId: string): Promise<Booking> {
+    const booking = await this.dataSource
+      .getRepository(Booking)
+      .findOneBy({ id: bookingId });
+    if (!booking) throw new NotFoundException('Booking not found');
+    if (booking.customerId !== userId && booking.providerId !== userId) {
+      throw new ForbiddenException('Booking participants only');
+    }
+    return this.redactDestinationFor(booking, userId);
+  }
+
+  /// Providers do not receive the customer's exact destination until the job
+  /// is theirs and active — matching-stage requests and terminal history stay
+  /// coordinate-free, while ASSIGNED/EN_ROUTE/IN_PROGRESS jobs must carry the
+  /// destination or navigation and live tracking cannot work.
+  private redactDestinationFor(booking: Booking, userId: string): Booking {
+    const destinationAllowed: readonly string[] = [
+      BookingStatus.ASSIGNED,
+      BookingStatus.EN_ROUTE,
+      BookingStatus.IN_PROGRESS,
+    ];
+    if (
+      booking.providerId === userId &&
+      booking.customerId !== userId &&
+      !destinationAllowed.includes(booking.status)
+    ) {
+      return Object.assign(new Booking(), booking, {
+        locationLat: null,
+        locationLng: null,
+      });
+    }
+    return booking;
   }
 
   async getAvailableRequests(
@@ -525,6 +684,7 @@ export class BookingsService {
       if (bookings.length === boundedLimit) break;
     }
 
+    await this.populatePhones(bookings.map((b) => b.booking));
     return { bookings };
   }
 
@@ -566,7 +726,7 @@ export class BookingsService {
     bookingId: string,
     actorUserId: string,
     expectedVersion: number,
-    mutate: (booking: Booking) => void,
+    mutate: (booking: Booking, manager: EntityManager) => void | Promise<void>,
     reason: string | null = null,
   ): Promise<Booking> {
     if (!Number.isInteger(expectedVersion) || expectedVersion < 1) {
@@ -583,7 +743,7 @@ export class BookingsService {
       }
 
       const fromStatus = booking.status;
-      mutate(booking);
+      await mutate(booking, manager);
       const result = await repository
         .createQueryBuilder()
         .update(Booking)
@@ -700,6 +860,7 @@ export class BookingsService {
       locationLat: Number(input.locationLat.toFixed(7)),
       locationLng: Number(input.locationLng.toFixed(7)),
       scheduledAt,
+      lineItems: input.lineItems,
     };
   }
 
@@ -752,5 +913,22 @@ export class BookingsService {
     } catch {
       throw new BadRequestException('Invalid booking history cursor');
     }
+  }
+
+  private async populatePhones(bookings: Booking[]): Promise<void> {
+    if (bookings.length === 0) return;
+    const userIds = new Set<string>();
+    bookings.forEach((b) => {
+      userIds.add(b.customerId);
+      if (b.providerId) userIds.add(b.providerId);
+    });
+    const users = await this.dataSource.getRepository(UserEntity).find({
+      where: { id: In([...userIds]) },
+    });
+    const phoneMap = new Map(users.map((u) => [u.id, u.phone]));
+    bookings.forEach((b) => {
+      b.customerPhone = phoneMap.get(b.customerId) ?? null;
+      if (b.providerId) b.providerPhone = phoneMap.get(b.providerId) ?? null;
+    });
   }
 }

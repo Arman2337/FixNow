@@ -302,12 +302,45 @@ class _ProviderLiveMapState extends State<ProviderLiveMap>
             widget.customerLocation!.latitude,
             widget.customerLocation!.longitude,
           );
+    // Nothing to show yet: no markers, no invented default center — say so.
+    if (provider == null && customer == null) {
+      return Semantics(
+        label: 'Live location is not available yet',
+        child: ClipRRect(
+          borderRadius: AppRadius.cardBorder,
+          child: SizedBox(
+            height: 348,
+            child: Container(
+              color: AppColors.surfaceContainerHigh,
+              alignment: Alignment.center,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.radar_rounded,
+                    color: AppColors.textSecondary,
+                    size: 28,
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    'Waiting for live location',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
     final center = provider != null && customer != null
         ? LatLng(
             (provider.latitude + customer.latitude) / 2,
             (provider.longitude + customer.longitude) / 2,
           )
-        : (provider ?? customer ?? const LatLng(23.0225, 72.5714));
+        : (provider ?? customer!);
     return Semantics(
       label: customer == null
           ? 'Live provider location map'
@@ -408,120 +441,120 @@ class _ProviderLiveMapState extends State<ProviderLiveMap>
                   ),
                 ],
               ),
-              const Positioned.fill(
-                child: IgnorePointer(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        stops: [0, 0.45, 1],
-                        colors: [
-                          Color(0x52081020),
-                          Colors.transparent,
-                          Color(0x8F081020),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              // Top Floating Glassmorphic Telemetry Card
-              Positioned(
-                top: AppSpacing.md,
-                left: AppSpacing.md,
-                right: 98,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xE60F172A),
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                    border: Border.all(
-                      color: provider != null
-                          ? AppColors.live.withValues(alpha: 0.6)
-                          : AppColors.borderStrong,
-                      width: 1.5,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.35),
-                        blurRadius: 10,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        provider != null
-                            ? Icons.two_wheeler_rounded
-                            : Icons.radar_rounded,
-                        color: provider != null
-                            ? AppColors.live
-                            : AppColors.primary,
-                        size: 18,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          provider != null && widget.estimatedMinutes != null
-                              ? 'Technician en route • ${widget.distanceKm != null ? "${widget.distanceKm!.toStringAsFixed(1)} km • " : ""}~${widget.estimatedMinutes} mins'
-                              : 'Connecting to technician GPS...',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.1,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+              if (widget.showOverlay)
+                const Positioned.fill(
+                  child: IgnorePointer(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          stops: [0, 0.45, 1],
+                          colors: [
+                            Color(0x52081020),
+                            Colors.transparent,
+                            Color(0x8F081020),
+                          ],
                         ),
                       ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
-              Positioned(
-                top: AppSpacing.md,
-                right: AppSpacing.md,
-                child: Material(
-                  color: AppColors.surfaceElevated.withValues(alpha: 0.92),
-                  borderRadius: BorderRadius.circular(AppRadius.pill),
-                  elevation: 4,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                    onTap: _fitCamera,
-                    child: const Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 8,
+              if (widget.showOverlay)
+                Positioned(
+                  top: AppSpacing.md,
+                  left: AppSpacing.md,
+                  right: 98,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xE60F172A),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.12),
+                        width: 0.5,
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.my_location_rounded,
-                            color: AppColors.primary,
-                            size: 16,
-                          ),
-                          SizedBox(width: 4),
-                          Text(
-                            'Fit View',
-                            style: TextStyle(
-                              color: AppColors.textPrimary,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.25),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          provider != null
+                              ? Icons.two_wheeler_rounded
+                              : Icons.radar_rounded,
+                          color: provider != null
+                              ? AppColors.live
+                              : AppColors.primary,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            provider != null && widget.estimatedMinutes != null
+                                ? 'Technician en route • ${widget.distanceKm != null ? "${widget.distanceKm!.toStringAsFixed(1)} km • " : ""}~${widget.estimatedMinutes} mins'
+                                : 'Connecting to technician GPS...',
+                            style: const TextStyle(
+                              color: Colors.white,
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
+                              letterSpacing: 0.1,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              if (widget.showOverlay)
+                Positioned(
+                  top: AppSpacing.md,
+                  right: AppSpacing.md,
+                  child: Material(
+                    color: AppColors.surfaceElevated.withValues(alpha: 0.92),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    elevation: 4,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                      onTap: _fitCamera,
+                      child: const Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 8,
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.my_location_rounded,
+                              color: AppColors.primary,
+                              size: 16,
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              'Fit View',
+                              style: TextStyle(
+                                color: AppColors.textPrimary,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
+
               if (widget.showOverlay)
                 Positioned(
                   left: AppSpacing.md,

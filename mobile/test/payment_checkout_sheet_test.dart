@@ -3,15 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Widget host(Widget child) => MaterialApp(
-      home: Scaffold(
-        body: Center(child: child),
-      ),
-    );
+  home: Scaffold(body: Center(child: child)),
+);
 
 void main() {
   group('FixPaymentCheckoutSheet', () {
-    testWidgets('calculates subtotal, GST, and grand total correctly',
-        (tester) async {
+    testWidgets('calculates subtotal, GST, and grand total correctly', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         host(
           const FixPaymentCheckoutSheet(
@@ -35,8 +34,9 @@ void main() {
       expect(find.text('₹706.82'), findsNWidgets(2)); // summary + bottom bar
     });
 
-    testWidgets('selecting a tip dynamically updates the grand total',
-        (tester) async {
+    testWidgets('selecting a tip dynamically updates the grand total', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         host(
           const FixPaymentCheckoutSheet(
@@ -62,8 +62,9 @@ void main() {
       expect(find.text('₹50'), findsOneWidget);
     });
 
-    testWidgets('switching to Cash changes button label to Confirm Cash Pay',
-        (tester) async {
+    testWidgets('switching to Cash changes button label to Confirm Cash Pay', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         host(
           const FixPaymentCheckoutSheet(
@@ -87,8 +88,9 @@ void main() {
       expect(find.text('Confirm Cash Pay'), findsOneWidget);
     });
 
-    testWidgets('successful payment transitions to celebratory success modal',
-        (tester) async {
+    testWidgets('successful payment transitions to celebratory success modal', (
+      tester,
+    ) async {
       var processCalled = false;
       var doneCalled = false;
 
@@ -98,13 +100,14 @@ void main() {
             bookingId: 'book-456',
             baseAmountMinor: 49900,
             proName: 'Vikram Singh',
-            onProcessPayment: ({
-              required paymentMethod,
-              required totalMinor,
-              required tipMinor,
-            }) async {
-              processCalled = true;
-            },
+            onProcessPayment:
+                ({
+                  required paymentMethod,
+                  required totalMinor,
+                  required tipMinor,
+                }) async {
+                  processCalled = true;
+                },
             onDone: () {
               doneCalled = true;
             },

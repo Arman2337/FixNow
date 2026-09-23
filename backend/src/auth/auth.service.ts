@@ -2,6 +2,7 @@ import {
   ConflictException,
   Injectable,
   UnauthorizedException,
+  BadRequestException,
 } from '@nestjs/common';
 import * as argon2 from 'argon2';
 import { DataSource } from 'typeorm';
@@ -14,6 +15,7 @@ import { UserRoleEntity } from '../users/user-role.entity';
 import { UserEntity } from '../users/user.entity';
 import { ProviderApplicationEntity } from '../providers/provider-application.entity';
 import { ProviderOnboardingStatus } from '../providers/provider-onboarding-status';
+import { CustomerProfileEntity } from '../users/customer-profile.entity';
 import {
   CUSTOMER_ROLE_ID,
   LOCAL_EMAIL_PROVIDER,
@@ -56,6 +58,10 @@ export class AuthService {
       providerApplicant: boolean;
     },
   ): Promise<AuthenticationResponse> {
+    if (!input.mobile?.trim()) {
+      throw new BadRequestException('Mobile number is required for registration.');
+    }
+
     const passwordHash = await argon2.hash(input.password, {
       type: argon2.argon2id,
     });
@@ -72,6 +78,7 @@ export class AuthService {
         const createdUser = await manager.save(
           manager.create(UserEntity, {
             status: AccountStatus.PendingVerification,
+            phone: input.mobile?.trim() || null,
           }),
         );
         const identity = await manager.save(
@@ -97,6 +104,14 @@ export class AuthService {
             expiresAt: null,
           }),
         );
+        if (input.fullName && input.fullName.trim().length > 0) {
+          await manager.save(
+            manager.create(CustomerProfileEntity, {
+              userId: createdUser.id,
+              displayName: input.fullName.trim(),
+            }),
+          );
+        }
         if (persona.providerApplicant) {
           await manager.save(
             manager.create(ProviderApplicationEntity, {

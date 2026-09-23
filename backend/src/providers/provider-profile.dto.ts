@@ -32,6 +32,14 @@ export class UpsertProviderProfileDto {
   baseLongitude!: number;
 }
 
+export class UpdateProviderLocationDto {
+  @IsLatitude()
+  latitude!: number;
+
+  @IsLongitude()
+  longitude!: number;
+}
+
 export class CoverageCheckDto {
   @IsLatitude()
   latitude!: number;
@@ -60,6 +68,13 @@ export class ProviderProfileResponseDto {
   createdAt!: Date;
 
   updatedAt!: Date;
+
+  stats?: {
+    rating: number;
+    completedJobs: number;
+    earningsMinor: number;
+    acceptanceRate: number;
+  };
 }
 
 export class CoverageCheckResponseDto {

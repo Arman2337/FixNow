@@ -7,6 +7,7 @@ environment:
   sdk: ^3.10.8
 
 dependencies:
+  audioplayers: 6.1.0
   file_picker: 11.0.3
   firebase_core: ^4.13.0
   firebase_messaging: ^16.5.0
@@ -16,12 +17,17 @@ dependencies:
   flutter_secure_storage: 10.0.0
   geocoding: ^5.0.0
   geolocator: 14.0.2
+  google_fonts: ^8.2.1
   http: 1.6.0
   http_parser: 4.1.2
   image_picker: ^1.1.2
+  intl: ^0.20.3
   latlong2: ^0.10.1
+  path_provider: ^2.1.6
   permission_handler: 11.4.0
   record: ^5.2.0
+  share_plus: ^12.0.2
+  url_launcher: ^6.3.2
   web_socket_channel: ^3.0.3
 
 dev_dependencies:
@@ -35,6 +41,8 @@ dependency_overrides:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/images/services/
 
   # ---------------------------------------------------------------------------
   # Bundled brand fonts (Playfair Display + Inter) — TEMPORARILY DISABLED.

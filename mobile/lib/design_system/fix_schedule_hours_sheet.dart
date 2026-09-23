@@ -8,10 +8,7 @@ import 'package:flutter/material.dart';
 /// working days (e.g. Mon–Fri, Mon–Sat, Everyday, or custom days) and working
 /// hours (start/end time) rather than being locked into fixed 09:00–17:00 weekday hours.
 class FixProviderWorkingHoursSheet extends StatefulWidget {
-  const FixProviderWorkingHoursSheet({
-    required this.controller,
-    super.key,
-  });
+  const FixProviderWorkingHoursSheet({required this.controller, super.key});
 
   final ProviderController controller;
 
@@ -23,9 +20,8 @@ class FixProviderWorkingHoursSheet extends StatefulWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => FixProviderWorkingHoursSheet(
-        controller: controller,
-      ),
+      builder: (context) =>
+          FixProviderWorkingHoursSheet(controller: controller),
     );
   }
 
@@ -105,10 +101,42 @@ class _FixProviderWorkingHoursSheetState
       initialTime: initial,
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
-          colorScheme: const ColorScheme.dark(
+          colorScheme: const ColorScheme.light(
             primary: AppColors.primary,
+            onPrimary: Colors.white,
             surface: AppColors.surfaceElevated,
-            onSurface: Colors.white,
+            onSurface: AppColors.textPrimary,
+            surfaceContainerHighest: AppColors.surfaceSecondary,
+            onSurfaceVariant: AppColors.textSecondary,
+          ),
+          timePickerTheme: TimePickerThemeData(
+            backgroundColor: AppColors.surfaceElevated,
+            dialBackgroundColor: AppColors.surfaceSecondary,
+            dialTextColor: WidgetStateColor.resolveWith((states) =>
+                states.contains(WidgetState.selected)
+                    ? Colors.white
+                    : AppColors.textPrimary),
+            dialHandColor: AppColors.primary,
+            hourMinuteColor: WidgetStateColor.resolveWith((states) =>
+                states.contains(WidgetState.selected)
+                    ? AppColors.primary
+                    : AppColors.surfaceSecondary),
+            hourMinuteTextColor: WidgetStateColor.resolveWith((states) =>
+                states.contains(WidgetState.selected)
+                    ? Colors.white
+                    : AppColors.textPrimary),
+            dayPeriodColor: WidgetStateColor.resolveWith((states) =>
+                states.contains(WidgetState.selected)
+                    ? AppColors.primarySoft
+                    : Colors.transparent),
+            dayPeriodTextColor: WidgetStateColor.resolveWith((states) =>
+                states.contains(WidgetState.selected)
+                    ? AppColors.primary
+                    : AppColors.textSecondary),
+            dayPeriodBorderSide: const BorderSide(color: AppColors.borderDefault),
+          ),
+          textButtonTheme: TextButtonThemeData(
+            style: TextButton.styleFrom(foregroundColor: AppColors.primary),
           ),
         ),
         child: child!,
@@ -147,10 +175,7 @@ class _FixProviderWorkingHoursSheetState
           {
             'dayOfWeek': day,
             'intervals': [
-              {
-                'startMinute': startMinutes,
-                'endMinute': endMinutes,
-              },
+              {'startMinute': startMinutes, 'endMinute': endMinutes},
             ],
           },
       ];
@@ -280,7 +305,8 @@ class _FixProviderWorkingHoursSheetState
               children: [
                 _buildPresetChip(
                   label: 'Mon–Fri',
-                  isSelected: _selectedDays.length == 5 &&
+                  isSelected:
+                      _selectedDays.length == 5 &&
                       _selectedDays.contains(1) &&
                       _selectedDays.contains(2) &&
                       _selectedDays.contains(3) &&
@@ -290,7 +316,8 @@ class _FixProviderWorkingHoursSheetState
                 ),
                 _buildPresetChip(
                   label: 'Mon–Sat',
-                  isSelected: _selectedDays.length == 6 &&
+                  isSelected:
+                      _selectedDays.length == 6 &&
                       _selectedDays.contains(1) &&
                       _selectedDays.contains(2) &&
                       _selectedDays.contains(3) &&
@@ -359,7 +386,11 @@ class _FixProviderWorkingHoursSheetState
                   ),
                 ),
                 const SizedBox(width: AppSpacing.md),
-                const Icon(Icons.arrow_forward_rounded, color: Colors.white38, size: 16),
+                const Icon(
+                  Icons.arrow_forward_rounded,
+                  color: Colors.white38,
+                  size: 16,
+                ),
                 const SizedBox(width: AppSpacing.md),
                 Expanded(
                   child: _buildTimeInputBox(
@@ -418,9 +449,7 @@ class _FixProviderWorkingHoursSheetState
         fontSize: 11,
         fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
       ),
-      side: BorderSide(
-        color: isSelected ? AppColors.primary : Colors.white12,
-      ),
+      side: BorderSide(color: isSelected ? AppColors.primary : Colors.white12),
       padding: const EdgeInsets.symmetric(horizontal: 4),
     );
   }
@@ -432,23 +461,23 @@ class _FixProviderWorkingHoursSheetState
     int endH,
     int endM,
   ) {
-    final isSelected = _startTime.hour == startH &&
+    final isSelected =
+        _startTime.hour == startH &&
         _startTime.minute == startM &&
         _endTime.hour == endH &&
         _endTime.minute == endM;
 
     return ActionChip(
       label: Text(label),
-      backgroundColor:
-          isSelected ? AppColors.primary : AppColors.backgroundPrimary,
+      backgroundColor: isSelected
+          ? AppColors.primary
+          : AppColors.backgroundPrimary,
       labelStyle: TextStyle(
         color: isSelected ? Colors.white : AppColors.textSecondary,
         fontSize: 11,
         fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
       ),
-      side: BorderSide(
-        color: isSelected ? AppColors.primary : Colors.white12,
-      ),
+      side: BorderSide(color: isSelected ? AppColors.primary : Colors.white12),
       padding: const EdgeInsets.symmetric(horizontal: 4),
       onPressed: () => _setTimePreset(startH, startM, endH, endM),
     );
@@ -479,7 +508,7 @@ class _FixProviderWorkingHoursSheetState
                     color: AppColors.primary.withValues(alpha: 0.3),
                     blurRadius: 6,
                     offset: const Offset(0, 2),
-                  )
+                  ),
                 ]
               : null,
         ),
@@ -502,13 +531,14 @@ class _FixProviderWorkingHoursSheetState
     required TimeOfDay time,
     required VoidCallback onTap,
   }) {
-    final hourStr = (time.hour == 0
-            ? 12
-            : time.hour > 12
+    final hourStr =
+        (time.hour == 0
+                ? 12
+                : time.hour > 12
                 ? time.hour - 12
                 : time.hour)
-        .toString()
-        .padLeft(2, '0');
+            .toString()
+            .padLeft(2, '0');
     final minuteStr = time.minute.toString().padLeft(2, '0');
     final periodStr = time.period == DayPeriod.am ? 'AM' : 'PM';
 
@@ -540,7 +570,7 @@ class _FixProviderWorkingHoursSheetState
                 Text(
                   '$hourStr:$minuteStr $periodStr',
                   style: const TextStyle(
-                    color: Colors.white,
+                    color: AppColors.textPrimary,
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
                   ),

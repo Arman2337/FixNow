@@ -20,8 +20,19 @@ import { Type } from 'class-transformer';
 import {
   BookingStatus,
   CreateBookingRequest,
+  CreateBookingLineItemRequest,
   UpdateBookingItemsRequest,
 } from '../../../shared/booking-lifecycle.types';
+
+export class CreateBookingLineItemDto implements CreateBookingLineItemRequest {
+  @IsUUID()
+  @IsNotEmpty()
+  subServiceId: string;
+
+  @IsInt()
+  @Min(1)
+  quantity: number;
+}
 
 export class BookingItemDto {
   @IsString()
@@ -79,6 +90,23 @@ export class CreateBookingDto implements CreateBookingRequest {
   @ValidateNested({ each: true })
   @Type(() => BookingItemDto)
   items?: BookingItemDto[] | null;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateBookingLineItemDto)
+  lineItems?: CreateBookingLineItemDto[];
+}
+
+export class UpdateBookingLineItemsDto {
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateBookingLineItemDto)
+  lineItems: CreateBookingLineItemDto[];
+
+  @IsInt()
+  @Min(1)
+  expectedVersion: number;
 }
 
 export class UpdateBookingStatusDto {

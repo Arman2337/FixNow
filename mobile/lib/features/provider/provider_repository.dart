@@ -33,6 +33,19 @@ class ProviderRepository {
         ),
       );
 
+  Future<ProviderApplication> submitApplication() async =>
+      ProviderApplication.fromJson(
+        _map(
+          (await _api.send(
+            ApiRequest(
+              method: ApiMethod.post,
+              path: 'provider-applications/me/submit',
+              bearerToken: await _token(),
+            ),
+          )).body,
+        ),
+      );
+
   /// FN-111: the caller's own rolling accept-time signal; null average means
   /// FixNow does not yet have enough accepted jobs to show it honestly.
   Future<ProviderAcceptTime?> acceptTime() async {
@@ -49,6 +62,29 @@ class ProviderRepository {
       if (error.statusCode == 404) return null;
       rethrow;
     }
+  }
+
+  Future<void> acceptBooking(String bookingId) async {
+    await _api.send(
+      ApiRequest(
+        method: ApiMethod.post,
+        path: 'bookings/$bookingId/accept',
+        bearerToken: await _token(),
+      ),
+    );
+  }
+
+  /// Whether the caller's assigned booking has a completed (PAID) payment.
+  Future<bool> bookingPaymentPaid(String bookingId) async {
+    final response = await _api.send(
+      ApiRequest(
+        method: ApiMethod.get,
+        path: 'providers/me/bookings/$bookingId/payment-status',
+        bearerToken: await _token(),
+      ),
+    );
+    final body = response.body;
+    return body is Map && body['paid'] == true;
   }
 
   Future<ProviderProfile?> profile() async {
@@ -85,6 +121,21 @@ class ProviderRepository {
     return ProviderProfile.fromJson(_map(response.body));
   }
 
+  Future<ProviderProfile> updateLocation(
+    double latitude,
+    double longitude,
+  ) async {
+    final response = await _api.send(
+      ApiRequest(
+        method: ApiMethod.put,
+        path: 'provider-profile/me/location',
+        bearerToken: await _token(),
+        body: {'latitude': latitude, 'longitude': longitude},
+      ),
+    );
+    return ProviderProfile.fromJson(_map(response.body));
+  }
+
   Future<ProviderAvailability> availability() async =>
       ProviderAvailability.fromJson(
         _map(
@@ -109,10 +160,13 @@ class ProviderRepository {
           path: 'provider-availability/me/status',
           bearerToken: await _token(),
           body: {
-            'status': status, 
+            'status': status,
             'expectedVersion': current.version,
-            if (status != 'offline') 
-              'expiresAt': DateTime.now().toUtc().add(const Duration(hours: 8)).toIso8601String(),
+            if (status != 'offline')
+              'expiresAt': DateTime.now()
+                  .toUtc()
+                  .add(const Duration(hours: 8))
+                  .toIso8601String(),
           },
         ),
       )).body,
@@ -191,7 +245,14 @@ class ProviderRepository {
       );
     }
     return rows
-        .map((row) => ProviderRequest.fromJson(_map(row)))
+        .map((row) {
+          try {
+            return ProviderRequest.fromJson(_map(row));
+          } catch (_) {
+            return null;
+          }
+        })
+        .whereType<ProviderRequest>()
         .toList(growable: false);
   }
 
@@ -238,6 +299,16 @@ class ProviderRepository {
         path: 'provider-skills',
         bearerToken: await _token(),
         body: {'serviceCategoryId': serviceCategoryId},
+      ),
+    );
+  }
+
+  Future<void> removeSkill(String id) async {
+    await _api.send(
+      ApiRequest(
+        method: ApiMethod.delete,
+        path: 'provider-skills/$id',
+        bearerToken: await _token(),
       ),
     );
   }
@@ -344,6 +415,22 @@ class ProviderRepository {
           path: 'bookings/${job.id}/cancel',
           bearerToken: await _token(),
           body: {'reason': reason.trim(), 'expectedVersion': job.version},
+        ),
+      )).body,
+    );
+    return CustomerBooking.fromJson(_map(body['booking']));
+  }
+  Future<CustomerBooking> updateLineItems(
+    String bookingId,
+    List<Map<String, dynamic>> lineItems,
+  ) async {
+    final body = _map(
+      (await _api.send(
+        ApiRequest(
+          method: ApiMethod.put,
+          path: 'bookings/$bookingId/line-items',
+          bearerToken: await _token(),
+          body: {'lineItems': lineItems},
         ),
       )).body,
     );

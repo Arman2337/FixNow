@@ -14,10 +14,9 @@ import 'package:fixnow_mobile/features/bookings/booking_controller.dart';
 import 'package:fixnow_mobile/features/bookings/booking_schedule.dart';
 import 'package:fixnow_mobile/features/location/booking_location.dart';
 import 'package:fixnow_mobile/features/location/saved_address.dart';
+import 'package:fixnow_mobile/features/location/service_location_picker_sheet.dart';
 import 'package:fixnow_mobile/features/services/service_category.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
 
 class ServiceRequestScreen extends StatefulWidget {
   const ServiceRequestScreen({
@@ -61,9 +60,12 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
   BookingSchedule? _schedule;
   PriceEstimateController? _estimate;
 
+  String? _createdBookingId;
+
   @override
   void initState() {
     super.initState();
+    widget.controller.addListener(_onBookingChanged);
     _details.text = widget.initialDescription ?? '';
     if (widget.initialLocation != null) {
       _confirmedLocation = widget.initialLocation;
@@ -90,6 +92,19 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
     if (mounted) setState(() {});
   }
 
+  void _onBookingChanged() {
+    if (!mounted || _createdBookingId == null || !_showRadar) return;
+    final booking = widget.controller.bookings
+        .where((b) => b.id == _createdBookingId)
+        .firstOrNull;
+    if (booking != null &&
+        const {'ASSIGNED', 'EN_ROUTE', 'IN_PROGRESS'}.contains(booking.status)) {
+      if (ModalRoute.of(context)?.isCurrent == true) {
+        Navigator.of(context).pop(booking);
+      }
+    }
+  }
+
   /// FN-113: the price card shows the advisory estimate when one is
   /// available and otherwise falls back to the static published-price
   /// content. The estimate never blocks booking and is labelled advisory.
@@ -104,14 +119,15 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
           Text(
             'Estimated price',
             style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
             estimate.rangeLabel,
-            style: Theme.of(context).textTheme.titleMedium
-                ?.copyWith(fontWeight: FontWeight.w700),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
@@ -125,8 +141,8 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
             'Advisory only — the final charge is confirmed for your booking '
             'before payment.',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.textOnSurfaceSecondary,
-                ),
+              color: AppColors.textOnSurfaceSecondary,
+            ),
           ),
         ],
       );
@@ -137,8 +153,8 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
         Text(
           'Base price',
           style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
         const SizedBox(height: AppSpacing.xs),
         Text(
@@ -160,6 +176,7 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
 
   @override
   void dispose() {
+    widget.controller.removeListener(_onBookingChanged);
     _estimate?.dispose();
     _details.dispose();
     super.dispose();
@@ -269,7 +286,7 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
           await (widget.locationProvider ??
                   BookingLocationResolver(initialFix: widget.initialLocation))
               .resolve();
-      await widget.controller.create(
+      final booking = await widget.controller.create(
         serviceCategoryId: widget.category.id,
         description: _details.text,
         latitude: location.latitude,
@@ -278,7 +295,10 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
         items: widget.initialItems,
       );
       if (mounted) {
-        setState(() => _showRadar = true); // FN-040 made visible (signature motion)
+        setState(() {
+          _createdBookingId = booking.id;
+          _showRadar = true;
+        });
       }
     } on BookingLocationFailure {
       // A browser may have permission but no hardware location source. Let the
@@ -309,221 +329,240 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
   Widget build(BuildContext context) {
     if (_showRadar) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Request service'), centerTitle: false),
+        appBar: AppBar(
+          title: const Text('Request service'),
+          centerTitle: false,
+        ),
         body: MatchRadarView(
           categoryName: widget.category.name,
           onFinished: () {
-            if (mounted) Navigator.of(context).pop(true);
+            if (!mounted) return;
+            final booking = widget.controller.bookings
+                .where((b) => b.id == _createdBookingId)
+                .firstOrNull;
+            if (booking != null &&
+                const {'ASSIGNED', 'EN_ROUTE', 'IN_PROGRESS'}
+                    .contains(booking.status)) {
+              Navigator.of(context).pop(booking);
+            } else {
+              Navigator.of(context).pop(true);
+            }
           },
         ),
       );
     }
     return Scaffold(
-    appBar: AppBar(title: const Text('Request service'), centerTitle: false),
-    body: SafeArea(
-      child: FixPageFrame(
-        child: ListView(
-          padding: const EdgeInsets.all(AppSpacing.pagePadding),
-          children: [
-            FixPageHeader(
-              eyebrow: 'FAST, SECURE MATCHING',
-              title: widget.category.name,
-              description:
-                  widget.category.description ??
-                  'Tell us what needs attention and we will match a verified provider nearby.',
-            ),
-            const SizedBox(height: AppSpacing.lg),
-
-            const FixCard(
-              tone: FixCardTone.elevated,
-              semanticLabel: 'How matching works',
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(Icons.verified_user_outlined, color: AppColors.verified),
-                  SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: Text(
-                      'Your request is shared only with eligible providers. A provider is assigned after they accept it.',
-                    ),
-                  ),
-                ],
+      appBar: AppBar(title: const Text('Request service'), centerTitle: false),
+      body: SafeArea(
+        child: FixPageFrame(
+          child: ListView(
+            padding: const EdgeInsets.all(AppSpacing.pagePadding),
+            children: [
+              FixPageHeader(
+                eyebrow: 'FAST, SECURE MATCHING',
+                title: widget.category.name,
+                description:
+                    widget.category.description ??
+                    'Tell us what needs attention and we will match a verified provider nearby.',
               ),
-            ),
-            const SizedBox(height: AppSpacing.lg),
+              const SizedBox(height: AppSpacing.lg),
 
-            if (widget.initialItems case final items? when items.isNotEmpty)
-              _buildItemsSummaryCard(items),
-            if (widget.initialItems case final items? when items.isNotEmpty)
-              const SizedBox(height: AppSpacing.md),
+              if (widget.initialItems case final items? when items.isNotEmpty)
+                _buildItemsSummaryCard(items),
+              if (widget.initialItems case final items? when items.isNotEmpty)
+                const SizedBox(height: AppSpacing.md),
 
-            FixCard(
-              tone: FixCardTone.elevated,
-              semanticLabel: 'Base service price',
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.sell_outlined,
-                    color: widget.category.pricing == null
-                        ? Theme.of(context).colorScheme.onSurfaceVariant
-                        : AppColors.primary,
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(child: _buildPriceContent(context)),
-                ],
-              ),
-            ),
-            if (widget.category.pricing != null) ...[
-              const SizedBox(height: AppSpacing.md),
-              FixPriceBreakdownCard(
-                amountMinor: widget.category.pricing!.amountMinor,
-                currency: widget.category.pricing!.currency,
-                modelType: PricingModelType.fixed,
-              ),
-            ],
-            const SizedBox(height: AppSpacing.lg),
-
-            FixCard(
-              tone: FixCardTone.secondary,
-              semanticLabel: 'Describe your service request',
-              child: Form(
-                key: _formKey,
-                autovalidateMode: AutovalidateMode.onUserInteraction,
-                child: Column(
+              const FixCard(
+                tone: FixCardTone.elevated,
+                semanticLabel: 'How matching works',
+                child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Tell us what needs fixing',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColors.textOnSurface,
+                    Icon(
+                      Icons.verified_user_outlined,
+                      color: AppColors.verified,
+                    ),
+                    SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: Text(
+                        'Your request is shared only with eligible providers. A provider is assigned after they accept it.',
                       ),
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    const Text(
-                      'Clear details help the right professional prepare before they accept.',
-                      style: TextStyle(color: AppColors.textOnSurfaceSecondary),
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    const Text(
-                      'Issue details',
-                      style: TextStyle(
-                        color: AppColors.textOnSurface,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    TextFormField(
-                      controller: _details,
-                      style: const TextStyle(color: AppColors.inputText),
-                      cursorColor: AppColors.primary,
-                      enabled: !_submitting,
-                      minLines: 3,
-                      maxLines: 6,
-                      maxLength: 500,
-                      textCapitalization: TextCapitalization.sentences,
-                      decoration: const InputDecoration(
-                        hintText:
-                            'For example: a pipe is leaking under the sink and water pressure is low.',
-                      ),
-                      validator: (value) => (value?.trim().length ?? 0) < 10
-                          ? 'Add at least 10 characters so the provider can prepare.'
-                          : null,
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    const Text(
-                      'Add a quick detail',
-                      style: TextStyle(
-                        color: AppColors.textOnSurfaceSecondary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    Wrap(
-                      spacing: AppSpacing.sm,
-                      runSpacing: AppSpacing.sm,
-                      children: [
-                        _buildChip('Leak or water damage'),
-                        _buildChip('Needs urgent attention'),
-                        _buildChip('Installation or replacement'),
-                      ],
                     ),
                   ],
                 ),
               ),
-            ),
-            const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: AppSpacing.lg),
 
-            SavedAddressSelectorCard(
-              onAddressSelected: (addr) {
-                setState(() {
-                  _confirmedLocation = BookingLocationFix(
-                    latitude: addr.latitude,
-                    longitude: addr.longitude,
-                    accuracyMeters: 10,
-                    timestamp: DateTime.now(),
-                  );
-                  _error = null;
-                });
-              },
-            ),
-            const SizedBox(height: AppSpacing.md),
-
-            FixSchedulePickerCard(
-              initialSchedule: _schedule,
-              onScheduleChanged: (sched) {
-                setState(() => _schedule = sched);
-              },
-            ),
-            const SizedBox(height: AppSpacing.md),
-
-            const Row(
-              children: [
-                Icon(
-                  Icons.location_on_outlined,
-                  size: 20,
-                  color: AppColors.accentGold,
+              FixCard(
+                tone: FixCardTone.elevated,
+                semanticLabel: 'Base service price',
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.sell_outlined,
+                      color: widget.category.pricing == null
+                          ? Theme.of(context).colorScheme.onSurfaceVariant
+                          : AppColors.primary,
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(child: _buildPriceContent(context)),
+                  ],
                 ),
-                SizedBox(width: AppSpacing.sm),
-                Expanded(
+              ),
+              if (widget.category.pricing != null) ...[
+                const SizedBox(height: AppSpacing.md),
+                FixPriceBreakdownCard(
+                  amountMinor: widget.category.pricing!.amountMinor,
+                  currency: widget.category.pricing!.currency,
+                  modelType: PricingModelType.fixed,
+                ),
+              ],
+              const SizedBox(height: AppSpacing.lg),
+
+              FixCard(
+                tone: FixCardTone.secondary,
+                semanticLabel: 'Describe your service request',
+                child: Form(
+                  key: _formKey,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Tell us what needs fixing',
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(color: AppColors.textOnSurface),
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      const Text(
+                        'Clear details help the right professional prepare before they accept.',
+                        style: TextStyle(
+                          color: AppColors.textOnSurfaceSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      const Text(
+                        'Issue details',
+                        style: TextStyle(
+                          color: AppColors.textOnSurface,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      TextFormField(
+                        controller: _details,
+                        style: const TextStyle(color: AppColors.inputText),
+                        cursorColor: AppColors.primary,
+                        enabled: !_submitting,
+                        minLines: 3,
+                        maxLines: 6,
+                        maxLength: 500,
+                        textCapitalization: TextCapitalization.sentences,
+                        decoration: const InputDecoration(
+                          hintText:
+                              'For example: a pipe is leaking under the sink and water pressure is low.',
+                        ),
+                        validator: (value) => (value?.trim().length ?? 0) < 10
+                            ? 'Add at least 10 characters so the provider can prepare.'
+                            : null,
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      const Text(
+                        'Add a quick detail',
+                        style: TextStyle(
+                          color: AppColors.textOnSurfaceSecondary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      Wrap(
+                        spacing: AppSpacing.sm,
+                        runSpacing: AppSpacing.sm,
+                        children: [
+                          _buildChip('Leak or water damage'),
+                          _buildChip('Needs urgent attention'),
+                          _buildChip('Installation or replacement'),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+
+              SavedAddressSelectorCard(
+                onAddressSelected: (addr) {
+                  setState(() {
+                    _confirmedLocation = BookingLocationFix(
+                      latitude: addr.latitude,
+                      longitude: addr.longitude,
+                      accuracyMeters: 10,
+                      timestamp: DateTime.now(),
+                    );
+                    _error = null;
+                  });
+                },
+              ),
+              const SizedBox(height: AppSpacing.md),
+
+              FixSchedulePickerCard(
+                initialSchedule: _schedule,
+                onScheduleChanged: (sched) {
+                  setState(() => _schedule = sched);
+                },
+              ),
+              const SizedBox(height: AppSpacing.md),
+
+              const Row(
+                children: [
+                  Icon(
+                    Icons.location_on_outlined,
+                    size: 20,
+                    color: AppColors.accentGold,
+                  ),
+                  SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Text(
+                      'Your current location is captured only when you submit.',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              FixSecondaryButton(
+                label: _confirmedLocation == null
+                    ? 'Choose service location on map'
+                    : 'Service location selected on map',
+                icon: Icons.map_outlined,
+                onPressed: _submitting ? null : _chooseLocationOnMap,
+              ),
+              if (_error case final message?) ...[
+                const SizedBox(height: AppSpacing.md),
+                Semantics(
+                  liveRegion: true,
                   child: Text(
-                    'Your current location is captured only when you submit.',
+                    message,
                     style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 13,
+                      color: Theme.of(context).colorScheme.error,
                     ),
                   ),
                 ),
               ],
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            FixSecondaryButton(
-              label: _confirmedLocation == null
-                  ? 'Choose service location on map'
-                  : 'Service location selected on map',
-              icon: Icons.map_outlined,
-              onPressed: _submitting ? null : _chooseLocationOnMap,
-            ),
-            if (_error case final message?) ...[
-              const SizedBox(height: AppSpacing.md),
-              Semantics(
-                liveRegion: true,
-                child: Text(
-                  message,
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
-                ),
+              const SizedBox(height: AppSpacing.xl),
+              FixPrimaryButton(
+                label: 'Find a verified provider',
+                icon: Icons.arrow_forward_rounded,
+                onPressed: _submit,
+                isLoading: _submitting,
               ),
             ],
-            const SizedBox(height: AppSpacing.xl),
-            FixPrimaryButton(
-              label: 'Find a verified provider',
-              icon: Icons.arrow_forward_rounded,
-              onPressed: _submit,
-              isLoading: _submitting,
-            ),
-          ],
+          ),
         ),
       ),
-    ),
     );
   }
 
@@ -542,11 +581,9 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
   }
 
   Future<void> _chooseLocationOnMap() async {
-    final selected = await showModalBottomSheet<BookingLocationFix>(
-      context: context,
-      isScrollControlled: true,
-      builder: (_) =>
-          _ServiceLocationPicker(initialLocation: _confirmedLocation ?? widget.initialLocation),
+    final selected = await ServiceLocationPickerSheet.show(
+      context,
+      initialLocation: widget.initialLocation ?? _confirmedLocation,
     );
     if (selected != null && mounted) {
       setState(() {
@@ -562,94 +599,3 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
     }
   }
 }
-
-class _ServiceLocationPicker extends StatefulWidget {
-  const _ServiceLocationPicker({this.initialLocation});
-
-  final BookingLocationFix? initialLocation;
-
-  @override
-  State<_ServiceLocationPicker> createState() => _ServiceLocationPickerState();
-}
-
-class _ServiceLocationPickerState extends State<_ServiceLocationPicker> {
-  late LatLng _selected = widget.initialLocation == null
-      ? const LatLng(20.5937, 78.9629)
-      : LatLng(
-          widget.initialLocation!.latitude,
-          widget.initialLocation!.longitude,
-        );
-
-  @override
-  Widget build(BuildContext context) => SafeArea(
-    child: Padding(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'Confirm service location',
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          const Text(
-            'Tap your home or service address on the map. This pin is used only to match your provider.',
-          ),
-          const SizedBox(height: AppSpacing.md),
-          Semantics(
-            label:
-                'Service location map. Tap to place the service address pin.',
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(14),
-              child: SizedBox(
-                height: 320,
-                child: FlutterMap(
-                  options: MapOptions(
-                    initialCenter: _selected,
-                    initialZoom: widget.initialLocation == null ? 5 : 15,
-                    onTap: (_, point) => setState(() => _selected = point),
-                  ),
-                  children: [
-                    TileLayer(
-                      urlTemplate:
-                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                      userAgentPackageName: 'com.fixnow.app',
-                    ),
-                    MarkerLayer(
-                      markers: [
-                        Marker(
-                          point: _selected,
-                          width: 48,
-                          height: 48,
-                          child: const Icon(
-                            Icons.location_on,
-                            color: AppColors.primary,
-                            size: 42,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          FixPrimaryButton(
-            label: 'Use this service location',
-            icon: Icons.check_rounded,
-            onPressed: () => Navigator.of(context).pop(
-              BookingLocationFix(
-                latitude: _selected.latitude,
-                longitude: _selected.longitude,
-                accuracyMeters: 0,
-                timestamp: DateTime.now(),
-              ),
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
-  }

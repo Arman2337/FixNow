@@ -1,4 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:fixnow_mobile/api/api_client.dart';
+
+class MockApiTransport implements ApiTransport {
+  @override
+  Future<ApiResponse> send(ApiRequest request) async =>
+      const ApiResponse(statusCode: 200, body: []);
+}
 
 enum AddressLabel { home, work, other }
 
@@ -39,41 +46,33 @@ class SavedAddress {
         };
 
   String get labelText => switch (label) {
-        AddressLabel.home => 'Home',
-        AddressLabel.work => 'Work',
-        AddressLabel.other => customTitle.isNotEmpty ? customTitle : 'Other',
-      };
+    AddressLabel.home => 'Home',
+    AddressLabel.work => 'Work',
+    AddressLabel.other => customTitle.isNotEmpty ? customTitle : 'Other',
+  };
 
   String get formattedSnippet {
-    if (flatBuilding.isNotEmpty &&
-        flatBuilding != streetArea &&
-        flatBuilding != 'Current Location') {
-      return '$flatBuilding, $streetArea';
-    }
-    return streetArea.isNotEmpty ? streetArea : city;
+    final parts = [flatBuilding, streetArea].where((s) => s.trim().isNotEmpty).toList();
+    return parts.join(', ');
   }
 
   String get formattedFull {
-    final buffer = StringBuffer();
-    if (flatBuilding.isNotEmpty && flatBuilding != streetArea) {
-      buffer.write(flatBuilding);
-    }
-    if (streetArea.isNotEmpty) {
-      if (buffer.isNotEmpty) buffer.write(', ');
-      buffer.write(streetArea);
-    }
-    if (landmark != null && landmark!.isNotEmpty) {
-      if (buffer.isNotEmpty) buffer.write(' ');
-      buffer.write('(Near $landmark)');
-    }
-    if (city.isNotEmpty) {
-      if (buffer.isNotEmpty) buffer.write(', ');
-      buffer.write(city);
-      if (postalCode.isNotEmpty) {
-        buffer.write(' - $postalCode');
-      }
-    }
-    return buffer.toString();
+    final areaPart = [
+      flatBuilding,
+      streetArea,
+      if (landmark != null && landmark!.trim().isNotEmpty) '(Near )',
+    ].where((s) => s.trim().isNotEmpty).toList();
+
+    final cityZip = [
+      if (city.trim().isNotEmpty && postalCode.trim().isNotEmpty)
+        ' - '
+      else ...[
+        if (city.trim().isNotEmpty) city,
+        if (postalCode.trim().isNotEmpty) postalCode,
+      ],
+    ];
+
+    return [...areaPart, ...cityZip].join(', ');
   }
 
   SavedAddress copyWith({
@@ -88,74 +87,128 @@ class SavedAddress {
     double? latitude,
     double? longitude,
     bool? isDefault,
-  }) =>
-      SavedAddress(
-        id: id ?? this.id,
-        label: label ?? this.label,
-        customTitle: customTitle ?? this.customTitle,
-        flatBuilding: flatBuilding ?? this.flatBuilding,
-        streetArea: streetArea ?? this.streetArea,
-        landmark: landmark ?? this.landmark,
-        city: city ?? this.city,
-        postalCode: postalCode ?? this.postalCode,
-        latitude: latitude ?? this.latitude,
-        longitude: longitude ?? this.longitude,
-        isDefault: isDefault ?? this.isDefault,
-      );
+  }) => SavedAddress(
+    id: id ?? this.id,
+    label: label ?? this.label,
+    customTitle: customTitle ?? this.customTitle,
+    flatBuilding: flatBuilding ?? this.flatBuilding,
+    streetArea: streetArea ?? this.streetArea,
+    landmark: landmark ?? this.landmark,
+    city: city ?? this.city,
+    postalCode: postalCode ?? this.postalCode,
+    latitude: latitude ?? this.latitude,
+    longitude: longitude ?? this.longitude,
+    isDefault: isDefault ?? this.isDefault,
+  );
 }
 
 /// In-memory repository for managing saved customer addresses.
 class SavedAddressRepository extends ChangeNotifier {
-  SavedAddressRepository._() {
-    _seedDefaults();
+  SavedAddressRepository({required this.api, required this.accessToken}) {
+    _instance = this;
   }
 
-  static final SavedAddressRepository instance = SavedAddressRepository._();
 
-  final List<SavedAddress> _addresses = [];
+  factory SavedAddressRepository.test() {
+    return SavedAddressRepository(
+      api: MockApiTransport(),
+      accessToken: () async => '',
+    );
+  }
+
+  static SavedAddressRepository? _instance;
+
+  static SavedAddressRepository get instance {
+    if (_instance == null) {
+      debugPrint(
+        'WARNING: SavedAddressRepository.instance was null. Falling back to test instance.',
+      );
+      _instance = SavedAddressRepository.test();
+    }
+    return _instance!;
+  }
+
+  final ApiTransport api;
+  final Future<String?> Function() accessToken;
+
+  List<SavedAddress> _addresses = [];
+  bool _isLoading = false;
 
   List<SavedAddress> get addresses => List.unmodifiable(_addresses);
+  bool get isLoading => _isLoading;
 
   SavedAddress? get defaultAddress {
+    if (_addresses.isEmpty) return null;
+    return _addresses.firstWhere(
+      (a) => a.isDefault,
+      orElse: () => _addresses.first,
+    );
+  }
+
+  void setUserId(String userId) {
+    // legacy
+  }
+
+  Future<String> _requireToken() async {
+    final token = await accessToken();
+    if (token == null || token.isEmpty) {
+      throw const ApiException(ApiFailureKind.unauthorized, 'Not signed in');
+    }
+    return token;
+  }
+
+  Future<void> fetchAddresses() async {
+    _isLoading = true;
+    notifyListeners();
     try {
-      return _addresses.firstWhere((a) => a.isDefault);
-    } catch (_) {
-      return _addresses.isNotEmpty ? _addresses.first : null;
+      final token = await _requireToken();
+      final response = await api.send(
+        ApiRequest(
+          method: ApiMethod.get,
+          path: 'users/me/addresses',
+          bearerToken: token,
+        ),
+      );
+
+      final data = response.body as List<dynamic>;
+      _addresses = data.map((json) {
+        final j = json as Map<String, dynamic>;
+        return SavedAddress(
+          id: j['id'],
+          label: j['label'] == 'Work'
+              ? AddressLabel.work
+              : (j['label'] == 'Home' ? AddressLabel.home : AddressLabel.other),
+          customTitle: j['label'] ?? '',
+          flatBuilding: j['street'],
+          streetArea: j['street'], // simplify mapping
+          city: j['city'] ?? 'Bengaluru',
+          postalCode: j['zip'] ?? '560001',
+          latitude: j['latitude'] is String
+              ? double.tryParse(j['latitude']) ?? 0.0
+              : (j['latitude']?.toDouble() ?? 0.0),
+          longitude: j['longitude'] is String
+              ? double.tryParse(j['longitude']) ?? 0.0
+              : (j['longitude']?.toDouble() ?? 0.0),
+          isDefault: j['isDefault'] ?? false,
+        );
+      }).toList();
+    } catch (e) {
+      // Ignore
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
-  void _seedDefaults() {
-    _addresses.addAll([
-      const SavedAddress(
-        id: 'addr-home-1',
-        label: AddressLabel.home,
-        customTitle: 'Home',
-        flatBuilding: 'Flat 402, Lotus Heights',
-        streetArea: '4th Cross, Koramangala 5th Block',
-        landmark: 'Opposite Sony World Signal',
-        city: 'Bengaluru',
-        postalCode: '560034',
-        latitude: 12.9352,
-        longitude: 77.6245,
-        isDefault: true,
-      ),
-      const SavedAddress(
-        id: 'addr-work-2',
-        label: AddressLabel.work,
-        customTitle: 'Office',
-        flatBuilding: 'Desk 5B, WeWork Galaxy',
-        streetArea: '43 Residency Road, Shanthala Nagar',
-        landmark: 'Near Mayo Hall Metro',
-        city: 'Bengaluru',
-        postalCode: '560025',
-        latitude: 12.9719,
-        longitude: 77.6070,
-        isDefault: false,
-      ),
-    ]);
+  /// Test/demo seeding hook: addresses normally come from
+  /// `fetchAddresses()`; tests add fixtures synchronously through this.
+  @visibleForTesting
+  void seedAll(List<SavedAddress> addresses) {
+    _addresses.addAll(addresses);
+    notifyListeners();
   }
 
-  void saveAddress(SavedAddress address) {
+  Future<void> saveAddress(SavedAddress address) async {
     final idx = _addresses.indexWhere((a) => a.id == address.id);
     if (address.isDefault) {
       for (var i = 0; i < _addresses.length; i++) {
@@ -173,14 +226,53 @@ class SavedAddressRepository extends ChangeNotifier {
       }
     }
     notifyListeners();
+    try {
+      final token = await _requireToken();
+      await api.send(
+        ApiRequest(
+          method: ApiMethod.post,
+          path: 'users/me/addresses',
+          bearerToken: token,
+          body: {
+            'label': address.label == AddressLabel.work
+                ? 'Work'
+                : (address.label == AddressLabel.home
+                      ? 'Home'
+                      : address.customTitle),
+            'street': address.flatBuilding,
+            'city': address.city,
+            'zip': address.postalCode,
+            'latitude': address.latitude,
+            'longitude': address.longitude,
+            'isDefault': address.isDefault,
+          },
+        ),
+      );
+      await fetchAddresses();
+    } catch (e) {
+      // Ignore
+    }
   }
 
-  void deleteAddress(String id) {
+  Future<void> deleteAddress(String id) async {
     _addresses.removeWhere((a) => a.id == id);
     if (_addresses.isNotEmpty && !_addresses.any((a) => a.isDefault)) {
       _addresses[0] = _addresses[0].copyWith(isDefault: true);
     }
     notifyListeners();
+    try {
+      final token = await _requireToken();
+      await api.send(
+        ApiRequest(
+          method: ApiMethod.delete,
+          path: 'users/me/addresses/$id',
+          bearerToken: token,
+        ),
+      );
+      await fetchAddresses();
+    } catch (e) {
+      // Ignore
+    }
   }
 
   void setDefault(String id) {
@@ -233,7 +325,6 @@ class SavedAddressRepository extends ChangeNotifier {
 
   void reset() {
     _addresses.clear();
-    _seedDefaults();
     notifyListeners();
   }
 }

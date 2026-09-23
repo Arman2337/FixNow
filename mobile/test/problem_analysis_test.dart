@@ -62,15 +62,17 @@ void main() {
 
     test('maps the medium band and defaults an unknown band to low', () {
       expect(
-        ProblemAnalysis.fromJson(_analysisWith(confidenceBand: 'medium'))
-            .confidenceBand,
+        ProblemAnalysis.fromJson(
+          _analysisWith(confidenceBand: 'medium'),
+        ).confidenceBand,
         ProblemConfidenceBand.medium,
       );
       // An unrecognized band must degrade to low so the UI falls back to
       // manual browsing rather than a confident auto-suggestion.
       expect(
-        ProblemAnalysis.fromJson(_analysisWith(confidenceBand: 'exceptional'))
-            .confidenceBand,
+        ProblemAnalysis.fromJson(
+          _analysisWith(confidenceBand: 'exceptional'),
+        ).confidenceBand,
         ProblemConfidenceBand.low,
       );
     });
@@ -102,23 +104,26 @@ void main() {
 
     test('throws FormatException on an unknown kind', () {
       expect(
-        () => ProblemAnalysis.fromJson(const <String, Object?>{'kind': 'mystery'}),
+        () => ProblemAnalysis.fromJson(const <String, Object?>{
+          'kind': 'mystery',
+        }),
         throwsFormatException,
       );
     });
   });
 }
 
-Map<String, Object?> _analysisWith({String? urgency, String? confidenceBand}) => {
-  'kind': 'analysis',
-  'source': 'voice',
-  'category': 'Electrical',
-  'subcategory': 'Wiring',
-  'problemSummary': 'Sparks from an outlet.',
-  'urgency': urgency ?? 'high',
-  'confidence': 0.7,
-  'confidenceBand': confidenceBand ?? 'medium',
-  'serviceCategoryId': 'cat-9',
-  'serviceName': 'Electrical',
-  'safetyNotice': null,
-};
+Map<String, Object?> _analysisWith({String? urgency, String? confidenceBand}) =>
+    {
+      'kind': 'analysis',
+      'source': 'voice',
+      'category': 'Electrical',
+      'subcategory': 'Wiring',
+      'problemSummary': 'Sparks from an outlet.',
+      'urgency': urgency ?? 'high',
+      'confidence': 0.7,
+      'confidenceBand': confidenceBand ?? 'medium',
+      'serviceCategoryId': 'cat-9',
+      'serviceName': 'Electrical',
+      'safetyNotice': null,
+    };

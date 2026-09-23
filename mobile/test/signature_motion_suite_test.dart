@@ -92,10 +92,7 @@ void main() {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(
-            body: FixRollingTicker(
-              targetValue: 499,
-              currencySymbol: '₹',
-            ),
+            body: FixRollingTicker(targetValue: 499, currencySymbol: '₹'),
           ),
         ),
       );
@@ -106,16 +103,15 @@ void main() {
       expect(find.text('₹499'), findsOneWidget);
     });
 
-    testWidgets('renders immediately when disableAnimations is true', (tester) async {
+    testWidgets('renders immediately when disableAnimations is true', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         const MediaQuery(
           data: MediaQueryData(disableAnimations: true),
           child: MaterialApp(
             home: Scaffold(
-              body: FixRollingTicker(
-                targetValue: 1250,
-                currencySymbol: '₹',
-              ),
+              body: FixRollingTicker(targetValue: 1250, currencySymbol: '₹'),
             ),
           ),
         ),
@@ -142,7 +138,9 @@ void main() {
       expect(find.textContaining('AI Vision'), findsNothing);
     });
 
-    testWidgets('shows HUD overlay and status text when scanning', (tester) async {
+    testWidgets('shows HUD overlay and status text when scanning', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(

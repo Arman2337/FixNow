@@ -34,10 +34,15 @@ void main() {
       expect(flippedState, isTrue);
       expect(find.text('CVV / CVC'), findsOneWidget);
       expect(find.text('742'), findsOneWidget);
-      expect(find.text('FixNow 256-Bit Escrow Vault Protected'), findsOneWidget);
+      expect(
+        find.text('FixNow 256-Bit Escrow Vault Protected'),
+        findsOneWidget,
+      );
     });
 
-    testWidgets('Fix3DSpatialBeacon renders beacon pin and labels', (tester) async {
+    testWidgets('Fix3DSpatialBeacon renders beacon pin and labels', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(
@@ -56,7 +61,9 @@ void main() {
       await tester.pump(const Duration(milliseconds: 500));
     });
 
-    testWidgets('FixJellySquishButton triggers tap and animates spring', (tester) async {
+    testWidgets('FixJellySquishButton triggers tap and animates spring', (
+      tester,
+    ) async {
       var tapped = false;
 
       await tester.pumpWidget(

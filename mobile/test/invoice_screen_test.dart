@@ -89,29 +89,30 @@ void main() {
     expect(find.text('INV-2026-0007'), findsNWidgets(2)); // header + details
   });
 
-  testWidgets('an unpaid booking reports no invoice yet, without fetching one', (
-    tester,
-  ) async {
-    final transport = FakeTransport(
-      (request) => ApiResponse(
-        statusCode: 200,
-        body: {
-          'id': 'order-2',
-          'bookingId': 'booking-2',
-          'amountMinor': 150000,
-          'currency': 'INR',
-          'status': 'CREATED',
-          'gatewayOrderId': 'gw_2',
-          'createdAt': '2026-08-20T10:00:00.000Z',
-        },
-      ),
-    );
-    await tester.pumpWidget(host(transport, 'booking-2'));
-    await tester.pumpIdle();
+  testWidgets(
+    'an unpaid booking reports no invoice yet, without fetching one',
+    (tester) async {
+      final transport = FakeTransport(
+        (request) => ApiResponse(
+          statusCode: 200,
+          body: {
+            'id': 'order-2',
+            'bookingId': 'booking-2',
+            'amountMinor': 150000,
+            'currency': 'INR',
+            'status': 'CREATED',
+            'gatewayOrderId': 'gw_2',
+            'createdAt': '2026-08-20T10:00:00.000Z',
+          },
+        ),
+      );
+      await tester.pumpWidget(host(transport, 'booking-2'));
+      await tester.pumpIdle();
 
-    expect(transport.requests.length, 1); // never asked for an invoice
-    expect(find.text('No invoice yet'), findsOneWidget);
-  });
+      expect(transport.requests.length, 1); // never asked for an invoice
+      expect(find.text('No invoice yet'), findsOneWidget);
+    },
+  );
 
   testWidgets('a booking with no payment order reports no invoice yet', (
     tester,
@@ -233,18 +234,19 @@ void main() {
     expect(find.text('₹1500'), findsOneWidget);
   });
 
-  testWidgets('without the local bypass the pending state offers no pay affordance', (
-    tester,
-  ) async {
-    final transport = FakeTransport(
-      (request) => const ApiResponse(statusCode: 200, body: null),
-    );
-    await tester.pumpWidget(
-      hostWithLocalPay(transport, 'booking-10', bypassEnabled: false),
-    );
-    await tester.pumpIdle();
+  testWidgets(
+    'without the local bypass the pending state offers no pay affordance',
+    (tester) async {
+      final transport = FakeTransport(
+        (request) => const ApiResponse(statusCode: 200, body: null),
+      );
+      await tester.pumpWidget(
+        hostWithLocalPay(transport, 'booking-10', bypassEnabled: false),
+      );
+      await tester.pumpIdle();
 
-    expect(find.text('No invoice yet'), findsOneWidget);
-    expect(find.text('Complete payment (local)'), findsNothing);
-  });
+      expect(find.text('No invoice yet'), findsOneWidget);
+      expect(find.text('Complete payment (local)'), findsNothing);
+    },
+  );
 }

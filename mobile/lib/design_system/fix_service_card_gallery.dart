@@ -55,13 +55,13 @@ class _FixServiceCardGalleryState extends State<FixServiceCardGallery> {
                 onChanged: (value) => setState(() => _reduceMotion = value),
                 title: Text(
                   'Reduce motion',
-                  style: AppTypography.body.copyWith(
+                  style: FixNowTypography.body.copyWith(
                     color: AppColors.textPrimary,
                   ),
                 ),
                 subtitle: Text(
                   'Simulates the OS accessibility setting',
-                  style: AppTypography.caption.copyWith(
+                  style: FixNowTypography.caption.copyWith(
                     color: AppColors.textMuted,
                   ),
                 ),
@@ -136,7 +136,7 @@ class _Label extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: AppSpacing.sm, left: 2),
       child: Text(
         text.toUpperCase(),
-        style: AppTypography.caption.copyWith(
+        style: FixNowTypography.caption.copyWith(
           color: AppColors.textMuted,
           fontWeight: FontWeight.w700,
           letterSpacing: 0.6,

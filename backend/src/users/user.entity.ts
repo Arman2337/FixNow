@@ -28,6 +28,9 @@ export class UserEntity {
   })
   statusReason!: string | null;
 
+  @Column({ type: 'varchar', length: 20, nullable: true })
+  phone!: string | null;
+
   @Column({
     name: 'status_changed_at',
     type: 'timestamptz',

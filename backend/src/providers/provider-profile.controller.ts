@@ -5,6 +5,7 @@ import {
   CoverageCheckDto,
   CoverageCheckResponseDto,
   ProviderProfileResponseDto,
+  UpdateProviderLocationDto,
   UpsertProviderProfileDto,
 } from './provider-profile.dto';
 import { ProviderProfileService } from './provider-profile.service';
@@ -30,6 +31,18 @@ export class ProviderProfileController {
     @Body() dto: UpsertProviderProfileDto,
   ): Promise<ProviderProfileResponseDto> {
     return this.profileService.upsertOwnProfile(
+      request.authorizationPrincipal!.userId,
+      dto,
+    );
+  }
+
+  @Put('me/location')
+  @RequireOwnPermission('provider.profile.update')
+  updateOwnLocation(
+    @Request() request: AuthorizedRequest,
+    @Body() dto: UpdateProviderLocationDto,
+  ): Promise<ProviderProfileResponseDto> {
+    return this.profileService.updateLocation(
       request.authorizationPrincipal!.userId,
       dto,
     );

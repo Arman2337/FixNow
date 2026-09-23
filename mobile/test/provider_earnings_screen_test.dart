@@ -40,7 +40,8 @@ void main() {
           'refundedMinor': 50000,
           'netMinor': 450000,
           'paidOrderCount': 9,
-          'note': 'Records of completed payments. Payouts are not available yet.',
+          'note':
+              'Records of completed payments. Payouts are not available yet.',
         },
       ),
     );
@@ -69,7 +70,8 @@ void main() {
           'refundedMinor': 10100,
           'netMinor': 49900,
           'paidOrderCount': 1,
-          'note': 'Records of completed payments. Payouts are not available yet.',
+          'note':
+              'Records of completed payments. Payouts are not available yet.',
         },
       ),
     );

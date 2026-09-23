@@ -31,7 +31,8 @@ class PlatformLocationPermissionGateway implements LocationPermissionGateway {
   Future<bool> openSettings() => Geolocator.openAppSettings();
 
   LocationPermissionState _map(LocationPermission status) {
-    if (status == LocationPermission.whileInUse || status == LocationPermission.always) {
+    if (status == LocationPermission.whileInUse ||
+        status == LocationPermission.always) {
       return LocationPermissionState.granted;
     }
     if (status == LocationPermission.deniedForever) {

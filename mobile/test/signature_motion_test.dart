@@ -6,11 +6,11 @@ import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Widget host(Widget child, {bool reduceMotion = false}) => MaterialApp(
-      home: MediaQuery(
-        data: MediaQueryData(disableAnimations: reduceMotion),
-        child: Scaffold(body: child),
-      ),
-    );
+  home: MediaQuery(
+    data: MediaQueryData(disableAnimations: reduceMotion),
+    child: Scaffold(body: child),
+  ),
+);
 
 void main() {
   group('MatchRadarView', () {
@@ -33,8 +33,9 @@ void main() {
       expect(finished, isTrue);
     });
 
-    testWidgets('advances through all stages without interaction',
-        (tester) async {
+    testWidgets('advances through all stages without interaction', (
+      tester,
+    ) async {
       var finished = false;
       await tester.pumpWidget(
         host(MatchRadarView(onFinished: () => finished = true)),
@@ -99,8 +100,9 @@ void main() {
       expect(confirmed, 1);
     });
 
-    testWidgets('semantic tap path confirms instantly (accessibility)',
-        (tester) async {
+    testWidgets('semantic tap path confirms instantly (accessibility)', (
+      tester,
+    ) async {
       final semantics = tester.ensureSemantics();
       var confirmed = 0;
       await tester.pumpWidget(
@@ -114,9 +116,9 @@ void main() {
 
       // Fire the semantic action itself — a pointer tap would miss the
       // Semantics.onTap path this test exists to cover.
-      final node = tester.getSemantics(find.bySemanticsLabel(
-        RegExp('^Hold to send emergency alert'),
-      ));
+      final node = tester.getSemantics(
+        find.bySemanticsLabel(RegExp('^Hold to send emergency alert')),
+      );
       node.owner!.performAction(node.id, SemanticsAction.tap);
       await tester.pump();
       expect(confirmed, 1);
@@ -130,21 +132,16 @@ void main() {
       expect(statusTemperatureColor('EN_ROUTE'), AppColors.success);
       expect(statusTemperatureColor('IN_PROGRESS'), AppColors.warning);
       expect(statusTemperatureColor('COMPLETED'), AppColors.rating);
-      expect(
-        statusTemperatureColor('CANCELLED'),
-        AppColors.textSecondary,
-      );
+      expect(statusTemperatureColor('CANCELLED'), AppColors.textSecondary);
     });
   });
 
   group('FixFxZoomIn', () {
-    testWidgets('settles child into view after spring animation', (tester) async {
+    testWidgets('settles child into view after spring animation', (
+      tester,
+    ) async {
       await tester.pumpWidget(
-        host(
-          const FixFxZoomIn(
-            child: Text('FixNow Hero'),
-          ),
-        ),
+        host(const FixFxZoomIn(child: Text('FixNow Hero'))),
       );
       await tester.pumpAndSettle();
       expect(find.text('FixNow Hero'), findsOneWidget);
@@ -152,12 +149,7 @@ void main() {
 
     testWidgets('renders immediately under reduce-motion', (tester) async {
       await tester.pumpWidget(
-        host(
-          const FixFxZoomIn(
-            child: Text('FixNow Hero'),
-          ),
-          reduceMotion: true,
-        ),
+        host(const FixFxZoomIn(child: Text('FixNow Hero')), reduceMotion: true),
       );
       await tester.pump();
       expect(find.text('FixNow Hero'), findsOneWidget);

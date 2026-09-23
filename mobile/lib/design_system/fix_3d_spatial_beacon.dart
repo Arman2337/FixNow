@@ -62,7 +62,8 @@ class _Fix3DSpatialBeaconState extends State<Fix3DSpatialBeacon>
 
   @override
   Widget build(BuildContext context) {
-    final reduceMotion = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -85,7 +86,10 @@ class _Fix3DSpatialBeaconState extends State<Fix3DSpatialBeacon>
                         height: widget.size * 0.9,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          border: Border.all(color: widget.accentColor.withValues(alpha: 0.4), width: 2),
+                          border: Border.all(
+                            color: widget.accentColor.withValues(alpha: 0.4),
+                            width: 2,
+                          ),
                         ),
                       )
                     : Transform.rotate(
@@ -166,10 +170,7 @@ class _Fix3DSpatialBeaconState extends State<Fix3DSpatialBeacon>
         Text(
           widget.sublabel,
           textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: Colors.white70,
-            fontSize: 12,
-          ),
+          style: const TextStyle(color: Colors.white70, fontSize: 12),
         ),
       ],
     );
@@ -212,11 +213,7 @@ class _Fix3DSpatialBeaconState extends State<Fix3DSpatialBeacon>
             shape: BoxShape.circle,
             color: Colors.white,
             boxShadow: [
-              BoxShadow(
-                color: Colors.white70,
-                blurRadius: 6,
-                spreadRadius: 1,
-              ),
+              BoxShadow(color: Colors.white70, blurRadius: 6, spreadRadius: 1),
             ],
           ),
         ),
@@ -253,8 +250,16 @@ class _SpatialRadarGridPainter extends CustomPainter {
       ..color = color.withValues(alpha: 0.25)
       ..strokeWidth = 1.0;
 
-    canvas.drawLine(Offset(center.dx - radius, center.dy), Offset(center.dx + radius, center.dy), linePaint);
-    canvas.drawLine(Offset(center.dx, center.dy - radius), Offset(center.dx, center.dy + radius), linePaint);
+    canvas.drawLine(
+      Offset(center.dx - radius, center.dy),
+      Offset(center.dx + radius, center.dy),
+      linePaint,
+    );
+    canvas.drawLine(
+      Offset(center.dx, center.dy - radius),
+      Offset(center.dx, center.dy + radius),
+      linePaint,
+    );
   }
 
   @override

@@ -115,7 +115,8 @@ class _FixPulseState extends State<FixPulse>
       child: widget.child,
       builder: (context, child) {
         final scale =
-            widget.minScale + (widget.maxScale - widget.minScale) * _curve.value;
+            widget.minScale +
+            (widget.maxScale - widget.minScale) * _curve.value;
         return Transform.scale(scale: scale, child: child);
       },
     );
@@ -417,7 +418,10 @@ class _FixAnimatedStarState extends State<FixAnimatedStar>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: AppMotion.emphasis);
+    _controller = AnimationController(
+      vsync: this,
+      duration: AppMotion.emphasis,
+    );
   }
 
   @override

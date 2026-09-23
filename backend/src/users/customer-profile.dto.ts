@@ -14,4 +14,9 @@ export class UpdateCustomerProfileDto {
 
 export interface CustomerProfileResponse {
   displayName: string | null;
+  stats: {
+    completedJobs: number;
+    cashbackMinor: number;
+    activeWarranties: number;
+  };
 }

@@ -7,10 +7,8 @@ import 'package:fixnow_mobile/features/chat/chat_message.dart';
 import 'package:fixnow_mobile/features/chat/chat_repository.dart';
 
 class FakeChatRepository implements ChatRepository {
-  FakeChatRepository({
-    List<ChatMessage>? initialMessages,
-    this.canSend = true,
-  }) : messages = initialMessages ?? [];
+  FakeChatRepository({List<ChatMessage>? initialMessages, this.canSend = true})
+    : messages = initialMessages ?? [];
 
   List<ChatMessage> messages;
   bool canSend;
@@ -50,7 +48,9 @@ class FakeChatRepository implements ChatRepository {
 
 void main() {
   group('BookingChatScreen', () {
-    testWidgets('renders header, shield banner, and message history', (tester) async {
+    testWidgets('renders header, shield banner, and message history', (
+      tester,
+    ) async {
       final fakeRepo = FakeChatRepository(
         initialMessages: [
           ChatMessage(
@@ -113,7 +113,9 @@ void main() {
       expect(find.text('🅿️ Park in driveway'), findsOneWidget);
     });
 
-    testWidgets('tapping canned chip sends message immediately', (tester) async {
+    testWidgets('tapping canned chip sends message immediately', (
+      tester,
+    ) async {
       final fakeRepo = FakeChatRepository();
       final controller = ChatController(
         bookingId: 'booking-123',
@@ -147,11 +149,7 @@ void main() {
       );
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: BookingChatScreen(
-            controller: controller,
-          ),
-        ),
+        MaterialApp(home: BookingChatScreen(controller: controller)),
       );
 
       await tester.pumpAndSettle();
@@ -176,11 +174,7 @@ void main() {
       );
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: BookingChatScreen(
-            controller: controller,
-          ),
-        ),
+        MaterialApp(home: BookingChatScreen(controller: controller)),
       );
 
       await tester.pumpAndSettle();
@@ -195,7 +189,9 @@ void main() {
       expect(textField.decoration?.hintText, 'Chat is read-only');
     });
 
-    testWidgets('tapping call button triggers onCallPressed callback', (tester) async {
+    testWidgets('tapping call button triggers onCallPressed callback', (
+      tester,
+    ) async {
       final fakeRepo = FakeChatRepository();
       final controller = ChatController(
         bookingId: 'booking-123',
@@ -223,8 +219,9 @@ void main() {
       expect(callTriggered, isTrue);
     });
 
-    testWidgets('appended message animates in and settles (new-only rule)',
-        (tester) async {
+    testWidgets('appended message animates in and settles (new-only rule)', (
+      tester,
+    ) async {
       final fakeRepo = FakeChatRepository(
         initialMessages: [
           ChatMessage(
@@ -293,29 +290,32 @@ void main() {
       expect(fakeRepo.sentMessages, contains('Temp id then real id'));
     });
 
-    testWidgets('read receipt renders gold done_all, pending renders white',
-        (tester) async {
-      final fakeRepo = FakeChatRepository(initialMessages: [
-        ChatMessage(
-          id: 'm1',
-          bookingId: 'booking-123',
-          senderUserId: 'customer-1',
-          senderRole: 'CUSTOMER',
-          messageText: 'Read message',
-          createdAt: DateTime.now(),
-          isMe: true,
-          readAt: DateTime.now(),
-        ),
-        ChatMessage(
-          id: 'm2',
-          bookingId: 'booking-123',
-          senderUserId: 'customer-1',
-          senderRole: 'CUSTOMER',
-          messageText: 'Delivered message',
-          createdAt: DateTime.now(),
-          isMe: true,
-        ),
-      ]);
+    testWidgets('read receipt renders gold done_all, pending renders white', (
+      tester,
+    ) async {
+      final fakeRepo = FakeChatRepository(
+        initialMessages: [
+          ChatMessage(
+            id: 'm1',
+            bookingId: 'booking-123',
+            senderUserId: 'customer-1',
+            senderRole: 'CUSTOMER',
+            messageText: 'Read message',
+            createdAt: DateTime.now(),
+            isMe: true,
+            readAt: DateTime.now(),
+          ),
+          ChatMessage(
+            id: 'm2',
+            bookingId: 'booking-123',
+            senderUserId: 'customer-1',
+            senderRole: 'CUSTOMER',
+            messageText: 'Delivered message',
+            createdAt: DateTime.now(),
+            isMe: true,
+          ),
+        ],
+      );
       final controller = ChatController(
         bookingId: 'booking-123',
         repository: fakeRepo,

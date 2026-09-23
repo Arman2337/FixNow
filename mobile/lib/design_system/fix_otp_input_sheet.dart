@@ -50,7 +50,13 @@ class _FixOtpInputSheetState extends State<FixOtpInputSheet> {
       });
       return;
     }
-    Navigator.of(context).pop(code);
+    
+    // Defer the pop to prevent unmounting the TextField while it's still processing the onChanged event
+    Future.microtask(() {
+      if (mounted) {
+        Navigator.of(context).pop(code);
+      }
+    });
   }
 
   @override
@@ -67,7 +73,9 @@ class _FixOtpInputSheetState extends State<FixOtpInputSheet> {
       ),
       decoration: const BoxDecoration(
         color: AppColors.surfaceElevated,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.bottomSheet)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppRadius.bottomSheet),
+        ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -105,7 +113,7 @@ class _FixOtpInputSheetState extends State<FixOtpInputSheet> {
                   children: [
                     Text(
                       'Customer Service Code',
-                      style: AppTypography.heading3.copyWith(
+                      style: FixNowTypography.heading3.copyWith(
                         color: AppColors.cream,
                         fontSize: 18,
                       ),
@@ -113,7 +121,7 @@ class _FixOtpInputSheetState extends State<FixOtpInputSheet> {
                     const SizedBox(height: 2),
                     Text(
                       'Ask the customer for the 4-digit code',
-                      style: AppTypography.caption.copyWith(
+                      style: FixNowTypography.caption.copyWith(
                         color: AppColors.textSecondary,
                       ),
                     ),
@@ -142,7 +150,9 @@ class _FixOtpInputSheetState extends State<FixOtpInputSheet> {
                     border: Border.all(
                       color: isCurrent
                           ? AppColors.primary
-                          : (hasDigit ? AppColors.accentGold : AppColors.borderStrong),
+                          : (hasDigit
+                                ? AppColors.accentGold
+                                : AppColors.borderStrong),
                       width: isCurrent || hasDigit ? 2 : 1,
                     ),
                   ),
@@ -205,12 +215,19 @@ class _FixOtpInputSheetState extends State<FixOtpInputSheet> {
             ),
             child: const Row(
               children: [
-                Icon(Icons.security_rounded, size: 18, color: AppColors.textSecondary),
+                Icon(
+                  Icons.security_rounded,
+                  size: 18,
+                  color: AppColors.textSecondary,
+                ),
                 SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     'Work starts only after the code is verified on the server.',
-                    style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
+                    ),
                   ),
                 ),
               ],

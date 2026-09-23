@@ -32,19 +32,19 @@ class Complaint {
   final DateTime updatedAt;
 
   factory Complaint.fromJson(Map<String, dynamic> json) => Complaint(
-        id: json['id'] as String,
-        bookingId: json['bookingId'] as String?,
-        submitterId: json['submitterId'] as String,
-        targetRole: json['targetRole'] as String,
-        targetId: json['targetId'] as String?,
-        assigneeId: json['assigneeId'] as String?,
-        category: json['category'] as String,
-        description: json['description'] as String,
-        status: json['status'] as String,
-        resolutionNotes: json['resolutionNotes'] as String?,
-        createdAt: DateTime.parse(json['createdAt'] as String),
-        updatedAt: DateTime.parse(json['updatedAt'] as String),
-      );
+    id: json['id'] as String,
+    bookingId: json['bookingId'] as String?,
+    submitterId: json['submitterId'] as String,
+    targetRole: json['targetRole'] as String,
+    targetId: json['targetId'] as String?,
+    assigneeId: json['assigneeId'] as String?,
+    category: json['category'] as String,
+    description: json['description'] as String,
+    status: json['status'] as String,
+    resolutionNotes: json['resolutionNotes'] as String?,
+    createdAt: DateTime.parse(json['createdAt'] as String),
+    updatedAt: DateTime.parse(json['updatedAt'] as String),
+  );
 }
 
 class ComplaintEvidence {

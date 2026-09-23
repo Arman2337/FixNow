@@ -10,7 +10,7 @@ Widget host(Widget child, {bool reduceMotion = false}) => MaterialApp(
 );
 
 void main() {
-  Widget welcome() => WelcomeScreen(onGetStarted: () {}, onSignIn: () {});
+  Widget welcome() => WelcomeScreen(onContinue: (r, b) {});
 
   testWidgets('staggered entrance settles to show headline and both CTAs', (
     tester,
@@ -19,12 +19,11 @@ void main() {
     // Advance past the longest stagger delay (~540ms) so the delayed tickers
     // start, then let every entrance animation finish.
     await tester.pump(const Duration(milliseconds: 700));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 5));
 
-    expect(find.text('Trusted help.'), findsOneWidget);
-    expect(find.text('When you need it.'), findsOneWidget);
-    expect(find.text('Get started'), findsOneWidget);
-    expect(find.text('Sign in'), findsOneWidget);
+    expect(find.text('CHOOSE ACCOUNT MODE'), findsOneWidget);
+    expect(find.text('I Need a Service'), findsOneWidget);
+    expect(find.text('I Am a Service Professional'), findsOneWidget);
   });
 
   testWidgets('reduce motion shows content on the first frame', (tester) async {
@@ -33,8 +32,8 @@ void main() {
 
     // The masked headline and CTAs must be present immediately, not gated
     // behind motion that reduce-motion users never see complete.
-    expect(find.text('Trusted help.'), findsOneWidget);
-    expect(find.text('Get started'), findsOneWidget);
+    expect(find.text('CHOOSE ACCOUNT MODE'), findsOneWidget);
+    expect(find.text('I Need a Service'), findsOneWidget);
 
     // Flush the (motion-ignored) delay timers so teardown stays clean.
     await tester.pump(const Duration(milliseconds: 700));

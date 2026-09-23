@@ -18,6 +18,7 @@ describe('BookingsController', () => {
   let availableMock: jest.MockedFunction<
     BookingsService['getAvailableRequests']
   >;
+  let getBookingMock: jest.MockedFunction<BookingsService['getBookingForUser']>;
 
   const requestFor = (
     userId: string,
@@ -50,6 +51,7 @@ describe('BookingsController', () => {
     rescheduleMock = jest.fn();
     historyMock = jest.fn();
     availableMock = jest.fn();
+    getBookingMock = jest.fn();
     const module: TestingModule = await Test.createTestingModule({
       controllers: [BookingsController],
       providers: [
@@ -63,6 +65,7 @@ describe('BookingsController', () => {
             rescheduleBooking: rescheduleMock,
             getBookingHistory: historyMock,
             getAvailableRequests: availableMock,
+            getBookingForUser: getBookingMock,
           },
         },
       ],
@@ -196,6 +199,22 @@ describe('BookingsController', () => {
         'Family emergency',
       );
       expect(result.booking).toMatchObject({ id: mockBooking.id });
+    });
+  });
+
+  describe('getBooking', () => {
+    it('returns the single booking to a participant', async () => {
+      const mockBooking = completeBooking(new Booking());
+      mockBooking.id = 'booking-id';
+      mockBooking.customerId = 'user-id';
+      mockBooking.status = BookingStatus.EN_ROUTE;
+      getBookingMock.mockResolvedValue(mockBooking);
+      const req = requestFor('user-id', ['customer']);
+
+      const result = await controller.getBooking(req, 'booking-id');
+
+      expect(getBookingMock).toHaveBeenCalledWith('booking-id', 'user-id');
+      expect(result.booking).toMatchObject({ id: 'booking-id' });
     });
   });
 

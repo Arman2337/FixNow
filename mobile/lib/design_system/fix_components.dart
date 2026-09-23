@@ -207,7 +207,7 @@ class FixSectionHeader extends StatelessWidget {
               child: Text(
                 title,
                 style: useSerif
-                    ? AppTypography.heading3.copyWith(
+                    ? FixNowTypography.heading3.copyWith(
                         color: AppColors.textPrimary,
                       )
                     : const TextStyle(
@@ -381,180 +381,284 @@ class FixEmergencyBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.emergencySoft,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.emergency, width: 1.5),
+        color: AppColors.error,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.error.withValues(alpha: 0.25),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final isNarrow = constraints.maxWidth < 320;
-          return Wrap(
-            crossAxisAlignment: WrapCrossAlignment.center,
-            alignment: WrapAlignment.spaceBetween,
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
-                mainAxisSize: isNarrow ? MainAxisSize.max : MainAxisSize.min,
                 children: [
                   Container(
-                    width: 38,
-                    height: 38,
+                    width: 32,
+                    height: 32,
                     decoration: BoxDecoration(
-                      color: AppColors.emergency,
-                      borderRadius: BorderRadius.circular(AppRadius.medium),
+                      color: AppColors.onError.withValues(alpha: 0.2),
+                      shape: BoxShape.circle,
                     ),
-                    child: const FixPulse(
-                      maxScale: 1.08,
-                      child: Icon(
-                        Icons.emergency_rounded,
-                        color: Colors.white,
-                        size: 20,
-                      ),
+                    child: const Icon(
+                      Icons.crisis_alert_rounded,
+                      color: AppColors.onError,
+                      size: 18,
                     ),
                   ),
                   const SizedBox(width: AppSpacing.sm),
-                  Flexible(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          title,
-                          style: const TextStyle(
-                            color: AppColors.textOnSurface,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 15,
-                          ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title.isEmpty ? 'Emergency Home Hazards?' : title,
+                        style: FixNowTypography.title.copyWith(
+                          color: AppColors.onError,
+                          fontWeight: FontWeight.w700,
                         ),
-                        Text(
-                          subtitle,
-                          style: const TextStyle(
-                            color: AppColors.textOnSurfaceSecondary,
-                            fontSize: 12,
-                          ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Priority SOS Field Unit Ready',
+                        style: FixNowTypography.labelSmall.copyWith(
+                          color: AppColors.onError.withValues(alpha: 0.9),
                         ),
-                      ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppColors.onError,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Text(
+                  '15-min ETA',
+                  style: TextStyle(
+                    color: AppColors.error,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            subtitle.isEmpty
+                ? 'Direct dispatch for gas leaks, pipe bursts & sparking panels. Immediate priority routing.'
+                : subtitle,
+            style: FixNowTypography.bodySmall.copyWith(
+              color: AppColors.onError.withValues(alpha: 0.95),
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.security_rounded,
+                    color: AppColors.onError.withValues(alpha: 0.9),
+                    size: 16,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Zero surge dispatch fee',
+                    style: FixNowTypography.labelSmall.copyWith(
+                      color: AppColors.onError.withValues(alpha: 0.9),
                     ),
                   ),
                 ],
               ),
-              ElevatedButton(
+              ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: AppColors.emergency,
+                  backgroundColor: AppColors.surfaceContainerLowest,
+                  foregroundColor: AppColors.error,
+                  elevation: 0,
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 6,
+                    horizontal: 16,
+                    vertical: 12,
                   ),
-                  minimumSize: const Size(0, 34),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.small),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
                 onPressed: onCallNow,
-                child: const Text(
-                  'Call Now',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                icon: const Icon(Icons.phone_in_talk_rounded, size: 18),
+                label: const Text(
+                  'Call SOS Dispatch',
+                  style: TextStyle(fontWeight: FontWeight.w700),
                 ),
               ),
             ],
-          );
-        },
+          ),
+        ],
       ),
     );
   }
 }
 
-/// Ask FixNow AI Problem Bar
+/// Ask FixNow AI Problem Bar (Stitch FixAI Diagnostic BETA banner)
 class FixAiPromptCard extends StatelessWidget {
   const FixAiPromptCard({
-    required this.onTap,
-    this.placeholder = 'My kitchen sink suddenly started leaking...',
+    required this.onScan,
+    required this.onSpeak,
     super.key,
   });
 
-  final VoidCallback onTap;
-  final String placeholder;
+  final VoidCallback onScan;
+  final VoidCallback onSpeak;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadius.card),
-      child: Container(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        decoration: BoxDecoration(
-          color: AppColors.surfaceElevated,
-          borderRadius: BorderRadius.circular(AppRadius.card),
-          border: Border.all(color: AppColors.borderGold),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x33000000),
-              blurRadius: 12,
-              offset: Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Flexible(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.accentGoldSoft,
-                      borderRadius: BorderRadius.circular(AppRadius.small),
-                      border: Border.all(color: AppColors.borderGold),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.borderDefault),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.auto_fix_high_rounded,
+                  color: Colors.white,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
                       children: [
-                        Icon(
-                          Icons.auto_awesome_rounded,
-                          color: AppColors.accentGold,
-                          size: 14,
-                        ),
-                        SizedBox(width: 4),
                         Flexible(
                           child: Text(
-                            'Ask FixNow AI',
-                            maxLines: 1,
+                            'FixAI Diagnostic',
+                            style: FixNowTypography.labelSmall.copyWith(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
                             overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: AppColors.accentGold,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 12,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 1,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryFixed,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            'BETA',
+                            style: FixNowTypography.labelSmall.copyWith(
+                              color: AppColors.onPrimaryFixed,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
                             ),
                           ),
                         ),
                       ],
                     ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Unsure what is broken?',
+                      style: FixNowTypography.title.copyWith(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Take a quick photo or describe the sound to auto-classify failure & estimate repairs instantly.',
+                      style: FixNowTypography.bodySmall.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: onScan,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  icon: const Icon(Icons.document_scanner_rounded, size: 18),
+                  label: const Text(
+                    'Scan with FixAI',
+                    style: TextStyle(fontWeight: FontWeight.w700),
                   ),
                 ),
-                const SizedBox(width: AppSpacing.sm),
-                const Icon(
-                  Icons.mic_rounded,
-                  color: AppColors.accentGold,
-                  size: 20,
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Text(
-              placeholder,
-              style: const TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 14,
-                fontStyle: FontStyle.italic,
               ),
-            ),
-          ],
-        ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: onSpeak,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.surfaceContainerHigh,
+                    foregroundColor: AppColors.textPrimary,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: const BorderSide(color: AppColors.borderDefault),
+                    ),
+                  ),
+                  icon: const Icon(Icons.mic_rounded, size: 18),
+                  label: const Text(
+                    'Speak',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -783,7 +887,7 @@ class FixOtpDisplay extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 'SERVICE START CODE',
-                style: AppTypography.caption.copyWith(
+                style: FixNowTypography.caption.copyWith(
                   color: AppColors.accentGold,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 1.2,
@@ -825,7 +929,7 @@ class FixOtpDisplay extends StatelessWidget {
                     children: [
                       Text(
                         'FixNow Anti-Fraud Protection',
-                        style: AppTypography.caption.copyWith(
+                        style: FixNowTypography.caption.copyWith(
                           color: AppColors.cream,
                           fontWeight: FontWeight.w700,
                           fontSize: 11,

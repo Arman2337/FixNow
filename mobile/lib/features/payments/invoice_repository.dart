@@ -27,17 +27,17 @@ class Invoice {
   final String? serviceName;
 
   /// GST statutory calculation properties (18% inclusive GST standard for service marketplaces)
-  /// Base Service Charge (approx 84.75% of total):
-  int get baseAmountMinor => (amountMinor / 1.18).round();
-
   /// CGST @ 9%:
-  int get cgstMinor => ((amountMinor - baseAmountMinor) / 2).round();
+  int get cgstMinor => ((amountMinor / 1.18) * 0.09).round();
 
   /// SGST @ 9%:
-  int get sgstMinor => amountMinor - baseAmountMinor - cgstMinor;
+  int get sgstMinor => cgstMinor;
 
   /// Total GST (18%):
-  int get totalGstMinor => amountMinor - baseAmountMinor;
+  int get totalGstMinor => cgstMinor + sgstMinor;
+
+  /// Base Service Charge (approx 84.75% of total):
+  int get baseAmountMinor => amountMinor - totalGstMinor;
 
   String get baseAmountLabel => _formatRupees(baseAmountMinor, currency);
   String get cgstLabel => _formatRupees(cgstMinor, currency);
@@ -85,7 +85,9 @@ class InvoiceController extends ChangeNotifier {
     this._bookingId, {
     Invoice? initialInvoice,
   }) : invoice = initialInvoice,
-       state = initialInvoice != null ? InvoiceState.ready : InvoiceState.loading;
+       state = initialInvoice != null
+           ? InvoiceState.ready
+           : InvoiceState.loading;
 
   final InvoiceRepository _repository;
   final String _bookingId;
@@ -120,10 +122,8 @@ class InvoiceController extends ChangeNotifier {
 }
 
 class InvoiceRepository {
-  InvoiceRepository(
-    this._transport, {
-    Future<String?> Function()? accessToken,
-  }) : _accessToken = accessToken;
+  InvoiceRepository(this._transport, {Future<String?> Function()? accessToken})
+    : _accessToken = accessToken;
 
   final ApiTransport _transport;
   final Future<String?> Function()? _accessToken;

@@ -45,7 +45,9 @@ void main() {
 
       // Sum of Base + CGST + SGST must strictly equal total amountMinor
       expect(
-        sampleInvoice.baseAmountMinor + sampleInvoice.cgstMinor + sampleInvoice.sgstMinor,
+        sampleInvoice.baseAmountMinor +
+            sampleInvoice.cgstMinor +
+            sampleInvoice.sgstMinor,
         sampleInvoice.amountMinor,
       );
 
@@ -55,29 +57,32 @@ void main() {
       expect(sampleInvoice.totalGstLabel, '₹76.12');
     });
 
-    test('generates compliant %PDF-1.4 binary stream with valid xref and EOF', () {
-      final pdfBytes = FixPdfInvoiceBuilder.build(
-        sampleInvoice,
-        customerName: 'Rahul Verma',
-        serviceAddress: 'Vastrapur, Ahmedabad, Gujarat',
-      );
+    test(
+      'generates compliant %PDF-1.4 binary stream with valid xref and EOF',
+      () {
+        final pdfBytes = FixPdfInvoiceBuilder.build(
+          sampleInvoice,
+          customerName: 'Rahul Verma',
+          serviceAddress: 'Vastrapur, Ahmedabad, Gujarat',
+        );
 
-      expect(pdfBytes.isNotEmpty, isTrue);
-      final pdfString = utf8.decode(pdfBytes, allowMalformed: true);
+        expect(pdfBytes.isNotEmpty, isTrue);
+        final pdfString = utf8.decode(pdfBytes, allowMalformed: true);
 
-      // Verify standard PDF header and termination
-      expect(pdfString.startsWith('%PDF-1.4'), isTrue);
-      expect(pdfString.contains('startxref'), isTrue);
-      expect(pdfString.contains('%%EOF'), isTrue);
+        // Verify standard PDF header and termination
+        expect(pdfString.startsWith('%PDF-1.4'), isTrue);
+        expect(pdfString.contains('startxref'), isTrue);
+        expect(pdfString.contains('%%EOF'), isTrue);
 
-      // Verify FixNow statutory details are embedded in stream
-      expect(pdfString.contains('FixNow'), isTrue);
-      expect(pdfString.contains('24AAACF1234F1Z5'), isTrue); // GSTIN
-      expect(pdfString.contains('9987'), isTrue); // SAC Code
-      expect(pdfString.contains('INV-2026-0899'), isTrue);
-      expect(pdfString.contains('Rahul Verma'), isTrue);
-      expect(pdfString.contains('TAX INVOICE'), isTrue);
-    });
+        // Verify FixNow statutory details are embedded in stream
+        expect(pdfString.contains('FixNow'), isTrue);
+        expect(pdfString.contains('24AAACF1234F1Z5'), isTrue); // GSTIN
+        expect(pdfString.contains('9987'), isTrue); // SAC Code
+        expect(pdfString.contains('INV-2026-0899'), isTrue);
+        expect(pdfString.contains('Rahul Verma'), isTrue);
+        expect(pdfString.contains('TAX INVOICE'), isTrue);
+      },
+    );
 
     test('generates standardized filename and plain-text share summary', () {
       final fileName = FixPdfInvoiceBuilder.getFileName(sampleInvoice);
@@ -93,7 +98,9 @@ void main() {
   });
 
   group('FixShareInvoiceSheet', () {
-    testWidgets('renders all share actions and handles copy/save callbacks', (tester) async {
+    testWidgets('renders all share actions and handles copy/save callbacks', (
+      tester,
+    ) async {
       bool saveCalled = false;
 
       await tester.pumpWidget(
@@ -127,7 +134,10 @@ void main() {
       expect(find.text('Share or Export Invoice'), findsOneWidget);
       expect(find.text('Share via WhatsApp'), findsOneWidget);
       expect(find.text('Share via Email'), findsOneWidget);
-      expect(find.text('Copy Invoice Summary & Verification Link'), findsOneWidget);
+      expect(
+        find.text('Copy Invoice Summary & Verification Link'),
+        findsOneWidget,
+      );
       expect(find.text('Save PDF to Device Storage'), findsOneWidget);
 
       // Tap Save to device storage
@@ -140,75 +150,81 @@ void main() {
   });
 
   group('InvoiceScreen PDF and Tax integration', () {
-    testWidgets('renders GST tax breakdown and triggers download and share actions', (tester) async {
-      tester.view.physicalSize = const Size(800, 2400);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.resetPhysicalSize);
+    testWidgets(
+      'renders GST tax breakdown and triggers download and share actions',
+      (tester) async {
+        tester.view.physicalSize = const Size(800, 2400);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
 
-      final transport = _FakeTransport((request) {
-        if (request.path == 'payments/orders/booking/bk-101') {
+        final transport = _FakeTransport((request) {
+          if (request.path == 'payments/orders/booking/bk-101') {
+            return ApiResponse(
+              statusCode: 200,
+              body: {
+                'id': 'order-101',
+                'bookingId': 'bk-101',
+                'amountMinor': 49900,
+                'currency': 'INR',
+                'status': 'PAID',
+              },
+            );
+          }
           return ApiResponse(
             statusCode: 200,
             body: {
-              'id': 'order-101',
-              'bookingId': 'bk-101',
+              'invoiceNumber': 'INV-2026-0101',
+              'issuedAt': '2026-08-28T10:00:00.000Z',
               'amountMinor': 49900,
               'currency': 'INR',
               'status': 'PAID',
             },
           );
-        }
-        return ApiResponse(
-          statusCode: 200,
-          body: {
-            'invoiceNumber': 'INV-2026-0101',
-            'issuedAt': '2026-08-28T10:00:00.000Z',
-            'amountMinor': 49900,
-            'currency': 'INR',
-            'status': 'PAID',
-          },
-        );
-      });
+        });
 
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.dark,
-          home: InvoiceScreen(
-            repository: InvoiceRepository(transport),
-            bookingId: 'bk-101',
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.dark,
+            home: InvoiceScreen(
+              repository: InvoiceRepository(transport),
+              bookingId: 'bk-101',
+            ),
           ),
-        ),
-      );
-      await tester.pumpIdle();
+        );
+        await tester.pumpIdle();
 
-      // Invoice header & amount
-      expect(find.text('INV-2026-0101'), findsNWidgets(2));
-      expect(find.text('₹499'), findsOneWidget);
+        // Invoice header & amount
+        expect(find.text('INV-2026-0101'), findsNWidgets(2));
+        expect(find.text('₹499'), findsOneWidget);
 
-      // GST Tax Breakdown card
-      expect(find.text('GST Tax Breakdown'), findsOneWidget);
-      expect(find.text('SAC 9987 • 18% GST'), findsOneWidget);
-      expect(find.text('Taxable Service Base'), findsOneWidget);
-      expect(find.text('Central GST (CGST @ 9%)'), findsOneWidget);
-      expect(find.text('State GST (SGST @ 9%)'), findsOneWidget);
-      expect(find.text('Total GST (18%)'), findsOneWidget);
+        // GST Tax Breakdown card
+        expect(find.text('GST Tax Breakdown'), findsOneWidget);
+        expect(find.text('SAC 9987 • 18% GST'), findsOneWidget);
+        expect(find.text('Taxable Service Base'), findsOneWidget);
+        expect(find.text('Central GST (CGST @ 9%)'), findsOneWidget);
+        expect(find.text('State GST (SGST @ 9%)'), findsOneWidget);
+        expect(find.text('Total GST (18%)'), findsOneWidget);
 
-      // Action buttons
-      expect(find.text('Download PDF Invoice'), findsOneWidget);
-      expect(find.text('Share Invoice'), findsOneWidget);
+        // Action buttons
+        expect(find.text('Download PDF Invoice'), findsOneWidget);
+        expect(find.text('Share Invoice'), findsOneWidget);
 
-      // Tap Download PDF Invoice
-      await tester.tap(find.text('Download PDF Invoice'));
-      await tester.pumpAndSettle();
+        // Tap Download PDF Invoice
+        await tester.tap(find.text('Download PDF Invoice'));
+        await tester.pumpAndSettle();
 
-      expect(find.textContaining('Downloaded Invoice-INV-2026-0101.pdf'), findsOneWidget);
+        expect(
+          find.textContaining('Downloaded Invoice-INV-2026-0101.pdf'),
+          findsOneWidget,
+        );
 
-      // Tap Share Invoice opens bottom sheet
-      await tester.tap(find.text('Share Invoice'));
-      await tester.pumpAndSettle();
+        // Tap Share Invoice opens bottom sheet
+        await tester.tap(find.text('Share Invoice'));
+        await tester.pumpAndSettle();
 
-      expect(find.text('Share or Export Invoice'), findsOneWidget);
-      expect(find.text('Share via WhatsApp'), findsOneWidget);
-    });
+        expect(find.text('Share or Export Invoice'), findsOneWidget);
+        expect(find.text('Share via WhatsApp'), findsOneWidget);
+      },
+    );
   });
 }

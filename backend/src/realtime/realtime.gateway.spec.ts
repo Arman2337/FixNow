@@ -1,4 +1,5 @@
 import { ConfigService } from '@nestjs/config';
+import type { IncomingMessage } from 'node:http';
 import { WebSocket } from 'ws';
 import { AuthorizationService } from '../common/authorization/authorization.service';
 import { RealtimeConnectionRegistry } from './realtime-connection-registry.service';
@@ -121,5 +122,68 @@ describe('RealtimeGateway heartbeat', () => {
       callId: 'call-xyz',
       data: 'AQIDBAU=',
     });
+  });
+
+  it('accepts localhost browser origins during development', () => {
+    const registry = new RealtimeConnectionRegistry();
+    const telemetry = new RealtimeTelemetryService();
+    const gateway = new RealtimeGateway(
+      {} as AuthorizationService,
+      registry,
+      telemetry,
+      {
+        get: jest.fn(
+          (key: string) => (key === 'NODE_ENV' ? 'development' : undefined),
+        ),
+      } as unknown as ConfigService,
+      {} as LocationService,
+    );
+    const close = jest.fn();
+    const client = {
+      readyState: WebSocket.OPEN,
+      on: jest.fn(),
+      close,
+    } as unknown as WebSocket;
+    const request = {
+      headers: { origin: 'http://localhost:54321' },
+      socket: { remoteAddress: '127.0.0.1' },
+    } as unknown as IncomingMessage;
+
+    gateway.handleConnection(client, request);
+
+    expect(close).not.toHaveBeenCalled();
+  });
+
+  it('closes browser origins that are not allowlisted outside development', () => {
+    const registry = new RealtimeConnectionRegistry();
+    const telemetry = new RealtimeTelemetryService();
+    const gateway = new RealtimeGateway(
+      {} as AuthorizationService,
+      registry,
+      telemetry,
+      {
+        get: jest.fn(
+          (key: string) => (key === 'NODE_ENV' ? 'production' : undefined),
+        ),
+      } as unknown as ConfigService,
+      {} as LocationService,
+    );
+    const close = jest.fn();
+    const client = {
+      readyState: WebSocket.OPEN,
+      on: jest.fn(),
+      close,
+    } as unknown as WebSocket;
+    const request = {
+      headers: { origin: 'https://evil.example.com' },
+      socket: { remoteAddress: '203.0.113.9' },
+    } as unknown as IncomingMessage;
+
+    gateway.handleConnection(client, request);
+
+    expect(close).toHaveBeenCalledWith(
+      expect.anything(),
+      'origin-not-allowed',
+    );
   });
 });

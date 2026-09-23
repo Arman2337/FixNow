@@ -1,45 +1,51 @@
 import 'package:fixnow_mobile/design_system/app_colors.dart';
-import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/app_typography.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 
 abstract final class AppTheme {
-  static ThemeData get dark {
-    const scheme = ColorScheme.dark(
-      brightness: Brightness.dark,
+  static ThemeData get trustMatrixTheme {
+    const scheme = ColorScheme.light(
+      brightness: Brightness.light,
       primary: AppColors.primary,
       onPrimary: AppColors.onPrimary,
-      primaryContainer: AppColors.primarySoft,
-      onPrimaryContainer: AppColors.textOnLightPrimary,
-      secondary: AppColors.info,
-      onSecondary: AppColors.backgroundPrimary,
-      secondaryContainer: AppColors.infoSoft,
-      onSecondaryContainer: AppColors.textOnLightPrimary,
+      primaryContainer: AppColors.primaryContainer,
+      onPrimaryContainer: AppColors.onPrimaryContainer,
+      secondary: AppColors.secondary,
+      onSecondary: AppColors.onSecondary,
+      secondaryContainer: AppColors.secondaryContainer,
+      onSecondaryContainer: AppColors.onSecondaryContainer,
+      tertiary: AppColors.tertiary,
+      onTertiary: AppColors.onAccentGold,
+      tertiaryContainer: AppColors.tertiaryContainer,
+      onTertiaryContainer: AppColors.onTertiaryContainer,
       error: AppColors.danger,
-      onError: AppColors.backgroundPrimary,
-      errorContainer: AppColors.dangerSoft,
-      onErrorContainer: AppColors.textOnLightPrimary,
+      onError: AppColors.onError,
+      errorContainer: AppColors.errorContainer,
+      onErrorContainer: AppColors.dangerOnLight,
       surface: AppColors.surfacePrimary,
-      onSurface: AppColors.textOnLightPrimary,
-      surfaceContainer: AppColors.surfaceSecondary,
-      surfaceContainerHigh: AppColors.surfaceElevated,
-      onSurfaceVariant: AppColors.textOnLightSecondary,
-      outline: AppColors.borderDefault,
-      outlineVariant: AppColors.borderStrong,
+      onSurface: AppColors.textOnSurface,
+      surfaceContainer: AppColors.surfaceContainerLow,
+      surfaceContainerHigh: AppColors.surfaceContainerHigh,
+      surfaceContainerHighest: AppColors.surfaceContainerHighest,
+      onSurfaceVariant: AppColors.textOnSurfaceSecondary,
+      outline: AppColors.outline,
+      outlineVariant: AppColors.outlineVariant,
       scrim: AppColors.scrim,
     );
 
-    final textTheme = AppTypography.textTheme(
+    final textTheme = FixNowTypography.textTheme(
       AppColors.textPrimary,
       AppColors.textSecondary,
     );
 
     return ThemeData(
       useMaterial3: true,
-      brightness: Brightness.dark,
+      brightness: Brightness.light,
       colorScheme: scheme,
-      scaffoldBackgroundColor: AppColors.backgroundPrimary,
+      scaffoldBackgroundColor: AppColors.background,
+      fontFamily: GoogleFonts.manrope().fontFamily,
       textTheme: textTheme,
       focusColor: AppColors.focus,
       textSelectionTheme: const TextSelectionThemeData(
@@ -55,12 +61,13 @@ abstract final class AppTheme {
           TargetPlatform.android: PredictiveBackPageTransitionsBuilder(),
         },
       ),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: AppColors.backgroundPrimary,
+      appBarTheme: AppBarTheme(
+        backgroundColor: AppColors.surface,
         foregroundColor: AppColors.textPrimary,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         centerTitle: false,
+        titleTextStyle: FixNowTypography.headlineMd,
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
@@ -71,9 +78,9 @@ abstract final class AppTheme {
           disabledForegroundColor: AppColors.textDisabled,
           disabledBackgroundColor: AppColors.surfaceSecondary,
           shape: const RoundedRectangleBorder(
-            borderRadius: AppRadius.buttonBorder,
+            borderRadius: BorderRadius.all(Radius.circular(12)),
           ),
-          textStyle: AppTypography.label,
+          textStyle: FixNowTypography.label,
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -83,72 +90,75 @@ abstract final class AppTheme {
           foregroundColor: AppColors.primary,
           side: const BorderSide(color: AppColors.borderStrong),
           shape: const RoundedRectangleBorder(
-            borderRadius: AppRadius.buttonBorder,
+            borderRadius: BorderRadius.all(Radius.circular(12)),
           ),
-          textStyle: AppTypography.label,
+          textStyle: FixNowTypography.label,
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           minimumSize: const Size(48, 48),
           foregroundColor: AppColors.primary,
-          textStyle: AppTypography.label,
+          textStyle: FixNowTypography.label,
           shape: const RoundedRectangleBorder(
-            borderRadius: AppRadius.buttonBorder,
+            borderRadius: BorderRadius.all(Radius.circular(12)),
           ),
         ),
       ),
-      inputDecorationTheme: const InputDecorationTheme(
+      inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.surfacePrimary,
-        labelStyle: TextStyle(color: AppColors.inputLabel),
-        hintStyle: TextStyle(color: AppColors.inputHint),
-        helperStyle: TextStyle(color: AppColors.inputHint),
+        fillColor: AppColors.surfaceContainerLowest,
+        labelStyle: const TextStyle(color: AppColors.inputLabel),
+        hintStyle: const TextStyle(color: AppColors.inputHint),
+        helperStyle: const TextStyle(color: AppColors.inputHint),
         prefixIconColor: AppColors.inputIcon,
         suffixIconColor: AppColors.inputIcon,
-        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
         border: OutlineInputBorder(
-          borderRadius: AppRadius.inputBorder,
-          borderSide: BorderSide(color: AppColors.borderDefault),
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: AppColors.borderDefault),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: AppRadius.inputBorder,
-          borderSide: BorderSide(color: AppColors.borderDefault),
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: AppColors.borderDefault),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: AppRadius.inputBorder,
-          borderSide: BorderSide(color: AppColors.focus, width: 2),
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: AppColors.focus, width: 2),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: AppRadius.inputBorder,
-          borderSide: BorderSide(color: AppColors.danger),
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: AppColors.danger),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: AppRadius.inputBorder,
-          borderSide: BorderSide(color: AppColors.danger, width: 2),
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: AppColors.danger, width: 2),
         ),
       ),
-      cardTheme: const CardThemeData(
-        color: AppColors.surfacePrimary,
+      cardTheme: CardThemeData(
+        color: AppColors.surfaceContainerLowest,
         surfaceTintColor: Colors.transparent,
-        elevation: 0,
+        elevation: 0.5,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: AppRadius.cardBorder,
-          side: BorderSide(color: AppColors.borderDefault),
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: AppColors.borderDefault, width: 1),
         ),
       ),
       navigationBarTheme: NavigationBarThemeData(
-        height: 76,
-        elevation: 0,
-        backgroundColor: AppColors.surfacePrimary,
+        height: 72,
+        elevation: 1,
+        backgroundColor: AppColors.surfaceContainerLowest,
         surfaceTintColor: Colors.transparent,
         indicatorColor: AppColors.primarySoft,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           final color = states.contains(WidgetState.selected)
               ? AppColors.primary
               : AppColors.textOnSurfaceSecondary;
-          return AppTypography.caption.copyWith(color: color);
+          return FixNowTypography.labelSmall.copyWith(color: color);
         }),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           return IconThemeData(
@@ -168,33 +178,41 @@ abstract final class AppTheme {
         linearTrackColor: AppColors.surfaceSecondary,
         circularTrackColor: AppColors.surfaceSecondary,
       ),
-      snackBarTheme: const SnackBarThemeData(
-        backgroundColor: AppColors.surfaceElevated,
-        contentTextStyle: TextStyle(color: AppColors.textPrimary),
-        actionTextColor: AppColors.primary,
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: AppColors.secondarySlate,
+        contentTextStyle: const TextStyle(color: Colors.white),
+        actionTextColor: AppColors.primaryFixed,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: AppRadius.cardBorder),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
-      dialogTheme: const DialogThemeData(
-        backgroundColor: AppColors.surfaceElevated,
+      dialogTheme: DialogThemeData(
+        backgroundColor: AppColors.surfaceContainerLowest,
         surfaceTintColor: Colors.transparent,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(AppRadius.large)),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
       bottomSheetTheme: const BottomSheetThemeData(
-        backgroundColor: AppColors.surfaceElevated,
-        modalBackgroundColor: AppColors.surfaceElevated,
+        backgroundColor: AppColors.surfaceContainerLowest,
+        modalBackgroundColor: AppColors.surfaceContainerLowest,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(AppRadius.bottomSheet),
-          ),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
       ),
     );
   }
 
-  @Deprecated('FixNow mobile now uses the approved premium dark theme.')
-  static ThemeData get light => dark;
+  static ThemeData get dark {
+    final base = trustMatrixTheme;
+    return base.copyWith(
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: AppColors.backgroundPrimary,
+      colorScheme: base.colorScheme.copyWith(
+        brightness: Brightness.dark,
+        surface: AppColors.surfacePrimary,
+        error: AppColors.danger,
+      ),
+    );
+  }
+
+  static ThemeData get light => trustMatrixTheme;
 }

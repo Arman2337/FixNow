@@ -5,7 +5,14 @@ import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/fix_motion.dart';
 import 'package:flutter/material.dart';
 
-enum FixButtonVariant { primary, secondary, tertiary, destructive, emergency, gold }
+enum FixButtonVariant {
+  primary,
+  secondary,
+  tertiary,
+  destructive,
+  emergency,
+  gold,
+}
 
 class FixButton extends StatelessWidget {
   const FixButton({
@@ -48,7 +55,8 @@ class FixButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final callback = (isLoading || success) ? null : onPressed;
-    final reduceMotion = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
 
     Widget content(String key) => KeyedSubtree(
       key: ValueKey(key),
@@ -91,8 +99,8 @@ class FixButton extends StatelessWidget {
               child: isLoading
                   ? content('loading')
                   : success
-                      ? content('success')
-                      : content('idle'),
+                  ? content('success')
+                  : content('idle'),
             ),
           );
 
@@ -114,7 +122,9 @@ class FixButton extends StatelessWidget {
       FixButtonVariant.secondary => OutlinedButton(
         style: OutlinedButton.styleFrom(
           minimumSize: Size(expand ? double.infinity : 48, height),
-          foregroundColor: success ? AppColors.successOnLight : AppColors.primary,
+          foregroundColor: success
+              ? AppColors.successOnLight
+              : AppColors.primary,
           side: success
               ? const BorderSide(color: AppColors.success)
               : const BorderSide(color: AppColors.borderStrong),
@@ -128,7 +138,9 @@ class FixButton extends StatelessWidget {
       FixButtonVariant.tertiary => TextButton(
         style: TextButton.styleFrom(
           minimumSize: Size(expand ? double.infinity : 48, height),
-          foregroundColor: success ? AppColors.successOnLight : AppColors.primary,
+          foregroundColor: success
+              ? AppColors.successOnLight
+              : AppColors.primary,
           shape: const RoundedRectangleBorder(
             borderRadius: AppRadius.buttonBorder,
           ),
@@ -139,7 +151,9 @@ class FixButton extends StatelessWidget {
       FixButtonVariant.destructive => OutlinedButton(
         style: OutlinedButton.styleFrom(
           minimumSize: Size(expand ? double.infinity : 48, height),
-          foregroundColor: success ? AppColors.successOnLight : AppColors.danger,
+          foregroundColor: success
+              ? AppColors.successOnLight
+              : AppColors.danger,
           side: success
               ? const BorderSide(color: AppColors.success)
               : const BorderSide(color: AppColors.danger),

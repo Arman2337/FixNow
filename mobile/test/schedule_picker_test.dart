@@ -12,9 +12,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Widget host(Widget child) => MaterialApp(
-      theme: AppTheme.dark,
-      home: Scaffold(body: child),
-    );
+  theme: AppTheme.dark,
+  home: Scaffold(body: child),
+);
 
 void main() {
   group('BookingSchedule model', () {
@@ -52,12 +52,20 @@ void main() {
 
     test('slot stays bookable until its window closes', () {
       expect(
-        BookingSchedule.isSlotPast(today, morning, now: DateTime(2026, 9, 8, 10, 59)),
+        BookingSchedule.isSlotPast(
+          today,
+          morning,
+          now: DateTime(2026, 9, 8, 10, 59),
+        ),
         isFalse,
       );
       // Window closes at 11:00 sharp — minute-precise, not start+3h eyeballed.
       expect(
-        BookingSchedule.isSlotPast(today, morning, now: DateTime(2026, 9, 8, 11, 0)),
+        BookingSchedule.isSlotPast(
+          today,
+          morning,
+          now: DateTime(2026, 9, 8, 11, 0),
+        ),
         isTrue,
       );
     });
@@ -65,13 +73,18 @@ void main() {
     test('future-date slots are never past', () {
       final tomorrow = DateTime(2026, 9, 9);
       expect(
-        BookingSchedule.isSlotPast(tomorrow, morning, now: DateTime(2026, 9, 8, 23, 0)),
+        BookingSchedule.isSlotPast(
+          tomorrow,
+          morning,
+          now: DateTime(2026, 9, 8, 23, 0),
+        ),
         isFalse,
       );
     });
 
-    testWidgets('recheck ticker promotes the selection off elapsed slots',
-        (tester) async {
+    testWidgets('recheck ticker promotes the selection off elapsed slots', (
+      tester,
+    ) async {
       BookingSchedule? active;
       final soonPast = BookingSchedule(
         mode: ScheduleMode.later,
@@ -108,8 +121,9 @@ void main() {
   });
 
   group('FixSchedulePickerCard widget', () {
-    testWidgets('toggles between Book for Now and Schedule for Later',
-        (tester) async {
+    testWidgets('toggles between Book for Now and Schedule for Later', (
+      tester,
+    ) async {
       BookingSchedule? active;
 
       await tester.pumpWidget(
@@ -126,13 +140,13 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Arrival Schedule'), findsOneWidget);
-      expect(find.text('Book for Now'), findsOneWidget);
-      expect(find.text('Schedule for Later'), findsOneWidget);
-      expect(find.textContaining('Immediate dispatch'), findsOneWidget);
+      expect(find.text('Select Execution Mode'), findsOneWidget);
+      expect(find.text('INSTANT SOS'), findsOneWidget);
+      expect(find.text('SCHEDULE'), findsOneWidget);
+      expect(find.text('15-Min Arrival'), findsOneWidget);
 
-      // Tap Schedule for Later
-      await tester.tap(find.text('Schedule for Later'));
+      // Tap Schedule
+      await tester.tap(find.text('SCHEDULE'));
       await tester.pumpAndSettle();
 
       expect(active?.isNow, isFalse);
@@ -150,99 +164,105 @@ void main() {
     });
 
     testWidgets(
-        'allows horizontal scrolling of upcoming dates via navigation chevrons',
-        (tester) async {
-      await tester.pumpWidget(
-        host(
-          FixSchedulePickerCard(
-            initialSchedule: BookingSchedule(
-              mode: ScheduleMode.later,
-              date: DateTime.now().add(const Duration(days: 1)),
-              slot: TimeSlot.standardSlots.first,
+      'allows horizontal scrolling of upcoming dates via navigation chevrons',
+      (tester) async {
+        await tester.pumpWidget(
+          host(
+            FixSchedulePickerCard(
+              initialSchedule: BookingSchedule(
+                mode: ScheduleMode.later,
+                date: DateTime.now().add(const Duration(days: 1)),
+                slot: TimeSlot.standardSlots.first,
+              ),
+              onScheduleChanged: (_) {},
             ),
-            onScheduleChanged: (_) {},
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      expect(find.byIcon(Icons.chevron_left_rounded), findsOneWidget);
-      expect(find.byIcon(Icons.chevron_right_rounded), findsOneWidget);
+        expect(find.byIcon(Icons.chevron_left_rounded), findsOneWidget);
+        expect(find.byIcon(Icons.chevron_right_rounded), findsOneWidget);
 
-      await tester.tap(find.byIcon(Icons.chevron_right_rounded));
-      await tester.pumpAndSettle();
-    });
+        await tester.tap(find.byIcon(Icons.chevron_right_rounded));
+        await tester.pumpAndSettle();
+      },
+    );
   });
 
   group('ServiceRequestScreen schedule integration', () {
-    testWidgets('submits booking with scheduledAt timestamp when later is picked',
-        (tester) async {
-      tester.view.physicalSize = const Size(800, 2400);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.resetPhysicalSize);
+    testWidgets(
+      'submits booking with scheduledAt timestamp when later is picked',
+      (tester) async {
+        tester.view.physicalSize = const Size(800, 2400);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
 
-      final fakeTransport = _FakeTransport();
-      final repository = BookingRepository(
-        api: fakeTransport,
-        accessToken: () async => 'test-token',
-      );
-      final controller = BookingController(repository);
+        final fakeTransport = _FakeTransport();
+        final repository = BookingRepository(
+          api: fakeTransport,
+          accessToken: () async => 'test-token',
+        );
+        final controller = BookingController(repository);
 
-      const category = ServiceCategory(
-        id: 'cat-plumbing',
-        name: 'Plumbing Service',
-        slug: 'plumbing',
-      );
+        const category = ServiceCategory(
+          id: 'cat-plumbing',
+          name: 'Plumbing Service',
+          slug: 'plumbing',
+        );
 
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.dark,
-          home: Scaffold(
-            body: ServiceRequestScreen(
-              category: category,
-              controller: controller,
-              initialDescription: 'Leaking bathroom pipe needs scheduled visit.',
-              locationProvider: _FixedLocation(),
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.dark,
+            home: Scaffold(
+              body: ServiceRequestScreen(
+                category: category,
+                controller: controller,
+                initialDescription:
+                    'Leaking bathroom pipe needs scheduled visit.',
+                locationProvider: _FixedLocation(),
+              ),
             ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      // Tap Schedule for Later
-      await tester.scrollUntilVisible(
-        find.text('Schedule for Later'),
-        300,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await tester.tap(find.text('Schedule for Later'));
-      await tester.pumpAndSettle();
+        // Tap Schedule
+        await tester.scrollUntilVisible(
+          find.text('SCHEDULE'),
+          300,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await tester.tap(find.text('SCHEDULE'));
+        await tester.pumpAndSettle();
 
-      // Submit booking
-      await tester.scrollUntilVisible(
-        find.widgetWithText(FixButton, 'Find a verified provider'),
-        300,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await tester.tap(find.widgetWithText(FixButton, 'Find a verified provider'));
-      await tester.pumpAndSettle();
+        // Submit booking
+        await tester.scrollUntilVisible(
+          find.widgetWithText(FixButton, 'Find a verified provider'),
+          300,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await tester.tap(
+          find.widgetWithText(FixButton, 'Find a verified provider'),
+        );
+        await tester.pumpAndSettle();
 
-      // Verify that scheduledAt was included in the API request body
-      expect(fakeTransport.sentBody, isNotNull);
-      expect(fakeTransport.sentBody!['scheduledAt'], isNotNull);
-      expect(fakeTransport.sentBody!['serviceCategoryId'], 'cat-plumbing');
-    });
+        // Verify that scheduledAt was included in the API request body
+        expect(fakeTransport.sentBody, isNotNull);
+        expect(fakeTransport.sentBody!['scheduledAt'], isNotNull);
+        expect(fakeTransport.sentBody!['serviceCategoryId'], 'cat-plumbing');
+      },
+    );
   });
 }
 
 class _FixedLocation implements BookingLocationProvider {
   @override
   Future<BookingLocationFix> resolve() async => BookingLocationFix(
-        latitude: 12.9716,
-        longitude: 77.5946,
-        accuracyMeters: 5,
-        timestamp: DateTime.now(),
-      );
+    latitude: 12.9716,
+    longitude: 77.5946,
+    accuracyMeters: 5,
+    timestamp: DateTime.now(),
+  );
 }
 
 class _FakeTransport implements ApiTransport {
@@ -264,7 +284,7 @@ class _FakeTransport implements ApiTransport {
             'locationLng': 77.5946,
             'createdAt': DateTime.now().toIso8601String(),
             'version': 1,
-          }
+          },
         },
       );
     }

@@ -12,6 +12,7 @@ export const PUSH_DELIVERY = Symbol('PUSH_DELIVERY');
 export interface PushNotificationContent {
   title: string;
   body: string;
+  data?: Record<string, string>;
 }
 
 export type PushSendStatus = 'sent' | 'unregistered' | 'unavailable';
@@ -62,8 +63,9 @@ export class FcmPushDelivery implements PushDelivery {
       await messaging.send({
         token,
         notification: { title: content.title, body: content.body },
-        android: { priority: 'normal' },
-        apns: { headers: { 'apns-priority': '5' } },
+        data: content.data,
+        android: { priority: content.data ? 'high' : 'normal' },
+        apns: { headers: { 'apns-priority': content.data ? '10' : '5' } },
       });
       return { status: 'sent' };
     } catch (error) {

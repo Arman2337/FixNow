@@ -33,16 +33,15 @@ class _FixSosVortexButtonState extends State<FixSosVortexButton>
   @override
   void initState() {
     super.initState();
-    _holdController = AnimationController(
-      vsync: this,
-      duration: widget.holdDuration,
-    )..addStatusListener((status) {
-        if (status == AnimationStatus.completed) {
-          HapticFeedback.heavyImpact();
-          widget.onTriggered();
-          _onHoldEnd();
-        }
-      });
+    _holdController =
+        AnimationController(vsync: this, duration: widget.holdDuration)
+          ..addStatusListener((status) {
+            if (status == AnimationStatus.completed) {
+              HapticFeedback.heavyImpact();
+              widget.onTriggered();
+              _onHoldEnd();
+            }
+          });
   }
 
   @override
@@ -66,7 +65,8 @@ class _FixSosVortexButtonState extends State<FixSosVortexButton>
 
   @override
   Widget build(BuildContext context) {
-    final reduceMotion = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
 
     return Semantics(
       button: true,
@@ -88,7 +88,9 @@ class _FixSosVortexButtonState extends State<FixSosVortexButton>
                   builder: (context, _) {
                     return CustomPaint(
                       size: Size.square(widget.size + 18.0),
-                      painter: _VortexRingPainter(progress: _holdController.value),
+                      painter: _VortexRingPainter(
+                        progress: _holdController.value,
+                      ),
                     );
                   },
                 ),
@@ -104,7 +106,10 @@ class _FixSosVortexButtonState extends State<FixSosVortexButton>
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: AppColors.emergency.withValues(
-                          alpha: (0.35 * (1.0 - _holdController.value)).clamp(0.0, 0.35),
+                          alpha: (0.35 * (1.0 - _holdController.value)).clamp(
+                            0.0,
+                            0.35,
+                          ),
                         ),
                       ),
                     );

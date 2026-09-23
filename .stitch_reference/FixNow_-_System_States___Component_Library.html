@@ -1,0 +1,551 @@
+<!DOCTYPE html><html class="h-full bg-surface" lang="en"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"><title>Activity Rewards - FixNow</title><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{width:100%;margin:0;padding:0;}body{overscroll-behavior:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { colors: { "inverse-surface": "#213145", "on-tertiary-container": "#fffbff", "surface-dim": "#cbdbf5", "outline-variant": "#bccac0", "secondary-fixed": "#dae2fd", "on-primary-fixed": "#002114", "on-surface-variant": "#3d4a42", "primary": "#006948", "error-container": "#ffdad6", "surface-container-lowest": "#ffffff", "surface": "#f8f9ff", "secondary": "#565e74", "on-background": "#0b1c30", "inverse-on-surface": "#eaf1ff", "on-error-container": "#93000a", "surface-container-highest": "#d3e4fe", "secondary-fixed-dim": "#bec6e0", "on-secondary-container": "#5c647a", "tertiary": "#825100", "surface-variant": "#d3e4fe", "primary-container": "#00855d", "on-surface": "#0b1c30", "on-primary": "#ffffff", "secondary-container": "#dae2fd", "on-tertiary-fixed-variant": "#653e00", "surface-container-low": "#eff4ff", "background": "#f8f9ff", "surface-bright": "#f8f9ff", "tertiary-fixed-dim": "#ffb95f", "surface-tint": "#006c4a", "on-secondary": "#ffffff", "error": "#ba1a1a", "primary-fixed-dim": "#68dba9", "on-secondary-fixed": "#131b2e", "surface-container": "#e5eeff", "on-tertiary-fixed": "#2a1700", "on-secondary-fixed-variant": "#3f465c", "on-primary-container": "#f5fff7", "on-error": "#ffffff", "tertiary-container": "#a36700", "on-primary-fixed-variant": "#005137", "on-tertiary": "#ffffff", "inverse-primary": "#68dba9", "surface-container-high": "#dce9ff", "outline": "#6d7a72", "tertiary-fixed": "#ffddb8", "primary-fixed": "#85f8c4" }, borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, spacing: { "space-xl": "2rem", "gutter": "1rem", "margin": "1rem", "margin-desktop": "2rem", "gutter-desktop": "1.5rem", "space-xs": "0.25rem", "space-md": "1rem", "space-lg": "1.5rem", "margin-tablet": "1.5rem", "space-sm": "0.5rem" }, fontFamily: { "label-sm": ["Inter"], "data-mono": ["Inter"], "headline-lg-mobile": ["Plus Jakarta Sans"], "headline-lg": ["Plus Jakarta Sans"], "body-md": ["Inter"], "headline-xl": ["Plus Jakarta Sans"], "label-md": ["Inter"], "body-sm": ["Inter"], "body-lg": ["Inter"], "price-display": ["Plus Jakarta Sans"], "headline-xl-mobile": ["Plus Jakarta Sans"], "headline-md": ["Plus Jakarta Sans"] }, fontSize: { "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "600" }], "data-mono": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }], "headline-lg-mobile": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "700" }], "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.015em", "fontWeight": "700" }], "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }], "headline-xl": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "800" }], "label-md": ["13px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "600" }], "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }], "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }], "price-display": ["24px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "700" }], "headline-xl-mobile": ["30px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "800" }], "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }] } } } }</script></head><body class="bg-surface text-on-surface font-body-md text-body-md min-h-screen flex flex-col antialiased selection:bg-primary-fixed-dim selection:text-on-primary-fixed"><header class="fixed top-0 w-full z-50 pt-safe bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-16 px-margin flex items-center justify-between gap-space-sm"><div class="flex items-center gap-space-sm min-w-0 flex-1"><img alt="FixNow Master Emblem" class="h-8 w-8 object-contain rounded-lg flex-shrink-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD6NvOXCCNxqnZkM5qjTaf8hrhQz2e4FUBJA70L5zRaA4rUOsvWs-PGGAj7WPl6rQQQ6_32XUppfPsXxsKLgi6Z1SbEVBuPwlssQh5ymmYONmIAkQVVqkYHgf2qOZxU1bSyFJOOtl9MK-NBPGqLaGXswADn9XRtQVRnZU8UgBDsuF0yd0OrRpQMLiX3JgLSqEJE1InpulwE_CWJpuWLben2AakFvl7km849pruem_l9UUjmHpddQj45nDfmU7RlxbBgNg"><div class="flex flex-col min-w-0"><div class="flex items-center gap-1"><span class="font-headline-md text-headline-md text-primary tracking-tight font-bold leading-none">FixNow</span><span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span></div><span class="font-label-sm text-label-sm text-on-surface-variant truncate">Activity Rewards</span></div></div><div class="flex items-center gap-space-xs flex-shrink-0"><button aria-label="Notifications" class="w-11 h-11 flex items-center justify-center rounded-full text-on-surface hover:bg-surface-container transition-colors relative"><span class="material-symbols-outlined text-[22px]">notifications</span><span class="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-error ring-2 ring-surface"></span></button><button aria-label="User Profile" class="w-11 h-11 flex items-center justify-center rounded-full p-0.5 hover:bg-surface-container transition-colors"><img alt="Profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC0fmQVzMF5Rs9tsmYYciE22juYHedjg4xdlfgpeJPLo_c1OH5vKW5FLwDdjmHCgNS-Zm04HM19nUNHjXKazC-ERm-09PmmZ0t9UWKgl0gtW4zPyDcckAwqOOpRtUJdKiGmku0L4h6pmM0GiXa759mhV3h7fANwBjZo0KlBPO2SgZkWyhJxMDMSi3gO97TQEsINn0kH5QyO1t3odNW--r6DJcOlfWCxmP59GEpDHwjKHWxZsj55b2Sa"></button></div></div></header><main class="flex-1 flex flex-col relative w-full pt-16 pb-20 bg-surface min-h-[calc(100vh-5rem)]"><div class="flex flex-col w-full pb-12">
+<!-- Interactive Persona Switcher Header Strip -->
+<section class="px-margin pt-space-sm pb-space-md">
+<div class="bg-surface-container rounded-xl p-space-xs shadow-sm flex items-center justify-between gap-1">
+<button class="flex-1 py-2 px-2.5 rounded-lg font-label-md text-label-md flex items-center justify-center gap-1.5 transition-all duration-200 bg-primary text-on-primary shadow-sm" id="btn-role-customer" onclick="switchPersona('customer')">
+<span class="material-symbols-outlined text-[18px]">person</span>
+<span class="">Customer</span>
+</button>
+<button class="flex-1 py-2 px-2.5 rounded-lg font-label-md text-label-md flex items-center justify-center gap-1.5 transition-all duration-200 text-on-surface-variant hover:text-on-surface" id="btn-role-tech" onclick="switchPersona('tech')">
+<span class="material-symbols-outlined text-[18px]">handyman</span>
+<span class="">Field Tech</span>
+</button>
+<button class="flex-1 py-2 px-2.5 rounded-lg font-label-md text-label-md flex items-center justify-center gap-1.5 transition-all duration-200 text-on-surface-variant hover:text-on-surface" id="btn-role-admin" onclick="switchPersona('admin')">
+<span class="material-symbols-outlined text-[18px]">admin_panel_settings</span>
+<span class="">Dispatch</span>
+</button>
+</div>
+<div class="mt-2 flex items-center justify-between px-1" id="role-context-tag">
+<span class="font-data-mono text-data-mono text-on-surface-variant flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-primary animate-ping"></span>
+        Active Context: <span class="text-on-surface font-semibold" id="role-name-display">Homeowner Consumer App</span>
+</span>
+<span class="font-label-sm text-label-sm text-primary bg-primary-fixed px-2 py-0.5 rounded-full">v2.4 Live Spec</span>
+</div>
+</section>
+<!-- Interactive State Playground Selector (Tabs) -->
+<section class="px-margin mb-space-md">
+<div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+<button class="state-tab-btn shrink-0 px-3.5 py-1.5 rounded-full font-label-md text-label-md bg-inverse-surface text-inverse-on-surface transition-colors shadow-sm flex items-center gap-1.5" id="tab-btn-components" onclick="activateTab('components')">
+<span class="material-symbols-outlined text-[16px]">widgets</span>
+<span class="">Living Components</span>
+</button>
+<button class="state-tab-btn shrink-0 px-3.5 py-1.5 rounded-full font-label-md text-label-md bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors flex items-center gap-1.5" id="tab-btn-loading" onclick="activateTab('loading')">
+<span class="material-symbols-outlined text-[16px]">hourglass_top</span>
+<span class="">Skeleton States</span>
+</button>
+<button class="state-tab-btn shrink-0 px-3.5 py-1.5 rounded-full font-label-md text-label-md bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors flex items-center gap-1.5" id="tab-btn-empty" onclick="activateTab('empty')">
+<span class="material-symbols-outlined text-[16px]">inbox</span>
+<span class="">Empty &amp; Zero States</span>
+</button>
+<button class="state-tab-btn shrink-0 px-3.5 py-1.5 rounded-full font-label-md text-label-md bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors flex items-center gap-1.5" id="tab-btn-error" onclick="activateTab('error')">
+<span class="material-symbols-outlined text-[16px]">wifi_off</span>
+<span class="">Offline &amp; SOS Sync</span>
+</button>
+</div>
+</section>
+<!-- TAB VIEW 1: LIVING COMPONENTS & INTERACTION -->
+<div class="state-view flex flex-col gap-space-lg px-margin" id="view-components">
+<!-- 1. Multimodal AI Diagnosis Card -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm">
+<div class="flex items-start justify-between gap-2 mb-3">
+<div class="flex items-center gap-2">
+<div class="w-9 h-9 rounded-lg bg-secondary-container text-on-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">auto_fix</span>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md leading-tight text-on-surface">Multimodal AI Triage</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Instant damage classification &amp; quote estimator</p>
+</div>
+</div>
+<span class="font-label-sm text-label-sm bg-primary-container text-on-primary-container px-2 py-0.5 rounded-full font-bold">GEMINI 1.5</span>
+</div>
+<!-- Input Mode Switcher -->
+<div class="bg-surface-container-low rounded-lg p-space-xs flex items-center gap-2 mb-3">
+<button class="flex-1 py-1.5 rounded-md font-label-sm text-label-sm text-on-surface-variant flex items-center justify-center gap-1 transition-all" id="ai-tab-voice" onclick="setAiMode('voice')">
+<span class="material-symbols-outlined text-[16px]">mic</span>
+<span class="">Voice</span>
+</button>
+<button class="flex-1 py-1.5 rounded-md font-label-sm text-label-sm bg-surface-container-lowest text-primary font-bold shadow-xs flex items-center justify-center gap-1 transition-all" id="ai-tab-photo" onclick="setAiMode('photo')">
+<span class="material-symbols-outlined text-[16px]">photo_camera</span>
+<span class="">Upload Image</span>
+</button>
+<button class="flex-1 py-1.5 rounded-md font-label-sm text-label-sm text-on-surface-variant flex items-center justify-center gap-1 transition-all" id="ai-tab-text" onclick="setAiMode('text')">
+<span class="material-symbols-outlined text-[16px]">chat</span>
+<span class="">Describe</span>
+</button>
+</div>
+<!-- AI Photo Preview Frame -->
+<div class="relative rounded-xl overflow-hidden bg-surface-container mb-3 aspect-[16/9] flex items-center justify-center" id="ai-canvas-area">
+<img class="w-full h-full object-cover" data-alt="A macro close up photo of a dripping brass water pipe connection showing corrosion, thread leak, high contrast lighting, realistic diagnostic focus with subtle technical highlight overlays." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC2HLAcHLwkDz8VB3VL4p9Dfx3ixtm3QXlGCW0MefFztmH-PuHp2grv0z6vFqBPiBbUJdq1iSn0WOJ5gJuE453PgLZAxHjY8DtmMpOMYIYtxMzfzd0ZLNDozofSgcAGz7rt82RHi1hbd5Ajw79DrZ1xKmQTtGlEg7GntxctgAZZN04YHxkTeqtO9WMHN9KpYM5GamzOZ-kRODMIBpFpNcRSSlKkCnwAqYoT1zduBiY0XXnain8D0sKM">
+<div class="absolute inset-0 bg-gradient-to-t from-inverse-surface/85 via-inverse-surface/20 to-transparent flex flex-col justify-end p-3 text-inverse-on-surface">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-full bg-primary-fixed animate-pulse"></span>
+<span class="font-data-mono text-data-mono font-bold uppercase tracking-wider text-primary-fixed">Detected: Thread Leakage</span>
+</div>
+<span class="font-data-mono text-data-mono bg-inverse-surface/90 px-2 py-0.5 rounded text-primary-fixed">98.4% Match</span>
+</div>
+<p class="font-body-sm text-body-sm text-inverse-on-surface/90 mt-1 line-clamp-1">3/4 inch brass fitting deterioration under sink cabinet.</p>
+</div>
+<button class="absolute top-2 right-2 bg-inverse-surface/70 hover:bg-inverse-surface text-inverse-on-surface p-1.5 rounded-full backdrop-blur-sm transition-colors" title="Retake Photo">
+<span class="material-symbols-outlined text-[18px]">sync</span>
+</button>
+</div>
+<!-- Suggested Fix Recommendation Box -->
+<div class="bg-surface-container-low rounded-lg p-3 mb-3 flex items-start gap-2.5">
+<span class="material-symbols-outlined text-tertiary mt-0.5 text-[20px]">build_circle</span>
+<div class="min-w-0 flex-1">
+<div class="flex items-center justify-between">
+<h4 class="font-label-md text-label-md text-on-surface">Plumbing Fitting Overhaul</h4>
+<span class="font-data-mono text-data-mono text-primary font-bold">~₹470 Est.</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Auto-matched with certified Master Plumber inventory.</p>
+</div>
+</div>
+<button class="w-full h-11 bg-primary hover:bg-primary-container text-on-primary rounded-xl font-label-md text-label-md flex items-center justify-center gap-2 shadow-sm transition-colors">
+<span class="material-symbols-outlined text-[18px]">bolt</span>
+<span class="">Auto-Book Recommended Mechanic</span>
+</button>
+</div>
+<!-- 2. Status Micro-Indicators & State Badges Collection -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm">
+<div class="flex items-center justify-between mb-3">
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface">Lifecycle Status Badges</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Real-time state indicators across customer &amp; field app</p>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">label</span>
+</div>
+<div class="grid grid-cols-2 gap-2.5">
+<!-- REQUESTED -->
+<div class="p-2.5 rounded-lg bg-surface-container flex items-center justify-between">
+<span class="font-data-mono text-data-mono text-on-surface-variant">01. Initiation</span>
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-label-sm text-label-sm bg-secondary-container text-on-secondary-container font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+            REQUESTED
+          </span>
+</div>
+<!-- ASSIGNED -->
+<div class="p-2.5 rounded-lg bg-surface-container flex items-center justify-between">
+<span class="font-data-mono text-data-mono text-on-surface-variant">02. Handshake</span>
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-label-sm text-label-sm bg-surface-variant text-on-surface-variant font-semibold">
+<span class="material-symbols-outlined text-[13px]">person_check</span>
+            ASSIGNED
+          </span>
+</div>
+<!-- EN_ROUTE -->
+<div class="p-2.5 rounded-lg bg-surface-container flex items-center justify-between">
+<span class="font-data-mono text-data-mono text-on-surface-variant">03. Transit</span>
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-label-sm text-label-sm bg-primary-fixed text-on-primary-fixed font-semibold">
+<span class="w-2 h-2 rounded-full bg-primary animate-ping"></span>
+            EN_ROUTE
+          </span>
+</div>
+<!-- IN_PROGRESS -->
+<div class="p-2.5 rounded-lg bg-surface-container flex items-center justify-between">
+<span class="font-data-mono text-data-mono text-on-surface-variant">04. Execution</span>
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-label-sm text-label-sm bg-tertiary-fixed text-on-tertiary-fixed font-semibold">
+<span class="material-symbols-outlined text-[13px] animate-spin">progress_activity</span>
+            IN_PROGRESS
+          </span>
+</div>
+<!-- COMPLETED -->
+<div class="p-2.5 rounded-lg bg-surface-container flex items-center justify-between">
+<span class="font-data-mono text-data-mono text-on-surface-variant">05. Resolution</span>
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-label-sm text-label-sm bg-primary text-on-primary font-semibold">
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+            COMPLETED
+          </span>
+</div>
+<!-- CANCELLED -->
+<div class="p-2.5 rounded-lg bg-surface-container flex items-center justify-between">
+<span class="font-data-mono text-data-mono text-on-surface-variant">06. Terminated</span>
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-label-sm text-label-sm bg-surface-dim text-on-surface-variant font-semibold">
+<span class="material-symbols-outlined text-[13px]">block</span>
+            CANCELLED
+          </span>
+</div>
+</div>
+<!-- SOS Emergency Badge Strip -->
+<div class="mt-3 p-3 rounded-xl bg-error-container text-on-error-container flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-error text-[24px] animate-bounce">e911_emergency</span>
+<div>
+<span class="font-label-md text-label-md font-bold text-on-error-container block">CRITICAL STATUS OVERRIDE</span>
+<span class="font-body-sm text-body-sm text-on-error-container/80">Hazard / Rapid Dispatch Trigger</span>
+</div>
+</div>
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full font-label-sm text-label-sm bg-error text-on-error font-bold shadow-sm">
+<span class="w-2 h-2 rounded-full bg-surface-container-lowest animate-pulse"></span>
+          SOS_EMERGENCY
+        </span>
+</div>
+</div>
+<!-- 3. Dynamic Price Itemizer & GST Breakdown Component -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm">
+<div class="flex items-center justify-between mb-2">
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface">Transparent Itemizer</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Dynamic tax computation engine &amp; GST ledger</p>
+</div>
+<button class="text-on-surface-variant hover:text-on-surface p-1" onclick="toggleGstTooltip()">
+<span class="material-symbols-outlined text-[20px]">info</span>
+</button>
+</div>
+<!-- Accordion Line Items -->
+<div class="bg-surface-container-low rounded-xl p-space-md flex flex-col gap-2.5 mb-3">
+<div class="flex items-center justify-between text-on-surface">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[18px]">engineering</span>
+<span class="font-body-md text-body-md">Base Diagnostic Labor</span>
+</div>
+<span class="font-data-mono text-data-mono font-semibold">₹249.00</span>
+</div>
+<div class="flex items-center justify-between text-on-surface">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-tertiary text-[18px]">valve</span>
+<span class="font-body-md text-body-md">Brass Bushing &amp; Teflon Tape</span>
+</div>
+<span class="font-data-mono text-data-mono font-semibold">₹150.00</span>
+</div>
+<div class="h-px bg-outline-variant/30 my-0.5"></div>
+<div class="flex items-center justify-between text-on-surface-variant">
+<div class="flex items-center gap-1.5 pl-6">
+<span class="font-label-sm text-label-sm">CGST (9.0%)</span>
+<span class="material-symbols-outlined text-[14px] text-on-surface-variant/60">verified</span>
+</div>
+<span class="font-data-mono text-data-mono">₹35.91</span>
+</div>
+<div class="flex items-center justify-between text-on-surface-variant">
+<div class="flex items-center gap-1.5 pl-6">
+<span class="font-label-sm text-label-sm">SGST (9.0%)</span>
+<span class="material-symbols-outlined text-[14px] text-on-surface-variant/60">verified</span>
+</div>
+<span class="font-data-mono text-data-mono">₹35.91</span>
+</div>
+<div class="h-px bg-outline-variant/30 my-0.5"></div>
+<div class="flex items-center justify-between pt-1">
+<div>
+<span class="font-label-md text-label-md text-on-surface uppercase tracking-wider block">Grand Total</span>
+<span class="font-data-mono text-data-mono text-primary">Invoice #FIX-8921B</span>
+</div>
+<div class="text-right">
+<span class="font-price-display text-price-display text-primary font-bold">₹470.82</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant block">Included all applicable taxes</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="flex-1 h-11 bg-inverse-surface hover:bg-surface-dim text-inverse-on-surface rounded-xl font-label-md text-label-md flex items-center justify-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined text-[18px]">receipt_long</span>
+<span class="">Download Tax Slip</span>
+</button>
+<button class="h-11 px-4 bg-primary hover:bg-primary-container text-on-primary rounded-xl font-label-md text-label-md flex items-center justify-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined text-[18px]">lock</span>
+<span class="">Pay ₹470.82</span>
+</button>
+</div>
+</div>
+</div>
+<!-- TAB VIEW 2: LOADING SKELETON STATES (SHIMMER) -->
+<div class="state-view hidden flex-col gap-space-lg px-margin" id="view-loading">
+<!-- State banner notice -->
+<div class="bg-surface-container rounded-xl p-3 flex items-center justify-between">
+<div class="flex items-center gap-2 text-on-surface">
+<span class="material-symbols-outlined text-primary text-[20px] animate-spin">autorenew</span>
+<span class="font-label-md text-label-md font-semibold">Active Dispatch Polling Simulation</span>
+</div>
+<span class="font-data-mono text-data-mono bg-surface-container-highest px-2 py-0.5 rounded text-on-surface-variant">200ms Jitter</span>
+</div>
+<!-- Category Grid Skeleton -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm">
+<div class="flex items-center justify-between mb-3">
+<div class="h-4 w-32 bg-surface-container-high rounded animate-pulse"></div>
+<div class="h-3 w-16 bg-surface-container rounded animate-pulse"></div>
+</div>
+<div class="grid grid-cols-4 gap-2.5">
+<div class="flex flex-col items-center gap-2">
+<div class="w-14 h-14 rounded-2xl bg-surface-container-high animate-pulse"></div>
+<div class="w-10 h-2.5 rounded bg-surface-container animate-pulse"></div>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-14 h-14 rounded-2xl bg-surface-container-high animate-pulse"></div>
+<div class="w-12 h-2.5 rounded bg-surface-container animate-pulse"></div>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-14 h-14 rounded-2xl bg-surface-container-high animate-pulse"></div>
+<div class="w-9 h-2.5 rounded bg-surface-container animate-pulse"></div>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-14 h-14 rounded-2xl bg-surface-container-high animate-pulse"></div>
+<div class="w-11 h-2.5 rounded bg-surface-container animate-pulse"></div>
+</div>
+</div>
+</div>
+<!-- Booking Ticket Card Skeleton -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-3">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-10 h-10 rounded-full bg-surface-container-high animate-pulse"></div>
+<div class="flex flex-col gap-1.5">
+<div class="w-28 h-3.5 bg-surface-container-high rounded animate-pulse"></div>
+<div class="w-20 h-2.5 bg-surface-container rounded animate-pulse"></div>
+</div>
+</div>
+<div class="w-24 h-6 rounded-full bg-surface-container-high animate-pulse"></div>
+</div>
+<div class="h-16 w-full bg-surface-container-low rounded-lg p-2.5 flex flex-col justify-between">
+<div class="w-3/4 h-3 bg-surface-container-high rounded animate-pulse"></div>
+<div class="w-1/2 h-3 bg-surface-container rounded animate-pulse"></div>
+</div>
+<div class="flex items-center justify-between pt-1">
+<div class="w-20 h-5 bg-surface-container rounded animate-pulse"></div>
+<div class="w-28 h-8 rounded-lg bg-surface-container-high animate-pulse"></div>
+</div>
+</div>
+<!-- Live Provider Map & Polyline Shimmer Canvas -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm">
+<div class="flex items-center justify-between mb-2">
+<div class="w-36 h-4 bg-surface-container-high rounded animate-pulse"></div>
+<div class="w-16 h-3 bg-surface-container rounded animate-pulse"></div>
+</div>
+<div class="relative w-full h-44 rounded-xl bg-surface-container overflow-hidden flex items-center justify-center">
+<!-- Abstract Polyline Vector Animation -->
+<svg class="w-full h-full text-surface-container-highest" preserveAspectRatio="none" viewBox="0 0 300 150">
+<path class="animate-pulse" d="M 20,120 Q 90,30 150,80 T 280,40" fill="none" stroke="currentColor" stroke-dasharray="6 6" stroke-linecap="round" stroke-width="4"></path>
+<circle class="animate-ping" cx="20" cy="120" fill="#006948" r="6"></circle>
+<circle cx="280" cy="40" fill="#825100" r="7"></circle>
+</svg>
+<div class="absolute bottom-3 left-3 right-3 bg-surface-container-lowest/90 backdrop-blur-md rounded-lg p-2.5 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-primary-fixed-dim animate-ping"></div>
+<div class="w-32 h-3 bg-surface-container-high rounded animate-pulse"></div>
+</div>
+<div class="w-14 h-4 bg-surface-container rounded animate-pulse"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- TAB VIEW 3: EMPTY & ZERO STATES -->
+<div class="state-view hidden flex-col gap-space-lg px-margin" id="view-empty">
+<!-- Zero State: No Active Bookings -->
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm text-center flex flex-col items-center">
+<div class="w-20 h-20 rounded-full bg-surface-container flex items-center justify-center text-primary mb-3">
+<span class="material-symbols-outlined text-[40px]">calendar_today</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-surface">No Active Jobs In Orbit</h3>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-xs mt-1 mb-5">
+        Your home is running quietly and smooth. No service dispatches or repairs are scheduled for today.
+      </p>
+<div class="w-full flex flex-col gap-2">
+<button class="w-full h-11 bg-primary hover:bg-primary-container text-on-primary rounded-xl font-label-md text-label-md flex items-center justify-center gap-2 shadow-sm transition-colors" onclick="activateTab('components')">
+<span class="material-symbols-outlined text-[18px]">search</span>
+<span class="">Explore Services Catalog</span>
+</button>
+<button class="w-full h-10 bg-surface-container hover:bg-surface-container-high text-on-surface rounded-xl font-label-md text-label-md transition-colors">
+          View Completed History
+        </button>
+</div>
+</div>
+<!-- Zero State: No Past Disputes (Delight Badge) -->
+<div class="bg-surface-container-low rounded-xl p-space-md flex items-center gap-3">
+<div class="w-12 h-12 rounded-xl bg-primary-fixed text-on-primary-fixed flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+</div>
+<div class="min-w-0 flex-1">
+<h4 class="font-headline-md text-headline-md leading-snug text-on-surface">Zero Dispute Record</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">100% of your completed tasks achieved clean satisfaction settlements.</p>
+</div>
+</div>
+<!-- Quick Suggested Actions Grid -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm">
+<h4 class="font-label-md text-label-md text-on-surface mb-2.5">Routine Preventative Checkups</h4>
+<div class="flex flex-col gap-2">
+<div class="p-2.5 rounded-lg bg-surface-container hover:bg-surface-container-high flex items-center justify-between cursor-pointer transition-colors">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-primary text-[20px]">hvac</span>
+<div>
+<span class="font-label-md text-label-md text-on-surface block">Pre-Monsoon AC Servicing</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Recommended every 90 days</span>
+</div>
+</div>
+<span class="font-label-sm text-label-sm text-primary font-bold">Book ₹499</span>
+</div>
+<div class="p-2.5 rounded-lg bg-surface-container hover:bg-surface-container-high flex items-center justify-between cursor-pointer transition-colors">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-tertiary text-[20px]">water_damage</span>
+<div>
+<span class="font-label-md text-label-md text-on-surface block">RO Water Purifier Filter Check</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Filter lifecycle at 85%</span>
+</div>
+</div>
+<span class="font-label-sm text-label-sm text-primary font-bold">Inspect ₹199</span>
+</div>
+</div>
+</div>
+</div>
+<!-- TAB VIEW 4: ERROR, WEBSOCKET LOSS & OFFLINE CACHE -->
+<div class="state-view hidden flex-col gap-space-lg px-margin" id="view-error">
+<!-- Network Disconnection Banner -->
+<div class="bg-error-container rounded-xl p-space-md text-on-error-container shadow-sm flex flex-col gap-3">
+<div class="flex items-start gap-3">
+<div class="w-10 h-10 rounded-full bg-error text-on-error flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[22px] animate-pulse">wifi_off</span>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md leading-tight">Network Connection Lost</h3>
+<p class="font-body-sm text-body-sm mt-0.5 text-on-error-container/90">Reconnecting to FixNow WebSocket dispatch pipe (wss://api.fixnow.internal/v2/stream)...</p>
+</div>
+</div>
+<!-- Sync retry counter strip -->
+<div class="bg-surface-container-lowest/80 backdrop-blur-sm rounded-lg p-2.5 flex items-center justify-between">
+<span class="font-data-mono text-data-mono text-on-surface flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-error animate-ping"></span>
+          Backoff Attempt: 3 of 5 (Next in 4s)
+        </span>
+<button class="px-3 py-1 bg-error text-on-error rounded-md font-label-sm text-label-sm font-bold flex items-center gap-1" id="manual-retry-btn" onclick="simulateSyncRetry()">
+<span class="material-symbols-outlined text-[14px]">refresh</span>
+<span class="">Retry Sync</span>
+</button>
+</div>
+</div>
+<!-- Offline Cache Operational Card -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm">
+<div class="flex items-center justify-between mb-3">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[22px]">offline_pin</span>
+<div>
+<h4 class="font-headline-md text-headline-md text-on-surface">Offline Mode Engaged</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant">IndexedDB Cache maintains offline action queue</p>
+</div>
+</div>
+<span class="font-label-sm text-label-sm bg-secondary-fixed text-on-secondary-fixed px-2 py-0.5 rounded-full font-bold">READ ONLY</span>
+</div>
+<div class="bg-surface-container-low rounded-lg p-3 flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<span class="font-body-md text-body-md text-on-surface">Cached Customer Address</span>
+<span class="font-data-mono text-data-mono text-on-surface-variant">42-A Golf Links, New Delhi</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="font-body-md text-body-md text-on-surface">Offline Job Key</span>
+<span class="font-data-mono text-data-mono text-primary font-bold">#JOB-2024-OFFLINE-78</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="font-body-md text-body-md text-on-surface">Queued Field Reports</span>
+<span class="font-data-mono text-data-mono bg-tertiary-fixed text-on-tertiary-fixed px-1.5 py-0.5 rounded font-bold">2 Actions Waiting</span>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-3 text-center">
+        Any changes made will auto-synchronize as soon as 4G/5G radio resumes.
+      </p>
+</div>
+<!-- SOS Immediate Bypass Button for Field Workers -->
+<div class="p-space-md rounded-xl bg-surface-container flex items-center justify-between">
+<div>
+<span class="font-label-md text-label-md text-on-surface block font-bold">Urgent Customer Hazard?</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Fallback to manual SMS-telemetry line</span>
+</div>
+<button class="h-10 px-3.5 bg-error text-on-error rounded-xl font-label-md text-label-md flex items-center gap-1.5 shadow-sm">
+<span class="material-symbols-outlined text-[16px]">call</span>
+<span class="">SMS SOS</span>
+</button>
+</div>
+</div>
+</div>
+<script>
+  function activateTab(tabKey) {
+    // Hide all views
+    document.querySelectorAll('.state-view').forEach(el => {
+      el.classList.add('hidden');
+      el.classList.remove('flex');
+    });
+
+    // Show target view
+    const target = document.getElementById('view-' + tabKey);
+    if (target) {
+      target.classList.remove('hidden');
+      target.classList.add('flex');
+    }
+
+    // Update active tab buttons
+    document.querySelectorAll('.state-tab-btn').forEach(btn => {
+      btn.className = 'state-tab-btn shrink-0 px-3.5 py-1.5 rounded-full font-label-md text-label-md bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors flex items-center gap-1.5';
+    });
+    
+    const activeBtn = document.getElementById('tab-btn-' + tabKey);
+    if (activeBtn) {
+      activeBtn.className = 'state-tab-btn shrink-0 px-3.5 py-1.5 rounded-full font-label-md text-label-md bg-inverse-surface text-inverse-on-surface transition-colors shadow-sm flex items-center gap-1.5';
+    }
+  }
+
+  function switchPersona(role) {
+    const roles = {
+      customer: {
+        label: 'Homeowner Consumer App',
+        btnId: 'btn-role-customer'
+      },
+      tech: {
+        label: 'Field Technician Terminal (One-Handed)',
+        btnId: 'btn-role-tech'
+      },
+      admin: {
+        label: 'Central Dispatch Command Ops',
+        btnId: 'btn-role-admin'
+      }
+    };
+
+    ['customer', 'tech', 'admin'].forEach(r => {
+      const btn = document.getElementById(roles[r].btnId);
+      if (btn) {
+        if (r === role) {
+          btn.className = 'flex-1 py-2 px-2.5 rounded-lg font-label-md text-label-md flex items-center justify-center gap-1.5 transition-all duration-200 bg-primary text-on-primary shadow-sm';
+        } else {
+          btn.className = 'flex-1 py-2 px-2.5 rounded-lg font-label-md text-label-md flex items-center justify-center gap-1.5 transition-all duration-200 text-on-surface-variant hover:text-on-surface';
+        }
+      }
+    });
+
+    const display = document.getElementById('role-name-display');
+    if (display && roles[role]) {
+      display.textContent = roles[role].label;
+    }
+  }
+
+  function setAiMode(mode) {
+    ['voice', 'photo', 'text'].forEach(m => {
+      const btn = document.getElementById('ai-tab-' + m);
+      if (btn) {
+        if (m === mode) {
+          btn.className = 'flex-1 py-1.5 rounded-md font-label-sm text-label-sm bg-surface-container-lowest text-primary font-bold shadow-xs flex items-center justify-center gap-1 transition-all';
+        } else {
+          btn.className = 'flex-1 py-1.5 rounded-md font-label-sm text-label-sm text-on-surface-variant flex items-center justify-center gap-1 transition-all';
+        }
+      }
+    });
+  }
+
+  function simulateSyncRetry() {
+    const btn = document.getElementById('manual-retry-btn');
+    if (!btn) return;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="material-symbols-outlined text-[14px] animate-spin">autorenew</span> Connecting...';
+    btn.disabled = true;
+    setTimeout(() => {
+      btn.innerHTML = '<span class="material-symbols-outlined text-[14px]">done</span> Synced';
+      btn.classList.replace('bg-error', 'bg-primary');
+      setTimeout(() => {
+        btn.innerHTML = originalText;
+        btn.classList.replace('bg-primary', 'bg-error');
+        btn.disabled = false;
+      }, 1500);
+    }, 1200);
+  }
+
+  function toggleGstTooltip() {
+    alert("Tax Rule 18% applied: 9% Central GST + 9% State GST levied on base diagnostic and billable parts under HSN Code 9987.");
+  }
+</script></main><nav class="fixed bottom-0 w-full z-50 pb-safe bg-surface/90 backdrop-blur-xl shadow-[0_-2px_12px_rgba(0,0,0,0.05)]" data-active-classes="text-primary font-semibold"><div class="h-16 px-space-xs flex items-stretch justify-around"><a class="flex-1 flex flex-col items-center justify-center min-w-[44px] min-h-[44px] text-on-surface-variant hover:text-on-surface transition-colors" data-path="explore-home" href="#"><span class="material-symbols-outlined text-[24px]">home_repair_service</span><span class="font-label-sm text-label-sm mt-0.5">Explore</span></a><a class="flex-1 flex flex-col items-center justify-center min-w-[44px] min-h-[44px] text-on-surface-variant hover:text-on-surface transition-colors relative" data-path="bookings" href="#"><span class="relative flex items-center justify-center"><span class="material-symbols-outlined text-[24px]">calendar_clock</span><span class="absolute -top-1 -right-2 px-1.5 py-0.2 bg-primary text-on-primary font-label-sm text-[10px] rounded-full leading-tight font-bold">2</span></span><span class="font-label-sm text-label-sm mt-0.5">Bookings</span></a><a aria-current="page" class="flex-1 flex flex-col items-center justify-center min-w-[44px] min-h-[44px] transition-colors text-primary font-semibold" data-path="activity-rewards" href="#"><span class="material-symbols-outlined text-[24px]">military_tech</span><span class="font-label-sm text-label-sm mt-0.5">Activity</span></a><a class="flex-1 flex flex-col items-center justify-center min-w-[44px] min-h-[44px] text-on-surface-variant hover:text-on-surface transition-colors" data-path="profile-account" href="#"><span class="material-symbols-outlined text-[24px]">account_circle</span><span class="font-label-sm text-label-sm mt-0.5">Profile</span></a></div></nav>
+
+</body></html>

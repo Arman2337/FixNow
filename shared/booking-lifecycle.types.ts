@@ -24,6 +24,11 @@ export const VALID_BOOKING_TRANSITIONS: Readonly<
   [BookingStatus.CANCELLED]: [],
 };
 
+export interface CreateBookingLineItemRequest {
+  subServiceId: string;
+  quantity: number;
+}
+
 /**
  * One itemized task line on a booking (e.g. "Tap & Mixer Repair" x2).
  * `unitPriceMinor` and `durationMinutes` are per-unit. Amounts are paise.
@@ -53,6 +58,7 @@ export interface CreateBookingRequest {
   locationLng: number;
   scheduledAt?: string | null;
   items?: BookingItemContract[] | null;
+  lineItems?: CreateBookingLineItemRequest[];
 }
 
 /**
@@ -86,6 +92,14 @@ export interface BookingContract {
   createdAt: string;
   updatedAt: string;
   version: number;
+  customerPhone?: string | null;
+  providerPhone?: string | null;
+  lineItems?: Array<{
+    id: string;
+    subServiceId: string;
+    quantity: number;
+    priceMinor: number;
+  }>;
 }
 
 export interface BookingResponse {

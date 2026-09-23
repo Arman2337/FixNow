@@ -27,7 +27,17 @@ class BookingController extends ChangeNotifier {
     status = BookingListStatus.loading;
     notifyListeners();
     try {
-      bookings = await _repository.history();
+      final latest = await _repository.history();
+      for (final prev in bookings) {
+        if (prev.status == 'REQUESTED') {
+          final now = latest.where((b) => b.id == prev.id).firstOrNull;
+          if (now != null &&
+              const {'ASSIGNED', 'EN_ROUTE', 'IN_PROGRESS'}.contains(now.status)) {
+            acceptedBooking.value = now.id;
+          }
+        }
+      }
+      bookings = latest;
       status = bookings.isEmpty
           ? BookingListStatus.empty
           : BookingListStatus.ready;
@@ -68,6 +78,15 @@ class BookingController extends ChangeNotifier {
     try {
       final latest = await _repository.history();
       if (_sameBookings(latest, bookings)) return;
+      for (final prev in bookings) {
+        if (prev.status == 'REQUESTED') {
+          final now = latest.where((b) => b.id == prev.id).firstOrNull;
+          if (now != null &&
+              const {'ASSIGNED', 'EN_ROUTE', 'IN_PROGRESS'}.contains(now.status)) {
+            acceptedBooking.value = now.id;
+          }
+        }
+      }
       bookings = latest;
       status = latest.isEmpty
           ? BookingListStatus.empty
@@ -116,6 +135,10 @@ class BookingController extends ChangeNotifier {
     final index = bookings.indexWhere((booking) => booking.id == id);
     if (index < 0 || version <= bookings[index].version) return;
     if (version > bookings[index].version + 1) {
+      if (bookings[index].status == 'REQUESTED' &&
+          const {'ASSIGNED', 'EN_ROUTE', 'IN_PROGRESS'}.contains(statusValue)) {
+        acceptedBooking.value = id;
+      }
       unawaited(load());
       return;
     }
@@ -141,14 +164,15 @@ class BookingController extends ChangeNotifier {
       estimatedDurationMinutes: duration is int ? duration : null,
     );
     bookings = [...bookings]..[index] = updated;
-    if (current.status == 'REQUESTED' && statusValue == 'ASSIGNED') {
+    if (current.status == 'REQUESTED' &&
+        const {'ASSIGNED', 'EN_ROUTE', 'IN_PROGRESS'}.contains(statusValue)) {
       acceptedBooking.value = id;
     }
     notifyListeners();
     unawaited(_subscribeToActiveBooking());
   }
 
-  Future<void> create({
+  Future<CustomerBooking> create({
     required String serviceCategoryId,
     required String description,
     required double latitude,
@@ -168,6 +192,7 @@ class BookingController extends ChangeNotifier {
     status = BookingListStatus.ready;
     notifyListeners();
     unawaited(_subscribeToActiveBooking());
+    return booking;
   }
 
   Future<CustomerBooking> cancel(CustomerBooking booking, String reason) async {

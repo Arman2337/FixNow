@@ -7,7 +7,6 @@ import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_otp_input_sheet.dart';
 import 'package:fixnow_mobile/design_system/fix_status_chip.dart';
 import 'package:fixnow_mobile/features/bookings/booking.dart';
-import 'package:fixnow_mobile/features/call/booking_call_screen.dart';
 import 'package:fixnow_mobile/features/call/call_controller.dart';
 import 'package:fixnow_mobile/features/call/call_repository.dart';
 import 'package:fixnow_mobile/features/chat/booking_chat_screen.dart';
@@ -366,26 +365,19 @@ class ProviderNavigationMapScreen extends StatelessWidget {
             isProvider: true,
           ),
           providerName: 'Customer',
-          callRepository: callRepository,
         ),
       ),
     );
   }
 
   void _openCall(BuildContext context) {
-    if (callRepository == null) return;
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => BookingCallScreen(
-          controller: CallController(
-            bookingId: job.id,
-            repository: callRepository!,
-            realtimeClient: controller.realtime,
-            initialSpeakerOn: true,
-          ),
-        ),
-      ),
-    );
+    if (job.customerPhone != null) {
+      const CallController().launchCall(job.customerPhone!);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Phone number unavailable')),
+      );
+    }
   }
 
   static double _haversineDistanceKm(

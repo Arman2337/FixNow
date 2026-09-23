@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&amp;family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "on-primary-fixed": "#002114", "on-primary-container": "#f5fff7", "surface": "#f8f9ff", "on-secondary-container": "#5c647a", "tertiary-container": "#a36700", "tertiary": "#825100", "on-secondary": "#ffffff", "on-primary": "#ffffff", "secondary": "#565e74", "surface-container-lowest": "#ffffff", "secondary-fixed": "#dae2fd", "surface-bright": "#f8f9ff", "outline": "#6d7a72", "inverse-primary": "#68dba9", "tertiary-fixed": "#ffddb8", "on-error-container": "#93000a", "inverse-on-surface": "#eaf1ff", "on-tertiary-container": "#fffbff", "outline-variant": "#bccac0", "on-secondary-fixed-variant": "#3f465c", "surface-tint": "#006c4a", "inverse-surface": "#213145", "on-secondary-fixed": "#131b2e", "secondary-fixed-dim": "#bec6e0", "on-tertiary-fixed": "#2a1700", "error-container": "#ffdad6", "surface-dim": "#cbdbf5", "on-tertiary-fixed-variant": "#653e00", "primary-fixed-dim": "#68dba9", "surface-container-highest": "#d3e4fe", "primary": "#006948", "error": "#ba1a1a", "on-error": "#ffffff", "tertiary-fixed-dim": "#ffb95f", "surface-container": "#e5eeff", "on-surface-variant": "#3d4a42", "primary-fixed": "#85f8c4", "surface-variant": "#d3e4fe", "primary-container": "#00855d", "background": "#f8f9ff", "surface-container-low": "#eff4ff", "on-background": "#0b1c30", "surface-container-high": "#dce9ff", "on-primary-fixed-variant": "#005137", "secondary-container": "#dae2fd", "on-tertiary": "#ffffff", "on-surface": "#0b1c30" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "gutter-desktop": "1.5rem", "space-sm": "0.5rem", "space-md": "1rem", "gutter": "1rem", "margin-tablet": "1.5rem", "margin-desktop": "2rem", "space-lg": "1.5rem", "space-xl": "2rem", "margin": "1rem", "space-xs": "0.25rem" }, "fontFamily": { "label-md": ["Inter"], "body-md": ["Inter"], "price-display": ["Plus Jakarta Sans"], "headline-md": ["Plus Jakarta Sans"], "body-lg": ["Inter"], "body-sm": ["Inter"], "headline-xl-mobile": ["Plus Jakarta Sans"], "headline-lg-mobile": ["Plus Jakarta Sans"], "data-mono": ["Inter"], "headline-xl": ["Plus Jakarta Sans"], "headline-lg": ["Plus Jakarta Sans"], "label-sm": ["Inter"] }, "fontSize": { "label-md": ["13px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "600" }], "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }], "price-display": ["24px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "700" }], "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }], "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }], "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }], "headline-xl-mobile": ["30px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "800" }], "headline-lg-mobile": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "700" }], "data-mono": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }], "headline-xl": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "800" }], "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.015em", "fontWeight": "700" }], "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "600" }] } } } }</script><style>@layer base{html,body{width:100%;margin:0;padding:0;min-height:100%;}body{overscroll-behavior-y:none;background-color:#f8f9ff;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface font-body-md text-on-surface flex flex-col min-h-screen"><header class="fixed top-0 w-full z-50 bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] pt-safe"><div class="h-16 px-margin flex items-center justify-between gap-space-sm"><div class="flex items-center gap-space-sm min-w-0"><span class="font-headline-md text-headline-md text-primary tracking-tight shrink-0">FixNow</span><span class="font-body-md text-body-md text-outline-variant shrink-0">/</span><h1 class="font-headline-md text-headline-md text-on-surface truncate">Bookings</h1></div><div class="flex items-center gap-space-xs shrink-0"><button aria-label="Notifications" class="w-11 h-11 flex items-center justify-center text-on-surface-variant hover:text-on-surface relative rounded-full"><span class="material-symbols-outlined text-[24px]">notifications</span><span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-tertiary-container"></span></button><a class="flex items-center justify-center p-0.5 rounded-full hover:opacity-90" data-path="profile" href="#"><img alt="Profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1UHetTjpd4BB1e8njLlIDDmUsYV1qxX9ZC_wim9sHsXYmSrYRkJpnyD1IHW75IXxc9pB2kik0nzNC98TRCklpEgiq7TkSpL4ITZqzFt8uLi5EyWXYQq9m4a8YI9wZ3o6xvQSkDtb6AI5-x28GAADr5cRCtuuSX9N5FrvCQ7MBueDjttVq6CBcCdMU6PRAQsRnz78gBoZeg_WCxKbdy42V0Um4AxVfE0kNiMNfOiHfuES63iQSWWA34hjob7XGOL3mAbPdCfF9El6g"/></a></div></div></header><main class="flex-1 flex flex-col relative w-full pt-16 pb-20 bg-surface"><div class="flex flex-col w-full">
+<!-- Interactive Toast Notification (Hidden by default) -->
+<div class="fixed top-20 left-4 right-4 z-50 transform -translate-y-24 opacity-0 pointer-events-none transition-all duration-300 flex items-center gap-space-sm bg-inverse-surface text-inverse-on-surface px-space-md py-space-sm rounded-xl shadow-xl" id="receiptToast">
+<span class="material-symbols-outlined text-primary-fixed text-[20px]">check_circle</span>
+<span class="font-label-md text-label-md" id="receiptToastText">Invoice downloaded successfully!</span>
+</div>
+<div class="px-margin pt-space-md pb-space-xl flex flex-col gap-space-md">
+<!-- Top Utility Metadata & Status Bar -->
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex items-center justify-between gap-space-sm">
+<div class="flex flex-col min-w-0">
+<span class="font-data-mono text-data-mono text-secondary">TAX INVOICE</span>
+<span class="font-label-md text-label-md text-on-surface truncate">#INV-2026-0824</span>
+</div>
+<div class="inline-flex items-center gap-1.5 bg-primary-fixed/30 text-on-primary-fixed px-2.5 py-1 rounded-full shrink-0">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-ping"></span>
+<span class="font-label-sm text-label-sm tracking-wide">PAID • VERIFIED</span>
+</div>
+</div>
+<!-- Main Receipt Document Frame -->
+<div class="bg-surface-container-lowest rounded-xl shadow-md overflow-hidden flex flex-col">
+<!-- Mint Branded Decorative Accent Bar -->
+<div class="h-2 w-full bg-gradient-to-r from-primary via-primary-container to-primary-fixed"></div>
+<div class="p-space-md flex flex-col gap-space-lg">
+<!-- Company Header Block -->
+<div class="flex items-start justify-between gap-space-sm pb-space-sm">
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-1.5 text-primary">
+<span class="material-symbols-outlined text-[24px]">verified_user</span>
+<span class="font-headline-md text-headline-md tracking-tight">FixNow</span>
+</div>
+<p class="font-label-sm text-label-sm text-secondary mt-1">FixNow Technologies Pvt Ltd</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">GSTIN: 29AAAAA0000A1Z5</p>
+<p class="font-body-sm text-body-sm text-outline">HSR Sector 2, Bengaluru, KA 560102</p>
+</div>
+<div class="w-12 h-12 rounded-xl bg-surface-container-high flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined text-[28px]">receipt_long</span>
+</div>
+</div>
+<!-- Bill To & Service Details (Asymmetric Grid) -->
+<div class="bg-surface-container-low p-space-md rounded-xl flex flex-col gap-space-md">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Billed To</span>
+<span class="font-label-md text-label-md text-on-surface mt-0.5">Aarav Sharma</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Flat 402, Green Glen Layout, Bellandur, Bengaluru, Karnataka 560103</p>
+</div>
+<div class="grid grid-cols-2 gap-space-sm pt-space-xs">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Date &amp; Time</span>
+<span class="font-body-sm text-body-sm text-on-surface mt-0.5">14 Sep 2026</span>
+<span class="font-data-mono text-data-mono text-outline">11:42 AM IST</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Specialist</span>
+<span class="font-body-sm text-body-sm text-on-surface mt-0.5">Rahul K.</span>
+<div class="inline-flex items-center gap-1 text-primary">
+<span class="material-symbols-outlined text-[14px]">badge</span>
+<span class="font-data-mono text-data-mono">TECH-4412</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Itemized Cost Breakdown -->
+<div class="flex flex-col gap-space-sm">
+<div class="flex items-center justify-between pb-space-xs">
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Particulars</span>
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Amount (INR)</span>
+</div>
+<!-- Line Item 1 -->
+<div class="flex items-start justify-between gap-space-sm py-1">
+<div class="flex flex-col min-w-0">
+<span class="font-body-md text-body-md text-on-surface font-semibold truncate">Base Diagnostic &amp; Labor</span>
+<span class="font-body-sm text-body-sm text-outline">SAC Code: 998719 • Plumbing Inspection</span>
+</div>
+<span class="font-data-mono text-data-mono text-on-surface font-semibold shrink-0">₹249.00</span>
+</div>
+<!-- Line Item 2 -->
+<div class="flex items-start justify-between gap-space-sm py-1">
+<div class="flex flex-col min-w-0">
+<span class="font-body-md text-body-md text-on-surface font-semibold truncate">Brass Angle Valve 1/2"</span>
+<span class="font-body-sm text-body-sm text-outline">HSN: 8481 • Genuine OEM Spare</span>
+</div>
+<span class="font-data-mono text-data-mono text-on-surface font-semibold shrink-0">₹150.00</span>
+</div>
+<!-- Line Item 3 -->
+<div class="flex items-start justify-between gap-space-sm py-1">
+<div class="flex flex-col min-w-0">
+<span class="font-body-md text-body-md text-on-surface font-semibold truncate">Teflon Sealant &amp; Thread Tape</span>
+<span class="font-body-sm text-body-sm text-outline">HSN: 3919 • High-grade joint sealer</span>
+</div>
+<span class="font-data-mono text-data-mono text-on-surface font-semibold shrink-0">₹35.00</span>
+</div>
+<!-- Subtotal & Tax Calcs Container -->
+<div class="mt-space-xs bg-surface-container-lowest p-space-sm rounded-lg flex flex-col gap-1.5">
+<div class="flex justify-between items-center text-on-surface-variant">
+<span class="font-body-sm text-body-sm">Subtotal</span>
+<span class="font-data-mono text-data-mono">₹434.00</span>
+</div>
+<div class="flex justify-between items-center text-on-surface-variant">
+<span class="font-body-sm text-body-sm">CGST (9.0%)</span>
+<span class="font-data-mono text-data-mono">₹18.41</span>
+</div>
+<div class="flex justify-between items-center text-on-surface-variant">
+<span class="font-body-sm text-body-sm">SGST (9.0%)</span>
+<span class="font-data-mono text-data-mono">₹18.41</span>
+</div>
+</div>
+<!-- Grand Total Banner Card -->
+<div class="bg-surface-container-highest p-space-md rounded-xl flex items-center justify-between gap-space-sm mt-space-xs">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Total Paid Amount</span>
+<span class="font-body-sm text-body-sm text-outline">Inclusive of all applicable GST</span>
+</div>
+<span class="font-headline-lg-mobile text-headline-lg-mobile text-primary font-bold tracking-tight shrink-0">₹470.82</span>
+</div>
+</div>
+<!-- Payment Method Settlement Indicator -->
+<div class="bg-surface-container-low p-space-md rounded-xl flex items-center justify-between gap-space-sm">
+<div class="flex items-center gap-space-sm min-w-0">
+<div class="w-9 h-9 rounded-full bg-surface-container-lowest flex items-center justify-center text-primary shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-[20px]">account_balance_wallet</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-md text-label-md text-on-surface truncate">UPI Auto-settle</span>
+<span class="font-data-mono text-data-mono text-outline truncate">Ref #UPI-84920491</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-primary text-[22px] shrink-0" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<!-- 30-Day FixNow Trust Warranty Certificate Banner -->
+<div class="relative overflow-hidden bg-gradient-to-br from-primary-container to-primary text-on-primary p-space-md rounded-xl shadow-sm flex items-center gap-space-md">
+<div class="w-12 h-12 rounded-full bg-on-primary/15 backdrop-blur-md flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-primary-fixed text-[28px]" style="font-variation-settings: 'FILL' 1;">workspace_premium</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-1.5">
+<span class="font-label-md text-label-md font-bold tracking-wide text-on-primary">FixNow 30-Day Trust Guarantee</span>
+<span class="material-symbols-outlined text-[16px] text-primary-fixed">verified</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-primary-container mt-0.5 line-clamp-2">Complete peace of mind. Free rework and parts warranty active until 14 Oct 2026.</p>
+</div>
+</div>
+</div>
+<!-- Scalloped Stamp Footer Note -->
+<div class="bg-surface-container-low px-space-md py-space-sm text-center">
+<p class="font-label-sm text-label-sm text-secondary">Computer generated invoice. No physical signature required under IT Act 2000.</p>
+</div>
+</div>
+<!-- Action Controls -->
+<div class="flex flex-col gap-space-sm pt-space-xs">
+<!-- Primary: Download PDF -->
+<button class="w-full h-12 bg-primary hover:bg-primary-container active:scale-[0.99] transition-all text-on-primary font-label-md text-label-md rounded-xl flex items-center justify-center gap-2 shadow-sm" id="downloadPdfBtn">
+<span class="material-symbols-outlined text-[20px]">download</span>
+<span>Download PDF Invoice</span>
+</button>
+<!-- Secondary Row: WhatsApp & Dispute -->
+<div class="grid grid-cols-2 gap-space-sm">
+<button class="h-12 bg-surface-container-lowest hover:bg-surface-container-low active:scale-[0.99] transition-all text-on-surface font-label-md text-label-md rounded-xl flex items-center justify-center gap-1.5 shadow-sm" id="shareWaBtn">
+<span class="material-symbols-outlined text-[20px] text-primary">share</span>
+<span class="truncate">Share via WhatsApp</span>
+</button>
+<button class="h-12 bg-surface-container-lowest hover:bg-surface-container-low active:scale-[0.99] transition-all text-error font-label-md text-label-md rounded-xl flex items-center justify-center gap-1.5 shadow-sm" id="disputeBtn">
+<span class="material-symbols-outlined text-[20px]">contact_support</span>
+<span class="truncate">Dispute / Help</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<script>
+  (function() {
+    const toast = document.getElementById('receiptToast');
+    const toastText = document.getElementById('receiptToastText');
+    const downloadBtn = document.getElementById('downloadPdfBtn');
+    const shareBtn = document.getElementById('shareWaBtn');
+    const disputeBtn = document.getElementById('disputeBtn');
+
+    let toastTimeout;
+
+    function showToast(msg) {
+      if (toastTimeout) clearTimeout(toastTimeout);
+      toastText.textContent = msg;
+      toast.classList.remove('-translate-y-24', 'opacity-0', 'pointer-events-none');
+      toast.classList.add('translate-y-0', 'opacity-100');
+
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('-translate-y-24', 'opacity-0', 'pointer-events-none');
+      }, 2600);
+    }
+
+    if (downloadBtn) {
+      downloadBtn.addEventListener('click', function() {
+        showToast('Downloading Tax Invoice #INV-2026-0824...');
+      });
+    }
+
+    if (shareBtn) {
+      shareBtn.addEventListener('click', function() {
+        showToast('Opening WhatsApp to share receipt...');
+      });
+    }
+
+    if (disputeBtn) {
+      disputeBtn.addEventListener('click', function() {
+        showToast('Connecting to FixNow Priority Care...');
+      });
+    }
+  })();
+</script></main><nav class="fixed bottom-0 w-full z-50 pb-safe bg-surface/90 backdrop-blur-xl shadow-[0_-2px_12px_rgba(0,0,0,0.05)]" data-active-classes="text-primary font-bold"><div class="flex justify-around items-center h-16 px-space-xs"><a class="flex flex-col items-center justify-center gap-space-xs w-16 h-12 text-on-surface-variant transition-colors" data-path="explore" href="#"><span class="material-symbols-outlined text-[24px]">explore</span><span class="font-label-sm text-label-sm">Explore</span></a><a aria-current="page" class="flex flex-col items-center justify-center gap-space-xs w-16 h-12 transition-colors text-primary font-bold" data-path="bookings" href="#"><span class="material-symbols-outlined text-[24px]">handyman</span><span class="font-label-sm text-label-sm">Bookings</span></a><a class="flex flex-col items-center justify-center gap-space-xs w-16 h-12 text-on-surface-variant transition-colors" data-path="rewards" href="#"><span class="material-symbols-outlined text-[24px]">verified</span><span class="font-label-sm text-label-sm">Rewards</span></a><a class="flex flex-col items-center justify-center gap-space-xs w-16 h-12 text-on-surface-variant transition-colors" data-path="profile" href="#"><span class="material-symbols-outlined text-[24px]">account_circle</span><span class="font-label-sm text-label-sm">Profile</span></a></div></nav></body></html>

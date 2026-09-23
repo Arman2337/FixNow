@@ -2,7 +2,7 @@
 import { NotFoundException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { ProviderApplicationEntity } from './provider-application.entity';
 import { ProviderProfileEntity } from './provider-profile.entity';
 import { ProviderProfileService } from './provider-profile.service';
@@ -37,11 +37,23 @@ describe('ProviderProfileService', () => {
         },
         {
           provide: getRepositoryToken(ProviderApplicationEntity),
-          useValue: { findOne: jest.fn() },
+          useValue: {
+            findOne: jest.fn(),
+          },
         },
         {
           provide: getRepositoryToken(ProviderSkillEntity),
-          useValue: { find: jest.fn() },
+          useValue: {
+            find: jest.fn(),
+            count: jest.fn(),
+          },
+        },
+        {
+          provide: DataSource,
+          useValue: {
+            transaction: jest.fn(),
+            query: jest.fn().mockResolvedValue([{ rating: 0, reviewsCount: 0 }]),
+          },
         },
       ],
     }).compile();
@@ -59,6 +71,12 @@ describe('ProviderProfileService', () => {
     await expect(service.getOwnProfile('provider-id')).resolves.toEqual({
       ...profile,
       skillIds: ['skill-id'],
+      stats: {
+        acceptanceRate: 98,
+        completedJobs: 0,
+        earningsMinor: 0,
+        rating: 0,
+      },
     });
     expect(profiles.findOne).toHaveBeenCalledWith({
       where: { userId: 'provider-id' },

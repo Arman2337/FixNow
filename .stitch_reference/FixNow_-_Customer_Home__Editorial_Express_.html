@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+
+<html class="h-full bg-[#F8FAFC]" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<title>FixNow - Fast, Verified Home Services</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#ECFDF5',
+              100: '#D1FAE5',
+              200: '#A7F3D0',
+              500: '#10B981',
+              600: '#059669',
+              700: '#047857',
+              800: '#065F46',
+              900: '#064E3B',
+            },
+            primary: "#059669",
+            "primary-container": "#047857",
+            surface: "#F8FAFC",
+            "surface-container": "#F1F5F9",
+            "on-surface": "#0F172A",
+            "on-surface-variant": "#64748B",
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
+            display: ['"Plus Jakarta Sans"', 'sans-serif'],
+            body: ['Inter', 'sans-serif']
+          },
+          boxShadow: {
+            'soft': '0 4px 20px -2px rgba(15, 23, 42, 0.05)',
+            'card': '0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04)',
+            'glow-emerald': '0 0 25px -3px rgba(5, 150, 105, 0.25)',
+            'glow-danger': '0 0 20px -2px rgba(239, 68, 68, 0.35)',
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    @layer base {
+      html, body {
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        background-color: #F8FAFC;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .pb-safe {
+        padding-bottom: env(safe-area-inset-bottom, 16px);
+      }
+      .pt-safe {
+        padding-top: env(safe-area-inset-top, 0px);
+      }
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    @keyframes pulseGlow {
+      0%, 100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+      }
+      50% {
+        box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+      }
+    }
+    .sos-pulse-border {
+      animation: pulseGlow 2.5s infinite;
+    }
+  </style>
+</head>
+<body class="bg-[#F8FAFC] text-slate-900 min-h-screen flex flex-col antialiased selection:bg-emerald-100 selection:text-emerald-900 pb-24">
+<!-- TOP HEADER & BRAND BAR -->
+<header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-[0_2px_12px_-4px_rgba(15,23,42,0.04)] pt-safe">
+<div class="px-4 pt-3 pb-3 flex items-center justify-between gap-3">
+<!-- Brand Logo & Location selector -->
+<div class="flex items-center gap-2.5 min-w-0 flex-1">
+<img alt="FixNow Logo" class="w-9 h-9 rounded-xl object-contain shadow-sm ring-1 ring-emerald-500/20 flex-shrink-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDA7KNBaMUp5hZ0nYGPWX6cglRpcwpFbRgRv3tGMbEeBc35vyotRCWY75X4ixgwLjDl_vH88ITLNRb4MJjm8idDDUvd066X-4KZ44qCyIMBSk_TWq-0aRCHF_EG3UQN1IyHz84kqXYVlNXZPKq0zlsRS21G07ozxgapYgFL3LOpiNDkZdajPheZLO9j7E-cEuMbY8XpwbfkXzJqHzyVptVusSfyac_-RihLJ6Eu84_mYacSlumC3Pi0szCIuNEnJWUskQ"/>
+<div class="min-w-0 flex flex-col">
+<div class="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-emerald-700">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            FixNow Express
+          </div>
+<button class="flex items-center gap-1 text-slate-900 font-bold text-[13px] leading-tight hover:text-emerald-700 transition-colors truncate group text-left" type="button">
+<span class="truncate">Home • Flat 402, Green Glen Layout, Bellandur</span>
+<span class="material-symbols-outlined text-[17px] text-slate-400 group-hover:text-emerald-600 transition-transform">expand_more</span>
+</button>
+</div>
+</div>
+<!-- Action items: Notifications + Profile -->
+<div class="flex items-center gap-1.5 flex-shrink-0">
+<button aria-label="Notifications" class="w-9 h-9 rounded-full flex items-center justify-center text-slate-700 hover:bg-slate-100 active:scale-95 transition-all relative border border-slate-200/80">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+<span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white"></span>
+</button>
+<div class="w-9 h-9 rounded-full ring-2 ring-emerald-500/30 p-0.5 relative cursor-pointer active:scale-95 transition-transform">
+<img alt="Customer Profile" class="w-full h-full rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCaImRQWvglaLVEq4igCfqXDp2U9Ztf3zbHBqr6GkXt9G2yRQGBcIKVeobT5N3jMOydUK2YLVi_WS5zwv56vwl0ekyoRofbPpbrXP4z0xND1mGc5TuGyjSFtr9uRdwpFJmQ44tJggC0CvJukr_fNCGy9sYhv6eSIC3VSpKvO7IFNXn5SmP7DYifPzPge0PYeJZocfZfPxGyfoqRF_9zgbuw6fQTwgZZaEDMCZvcNSk3IeAJFNXDjdK8"/>
+</div>
+</div>
+</div>
+</header>
+<main class="flex-1 flex flex-col space-y-4 px-4 pt-3.5 max-w-md mx-auto w-full">
+<!-- GREETING & HERO SEARCH -->
+<section class="space-y-3">
+<div class="flex items-baseline justify-between">
+<div>
+<h1 class="text-[20px] font-extrabold tracking-tight text-slate-900">Good morning, Aarav ✨</h1>
+<p class="text-[13px] font-medium text-slate-500 mt-0.5">Fast, verified home services at your doorstep</p>
+</div>
+<div class="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 text-[11px] font-bold border border-emerald-200/60">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-ping"></span>
+          42 Pros Active
+        </div>
+</div>
+<!-- Floating High-Contrast Search Bar -->
+<div class="relative flex items-center shadow-soft">
+<span class="material-symbols-outlined absolute left-3.5 text-slate-400 text-[21px] pointer-events-none">search</span>
+<input class="w-full h-12 pl-11 pr-20 rounded-2xl bg-white border border-slate-200/90 text-[14px] text-slate-900 placeholder:text-slate-400 font-medium focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all shadow-sm" placeholder="Search 'switchboard repair', 'AC service'..." type="text"/>
+<div class="absolute right-2 flex items-center gap-1">
+<button aria-label="Voice Search" class="w-8 h-8 rounded-xl flex items-center justify-center text-slate-500 hover:text-emerald-600 hover:bg-slate-100 transition-colors active:scale-95">
+<span class="material-symbols-outlined text-[19px]">mic</span>
+</button>
+<button aria-label="Filter" class="w-8 h-8 rounded-xl flex items-center justify-center bg-slate-100 text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors active:scale-95">
+<span class="material-symbols-outlined text-[18px]">tune</span>
+</button>
+</div>
+</div>
+</section>
+<!-- LIVE ACTIVE DISPATCH BANNER (Dismissible/Trackable) -->
+<section class="transition-all duration-300" id="activeBookingCard">
+<div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 text-white p-3.5 shadow-lg border border-slate-700/60">
+<!-- Background subtle particle glow -->
+<div class="absolute -right-8 -top-8 w-28 h-28 bg-emerald-500/20 rounded-full blur-2xl pointer-events-none"></div>
+<div class="flex items-start justify-between gap-2 relative z-10">
+<div class="flex items-center gap-2">
+<span class="relative flex h-3 w-3">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+<span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+</span>
+<span class="text-[11px] font-bold uppercase tracking-wider text-emerald-400">Technician En Route</span>
+</div>
+<button aria-label="Minimize" class="text-slate-400 hover:text-white text-xs" onclick="document.getElementById('activeBookingCard').classList.add('hidden')">
+<span class="material-symbols-outlined text-[16px]">close</span>
+</button>
+</div>
+<div class="mt-2 flex items-center justify-between gap-3 relative z-10">
+<div class="flex items-center gap-2.5 min-w-0">
+<div class="relative flex-shrink-0">
+<img alt="Rahul K." class="w-10 h-10 rounded-full object-cover border border-emerald-400/50" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB565PgUpxtDKxt6fDDA4HPlqdoQSSkaZpxlNoNQKf7bxE7jnokBM2-tl4Zeh5ggxaSlMSK2IZ_EI8S8QtVa5FcD7uCNaI6RzThzCKGUL4mnQpNw5pZf9TEdbZm-0yJtKc5tP6ro6gL8NBi8MBsaYXj3L9igugq4-u7yBWTjG3XHkURG7VUlECav_RiTjrKs-ihdnnjJ3eTcFiPbeIV49faB8kfj0A8bBkUWuCcE73x5Eu8AOD8LZht"/>
+<span class="absolute -bottom-1 -right-1 bg-emerald-600 text-white rounded-full p-0.5 text-[10px] flex items-center justify-center">
+<span class="material-symbols-outlined text-[11px]">bolt</span>
+</span>
+</div>
+<div class="min-w-0">
+<h4 class="text-[13px] font-bold text-white truncate">Rahul K. arriving in 7 mins</h4>
+<p class="text-[12px] text-slate-300 truncate">Kitchen Tap Repair &amp; Leak Seal</p>
+</div>
+</div>
+<div class="flex flex-col items-end flex-shrink-0">
+<div class="text-[10px] uppercase font-semibold text-slate-400 tracking-wider">Start PIN</div>
+<span class="font-mono text-[13px] font-extrabold text-emerald-300 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-500/40 tracking-wider">4821</span>
+</div>
+</div>
+<div class="mt-3 pt-2.5 border-t border-slate-700/60 flex items-center justify-between gap-2 text-xs relative z-10">
+<div class="flex items-center gap-1.5 text-slate-300 text-[11px]">
+<span class="material-symbols-outlined text-[15px] text-emerald-400">moped</span>
+<span>0.8 km away • 27th Main HSR</span>
+</div>
+<button class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-[12px] transition-all active:scale-95 shadow-sm shadow-emerald-950" type="button">
+<span class="material-symbols-outlined text-[15px]">navigation</span>
+<span>Track Live</span>
+</button>
+</div>
+</div>
+</section>
+<!-- 24/7 EMERGENCY SOS VORTEX CARD -->
+<section>
+<div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-rose-600 via-rose-700 to-red-800 text-white p-3.5 shadow-md border-2 border-rose-400/60 sos-pulse-border">
+<!-- Floating Hazard graphic overlay -->
+<div class="absolute -right-5 -bottom-5 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+<div class="flex items-center justify-between relative z-10">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-[20px] animate-pulse">crisis_alert</span>
+</div>
+<div>
+<div class="flex items-center gap-1.5">
+<span class="text-[14px] font-extrabold tracking-tight">24/7 Emergency Dispatch</span>
+<span class="bg-white text-rose-700 text-[10px] font-black px-1.5 py-0.5 rounded-full uppercase">15m ETA</span>
+</div>
+<p class="text-[11px] text-rose-100 font-medium">Sparking panels, major pipe bursts &amp; gas leaks</p>
+</div>
+</div>
+<button class="px-3 py-2 bg-white text-rose-700 hover:bg-rose-50 rounded-xl font-bold text-[12px] shadow flex items-center gap-1 active:scale-95 transition-transform flex-shrink-0" type="button">
+<span class="material-symbols-outlined text-[16px]">call</span>
+<span>Get Urgent Help</span>
+</button>
+</div>
+</div>
+</section>
+<!-- QUICK FILTER CHIPS -->
+<section>
+<div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 -mx-4 px-4">
+<button class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-600 text-white font-semibold text-[12px] whitespace-nowrap shadow-sm active:scale-95 transition-all flex-shrink-0">
+<span class="material-symbols-outlined text-[15px]">bolt</span>
+<span>⚡ Instant 15-Min</span>
+</button>
+<button class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-slate-200 text-slate-700 font-semibold text-[12px] whitespace-nowrap hover:bg-slate-50 active:scale-95 transition-all flex-shrink-0 shadow-sm">
+<span>⭐ Top Rated</span>
+</button>
+<button class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-slate-200 text-slate-700 font-semibold text-[12px] whitespace-nowrap hover:bg-slate-50 active:scale-95 transition-all flex-shrink-0 shadow-sm">
+<span>🛡️ Warranty Covered</span>
+</button>
+<button class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-slate-200 text-slate-700 font-semibold text-[12px] whitespace-nowrap hover:bg-slate-50 active:scale-95 transition-all flex-shrink-0 shadow-sm">
+<span>🏷️ Special Offers</span>
+</button>
+</div>
+</section>
+<!-- FIXAI MULTIMODAL DIAGNOSIS HERO BANNER -->
+<section>
+<div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-800 via-teal-800 to-emerald-900 text-white p-4 shadow-soft">
+<div class="absolute -top-6 -right-6 w-32 h-32 bg-emerald-400/20 rounded-full blur-2xl pointer-events-none"></div>
+<div class="flex items-start gap-3.5 relative z-10">
+<div class="w-11 h-11 rounded-2xl bg-white/15 backdrop-blur border border-white/20 flex items-center justify-center text-emerald-300 flex-shrink-0 shadow-inner">
+<span class="material-symbols-outlined text-[26px]">smart_toy</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-2">
+<span class="text-[11px] font-extrabold uppercase tracking-widest text-emerald-300">FixAI Diagnostics</span>
+<span class="bg-emerald-500/40 text-emerald-200 text-[10px] font-bold px-1.5 py-0.2 rounded-full border border-emerald-400/30">GEN-AI</span>
+</div>
+<h3 class="text-[14px] font-bold text-white mt-0.5">Can't explain the issue?</h3>
+<p class="text-[12px] text-emerald-100/90 leading-snug mt-1">
+              Snap a photo or record audio for instant failure diagnosis &amp; upfront price estimate.
+            </p>
+<div class="mt-3 flex items-center gap-2">
+<button class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold text-[12px] transition-all active:scale-95 shadow-sm" type="button">
+<span class="material-symbols-outlined text-[16px]">photo_camera</span>
+<span>Scan Problem Now</span>
+</button>
+<button class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-white/15 hover:bg-white/25 text-white font-semibold text-[12px] backdrop-blur transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">mic</span>
+<span>Speak</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- CURATED SERVICE CATEGORIES GRID (10 Categories) -->
+<section class="space-y-2.5">
+<div class="flex items-center justify-between">
+<div>
+<h2 class="text-[16px] font-bold text-slate-900 tracking-tight">Explore Categories</h2>
+<p class="text-[12px] text-slate-500">Verified upfront pricing &amp; 30-day rework warranty</p>
+</div>
+<span class="text-[12px] font-bold text-emerald-600 hover:text-emerald-700 cursor-pointer">View All</span>
+</div>
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+<!-- 1. Electrical -->
+<div class="group bg-white rounded-2xl p-3 border border-slate-200/80 shadow-card hover:shadow-md hover:border-emerald-200 transition-all cursor-pointer active:scale-[0.98]">
+<div class="flex items-center justify-between mb-2">
+<div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-[24px]">electric_bolt</span>
+</div>
+<span class="text-[11px] font-extrabold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md">From ₹199</span>
+</div>
+<h3 class="text-[13px] font-bold text-slate-900">Electrical</h3>
+<p class="text-[11px] text-slate-500 truncate">Fans, switches &amp; fuses</p>
+<div class="mt-2 flex items-center gap-1 text-[10px] text-slate-400 font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+<span>42 pros nearby</span>
+</div>
+</div>
+<!-- 2. Plumbing -->
+<div class="group bg-white rounded-2xl p-3 border border-slate-200/80 shadow-card hover:shadow-md hover:border-emerald-200 transition-all cursor-pointer active:scale-[0.98]">
+<div class="flex items-center justify-between mb-2">
+<div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-[24px]">water_damage</span>
+</div>
+<span class="text-[11px] font-extrabold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md">From ₹249</span>
+</div>
+<h3 class="text-[13px] font-bold text-slate-900">Plumbing</h3>
+<p class="text-[11px] text-slate-500 truncate">Taps, blocks &amp; drains</p>
+<div class="mt-2 flex items-center gap-1 text-[10px] text-slate-400 font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+<span>38 pros nearby</span>
+</div>
+</div>
+<!-- 3. AC Servicing -->
+<div class="group bg-white rounded-2xl p-3 border border-slate-200/80 shadow-card hover:shadow-md hover:border-emerald-200 transition-all cursor-pointer active:scale-[0.98] relative overflow-hidden">
+<div class="absolute top-0 right-0 bg-rose-500 text-white font-extrabold text-[9px] px-2 py-0.5 rounded-bl-lg uppercase tracking-wide">Popular</div>
+<div class="flex items-center justify-between mb-2">
+<div class="w-10 h-10 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-[24px]">mode_fan</span>
+</div>
+<span class="text-[11px] font-extrabold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md">From ₹499</span>
+</div>
+<h3 class="text-[13px] font-bold text-slate-900">AC Servicing</h3>
+<p class="text-[11px] text-slate-500 truncate">Deep jet clean &amp; gas</p>
+<div class="mt-2 flex items-center gap-1 text-[10px] text-slate-400 font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+<span>26 pros nearby</span>
+</div>
+</div>
+<!-- 4. Appliance Repair -->
+<div class="group bg-white rounded-2xl p-3 border border-slate-200/80 shadow-card hover:shadow-md hover:border-emerald-200 transition-all cursor-pointer active:scale-[0.98]">
+<div class="flex items-center justify-between mb-2">
+<div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-[24px]">kitchen</span>
+</div>
+<span class="text-[11px] font-extrabold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md">From ₹299</span>
+</div>
+<h3 class="text-[13px] font-bold text-slate-900">Appliance Fix</h3>
+<p class="text-[11px] text-slate-500 truncate">Washing machine &amp; RO</p>
+<div class="mt-2 flex items-center gap-1 text-[10px] text-slate-400 font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+<span>19 pros nearby</span>
+</div>
+</div>
+<!-- 5. Carpentry -->
+<div class="group bg-white rounded-2xl p-3 border border-slate-200/80 shadow-card hover:shadow-md hover:border-emerald-200 transition-all cursor-pointer active:scale-[0.98]">
+<div class="flex items-center justify-between mb-2">
+<div class="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-[24px]">carpenter</span>
+</div>
+<span class="text-[11px] font-extrabold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md">From ₹299</span>
+</div>
+<h3 class="text-[13px] font-bold text-slate-900">Carpentry</h3>
+<p class="text-[11px] text-slate-500 truncate">Doors, locks &amp; hinges</p>
+<div class="mt-2 flex items-center gap-1 text-[10px] text-slate-400 font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+<span>15 pros nearby</span>
+</div>
+</div>
+<!-- 6. Deep Cleaning -->
+<div class="group bg-white rounded-2xl p-3 border border-slate-200/80 shadow-card hover:shadow-md hover:border-emerald-200 transition-all cursor-pointer active:scale-[0.98]">
+<div class="flex items-center justify-between mb-2">
+<div class="w-10 h-10 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-[24px]">cleaning_services</span>
+</div>
+<span class="text-[11px] font-extrabold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md">From ₹449</span>
+</div>
+<h3 class="text-[13px] font-bold text-slate-900">Deep Cleaning</h3>
+<p class="text-[11px] text-slate-500 truncate">Bathrooms &amp; kitchen</p>
+<div class="mt-2 flex items-center gap-1 text-[10px] text-slate-400 font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+<span>31 pros nearby</span>
+</div>
+</div>
+<!-- 7. Painting & Water-proof -->
+<div class="group bg-white rounded-2xl p-3 border border-slate-200/80 shadow-card hover:shadow-md hover:border-emerald-200 transition-all cursor-pointer active:scale-[0.98]">
+<div class="flex items-center justify-between mb-2">
+<div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-[24px]">format_paint</span>
+</div>
+<span class="text-[11px] font-extrabold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md">From ₹699</span>
+</div>
+<h3 class="text-[13px] font-bold text-slate-900">Painting</h3>
+<p class="text-[11px] text-slate-500 truncate">Rooms &amp; water proofing</p>
+<div class="mt-2 flex items-center gap-1 text-[10px] text-slate-400 font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+<span>12 pros nearby</span>
+</div>
+</div>
+<!-- 8. Locksmith & Safe -->
+<div class="group bg-white rounded-2xl p-3 border border-slate-200/80 shadow-card hover:shadow-md hover:border-emerald-200 transition-all cursor-pointer active:scale-[0.98]">
+<div class="flex items-center justify-between mb-2">
+<div class="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-[24px]">lock_open</span>
+</div>
+<span class="text-[11px] font-extrabold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md">From ₹349</span>
+</div>
+<h3 class="text-[13px] font-bold text-slate-900">Locksmith</h3>
+<p class="text-[11px] text-slate-500 truncate">Emergency lock open</p>
+<div class="mt-2 flex items-center gap-1 text-[10px] text-slate-400 font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+<span>8 pros nearby</span>
+</div>
+</div>
+</div>
+</section>
+<!-- "BOOK AGAIN" QUICK RE-DISPATCH CARD -->
+<section>
+<div class="bg-white rounded-2xl p-3.5 border border-slate-200/90 shadow-soft">
+<div class="flex items-center justify-between mb-2.5">
+<span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px] text-emerald-600">history</span>
+            Book Again
+          </span>
+<span class="text-[11px] font-semibold text-slate-500">Completed 3 weeks ago</span>
+</div>
+<div class="flex items-center justify-between gap-3">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-700 flex-shrink-0">
+<span class="material-symbols-outlined text-[22px]">mode_fan</span>
+</div>
+<div class="min-w-0">
+<h4 class="text-[13px] font-bold text-slate-900 truncate">Ceiling Fan Installation &amp; Regulator</h4>
+<p class="text-[11px] text-slate-500">Master Bedroom • ₹249 total paid</p>
+</div>
+</div>
+<button class="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-[12px] border border-emerald-200/80 transition-colors whitespace-nowrap active:scale-95" type="button">
+            Repeat Job
+          </button>
+</div>
+</div>
+</section>
+<!-- TRENDING IN BELLANDUR (Horizontal Rail) -->
+<section class="space-y-2.5">
+<div class="flex items-center justify-between">
+<div>
+<h2 class="text-[16px] font-bold text-slate-900 tracking-tight">Trending in Bellandur</h2>
+<p class="text-[12px] text-slate-500">Most booked repairs within 3 km of you</p>
+</div>
+<span class="text-xs font-semibold text-emerald-700 cursor-pointer">See More</span>
+</div>
+<div class="flex gap-3 overflow-x-auto no-scrollbar pb-1 -mx-4 px-4">
+<!-- Card 1 -->
+<div class="w-[210px] flex-shrink-0 bg-white rounded-2xl border border-slate-200/90 shadow-soft overflow-hidden flex flex-col justify-between">
+<div class="h-28 relative overflow-hidden">
+<img alt="Switchboard repair" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD8zP5f0KGROuMkz5rhncppZwzc32RQnUGc99Tu1xZMT8gLBvJryHYpQepb6V6grTK7cTyAtE8ezANTieEMdCqjs63wOtM-O5qQMLHD-K40WVwgXXyEvmw7QGc5_ZASttajECmFohQz-JIXVnQb-1A0wzdnvLXwMYcuAP8rodi8rsVbdRr9TtMdRtWBqn_LuvJHBwgUXyQKEUb7dlb1dnIlXno_1NAQkowSKWtA54t6bpDmCypLBKTY"/>
+<div class="absolute top-2 left-2 bg-slate-900/80 backdrop-blur-md text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px] text-amber-400">star</span>
+<span>4.9 (1.2k)</span>
+</div>
+<span class="absolute bottom-2 left-2 bg-emerald-600 text-white font-bold text-[10px] px-2 py-0.5 rounded-full">30m arrival</span>
+</div>
+<div class="p-3 flex flex-col justify-between flex-1">
+<div>
+<h4 class="text-[13px] font-bold text-slate-900 leading-snug">Modular Switch &amp; Socket Repair</h4>
+<p class="text-[11px] text-slate-500 mt-0.5">Includes short-circuit diagnostic</p>
+</div>
+<div class="mt-3 flex items-center justify-between pt-2 border-t border-slate-100">
+<span class="text-[14px] font-black text-slate-900">₹149</span>
+<button class="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[12px] shadow-sm active:scale-95 transition-all" type="button">
+                + Add
+              </button>
+</div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="w-[210px] flex-shrink-0 bg-white rounded-2xl border border-slate-200/90 shadow-soft overflow-hidden flex flex-col justify-between">
+<div class="h-28 relative overflow-hidden">
+<img alt="Tap Leakage repair" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDsUhoLKjQOGnbWNZc4zae0NEtGNyeL3K1pkQu41qviau65CwjB1WmvrTZwnMpwJCmGTGD9BG6ORmfSaaJ1VxxNKR9Lr01prSW58ShWbOiZqTQYHYqZc8349ZMCP7MBH-WnskJhwXwvf0UQhDpy4scSJaL6nEd3PqaAm934_sAkVj3000jGglgHFiSnjCfIdqeNfeegWu7Czs3O5Xv53RW9D-hNBt4vyVvjbysXOErW-1ucNySucOVp"/>
+<div class="absolute top-2 left-2 bg-slate-900/80 backdrop-blur-md text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px] text-amber-400">star</span>
+<span>4.8 (890)</span>
+</div>
+<span class="absolute bottom-2 left-2 bg-emerald-600 text-white font-bold text-[10px] px-2 py-0.5 rounded-full">20m arrival</span>
+</div>
+<div class="p-3 flex flex-col justify-between flex-1">
+<div>
+<h4 class="text-[13px] font-bold text-slate-900 leading-snug">Kitchen Tap &amp; Spout Replacement</h4>
+<p class="text-[11px] text-slate-500 mt-0.5">Zero leak gasket seal included</p>
+</div>
+<div class="mt-3 flex items-center justify-between pt-2 border-t border-slate-100">
+<span class="text-[14px] font-black text-slate-900">₹199</span>
+<button class="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[12px] shadow-sm active:scale-95 transition-all" type="button">
+                + Add
+              </button>
+</div>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="w-[210px] flex-shrink-0 bg-white rounded-2xl border border-slate-200/90 shadow-soft overflow-hidden flex flex-col justify-between">
+<div class="h-28 relative overflow-hidden">
+<img alt="AC Filter wash" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBBXRG3uYwwUeXFKPFhbfkrfKwooAYIDzG4EADcW9VoZq4EmdW-sT9lxLVAVu3V2OngtBU5H16Hnd-sSYC6Anj9Wr0jGNSURXZQXvqZknH74lMW_y0EDs6mz6yqrN-41QGnj8enLdytjQXOQEBDXZZjswnaKVrBC5CosHJZjIrPhI98PnmUbbigV0K5uUbnddySIdc3278Mtxpsys9gB4enoRQK4PdqG8GAOZ37wtc11Ch3h1ol7vSH"/>
+<div class="absolute top-2 left-2 bg-slate-900/80 backdrop-blur-md text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px] text-amber-400">star</span>
+<span>4.9 (2.4k)</span>
+</div>
+<span class="absolute bottom-2 left-2 bg-emerald-600 text-white font-bold text-[10px] px-2 py-0.5 rounded-full">45m session</span>
+</div>
+<div class="p-3 flex flex-col justify-between flex-1">
+<div>
+<h4 class="text-[13px] font-bold text-slate-900 leading-snug">Power Saver AC Jet Foam Wash</h4>
+<p class="text-[11px] text-slate-500 mt-0.5">Deep coil sanitation &amp; tray drain</p>
+</div>
+<div class="mt-3 flex items-center justify-between pt-2 border-t border-slate-100">
+<span class="text-[14px] font-black text-slate-900">₹449</span>
+<button class="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[12px] shadow-sm active:scale-95 transition-all" type="button">
+                + Add
+              </button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- TRUST & ASSURANCE SHIELD FOOTER CARD -->
+<section class="pt-2">
+<div class="bg-emerald-950 text-white rounded-2xl p-4 relative overflow-hidden shadow-soft">
+<div class="absolute -right-6 -bottom-6 w-32 h-32 bg-emerald-600/10 rounded-full blur-xl pointer-events-none"></div>
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-emerald-400 text-[20px]">verified_user</span>
+<h3 class="text-[13px] font-extrabold tracking-wide uppercase text-emerald-300">FixNow Shield Promise</h3>
+</div>
+<div class="grid grid-cols-3 gap-2 text-center pt-2 border-t border-emerald-800/60">
+<div class="p-1">
+<span class="material-symbols-outlined text-emerald-400 text-[18px]">badge</span>
+<div class="text-[11px] font-bold text-white mt-1">100% Verified</div>
+<div class="text-[10px] text-slate-300">Police checked</div>
+</div>
+<div class="p-1 border-x border-emerald-800/60">
+<span class="material-symbols-outlined text-emerald-400 text-[18px]">price_check</span>
+<div class="text-[11px] font-bold text-white mt-1">₹0 Hidden Costs</div>
+<div class="text-[10px] text-slate-300">MRP transparency</div>
+</div>
+<div class="p-1">
+<span class="material-symbols-outlined text-emerald-400 text-[18px]">published_with_changes</span>
+<div class="text-[11px] font-bold text-white mt-1">30-Day Cover</div>
+<div class="text-[10px] text-slate-300">Free rework warranty</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- PREMIUM MODERN BOTTOM NAVIGATION (4 Tabs) -->
+<nav class="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-slate-200/80 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+<div class="max-w-md mx-auto h-16 px-4 flex items-center justify-around">
+<!-- 1. Explore (Active) -->
+<a class="flex flex-col items-center justify-center flex-1 text-emerald-600 font-bold transition-all" href="#">
+<span class="material-symbols-outlined text-[24px]">home_repair_service</span>
+<span class="text-[11px] mt-0.5 tracking-tight font-bold">Explore</span>
+</a>
+<!-- 2. Bookings (With Badge) -->
+<a class="flex flex-col items-center justify-center flex-1 text-slate-500 hover:text-slate-900 transition-all relative" href="#">
+<div class="relative">
+<span class="material-symbols-outlined text-[24px]">calendar_month</span>
+<span class="absolute -top-1 -right-2 px-1.5 py-0.2 bg-emerald-600 text-white font-extrabold text-[10px] rounded-full leading-tight ring-2 ring-white">1</span>
+</div>
+<span class="text-[11px] mt-0.5 tracking-tight font-medium">Bookings</span>
+</a>
+<!-- 3. Disputes / Help -->
+<a class="flex flex-col items-center justify-center flex-1 text-slate-500 hover:text-slate-900 transition-all" href="#">
+<span class="material-symbols-outlined text-[24px]">support_agent</span>
+<span class="text-[11px] mt-0.5 tracking-tight font-medium">Help</span>
+</a>
+<!-- 4. Profile -->
+<a class="flex flex-col items-center justify-center flex-1 text-slate-500 hover:text-slate-900 transition-all" href="#">
+<span class="material-symbols-outlined text-[24px]">person</span>
+<span class="text-[11px] mt-0.5 tracking-tight font-medium">Profile</span>
+</a>
+</div>
+</nav>
+</body></html>

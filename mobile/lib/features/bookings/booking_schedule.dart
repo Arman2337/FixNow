@@ -71,13 +71,7 @@ class BookingSchedule {
   /// Returns the exact target timestamp for backend dispatch, or null if instant/now.
   DateTime? get targetScheduledAt {
     if (isNow) return null;
-    return DateTime(
-      date.year,
-      date.month,
-      date.day,
-      slot.startHour,
-      0,
-    );
+    return DateTime(date.year, date.month, date.day, slot.startHour, 0);
   }
 
   String get formattedSummary {
@@ -85,15 +79,19 @@ class BookingSchedule {
       return 'Immediate arrival (~15–30 mins)';
     }
     final now = DateTime.now();
-    final isToday = date.year == now.year && date.month == now.month && date.day == now.day;
+    final isToday =
+        date.year == now.year && date.month == now.month && date.day == now.day;
     final tomorrow = now.add(const Duration(days: 1));
-    final isTomorrow = date.year == tomorrow.year && date.month == tomorrow.month && date.day == tomorrow.day;
+    final isTomorrow =
+        date.year == tomorrow.year &&
+        date.month == tomorrow.month &&
+        date.day == tomorrow.day;
 
     final prefix = isToday
         ? 'Today'
         : isTomorrow
-            ? 'Tomorrow'
-            : _weekday(date.weekday);
+        ? 'Tomorrow'
+        : _weekday(date.weekday);
 
     final dateNum = '${date.day} ${_monthName(date.month)}';
     return '$prefix ($dateNum) • ${slot.timeRange}';
@@ -103,19 +101,19 @@ class BookingSchedule {
     ScheduleMode? mode,
     DateTime? date,
     TimeSlot? slot,
-  }) =>
-      BookingSchedule(
-        mode: mode ?? this.mode,
-        date: date ?? this.date,
-        slot: slot ?? this.slot,
-      );
+  }) => BookingSchedule(
+    mode: mode ?? this.mode,
+    date: date ?? this.date,
+    slot: slot ?? this.slot,
+  );
 
   /// Generates the next 7 calendar days starting from today.
   static List<DateTime> getUpcomingDates([DateTime? base]) {
     final start = base ?? DateTime.now();
     return List.generate(
       7,
-      (i) => DateTime(start.year, start.month, start.day).add(Duration(days: i)),
+      (i) =>
+          DateTime(start.year, start.month, start.day).add(Duration(days: i)),
     );
   }
 
@@ -131,29 +129,29 @@ class BookingSchedule {
   }
 
   static String _weekday(int day) => switch (day) {
-        1 => 'Mon',
-        2 => 'Tue',
-        3 => 'Wed',
-        4 => 'Thu',
-        5 => 'Fri',
-        6 => 'Sat',
-        7 => 'Sun',
-        _ => '',
-      };
+    1 => 'Mon',
+    2 => 'Tue',
+    3 => 'Wed',
+    4 => 'Thu',
+    5 => 'Fri',
+    6 => 'Sat',
+    7 => 'Sun',
+    _ => '',
+  };
 
   static String _monthName(int month) => switch (month) {
-        1 => 'Jan',
-        2 => 'Feb',
-        3 => 'Mar',
-        4 => 'Apr',
-        5 => 'May',
-        6 => 'Jun',
-        7 => 'Jul',
-        8 => 'Aug',
-        9 => 'Sep',
-        10 => 'Oct',
-        11 => 'Nov',
-        12 => 'Dec',
-        _ => '',
-      };
+    1 => 'Jan',
+    2 => 'Feb',
+    3 => 'Mar',
+    4 => 'Apr',
+    5 => 'May',
+    6 => 'Jun',
+    7 => 'Jul',
+    8 => 'Aug',
+    9 => 'Sep',
+    10 => 'Oct',
+    11 => 'Nov',
+    12 => 'Dec',
+    _ => '',
+  };
 }

@@ -171,7 +171,7 @@ describe('ProviderSkillsService', () => {
       expect(skillRepository.create).toHaveBeenCalledWith({
         ...createDto,
         userId: 'user-id',
-        isVerified: false,
+        isVerified: true, // Skills are auto-verified for now so providers get jobs immediately
       });
       expect(result).toEqual(mockSkill);
     });

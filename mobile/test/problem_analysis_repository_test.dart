@@ -59,29 +59,31 @@ const _analysisBody = <String, Object?>{
 };
 
 void main() {
-  test('combined upload posts to the combined path with token and hint',
-      () async {
-    final client = _FakeApiClient(
-      const ApiResponse(statusCode: 201, body: _analysisBody),
-    );
-    final repository = ProblemAnalysisRepository(
-      client,
-      accessToken: () async => 'token-abc',
-    );
+  test(
+    'combined upload posts to the combined path with token and hint',
+    () async {
+      final client = _FakeApiClient(
+        const ApiResponse(statusCode: 201, body: _analysisBody),
+      );
+      final repository = ProblemAnalysisRepository(
+        client,
+        accessToken: () async => 'token-abc',
+      );
 
-    final analysis = await repository.analyzeCombined(
-      image: _part('image'),
-      audio: _part('audio'),
-      languageHint: 'gu',
-    );
+      final analysis = await repository.analyzeCombined(
+        image: _part('image'),
+        audio: _part('audio'),
+        languageHint: 'gu',
+      );
 
-    expect(client.path, 'ai/problem-analysis/combined');
-    expect(client.bearerToken, 'token-abc');
-    expect(client.files, hasLength(2));
-    expect(client.fields, {'languageHint': 'gu'});
-    expect(analysis.isAnalysis, isTrue);
-    expect(analysis.serviceCategoryId, 'cat-1');
-  });
+      expect(client.path, 'ai/problem-analysis/combined');
+      expect(client.bearerToken, 'token-abc');
+      expect(client.files, hasLength(2));
+      expect(client.fields, {'languageHint': 'gu'});
+      expect(analysis.isAnalysis, isTrue);
+      expect(analysis.serviceCategoryId, 'cat-1');
+    },
+  );
 
   test('a null language hint omits the fields map', () async {
     final client = _FakeApiClient(
@@ -100,11 +102,14 @@ void main() {
 
   test('accepts a 201 unavailable body', () async {
     final client = _FakeApiClient(
-      const ApiResponse(statusCode: 201, body: <String, Object?>{
-        'kind': 'unavailable',
-        'source': 'voice',
-        'errorCode': 'AI_DISABLED',
-      }),
+      const ApiResponse(
+        statusCode: 201,
+        body: <String, Object?>{
+          'kind': 'unavailable',
+          'source': 'voice',
+          'errorCode': 'AI_DISABLED',
+        },
+      ),
     );
     final repository = ProblemAnalysisRepository(
       client,

@@ -87,10 +87,7 @@ class _FixSpringBounceState extends State<FixSpringBounce>
       onTapDown: _onTapDown,
       onTapUp: _onTapUp,
       onTapCancel: _onTapCancel,
-      child: ScaleTransition(
-        scale: _controller,
-        child: widget.child,
-      ),
+      child: ScaleTransition(scale: _controller, child: widget.child),
     );
   }
 }
@@ -131,10 +128,7 @@ class _StaggeredListRevealState extends State<StaggeredListReveal>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: widget.duration,
-    );
+    _controller = AnimationController(vsync: this, duration: widget.duration);
 
     _slideAnimation = Tween<Offset>(
       begin: Offset(0, widget.slideDistance),
@@ -173,10 +167,7 @@ class _StaggeredListRevealState extends State<StaggeredListReveal>
 
     return FadeTransition(
       opacity: _fadeAnimation,
-      child: SlideTransition(
-        position: _slideAnimation,
-        child: widget.child,
-      ),
+      child: SlideTransition(position: _slideAnimation, child: widget.child),
     );
   }
 }
@@ -217,9 +208,10 @@ class _FixRollingTickerState extends State<FixRollingTicker>
   void initState() {
     super.initState();
     _controller = AnimationController(vsync: this, duration: widget.duration);
-    _animation = Tween<double>(begin: 0.0, end: widget.targetValue).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
-    );
+    _animation = Tween<double>(
+      begin: 0.0,
+      end: widget.targetValue,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
     _controller.forward();
   }
 
@@ -228,9 +220,10 @@ class _FixRollingTickerState extends State<FixRollingTicker>
     super.didUpdateWidget(oldWidget);
     if (oldWidget.targetValue != widget.targetValue) {
       _prevValue = oldWidget.targetValue;
-      _animation = Tween<double>(begin: _prevValue, end: widget.targetValue).animate(
-        CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
-      );
+      _animation = Tween<double>(begin: _prevValue, end: widget.targetValue)
+          .animate(
+            CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
+          );
       _controller.forward(from: 0.0);
     }
   }
@@ -243,13 +236,14 @@ class _FixRollingTickerState extends State<FixRollingTicker>
 
   @override
   Widget build(BuildContext context) {
-    final effectiveStyle = (widget.style ?? const TextStyle(
-      fontSize: 28,
-      fontWeight: FontWeight.w800,
-      color: AppColors.cream,
-    )).copyWith(
-      fontFeatures: const [FontFeature.tabularFigures()],
-    );
+    final effectiveStyle =
+        (widget.style ??
+                const TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.cream,
+                ))
+            .copyWith(fontFeatures: const [FontFeature.tabularFigures()]);
 
     if (_reduceMotion(context)) {
       final formatted = widget.showDecimals
@@ -345,17 +339,13 @@ class _AiPhotoScannerOverlayState extends State<AiPhotoScannerOverlay>
 
           // Dark tech scrim overlay
           Positioned.fill(
-            child: Container(
-              color: Colors.black.withValues(alpha: 0.45),
-            ),
+            child: Container(color: Colors.black.withValues(alpha: 0.45)),
           ),
 
           // Cyber Corner Brackets
           Positioned.fill(
             child: CustomPaint(
-              painter: _HudCornerPainter(
-                color: AppColors.info,
-              ),
+              painter: _HudCornerPainter(color: AppColors.info),
             ),
           ),
 
@@ -399,7 +389,9 @@ class _AiPhotoScannerOverlayState extends State<AiPhotoScannerOverlay>
               decoration: BoxDecoration(
                 color: AppColors.backgroundPrimary.withValues(alpha: 0.85),
                 borderRadius: BorderRadius.circular(AppRadius.pill),
-                border: Border.all(color: AppColors.info.withValues(alpha: 0.5)),
+                border: Border.all(
+                  color: AppColors.info.withValues(alpha: 0.5),
+                ),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -450,18 +442,43 @@ class _HudCornerPainter extends CustomPainter {
     canvas.drawLine(const Offset(8, 8), const Offset(8, 8 + len), paint);
 
     // Top-right
-    canvas.drawLine(Offset(size.width - 8, 8), Offset(size.width - 8 - len, 8), paint);
-    canvas.drawLine(Offset(size.width - 8, 8), Offset(size.width - 8, 8 + len), paint);
+    canvas.drawLine(
+      Offset(size.width - 8, 8),
+      Offset(size.width - 8 - len, 8),
+      paint,
+    );
+    canvas.drawLine(
+      Offset(size.width - 8, 8),
+      Offset(size.width - 8, 8 + len),
+      paint,
+    );
 
     // Bottom-left
-    canvas.drawLine(Offset(8, size.height - 8), Offset(8 + len, size.height - 8), paint);
-    canvas.drawLine(Offset(8, size.height - 8), Offset(8, size.height - 8 - len), paint);
+    canvas.drawLine(
+      Offset(8, size.height - 8),
+      Offset(8 + len, size.height - 8),
+      paint,
+    );
+    canvas.drawLine(
+      Offset(8, size.height - 8),
+      Offset(8, size.height - 8 - len),
+      paint,
+    );
 
     // Bottom-right
-    canvas.drawLine(Offset(size.width - 8, size.height - 8), Offset(size.width - 8 - len, size.height - 8), paint);
-    canvas.drawLine(Offset(size.width - 8, size.height - 8), Offset(size.width - 8, size.height - 8 - len), paint);
+    canvas.drawLine(
+      Offset(size.width - 8, size.height - 8),
+      Offset(size.width - 8 - len, size.height - 8),
+      paint,
+    );
+    canvas.drawLine(
+      Offset(size.width - 8, size.height - 8),
+      Offset(size.width - 8, size.height - 8 - len),
+      paint,
+    );
   }
 
   @override
-  bool shouldRepaint(_HudCornerPainter oldDelegate) => oldDelegate.color != color;
+  bool shouldRepaint(_HudCornerPainter oldDelegate) =>
+      oldDelegate.color != color;
 }

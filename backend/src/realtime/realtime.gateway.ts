@@ -558,6 +558,13 @@ export class RealtimeGateway
 
   private originAllowed(origin: string | undefined): boolean {
     if (!origin) return true;
+    // Browser sockets always send Origin; native clients do not. In
+    // development any local port is trusted because `flutter run -d chrome`
+    // serves from a random port each run. Production relies on the strict
+    // REALTIME_ALLOWED_ORIGINS allowlist.
+    if (this.config.get<string>('NODE_ENV') === 'development') {
+      return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin);
+    }
     const configured =
       this.config.get<string>('REALTIME_ALLOWED_ORIGINS') ?? '';
     const allowed = configured

@@ -22,19 +22,26 @@ abstract interface class PushGateway {
 /// A push delivered while the app is open. Android suppresses tray display
 /// for foregrounded apps; the app surfaces these as an in-app banner.
 class ForegroundPushMessage {
-  const ForegroundPushMessage({required this.title, required this.body});
+  const ForegroundPushMessage({
+    required this.title,
+    required this.body,
+    this.data,
+  });
 
   final String title;
   final String body;
+  final Map<String, dynamic>? data;
 }
 
-/// Source of foreground-delivered pushes; separate from [PushGateway] so
+/// Source of pushes that users interact with; separate from [PushGateway] so
 /// enrollment fakes stay unaffected.
-abstract interface class ForegroundPushSource {
+abstract interface class PushInteractionSource {
   Stream<ForegroundPushMessage> foregroundMessages();
+  Stream<ForegroundPushMessage> backgroundInteractions();
+  Future<ForegroundPushMessage?> initialInteraction();
 }
 
-class FirebasePushGateway implements PushGateway, ForegroundPushSource {
+class FirebasePushGateway implements PushGateway, PushInteractionSource {
   bool _initialized = false;
 
   @override
@@ -67,13 +74,27 @@ class FirebasePushGateway implements PushGateway, ForegroundPushSource {
 
   @override
   Stream<ForegroundPushMessage> foregroundMessages() =>
-      FirebaseMessaging.onMessage.map((message) {
-        final notification = message.notification;
-        return ForegroundPushMessage(
-          title: notification?.title ?? 'FixNow',
-          body: notification?.body ?? '',
-        );
-      });
+      FirebaseMessaging.onMessage.map(_convert);
+
+  @override
+  Stream<ForegroundPushMessage> backgroundInteractions() =>
+      FirebaseMessaging.onMessageOpenedApp.map(_convert);
+
+  @override
+  Future<ForegroundPushMessage?> initialInteraction() async {
+    final msg = await FirebaseMessaging.instance.getInitialMessage();
+    if (msg == null) return null;
+    return _convert(msg);
+  }
+
+  ForegroundPushMessage _convert(RemoteMessage message) {
+    final notification = message.notification;
+    return ForegroundPushMessage(
+      title: notification?.title ?? 'FixNow',
+      body: notification?.body ?? '',
+      data: message.data,
+    );
+  }
 }
 
 /// FN-062 remainder: show foreground pushes as an in-app banner through the
@@ -82,7 +103,7 @@ class FirebasePushGateway implements PushGateway, ForegroundPushSource {
 /// so the app can cancel it on dispose; never subscribes when push is
 /// compiled out.
 StreamSubscription<ForegroundPushMessage>? bindForegroundPushBanner({
-  required ForegroundPushSource source,
+  required PushInteractionSource source,
   required GlobalKey<ScaffoldMessengerState> messengerKey,
   bool featureEnabled = pushNotificationsEnabled,
 }) {

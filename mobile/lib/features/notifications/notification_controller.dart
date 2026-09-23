@@ -12,7 +12,8 @@ class NotificationController extends ChangeNotifier {
   NotificationCategory _selectedCategory = NotificationCategory.all;
   bool _loading = false;
 
-  List<InAppNotification> get notifications => List.unmodifiable(_notifications);
+  List<InAppNotification> get notifications =>
+      List.unmodifiable(_notifications);
   NotificationCategory get selectedCategory => _selectedCategory;
   bool get isLoading => _loading;
 
@@ -67,8 +68,12 @@ class NotificationController extends ChangeNotifier {
 
   void markAllAsRead() {
     if (unreadCount == 0) return;
-    _repository.markAllAsRead(_notifications.where((n) => !n.isRead).map((n) => n.id));
-    _notifications = _notifications.map((n) => n.copyWith(isRead: true)).toList();
+    _repository.markAllAsRead(
+      _notifications.where((n) => !n.isRead).map((n) => n.id),
+    );
+    _notifications = _notifications
+        .map((n) => n.copyWith(isRead: true))
+        .toList();
     notifyListeners();
   }
 
@@ -85,7 +90,10 @@ class NotificationController extends ChangeNotifier {
   }
 
   void addNotification(InAppNotification notification) {
-    _notifications = [notification, ..._notifications.where((n) => n.id != notification.id)];
+    _notifications = [
+      notification,
+      ..._notifications.where((n) => n.id != notification.id),
+    ];
     notifyListeners();
   }
 }

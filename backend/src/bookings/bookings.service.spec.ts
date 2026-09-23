@@ -239,6 +239,56 @@ describe('BookingsService', () => {
     ).rejects.toThrow('Invalid booking history cursor');
   });
 
+  describe('getBookingForUser', () => {
+    const CUSTOMER_ID = '00000000-0000-4000-8000-000000000001';
+    const PROVIDER_ID = '00000000-0000-4000-8000-000000000002';
+    const BOOKING_ID = '00000000-0000-4000-8000-000000000101';
+
+    it('keeps the destination on an active job read by the assigned provider', async () => {
+      bookingFindOneBy.mockResolvedValue(
+        booking({ status: BookingStatus.EN_ROUTE, providerId: PROVIDER_ID }),
+      );
+
+      const result = await service.getBookingForUser(BOOKING_ID, PROVIDER_ID);
+
+      expect(result.locationLat).toBe(22.3);
+      expect(result.locationLng).toBe(73.2);
+    });
+
+    it('strips the destination once the job is terminal for the provider', async () => {
+      bookingFindOneBy.mockResolvedValue(
+        booking({ status: BookingStatus.COMPLETED, providerId: PROVIDER_ID }),
+      );
+
+      const result = await service.getBookingForUser(BOOKING_ID, PROVIDER_ID);
+
+      expect(result.locationLat).toBeNull();
+      expect(result.locationLng).toBeNull();
+    });
+
+    it('always returns the destination to the customer', async () => {
+      bookingFindOneBy.mockResolvedValue(
+        booking({ status: BookingStatus.COMPLETED, providerId: PROVIDER_ID }),
+      );
+
+      const result = await service.getBookingForUser(BOOKING_ID, CUSTOMER_ID);
+
+      expect(result.locationLat).toBe(22.3);
+      expect(result.locationLng).toBe(73.2);
+    });
+
+    it('rejects a reader who is not a booking participant', async () => {
+      bookingFindOneBy.mockResolvedValue(booking());
+
+      await expect(
+        service.getBookingForUser(
+          BOOKING_ID,
+          '00000000-0000-4000-8000-000000000099',
+        ),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+    });
+  });
+
   it('returns only requests for which the provider is currently eligible', async () => {
     const first = booking({ id: '00000000-0000-4000-8000-000000000201' });
     const second = booking({ id: '00000000-0000-4000-8000-000000000202' });

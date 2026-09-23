@@ -7,15 +7,78 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Widget host(Widget child) => MaterialApp(
-      theme: ThemeData.dark(),
-      home: Scaffold(body: child),
-    );
+  theme: ThemeData.dark(),
+  home: Scaffold(body: child),
+);
 
 final dummyBytes = Uint8List.fromList([
-  137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82, 0, 0,
-  0, 1, 0, 0, 0, 1, 8, 6, 0, 0, 0, 31, 21, 196, 137, 0, 0, 0, 10, 73,
-  68, 65, 84, 120, 156, 99, 0, 1, 0, 0, 5, 0, 1, 13, 10, 45, 180, 0, 0,
-  0, 0, 73, 69, 78, 68, 174, 66, 96, 130,
+  137,
+  80,
+  78,
+  71,
+  13,
+  10,
+  26,
+  10,
+  0,
+  0,
+  0,
+  13,
+  73,
+  72,
+  68,
+  82,
+  0,
+  0,
+  0,
+  1,
+  0,
+  0,
+  0,
+  1,
+  8,
+  6,
+  0,
+  0,
+  0,
+  31,
+  21,
+  196,
+  137,
+  0,
+  0,
+  0,
+  10,
+  73,
+  68,
+  65,
+  84,
+  120,
+  156,
+  99,
+  0,
+  1,
+  0,
+  0,
+  5,
+  0,
+  1,
+  13,
+  10,
+  45,
+  180,
+  0,
+  0,
+  0,
+  0,
+  73,
+  69,
+  78,
+  68,
+  174,
+  66,
+  96,
+  130,
 ]);
 
 void main() {
@@ -85,7 +148,10 @@ void main() {
       await tester.pumpAndSettle();
 
       // Enter notes
-      await tester.enterText(find.byType(TextField), 'Tested water pressure, 0 leaks');
+      await tester.enterText(
+        find.byType(TextField),
+        'Tested water pressure, 0 leaks',
+      );
       await tester.pumpAndSettle();
 
       // Submit
@@ -100,7 +166,9 @@ void main() {
   });
 
   group('JobProofViewerCard', () {
-    testWidgets('displays before/after labels, notes, and watermark', (tester) async {
+    testWidgets('displays before/after labels, notes, and watermark', (
+      tester,
+    ) async {
       final proof = JobProof(
         bookingId: 'view-test-789',
         beforePhotoBytes: dummyBytes,
@@ -110,9 +178,7 @@ void main() {
         proName: 'Ramesh Sharma',
       );
 
-      await tester.pumpWidget(
-        host(JobProofViewerCard(proof: proof)),
-      );
+      await tester.pumpWidget(host(JobProofViewerCard(proof: proof)));
       await tester.pumpAndSettle();
 
       expect(find.text('Verified Job Proof Photos'), findsOneWidget);
@@ -124,8 +190,9 @@ void main() {
   });
 
   group('BookingDetailScreen integration', () {
-    testWidgets('shows JobProofViewerCard when proof exists for the booking',
-        (tester) async {
+    testWidgets('shows JobProofViewerCard when proof exists for the booking', (
+      tester,
+    ) async {
       final booking = CustomerBooking(
         id: 'booking-proof-detail-1',
         serviceCategoryId: 'plumbing',
@@ -160,14 +227,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(
-        find.text('Verified Job Proof Photos'),
-        findsOneWidget,
-      );
-      expect(
-        find.textContaining('Replaced ceramic cartridge'),
-        findsOneWidget,
-      );
+      expect(find.text('Verified Job Proof Photos'), findsOneWidget);
+      expect(find.textContaining('Replaced ceramic cartridge'), findsOneWidget);
     });
   });
 }

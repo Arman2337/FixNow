@@ -68,7 +68,8 @@ class _FixStarRatingBurstState extends State<FixStarRatingBurst>
 
   @override
   Widget build(BuildContext context) {
-    final reduceMotion = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -182,9 +183,14 @@ class _SparklePainter extends CustomPainter {
       final y = center.dy + math.sin(angle) * dist;
       final alpha = (1.0 - progress).clamp(0.0, 1.0);
 
-      paint.color = (i % 2 == 0 ? AppColors.accentGold : AppColors.accentGoldHover)
-          .withValues(alpha: alpha);
-      canvas.drawCircle(Offset(x, y), (4.0 * (1.0 - progress)).clamp(1.0, 4.0), paint);
+      paint.color =
+          (i % 2 == 0 ? AppColors.accentGold : AppColors.accentGoldHover)
+              .withValues(alpha: alpha);
+      canvas.drawCircle(
+        Offset(x, y),
+        (4.0 * (1.0 - progress)).clamp(1.0, 4.0),
+        paint,
+      );
     }
   }
 

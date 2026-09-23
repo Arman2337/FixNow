@@ -1,5 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
@@ -26,10 +29,8 @@ class FixShareInvoiceSheet extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => FixShareInvoiceSheet(
-        invoice: invoice,
-        onSavePdf: onSavePdf,
-      ),
+      builder: (_) =>
+          FixShareInvoiceSheet(invoice: invoice, onSavePdf: onSavePdf),
     );
   }
 
@@ -42,7 +43,9 @@ class FixShareInvoiceSheet extends StatelessWidget {
     return Container(
       decoration: const BoxDecoration(
         color: AppColors.surfaceElevated,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.bottomSheet)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppRadius.bottomSheet),
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black54,
@@ -83,9 +86,15 @@ class FixShareInvoiceSheet extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: AppColors.primary.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                  border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.3),
+                  ),
                 ),
-                child: const Icon(Icons.receipt_long_rounded, color: AppColors.primary, size: 24),
+                child: const Icon(
+                  Icons.receipt_long_rounded,
+                  color: AppColors.primary,
+                  size: 24,
+                ),
               ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
@@ -106,7 +115,10 @@ class FixShareInvoiceSheet extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.success.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(4),
@@ -125,7 +137,10 @@ class FixShareInvoiceSheet extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       'Official Tax Invoice • $fileName ($sizeKb KB)',
-                      style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                      ),
                     ),
                   ],
                 ),
@@ -151,14 +166,15 @@ class FixShareInvoiceSheet extends StatelessWidget {
             iconColor: const Color(0xFF25D366), // WhatsApp Green
             title: 'Share via WhatsApp',
             subtitle: 'Send formatted receipt details and verified PDF link',
-            onTap: () {
+            onTap: () async {
               Navigator.pop(context);
               final text = FixPdfInvoiceBuilder.generateShareSummary(invoice);
-              Clipboard.setData(ClipboardData(text: text));
-              _showSnack(
-                context,
-                'Invoice summary ready for WhatsApp (copied to clipboard)',
-                icon: Icons.check_circle_rounded,
+              final dir = await getApplicationDocumentsDirectory();
+              final file = File('${dir.path}/$fileName');
+              await file.writeAsBytes(pdfBytes);
+              await Share.shareXFiles(
+                [XFile(file.path, mimeType: 'application/pdf')],
+                text: text,
               );
             },
           ),
@@ -170,14 +186,16 @@ class FixShareInvoiceSheet extends StatelessWidget {
             iconColor: AppColors.primary,
             title: 'Share via Email',
             subtitle: 'Email formal GST invoice to your accountant or company',
-            onTap: () {
+            onTap: () async {
               Navigator.pop(context);
               final text = FixPdfInvoiceBuilder.generateShareSummary(invoice);
-              Clipboard.setData(ClipboardData(text: text));
-              _showSnack(
-                context,
-                'Invoice details pre-formatted for Email (copied to clipboard)',
-                icon: Icons.mark_email_read_rounded,
+              final dir = await getApplicationDocumentsDirectory();
+              final file = File('${dir.path}/$fileName');
+              await file.writeAsBytes(pdfBytes);
+              await Share.shareXFiles(
+                [XFile(file.path, mimeType: 'application/pdf')],
+                subject: 'FixNow Invoice - ${invoice.invoiceNumber}',
+                text: text,
               );
             },
           ),
@@ -188,7 +206,8 @@ class FixShareInvoiceSheet extends StatelessWidget {
             icon: Icons.copy_rounded,
             iconColor: AppColors.accentGold,
             title: 'Copy Invoice Summary & Verification Link',
-            subtitle: 'Includes GST breakdown, SAC code 9987 & online verification ref',
+            subtitle:
+                'Includes GST breakdown, SAC code 9987 & online verification ref',
             onTap: () {
               Navigator.pop(context);
               final text = FixPdfInvoiceBuilder.generateShareSummary(invoice);
@@ -210,23 +229,36 @@ class FixShareInvoiceSheet extends StatelessWidget {
             subtitle: 'Downloads standard A4 PDF (${pdfBytes.length} bytes)',
             onTap: () async {
               Navigator.pop(context);
-              if (onSavePdf != null) {
-                final path = await onSavePdf!();
+              try {
+                if (onSavePdf != null) {
+                  final path = await onSavePdf!();
+                  if (context.mounted && path != null) {
+                    _showSnack(
+                      context,
+                      'Saved $fileName to $path',
+                      icon: Icons.file_download_done_rounded,
+                    );
+                  }
+                } else {
+                  final dir = await getApplicationDocumentsDirectory();
+                  final file = File('${dir.path}/$fileName');
+                  await file.writeAsBytes(pdfBytes);
+                  if (context.mounted) {
+                    _showSnack(
+                      context,
+                      'Downloaded $fileName ($sizeKb KB)',
+                      icon: Icons.file_download_done_rounded,
+                    );
+                  }
+                }
+              } catch (e) {
                 if (context.mounted) {
                   _showSnack(
                     context,
-                    path != null
-                        ? 'Saved $fileName to $path'
-                        : 'Downloaded $fileName successfully',
-                    icon: Icons.file_download_done_rounded,
+                    'Failed to save PDF: $e',
+                    icon: Icons.error_rounded,
                   );
                 }
-              } else {
-                _showSnack(
-                  context,
-                  'Downloaded $fileName ($sizeKb KB) to Downloads folder',
-                  icon: Icons.file_download_done_rounded,
-                );
               }
             },
           ),
@@ -238,13 +270,18 @@ class FixShareInvoiceSheet extends StatelessWidget {
             child: OutlinedButton(
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 12),
-                side: BorderSide(color: AppColors.borderDefault.withValues(alpha: 0.2)),
+                side: BorderSide(
+                  color: AppColors.borderDefault.withValues(alpha: 0.2),
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppRadius.medium),
                 ),
               ),
               onPressed: () => Navigator.pop(context),
-              child: const Text('Close', style: TextStyle(color: AppColors.textSecondary)),
+              child: const Text(
+                'Close',
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
             ),
           ),
         ],
@@ -259,7 +296,9 @@ class FixShareInvoiceSheet extends StatelessWidget {
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
-          side: BorderSide(color: AppColors.borderDefault.withValues(alpha: 0.2)),
+          side: BorderSide(
+            color: AppColors.borderDefault.withValues(alpha: 0.2),
+          ),
         ),
         content: Row(
           children: [
@@ -307,7 +346,9 @@ class _ShareOptionTile extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppColors.backgroundSecondary.withValues(alpha: 0.4),
             borderRadius: BorderRadius.circular(AppRadius.medium),
-            border: Border.all(color: AppColors.borderDefault.withValues(alpha: 0.1)),
+            border: Border.all(
+              color: AppColors.borderDefault.withValues(alpha: 0.1),
+            ),
           ),
           child: Row(
             children: [
@@ -336,12 +377,19 @@ class _ShareOptionTile extends StatelessWidget {
                     const SizedBox(height: 1),
                     Text(
                       subtitle,
-                      style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
+                      style: const TextStyle(
+                        color: AppColors.textMuted,
+                        fontSize: 11,
+                      ),
                     ),
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted, size: 18),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: AppColors.textMuted,
+                size: 18,
+              ),
             ],
           ),
         ),

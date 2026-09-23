@@ -85,10 +85,7 @@ class EtaProgressRing extends StatelessWidget {
           else if (reduceMotion)
             Text('${minutes!}', style: labelStyle)
           else
-            FixCountUp(
-              value: minutes!,
-              style: labelStyle,
-            ),
+            FixCountUp(value: minutes!, style: labelStyle),
         ],
       ),
     );
@@ -96,7 +93,11 @@ class EtaProgressRing extends StatelessWidget {
 }
 
 class _EtaRingPainter extends CustomPainter {
-  _EtaRingPainter({required this.sweep, required this.color, required this.track});
+  _EtaRingPainter({
+    required this.sweep,
+    required this.color,
+    required this.track,
+  });
 
   final double sweep;
   final Color color;

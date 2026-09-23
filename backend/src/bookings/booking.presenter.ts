@@ -50,6 +50,14 @@ export const presentBooking = (booking: Booking): BookingContract => ({
   createdAt: booking.createdAt.toISOString(),
   updatedAt: booking.updatedAt.toISOString(),
   version: booking.version,
+  customerPhone: booking.customerPhone,
+  providerPhone: booking.providerPhone,
+  lineItems: booking.lineItems?.map((li) => ({
+    id: li.id,
+    subServiceId: li.subServiceId,
+    quantity: li.quantity,
+    priceMinor: li.priceMinor,
+  })),
 });
 
 export const presentProviderBookingRequest = (

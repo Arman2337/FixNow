@@ -19,39 +19,24 @@ class ApiBookingTrackingSource implements BookingTrackingSource {
     final response = await api.send(
       ApiRequest(
         method: ApiMethod.get,
-        path: 'bookings?limit=30',
+        path: 'bookings/$bookingId',
         bearerToken: token,
       ),
     );
     final body = response.body;
-    final rows = body is Map<String, dynamic> ? body['bookings'] : null;
-    if (rows is! List) {
+    final raw = body is Map<String, dynamic> ? body['booking'] : null;
+    if (raw is! Map) {
       throw const ApiException(
         ApiFailureKind.invalidResponse,
         'The booking snapshot was invalid.',
       );
     }
-    final booking = rows
-        .map(
-          (row) =>
-              CustomerBooking.fromJson(Map<String, Object?>.from(row as Map)),
-        )
-        .cast<CustomerBooking>()
-        .firstWhere((item) => item.id == bookingId);
+    final booking = CustomerBooking.fromJson(
+      Map<String, Object?>.from(raw),
+    );
     String? serviceStartOtp;
     if (booking.status == 'EN_ROUTE') {
-      final otpResponse = await api.send(
-        ApiRequest(
-          method: ApiMethod.post,
-          path: 'bookings/$bookingId/service-start-otp',
-          bearerToken: token,
-        ),
-      );
-      final body = otpResponse.body;
-      final value = body is Map ? body['otp'] : null;
-      if (value is String && RegExp(r'^\d{4}$').hasMatch(value)) {
-        serviceStartOtp = value;
-      }
+      serviceStartOtp = await fetchServiceStartOtp(bookingId);
     }
     return BookingTracking(
       bookingId: booking.id,
@@ -67,5 +52,29 @@ class ApiBookingTrackingSource implements BookingTrackingSource {
           : null,
       serviceStartOtp: serviceStartOtp,
     );
+  }
+
+  @override
+  Future<String?> fetchServiceStartOtp(String bookingId) async {
+    final token = await accessToken();
+    if (token == null) {
+      throw const ApiException(
+        ApiFailureKind.unauthorized,
+        'Sign in required.',
+      );
+    }
+    final otpResponse = await api.send(
+      ApiRequest(
+        method: ApiMethod.post,
+        path: 'bookings/$bookingId/service-start-otp',
+        bearerToken: token,
+      ),
+    );
+    final body = otpResponse.body;
+    final value = body is Map ? body['otp'] : null;
+    if (value is String && RegExp(r'^\d{4}$').hasMatch(value)) {
+      return value;
+    }
+    return null;
   }
 }

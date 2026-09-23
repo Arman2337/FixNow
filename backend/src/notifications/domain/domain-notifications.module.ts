@@ -7,15 +7,20 @@ import { BookingReminderService } from './booking-reminder.service';
 import { DomainNotificationService } from './domain-notification.service';
 import { NotificationDelivery } from './notification-delivery.entity';
 
+import { InAppNotification } from './in-app-notification.entity';
+import { InboxController } from './inbox.controller';
+
 @Module({
   imports: [
     TypeOrmModule.forFeature([
       NotificationDelivery,
+      InAppNotification,
       PushDeviceTokenEntity,
       Booking,
     ]),
     PushModule,
   ],
+  controllers: [InboxController],
   providers: [DomainNotificationService, BookingReminderService],
   exports: [DomainNotificationService],
 })

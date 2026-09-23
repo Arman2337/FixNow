@@ -48,17 +48,65 @@ class _FixJellySquishButtonState extends State<FixJellySquishButton>
 
     // Jelly spring curves: X expands when Y squashes
     _scaleXAnim = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.15).chain(CurveTween(curve: Curves.easeOutQuad)), weight: 30),
-      TweenSequenceItem(tween: Tween(begin: 1.15, end: 0.92).chain(CurveTween(curve: Curves.easeInOutQuad)), weight: 30),
-      TweenSequenceItem(tween: Tween(begin: 0.92, end: 1.04).chain(CurveTween(curve: Curves.easeInOutQuad)), weight: 20),
-      TweenSequenceItem(tween: Tween(begin: 1.04, end: 1.0).chain(CurveTween(curve: Curves.easeOutQuad)), weight: 20),
+      TweenSequenceItem(
+        tween: Tween(
+          begin: 1.0,
+          end: 1.15,
+        ).chain(CurveTween(curve: Curves.easeOutQuad)),
+        weight: 30,
+      ),
+      TweenSequenceItem(
+        tween: Tween(
+          begin: 1.15,
+          end: 0.92,
+        ).chain(CurveTween(curve: Curves.easeInOutQuad)),
+        weight: 30,
+      ),
+      TweenSequenceItem(
+        tween: Tween(
+          begin: 0.92,
+          end: 1.04,
+        ).chain(CurveTween(curve: Curves.easeInOutQuad)),
+        weight: 20,
+      ),
+      TweenSequenceItem(
+        tween: Tween(
+          begin: 1.04,
+          end: 1.0,
+        ).chain(CurveTween(curve: Curves.easeOutQuad)),
+        weight: 20,
+      ),
     ]).animate(_springController);
 
     _scaleYAnim = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.82).chain(CurveTween(curve: Curves.easeOutQuad)), weight: 30),
-      TweenSequenceItem(tween: Tween(begin: 0.82, end: 1.12).chain(CurveTween(curve: Curves.easeInOutQuad)), weight: 30),
-      TweenSequenceItem(tween: Tween(begin: 1.12, end: 0.96).chain(CurveTween(curve: Curves.easeInOutQuad)), weight: 20),
-      TweenSequenceItem(tween: Tween(begin: 0.96, end: 1.0).chain(CurveTween(curve: Curves.easeOutQuad)), weight: 20),
+      TweenSequenceItem(
+        tween: Tween(
+          begin: 1.0,
+          end: 0.82,
+        ).chain(CurveTween(curve: Curves.easeOutQuad)),
+        weight: 30,
+      ),
+      TweenSequenceItem(
+        tween: Tween(
+          begin: 0.82,
+          end: 1.12,
+        ).chain(CurveTween(curve: Curves.easeInOutQuad)),
+        weight: 30,
+      ),
+      TweenSequenceItem(
+        tween: Tween(
+          begin: 1.12,
+          end: 0.96,
+        ).chain(CurveTween(curve: Curves.easeInOutQuad)),
+        weight: 20,
+      ),
+      TweenSequenceItem(
+        tween: Tween(
+          begin: 0.96,
+          end: 1.0,
+        ).chain(CurveTween(curve: Curves.easeOutQuad)),
+        weight: 20,
+      ),
     ]).animate(_springController);
   }
 
@@ -76,7 +124,8 @@ class _FixJellySquishButtonState extends State<FixJellySquishButton>
 
   @override
   Widget build(BuildContext context) {
-    final reduceMotion = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
 
     final btnContent = Container(
       height: widget.height,
@@ -118,10 +167,7 @@ class _FixJellySquishButtonState extends State<FixJellySquishButton>
     );
 
     if (reduceMotion) {
-      return GestureDetector(
-        onTap: widget.onPressed,
-        child: btnContent,
-      );
+      return GestureDetector(onTap: widget.onPressed, child: btnContent);
     }
 
     return GestureDetector(

@@ -1,4 +1,3 @@
-import 'package:fixnow_mobile/features/services/sub_service_item.dart';
 import 'package:fixnow_mobile/api/api_client.dart';
 import 'package:fixnow_mobile/design_system/app_theme.dart';
 import 'package:fixnow_mobile/features/profile/customer_profile.dart';
@@ -72,6 +71,23 @@ void main() {
     await tester.pump();
 
     expect(find.text('Enter a display name.'), findsOneWidget);
+  });
+
+  testWidgets('renders notification section in profile with allow option',
+      (tester) async {
+    final controller = CustomerProfileController(
+      FakeProfileRepository(const CustomerProfile(displayName: 'Asha')),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.dark,
+        home: Scaffold(body: CustomerProfileScreen(controller: controller)),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('Push Notifications'), findsOneWidget);
+    expect(find.text('Allow Notifications'), findsOneWidget);
   });
 }
 

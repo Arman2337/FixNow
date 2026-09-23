@@ -9,7 +9,6 @@ import 'package:fixnow_mobile/features/location/saved_address.dart';
 import 'package:fixnow_mobile/features/profile/customer_profile_controller.dart';
 import 'package:fixnow_mobile/notifications/push_enrollment.dart';
 import 'package:fixnow_mobile/notifications/push_settings_card.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/material.dart';
 
 class CustomerProfileScreen extends StatefulWidget {
@@ -605,13 +604,8 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
             ),
           ),
           const SizedBox(height: AppSpacing.md),
-          if (widget.pushController != null) ...[
-            PushSettingsCard(controller: widget.pushController!),
-            const SizedBox(height: AppSpacing.md),
-          ] else ...[
-            _buildNotificationSettingsCard(),
-            const SizedBox(height: AppSpacing.md),
-          ],
+          PushSettingsCard(controller: widget.pushController),
+          const SizedBox(height: AppSpacing.md),
           if (widget.onSignOut != null) ...[
             const SizedBox(height: AppSpacing.lg),
             FixButton(
@@ -749,84 +743,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
   }
 
 
-  Widget _buildNotificationSettingsCard() {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: AppColors.outline.withValues(alpha: 0.08),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: AppColors.primaryEmerald.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.notifications_active_outlined,
-                  color: AppColors.primaryEmerald,
-                  size: 22,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Push Notifications',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    SizedBox(height: 2),
-                    Text(
-                      'Arrival alerts, booking status, and chat messages',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.md),
-          FixButton(
-            label: 'Allow Notifications',
-            icon: Icons.notifications_rounded,
-            variant: FixButtonVariant.secondary,
-            onPressed: () async {
-              final status = await Permission.notification.request();
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      status.isGranted
-                          ? 'Notifications allowed! You will receive live arrival alerts.'
-                          : 'Notification permission is required to receive live updates.',
-                    ),
-                  ),
-                );
-              }
-            },
-          ),
-        ],
-      ),
-    );
-  }
+
 
   bool get _failed => const {
     ProfileViewStatus.offline,
@@ -836,7 +753,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
 }
 
 class _SavedAddressesSection extends StatelessWidget {
-  const _SavedAddressesSection({super.key});
+  const _SavedAddressesSection();
 
   @override
   Widget build(BuildContext context) {

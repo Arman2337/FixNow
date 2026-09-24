@@ -5,8 +5,10 @@ import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_state_views.dart';
 import 'package:fixnow_mobile/features/provider/provider_controller.dart';
 import 'package:fixnow_mobile/features/provider/provider_models.dart';
-import 'package:fixnow_mobile/features/provider/provider_setup_screen.dart';
 import 'package:fixnow_mobile/notifications/push_enrollment.dart';
+import 'package:fixnow_mobile/design_system/fix_notification_bell.dart';
+import 'package:fixnow_mobile/features/notifications/notification_center_screen.dart';
+import 'package:fixnow_mobile/features/notifications/notification_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
@@ -17,12 +19,14 @@ class ProviderOnboardingScreen extends StatefulWidget {
     required this.onSignOut,
     this.onSupportCases,
     this.pushController,
+    this.notificationController,
     super.key,
   });
   final ProviderController controller;
   final VoidCallback onSignOut;
   final VoidCallback? onSupportCases;
   final PushEnrollmentController? pushController;
+  final NotificationController? notificationController;
 
   @override
   State<ProviderOnboardingScreen> createState() =>
@@ -240,13 +244,35 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
                   ],
                 ),
                 actions: [
-                  IconButton(
-                    icon: const Icon(
-                      Icons.notifications_none_rounded,
-                      color: AppColors.textPrimary,
+                  if (widget.notificationController != null)
+                    FixNotificationBellIcon(
+                      controller: widget.notificationController!,
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => NotificationCenterScreen(
+                              controller: widget.notificationController!,
+                            ),
+                          ),
+                        );
+                      },
+                    )
+                  else
+                    IconButton(
+                      icon: const Icon(
+                        Icons.notifications_none_rounded,
+                        color: AppColors.textPrimary,
+                      ),
+                      onPressed: () {
+                        if (!mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('No new notifications'),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      },
                     ),
-                    onPressed: () {},
-                  ),
                   IconButton(
                     icon: Container(
                       width: 32,
@@ -828,9 +854,11 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
                                               deleteIconColor: AppColors.onAccentGold,
                                               onDeleted: () {
                                                 widget.controller.removeSkill(skill.id).then((_) {
+                                                  if (!mounted) return;
                                                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Skill removed')));
                                                 }).catchError((e) {
-                                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to remove skill')));
+                                                  if (!mounted) return;
+                                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to remove skill')));
                                                 });
                                               },
                                             ),
@@ -883,9 +911,11 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
                                                   onChanged: (val) {
                                                     if (val != null) {
                                                       widget.controller.addSkill(val).then((_) {
+                                                        if (!mounted) return;
                                                         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Skill added')));
                                                       }).catchError((e) {
-                                                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to add skill')));
+                                                        if (!mounted) return;
+                                                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to add skill')));
                                                       });
                                                     }
                                                   },
@@ -1273,10 +1303,12 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
                                   stats: current?.stats,
                                 ),
                               ).then((_) {
+                                if (!mounted) return;
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(content: Text('Updates saved successfully')),
                                 );
                               }).catchError((e) {
+                                if (!mounted) return;
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(content: Text('Failed to save updates')),
                                 );

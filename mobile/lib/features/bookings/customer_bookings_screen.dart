@@ -1,14 +1,18 @@
 import 'dart:async';
 
+import 'package:fixnow_mobile/app/app_shell.dart';
 import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
 import 'package:fixnow_mobile/design_system/fix_status_chip.dart';
+import 'package:fixnow_mobile/design_system/fix_notification_bell.dart';
 import 'package:fixnow_mobile/features/bookings/booking.dart';
 import 'package:fixnow_mobile/features/bookings/booking_controller.dart';
 import 'package:fixnow_mobile/features/bookings/recurring_schedule.dart';
+import 'package:fixnow_mobile/features/notifications/notification_controller.dart';
+import 'package:fixnow_mobile/features/notifications/notification_center_screen.dart';
 import 'package:flutter/material.dart';
 
 enum _BookingFilter { all, active, completed, cancelled }
@@ -20,6 +24,8 @@ class CustomerBookingsScreen extends StatefulWidget {
     this.onBookAgain,
     this.schedulesController,
     this.onOccurrenceConfirmed,
+    this.notificationController,
+    this.onOpenProfile,
     super.key,
   });
   final BookingController controller;
@@ -33,6 +39,13 @@ class CustomerBookingsScreen extends StatefulWidget {
 
   /// Opens a prefilled request for a completed booking; null hides the action.
   final ValueChanged<CustomerBooking>? onBookAgain;
+
+  /// In-app notification controller for bell notifications.
+  final NotificationController? notificationController;
+
+  /// Opens customer profile tab/screen.
+  final VoidCallback? onOpenProfile;
+
   @override
   State<CustomerBookingsScreen> createState() => _CustomerBookingsScreenState();
 }
@@ -96,44 +109,85 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Stack(
-                    children: [
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: const BoxDecoration(shape: BoxShape.circle),
-                        alignment: Alignment.center,
-                        child: const Icon(
-                          Icons.notifications_none_rounded,
-                          size: 24,
-                          color: AppColors.textSecondary,
-                        ),
+                  if (widget.notificationController != null)
+                    FixNotificationBellIcon(
+                      controller: widget.notificationController!,
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => NotificationCenterScreen(
+                              controller: widget.notificationController!,
+                              onOpenBooking: (bookingId) {
+                                final match = widget.controller.bookings
+                                    .where((b) => b.id == bookingId)
+                                    .firstOrNull;
+                                if (match != null &&
+                                    widget.onBookingSelected != null) {
+                                  widget.onBookingSelected!(match);
+                                }
+                              },
+                              onOpenInvoice: (_) {},
+                            ),
+                          ),
+                        );
+                      },
+                    )
+                  else
+                    IconButton(
+                      icon: const Icon(
+                        Icons.notifications_none_rounded,
+                        color: AppColors.textPrimary,
+                        size: 24,
                       ),
-                      Positioned(
-                        top: 10,
-                        right: 10,
-                        child: Container(
-                          width: 8,
-                          height: 8,
-                          decoration: const BoxDecoration(
-                            color: AppColors.accentGold,
-                            shape: BoxShape.circle,
+                      onPressed: () {},
+                    ),
+                  const SizedBox(width: AppSpacing.xs),
+                  Semantics(
+                    button: true,
+                    label: 'Customer profile',
+                    child: Tooltip(
+                      message: 'Profile',
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () {
+                            if (widget.onOpenProfile != null) {
+                              widget.onOpenProfile!();
+                            } else {
+                              final shell = AppShellScope.of(context);
+                              if (shell != null) {
+                                shell.selectDestination(3, destinationCount: 4);
+                              }
+                            }
+                          },
+                          borderRadius: BorderRadius.circular(22),
+                          child: Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppColors.surfaceElevated,
+                              border: Border.all(
+                                color: AppColors.borderDefault,
+                                width: 1,
+                              ),
+                            ),
+                            alignment: Alignment.center,
+                            child: Container(
+                              width: 32,
+                              height: 32,
+                              decoration: const BoxDecoration(
+                                color: AppColors.primarySoft,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.person_rounded,
+                                size: 20,
+                                color: AppColors.primary,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(width: 4),
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      image: DecorationImage(
-                        image: NetworkImage(
-                          'https://lh3.googleusercontent.com/aida/AEtjO1UHetTjpd4BB1e8njLlIDDmUsYV1qxX9ZC_wim9sHsXYmSrYRkJpnyD1IHW75IXxc9pB2kik0nzNC98TRCklpEgiq7TkSpL4ITZqzFt8uLi5EyWXYQq9m4a8YI9wZ3o6xvQSkDtb6AI5-x28GAADr5cRCtuuSX9N5FrvCQ7MBueDjttVq6CBcCdMU6PRAQsRnz78gBoZeg_WCxKbdy42V0Um4AxVfE0kNiMNfOiHfuES63iQSWWA34hjob7XGOL3mAbPdCfF9El6g',
-                        ),
-                        fit: BoxFit.cover,
                       ),
                     ),
                   ),
@@ -172,6 +226,22 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
               },
             ),
             const SizedBox(height: AppSpacing.sm),
+            _BookingSummary(
+              activeCount: widget.controller.bookings
+                  .where((b) => b.statusValue.isActive)
+                  .length,
+              onTap: () {
+                final activeBookings = widget.controller.bookings
+                    .where((b) => b.statusValue.isActive)
+                    .toList();
+                if (activeBookings.isNotEmpty) {
+                  setState(() => _filter = _BookingFilter.active);
+                  if (widget.onBookingSelected != null) {
+                    widget.onBookingSelected!(activeBookings.first);
+                  }
+                }
+              },
+            ),
             const SizedBox(height: AppSpacing.lg),
           ],
           ...switch (widget.controller.status) {
@@ -984,7 +1054,7 @@ class _BookingCard extends StatelessWidget {
                                 color: AppColors.primary,
                               ),
                               label: const Text(
-                                'Book Again',
+                                'Book again',
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
@@ -1228,19 +1298,23 @@ class _EmptyBookings extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppSpacing.sm),
-        const Text(
-          'No Bookings Found',
-          style: TextStyle(
+        Text(
+          filter == null || filter == _BookingFilter.all
+              ? 'No bookings yet'
+              : 'No ${_filterLabel(filter!)} bookings',
+          style: const TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w600,
             color: AppColors.textPrimary,
           ),
         ),
         const SizedBox(height: 4),
-        const Text(
-          "We couldn't find any service history matching your query or selected filter.",
+        Text(
+          filter == null || filter == _BookingFilter.all
+              ? "We couldn't find any service history matching your query or selected filter."
+              : 'Choose another filter to review a different part of your service history.',
           textAlign: TextAlign.center,
-          style: TextStyle(color: AppColors.outline, fontSize: 12),
+          style: const TextStyle(color: AppColors.outline, fontSize: 12),
         ),
         if (onReset != null) ...[
           const SizedBox(height: AppSpacing.md),
@@ -1264,6 +1338,65 @@ class _EmptyBookings extends StatelessWidget {
       ],
     ),
   );
+
+  static String _filterLabel(_BookingFilter value) => switch (value) {
+    _BookingFilter.all => '',
+    _BookingFilter.active => 'active',
+    _BookingFilter.completed => 'completed',
+    _BookingFilter.cancelled => 'cancelled',
+  };
+}
+
+class _BookingSummary extends StatelessWidget {
+  const _BookingSummary({required this.activeCount, this.onTap});
+  final int activeCount;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    if (activeCount == 0) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: FixCard(
+          tone: FixCardTone.elevated,
+          semanticLabel:
+              '$activeCount active ${activeCount == 1 ? 'booking' : 'bookings'}',
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                alignment: Alignment.center,
+                decoration: const BoxDecoration(
+                  color: AppColors.primarySoft,
+                  borderRadius: BorderRadius.all(Radius.circular(12)),
+                ),
+                child: const Icon(Icons.route_rounded, color: AppColors.primary),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Text(
+                  '$activeCount active ${activeCount == 1 ? 'booking' : 'bookings'}',
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: AppColors.textSecondary,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _Failure extends StatelessWidget {

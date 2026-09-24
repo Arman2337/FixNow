@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Optional } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Booking } from '../../bookings/domain/booking.entity';
@@ -13,6 +13,7 @@ import {
   NotificationDelivery,
   NotificationDeliveryStatus,
 } from './notification-delivery.entity';
+import { InAppNotification } from './in-app-notification.entity';
 
 /**
  * Lock-screen-safe templates. Booking identifiers and generic wording only —
@@ -107,6 +108,9 @@ export class DomainNotificationService {
     @InjectRepository(PushDeviceTokenEntity)
     private readonly devices: Repository<PushDeviceTokenEntity>,
     @Inject(PUSH_DELIVERY) private readonly delivery: PushDelivery,
+    @Optional()
+    @InjectRepository(InAppNotification)
+    private readonly inAppNotifications?: Repository<InAppNotification>,
   ) {}
 
   async notifyBookingEvent(
@@ -208,6 +212,22 @@ export class DomainNotificationService {
       dedupeKey,
     });
     if (existing) return; // Deduplicated replay.
+
+    if (this.inAppNotifications) {
+      try {
+        await this.inAppNotifications.save({
+          userId,
+          title: content.title,
+          body: content.body,
+          kind,
+          bookingId,
+          paymentId: null,
+          readAt: null,
+        });
+      } catch {
+        // Continue even if in-app persistence fails
+      }
+    }
 
     if (!options.bypassQuietHours && this.inQuietHours()) {
       await this.record(

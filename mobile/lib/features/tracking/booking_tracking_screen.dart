@@ -60,16 +60,25 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
       title: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppRadius.small),
-              image: const DecorationImage(
-                image: NetworkImage(
-                  'https://lh3.googleusercontent.com/aida-public/AB6AXuD5p30JJ4xla5t1sty9n4wk388rQJ8NTT4EVcQxwUkSFFNIabrf8QeAkkMc_rR4nuu7D6NP0MuNneeDoe95jDDpkzWZuV_F6vdYLId2wTwZIKy2HNSuIHxxja5Itw6TGA59DzYezKUsdbqYWMwbL2MbodCGE8XidOaalteI9sNNNKeq_99u5vxzR83Qhaz4mgw7LMydMp-BCoX3lJLI40C5cAkXkr6A8wPRILlCbD06LufFnfkxVtitHj9urdIYeJ6iuw',
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadius.small),
+            child: Image.network(
+              'https://lh3.googleusercontent.com/aida-public/AB6AXuD5p30JJ4xla5t1sty9n4wk388rQJ8NTT4EVcQxwUkSFFNIabrf8QeAkkMc_rR4nuu7D6NP0MuNneeDoe95jDDpkzWZuV_F6vdYLId2wTwZIKy2HNSuIHxxja5Itw6TGA59DzYezKUsdbqYWMwbL2MbodCGE8XidOaalteI9sNNNKeq_99u5vxzR83Qhaz4mgw7LMydMp-BCoX3lJLI40C5cAkXkr6A8wPRILlCbD06LufFnfkxVtitHj9urdIYeJ6iuw',
+              width: 32,
+              height: 32,
+              fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: AppColors.primaryContainer,
+                  borderRadius: BorderRadius.circular(AppRadius.small),
                 ),
-                fit: BoxFit.contain,
+                child: const Icon(
+                  Icons.navigation_rounded,
+                  size: 18,
+                  color: AppColors.primary,
+                ),
               ),
             ),
           ),
@@ -99,11 +108,14 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
         Padding(
           padding: const EdgeInsets.only(right: 12.0),
           child: IconButton(
-            icon: const CircleAvatar(
+            icon: CircleAvatar(
               radius: 14,
-              backgroundImage: NetworkImage(
+              backgroundColor: AppColors.primarySoft,
+              backgroundImage: const NetworkImage(
                 'https://lh3.googleusercontent.com/aida-public/AB6AXuC0fmQVzMF5Rs9tsmYYciE22juYHedjg4xdlfgpeJPLo_c1OH5vKW5FLwDdjmHCgNS-Zm04HM19nUNHjXKazC-ERm-09PmmZ0t9UWKgl0gtW4zPyDcckAwqOOpRtUJdKiGmku0L4h6pmM0GiXa759mhV3h7fANwBjZo0KlBPO2SgZkWyhJxMDMSi3gO97TQEsINn0kH5QyO1t3odNW--r6DJcOlfWCxmP59GEpDHwjKHWxZsj55b2Sa',
               ),
+              onBackgroundImageError: (_, __) {},
+              child: const Icon(Icons.person_rounded, size: 16, color: AppColors.primary),
             ),
             onPressed: () {},
           ),
@@ -293,6 +305,10 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
   }
 
   Widget _buildSpecialistProfileCard(BuildContext context) {
+    final providerName =
+        widget.controller.tracking?.providerName ?? 'Verified Specialist';
+    final providerFirstName = providerName.split(' ').first;
+
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerLowest,
@@ -313,17 +329,25 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
             children: [
               Stack(
                 children: [
-                  Container(
-                    width: 64,
-                    height: 64,
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(AppRadius.medium),
-                      image: const DecorationImage(
-                        image: NetworkImage(
-                          'https://lh3.googleusercontent.com/aida-public/AB6AXuC0fmQVzMF5Rs9tsmYYciE22juYHedjg4xdlfgpeJPLo_c1OH5vKW5FLwDdjmHCgNS-Zm04HM19nUNHjXKazC-ERm-09PmmZ0t9UWKgl0gtW4zPyDcckAwqOOpRtUJdKiGmku0L4h6pmM0GiXa759mhV3h7fANwBjZo0KlBPO2SgZkWyhJxMDMSi3gO97TQEsINn0kH5QyO1t3odNW--r6DJcOlfWCxmP59GEpDHwjKHWxZsj55b2Sa',
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(AppRadius.medium),
+                    child: Image.network(
+                      'https://lh3.googleusercontent.com/aida-public/AB6AXuC0fmQVzMF5Rs9tsmYYciE22juYHedjg4xdlfgpeJPLo_c1OH5vKW5FLwDdjmHCgNS-Zm04HM19nUNHjXKazC-ERm-09PmmZ0t9UWKgl0gtW4zPyDcckAwqOOpRtUJdKiGmku0L4h6pmM0GiXa759mhV3h7fANwBjZo0KlBPO2SgZkWyhJxMDMSi3gO97TQEsINn0kH5QyO1t3odNW--r6DJcOlfWCxmP59GEpDHwjKHWxZsj55b2Sa',
+                      width: 64,
+                      height: 64,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        width: 64,
+                        height: 64,
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryContainer,
+                          borderRadius: BorderRadius.circular(AppRadius.medium),
                         ),
-                        fit: BoxFit.cover,
+                        child: const Icon(
+                          Icons.person_rounded,
+                          size: 36,
+                          color: AppColors.primary,
+                        ),
                       ),
                     ),
                   ),
@@ -353,12 +377,17 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
                   children: [
                     Row(
                       children: [
-                        const Text(
-                          'Rahul K.',
-                          style: TextStyle(
-                            color: AppColors.textPrimary,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
+                        Flexible(
+                          child: Text(
+                            widget.controller.tracking?.providerName ??
+                                'Verified Specialist',
+                            style: const TextStyle(
+                              color: AppColors.textPrimary,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         const SizedBox(width: 6),
@@ -386,7 +415,7 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
                     ),
                     const SizedBox(height: 2),
                     const Text(
-                      'Senior Certified Electrician',
+                      'Verified Master Professional',
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12,
@@ -401,18 +430,19 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
                           size: 16,
                         ),
                         const SizedBox(width: 4),
-                        const Text(
-                          '4.93',
-                          style: TextStyle(
+                        Text(
+                          (widget.controller.tracking?.providerRating ?? 4.9)
+                              .toStringAsFixed(1),
+                          style: const TextStyle(
                             color: AppColors.textPrimary,
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
                         const SizedBox(width: 4),
-                        const Text(
-                          '(1,420 jobs)',
-                          style: TextStyle(
+                        Text(
+                          '(${widget.controller.tracking?.providerJobsCount ?? 48} jobs)',
+                          style: const TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 12,
                           ),
@@ -459,9 +489,9 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
                     ),
                   ),
                   icon: const Icon(Icons.call_rounded, size: 18),
-                  label: const Text(
-                    'Call Rahul',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                  label: Text(
+                    'Call $providerFirstName',
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),
@@ -498,27 +528,27 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
               color: AppColors.secondaryContainer.withValues(alpha: 0.4),
               borderRadius: BorderRadius.circular(AppRadius.medium),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                Icon(
+                const Icon(
                   Icons.quickreply_rounded,
                   color: AppColors.primary,
                   size: 18,
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Text.rich(
                     TextSpan(
                       children: [
                         TextSpan(
-                          text: 'Rahul: ',
-                          style: TextStyle(
+                          text: '$providerFirstName: ',
+                          style: const TextStyle(
                             fontWeight: FontWeight.w700,
                             color: AppColors.textPrimary,
                           ),
                         ),
-                        TextSpan(
-                          text: '"I am approaching your gate."',
+                        const TextSpan(
+                          text: '"I am approaching your location."',
                           style: TextStyle(color: AppColors.textPrimary),
                         ),
                       ],
@@ -863,6 +893,10 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
         ),
       ),
       builder: (context) {
+        final tracking = widget.controller.tracking;
+        final providerName = tracking?.providerName ?? 'the specialist';
+        final otp = tracking?.serviceStartOtp ?? '••••';
+
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.lg),
@@ -912,13 +946,13 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
                 _buildSafetyRule(
                   Icons.badge_rounded,
                   'Verify Physical ID Badge',
-                  'Match Rahul\'s face and official FixNow lanyard credentials prior to doorway entry.',
+                  'Match $providerName\'s face and official FixNow lanyard credentials prior to doorway entry.',
                 ),
                 const SizedBox(height: AppSpacing.md),
                 _buildSafetyRule(
                   Icons.pin_rounded,
                   'Do Not Disclose OTP Early',
-                  'Only provide code 4821 once the technician is physically present at the circuit breaker or appliance.',
+                  'Only provide your start verification code ($otp) once the technician is physically present at the work site.',
                 ),
                 const SizedBox(height: AppSpacing.md),
                 _buildSafetyRule(
@@ -1007,6 +1041,8 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
               repository: widget.chatRepository!,
               realtimeClient: widget.controller.realtime,
             ),
+            providerName: widget.controller.tracking?.providerName ??
+                'Verified Specialist',
             onCallPressed: () => _startCall(context),
           ),
         ),
@@ -1110,7 +1146,7 @@ class _TrackingCard extends StatelessWidget {
                     Text(
                       'Service in progress',
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        color: AppColors.cream,
+                        color: AppColors.textPrimary,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -1146,7 +1182,7 @@ class _TrackingCard extends StatelessWidget {
                         Text(
                           'Technician is working on-site',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: AppColors.textPrimary,
                             fontWeight: FontWeight.w700,
                             fontSize: 14,
                           ),
@@ -1154,7 +1190,7 @@ class _TrackingCard extends StatelessWidget {
                         SizedBox(height: 4),
                         Text(
                           'Your provider has arrived and service is underway. Transit map is no longer active.',
-                          style: TextStyle(color: Colors.white70, fontSize: 12),
+                          style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
                         ),
                       ],
                     ),
@@ -1186,14 +1222,14 @@ class _TrackingCard extends StatelessWidget {
                   Text(
                     'Service Completed',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: AppColors.cream,
+                          color: AppColors.textPrimary,
                           fontWeight: FontWeight.w700,
                         ),
                   ),
                   const SizedBox(height: 2),
                   const Text(
                     'All work finished. You can view your invoice and ratings.',
-                    style: TextStyle(color: Colors.white70, fontSize: 12),
+                    style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
                   ),
                 ],
               ),

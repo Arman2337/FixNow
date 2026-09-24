@@ -94,6 +94,9 @@ export interface BookingContract {
   version: number;
   customerPhone?: string | null;
   providerPhone?: string | null;
+  providerName?: string | null;
+  providerRating?: number | null;
+  providerJobsCount?: number | null;
   lineItems?: Array<{
     id: string;
     subServiceId: string;

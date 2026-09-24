@@ -51,7 +51,7 @@ class AvailableProvidersSheet extends StatelessWidget {
                 Text(
                   'Available Professionals',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: AppColors.cream,
+                    color: AppColors.textPrimary,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -248,7 +248,7 @@ class BookingConfirmedDialog extends StatelessWidget {
     required this.bookingId,
     required this.serviceName,
     required this.onTrackBooking,
-    this.providerName = 'Amit Sharma',
+    this.providerName = 'Assigned Professional',
     this.estimatedArrival = '12 minutes',
     super.key,
   });
@@ -290,7 +290,7 @@ class BookingConfirmedDialog extends StatelessWidget {
             const SizedBox(height: AppSpacing.lg),
             Text(
               'Booking Confirmed!',
-              style: FixNowTypography.heading2.copyWith(color: AppColors.cream),
+              style: FixNowTypography.heading2.copyWith(color: AppColors.textPrimary),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 4),
@@ -434,7 +434,7 @@ class JobCompletedDialog extends StatelessWidget {
             const SizedBox(height: AppSpacing.md),
             Text(
               'Service Completed!',
-              style: FixNowTypography.heading2.copyWith(color: AppColors.cream),
+              style: FixNowTypography.heading2.copyWith(color: AppColors.textPrimary),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 4),
@@ -584,7 +584,7 @@ class _ReviewRatingDialogState extends State<ReviewRatingDialog> {
           children: [
             Text(
               'Rate your service',
-              style: FixNowTypography.heading3.copyWith(color: AppColors.cream),
+              style: FixNowTypography.heading3.copyWith(color: AppColors.textPrimary),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 4),

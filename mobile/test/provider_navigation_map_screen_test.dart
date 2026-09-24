@@ -81,7 +81,29 @@ class _MockProviderRepository implements ProviderRepository {
   Future<List<ProviderSkill>> skills() async => [];
 
   @override
-  Future<ProviderSkill> addSkill(String categoryId) async => throw UnimplementedError();
+  Future<void> addSkill(String categoryId) async {}
+
+  @override
+  Future<void> removeSkill(String id) async {}
+
+  @override
+  Future<void> acceptBooking(String bookingId) async {}
+
+  @override
+  Future<bool> bookingPaymentPaid(String bookingId) async => false;
+
+  @override
+  Future<ProviderApplication> submitApplication() async => throw UnimplementedError();
+
+  @override
+  Future<CustomerBooking> updateLineItems(
+    String bookingId,
+    List<Map<String, dynamic>> lineItems,
+  ) async => throw UnimplementedError();
+
+  @override
+  Future<ProviderProfile> updateLocation(double latitude, double longitude) async =>
+      (await profile())!;
 
   @override
   Future<void> uploadDocument({

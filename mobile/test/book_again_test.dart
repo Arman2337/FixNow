@@ -1,4 +1,3 @@
-import 'package:fixnow_mobile/features/services/sub_service_item.dart';
 import 'package:fixnow_mobile/api/api_client.dart';
 import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_theme.dart';

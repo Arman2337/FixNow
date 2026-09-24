@@ -678,7 +678,7 @@ class FixFxBrandHero extends StatelessWidget {
                         : Theme.of(context).textTheme.headlineMedium)
                     ?.copyWith(
                       fontWeight: FontWeight.w800,
-                      color: AppColors.cream,
+                      color: AppColors.textPrimary,
                       letterSpacing: -0.5,
                     ),
           ),

@@ -5,6 +5,7 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
+  type Relation,
   Unique,
   UpdateDateColumn,
 } from 'typeorm';
@@ -33,7 +34,7 @@ export class ProviderSkillEntity {
     { onDelete: 'CASCADE' },
   )
   @JoinColumn({ name: 'service_category_id' })
-  serviceCategory!: ServiceCategoryEntity;
+  serviceCategory!: Relation<ServiceCategoryEntity>;
 
   @Column({ name: 'years_experience', type: 'integer', nullable: true })
   yearsExperience!: number | null;

@@ -51,6 +51,9 @@ class ApiBookingTrackingSource implements BookingTrackingSource {
             )
           : null,
       serviceStartOtp: serviceStartOtp,
+      providerName: booking.providerName,
+      providerRating: booking.providerRating,
+      providerJobsCount: booking.providerJobsCount,
     );
   }
 

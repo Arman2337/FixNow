@@ -530,24 +530,36 @@ class SubServiceRepository {
       );
 
       final data = response.body;
-      if (data is List) {
+      if (data is List && data.isNotEmpty) {
         return data.map((json) {
           final j = json as Map<String, dynamic>;
+          final name = (j['name'] ?? '').toString();
+          final categoryId = (j['categoryId'] ?? '').toString();
           return SubServiceItem(
-            id: j['id'],
-            categorySlug: j['categoryId'],
-            name: j['name'],
+            id: j['id'] ?? '',
+            categorySlug: categoryId,
+            name: name,
             description: j['description'] ?? '',
             priceMinor: j['priceMinor'] ?? 0,
             durationMinutes: j['estimatedDurationMinutes'] ?? 0,
+            icon: SubServiceItem.resolveIcon(name, categoryId),
             badge: j['badge'],
             imageUrl: j['imageUrl'],
           );
         }).toList();
       }
     } catch (e) {
-      // Return empty list
+      // Fallback below
     }
-    return [];
+    return [
+      ..._fallbackSubServices('plumbing'),
+      ..._fallbackSubServices('electrical'),
+      ..._fallbackSubServices('hvac'),
+      ..._fallbackSubServices('carpentry'),
+      ..._fallbackSubServices('cleaning'),
+      ..._fallbackSubServices('painting'),
+      ..._fallbackSubServices('locksmith'),
+      ..._fallbackSubServices('pest_control'),
+    ];
   }
 }

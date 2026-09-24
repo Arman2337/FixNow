@@ -396,45 +396,49 @@ class FixEmergencyBanner extends StatelessWidget {
         children: [
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: AppColors.onError.withValues(alpha: 0.2),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.crisis_alert_rounded,
-                      color: AppColors.onError,
-                      size: 18,
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title.isEmpty ? 'Emergency Home Hazards?' : title,
-                        style: FixNowTypography.title.copyWith(
-                          color: AppColors.onError,
-                          fontWeight: FontWeight.w700,
-                        ),
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: AppColors.onError.withValues(alpha: 0.2),
+                        shape: BoxShape.circle,
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Priority SOS Field Unit Ready',
-                        style: FixNowTypography.labelSmall.copyWith(
-                          color: AppColors.onError.withValues(alpha: 0.9),
-                        ),
+                      child: const Icon(
+                        Icons.crisis_alert_rounded,
+                        color: AppColors.onError,
+                        size: 18,
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title.isEmpty ? 'Emergency Home Hazards?' : title,
+                            style: FixNowTypography.title.copyWith(
+                              color: AppColors.onError,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Priority SOS Field Unit Ready',
+                            style: FixNowTypography.labelSmall.copyWith(
+                              color: AppColors.onError.withValues(alpha: 0.9),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: AppSpacing.xs),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
@@ -463,10 +467,14 @@ class FixEmergencyBanner extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.md),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
             children: [
               Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
                     Icons.security_rounded,
@@ -474,10 +482,12 @@ class FixEmergencyBanner extends StatelessWidget {
                     size: 16,
                   ),
                   const SizedBox(width: 4),
-                  Text(
-                    'Zero surge dispatch fee',
-                    style: FixNowTypography.labelSmall.copyWith(
-                      color: AppColors.onError.withValues(alpha: 0.9),
+                  Flexible(
+                    child: Text(
+                      'Zero surge dispatch fee',
+                      style: FixNowTypography.labelSmall.copyWith(
+                        color: AppColors.onError.withValues(alpha: 0.9),
+                      ),
                     ),
                   ),
                 ],
@@ -930,7 +940,7 @@ class FixOtpDisplay extends StatelessWidget {
                       Text(
                         'FixNow Anti-Fraud Protection',
                         style: FixNowTypography.caption.copyWith(
-                          color: AppColors.cream,
+                          color: AppColors.textPrimary,
                           fontWeight: FontWeight.w700,
                           fontSize: 11,
                         ),
@@ -1019,7 +1029,7 @@ class FixInvoiceCard extends StatelessWidget {
               const Text(
                 'Total Payable',
                 style: TextStyle(
-                  color: AppColors.cream,
+                  color: AppColors.textPrimary,
                   fontWeight: FontWeight.w700,
                   fontSize: 16,
                 ),

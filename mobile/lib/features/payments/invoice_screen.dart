@@ -63,7 +63,24 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Invoice')),
+    appBar: AppBar(
+      backgroundColor: AppColors.surfaceContainerLowest,
+      elevation: 0,
+      scrolledUnderElevation: 1,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+        onPressed: () => Navigator.of(context).maybePop(),
+      ),
+      title: const Text(
+        'Invoice',
+        style: TextStyle(
+          color: AppColors.textPrimary,
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      centerTitle: false,
+    ),
     body: SafeArea(
       top: false,
       child: FixPageFrame(
@@ -162,6 +179,23 @@ class _PendingViewState extends State<_PendingView> {
               label: 'Pay Now (Interactive Checkout)',
               icon: Icons.payments_rounded,
               onPressed: () => _openCheckoutSheet(context),
+            ),
+          ],
+          if (_canPayLocally) ...[
+            const SizedBox(height: AppSpacing.sm),
+            FixButton(
+              label: 'Complete payment (local)',
+              icon: Icons.build_circle_outlined,
+              variant: FixButtonVariant.secondary,
+              isLoading: _paying,
+              onPressed: _paying ? null : _payLocally,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            const Text(
+              'Local testing only — drives the fake gateway to a paid '
+              'invoice. Not available in production.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.textSecondary),
             ),
           ],
         ],

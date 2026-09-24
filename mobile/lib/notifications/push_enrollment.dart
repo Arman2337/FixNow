@@ -89,21 +89,41 @@ class FirebasePushGateway implements PushGateway, PushInteractionSource {
   }
 
   @override
-  Future<String?> currentToken() => FirebaseMessaging.instance.getToken();
+  Future<String?> currentToken() async {
+    try {
+      return await FirebaseMessaging.instance.getToken();
+    } catch (_) {
+      return null;
+    }
+  }
 
   @override
-  Stream<ForegroundPushMessage> foregroundMessages() =>
-      FirebaseMessaging.onMessage.map(_convert);
+  Stream<ForegroundPushMessage> foregroundMessages() {
+    try {
+      return FirebaseMessaging.onMessage.map(_convert);
+    } catch (_) {
+      return const Stream.empty();
+    }
+  }
 
   @override
-  Stream<ForegroundPushMessage> backgroundInteractions() =>
-      FirebaseMessaging.onMessageOpenedApp.map(_convert);
+  Stream<ForegroundPushMessage> backgroundInteractions() {
+    try {
+      return FirebaseMessaging.onMessageOpenedApp.map(_convert);
+    } catch (_) {
+      return const Stream.empty();
+    }
+  }
 
   @override
   Future<ForegroundPushMessage?> initialInteraction() async {
-    final msg = await FirebaseMessaging.instance.getInitialMessage();
-    if (msg == null) return null;
-    return _convert(msg);
+    try {
+      final msg = await FirebaseMessaging.instance.getInitialMessage();
+      if (msg == null) return null;
+      return _convert(msg);
+    } catch (_) {
+      return null;
+    }
   }
 
   ForegroundPushMessage _convert(RemoteMessage message) {

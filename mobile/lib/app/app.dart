@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:fixnow_mobile/app/app_shell.dart';
+import 'package:fixnow_mobile/app/app_shell_controller.dart';
 import 'package:fixnow_mobile/app/app_navigation.dart';
 import 'package:fixnow_mobile/api/api_client.dart';
 import 'package:fixnow_mobile/api/api_config.dart';
@@ -129,6 +130,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
       GlobalKey<ScaffoldMessengerState>();
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
   final FirebasePushGateway _pushGateway = FirebasePushGateway();
+  final AppShellController _customerShellController = AppShellController();
   StreamSubscription<ForegroundPushMessage>? _foregroundPushSub;
   StreamSubscription<ForegroundPushMessage>? _backgroundPushSub;
   _AuthEntryStep _authEntryStep = _AuthEntryStep.welcome;
@@ -379,6 +381,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    _customerShellController.dispose();
     WidgetsBinding.instance.removeObserver(this);
     _auth.removeListener(_handleAuthChange);
     unawaited(_foregroundPushSub?.cancel());
@@ -454,6 +457,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
             return ProviderOnboardingScreen(
               controller: _provider,
               pushController: _push,
+              notificationController: _notifications,
               onSupportCases: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(
@@ -570,6 +574,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
               providerProfile: ProviderOnboardingScreen(
                 controller: _provider,
                 pushController: _push,
+                notificationController: _notifications,
                 onSupportCases: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
@@ -584,6 +589,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
           }
           unawaited(_bookings.startRealtime());
           return AppShell(
+            controller: _customerShellController,
             customerHome: ServiceDiscoveryScreen(
               controller: _discovery,
               locationController: _location,
@@ -722,6 +728,11 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
             ),
             customerBookings: CustomerBookingsScreen(
               controller: _bookings,
+              notificationController: _notifications,
+              onOpenProfile: () => _customerShellController.selectDestination(
+                3,
+                destinationCount: 4,
+              ),
               onBookingSelected: (booking) => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => _bookingDestination(booking)),
               ),

@@ -303,7 +303,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 4),
                             child: Text(
-                              'CHOOSE YOUR ACCOUNT TYPE',
+                              'CHOOSE ACCOUNT MODE',
                               style: FixNowTypography.labelSmall.copyWith(
                                 color: AppColors.textSecondary,
                                 letterSpacing: 1.2,
@@ -317,7 +317,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                             children: [
                               Expanded(
                                 child: _StitchRoleCard(
-                                  title: 'I need a service',
+                                  title: 'I Need a Service',
                                   subtitle: 'For homeowners\nand residents',
                                   icon: Icons.person_rounded,
                                   selected: _selected == AccountRole.customer,
@@ -329,7 +329,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                               const SizedBox(width: 12),
                               Expanded(
                                 child: _StitchRoleCard(
-                                  title: 'I am a professional',
+                                  title: 'I Am a Service Professional',
                                   subtitle:
                                       'For technicians\nand service providers',
                                   icon: Icons.work_rounded,

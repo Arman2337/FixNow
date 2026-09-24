@@ -68,6 +68,7 @@ class _AuthScreenState extends State<AuthScreen>
     _email.removeListener(_onInputChanged);
     _password.removeListener(_onInputChanged);
     _fullName.removeListener(_onInputChanged);
+    _mobile.removeListener(_onInputChanged);
     _referral.removeListener(_onInputChanged);
     _email.dispose();
     _password.dispose();

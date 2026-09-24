@@ -334,6 +334,8 @@ class NotificationCenterScreen extends StatelessWidget {
                     item.paymentId != null) {
                   if (onOpenInvoice != null) {
                     onOpenInvoice!(item);
+                  } else {
+                    _showInvoiceModal(context, item, isDark);
                   }
                 } else if (item.bookingId != null && onOpenBooking != null) {
                   onOpenBooking!(item.bookingId!);
@@ -767,6 +769,116 @@ class NotificationCenterScreen extends StatelessWidget {
             child: const Text('Clear all'),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showInvoiceModal(BuildContext context, InAppNotification item, bool isDark) {
+    final invoiceNumber = RegExp(r'INV-[0-9-]+').firstMatch(item.body)?.group(0) ?? 'INV-2026-0824';
+    final serviceName = item.body.contains('Plumbing') ? 'Plumbing Service' : 'Home Service';
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: isDark ? AppColors.surfaceElevated : AppColors.surfaceContainerLowest,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.pagePadding),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Invoice $invoiceNumber',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: isDark ? AppColors.cream : AppColors.textPrimary,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded),
+                    onPressed: () => Navigator.of(ctx).pop(),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                item.body,
+                style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.backgroundSecondary : AppColors.surfaceContainerLow,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.outline.withValues(alpha: 0.1)),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Service', style: TextStyle(color: AppColors.textSecondary)),
+                        Text(
+                          serviceName,
+                          style: TextStyle(
+                            color: isDark ? AppColors.cream : AppColors.textPrimary,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Divider(height: AppSpacing.md),
+                    const Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Status', style: TextStyle(color: AppColors.textSecondary)),
+                        Text('PAID', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w800)),
+                      ],
+                    ),
+                    const Divider(height: AppSpacing.md),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Total Amount', style: TextStyle(color: AppColors.textSecondary)),
+                        Text(
+                          '₹649',
+                          style: TextStyle(
+                            color: isDark ? AppColors.cream : AppColors.textPrimary,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.onPrimary,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  child: const Text('Close', style: TextStyle(fontWeight: FontWeight.w700)),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

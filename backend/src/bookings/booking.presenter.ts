@@ -52,6 +52,9 @@ export const presentBooking = (booking: Booking): BookingContract => ({
   version: booking.version,
   customerPhone: booking.customerPhone,
   providerPhone: booking.providerPhone,
+  providerName: booking.providerName ?? null,
+  providerRating: booking.providerRating ?? null,
+  providerJobsCount: booking.providerJobsCount ?? null,
   lineItems: booking.lineItems?.map((li) => ({
     id: li.id,
     subServiceId: li.subServiceId,

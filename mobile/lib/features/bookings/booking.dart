@@ -182,6 +182,9 @@ class CustomerBooking {
     required this.version,
     this.customerPhone,
     this.providerPhone,
+    this.providerName,
+    this.providerRating,
+    this.providerJobsCount,
     this.locationLatitude,
     this.locationLongitude,
     this.scheduledAt,
@@ -198,6 +201,9 @@ class CustomerBooking {
   final int version;
   final String? customerPhone;
   final String? providerPhone;
+  final String? providerName;
+  final double? providerRating;
+  final int? providerJobsCount;
   final double? locationLatitude;
   final double? locationLongitude;
   final DateTime? scheduledAt;
@@ -217,6 +223,9 @@ class CustomerBooking {
     int? version,
     String? customerPhone,
     String? providerPhone,
+    String? providerName,
+    double? providerRating,
+    int? providerJobsCount,
     double? locationLatitude,
     double? locationLongitude,
     DateTime? scheduledAt,
@@ -234,6 +243,9 @@ class CustomerBooking {
         version: version ?? this.version,
         customerPhone: customerPhone ?? this.customerPhone,
         providerPhone: providerPhone ?? this.providerPhone,
+        providerName: providerName ?? this.providerName,
+        providerRating: providerRating ?? this.providerRating,
+        providerJobsCount: providerJobsCount ?? this.providerJobsCount,
         locationLatitude: locationLatitude ?? this.locationLatitude,
         locationLongitude: locationLongitude ?? this.locationLongitude,
         scheduledAt: scheduledAt ?? this.scheduledAt,
@@ -252,6 +264,9 @@ class CustomerBooking {
     final createdAt = DateTime.tryParse(json['createdAt']?.toString() ?? '');
     final customerPhone = json['customerPhone'] as String?;
     final providerPhone = json['providerPhone'] as String?;
+    final providerName = json['providerName'] as String?;
+    final providerRating = (json['providerRating'] as num?)?.toDouble();
+    final providerJobsCount = (json['providerJobsCount'] as num?)?.toInt();
     final latitude = json['locationLat'];
     final longitude = json['locationLng'];
     final scheduledAt = json['scheduledAt'] != null
@@ -276,6 +291,9 @@ class CustomerBooking {
       version: (json['version'] as num?)?.toInt() ?? 1,
       customerPhone: customerPhone,
       providerPhone: providerPhone,
+      providerName: providerName,
+      providerRating: providerRating,
+      providerJobsCount: providerJobsCount,
       locationLatitude: latitude is num ? latitude.toDouble() : null,
       locationLongitude: longitude is num ? longitude.toDouble() : null,
       scheduledAt: scheduledAt,

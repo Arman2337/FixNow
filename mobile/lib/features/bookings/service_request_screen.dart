@@ -330,7 +330,21 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
     if (_showRadar) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text('Request service'),
+          backgroundColor: AppColors.surfaceContainerLowest,
+          elevation: 0,
+          scrolledUnderElevation: 1,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+            onPressed: () => Navigator.of(context).maybePop(),
+          ),
+          title: const Text(
+            'Request Service',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           centerTitle: false,
         ),
         body: MatchRadarView(
@@ -352,7 +366,24 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
       );
     }
     return Scaffold(
-      appBar: AppBar(title: const Text('Request service'), centerTitle: false),
+      appBar: AppBar(
+        backgroundColor: AppColors.surfaceContainerLowest,
+        elevation: 0,
+        scrolledUnderElevation: 1,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
+        title: const Text(
+          'Request Service',
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        centerTitle: false,
+      ),
       body: SafeArea(
         child: FixPageFrame(
           child: ListView(

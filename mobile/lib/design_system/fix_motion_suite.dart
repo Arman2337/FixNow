@@ -241,7 +241,7 @@ class _FixRollingTickerState extends State<FixRollingTicker>
                 const TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.w800,
-                  color: AppColors.cream,
+                  color: AppColors.textPrimary,
                 ))
             .copyWith(fontFeatures: const [FontFeature.tabularFigures()]);
 
@@ -408,7 +408,7 @@ class _AiPhotoScannerOverlayState extends State<AiPhotoScannerOverlay>
                   Text(
                     widget.statusText,
                     style: const TextStyle(
-                      color: AppColors.cream,
+                      color: AppColors.textPrimary,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),

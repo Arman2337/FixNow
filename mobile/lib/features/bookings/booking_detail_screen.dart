@@ -492,6 +492,28 @@ class BookingDetailScreen extends StatelessWidget {
                                 ),
                               ],
                             ),
+                            const SizedBox(height: AppSpacing.md),
+                            const Divider(
+                              height: 1,
+                              color: AppColors.surfaceContainerHigh,
+                            ),
+                            const SizedBox(height: AppSpacing.sm),
+                            const Text(
+                              'Full booking ID',
+                              style: TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            SelectableText(
+                              booking.id,
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 12,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -506,39 +528,193 @@ class BookingDetailScreen extends StatelessWidget {
                 ],
 
                 const SizedBox(height: AppSpacing.md),
-                Container(
-                  padding: const EdgeInsets.all(AppSpacing.md),
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceContainerLow,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Icon(
-                        Icons.info_outline_rounded,
-                        color: AppColors.textSecondary,
-                        size: 20,
+                if (booking.providerName != null &&
+                    booking.providerName!.trim().isNotEmpty) ...[
+                  Container(
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceElevated,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: AppColors.borderDefault,
                       ),
-                      const SizedBox(width: AppSpacing.sm),
-                      const Expanded(
-                        child: Text(
-                          'Identity, ETA, and live tracking map appear only when the assigned provider shares location.',
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 13,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.04),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.verified_user_rounded,
+                              color: AppColors.primary,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 6),
+                            const Text(
+                              'ASSIGNED SPECIALIST',
+                              style: TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            const Spacer(),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Text(
+                                'FixNow Verified',
+                                style: TextStyle(
+                                  color: AppColors.primary,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        const Divider(height: 1, color: AppColors.borderDefault),
+                        const SizedBox(height: AppSpacing.sm),
+                        Row(
+                          children: [
+                            Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                (booking.providerName!.trim().isNotEmpty
+                                        ? booking.providerName!.trim()[0]
+                                        : 'S')
+                                    .toUpperCase(),
+                                style: const TextStyle(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 20,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: AppSpacing.md),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    booking.providerName!,
+                                    style: const TextStyle(
+                                      color: AppColors.textPrimary,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.star_rounded,
+                                        color: Color(0xFFF59E0B),
+                                        size: 16,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        (booking.providerRating ?? 4.9)
+                                            .toStringAsFixed(1),
+                                        style: const TextStyle(
+                                          color: AppColors.textPrimary,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        '(${booking.providerJobsCount ?? 48} jobs completed)',
+                                        style: const TextStyle(
+                                          color: AppColors.textSecondary,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  if (booking.providerPhone != null &&
+                                      booking.providerPhone!.trim().isNotEmpty) ...[
+                                    const SizedBox(height: 4),
+                                    Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.phone_outlined,
+                                          size: 14,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          booking.providerPhone!,
+                                          style: const TextStyle(
+                                            color: AppColors.textSecondary,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ] else ...[
+                  Container(
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceContainerLow,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(
+                          Icons.info_outline_rounded,
+                          color: AppColors.textSecondary,
+                          size: 20,
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        const Expanded(
+                          child: Text(
+                            'Specialist assignment and live tracking details appear once an eligible provider is matched.',
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 13,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
+                ],
 
                 const SizedBox(height: AppSpacing.lg),
                 // Actions Block
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
                     if (booking.statusValue.isCompleted) ...[
                       Container(
                         padding: const EdgeInsets.all(AppSpacing.md),
@@ -590,9 +766,17 @@ class BookingDetailScreen extends StatelessWidget {
                     if (booking.statusValue.isCompleted &&
                         onBookAgain != null) ...[
                       FixButton(
-                        label: 'Book Again',
+                        label: 'Book again',
                         icon: Icons.refresh_rounded,
                         onPressed: onBookAgain,
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Prior technician assignment is not guaranteed.',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                        ),
                       ),
                       const SizedBox(height: AppSpacing.sm),
                     ],
@@ -641,8 +825,6 @@ class BookingDetailScreen extends StatelessWidget {
                         }.contains(booking.statusValue)) ...[
                       _CancelButton(booking: booking, onCancel: onCancel!),
                     ],
-                  ],
-                ),
                 // Bottom padding
                 const SizedBox(height: AppSpacing.xl),
               ]),

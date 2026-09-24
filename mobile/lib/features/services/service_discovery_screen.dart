@@ -343,7 +343,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
             Text(
               'If anyone is in danger, call your local emergency number first.',
               style: TextStyle(
-                color: AppColors.cream,
+                color: AppColors.textPrimary,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -555,7 +555,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
               'No services found for "${_searchController.text.trim()}"',
               style: const TextStyle(
                 fontWeight: FontWeight.w700,
-                color: AppColors.cream,
+                color: AppColors.textPrimary,
                 fontSize: 16,
               ),
               textAlign: TextAlign.center,
@@ -577,7 +577,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                     s,
                     style: const TextStyle(
                       fontSize: 12,
-                      color: AppColors.cream,
+                      color: AppColors.onSecondary,
                     ),
                   ),
                   backgroundColor: AppColors.backgroundSecondary,
@@ -606,7 +606,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
               style: const TextStyle(
                 fontWeight: FontWeight.w700,
                 fontSize: 16,
-                color: AppColors.cream,
+                color: AppColors.textPrimary,
               ),
             ),
             TextButton(
@@ -724,7 +724,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                               style: const TextStyle(
                                 fontWeight: FontWeight.w700,
                                 fontSize: 15,
-                                color: AppColors.cream,
+                                color: AppColors.textPrimary,
                               ),
                             ),
                             const SizedBox(height: 2),
@@ -1503,16 +1503,25 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
             // Stitch Brand Header Bar
             Row(
               children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    image: const DecorationImage(
-                      image: NetworkImage(
-                        'https://lh3.googleusercontent.com/aida-public/AB6AXuBq3W54yVgIIYzS2ZmyZZ0d9kwFAN6ICfuhZt7xwzFvvtpyeMbbct9nXWFyX6ptnBKyMW12g8HEm89mm4UmVE44PrFuYKwUIb3SRYCHXq6Kv8tUUv752LSORLe_9kWLBzwm99CMXx7tdvhIVHJJ7TmMjQ0d0QncryYSbDns4E39pUp7H_O9pED5oar2w3k3xSsY_XM0-6M2n5Rytv5n6ety7Afuy6O3MEGapgQX1Qgy5iqdYxMhAfBqp19_6hNc40YqTw',
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    'https://lh3.googleusercontent.com/aida-public/AB6AXuBq3W54yVgIIYzS2ZmyZZ0d9kwFAN6ICfuhZt7xwzFvvtpyeMbbct9nXWFyX6ptnBKyMW12g8HEm89mm4UmVE44PrFuYKwUIb3SRYCHXq6Kv8tUUv752LSORLe_9kWLBzwm99CMXx7tdvhIVHJJ7TmMjQ0d0QncryYSbDns4E39pUp7H_O9pED5oar2w3k3xSsY_XM0-6M2n5Rytv5n6ety7Afuy6O3MEGapgQX1Qgy5iqdYxMhAfBqp19_6hNc40YqTw',
+                    width: 32,
+                    height: 32,
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryContainer,
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      fit: BoxFit.contain,
+                      child: const Icon(
+                        Icons.build_rounded,
+                        color: AppColors.primary,
+                        size: 20,
+                      ),
                     ),
                   ),
                 ),

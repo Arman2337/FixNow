@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/app_typography.dart';
-import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/features/support/complaints_controller.dart';
 import 'package:fixnow_mobile/features/support/complaint_list_screen.dart';
 import 'package:fixnow_mobile/features/support/submit_complaint_screen.dart';
@@ -400,7 +399,12 @@ class _CustomerHelpScreenState extends State<CustomerHelpScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Quick Resolution Hub', style: FixNowTypography.h1),
+                      Text(
+                        'Quick Resolution Hub',
+                        style: FixNowTypography.h1.copyWith(
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
                       const SizedBox(height: 4),
                       Text(
                         'Get help, track issues, or connect with our support team.',

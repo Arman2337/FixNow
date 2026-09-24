@@ -67,7 +67,13 @@ abstract final class AppTheme {
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         centerTitle: false,
-        titleTextStyle: FixNowTypography.headlineMd,
+        iconTheme: const IconThemeData(color: AppColors.textPrimary),
+        actionsIconTheme: const IconThemeData(color: AppColors.textPrimary),
+        titleTextStyle: FixNowTypography.title.copyWith(
+          color: AppColors.textPrimary,
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+        ),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(

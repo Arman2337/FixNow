@@ -1,4 +1,12 @@
-import { Body, Controller, Headers, Param, Post, Req } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Headers,
+  Param,
+  Post,
+  Req,
+} from '@nestjs/common';
 import type { AuthorizedRequest } from '../common/authorization/authorization.guard';
 import { RequirePermission } from '../common/authorization/authorization.decorators';
 import { PERMISSIONS } from '../common/authorization/permission-policies';
@@ -22,11 +30,9 @@ export class PaymentsAdminController {
     @Body() dto: CreateRefundDto,
   ) {
     const requestKey = idempotencyKey?.trim();
-    if (!requestKey || requestKey.length < 8 || requestKey.length > 128) {
-      return await this.payments.refundOrder(
-        request.authorizationPrincipal!.userId,
-        orderId,
-        { amountMinor: dto.amountMinor, reason: dto.reason },
+    if (!requestKey) {
+      throw new BadRequestException(
+        'An Idempotency-Key header is required for refunds',
       );
     }
     return await this.payments.refundOrder(

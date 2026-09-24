@@ -46,6 +46,18 @@ describe('RealtimeGateway heartbeat', () => {
       telemetry,
       { get: jest.fn() } as unknown as ConfigService,
       {} as LocationService,
+      {
+        getRepository: jest.fn().mockReturnValue({
+          findOneBy: jest.fn().mockResolvedValue({
+            id: 'call-xyz',
+            bookingId: 'booking-123',
+            callerUserId: 'user-1',
+            calleeUserId: 'user-2',
+            status: 'CONNECTED',
+          }),
+        }),
+      } as never,
+      {} as never,
     );
 
     const client1Send = jest.fn();
@@ -122,6 +134,90 @@ describe('RealtimeGateway heartbeat', () => {
       callId: 'call-xyz',
       data: 'AQIDBAU=',
     });
+  });
+
+  it('rejects voice frames from users who are not call participants', async () => {
+    const registry = new RealtimeConnectionRegistry();
+    const telemetry = new RealtimeTelemetryService();
+    const gateway = new RealtimeGateway(
+      {} as AuthorizationService,
+      registry,
+      telemetry,
+      { get: jest.fn() } as unknown as ConfigService,
+      {} as LocationService,
+      {
+        getRepository: jest.fn().mockReturnValue({
+          findOneBy: jest.fn().mockResolvedValue({
+            id: 'call-xyz',
+            bookingId: 'booking-123',
+            callerUserId: 'user-1',
+            calleeUserId: 'user-2',
+            status: 'CONNECTED',
+          }),
+        }),
+      } as never,
+      {} as never,
+    );
+    const client1Send = jest.fn();
+    const client2Send = jest.fn();
+    const client1 = {
+      readyState: WebSocket.OPEN,
+      send: client1Send,
+    } as unknown as WebSocket;
+    const client2 = {
+      readyState: WebSocket.OPEN,
+      send: client2Send,
+    } as unknown as WebSocket;
+    registry.registerPending(client1, '127.0.0.1');
+    registry.registerPending(client2, '127.0.0.1');
+    registry.authenticate(
+      client1,
+      {
+        userId: 'user-3',
+        roles: ['CUSTOMER'],
+        scopes: [],
+        type: 'CUSTOMER',
+        permissions: [],
+      },
+      'token-3',
+    );
+    registry.authenticate(
+      client2,
+      {
+        userId: 'user-2',
+        roles: ['PROVIDER'],
+        scopes: [],
+        type: 'PROVIDER',
+        permissions: [],
+      },
+      'token-2',
+    );
+    for (const [client, id] of [
+      [client1, 'sub-1'],
+      [client2, 'sub-2'],
+    ] as const) {
+      registry.get(client)!.subscriptions.set(id, {
+        id,
+        channel: 'booking',
+        resourceId: 'booking-123',
+      });
+    }
+
+    await gateway.onMessage(
+      client1,
+      Buffer.from(
+        JSON.stringify({
+          type: 'call.voice-frame.v1',
+          bookingId: 'booking-123',
+          callId: 'call-xyz',
+          data: 'AQIDBAU=',
+        }),
+      ),
+      false,
+    );
+
+    expect(client1Send).not.toHaveBeenCalled();
+    expect(client2Send).not.toHaveBeenCalled();
   });
 
   it('accepts localhost browser origins during development', () => {

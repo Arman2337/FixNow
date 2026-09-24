@@ -1,8 +1,17 @@
-import { Controller, Get, Param, Patch, Req } from '@nestjs/common';
+import {
+  Controller,
+  ForbiddenException,
+  Get,
+  Param,
+  Patch,
+  Req,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { InAppNotification } from './in-app-notification.entity';
 import type { AuthorizedRequest } from '../../common/authorization/authorization.guard';
+import { RequireOwnPermission } from '../../common/authorization/authorization.decorators';
+import { PERMISSIONS } from '../../common/authorization/permission-policies';
 
 @Controller('users/:userId/notifications')
 export class InboxController {
@@ -12,12 +21,12 @@ export class InboxController {
   ) {}
 
   @Get()
+  @RequireOwnPermission(PERMISSIONS.notificationInboxReadSelf)
   async getInbox(
     @Param('userId') userIdParam: string,
     @Req() req: AuthorizedRequest,
   ) {
-    const userId =
-      userIdParam === 'me' ? req.authorizationPrincipal?.userId : userIdParam;
+    const userId = this.resolveUserId(userIdParam, req);
 
     if (!userId) {
       return [];
@@ -43,13 +52,13 @@ export class InboxController {
   }
 
   @Patch(':id/read')
+  @RequireOwnPermission(PERMISSIONS.notificationInboxReadSelf)
   async markRead(
     @Param('userId') userIdParam: string,
     @Param('id') id: string,
     @Req() req: AuthorizedRequest,
   ) {
-    const userId =
-      userIdParam === 'me' ? req.authorizationPrincipal?.userId : userIdParam;
+    const userId = this.resolveUserId(userIdParam, req);
 
     if (!userId) {
       return { success: false };
@@ -60,5 +69,17 @@ export class InboxController {
       { readAt: new Date() },
     );
     return { success: true };
+  }
+
+  private resolveUserId(
+    userIdParam: string,
+    request: AuthorizedRequest,
+  ): string | undefined {
+    const authenticatedUserId = request.authorizationPrincipal?.userId;
+    if (!authenticatedUserId) return undefined;
+    if (userIdParam !== 'me' && userIdParam !== authenticatedUserId) {
+      throw new ForbiddenException('You cannot access another user inbox');
+    }
+    return authenticatedUserId;
   }
 }

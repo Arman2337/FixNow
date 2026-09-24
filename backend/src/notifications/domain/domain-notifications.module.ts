@@ -9,6 +9,7 @@ import { NotificationDelivery } from './notification-delivery.entity';
 
 import { InAppNotification } from './in-app-notification.entity';
 import { InboxController } from './inbox.controller';
+import { RealtimeModule } from '../../realtime/realtime.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { InboxController } from './inbox.controller';
       Booking,
     ]),
     PushModule,
+    RealtimeModule,
   ],
   controllers: [InboxController],
   providers: [DomainNotificationService, BookingReminderService],

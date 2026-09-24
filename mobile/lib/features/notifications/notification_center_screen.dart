@@ -28,13 +28,9 @@ class NotificationCenterScreen extends StatelessWidget {
         final unread = controller.unreadCount;
 
         return Scaffold(
-          backgroundColor: isDark
-              ? AppColors.backgroundSecondary
-              : AppColors.surface,
+           backgroundColor: AppColors.background,
           appBar: AppBar(
-            backgroundColor: isDark
-                ? AppColors.backgroundSecondary
-                : AppColors.surface.withValues(alpha: 0.95),
+             backgroundColor: AppColors.background,
             elevation: 0,
             scrolledUnderElevation: 1,
             leading: IconButton(
@@ -120,8 +116,10 @@ class NotificationCenterScreen extends StatelessWidget {
 
                 // Notification list or empty view
                 Expanded(
-                  child: notifications.isEmpty
-                      ? _buildEmptyState(context, isDark)
+                   child: notifications.isEmpty
+                       ? controller.hasError
+                           ? _buildErrorState(context, isDark)
+                           : _buildEmptyState(context, isDark)
                       : ListView.separated(
                           padding: const EdgeInsets.symmetric(
                             horizontal: AppSpacing.pagePadding,
@@ -166,14 +164,12 @@ class NotificationCenterScreen extends StatelessWidget {
           final isSelected = controller.selectedCategory == cat;
           final count = controller.getCountForCategory(cat);
 
-          final chipBg = isSelected
-              ? (isDark ? Colors.white : AppColors.textPrimary)
-              : (isDark
-                    ? AppColors.surfaceElevated
-                    : AppColors.surfaceContainer);
-          final chipFg = isSelected
-              ? (isDark ? AppColors.backgroundSecondary : AppColors.surface)
-              : (isDark ? AppColors.textSecondary : AppColors.textSecondary);
+           final chipBg = isSelected
+               ? AppColors.primary
+               : AppColors.surfaceElevated;
+           final chipFg = isSelected
+               ? AppColors.onPrimary
+               : AppColors.textSecondary;
 
           return Padding(
             padding: const EdgeInsets.only(right: AppSpacing.xs),
@@ -191,15 +187,7 @@ class NotificationCenterScreen extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: chipBg,
                     borderRadius: BorderRadius.circular(AppRadius.pill),
-                    boxShadow: isSelected
-                        ? [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.08),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ]
-                        : null,
+                     boxShadow: null,
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -258,9 +246,9 @@ class NotificationCenterScreen extends StatelessWidget {
     bool isDark,
   ) {
     final isUnread = !item.isRead;
-    final cardBgColor = isDark
-        ? (isUnread ? AppColors.surfaceElevated : const Color(0xFF0D1728))
-        : AppColors.surfaceContainerLowest;
+     final cardBgColor = isDark
+         ? (isUnread ? AppColors.surfaceElevated : AppColors.backgroundSecondary)
+         : AppColors.surfaceContainerLowest;
     final cardBorderColor = isDark
         ? (isUnread
               ? AppColors.primary.withValues(alpha: 0.45)
@@ -284,7 +272,7 @@ class NotificationCenterScreen extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
         decoration: BoxDecoration(
           color: AppColors.errorContainer,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: AppRadius.cardBorder,
         ),
         child: const Row(
           mainAxisSize: MainAxisSize.min,
@@ -313,7 +301,7 @@ class NotificationCenterScreen extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             color: cardBgColor,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: AppRadius.cardBorder,
             border: Border.all(color: cardBorderColor, width: 1.2),
             boxShadow: [
               BoxShadow(
@@ -327,7 +315,7 @@ class NotificationCenterScreen extends StatelessWidget {
           child: Material(
             color: Colors.transparent,
             child: InkWell(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: AppRadius.cardBorder,
               onTap: () {
                 controller.markAsRead(item.id);
                 if (item.category == NotificationCategory.payments ||
@@ -531,24 +519,24 @@ class NotificationCenterScreen extends StatelessWidget {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Row(
-                                  children: [
-                                    Icon(
-                                      Icons.verified_user_rounded,
-                                      size: 15,
-                                      color: AppColors.primary,
-                                    ),
-                                    SizedBox(width: 4),
-                                    Text(
-                                      '30-Day Coverage Active',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppColors.primary,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                 const Row(
+                                   children: [
+                                     Icon(
+                                       Icons.receipt_long_rounded,
+                                       size: 15,
+                                       color: AppColors.primary,
+                                     ),
+                                     SizedBox(width: 4),
+                                     Text(
+                                       'Payment update',
+                                       style: TextStyle(
+                                         fontSize: 11,
+                                         fontWeight: FontWeight.w700,
+                                         color: AppColors.primary,
+                                       ),
+                                     ),
+                                   ],
+                                 ),
                                 Row(
                                   children: [
                                     Text(
@@ -589,28 +577,14 @@ class NotificationCenterScreen extends StatelessWidget {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'START PIN',
-                                      style: TextStyle(
-                                        fontSize: 9,
-                                        fontWeight: FontWeight.w800,
-                                        letterSpacing: 0.5,
-                                        color: AppColors.textSecondary,
-                                      ),
-                                    ),
-                                    Text(
-                                      '4821',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w800,
-                                        color: AppColors.primary,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                 const Text(
+                                   'Booking update',
+                                   style: TextStyle(
+                                     fontSize: 12,
+                                     fontWeight: FontWeight.w700,
+                                     color: AppColors.primary,
+                                   ),
+                                 ),
                                 Row(
                                   children: [
                                     Text(
@@ -643,6 +617,49 @@ class NotificationCenterScreen extends StatelessWidget {
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorState(BuildContext context, bool isDark) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.xl),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.cloud_off_rounded,
+              size: 40,
+              color: isDark ? AppColors.textSecondary : AppColors.primary,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              'Notifications unavailable',
+              style: TextStyle(
+                color: isDark ? AppColors.cream : AppColors.textPrimary,
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              controller.errorMessage ?? 'Try again in a moment.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 13,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            OutlinedButton.icon(
+              onPressed: controller.load,
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('Try again'),
+            ),
+          ],
         ),
       ),
     );
@@ -737,7 +754,7 @@ class NotificationCenterScreen extends StatelessWidget {
         backgroundColor: isDark
             ? AppColors.surfaceElevated
             : AppColors.surfaceContainerLowest,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.cardBorder),
         title: Text(
           'Clear all notifications?',
           style: TextStyle(
@@ -774,11 +791,11 @@ class NotificationCenterScreen extends StatelessWidget {
   }
 
   void _showInvoiceModal(BuildContext context, InAppNotification item, bool isDark) {
-    final invoiceNumber = RegExp(r'INV-[0-9-]+').firstMatch(item.body)?.group(0) ?? 'INV-2026-0824';
-    final serviceName = item.body.contains('Plumbing') ? 'Plumbing Service' : 'Home Service';
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: isDark ? AppColors.surfaceElevated : AppColors.surfaceContainerLowest,
+      backgroundColor: isDark
+          ? AppColors.surfaceElevated
+          : AppColors.surfaceContainerLowest,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -793,7 +810,7 @@ class NotificationCenterScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Invoice $invoiceNumber',
+                    'Invoice',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
@@ -801,6 +818,7 @@ class NotificationCenterScreen extends StatelessWidget {
                     ),
                   ),
                   IconButton(
+                    tooltip: 'Close',
                     icon: const Icon(Icons.close_rounded),
                     onPressed: () => Navigator.of(ctx).pop(),
                   ),
@@ -809,55 +827,18 @@ class NotificationCenterScreen extends StatelessWidget {
               const SizedBox(height: AppSpacing.xs),
               Text(
                 item.body,
-                style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 13,
+                ),
               ),
               const SizedBox(height: AppSpacing.md),
-              Container(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.backgroundSecondary : AppColors.surfaceContainerLow,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.outline.withValues(alpha: 0.1)),
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('Service', style: TextStyle(color: AppColors.textSecondary)),
-                        Text(
-                          serviceName,
-                          style: TextStyle(
-                            color: isDark ? AppColors.cream : AppColors.textPrimary,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const Divider(height: AppSpacing.md),
-                    const Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('Status', style: TextStyle(color: AppColors.textSecondary)),
-                        Text('PAID', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w800)),
-                      ],
-                    ),
-                    const Divider(height: AppSpacing.md),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('Total Amount', style: TextStyle(color: AppColors.textSecondary)),
-                        Text(
-                          '₹649',
-                          style: TextStyle(
-                            color: isDark ? AppColors.cream : AppColors.textPrimary,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+              const Text(
+                'Open the payment details to view the authoritative invoice, amount, and status.',
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 13,
+                  height: 1.4,
                 ),
               ),
               const SizedBox(height: AppSpacing.lg),
@@ -873,7 +854,10 @@ class NotificationCenterScreen extends StatelessWidget {
                     ),
                   ),
                   onPressed: () => Navigator.of(ctx).pop(),
-                  child: const Text('Close', style: TextStyle(fontWeight: FontWeight.w700)),
+                  child: const Text(
+                    'Close',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
                 ),
               ),
             ],

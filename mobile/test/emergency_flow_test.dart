@@ -42,11 +42,17 @@ const category = ServiceCategory(
   isEmergency: true,
 );
 
-Future<EmergencyConfirmScreen> screen(ApiTransport transport) async =>
+Future<EmergencyConfirmScreen> screen(
+  ApiTransport transport, {
+  String? hotlineNumber,
+  void Function(String)? onCallHotline,
+}) async =>
     EmergencyConfirmScreen(
       categories: const [category],
       repository: EmergencyRepository(transport),
       locationProvider: FixedLocation(),
+      hotlineNumber: hotlineNumber,
+      onCallHotline: onCallHotline,
     );
 
 Widget host(Widget child) => MaterialApp(
@@ -82,6 +88,7 @@ void main() {
     'currentWave': 1,
     'fallbackRequired': false,
     'guidance': null,
+    'eligibleCount': 7,
   };
 
   testWidgets('shows the mandatory public-emergency notice before anything', (
@@ -185,5 +192,56 @@ void main() {
       find.textContaining('call your local emergency services'),
       findsOneWidget,
     );
+  });
+
+  testWidgets('does not render fabricated hotline, SLA, or address claims', (
+    tester,
+  ) async {
+    final transport = FakeTransport(
+      ApiResponse(statusCode: 201, body: created),
+      () => ApiResponse(statusCode: 200, body: okStatus),
+    );
+
+    await tester.pumpWidget(host(await screen(transport)));
+    await tester.pumpIdle();
+
+    expect(find.text('24/7 Hotline'), findsNothing);
+    expect(find.text('15-Min SLA'), findsNothing);
+    expect(find.text('5 Verified Techs nearby'), findsNothing);
+    expect(find.textContaining('Flat 402, Green Glen Layout'), findsNothing);
+  });
+
+  testWidgets('uses a configured hotline and real resolved availability', (
+    tester,
+  ) async {
+    String? calledNumber;
+    final transport = FakeTransport(
+      ApiResponse(statusCode: 201, body: created),
+      () => ApiResponse(statusCode: 200, body: okStatus),
+    );
+
+    await tester.pumpWidget(
+      host(
+        await screen(
+          transport,
+          hotlineNumber: '+91-800-123-4567',
+          onCallHotline: (number) => calledNumber = number,
+        ),
+      ),
+    );
+    await tester.pumpIdle();
+
+    await tester.tap(find.text('Emergency hotline'));
+    expect(calledNumber, '+91-800-123-4567');
+
+    await tester.enterText(find.byType(TextField), 'Water everywhere');
+    await tester.pump();
+    await confirmAlert(tester);
+    await tester.pumpIdle();
+    await tester.pumpIdle();
+
+    expect(find.text('Eligible professionals: 7'), findsOneWidget);
+    expect(find.textContaining('23.02000, 72.57000'), findsOneWidget);
+    expect(find.text('15-Min SLA'), findsNothing);
   });
 }

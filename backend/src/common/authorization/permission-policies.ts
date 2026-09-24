@@ -52,6 +52,7 @@ export const PERMISSIONS = {
   adminBookingsRead: 'admin.bookings.read',
   adminBookingsIntervene: 'admin.bookings.intervene',
   pushTokenManageSelf: 'notifications.push.token.manage.self',
+  notificationInboxReadSelf: 'notifications.inbox.read.self',
   trustAcceptTimeReadSelf: 'trust.accept-time.read.self',
   complaintsCreate: 'complaints.create',
   aiRecommendationCreate: 'ai.recommendation.create',
@@ -381,6 +382,11 @@ export const PERMISSION_POLICIES: Readonly<
   },
   [PERMISSIONS.pushTokenManageSelf]: {
     roles: allHumanRoles,
+    relationship: 'self',
+  },
+  [PERMISSIONS.notificationInboxReadSelf]: {
+    roles: allHumanRoles,
+    audience: 'mobile',
     relationship: 'self',
   },
   [PERMISSIONS.trustAcceptTimeReadSelf]: {

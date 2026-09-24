@@ -7,6 +7,7 @@ import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/app_typography.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
+import 'package:fixnow_mobile/config/app_environment.dart';
 import 'package:fixnow_mobile/design_system/fix_components.dart';
 import 'package:fixnow_mobile/design_system/fix_motion.dart';
 import 'package:fixnow_mobile/design_system/fix_motion_suite.dart';
@@ -27,6 +28,7 @@ import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
+import 'package:url_launcher/url_launcher.dart';
 import 'package:fixnow_mobile/features/ai/ai_recommendation_repository.dart';
 import 'package:fixnow_mobile/features/ai/problem_analysis_repository.dart';
 import 'package:fixnow_mobile/features/ai/problem_diagnosis_controller.dart';
@@ -309,6 +311,10 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
             builder: (_) => EmergencyConfirmScreen(
               categories: emergencies,
               repository: repository,
+              locationProvider: BookingLocationResolver(initialFix: _bookingLocation),
+              hotlineNumber: AppEnvironment.emergencyHotline.isEmpty
+                  ? null
+                  : AppEnvironment.emergencyHotline,
             ),
           ),
         )
@@ -357,21 +363,31 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
               style: TextStyle(color: AppColors.textSecondary),
             ),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.emergency,
-              foregroundColor: Colors.white,
+          if (AppEnvironment.emergencyHotline.isNotEmpty)
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.emergency,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () async {
+                Navigator.of(ctx).pop();
+                final opened = await launchUrl(
+                  Uri(
+                    scheme: 'tel',
+                    path: AppEnvironment.emergencyHotline,
+                  ),
+                  mode: LaunchMode.externalApplication,
+                );
+                if (!opened && context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('The emergency number could not be opened.'),
+                    ),
+                  );
+                }
+              },
+              child: const Text('Call configured hotline'),
             ),
-            onPressed: () {
-              Navigator.of(ctx).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Connecting to 24/7 Emergency Dispatch...'),
-                ),
-              );
-            },
-            child: const Text('Call Dispatch'),
-          ),
         ],
       ),
     );

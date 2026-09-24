@@ -37,6 +37,84 @@ void main() {
     },
   );
 
+  test('waits for subscription acknowledgement and restores account subscriptions', () async {
+    final firstSocket = _FakeSocket();
+    final secondSocket = _FakeSocket();
+    final sockets = <_FakeSocket>[firstSocket, secondSocket];
+    var connection = 0;
+    final client = RealtimeClient(
+      uri: Uri.parse('ws://localhost/realtime'),
+      accessToken: () async => 'access-token',
+      connector: _Connector(() => sockets[connection++]),
+    );
+
+    final accountSubscription = client.subscribeAccount('user-1');
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+    final firstSubscribe = jsonDecode(firstSocket.sent[1]) as Map<String, dynamic>;
+    expect(firstSubscribe['requestId'], isNotNull);
+    firstSocket.emit({
+      'type': 'subscribed',
+      'requestId': firstSubscribe['requestId'],
+      'channel': 'account',
+      'resourceId': 'user-1',
+    });
+    await accountSubscription;
+
+    await firstSocket.close();
+    await Future<void>.delayed(const Duration(milliseconds: 700));
+    expect(secondSocket.sent.map(jsonDecode), contains(
+      isA<Map<String, dynamic>>().having(
+        (message) => message['type'],
+        'type',
+        'subscribe',
+      ).having((message) => message['resourceId'], 'resourceId', 'user-1'),
+    ));
+    client.dispose();
+  });
+
+  test('emits account notification projections', () async {
+    final socket = _FakeSocket();
+    final client = RealtimeClient(
+      uri: Uri.parse('ws://localhost/realtime'),
+      accessToken: () async => 'access-token',
+      connector: _FakeConnector(socket),
+    );
+    final notification = expectLater(
+      client.notifications,
+      emits(
+        isA<RealtimeProjection>().having(
+          (projection) => projection.data['id'],
+          'id',
+          'notification-1',
+        ),
+      ),
+    );
+
+    await client.subscribeAccount('user-1');
+    await Future<void>.delayed(Duration.zero);
+    final subscribe = jsonDecode(socket.sent[1]) as Map<String, dynamic>;
+    socket.emit({
+      'type': 'subscribed',
+      'requestId': subscribe['requestId'],
+      'channel': 'account',
+      'resourceId': 'user-1',
+    });
+    socket.emit({
+      'type': 'notification.created.v1',
+      'data': {
+        'id': 'notification-1',
+        'title': 'Booking update',
+        'body': 'Your booking changed.',
+        'category': 'bookings',
+        'timestamp': '2026-09-24T10:00:00.000Z',
+        'isRead': false,
+      },
+    });
+
+    await notification;
+    client.dispose();
+  });
+
   test('exposes provider presence, consent, and location commands', () async {
     final socket = _FakeSocket();
     final client = RealtimeClient(
@@ -82,6 +160,15 @@ void main() {
   });
 }
 
+class _Connector implements RealtimeSocketConnector {
+  _Connector(this.factory);
+
+  final _FakeSocket Function() factory;
+
+  @override
+  Future<RealtimeSocket> connect(Uri uri) async => factory();
+}
+
 class _FakeConnector implements RealtimeSocketConnector {
   _FakeConnector(this.socket);
   final _FakeSocket socket;
@@ -100,8 +187,16 @@ class _FakeSocket implements RealtimeSocket {
   @override
   Future<void> send(Object message) async {
     sent.add(message.toString());
-    if (message.toString().contains('"authenticate"')) {
+    final value = jsonDecode(message.toString()) as Map<String, dynamic>;
+    if (value['type'] == 'authenticate') {
       Future.delayed(Duration.zero, () => emit({'type': 'ready'}));
+    } else if (value['type'] == 'subscribe') {
+      Future.delayed(Duration.zero, () => emit({
+            'type': 'subscribed',
+            'requestId': value['requestId'],
+            'channel': value['channel'],
+            'resourceId': value['resourceId'],
+          }));
     }
   }
 

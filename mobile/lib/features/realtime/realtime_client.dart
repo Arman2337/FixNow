@@ -55,36 +55,30 @@ class RealtimeClient extends ChangeNotifier {
   final Future<String?> Function() accessToken;
   final RealtimeSocketConnector _connector;
   final _projections = StreamController<RealtimeProjection>.broadcast();
+  final _notifications = StreamController<RealtimeProjection>.broadcast();
   final _voiceFrames = StreamController<Map<String, Object?>>.broadcast();
   RealtimeSocket? _socket;
   StreamSubscription<Object?>? _subscription;
   Timer? _retryTimer;
-  String? _bookingId;
   bool _closed = false;
   int _retries = 0;
   int _requestSequence = 0;
   Completer<void>? _readyCompleter;
   final Map<String, Completer<void>> _pendingAcks = {};
+  final Set<String> _pendingSubscriptionAcks = {};
+  final List<Map<String, String>> _subscriptions = [];
 
   Stream<RealtimeProjection> get projections => _projections.stream;
+  Stream<RealtimeProjection> get notifications => _notifications.stream;
   Stream<Map<String, Object?>> get voiceFrames => _voiceFrames.stream;
   bool get isConnected =>
       _socket != null && (_readyCompleter?.isCompleted ?? false);
 
   Future<void> subscribeBooking(String bookingId) async {
-    _bookingId = bookingId;
     _closed = false;
+    _rememberSubscription('booking', bookingId);
     if (_socket != null) {
-      if (_readyCompleter?.isCompleted == false) {
-        try {
-          await _readyCompleter!.future;
-        } catch (_) {}
-      }
-      await _send({
-        'type': 'subscribe',
-        'channel': 'booking',
-        'resourceId': bookingId,
-      });
+      await _subscribe('booking', bookingId);
       return;
     }
     await _connect();
@@ -92,17 +86,9 @@ class RealtimeClient extends ChangeNotifier {
 
   Future<void> subscribeAccount(String userId) async {
     _closed = false;
+    _rememberSubscription('account', userId);
     if (_socket != null) {
-      if (_readyCompleter?.isCompleted == false) {
-        try {
-          await _readyCompleter!.future;
-        } catch (_) {}
-      }
-      await _send({
-        'type': 'subscribe',
-        'channel': 'account',
-        'resourceId': userId,
-      });
+      await _subscribe('account', userId);
       return;
     }
     await _connect();
@@ -152,6 +138,45 @@ class RealtimeClient extends ChangeNotifier {
     'data': base64Data,
   });
 
+  void _rememberSubscription(String channel, String resourceId) {
+    final exists = _subscriptions.any(
+      (subscription) =>
+          subscription['channel'] == channel &&
+          subscription['resourceId'] == resourceId,
+    );
+    if (!exists) {
+      _subscriptions.add({'channel': channel, 'resourceId': resourceId});
+    }
+  }
+
+  Future<void> _subscribe(String channel, String resourceId) async {
+    final requestId = 'mobile-${++_requestSequence}';
+    final acknowledgement = Completer<void>();
+    _pendingAcks[requestId] = acknowledgement;
+    _pendingSubscriptionAcks.add(requestId);
+    try {
+      await _send({
+        'type': 'subscribe',
+        'channel': channel,
+        'resourceId': resourceId,
+        'requestId': requestId,
+      });
+      await acknowledgement.future.timeout(const Duration(seconds: 5));
+    } finally {
+      _pendingAcks.remove(requestId);
+      _pendingSubscriptionAcks.remove(requestId);
+    }
+  }
+
+  Future<void> _restoreSubscriptions() async {
+    for (final subscription in List<Map<String, String>>.from(_subscriptions)) {
+      await _subscribe(
+        subscription['channel']!,
+        subscription['resourceId']!,
+      );
+    }
+  }
+
   Future<void> _connect() async {
     _retryTimer?.cancel();
     final token = await accessToken();
@@ -179,8 +204,9 @@ class RealtimeClient extends ChangeNotifier {
         cancelOnError: true,
       );
       notifyListeners();
-      await _readyCompleter!.future.timeout(const Duration(seconds: 5));
-    } catch (_) {
+       await _readyCompleter!.future.timeout(const Duration(seconds: 5));
+       await _restoreSubscriptions();
+     } catch (_) {
       _handleDisconnect();
     }
   }
@@ -194,20 +220,16 @@ class RealtimeClient extends ChangeNotifier {
         if (_readyCompleter?.isCompleted == false) {
           _readyCompleter!.complete();
         }
-        if (_bookingId != null) {
-          unawaited(
-            _send({
-              'type': 'subscribe',
-              'channel': 'booking',
-              'resourceId': _bookingId,
-            }),
-          );
-        }
       }
       _completeAcknowledgement(decoded);
       final msgType = decoded['type']?.toString();
       if (msgType == 'call.voice-frame.v1') {
         _voiceFrames.add(Map<String, Object?>.from(decoded));
+      } else if (msgType == 'notification.created.v1') {
+        final data = decoded['data'];
+        if (data is Map) {
+          _notifications.add(RealtimeProjection(Map<String, Object?>.from(data)));
+        }
       } else if (msgType == 'booking.projection-updated.v1') {
         final data = decoded['data'];
         if (data is Map) {
@@ -282,9 +304,13 @@ class RealtimeClient extends ChangeNotifier {
     final type = decoded['type'];
     if (type == 'presence-ack' ||
         type == 'location-consent-ack' ||
-        type == 'location-ack') {
+        type == 'location-ack' ||
+        (type == 'subscribed' &&
+            _pendingSubscriptionAcks.contains(requestId))) {
       acknowledgement.complete();
-    } else if (type == 'location-denied' || type == 'error') {
+    } else if (type == 'location-denied' ||
+        type == 'subscription-denied' ||
+        type == 'error') {
       acknowledgement.completeError(
         StateError(decoded['code']?.toString() ?? 'Realtime request denied'),
       );
@@ -297,15 +323,17 @@ class RealtimeClient extends ChangeNotifier {
     _retryTimer?.cancel();
     unawaited(_subscription?.cancel());
     unawaited(_socket?.close());
-    unawaited(_projections.close());
-    unawaited(_voiceFrames.close());
-    for (final acknowledgement in _pendingAcks.values) {
+     unawaited(_projections.close());
+     unawaited(_notifications.close());
+     unawaited(_voiceFrames.close());
+     for (final acknowledgement in _pendingAcks.values) {
       if (!acknowledgement.isCompleted) {
         acknowledgement.completeError(StateError('Realtime client closed'));
       }
     }
-    _pendingAcks.clear();
-    super.dispose();
+     _pendingAcks.clear();
+     _pendingSubscriptionAcks.clear();
+     super.dispose();
   }
 }
 

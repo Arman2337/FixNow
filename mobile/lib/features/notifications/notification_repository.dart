@@ -10,44 +10,6 @@ class NotificationRepository {
   final Set<String> _readIds = {};
   final Set<String> _deletedIds = {};
 
-  static final List<InAppNotification> _defaultSeed = [
-    InAppNotification(
-      id: 'notif-seed-1',
-      title: 'Booking Confirmed & Assigned',
-      body: 'Verified expert Ramesh K. has accepted your electrical repair request.',
-      category: NotificationCategory.bookings,
-      timestamp: DateTime.now().subtract(const Duration(minutes: 18)),
-      isRead: false,
-      bookingId: 'booking-seed-1',
-    ),
-    InAppNotification(
-      id: 'notif-seed-2',
-      title: 'Seasonal Home Checkup',
-      body: 'Schedule pre-monsoon appliance and plumbing checks with verified local pros.',
-      category: NotificationCategory.offers,
-      timestamp: DateTime.now().subtract(const Duration(hours: 2)),
-      isRead: false,
-    ),
-    InAppNotification(
-      id: 'notif-seed-3',
-      title: 'Payment Invoice Ready',
-      body: 'Invoice INV-2026-0824 for Plumbing Service has been generated and marked paid.',
-      category: NotificationCategory.payments,
-      timestamp: DateTime.now().subtract(const Duration(hours: 18)),
-      isRead: true,
-      bookingId: 'booking-seed-1',
-      paymentId: 'pay-seed-1',
-    ),
-    InAppNotification(
-      id: 'notif-seed-4',
-      title: 'Trust & Safety Assurance',
-      body: 'All FixNow professionals have verified background checks, identity proof, and skill tests.',
-      category: NotificationCategory.system,
-      timestamp: DateTime.now().subtract(const Duration(days: 2)),
-      isRead: true,
-    ),
-  ];
-
   Future<List<InAppNotification>> fetchNotifications() async {
     List<InAppNotification> remoteList = [];
     if (api != null) {
@@ -60,18 +22,34 @@ class NotificationRepository {
             bearerToken: token,
           ),
         );
-        if (response.statusCode == 200 && response.body is List) {
-          final raw = response.body as List;
-          remoteList = raw
-              .whereType<Map>()
-              .map(
-                (m) => InAppNotification.fromJson(Map<String, dynamic>.from(m)),
-              )
-              .toList();
-        }
-      } catch (_) {
-        // No fallback, return what we have (empty or cached)
-      }
+         if (response.statusCode < 200 || response.statusCode >= 300) {
+           throw ApiException(
+             ApiFailureKind.server,
+             'Notifications are temporarily unavailable.',
+             statusCode: response.statusCode,
+           );
+         }
+         if (response.body is! List) {
+           throw const ApiException(
+             ApiFailureKind.invalidResponse,
+             'Notifications returned an invalid response.',
+           );
+         }
+         final raw = response.body as List;
+         remoteList = raw
+             .whereType<Map>()
+             .map(
+               (m) => InAppNotification.fromJson(Map<String, dynamic>.from(m)),
+             )
+             .toList();
+       } on ApiException {
+         rethrow;
+       } catch (_) {
+         throw const ApiException(
+           ApiFailureKind.server,
+           'Notifications are temporarily unavailable.',
+         );
+       }
     }
 
     final combined = <String, InAppNotification>{};
@@ -80,16 +58,6 @@ class NotificationRepository {
         combined[item.id] = item.copyWith(
           isRead: item.isRead || _readIds.contains(item.id),
         );
-      }
-    }
-
-    if (api == null || combined.isEmpty) {
-      for (final item in _defaultSeed) {
-        if (!_deletedIds.contains(item.id) && !combined.containsKey(item.id)) {
-          combined[item.id] = item.copyWith(
-            isRead: item.isRead || _readIds.contains(item.id),
-          );
-        }
       }
     }
 

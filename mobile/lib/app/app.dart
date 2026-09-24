@@ -119,6 +119,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
   late final ChatRepository _chatRepository;
   late final SavedAddressRepository _savedAddresses;
   final Map<String, BookingTrackingController> _trackingControllers = {};
+  RealtimeClient? _notificationRealtime;
 
   /// Last status seen per booking while its detail/tracking route is open, so
   /// the payment page can be surfaced exactly once on a live completion.
@@ -342,9 +343,11 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
       api: PushApi(api, accessToken: _auth.validAccessToken),
       gateway: _pushGateway,
     );
-    _notifications = NotificationController(
-      NotificationRepository(api: api, accessToken: _auth.validAccessToken),
-    );
+     _notificationRealtime = _createRealtimeClient();
+     _notifications = NotificationController(
+       NotificationRepository(api: api, accessToken: _auth.validAccessToken),
+       realtime: _notificationRealtime,
+     );
     _chatRepository = HttpChatRepository(
       api: api,
       accessToken: _auth.validAccessToken,
@@ -363,6 +366,10 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
   void _handleAuthChange() {
     if (_auth.isAuthenticated) {
       unawaited(_requestNotificationPermission());
+      final userId = _auth.session?.userId;
+      if (userId != null) {
+        unawaited(_notificationRealtime?.subscribeAccount(userId) ?? Future<void>.value());
+      }
     }
   }
 

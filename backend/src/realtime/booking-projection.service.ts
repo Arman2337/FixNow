@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { WebSocket } from 'ws';
 import type { BookingTrackingProjection } from '../../../shared/booking-tracking.types';
@@ -7,6 +7,7 @@ import type { CachedProviderLocation } from '../location/location.types';
 import { RealtimeConnectionRegistry } from './realtime-connection-registry.service';
 import { EtaAdapter } from './eta-adapter';
 import { RouteAdapter } from './route-adapter';
+import { RealtimeNotificationPublisher } from './realtime-notification-publisher.service';
 
 @Injectable()
 export class BookingProjectionService {
@@ -14,6 +15,8 @@ export class BookingProjectionService {
     private readonly registry: RealtimeConnectionRegistry,
     private readonly eta: EtaAdapter,
     private readonly routes: RouteAdapter,
+    @Optional()
+    private readonly events?: RealtimeNotificationPublisher,
   ) {}
 
   publishBooking(booking: Booking): Promise<void> {
@@ -81,54 +84,37 @@ export class BookingProjectionService {
       eta: estimate ? { ...estimate, calculatedAt: occurredAt } : null,
       route,
     };
-    for (const [client, state] of this.registry.entries()) {
-      if (client.readyState !== WebSocket.OPEN) continue;
-      for (const subscription of state.subscriptions.values()) {
-        if (
-          subscription.channel === 'booking' &&
-          subscription.resourceId?.toLowerCase() === booking.id.toLowerCase()
-        ) {
-          client.send(
-            JSON.stringify({
-              type: 'booking.projection-updated.v1',
-              eventId: randomUUID(),
-              subscriptionId: subscription.id,
-              resourceId: booking.id,
-              sequence: booking.version,
-              occurredAt,
-              data,
-            }),
-          );
-        }
-      }
+    const frame = {
+      type: 'booking.projection-updated.v1',
+      eventId: randomUUID(),
+      resourceId: booking.id,
+      sequence: booking.version,
+      occurredAt,
+      data,
+    };
+    if (this.events) {
+      await this.events.publishBookingFrame(booking.id, frame);
+      return;
     }
+    this.sendToBookingSubscribers(booking.id, frame);
   }
 
-  publishChatMessage(
+  async publishChatMessage(
     bookingId: string,
     message: Readonly<Record<string, unknown>>,
-  ): void {
-    const occurredAt = new Date().toISOString();
-    for (const [client, state] of this.registry.entries()) {
-      if (client.readyState !== WebSocket.OPEN) continue;
-      for (const subscription of state.subscriptions.values()) {
-        if (
-          subscription.channel === 'booking' &&
-          subscription.resourceId?.toLowerCase() === bookingId.toLowerCase()
-        ) {
-          client.send(
-            JSON.stringify({
-              type: 'chat.message-received.v1',
-              eventId: randomUUID(),
-              subscriptionId: subscription.id,
-              resourceId: bookingId,
-              occurredAt,
-              data: message,
-            }),
-          );
-        }
-      }
+  ): Promise<void> {
+    const frame = {
+      type: 'chat.message-received.v1',
+      eventId: randomUUID(),
+      resourceId: bookingId,
+      occurredAt: new Date().toISOString(),
+      data: message,
+    };
+    if (this.events) {
+      await this.events.publishBookingFrame(bookingId, frame);
+      return;
     }
+    this.sendToBookingSubscribers(bookingId, frame);
   }
 
   isSubscriberActive(bookingId: string, userId: string): boolean {
@@ -148,12 +134,48 @@ export class BookingProjectionService {
     return false;
   }
 
-  publishCallSignal(
+  async publishCallSignal(
     bookingId: string,
     signalType: string,
     data: Readonly<Record<string, unknown>>,
+  ): Promise<void> {
+    const frame = {
+      type: signalType,
+      eventId: randomUUID(),
+      resourceId: bookingId,
+      occurredAt: new Date().toISOString(),
+      data,
+    };
+    if (this.events) {
+      await this.events.publishBookingFrame(bookingId, frame);
+      return;
+    }
+    this.sendToBookingSubscribers(bookingId, frame);
+  }
+
+  async publishAccountSignal(
+    userId: string,
+    signalType: string,
+    data: Readonly<Record<string, unknown>>,
+  ): Promise<void> {
+    const frame = {
+      type: signalType,
+      eventId: randomUUID(),
+      resourceId: userId,
+      occurredAt: new Date().toISOString(),
+      data,
+    };
+    if (this.events) {
+      await this.events.publishAccountFrame(userId, frame);
+      return;
+    }
+    this.sendToAccountSubscribers(userId, frame);
+  }
+
+  private sendToBookingSubscribers(
+    bookingId: string,
+    frame: Readonly<Record<string, unknown>>,
   ): void {
-    const occurredAt = new Date().toISOString();
     for (const [client, state] of this.registry.entries()) {
       if (client.readyState !== WebSocket.OPEN) continue;
       for (const subscription of state.subscriptions.values()) {
@@ -163,12 +185,8 @@ export class BookingProjectionService {
         ) {
           client.send(
             JSON.stringify({
-              type: signalType,
-              eventId: randomUUID(),
+              ...frame,
               subscriptionId: subscription.id,
-              resourceId: bookingId,
-              occurredAt,
-              data,
             }),
           );
         }
@@ -176,12 +194,10 @@ export class BookingProjectionService {
     }
   }
 
-  publishAccountSignal(
+  private sendToAccountSubscribers(
     userId: string,
-    signalType: string,
-    data: Readonly<Record<string, unknown>>,
+    frame: Readonly<Record<string, unknown>>,
   ): void {
-    const occurredAt = new Date().toISOString();
     for (const [client, state] of this.registry.entries()) {
       if (client.readyState !== WebSocket.OPEN) continue;
       for (const subscription of state.subscriptions.values()) {
@@ -191,12 +207,8 @@ export class BookingProjectionService {
         ) {
           client.send(
             JSON.stringify({
-              type: signalType,
-              eventId: randomUUID(),
+              ...frame,
               subscriptionId: subscription.id,
-              resourceId: userId,
-              occurredAt,
-              data,
             }),
           );
         }

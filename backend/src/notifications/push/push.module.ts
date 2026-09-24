@@ -9,7 +9,6 @@ import {
 } from './push-delivery';
 import { PushDeviceController } from './push.controller';
 import { PushDeviceService } from './push.service';
-import { NotificationInboxController } from '../inbox.controller';
 
 export enum PushProviderName {
   Disabled = 'disabled',
@@ -19,7 +18,7 @@ export enum PushProviderName {
 
 @Module({
   imports: [TypeOrmModule.forFeature([PushDeviceTokenEntity])],
-  controllers: [PushDeviceController, NotificationInboxController],
+  controllers: [PushDeviceController],
   providers: [
     PushDeviceService,
     FakePushDelivery,

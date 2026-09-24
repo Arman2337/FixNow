@@ -9,6 +9,7 @@ import 'package:fixnow_mobile/features/emergency/emergency_repository.dart';
 import 'package:fixnow_mobile/features/location/booking_location.dart';
 import 'package:fixnow_mobile/features/services/service_category.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// Policy §3 mandated copy. Fixed by docs/safety/emergency-dispatch-policy-v1;
 /// callers cannot alter it.
@@ -26,12 +27,16 @@ class EmergencyConfirmScreen extends StatefulWidget {
     required this.categories,
     required this.repository,
     this.locationProvider,
+    this.hotlineNumber,
+    this.onCallHotline,
     super.key,
   }) : assert(categories.length > 0);
 
   final List<ServiceCategory> categories;
   final EmergencyRepository repository;
   final BookingLocationProvider? locationProvider;
+  final String? hotlineNumber;
+  final void Function(String number)? onCallHotline;
 
   @override
   State<EmergencyConfirmScreen> createState() => _EmergencyConfirmScreenState();
@@ -77,33 +82,26 @@ class _EmergencyConfirmScreenState extends State<EmergencyConfirmScreen> {
           ),
         ),
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: AppSpacing.sm),
-            child: TextButton.icon(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'Dialing 24/7 Priority Emergency Hotline: 1800-123-4567',
-                    ),
-                  ),
-                );
-              },
-              icon: const Icon(
-                Icons.phone_in_talk_rounded,
-                size: 14,
-                color: AppColors.error,
-              ),
-              label: const Text(
-                '24/7 Hotline',
-                style: TextStyle(
+          if (widget.hotlineNumber?.trim().isNotEmpty ?? false)
+            Padding(
+              padding: const EdgeInsets.only(right: AppSpacing.sm),
+              child: TextButton.icon(
+                onPressed: () => _callHotline(widget.hotlineNumber!),
+                icon: const Icon(
+                  Icons.phone_in_talk_rounded,
+                  size: 14,
                   color: AppColors.error,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
+                ),
+                label: const Text(
+                  'Emergency hotline',
+                  style: TextStyle(
+                    color: AppColors.error,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ),
-          ),
         ],
       ),
       body: ListenableBuilder(
@@ -139,6 +137,31 @@ class _EmergencyConfirmScreenState extends State<EmergencyConfirmScreen> {
               ),
       ),
     );
+  }
+
+  Future<void> _callHotline(String number) async {
+    final callback = widget.onCallHotline;
+    if (callback != null) {
+      callback(number);
+      return;
+    }
+    try {
+      final opened = await launchUrl(
+        Uri(scheme: 'tel', path: number),
+        mode: LaunchMode.externalApplication,
+      );
+      if (!opened && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('The emergency number could not be opened.')),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('The emergency number could not be opened.')),
+        );
+      }
+    }
   }
 
   /// 1. Critical Evacuation Advisory Card (Life Safety Notice)
@@ -636,14 +659,16 @@ class _DispatchedView extends StatelessWidget {
                         color: AppColors.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Text(
-                        '15-Min SLA',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.primary,
-                        ),
-                      ),
+                     child: Text(
+                       status == null
+                           ? 'Availability pending'
+                           : 'Wave ${status.currentWave}',
+                       style: const TextStyle(
+                         fontSize: 10,
+                         fontWeight: FontWeight.w700,
+                         color: AppColors.primary,
+                       ),
+                     ),
                     ),
                   ],
                 ),
@@ -675,10 +700,12 @@ class _DispatchedView extends StatelessWidget {
                           color: AppColors.textPrimary,
                         ),
                       ),
-                      const Expanded(
+                      Expanded(
                         child: Text(
-                          '5 Verified Techs nearby',
-                          style: TextStyle(
+                          status == null
+                              ? 'Availability checked after sending'
+                              : 'Eligible professionals: ${status!.eligibleCount}',
+                          style: const TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
                             color: AppColors.primary,
@@ -724,46 +751,32 @@ class _DispatchedView extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
-                const Text(
-                  'Flat 402, Green Glen Layout, Bellandur, Bengaluru',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceContainerLow,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: const [
-                      Icon(
-                        Icons.signpost_rounded,
-                        size: 15,
-                        color: AppColors.tertiary,
-                      ),
-                      SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          'Landmark: Behind HDFC Bank ATM, Gate 2 (Intercom 402)',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: AppColors.textSecondary,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                 const SizedBox(height: 6),
+                 if (controller.resolvedLocation case final fix?) ...[
+                   Text(
+                     '${fix.latitude.toStringAsFixed(5)}, ${fix.longitude.toStringAsFixed(5)}',
+                     style: const TextStyle(
+                       fontSize: 13,
+                       fontWeight: FontWeight.w700,
+                       color: AppColors.textPrimary,
+                     ),
+                   ),
+                   const SizedBox(height: 6),
+                   Text(
+                     'Device location accuracy: ±${fix.accuracyMeters.round()} m',
+                     style: const TextStyle(
+                       fontSize: 11,
+                       color: AppColors.textSecondary,
+                     ),
+                   ),
+                 ] else
+                   const Text(
+                     'Location will be confirmed when you send the alert.',
+                     style: TextStyle(
+                       fontSize: 12,
+                       color: AppColors.textSecondary,
+                     ),
+                   ),
               ],
             ),
           ),

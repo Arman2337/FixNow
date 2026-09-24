@@ -14,6 +14,7 @@ import {
   NotificationDeliveryStatus,
 } from './notification-delivery.entity';
 import { InAppNotification } from './in-app-notification.entity';
+import { RealtimeNotificationPublisher } from '../../realtime/realtime-notification-publisher.service';
 
 /**
  * Lock-screen-safe templates. Booking identifiers and generic wording only —
@@ -111,6 +112,9 @@ export class DomainNotificationService {
     @Optional()
     @InjectRepository(InAppNotification)
     private readonly inAppNotifications?: Repository<InAppNotification>,
+    @Optional()
+    @Inject(RealtimeNotificationPublisher)
+    private readonly realtimePublisher?: RealtimeNotificationPublisher,
   ) {}
 
   async notifyBookingEvent(
@@ -215,7 +219,7 @@ export class DomainNotificationService {
 
     if (this.inAppNotifications) {
       try {
-        await this.inAppNotifications.save({
+        const persisted = await this.inAppNotifications.save({
           userId,
           title: content.title,
           body: content.body,
@@ -223,6 +227,16 @@ export class DomainNotificationService {
           bookingId,
           paymentId: null,
           readAt: null,
+        });
+        await this.realtimePublisher?.publishAccountNotification(userId, {
+          id: persisted.id,
+          title: persisted.title,
+          body: persisted.body,
+          category: persisted.kind,
+          bookingId: persisted.bookingId,
+          paymentId: persisted.paymentId,
+          timestamp: persisted.createdAt.toISOString(),
+          isRead: false,
         });
       } catch {
         // Continue even if in-app persistence fails

@@ -1,11 +1,113 @@
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:fixnow_mobile/api/api_client.dart';
 import 'package:fixnow_mobile/design_system/app_theme.dart';
 import 'package:fixnow_mobile/design_system/fix_notification_bell.dart';
 import 'package:fixnow_mobile/features/notifications/notification_center_screen.dart';
 import 'package:fixnow_mobile/features/notifications/notification_controller.dart';
 import 'package:fixnow_mobile/features/notifications/notification_model.dart';
 import 'package:fixnow_mobile/features/notifications/notification_repository.dart';
+import 'package:fixnow_mobile/features/realtime/realtime_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+class _FailingNotificationTransport implements ApiTransport {
+  @override
+  Future<ApiResponse> send(ApiRequest request) async {
+    return const ApiResponse(statusCode: 503, body: <Object?>{});
+  }
+}
+
+class _FixtureNotificationTransport implements ApiTransport {
+  @override
+  Future<ApiResponse> send(ApiRequest request) async {
+    final now = DateTime.now().toUtc();
+    return ApiResponse(
+      statusCode: 200,
+      body: [
+        {
+          'id': 'booking-1',
+          'title': 'Booking Confirmed & Assigned',
+          'body': 'Your booking is confirmed.',
+          'category': 'bookings',
+          'timestamp': now.subtract(const Duration(minutes: 18)).toIso8601String(),
+          'bookingId': 'booking-1',
+          'isRead': false,
+        },
+        {
+          'id': 'offer-1',
+          'title': 'Seasonal Home Checkup',
+          'body': 'Book a seasonal home checkup.',
+          'category': 'offers',
+          'timestamp': now.subtract(const Duration(hours: 2)).toIso8601String(),
+          'isRead': false,
+        },
+        {
+          'id': 'payment-1',
+          'title': 'Payment Invoice Ready',
+          'body': 'Invoice for Plumbing Service is ready.',
+          'category': 'payments',
+          'timestamp': now.subtract(const Duration(hours: 18)).toIso8601String(),
+          'paymentId': 'payment-1',
+          'serviceName': 'Plumbing Service',
+          'isRead': true,
+        },
+        {
+          'id': 'system-1',
+          'title': 'Trust & Safety Assurance',
+          'body': 'Your account is protected.',
+          'category': 'system',
+          'timestamp': now.subtract(const Duration(days: 2)).toIso8601String(),
+          'isRead': true,
+        },
+      ],
+    );
+  }
+}
+
+NotificationRepository fixtureRepository() => NotificationRepository(
+  api: _FixtureNotificationTransport(),
+  accessToken: () async => 'token',
+);
+
+class _NotificationSocket implements RealtimeSocket {
+  final _messages = StreamController<Object?>();
+  final sent = <String>[];
+
+  @override
+  Stream<Object?> get messages => _messages.stream;
+
+  @override
+  Future<void> send(Object message) async {
+    sent.add(message.toString());
+    final value = jsonDecode(message.toString()) as Map<String, dynamic>;
+    if (value['type'] == 'authenticate') {
+      Future<void>.delayed(Duration.zero, () => emit({'type': 'ready'}));
+    } else if (value['type'] == 'subscribe') {
+      Future<void>.delayed(Duration.zero, () => emit({
+            'type': 'subscribed',
+            'requestId': value['requestId'],
+            'channel': value['channel'],
+            'resourceId': value['resourceId'],
+          }));
+    }
+  }
+
+  void emit(Map<String, Object?> message) => _messages.add(jsonEncode(message));
+
+  @override
+  Future<void> close() => _messages.close();
+}
+
+class _NotificationConnector implements RealtimeSocketConnector {
+  const _NotificationConnector(this.socket);
+
+  final _NotificationSocket socket;
+
+  @override
+  Future<RealtimeSocket> connect(Uri uri) async => socket;
+}
 
 Widget host(Widget child) => MaterialApp(
   theme: AppTheme.dark,
@@ -13,6 +115,19 @@ Widget host(Widget child) => MaterialApp(
 );
 
 void main() {
+  test('does not return seed data when the notification API is unavailable', () async {
+    final repository = NotificationRepository(
+      api: _FailingNotificationTransport(),
+      accessToken: () async => 'token',
+    );
+
+    final controller = NotificationController(repository);
+    await controller.load();
+
+    expect(controller.notifications, isEmpty);
+    expect(controller.hasError, isTrue);
+  });
+
   group('NotificationModel', () {
     test('serializes and deserializes correctly with timeAgo', () {
       final notif = InAppNotification(
@@ -38,7 +153,7 @@ void main() {
 
   group('NotificationController', () {
     test('tracks unread count and applies category filter', () async {
-      final repository = NotificationRepository();
+      final repository = fixtureRepository();
       final controller = NotificationController(repository);
       await controller.load();
 
@@ -72,8 +187,47 @@ void main() {
       expect(controller.unreadCount, 1);
     });
 
+    test('adds a notification delivered by the account realtime stream', () async {
+      final socket = _NotificationSocket();
+      final realtime = RealtimeClient(
+        uri: Uri.parse('ws://localhost/realtime'),
+        accessToken: () async => 'access-token',
+        connector: _NotificationConnector(socket),
+      );
+      final controller = NotificationController(
+        fixtureRepository(),
+        realtime: realtime,
+      );
+      await controller.load();
+      final received = Completer<void>();
+      controller.addListener(() {
+        if (controller.notifications.any((item) => item.id == 'realtime-1') &&
+            !received.isCompleted) {
+          received.complete();
+        }
+      });
+
+      await realtime.subscribeAccount('user-1');
+      socket.emit({
+        'type': 'notification.created.v1',
+        'data': {
+          'id': 'realtime-1',
+          'title': 'Realtime update',
+          'body': 'A new update arrived.',
+          'category': 'bookings',
+          'timestamp': DateTime.now().toUtc().toIso8601String(),
+          'isRead': false,
+        },
+      });
+
+      await received.future.timeout(const Duration(seconds: 1));
+      expect(controller.notifications.first.id, 'realtime-1');
+      controller.dispose();
+      realtime.dispose();
+    });
+
     test('deletes individual and clears all notifications', () async {
-      final repository = NotificationRepository();
+      final repository = fixtureRepository();
       final controller = NotificationController(repository);
       await controller.load();
 
@@ -89,7 +243,7 @@ void main() {
 
   group('FixNotificationBellIcon widget', () {
     testWidgets('renders badge counter and fires onTap', (tester) async {
-      final repository = NotificationRepository();
+      final repository = fixtureRepository();
       final controller = NotificationController(repository);
       await controller.load();
 
@@ -123,7 +277,7 @@ void main() {
         tester.view.devicePixelRatio = 1.0;
         addTearDown(tester.view.resetPhysicalSize);
 
-        final repository = NotificationRepository();
+        final repository = fixtureRepository();
         final controller = NotificationController(repository);
         await controller.load();
 
@@ -158,7 +312,7 @@ void main() {
         await tester.tap(bookingCard);
         await tester.pumpAndSettle();
 
-        expect(openedBookingId, 'booking-seed-1');
+        expect(openedBookingId, 'booking-1');
 
         // Test "Mark read" button
         if (controller.unreadCount > 0) {
@@ -176,7 +330,7 @@ void main() {
         tester.view.devicePixelRatio = 1.0;
         addTearDown(tester.view.resetPhysicalSize);
 
-        final repository = NotificationRepository();
+        final repository = fixtureRepository();
         final controller = NotificationController(repository);
         await controller.load();
         controller.clearAll();
@@ -200,7 +354,7 @@ void main() {
         tester.view.devicePixelRatio = 1.0;
         addTearDown(tester.view.resetPhysicalSize);
 
-        final repository = NotificationRepository();
+        final repository = fixtureRepository();
         final controller = NotificationController(repository);
         await controller.load();
 
@@ -237,7 +391,7 @@ void main() {
         tester.view.devicePixelRatio = 1.0;
         addTearDown(tester.view.resetPhysicalSize);
 
-        final repository = NotificationRepository();
+        final repository = fixtureRepository();
         final controller = NotificationController(repository);
         await controller.load();
 
@@ -278,7 +432,7 @@ void main() {
         tester.view.devicePixelRatio = 1.0;
         addTearDown(tester.view.resetPhysicalSize);
 
-        final repository = NotificationRepository();
+        final repository = fixtureRepository();
         final controller = NotificationController(repository);
         await controller.load();
 
@@ -299,16 +453,21 @@ void main() {
         await tester.pumpAndSettle();
 
         // Modal sheet should be open
-        expect(find.text('Invoice INV-2026-0824'), findsOneWidget);
-        expect(find.text('Plumbing Service'), findsOneWidget);
-        expect(find.text('PAID'), findsOneWidget);
-        expect(find.text('₹649'), findsOneWidget);
+         expect(find.text('Invoice'), findsOneWidget);
+         expect(
+           find.text(
+             'Open the payment details to view the authoritative invoice, amount, and status.',
+           ),
+           findsOneWidget,
+         );
+         expect(find.text('PAID'), findsNothing);
+         expect(find.text('₹649'), findsNothing);
 
-        // Tap close button on modal
-        await tester.tap(find.text('Close'));
-        await tester.pumpAndSettle();
+         // Tap close button on modal
+         await tester.tap(find.text('Close'));
+         await tester.pumpAndSettle();
 
-        expect(find.text('Invoice INV-2026-0824'), findsNothing);
+         expect(find.text('Invoice'), findsNothing);
       },
     );
   });

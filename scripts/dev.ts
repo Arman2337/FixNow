@@ -188,8 +188,12 @@ async function start() {
   if (!isBackendOnly) {
     const flutterArgs = ["run"];
     if (hasDevice) {
-      console.log("📱 \x1b[1mLaunching Flutter Mobile App on attached device...\x1b[0m");
+      console.log("?? \x1b[1mLaunching Flutter Mobile App on attached device...\x1b[0m");
+      // Explicit even though push now defaults on: it keeps the flag visible
+      // and discoverable, and documents how to turn push off.
+      flutterArgs.push("--dart-define=PUSH_NOTIFICATIONS_ENABLED=true");
     } else {
+
       console.log("🌐 \x1b[1mLaunching Flutter Web App...\x1b[0m");
       console.log(`   \x1b[32mOpen http://localhost:${flutterWebPort}\x1b[0m`);
       flutterArgs.push(

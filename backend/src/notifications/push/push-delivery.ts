@@ -43,6 +43,25 @@ export class FakePushDelivery implements PushDelivery {
   }
 }
 
+/**
+ * The `PUSH_PROVIDER=disabled` implementation.
+ *
+ * This must NOT be the fake provider. The factory used to fall back to
+ * FakePushDelivery, which returns `sent` for every message, so a default or
+ * misconfigured deployment recorded SENT for notifications that were never
+ * delivered anywhere and nothing ever looked wrong. An honest no-op reports
+ * `unavailable` so the delivery row shows the truth.
+ */
+@Injectable()
+export class DisabledPushDelivery implements PushDelivery {
+  sendToToken(
+    _token: string,
+    _content: PushNotificationContent,
+  ): Promise<PushDeliveryResult> {
+    return Promise.resolve({ status: 'unavailable' });
+  }
+}
+
 /** Narrow surface of firebase-admin messaging used by this adapter. */
 interface MessagingClient {
   send(message: FirebaseAdminMessage): Promise<string>;
@@ -64,7 +83,13 @@ export class FcmPushDelivery implements PushDelivery {
         token,
         notification: { title: content.title, body: content.body },
         data: content.data,
-        android: { priority: content.data ? 'high' : 'normal' },
+        android: {
+          priority: content.data ? 'high' : 'normal',
+          // Drop stale booking pushes for the same booking rather than stacking
+          // a tray full of superseded "provider accepted" messages.
+          collapseKey: content.data?.['bookingId'],
+          ttl: 86_400_000,
+        },
         apns: { headers: { 'apns-priority': content.data ? '10' : '5' } },
       });
       return { status: 'sent' };

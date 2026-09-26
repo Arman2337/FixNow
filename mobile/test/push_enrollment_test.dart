@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fixnow_mobile/api/api_client.dart';
 import 'package:fixnow_mobile/notifications/push_api.dart';
 import 'package:fixnow_mobile/notifications/push_enrollment.dart';
@@ -50,6 +52,15 @@ PushEnrollmentController controllerFor(
   gateway: gateway ?? FakeGateway(),
   featureEnabled: true,
 );
+
+class RefreshingGateway extends FakeGateway implements PushTokenRefresher {
+  final _controller = StreamController<String?>.broadcast();
+
+  @override
+  Stream<String?> tokenRefreshes() => _controller.stream;
+
+  void emit(String token) => _controller.add(token);
+}
 
 void main() {
   test('stays fully inert when the build omits push support', () async {
@@ -140,5 +151,59 @@ void main() {
       ),
       isTrue,
     );
+  });
+
+  // Regression: nothing re-registered a rotated FCM token, so after a reinstall
+  // or an FCM refresh the backend held a dead token and delivery stopped
+  // silently while the app still showed "Active".
+  test('a rotated FCM token is re-registered with the backend', () async {
+    final transport = FakeTransport(
+      responses: [
+        const ApiResponse(statusCode: 200, body: []),
+        const ApiResponse(
+          statusCode: 200,
+          body: [
+            {
+              'id': 'device-1',
+              'platform': 'ANDROID',
+              'createdAt': '2026-08-24T00:00:00.000Z',
+            },
+          ],
+        ),
+        const ApiResponse(statusCode: 200, body: []),
+        const ApiResponse(
+          statusCode: 200,
+          body: [
+            {
+              'id': 'device-2',
+              'platform': 'ANDROID',
+              'createdAt': '2026-08-25T00:00:00.000Z',
+            },
+          ],
+        ),
+      ],
+    );
+    final gateway = RefreshingGateway();
+    final controller = controllerFor(transport, gateway);
+    await controller.enable();
+    expect(controller.status, PushEnrollmentStatus.ready);
+
+    gateway.emit('r' * 64);
+    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(Duration.zero);
+
+    final registered = transport.requests
+        .where((request) => request.method == ApiMethod.put)
+        .map((request) => request.body?['token'])
+        .toList();
+    expect(registered, ['f' * 64, 'r' * 64]);
+    controller.dispose();
+  });
+
+  test('push is enabled by default so a plain build registers a token', () {
+    // Regression: the gate defaulted to false and no run script, IDE config or
+    // documented command ever passed the flag, so the app shipped with push
+    // compiled out and no tray notification could ever arrive.
+    expect(pushNotificationsEnabled, isTrue);
   });
 }

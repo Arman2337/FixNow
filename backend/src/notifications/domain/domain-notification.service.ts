@@ -1,4 +1,4 @@
-import { Inject, Injectable, Optional } from '@nestjs/common';
+import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Booking } from '../../bookings/domain/booking.entity';
@@ -101,6 +101,25 @@ export const EMERGENCY_NOTIFICATION_TEMPLATES: Readonly<
  * e.g. "23-7", empty = disabled) because no per-user timezone is captured yet.
  * Per-user local quiet hours and emergency override arrive with FN-063.
  */
+/**
+ * Outcomes that a later attempt can still fix. SENT and SKIPPED_QUIET_HOURS are
+ * terminal; NO_DEVICES and FAILED are not, because the user may enroll a device
+ * or the provider may recover.
+ */
+const RETRYABLE_DELIVERY_STATUSES: ReadonlySet<NotificationDeliveryStatus> =
+  new Set([NotificationDeliveryStatus.NO_DEVICES, NotificationDeliveryStatus.FAILED]);
+
+/** Surfaces the provider's own error code so a log line is actionable. */
+function describePushError(error: unknown): string {
+  if (typeof error === 'object' && error !== null) {
+    const code = 'code' in error ? String((error as { code?: unknown }).code) : '';
+    const message =
+      'message' in error ? String((error as { message?: unknown }).message) : '';
+    if (code || message) return [code, message].filter(Boolean).join(': ');
+  }
+  return error instanceof Error ? error.message : String(error);
+}
+
 @Injectable()
 export class DomainNotificationService {
   constructor(
@@ -115,7 +134,11 @@ export class DomainNotificationService {
     @Optional()
     @Inject(RealtimeNotificationPublisher)
     private readonly realtimePublisher?: RealtimeNotificationPublisher,
-  ) {}
+  ) {
+    this.logger = new Logger(DomainNotificationService.name);
+  }
+
+  private readonly logger: Logger;
 
   async notifyBookingEvent(
     booking: Booking,
@@ -218,7 +241,12 @@ export class DomainNotificationService {
       userId,
       dedupeKey,
     });
-    if (existing) return; // Deduplicated replay.
+    // Retryable outcomes must not burn the dedupe slot. A NO_DEVICES row used
+    // to make the notification permanently undeliverable, so a user who
+    // enrolled their phone ten seconds later never received it.
+    if (existing && !RETRYABLE_DELIVERY_STATUSES.has(existing.status)) {
+      return; // Deduplicated replay.
+    }
 
     if (this.inAppNotifications) {
       try {
@@ -275,16 +303,23 @@ export class DomainNotificationService {
     }
 
     let sentAny = false;
+    let unavailable = false;
     for (const { token } of tokens) {
       try {
         const result = await this.delivery.sendToToken(token, content);
         if (result.status === 'sent') sentAny = true;
+        if (result.status === 'unavailable') unavailable = true;
         if (result.status === 'unregistered') {
           // Stale token: drop it so future sends skip the dead device.
           await this.devices.update({ token }, { enabled: false });
         }
-      } catch {
-        // Single attempt per send; the delivery row records the failure.
+      } catch (error) {
+        // Was a bare `catch {}`: a 401 from FCM, an unreadable credential file
+        // or an APNs auth error all vanished with no trace, so the only signal
+        // was a FAILED row nobody reads. Log the provider's own error code.
+        this.logger.warn(
+          `Push send failed for a device token: ${describePushError(error)}`,
+        );
       }
     }
     await this.record(
@@ -294,7 +329,9 @@ export class DomainNotificationService {
       bookingId,
       sentAny
         ? NotificationDeliveryStatus.SENT
-        : NotificationDeliveryStatus.FAILED,
+        : unavailable
+          ? NotificationDeliveryStatus.NO_DEVICES
+          : NotificationDeliveryStatus.FAILED,
       null,
     );
   }

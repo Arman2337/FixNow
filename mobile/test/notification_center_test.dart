@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:fixnow_mobile/api/api_client.dart';
+import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_theme.dart';
 import 'package:fixnow_mobile/design_system/fix_notification_bell.dart';
 import 'package:fixnow_mobile/features/notifications/notification_center_screen.dart';
@@ -323,6 +324,56 @@ void main() {
       },
     );
 
+    testWidgets('keeps notification header within narrow large-text bounds', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(320, 640);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final repository = fixtureRepository();
+      final controller = NotificationController(repository);
+      await controller.load();
+
+      await tester.pumpWidget(
+        MediaQuery(
+          data: const MediaQueryData(
+            textScaler: TextScaler.linear(2),
+            disableAnimations: true,
+          ),
+          child: MaterialApp(
+            theme: AppTheme.dark,
+            home: NotificationCenterScreen(controller: controller),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      controller.dispose();
+    });
+
+    testWidgets('uses readable foreground on notification cards', (
+      tester,
+    ) async {
+      final repository = fixtureRepository();
+      final controller = NotificationController(repository);
+      await controller.load();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.dark,
+          home: NotificationCenterScreen(controller: controller),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final title = tester.widget<Text>(find.text('Booking Confirmed & Assigned'));
+      expect(title.style?.color, AppColors.textPrimary);
+      controller.dispose();
+    });
+
     testWidgets(
       'displays comforting empty state when category has no notifications',
       (tester) async {
@@ -348,7 +399,7 @@ void main() {
     );
 
     testWidgets(
-      'read notifications maintain high-contrast dark theme surfaces without white-on-white text',
+      'read notifications maintain readable text on notification surfaces',
       (tester) async {
         tester.view.physicalSize = const Size(800, 2400);
         tester.view.devicePixelRatio = 1.0;
@@ -374,13 +425,10 @@ void main() {
         expect(find.text('Payment Invoice Ready'), findsOneWidget);
         expect(find.text('Trust & Safety Assurance'), findsOneWidget);
 
-        // Find the text widget for read notification and verify it uses high contrast text color
         final readTitle = tester.widget<Text>(
           find.text('Payment Invoice Ready'),
         );
-        expect(readTitle.style?.color, isNotNull);
-        // Ensure text is high contrast cream/white (not dark text that blends into dark bg)
-        expect(readTitle.style!.color!.computeLuminance(), greaterThan(0.5));
+        expect(readTitle.style?.color, AppColors.textPrimary);
       },
     );
 

@@ -57,11 +57,11 @@ export class RealtimeGateway
     private readonly telemetry: RealtimeTelemetryService,
     private readonly config: ConfigService,
     private readonly location: LocationService,
-     private readonly dataSource: DataSource,
-     private readonly projections: BookingProjectionService,
-     @Optional()
-     private readonly events?: RealtimeNotificationPublisher,
-   ) {}
+    private readonly dataSource: DataSource,
+    private readonly projections: BookingProjectionService,
+    @Optional()
+    private readonly events?: RealtimeNotificationPublisher,
+  ) {}
 
   afterInit(): void {
     this.heartbeatTimer = setInterval(
@@ -176,10 +176,10 @@ export class RealtimeGateway
       await this.ingestLocation(client, message);
       return;
     }
-     if (message.type === 'call.voice-frame.v1') {
-       await this.relayVoiceFrame(client, message);
-       return;
-     }
+    if (message.type === 'call.voice-frame.v1') {
+      await this.relayVoiceFrame(client, message);
+      return;
+    }
     this.telemetry.increment('messages.invalid');
     this.send(client, {
       type: 'error',
@@ -198,7 +198,7 @@ export class RealtimeGateway
     const senderState = this.registry.get(senderClient);
     const senderId = senderState?.principal?.userId;
     if (!bookingId || !callId || !data || !senderId) return;
-    const senderSubscribed = [...senderState!.subscriptions.values()].some(
+    const senderSubscribed = [...senderState.subscriptions.values()].some(
       (subscription) =>
         subscription.channel === 'booking' &&
         subscription.resourceId?.toLowerCase() === bookingId.toLowerCase(),

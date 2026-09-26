@@ -8,7 +8,7 @@ import { Repository } from 'typeorm';
 import { Complaint, ComplaintStatus } from './domain/complaint.entity';
 import { ComplaintEvidence } from './domain/complaint-evidence.entity';
 import { ComplaintAudit } from './domain/complaint-audit.entity';
-import { CreateComplaintDto } from './dto/create-complaint.dto';
+import { CreateComplaintDto, EvidenceDto } from './dto/create-complaint.dto';
 import { AppealStatus } from '../../../../shared/trust.types';
 import { ComplaintTargetRole } from './domain/complaint.entity';
 import { TrustService } from '../../trust/trust.service';
@@ -97,6 +97,66 @@ export class ComplaintsService {
       // Redact submitter identity to prevent retaliation
       complaint.submitterId = 'REDACTED';
     }
+
+    return complaint;
+  }
+
+  async addEvidence(
+    id: string,
+    actorId: string,
+    dto: EvidenceDto,
+  ): Promise<Complaint> {
+    const complaint = await this.complaintsRepository.findOne({
+      where: { id },
+    });
+
+    if (!complaint) {
+      throw new NotFoundException(`Complaint with ID ${id} not found`);
+    }
+
+    if (complaint.targetId !== actorId && complaint.submitterId !== actorId) {
+      throw new ForbiddenException(
+        'Only parties involved can add evidence to this complaint',
+      );
+    }
+
+    await this.evidenceRepository.save(
+      this.evidenceRepository.create({
+        complaintId: complaint.id,
+        uploadedBy: actorId,
+        fileUrl: dto.fileUrl,
+        fileType: dto.fileType,
+        description: dto.description,
+      }),
+    );
+
+    return this.getComplaintById(id, actorId, false);
+  }
+
+  async requestCallback(id: string, actorId: string): Promise<Complaint> {
+    const complaint = await this.complaintsRepository.findOne({
+      where: { id },
+    });
+
+    if (!complaint) {
+      throw new NotFoundException(`Complaint with ID ${id} not found`);
+    }
+
+    if (complaint.targetId !== actorId && complaint.submitterId !== actorId) {
+      throw new ForbiddenException(
+        'Only parties involved can request a callback for this complaint',
+      );
+    }
+
+    await this.auditRepository.save(
+      this.auditRepository.create({
+        complaintId: complaint.id,
+        actorId,
+        previousStatus: complaint.status,
+        newStatus: complaint.status,
+        notes: 'Callback requested by case participant',
+      }),
+    );
 
     return complaint;
   }

@@ -14,6 +14,12 @@ import {
 
 const EARTH_RADIUS_KM = 6371.0088;
 
+type ProviderStatsRow = {
+  rating: number;
+  completedJobs: number;
+  earningsMinor: number;
+};
+
 @Injectable()
 export class ProviderProfileService {
   constructor(
@@ -113,7 +119,7 @@ export class ProviderProfileService {
       order: { createdAt: 'ASC' },
     });
 
-    const stats = await this.dataSource.query(
+    const stats = await this.dataSource.query<ProviderStatsRow[]>(
       `
       SELECT 
         COALESCE(AVG(r.rating), 0)::float AS "rating",
@@ -127,13 +133,15 @@ export class ProviderProfileService {
       [profile.userId],
     );
 
-    return { 
-      ...profile, 
+    const statsRow = stats[0];
+
+    return {
+      ...profile,
       skillIds: skills.map((skill) => skill.id),
       stats: {
-        rating: stats[0]?.rating ?? 0,
-        completedJobs: stats[0]?.completedJobs ?? 0,
-        earningsMinor: stats[0]?.earningsMinor ?? 0,
+        rating: statsRow?.rating ?? 0,
+        completedJobs: statsRow?.completedJobs ?? 0,
+        earningsMinor: statsRow?.earningsMinor ?? 0,
         acceptanceRate: 98, // hardcode or mock for now, complex to derive accurately
       },
     };

@@ -52,7 +52,9 @@ describe('ProviderProfileService', () => {
           provide: DataSource,
           useValue: {
             transaction: jest.fn(),
-            query: jest.fn().mockResolvedValue([{ rating: 0, reviewsCount: 0 }]),
+            query: jest
+              .fn()
+              .mockResolvedValue([{ rating: 0, reviewsCount: 0 }]),
           },
         },
       ],

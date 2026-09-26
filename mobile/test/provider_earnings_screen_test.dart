@@ -49,14 +49,18 @@ void main() {
     await tester.pumpIdle();
 
     expect(transport.requests.single.path, 'providers/me/earnings');
-    expect(find.text('₹4500'), findsOneWidget); // net
-    expect(find.text('₹5000'), findsOneWidget); // gross received
-    expect(find.text('₹500'), findsOneWidget); // refunded
+    expect(find.text('₹4500'), findsNWidgets(2));
+    expect(find.text('₹5000'), findsNWidgets(2));
+    expect(find.text('₹500'), findsNWidgets(2));
     expect(find.textContaining('9 completed payments'), findsOneWidget);
     expect(
       find.textContaining('Payouts are not available yet'),
       findsOneWidget,
     );
+    expect(find.text('Daily Auto-Credit'), findsNothing);
+    expect(find.text('Direct to Bank'), findsNothing);
+    expect(find.text('Net Settled'), findsNothing);
+    expect(find.text('Guaranteed'), findsNothing);
   });
 
   testWidgets('a single completed payment reads in the singular', (
@@ -79,7 +83,7 @@ void main() {
     await tester.pumpIdle();
 
     expect(find.textContaining('1 completed payment.'), findsOneWidget);
-    expect(find.text('₹499'), findsOneWidget); // net, distinct from gross
+    expect(find.text('₹499'), findsNWidgets(2));
   });
 
   testWidgets('a fetch failure shows an honest retry state', (tester) async {

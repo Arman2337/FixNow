@@ -48,7 +48,45 @@ Widget hostWithLocalPay(
   ),
 );
 
+Widget hostByPayment(ApiTransport transport, String paymentId) => MaterialApp(
+      home: InvoiceScreen(
+        repository: InvoiceRepository(transport, accessToken: () async => 'token'),
+        bookingId: '',
+        paymentId: paymentId,
+      ),
+    );
+
 void main() {
+  testWidgets('payment notifications open the invoice by payment id', (
+    tester,
+  ) async {
+    final transport = FakeTransport((request) {
+      if (request.path == 'payments/invoices/payment-1') {
+        return const ApiResponse(
+          statusCode: 200,
+          body: {
+            'bookingId': 'booking-1',
+            'invoiceNumber': 'INV-2026-0008',
+            'issuedAt': '2026-08-20T10:30:00.000Z',
+            'amountMinor': 150000,
+            'currency': 'INR',
+            'status': 'PAID',
+          },
+        );
+      }
+      return const ApiResponse(statusCode: 404, body: <Object?>{});
+    });
+
+    await tester.pumpWidget(hostByPayment(transport, 'payment-1'));
+    await tester.pumpIdle();
+
+    expect(transport.requests.map((request) => request.path), [
+      'payments/invoices/payment-1',
+    ]);
+    expect(find.text('INV-2026-0008'), findsNWidgets(2));
+    expect(find.text('₹1500'), findsOneWidget);
+  });
+
   testWidgets('a paid booking shows the real invoice', (tester) async {
     final transport = FakeTransport((request) {
       if (request.path == 'payments/orders/booking/booking-1') {

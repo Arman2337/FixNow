@@ -8,7 +8,13 @@ import {
 import { InjectDataSource } from '@nestjs/typeorm';
 import { createHash, createHmac, timingSafeEqual } from 'crypto';
 import { ConfigService } from '@nestjs/config';
-import { DataSource, EntityManager, IsNull, QueryFailedError, In } from 'typeorm';
+import {
+  DataSource,
+  EntityManager,
+  IsNull,
+  QueryFailedError,
+  In,
+} from 'typeorm';
 import { BookingStatus } from '../../../shared/booking-lifecycle.types';
 import {
   CreateBookingDto,
@@ -117,18 +123,23 @@ export class BookingsService {
         if (normalizedInput.lineItems?.length) {
           const lineItemRepo = manager.getRepository(BookingLineItem);
           const subServiceRepo = manager.getRepository(SubServiceEntity);
-          
+
           const lineItemsToSave = await Promise.all(
             normalizedInput.lineItems.map(async (item) => {
-              const subService = await subServiceRepo.findOneBy({ id: item.subServiceId });
-              if (!subService) throw new NotFoundException(`SubService ${item.subServiceId} not found`);
+              const subService = await subServiceRepo.findOneBy({
+                id: item.subServiceId,
+              });
+              if (!subService)
+                throw new NotFoundException(
+                  `SubService ${item.subServiceId} not found`,
+                );
               return lineItemRepo.create({
                 bookingId: saved.id,
                 subServiceId: item.subServiceId,
                 quantity: item.quantity,
                 priceMinor: subService.priceMinor ?? 0,
               });
-            })
+            }),
           );
           await lineItemRepo.save(lineItemsToSave);
           saved.lineItems = lineItemsToSave;
@@ -153,7 +164,7 @@ export class BookingsService {
           50,
         );
         const providerIds = eligible.map(({ providerId }) => providerId);
-        
+
         if (this.domainNotifications) {
           await this.domainNotifications.notifyProvidersOfAvailableRequest(
             created,
@@ -164,19 +175,31 @@ export class BookingsService {
         if (this.bookingProjections) {
           let totalMinor = 0;
           if (created.lineItems) {
-            totalMinor = created.lineItems.reduce((sum, item) => sum + item.priceMinor * item.quantity, 0);
+            totalMinor = created.lineItems.reduce(
+              (sum, item) => sum + item.priceMinor * item.quantity,
+              0,
+            );
           }
           const data = {
             bookingId: created.id,
             serviceCategoryId: created.serviceCategoryId,
-            locationLat: created.locationLat ? created.locationLat.toString() : '',
-            locationLng: created.locationLng ? created.locationLng.toString() : '',
+            locationLat: created.locationLat
+              ? created.locationLat.toString()
+              : '',
+            locationLng: created.locationLng
+              ? created.locationLng.toString()
+              : '',
             description: created.description ?? '',
             priceMinor: totalMinor.toString(),
+            version: created.version,
             type: 'booking:provider:REQUESTED',
           };
           for (const providerId of providerIds.slice(0, 20)) {
-            this.bookingProjections.publishAccountSignal(providerId, 'provider.request.v1', data);
+            void this.bookingProjections.publishAccountSignal(
+              providerId,
+              'provider.request.v1',
+              data,
+            );
           }
         }
       });
@@ -272,8 +295,16 @@ export class BookingsService {
     }
     await this.bookingProjections?.publishBooking(booking);
     await this.notifySafely(async () => {
-      await this.domainNotifications!.notifyBookingEvent(booking, 'customer', status);
-      await this.domainNotifications!.notifyBookingEvent(booking, 'provider', status);
+      await this.domainNotifications!.notifyBookingEvent(
+        booking,
+        'customer',
+        status,
+      );
+      await this.domainNotifications!.notifyBookingEvent(
+        booking,
+        'provider',
+        status,
+      );
     });
     return booking;
   }
@@ -292,23 +323,32 @@ export class BookingsService {
         if (booking.providerId !== providerId) {
           throw new ForbiddenException('You are not assigned to this booking');
         }
-        if (booking.status === BookingStatus.COMPLETED || booking.status === BookingStatus.CANCELLED) {
-          throw new ConflictException('Cannot modify line items for a completed or cancelled booking');
+        if (
+          booking.status === BookingStatus.COMPLETED ||
+          booking.status === BookingStatus.CANCELLED
+        ) {
+          throw new ConflictException(
+            'Cannot modify line items for a completed or cancelled booking',
+          );
         }
 
         const lineItemRepo = manager.getRepository(BookingLineItem);
         const subServiceRepo = manager.getRepository(SubServiceEntity);
-        
+
         // Remove existing line items for this booking
         await lineItemRepo.delete({ bookingId: booking.id });
-        
+
         // Add new line items
         if (lineItemsInput.length > 0) {
           const newLineItems = await Promise.all(
             lineItemsInput.map(async (item) => {
-              const subService = await subServiceRepo.findOneBy({ id: item.subServiceId });
+              const subService = await subServiceRepo.findOneBy({
+                id: item.subServiceId,
+              });
               if (!subService || subService.priceMinor === undefined) {
-                throw new BadRequestException(`Invalid sub-service or price not set: ${item.subServiceId}`);
+                throw new BadRequestException(
+                  `Invalid sub-service or price not set: ${item.subServiceId}`,
+                );
               }
               return lineItemRepo.create({
                 bookingId: booking.id,
@@ -956,7 +996,7 @@ export class BookingsService {
               completedStatus: BookingStatus.COMPLETED,
             })
             .groupBy('b.provider_id')
-            .getRawMany()
+            .getRawMany<{ providerId: string; count: string | number }>()
         : [];
     const jobsMap = new Map(
       jobsCounts.map((j) => [j.providerId, Number(j.count)]),

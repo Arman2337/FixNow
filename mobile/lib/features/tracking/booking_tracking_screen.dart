@@ -1,3 +1,5 @@
+import 'package:fixnow_mobile/features/bookings/booking.dart';
+import 'package:fixnow_mobile/features/bookings/cancellation_dialog.dart';
 import 'package:fixnow_mobile/design_system/fix_status_chip.dart';
 import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_radius.dart';
@@ -13,6 +15,7 @@ import 'package:fixnow_mobile/features/tracking/booking_tracking.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking_controller.dart';
 import 'package:fixnow_mobile/features/tracking/provider_live_map.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class BookingTrackingScreen extends StatefulWidget {
   const BookingTrackingScreen({
@@ -20,17 +23,25 @@ class BookingTrackingScreen extends StatefulWidget {
     this.chatRepository,
     this.onOpenChat,
     this.onCallPressed,
+    this.onCancel,
+    this.onReschedule,
+    this.onOpenProfile,
     super.key,
   });
   final BookingTrackingController controller;
   final ChatRepository? chatRepository;
   final void Function(BuildContext context, String bookingId)? onOpenChat;
   final void Function(BuildContext context, String bookingId)? onCallPressed;
+  final Future<CustomerBooking> Function(String reason)? onCancel;
+  final VoidCallback? onReschedule;
+  final VoidCallback? onOpenProfile;
   @override
   State<BookingTrackingScreen> createState() => _BookingTrackingScreenState();
 }
 
 class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
+  bool _isCancelling = false;
+
   @override
   void initState() {
     super.initState();
@@ -58,7 +69,6 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
         onPressed: () => Navigator.of(context).pop(),
       ),
       title: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(AppRadius.small),
@@ -67,7 +77,7 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
               width: 32,
               height: 32,
               fit: BoxFit.contain,
-              errorBuilder: (_, __, ___) => Container(
+              errorBuilder: (_, _, _) => Container(
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
@@ -83,12 +93,16 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
             ),
           ),
           const SizedBox(width: 8),
-          const Text(
-            'Live Technician Tracker',
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
+          const Expanded(
+            child: Text(
+              'Live Technician Tracker',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ],
@@ -107,18 +121,33 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
         ),
         Padding(
           padding: const EdgeInsets.only(right: 12.0),
-          child: IconButton(
-            icon: CircleAvatar(
-              radius: 14,
-              backgroundColor: AppColors.primarySoft,
-              backgroundImage: const NetworkImage(
-                'https://lh3.googleusercontent.com/aida-public/AB6AXuC0fmQVzMF5Rs9tsmYYciE22juYHedjg4xdlfgpeJPLo_c1OH5vKW5FLwDdjmHCgNS-Zm04HM19nUNHjXKazC-ERm-09PmmZ0t9UWKgl0gtW4zPyDcckAwqOOpRtUJdKiGmku0L4h6pmM0GiXa759mhV3h7fANwBjZo0KlBPO2SgZkWyhJxMDMSi3gO97TQEsINn0kH5QyO1t3odNW--r6DJcOlfWCxmP59GEpDHwjKHWxZsj55b2Sa',
-              ),
-              onBackgroundImageError: (_, __) {},
-              child: const Icon(Icons.person_rounded, size: 16, color: AppColors.primary),
-            ),
-            onPressed: () {},
-          ),
+          child: widget.onOpenProfile == null
+              ? CircleAvatar(
+                  radius: 14,
+                  backgroundColor: AppColors.primarySoft,
+                  child: const Icon(
+                    Icons.person_rounded,
+                    size: 16,
+                    color: AppColors.primary,
+                  ),
+                )
+              : IconButton(
+                  tooltip: 'Open profile',
+                  icon: CircleAvatar(
+                    radius: 14,
+                    backgroundColor: AppColors.primarySoft,
+                    backgroundImage: const NetworkImage(
+                      'https://lh3.googleusercontent.com/aida-public/AB6AXuC0fmQVzMF5Rs9tsmYYciE22juYHedjg4xdlfgpeJPLo_c1OH5vKW5FLwDdjmHCgNS-Zm04HM19nUNHjXKazC-ERm-09PmmZ0t9UWKgl0gtW4zPyDcckAwqOOpRtUJdKiGmku0L4h6pmM0GiXa759mhV3h7fANwBjZo0KlBPO2SgZkWyhJxMDMSi3gO97TQEsINn0kH5QyO1t3odNW--r6DJcOlfWCxmP59GEpDHwjKHWxZsj55b2Sa',
+                    ),
+                    onBackgroundImageError: (_, _) {},
+                    child: const Icon(
+                      Icons.person_rounded,
+                      size: 16,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  onPressed: widget.onOpenProfile,
+                ),
         ),
       ],
     ),
@@ -267,12 +296,8 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
                     ),
                     const SizedBox(width: 12),
                     IconButton(
-                      onPressed: () {
-                        showFixBanner(
-                          ScaffoldMessenger.of(context),
-                          message: 'OTP Copied to clipboard',
-                        );
-                      },
+                      tooltip: 'Copy service-start OTP',
+                      onPressed: () => _copyOtp(otp),
                       icon: const Icon(
                         Icons.content_copy_rounded,
                         size: 18,
@@ -336,7 +361,7 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
                       width: 64,
                       height: 64,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
+                      errorBuilder: (_, _, _) => Container(
                         width: 64,
                         height: 64,
                         decoration: BoxDecoration(
@@ -380,7 +405,7 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
                         Flexible(
                           child: Text(
                             widget.controller.tracking?.providerName ??
-                                'Verified Specialist',
+                                'Provider details unavailable',
                             style: const TextStyle(
                               color: AppColors.textPrimary,
                               fontSize: 18,
@@ -415,7 +440,7 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
                     ),
                     const SizedBox(height: 2),
                     const Text(
-                      'Verified Master Professional',
+                      'Provider verification details',
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12,
@@ -430,21 +455,39 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
                           size: 16,
                         ),
                         const SizedBox(width: 4),
-                        Text(
-                          (widget.controller.tracking?.providerRating ?? 4.9)
-                              .toStringAsFixed(1),
-                          style: const TextStyle(
-                            color: AppColors.textPrimary,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '(${widget.controller.tracking?.providerJobsCount ?? 48} jobs)',
-                          style: const TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 12,
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  widget.controller.tracking?.providerRating != null
+                                      ? widget.controller.tracking!.providerRating!
+                                            .toStringAsFixed(1)
+                                      : 'Rating unavailable',
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: AppColors.textPrimary,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  widget.controller.tracking?.providerJobsCount != null
+                                      ? '(${widget.controller.tracking!.providerJobsCount} jobs)'
+                                      : 'Job history unavailable',
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: AppColors.textSecondary,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -453,17 +496,19 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
                     const Row(
                       children: [
                         Icon(
-                          Icons.badge_rounded,
+                          Icons.verified_user_outlined,
                           color: AppColors.primary,
                           size: 14,
                         ),
                         SizedBox(width: 4),
-                        Text(
-                          'Aadhaar & Trade Verified',
-                          style: TextStyle(
-                            color: AppColors.primary,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
+                        Flexible(
+                          child: Text(
+                            'Verification details are available in the booking record.',
+                            style: TextStyle(
+                              color: AppColors.primary,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ],
@@ -474,52 +519,70 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
             ],
           ),
           const SizedBox(height: AppSpacing.md),
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () => _startCall(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: AppColors.onPrimary,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.medium),
-                    ),
-                  ),
-                  icon: const Icon(Icons.call_rounded, size: 18),
-                  label: Text(
-                    'Call $providerFirstName',
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final stackActions =
+                  constraints.maxWidth < 360 ||
+                  MediaQuery.textScalerOf(context).scale(1) > 1.3;
+              final callAction = ElevatedButton.icon(
+                onPressed: () => _startCall(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: AppColors.onPrimary,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.medium),
                   ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () => _openChat(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.surfaceContainer,
-                    foregroundColor: AppColors.textPrimary,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.medium),
-                    ),
-                  ),
-                  icon: const Icon(
-                    Icons.chat_rounded,
-                    color: AppColors.primary,
-                    size: 18,
-                  ),
-                  label: const Text(
-                    'Chat',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                icon: const Icon(Icons.call_rounded, size: 18),
+                label: Text(
+                  'Call $providerFirstName',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-              ),
-            ],
+              );
+              final chatAction = ElevatedButton.icon(
+                onPressed: () => _openChat(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.surfaceContainer,
+                  foregroundColor: AppColors.textPrimary,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.medium),
+                  ),
+                ),
+                icon: const Icon(
+                  Icons.chat_rounded,
+                  color: AppColors.primary,
+                  size: 18,
+                ),
+                label: const Text(
+                  'Chat',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                ),
+              );
+              if (stackActions) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    callAction,
+                    const SizedBox(height: AppSpacing.sm),
+                    chatAction,
+                  ],
+                );
+              }
+              return Row(
+                children: [
+                  Expanded(child: callAction),
+                  const SizedBox(width: 10),
+                  Expanded(child: chatAction),
+                ],
+              );
+            },
           ),
           const SizedBox(height: AppSpacing.sm),
           Container(
@@ -593,22 +656,31 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Booking Status',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
+              const Expanded(
+                child: Text(
+                  'Booking Status',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
-              Text(
-                'Order #FX-${widget.controller.bookingId.substring(0, 5).toUpperCase()}',
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
+              const SizedBox(width: AppSpacing.sm),
+              Flexible(
+                child: Text(
+                  'Order #FX-${widget.controller.bookingId.substring(0, 5).toUpperCase()}',
+                  textAlign: TextAlign.right,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],
@@ -639,26 +711,32 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
       child: Column(
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  const Icon(
-                    Icons.receipt_long_rounded,
-                    color: AppColors.primary,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'Service Summary',
-                    style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
+              Expanded(
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.receipt_long_rounded,
+                      color: AppColors.primary,
+                      size: 20,
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 8),
+                    const Expanded(
+                      child: Text(
+                        'Service Summary',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: AppSpacing.sm),
               const Text(
                 '₹449',
                 style: TextStyle(
@@ -678,72 +756,89 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
             ),
             child: const Column(
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Standard Inspection & Diagnosis',
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 12,
-                      ),
-                    ),
-                    Text(
-                      '₹299',
-                      style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
+                 Row(
+                   children: [
+                     const Expanded(
+                       child: Text(
+                         'Standard Inspection & Diagnosis',
+                         maxLines: 2,
+                         overflow: TextOverflow.ellipsis,
+                         style: TextStyle(
+                           color: AppColors.textSecondary,
+                           fontSize: 12,
+                         ),
+                       ),
+                     ),
+                     const SizedBox(width: AppSpacing.sm),
+                     Text(
+                       '₹299',
+                       style: const TextStyle(
+                         color: AppColors.textPrimary,
+                         fontSize: 12,
+                         fontWeight: FontWeight.w600,
+                       ),
+                     ),
+                   ],
+                 ),
                 SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Emergency Dispatch Convenience Fee',
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 12,
-                      ),
-                    ),
-                    Text(
-                      '₹150',
-                      style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
+                 Row(
+                   children: [
+                     const Expanded(
+                       child: Text(
+                         'Emergency Dispatch Convenience Fee',
+                         maxLines: 2,
+                         overflow: TextOverflow.ellipsis,
+                         style: TextStyle(
+                           color: AppColors.textSecondary,
+                           fontSize: 12,
+                         ),
+                       ),
+                     ),
+                     const SizedBox(width: AppSpacing.sm),
+                     Text(
+                       '₹150',
+                       style: const TextStyle(
+                         color: AppColors.textPrimary,
+                         fontSize: 12,
+                         fontWeight: FontWeight.w600,
+                       ),
+                     ),
+                   ],
+                 ),
                 Padding(
                   padding: EdgeInsets.symmetric(vertical: 8),
                   child: Divider(color: AppColors.borderDefault, height: 1),
                 ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'FixNow 30-Day Guarantee',
-                      style: TextStyle(
-                        color: AppColors.primary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
+                 Row(
+                   children: [
+                     const Expanded(
+                       child: Text(
+                         'FixNow 30-Day Guarantee',
+                         maxLines: 2,
+                         overflow: TextOverflow.ellipsis,
+                         style: TextStyle(
+                           color: AppColors.primary,
+                           fontSize: 12,
+                           fontWeight: FontWeight.w600,
+                         ),
+                       ),
+                     ),
+                     const SizedBox(width: AppSpacing.sm),
+                      Flexible(
+                        child: Text(
+                          'Included FREE',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.right,
+                          style: const TextStyle(
+                            color: AppColors.primary,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ),
-                    ),
-                    Text(
-                      'Included FREE',
-                      style: TextStyle(
-                        color: AppColors.primary,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
+                   ],
+                 ),
               ],
             ),
           ),
@@ -768,119 +863,193 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
             ),
           ),
         ),
-        Row(
-          children: [
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.surfaceContainerLowest,
-                  foregroundColor: AppColors.textPrimary,
-                  elevation: 0,
-                  shadowColor: Colors.black.withValues(alpha: 0.1),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.medium),
-                  ),
-                ),
-                icon: const Icon(
-                  Icons.update_rounded,
-                  color: AppColors.textSecondary,
-                  size: 18,
-                ),
-                label: const Text(
-                  'Reschedule',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final stackActions =
+                constraints.maxWidth < 360 ||
+                MediaQuery.textScalerOf(context).scale(1) > 1.3;
+            final rescheduleAction = ElevatedButton.icon(
+              onPressed: widget.onReschedule,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.surfaceContainerLowest,
+                foregroundColor: AppColors.textPrimary,
+                elevation: 0,
+                shadowColor: Colors.black.withValues(alpha: 0.1),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.medium),
                 ),
               ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: _showSafetyModal,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.surfaceContainerLowest,
-                  foregroundColor: AppColors.textPrimary,
-                  elevation: 0,
-                  shadowColor: Colors.black.withValues(alpha: 0.1),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.medium),
-                  ),
-                ),
-                icon: const Icon(
-                  Icons.health_and_safety_rounded,
-                  color: AppColors.primary,
-                  size: 18,
-                ),
-                label: const Text(
-                  'Safety Guide',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+              icon: const Icon(
+                Icons.update_rounded,
+                color: AppColors.textSecondary,
+                size: 18,
+              ),
+              label: const Text(
+                'Reschedule',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+              ),
+            );
+            final safetyAction = ElevatedButton.icon(
+              onPressed: _showSafetyModal,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.surfaceContainerLowest,
+                foregroundColor: AppColors.textPrimary,
+                elevation: 0,
+                shadowColor: Colors.black.withValues(alpha: 0.1),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.medium),
                 ),
               ),
-            ),
-          ],
+              icon: const Icon(
+                Icons.health_and_safety_rounded,
+                color: AppColors.primary,
+                size: 18,
+              ),
+              label: const Text(
+                'Safety Guide',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+              ),
+            );
+            if (stackActions) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (widget.onReschedule != null) ...[
+                    rescheduleAction,
+                    const SizedBox(height: AppSpacing.sm),
+                  ],
+                  safetyAction,
+                ],
+              );
+            }
+            return Row(
+              children: [
+                if (widget.onReschedule != null) ...[
+                  Expanded(child: rescheduleAction),
+                  const SizedBox(width: AppSpacing.sm),
+                ],
+                Expanded(child: safetyAction),
+              ],
+            );
+          },
         ),
-        const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: AppColors.surfaceContainerLowest,
-            borderRadius: BorderRadius.circular(AppRadius.medium),
-          ),
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            children: [
-              SizedBox(
-                width: double.infinity,
-                child: TextButton.icon(
-                  onPressed: () {
-                    showFixBanner(
-                      ScaffoldMessenger.of(context),
-                      message:
-                          'Booking cancellation initiated. No fee was applied.',
-                    );
-                  },
-                  style: TextButton.styleFrom(
-                    foregroundColor: AppColors.error,
-                    backgroundColor: AppColors.error.withValues(alpha: 0.05),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.small),
-                    ),
-                  ),
-                  icon: const Icon(Icons.cancel_rounded, size: 18),
-                  label: const Text(
-                    'Cancel Booking',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text.rich(
-                TextSpan(
-                  children: [
-                    TextSpan(text: 'Cancellation is free for another '),
-                    TextSpan(
-                      text: '3 minutes',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
+        if (widget.onCancel != null &&
+            const {
+              'REQUESTED',
+              'ASSIGNED',
+            }.contains(widget.controller.tracking?.status)) ...[
+          const SizedBox(height: 8),
+          Container(
+            decoration: BoxDecoration(
+              color: AppColors.surfaceContainerLowest,
+              borderRadius: BorderRadius.circular(AppRadius.medium),
+            ),
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              children: [
+                SizedBox(
+                  width: double.infinity,
+                  child: TextButton.icon(
+                    onPressed: _isCancelling ? null : _cancelBooking,
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.error,
+                      backgroundColor: AppColors.error.withValues(alpha: 0.05),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.small),
                       ),
                     ),
-                    TextSpan(
-                      text:
-                          '. A ₹99 technician dispatch fee applies thereafter.',
+                    icon: _isCancelling
+                        ? const SizedBox.square(
+                            dimension: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.cancel_rounded, size: 18),
+                    label: Text(
+                      _isCancelling ? 'Cancelling...' : 'Cancel Booking',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ],
+                  ),
                 ),
-                textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 11),
-              ),
-            ],
+                const SizedBox(height: 8),
+                const Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(text: 'Cancellation is free for another '),
+                      TextSpan(
+                        text: '3 minutes',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      TextSpan(
+                        text:
+                            '. A ₹99 technician dispatch fee applies thereafter.',
+                      ),
+                    ],
+                  ),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
+        ],
       ],
     );
+  }
+
+  Future<void> _copyOtp(String otp) async {
+    try {
+      await Clipboard.setData(ClipboardData(text: otp));
+      if (mounted) {
+        showFixBanner(
+          ScaffoldMessenger.of(context),
+          message: 'OTP copied to clipboard',
+        );
+      }
+    } on Object {
+      if (mounted) {
+        showFixBanner(
+          ScaffoldMessenger.of(context),
+          message: 'The OTP could not be copied. Try again.',
+        );
+      }
+    }
+  }
+
+  Future<void> _cancelBooking() async {
+    if (widget.onCancel == null || _isCancelling) return;
+    final reason = await showCancellationDialog(context);
+    if (reason == null || !mounted) return;
+    setState(() => _isCancelling = true);
+    try {
+      await widget.onCancel!(reason);
+      if (mounted) {
+        showFixBanner(
+          ScaffoldMessenger.of(context),
+          message: 'Booking cancelled successfully',
+        );
+      }
+    } on Object {
+      if (mounted) {
+        showFixBanner(
+          ScaffoldMessenger.of(context),
+          message: 'Booking could not be cancelled. Refresh and try again.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isCancelling = false);
+    }
   }
 
   void _showSafetyModal() {
@@ -1041,7 +1210,8 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
               repository: widget.chatRepository!,
               realtimeClient: widget.controller.realtime,
             ),
-            providerName: widget.controller.tracking?.providerName ??
+            providerName:
+                widget.controller.tracking?.providerName ??
                 'Verified Specialist',
             onCallPressed: () => _startCall(context),
           ),
@@ -1120,7 +1290,9 @@ class _TrackingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final value = tracking;
-    if (value == null || value.status == 'CANCELLED') return const SizedBox.shrink();
+    if (value == null || value.status == 'CANCELLED') {
+      return const SizedBox.shrink();
+    }
 
     if (value.status == 'IN_PROGRESS') {
       return FixCard(
@@ -1145,10 +1317,11 @@ class _TrackingCard extends StatelessWidget {
                     const SizedBox(width: 8),
                     Text(
                       'Service in progress',
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.w700,
-                      ),
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.w700,
+                          ),
                     ),
                   ],
                 ),
@@ -1165,7 +1338,9 @@ class _TrackingCard extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.live.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(AppRadius.medium),
-                border: Border.all(color: AppColors.live.withValues(alpha: 0.2)),
+                border: Border.all(
+                  color: AppColors.live.withValues(alpha: 0.2),
+                ),
               ),
               child: const Row(
                 children: [
@@ -1190,7 +1365,10 @@ class _TrackingCard extends StatelessWidget {
                         SizedBox(height: 4),
                         Text(
                           'Your provider has arrived and service is underway. Transit map is no longer active.',
-                          style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 12,
+                          ),
                         ),
                       ],
                     ),
@@ -1222,14 +1400,17 @@ class _TrackingCard extends StatelessWidget {
                   Text(
                     'Service Completed',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: AppColors.textPrimary,
-                          fontWeight: FontWeight.w700,
-                        ),
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   const SizedBox(height: 2),
                   const Text(
                     'All work finished. You can view your invoice and ratings.',
-                    style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
+                    ),
                   ),
                 ],
               ),
@@ -1276,79 +1457,94 @@ class _TrackingCard extends StatelessWidget {
             left: 12,
             right: 12,
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceContainerLowest.withValues(
-                      alpha: 0.9,
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
                     ),
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceContainerLowest.withValues(
+                        alpha: 0.9,
                       ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          color: AppColors.primary,
-                          shape: BoxShape.circle,
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        _statusTitle(value.status),
-                        style: const TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: value.locationAvailability ==
-                                  LocationAvailability.live
-                              ? AppColors.primaryEmerald.withValues(alpha: 0.15)
-                              : AppColors.surfaceContainerHigh,
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                        ),
-                        child: Text(
-                          value.locationAvailability ==
-                                  LocationAvailability.live
-                              ? (value.providerLocation != null
-                                  ? 'Live location available'
-                                  : 'GPS Active')
-                              : 'Live location unavailable',
-                          style: TextStyle(
-                            color: value.locationAvailability ==
-                                    LocationAvailability.live
-                                ? AppColors.primaryEmerald
-                                : AppColors.textSecondary,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            color: AppColors.primary,
+                            shape: BoxShape.circle,
                           ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _statusTitle(value.status),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: AppColors.textPrimary,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color:
+                                  value.locationAvailability ==
+                                      LocationAvailability.live
+                                  ? AppColors.primaryEmerald.withValues(
+                                      alpha: 0.15,
+                                    )
+                                  : AppColors.surfaceContainerHigh,
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.pill,
+                              ),
+                            ),
+                            child: Text(
+                              value.locationAvailability ==
+                                      LocationAvailability.live
+                                  ? (value.providerLocation != null
+                                        ? 'Live location available'
+                                        : 'GPS Active')
+                                  : 'Live location unavailable',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color:
+                                    value.locationAvailability ==
+                                        LocationAvailability.live
+                                    ? AppColors.primaryEmerald
+                                    : AppColors.textSecondary,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
+                const SizedBox(width: 8),
                 Container(
                   width: 36,
                   height: 36,
@@ -1394,93 +1590,122 @@ class _TrackingCard extends StatelessWidget {
                 ],
               ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryFixed,
-                          borderRadius: BorderRadius.circular(AppRadius.small),
-                        ),
-                        child: const Icon(
-                          Icons.timer_rounded,
-                          color: AppColors.onPrimaryFixed,
-                          size: 22,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Text(
-                            'ESTIMATED ARRIVAL',
-                            style: TextStyle(
-                              color: AppColors.textSecondary,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryFixed,
+                            borderRadius: BorderRadius.circular(
+                              AppRadius.small,
                             ),
                           ),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.baseline,
-                            textBaseline: TextBaseline.alphabetic,
+                          child: const Icon(
+                            Icons.timer_rounded,
+                            color: AppColors.onPrimaryFixed,
+                            size: 22,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text(
-                                value.estimatedMinutes == null
-                                    ? 'Unavailable'
-                                    : '${value.estimatedMinutes} mins',
-                                style: const TextStyle(
-                                  color: AppColors.primary,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w800,
+                              const Text(
+                                'ESTIMATED ARRIVAL',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
-                              const SizedBox(width: 4),
-                              Text(
-                                value.route != null
-                                    ? '(${(value.route!.distanceMeters / 1000).toStringAsFixed(1)} km away)'
-                                    : '',
-                                style: const TextStyle(
-                                  color: AppColors.textSecondary,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                ),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.baseline,
+                                textBaseline: TextBaseline.alphabetic,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      value.estimatedMinutes == null
+                                          ? 'Unavailable'
+                                          : '${value.estimatedMinutes} mins',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        color: AppColors.primary,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                  ),
+                                  if (value.route != null) ...[
+                                    const SizedBox(width: 4),
+                                    Flexible(
+                                      child: Text(
+                                        '(${(value.route!.distanceMeters / 1000).toStringAsFixed(1)} km away)',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          color: AppColors.textSecondary,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
                               ),
                             ],
                           ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Traffic Flow',
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 10,
                         ),
-                      ),
-                      Row(
-                        children: [
-                          Icon(Icons.circle, size: 6, color: AppColors.primary),
-                          SizedBox(width: 4),
-                          Text(
-                            'Clear Road',
-                            style: TextStyle(
-                              color: AppColors.primary,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Flexible(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'Traffic Flow',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 10,
                           ),
-                        ],
-                      ),
-                    ],
+                        ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.circle,
+                              size: 6,
+                              color: AppColors.primary,
+                            ),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                'Clear Road',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: AppColors.primary,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),

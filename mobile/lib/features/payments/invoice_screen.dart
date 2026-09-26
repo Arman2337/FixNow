@@ -25,6 +25,7 @@ class InvoiceScreen extends StatefulWidget {
     required this.repository,
     required this.bookingId,
     this.initialInvoice,
+    this.paymentId,
     this.localPaymentRepository,
     bool? localPaymentBypassEnabled,
     super.key,
@@ -35,6 +36,7 @@ class InvoiceScreen extends StatefulWidget {
 
   final InvoiceRepository repository;
   final String bookingId;
+  final String? paymentId;
   final Invoice? initialInvoice;
 
   /// FN-118: dev-only local checkout. When null the pay affordance never
@@ -52,6 +54,7 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
   late final InvoiceController _controller = InvoiceController(
     widget.repository,
     widget.bookingId,
+    paymentId: widget.paymentId,
     initialInvoice: widget.initialInvoice,
   )..load();
 
@@ -68,7 +71,10 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
       elevation: 0,
       scrolledUnderElevation: 1,
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+        icon: const Icon(
+          Icons.arrow_back_rounded,
+          color: AppColors.textPrimary,
+        ),
         onPressed: () => Navigator.of(context).maybePop(),
       ),
       title: const Text(
@@ -501,12 +507,21 @@ class _InvoiceView extends StatelessWidget {
     final bytes = FixPdfInvoiceBuilder.build(invoice);
     final fileName = FixPdfInvoiceBuilder.getFileName(invoice);
     final sizeKb = (bytes.length / 1024).toStringAsFixed(1);
-    
+
     try {
-      final dir = await getApplicationDocumentsDirectory();
+      Directory dir;
+      if (Platform.isAndroid || Platform.isIOS) {
+        try {
+          dir = await getApplicationDocumentsDirectory();
+        } catch (_) {
+          dir = Directory.systemTemp;
+        }
+      } else {
+        dir = Directory.systemTemp;
+      }
       final file = File('${dir.path}/$fileName');
-      await file.writeAsBytes(bytes);
-      
+      file.writeAsBytesSync(bytes);
+
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -529,7 +544,10 @@ class _InvoiceView extends StatelessWidget {
                 Expanded(
                   child: Text(
                     'Downloaded $fileName ($sizeKb KB)',
-                    style: const TextStyle(color: AppColors.cream, fontSize: 13),
+                    style: const TextStyle(
+                      color: AppColors.cream,
+                      fontSize: 13,
+                    ),
                   ),
                 ),
               ],
@@ -539,9 +557,9 @@ class _InvoiceView extends StatelessWidget {
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to download: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to download: $e')));
       }
     }
   }

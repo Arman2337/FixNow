@@ -1,4 +1,3 @@
-import 'package:fixnow_mobile/features/services/sub_service_item.dart';
 import 'package:fixnow_mobile/api/api_client.dart';
 import 'package:fixnow_mobile/features/ai/price_estimate_repository.dart';
 import 'package:fixnow_mobile/features/bookings/booking_controller.dart';
@@ -155,8 +154,8 @@ void main() {
   });
 }
 
-
 class MockClient implements ApiTransport {
   @override
-  Future<ApiResponse> send(ApiRequest request) async => ApiResponse(statusCode: 200, body: {});
+  Future<ApiResponse> send(ApiRequest request) async =>
+      ApiResponse(statusCode: 200, body: {});
 }

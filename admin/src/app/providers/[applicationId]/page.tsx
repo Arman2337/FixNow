@@ -39,13 +39,11 @@ export default async function ProviderDetailPage({ params, searchParams }: { par
           
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-space-md">
             <div>
-              <div className="flex items-center gap-2">
-                <span className="font-data-mono text-data-mono uppercase tracking-widest text-primary font-bold">Identity Engine v4</span>
-                <span className="w-1 h-1 rounded-full bg-outline"></span>
-                <span className="font-label-sm text-label-sm text-on-surface-variant font-medium">Synced with DigiLocker</span>
-                <span className="px-2 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed font-data-mono text-[10px] font-bold uppercase tracking-wider">ADR-0016 Active</span>
-              </div>
-              <h1 className="font-headline-lg text-headline-lg text-on-surface tracking-tight mt-1">Provider KYC Verification</h1>
+               <div className="flex items-center gap-2">
+                 <span className="font-data-mono text-data-mono uppercase tracking-widest text-primary font-bold">Provider verification record</span>
+                 <span className="font-label-sm text-label-sm text-on-surface-variant font-medium">Management API record</span>
+               </div>
+               <h1 className="font-headline-lg text-headline-lg text-on-surface tracking-tight mt-1">Provider KYC Verification</h1>
             </div>
             {result && messages[result] && (
               <div className={`px-4 py-2 rounded-lg ${result === "claimed" || result === "decided" ? "bg-primary-container text-on-primary-container" : "bg-error-container text-on-error-container"} font-label-sm font-bold`}>
@@ -59,8 +57,8 @@ export default async function ProviderDetailPage({ params, searchParams }: { par
             {/* LEFT PANE: Verification Queue */}
             <div className="xl:col-span-4 flex flex-col gap-space-md hidden lg:flex">
               <div className="flex items-center justify-between">
-                <h2 className="font-headline-sm text-headline-sm font-bold text-on-surface tracking-tight">Active Queue</h2>
-                <span className="font-data-mono text-data-mono text-primary font-bold">{page.items.length} Pending</span>
+                 <h2 className="font-headline-sm text-headline-sm font-bold text-on-surface tracking-tight">Verification queue</h2>
+                 <span className="font-data-mono text-data-mono text-primary font-bold">{page.items.length} record{page.items.length === 1 ? "" : "s"}</span>
               </div>
 
               <form role="search" className="flex flex-col gap-3" action="/providers">
@@ -135,9 +133,9 @@ export default async function ProviderDetailPage({ params, searchParams }: { par
                     <div className="flex flex-wrap items-center gap-space-sm">
                       <h2 className="font-headline-lg text-headline-lg text-[22px] font-bold text-on-surface tracking-tight">{application.profile?.displayName ?? "Unnamed"}</h2>
                       <span className="font-data-mono text-data-mono px-2 py-0.5 rounded bg-surface-container text-on-surface-variant font-bold">UUID: #{shortId(application.id)}</span>
-                      <span className="px-2.5 py-0.5 rounded-full bg-primary-container text-on-primary-container font-label-sm text-label-sm font-semibold flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-primary-fixed animate-ping"></span> Live Session
-                      </span>
+                       <span className="px-2.5 py-0.5 rounded-full bg-primary-container text-on-primary-container font-label-sm text-label-sm font-semibold">
+                         Application record
+                       </span>
                     </div>
                     <div className="flex flex-wrap items-center gap-x-space-md gap-y-1 font-body-sm text-body-sm text-on-surface-variant mt-1">
                       <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[16px]">location_on</span>{application.profile?.serviceRadiusKm ? `${application.profile.serviceRadiusKm}km coverage` : "No radius set"}</span>
@@ -158,7 +156,7 @@ export default async function ProviderDetailPage({ params, searchParams }: { par
                     <span className="material-symbols-outlined text-primary text-[22px]">badge</span>
                     <div>
                       <h3 className="font-headline-md text-headline-md text-[18px] font-bold text-on-surface">1. Statutory Identity Verification & Documents</h3>
-                      <p className="font-body-sm text-body-sm text-on-surface-variant">DigiLocker API Direct Integration with UIDAI & NSDL Databases</p>
+                       <p className="font-body-sm text-body-sm text-on-surface-variant">Document records returned by the provider document API</p>
                     </div>
                   </div>
                   {!assigned ? (

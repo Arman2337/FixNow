@@ -217,16 +217,22 @@ class _FixAcceptCelebrationState extends State<FixAcceptCelebration>
 
         const SizedBox(height: AppSpacing.md),
 
-        // Verified Trust Badges Strip (responsive Wrap)
-        Wrap(
-          spacing: 6,
-          runSpacing: 4,
-          alignment: WrapAlignment.center,
-          children: [
-            _buildMiniTrustBadge(Icons.shield_rounded, 'Aadhaar Verified'),
-            _buildMiniTrustBadge(Icons.verified_user_rounded, 'Police Checked'),
-          ],
-        ),
+         Container(
+           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+           decoration: BoxDecoration(
+             color: AppColors.surfaceContainerLow,
+             borderRadius: BorderRadius.circular(AppRadius.small),
+           ),
+           child: const Text(
+             'Provider assigned. ETA and verification details update in tracking.',
+             textAlign: TextAlign.center,
+             style: TextStyle(
+               color: AppColors.textSecondary,
+               fontSize: 11,
+               fontWeight: FontWeight.w600,
+             ),
+           ),
+         ),
 
         const SizedBox(height: AppSpacing.sm),
 
@@ -251,9 +257,9 @@ class _FixAcceptCelebrationState extends State<FixAcceptCelebration>
                       size: 16,
                     ),
                     SizedBox(width: 6),
-                    Text(
-                      'ETA ~15 Mins',
-                      style: TextStyle(
+                     Text(
+                       'ETA updates in tracking',
+                       style: TextStyle(
                         color: AppColors.primary,
                         fontSize: 12,
                         fontWeight: FontWeight.w800,
@@ -263,7 +269,7 @@ class _FixAcceptCelebrationState extends State<FixAcceptCelebration>
                 ),
                 SizedBox(width: 12),
                 Text(
-                  'Dispatched to your gate',
+                   'Live booking updates',
                   style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 11,
@@ -277,30 +283,6 @@ class _FixAcceptCelebrationState extends State<FixAcceptCelebration>
     ),
   );
 
-  Widget _buildMiniTrustBadge(IconData icon, String text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 12, color: AppColors.primary),
-          const SizedBox(width: 4),
-          Text(
-            text,
-            style: const TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 /// Deterministic confetti: seeded particles so tests and sessions render the

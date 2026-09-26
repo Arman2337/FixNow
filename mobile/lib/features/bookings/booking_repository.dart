@@ -74,8 +74,10 @@ class BookingRepository {
     required double longitude,
     DateTime? scheduledAt,
     List<BookingItemDraft>? items,
+    String? idempotencyKey,
   }) async {
-    final key = 'mobile-${DateTime.now().toUtc().millisecondsSinceEpoch}';
+    final key =
+        idempotencyKey ?? 'mobile-${DateTime.now().toUtc().millisecondsSinceEpoch}';
     final response = await _api.send(
       ApiRequest(
         method: ApiMethod.post,

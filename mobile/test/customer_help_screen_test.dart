@@ -11,6 +11,17 @@ class _FakeComplaintsRepo implements ComplaintsRepository {
   Future<Complaint> getComplaint(String id) async => throw UnimplementedError();
 
   @override
+  Future<Complaint> addEvidence(
+    String id, {
+    required String fileUrl,
+    required String fileType,
+    String? description,
+  }) async => throw UnimplementedError();
+
+  @override
+  Future<Complaint> requestCallback(String id) async => throw UnimplementedError();
+
+  @override
   Future<Complaint> submitComplaint({
     String? bookingId,
     required String targetRole,
@@ -60,7 +71,7 @@ void main() {
 
       // Verify Contact Card & Callback
       expect(find.text('Still need assistance?'), findsOneWidget);
-      expect(find.text('Chat with Trust Team'), findsOneWidget);
+      expect(find.text('File Ticket with Trust Team'), findsOneWidget);
       final callbackBtn = find.text('Request Instant Callback');
       expect(callbackBtn, findsOneWidget);
 
@@ -69,7 +80,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(callbackBtn);
       await tester.pumpAndSettle();
-      expect(find.textContaining('Callback request queued!'), findsOneWidget);
+       expect(find.textContaining('Direct phone callback is currently unavailable.'), findsOneWidget);
 
       // Test search filter
       final searchField = find.byType(TextField);

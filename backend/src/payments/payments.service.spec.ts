@@ -53,11 +53,8 @@ describe('PaymentsService', () => {
     update: jest.fn().mockResolvedValue({ affected: 1 }),
     create: jest.fn(<T extends object>(value: T): T => value),
   };
-  let dataSource: {
-    getRepository: jest.Mock;
-    query: jest.Mock;
-    transaction: jest.Mock;
-  };
+  type QueryArgs = [query: string, parameters?: unknown[]];
+  const query = jest.fn<Promise<unknown>, QueryArgs>();
   const transactionManager = {
     getRepository: jest.fn((entity: unknown) =>
       entity === PaymentOrder
@@ -74,9 +71,9 @@ describe('PaymentsService', () => {
                   ? invoiceRepo
                   : eventRepo,
     ),
-    query: jest.fn((...args: unknown[]) => dataSource.query(...args)),
+    query: jest.fn((...args: QueryArgs) => query(...args)),
   };
-  dataSource = {
+  const dataSource = {
     getRepository: jest.fn((entity: unknown) =>
       entity === Booking
         ? bookingRepo
@@ -88,10 +85,12 @@ describe('PaymentsService', () => {
               ? refundRepo
               : eventRepo,
     ),
-    query: jest.fn(),
+    query,
     transaction: jest.fn(
-      async (_isolation: string, callback: (manager: typeof transactionManager) => unknown) =>
-        callback(transactionManager),
+      (
+        _isolation: string,
+        callback: (manager: typeof transactionManager) => unknown,
+      ) => Promise.resolve(callback(transactionManager)),
     ),
   };
   const orders = {
@@ -156,12 +155,14 @@ describe('PaymentsService', () => {
     eventRepo.insert.mockResolvedValue(undefined);
     invoiceRepo.findOneBy.mockResolvedValue(null);
     refundStore = null;
-    refundRepo.findOneBy.mockImplementation((criteria: { requestKey?: string }) => {
-      if (!refundStore || refundStore.requestKey !== criteria.requestKey) {
-        return Promise.resolve(null);
-      }
-      return Promise.resolve(refundStore);
-    });
+    refundRepo.findOneBy.mockImplementation(
+      (criteria: { requestKey?: string }) => {
+        if (!refundStore || refundStore.requestKey !== criteria.requestKey) {
+          return Promise.resolve(null);
+        }
+        return Promise.resolve(refundStore);
+      },
+    );
     refundRepo.save.mockReset();
     refundRepo.save.mockImplementation((value: Record<string, unknown>) => {
       refundStore = { id: 'refund-1', ...value };

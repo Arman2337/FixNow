@@ -18,7 +18,9 @@ type RoutedEvent =
     };
 
 @Injectable()
-export class RealtimeNotificationPublisher implements OnModuleInit, OnModuleDestroy {
+export class RealtimeNotificationPublisher
+  implements OnModuleInit, OnModuleDestroy
+{
   private publisher?: RedisClientType;
   private subscriber?: RedisClientType;
 
@@ -100,12 +102,12 @@ export class RealtimeNotificationPublisher implements OnModuleInit, OnModuleDest
       try {
         await this.publisher.publish(REALTIME_CHANNEL, JSON.stringify(event));
         return;
-       } catch {
-         this.routeEvent(event);
-         return;
-       }
-     }
-     this.routeEvent(event);
+      } catch {
+        this.routeEvent(event);
+        return;
+      }
+    }
+    this.routeEvent(event);
   }
 
   private routeEvent(event: RoutedEvent): void {
@@ -154,7 +156,9 @@ export class RealtimeNotificationPublisher implements OnModuleInit, OnModuleDest
 
   private isSubscribed(
     client: WebSocket,
-    state: { subscriptions: Map<string, { channel: string; resourceId: string }> },
+    state: {
+      subscriptions: Map<string, { channel: string; resourceId: string }>;
+    },
     channel: string,
     resourceId: string,
   ): boolean {

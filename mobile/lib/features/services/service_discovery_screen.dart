@@ -189,7 +189,8 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
         final state = data['principalSubdivision'] ?? data['countryName'];
         if (mounted && city != null && city.toString().trim().isNotEmpty) {
           setState(() {
-            _locationName = (state != null && state.toString().trim().isNotEmpty)
+            _locationName =
+                (state != null && state.toString().trim().isNotEmpty)
                 ? '${city.toString().trim()}, ${state.toString().trim()}'
                 : city.toString().trim();
           });
@@ -311,7 +312,9 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
             builder: (_) => EmergencyConfirmScreen(
               categories: emergencies,
               repository: repository,
-              locationProvider: BookingLocationResolver(initialFix: _bookingLocation),
+              locationProvider: BookingLocationResolver(
+                initialFix: _bookingLocation,
+              ),
               hotlineNumber: AppEnvironment.emergencyHotline.isEmpty
                   ? null
                   : AppEnvironment.emergencyHotline,
@@ -370,18 +373,18 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                 foregroundColor: Colors.white,
               ),
               onPressed: () async {
+                final messenger = ScaffoldMessenger.of(context);
                 Navigator.of(ctx).pop();
                 final opened = await launchUrl(
-                  Uri(
-                    scheme: 'tel',
-                    path: AppEnvironment.emergencyHotline,
-                  ),
+                  Uri(scheme: 'tel', path: AppEnvironment.emergencyHotline),
                   mode: LaunchMode.externalApplication,
                 );
-                if (!opened && context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
+                if (!opened && mounted) {
+                  messenger.showSnackBar(
                     const SnackBar(
-                      content: Text('The emergency number could not be opened.'),
+                      content: Text(
+                        'The emergency number could not be opened.',
+                      ),
                     ),
                   );
                 }
@@ -1505,8 +1508,8 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
             widget.locationController.state == LocationPermissionState.granted;
         final locationText = isGranted
             ? (_isLoadingLocation && _locationName == null
-                ? 'Detecting live location...'
-                : (_locationName ?? 'Current Location'))
+                  ? 'Detecting live location...'
+                  : (_locationName ?? 'Current Location'))
             : 'Enable Location';
         final onlineCount = widget.controller.categories.fold<int>(
           0,
@@ -1526,7 +1529,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                     width: 32,
                     height: 32,
                     fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => Container(
+                    errorBuilder: (_, _, _) => Container(
                       width: 32,
                       height: 32,
                       decoration: BoxDecoration(
@@ -1585,8 +1588,9 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                     controller: widget.notificationController!,
                     onTap: () {
                       Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => NotificationCenterScreen(
+MaterialPageRoute(
+                           settings: const RouteSettings(name: 'notifications'),
+                           builder: (_) => NotificationCenterScreen(
                             controller: widget.notificationController!,
                             onOpenBooking: widget.onBookingSelected,
                             onOpenInvoice: widget.onInvoiceSelected,
@@ -1633,7 +1637,9 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                                         ?.longitude ??
                                     78.9629,
                               ),
-                              initialZoom: _bookingLocation != null ? 14.0 : 5.0,
+                              initialZoom: _bookingLocation != null
+                                  ? 14.0
+                                  : 5.0,
                               interactionOptions: const InteractionOptions(
                                 flags: InteractiveFlag.none,
                               ),

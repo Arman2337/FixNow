@@ -11,9 +11,9 @@ import 'package:geolocator_platform_interface/geolocator_platform_interface.dart
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 class _RecordingRealtimeClient extends Fake implements RealtimeClient {
-  _RecordingRealtimeClient({this.failConsent = false});
+  _RecordingRealtimeClient();
 
-  final bool failConsent;
+  bool failConsent = false;
   final StreamController<RealtimeProjection> incoming =
       StreamController<RealtimeProjection>();
   final List<Map<String, Object?>> frames = [];
@@ -73,9 +73,10 @@ class _RecordingRealtimeClient extends Fake implements RealtimeClient {
 }
 
 class _ProviderTransport implements ApiTransport {
-  _ProviderTransport({this.jobs = const [], this.paymentPaid = false});
-  final List<CustomerBooking> jobs;
-  final bool paymentPaid;
+  _ProviderTransport();
+
+  final List<CustomerBooking> jobs = const [];
+  final bool paymentPaid = false;
 
   @override
   Future<ApiResponse> send(ApiRequest request) async {
@@ -99,12 +100,8 @@ class _ProviderTransport implements ApiTransport {
 
 class _FixedGeolocatorPlatform extends GeolocatorPlatform
     with MockPlatformInterfaceMixin {
-  _FixedGeolocatorPlatform({
-    this.permission,
-    this.position,
-    this.error,
-    this.onCurrentPosition,
-  });
+  _FixedGeolocatorPlatform();
+
   LocationPermission? permission;
   Position? position;
   Object? error;
@@ -194,89 +191,93 @@ void main() {
   late _FixedGeolocatorPlatform gps;
 
   setUp(() {
-    gps = _FixedGeolocatorPlatform(position: _gpsPosition());
+    gps = _FixedGeolocatorPlatform()..position = _gpsPosition();
     GeolocatorPlatform.instance = gps;
   });
 
-  test('tracks a flat booking.tracking.v1 projection with route + location',
-      () async {
-    final realtime = _RecordingRealtimeClient();
-    final controller = _controller(
-      transport: _ProviderTransport(),
-      realtime: realtime,
-    );
-    addTearDown(controller.dispose);
-    controller.jobs = [_job('booking-1')];
+  test(
+    'tracks a flat booking.tracking.v1 projection with route + location',
+    () async {
+      final realtime = _RecordingRealtimeClient();
+      final controller = _controller(
+        transport: _ProviderTransport(),
+        realtime: realtime,
+      );
+      addTearDown(controller.dispose);
+      controller.jobs = [_job('booking-1')];
 
-    realtime.incoming.add(
-      const RealtimeProjection({
-        'type': 'booking.projection-updated.v1',
-        'data': {
-          'bookingId': 'booking-1',
-          'status': 'EN_ROUTE',
-          'sequence': 4,
-          'locationAvailability': 'live',
-          'location': {
-            'latitude': 23.01,
-            'longitude': 72.56,
-            'accuracyMeters': 12.0,
-            'capturedAt': '2026-09-18T09:00:00.000Z',
-            'receivedAt': '2026-09-18T09:00:01.000Z',
+      realtime.incoming.add(
+        const RealtimeProjection({
+          'type': 'booking.projection-updated.v1',
+          'data': {
+            'bookingId': 'booking-1',
+            'status': 'EN_ROUTE',
+            'sequence': 4,
+            'locationAvailability': 'live',
+            'location': {
+              'latitude': 23.01,
+              'longitude': 72.56,
+              'accuracyMeters': 12.0,
+              'capturedAt': '2026-09-18T09:00:00.000Z',
+              'receivedAt': '2026-09-18T09:00:01.000Z',
+            },
+            'route': {
+              'distanceMeters': 4200.0,
+              'durationSeconds': 600,
+              'coordinates': [
+                [72.56, 23.01],
+                [72.57, 23.02],
+              ],
+            },
           },
-          'route': {
-            'distanceMeters': 4200.0,
-            'durationSeconds': 600,
-            'coordinates': [
-              [72.56, 23.01],
-              [72.57, 23.02],
-            ],
+        }),
+      );
+      await realtime.incoming.close();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(controller.currentLocation?.latitude, 23.01);
+      expect(controller.currentLocation?.accuracyMeters, 12.0);
+      expect(controller.currentRoute?.distanceMeters, 4200.0);
+      expect(controller.currentRoute?.coordinates.length, 2);
+    },
+  );
+
+  test(
+    'projection for another booking does not touch cockpit map data',
+    () async {
+      final realtime = _RecordingRealtimeClient();
+      final controller = _controller(
+        transport: _ProviderTransport(),
+        realtime: realtime,
+      );
+      addTearDown(controller.dispose);
+      controller.jobs = [_job('booking-1')];
+
+      realtime.incoming.add(
+        const RealtimeProjection({
+          'type': 'booking.projection-updated.v1',
+          'data': {
+            'bookingId': 'booking-2',
+            'status': 'EN_ROUTE',
+            'sequence': 4,
+            'locationAvailability': 'live',
+            'location': {
+              'latitude': 1.0,
+              'longitude': 2.0,
+              'accuracyMeters': 10.0,
+              'capturedAt': '2026-09-18T09:00:00.000Z',
+              'receivedAt': '2026-09-18T09:00:01.000Z',
+            },
           },
-        },
-      }),
-    );
-    await realtime.incoming.close();
-    await Future<void>.delayed(Duration.zero);
+        }),
+      );
+      await realtime.incoming.close();
+      await Future<void>.delayed(Duration.zero);
 
-    expect(controller.currentLocation?.latitude, 23.01);
-    expect(controller.currentLocation?.accuracyMeters, 12.0);
-    expect(controller.currentRoute?.distanceMeters, 4200.0);
-    expect(controller.currentRoute?.coordinates.length, 2);
-  });
-
-  test('projection for another booking does not touch cockpit map data',
-      () async {
-    final realtime = _RecordingRealtimeClient();
-    final controller = _controller(
-      transport: _ProviderTransport(),
-      realtime: realtime,
-    );
-    addTearDown(controller.dispose);
-    controller.jobs = [_job('booking-1')];
-
-    realtime.incoming.add(
-      const RealtimeProjection({
-        'type': 'booking.projection-updated.v1',
-        'data': {
-          'bookingId': 'booking-2',
-          'status': 'EN_ROUTE',
-          'sequence': 4,
-          'locationAvailability': 'live',
-          'location': {
-            'latitude': 1.0,
-            'longitude': 2.0,
-            'accuracyMeters': 10.0,
-            'capturedAt': '2026-09-18T09:00:00.000Z',
-            'receivedAt': '2026-09-18T09:00:01.000Z',
-          },
-        },
-      }),
-    );
-    await realtime.incoming.close();
-    await Future<void>.delayed(Duration.zero);
-
-    expect(controller.currentLocation, isNull);
-    expect(controller.currentRoute, isNull);
-  });
+      expect(controller.currentLocation, isNull);
+      expect(controller.currentRoute, isNull);
+    },
+  );
 
   test('publishes the real GPS fix captured by the device', () async {
     final realtime = _RecordingRealtimeClient();
@@ -295,24 +296,26 @@ void main() {
     expect(frame['capturedAt'], DateTime.utc(2026, 9, 18, 9));
   });
 
-  test('does not publish when consent was revoked during the GPS await',
-      () async {
-    final realtime = _RecordingRealtimeClient();
-    final controller = _controller(
-      transport: _ProviderTransport(),
-      realtime: realtime,
-    );
-    addTearDown(controller.dispose);
-    controller.jobs = [_job('booking-1', lat: 1.0, lng: 2.0)];
-    controller.locationSharing['booking-1'] = true;
-    gps.onCurrentPosition = () {
-      controller.locationSharing['booking-1'] = false;
-    };
+  test(
+    'does not publish when consent was revoked during the GPS await',
+    () async {
+      final realtime = _RecordingRealtimeClient();
+      final controller = _controller(
+        transport: _ProviderTransport(),
+        realtime: realtime,
+      );
+      addTearDown(controller.dispose);
+      controller.jobs = [_job('booking-1', lat: 1.0, lng: 2.0)];
+      controller.locationSharing['booking-1'] = true;
+      gps.onCurrentPosition = () {
+        controller.locationSharing['booking-1'] = false;
+      };
 
-    await controller.publishCurrentLocation(controller.jobs.first);
+      await controller.publishCurrentLocation(controller.jobs.first);
 
-    expect(realtime.frames, isEmpty);
-  });
+      expect(realtime.frames, isEmpty);
+    },
+  );
 
   test('skips a publish that would hit the server rate limit', () async {
     final realtime = _RecordingRealtimeClient();
@@ -329,40 +332,44 @@ void main() {
     expect(realtime.frames, hasLength(1));
   });
 
-  test('retries for a usable fix when the first reading is too coarse',
-      () async {
-    final realtime = _RecordingRealtimeClient();
-    final controller = _controller(
-      transport: _ProviderTransport(),
-      realtime: realtime,
-    );
-    addTearDown(controller.dispose);
-    controller.jobs = [_job('booking-1', lat: 1.0, lng: 2.0)];
-    gps.currentPositions = [_gpsAt(250), _gpsAt(8)];
+  test(
+    'retries for a usable fix when the first reading is too coarse',
+    () async {
+      final realtime = _RecordingRealtimeClient();
+      final controller = _controller(
+        transport: _ProviderTransport(),
+        realtime: realtime,
+      );
+      addTearDown(controller.dispose);
+      controller.jobs = [_job('booking-1', lat: 1.0, lng: 2.0)];
+      gps.currentPositions = [_gpsAt(250), _gpsAt(8)];
 
-    await controller.publishCurrentLocation(controller.jobs.first);
+      await controller.publishCurrentLocation(controller.jobs.first);
 
-    expect(realtime.frames, hasLength(1));
-    expect(realtime.frames.single['accuracyMeters'], 8.0);
-  });
+      expect(realtime.frames, hasLength(1));
+      expect(realtime.frames.single['accuracyMeters'], 8.0);
+    },
+  );
 
-  test('prefers a fresh last-known fix over a persistently coarse reading',
-      () async {
-    final realtime = _RecordingRealtimeClient();
-    final controller = _controller(
-      transport: _ProviderTransport(),
-      realtime: realtime,
-    );
-    addTearDown(controller.dispose);
-    controller.jobs = [_job('booking-1', lat: 1.0, lng: 2.0)];
-    gps.currentPositions = [_gpsAt(250), _gpsAt(240)];
-    gps.lastKnownPosition = _gpsAt(
-      12,
-      timestamp: DateTime.now().subtract(const Duration(seconds: 20)),
-    );
+  test(
+    'prefers a fresh last-known fix over a persistently coarse reading',
+    () async {
+      final realtime = _RecordingRealtimeClient();
+      final controller = _controller(
+        transport: _ProviderTransport(),
+        realtime: realtime,
+      );
+      addTearDown(controller.dispose);
+      controller.jobs = [_job('booking-1', lat: 1.0, lng: 2.0)];
+      gps.currentPositions = [_gpsAt(250), _gpsAt(240)];
+      gps.lastKnownPosition = _gpsAt(
+        12,
+        timestamp: DateTime.now().subtract(const Duration(seconds: 20)),
+      );
 
-    await controller.publishCurrentLocation(controller.jobs.first);
+      await controller.publishCurrentLocation(controller.jobs.first);
 
-    expect(realtime.frames.single['accuracyMeters'], 12.0);
-  });
+      expect(realtime.frames.single['accuracyMeters'], 12.0);
+    },
+  );
 }

@@ -7,33 +7,50 @@ import { InAppNotification } from './domain/in-app-notification.entity';
 describe('InboxController', () => {
   const userId = '00000000-0000-4000-8000-000000000001';
   const repository = {
-    find: jest.fn().mockResolvedValue([
-      {
-        id: 'notification-1',
-        title: 'Booking update',
-        body: 'Your booking changed.',
-        kind: 'booking',
-        bookingId: 'booking-1',
-        paymentId: null,
-        createdAt: new Date('2026-09-24T10:00:00.000Z'),
-        readAt: null,
-      },
-    ]),
-    update: jest.fn().mockResolvedValue({ affected: 1 }),
+    find: jest
+      .fn<Promise<Array<Partial<InAppNotification>>>, [unknown]>()
+      .mockResolvedValue([
+        {
+          id: 'notification-1',
+          title: 'Booking update',
+          body: 'Your booking changed.',
+          kind: 'booking',
+          bookingId: 'booking-1',
+          paymentId: null,
+          createdAt: new Date('2026-09-24T10:00:00.000Z'),
+          readAt: null,
+        },
+      ]),
+    update: jest
+      .fn<Promise<{ affected: number }>, [unknown, { readAt: Date }]>()
+      .mockResolvedValue({ affected: 1 }),
   };
   const request = {
     authorizationPrincipal: { userId },
   } as never;
   const controller = new InboxController(repository as never);
+  const prototypeHandler = (methodName: 'getInbox' | 'markRead'): object => {
+    const descriptor = Object.getOwnPropertyDescriptor(
+      InboxController.prototype,
+      methodName,
+    );
+    if (!descriptor)
+      throw new Error(`Missing controller method: ${methodName}`);
+    const handler: unknown = descriptor.value;
+    return handler;
+  };
 
   it('requires the authenticated user inbox permission', () => {
     expect(
-      Reflect.getMetadata(REQUIRED_PERMISSION_KEY, InboxController.prototype.getInbox),
+      Reflect.getMetadata(
+        REQUIRED_PERMISSION_KEY,
+        prototypeHandler('getInbox'),
+      ),
     ).toBe(PERMISSIONS.notificationInboxReadSelf);
     expect(
       Reflect.getMetadata(
         REQUIRED_PERMISSION_KEY,
-        InboxController.prototype.markRead,
+        prototypeHandler('markRead'),
       ),
     ).toBe(PERMISSIONS.notificationInboxReadSelf);
   });
@@ -60,16 +77,12 @@ describe('InboxController', () => {
 
   it('marks only the authenticated user notification as read', async () => {
     await expect(
-      controller.markRead(
-        'me',
-        'notification-1',
-        request,
-      ),
+      controller.markRead('me', 'notification-1', request),
     ).resolves.toEqual({ success: true });
-    expect(repository.update).toHaveBeenCalledWith(
-      { id: 'notification-1', userId },
-      { readAt: expect.any(Date) },
-    );
+    const [updateCriteria, updateValues] =
+      repository.update.mock.calls[0] ?? [];
+    expect(updateCriteria).toEqual({ id: 'notification-1', userId });
+    expect(updateValues.readAt).toBeInstanceOf(Date);
   });
 
   it('does not allow a user to mark another user notification as read', async () => {

@@ -11,8 +11,12 @@ describe("AdminShell", () => {
     expect(markup).toContain('href="/providers"');
     expect(markup).toContain("Role-based access is active");
     expect(markup).toContain("The navigation shows 2 modules available");
-    expect(markup).toContain("Sign out");
-    expect(markup).toContain("Providers");
-    expect(markup).not.toContain("Access</a>");
+     expect(markup).toContain("Sign out");
+     expect(markup).toContain("Providers");
+     expect(markup).toContain("Environment");
+     expect(markup).not.toContain("Dispatch Node");
+     expect(markup).not.toContain("ONLINE");
+     expect(markup).not.toContain("cluster-04");
+     expect(markup).not.toContain("Access</a>");
   });
 });

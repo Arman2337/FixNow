@@ -184,6 +184,54 @@ void main() {
         expect((poppedResult as CustomerBooking).status, 'ASSIGNED');
       },
     );
+
+    testWidgets('retrying an offline request reuses the submission key', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(800, 1200);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final transport = _RetryTransport();
+      final controller = BookingController(
+        BookingRepository(api: transport, accessToken: () async => 'token'),
+      );
+      const category = ServiceCategory(
+        id: 'cat-plumbing',
+        name: 'Plumbing',
+        slug: 'plumbing',
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.dark,
+          home: ServiceRequestScreen(
+            category: category,
+            controller: controller,
+            initialDescription: 'Leaking pipe under kitchen sink.',
+            locationProvider: _FixedLocation(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.drag(find.byType(ListView), const Offset(0, -400));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Find a verified provider'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.text('You are offline. Reconnect and try again.'), findsOneWidget);
+
+      await tester.drag(find.byType(ListView), const Offset(0, -300));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Find a verified provider'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(find.byType(MatchRadarView), findsOneWidget);
+      expect(transport.keys, hasLength(2));
+      expect(transport.keys[0], transport.keys[1]);
+    });
   });
 }
 
@@ -195,6 +243,36 @@ class _FixedLocation implements BookingLocationProvider {
     accuracyMeters: 5.0,
     timestamp: DateTime.now(),
   );
+}
+
+class _RetryTransport implements ApiTransport {
+  final keys = <String?>[];
+
+  @override
+  Future<ApiResponse> send(ApiRequest request) async {
+    keys.add(request.headers['Idempotency-Key']);
+    if (keys.length == 1) {
+      throw const ApiException(
+        ApiFailureKind.offline,
+        'The network is unavailable.',
+      );
+    }
+    return const ApiResponse(
+      statusCode: 201,
+      body: {
+        'booking': {
+          'id': 'booking-retry-123',
+          'serviceCategoryId': 'cat-plumbing',
+          'status': 'REQUESTED',
+          'description': 'Leaking pipe under kitchen sink.',
+          'createdAt': '2026-09-18T10:00:00.000Z',
+          'version': 1,
+          'locationLat': 17.385,
+          'locationLng': 78.4867,
+        },
+      },
+    );
+  }
 }
 
 class _FakeTransport implements ApiTransport {

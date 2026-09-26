@@ -15,16 +15,24 @@ export class SubServicesController {
   @Get()
   async list(@Query('categoryId') categoryId?: string) {
     try {
-      const query = this.subServiceRepo.createQueryBuilder('sub_service')
+      const query = this.subServiceRepo
+        .createQueryBuilder('sub_service')
         .leftJoin('sub_service.category', 'category')
         .where('sub_service.isActive = :isActive', { isActive: true });
 
       if (categoryId) {
-        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(categoryId);
+        const isUuid =
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+            categoryId,
+          );
         if (isUuid) {
-          query.andWhere('sub_service.categoryId = :categoryId', { categoryId });
+          query.andWhere('sub_service.categoryId = :categoryId', {
+            categoryId,
+          });
         } else {
-          const rootSlug = categoryId.replace(/[-_]services?/i, '').replace(/[-_]repair/i, '');
+          const rootSlug = categoryId
+            .replace(/[-_]services?/i, '')
+            .replace(/[-_]repair/i, '');
           query.andWhere(
             '(category.slug = :categoryId OR category.slug ILIKE :prefix)',
             { categoryId, prefix: `${rootSlug}%` },
@@ -33,8 +41,9 @@ export class SubServicesController {
       }
 
       return await query.getMany();
-    } catch (e: any) {
-      return { error: e.message, stack: e.stack };
+    } catch (error: unknown) {
+      const details = error as { message?: unknown; stack?: unknown };
+      return { error: details.message, stack: details.stack };
     }
   }
 

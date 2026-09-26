@@ -152,13 +152,17 @@ class _EmergencyConfirmScreenState extends State<EmergencyConfirmScreen> {
       );
       if (!opened && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('The emergency number could not be opened.')),
+          const SnackBar(
+            content: Text('The emergency number could not be opened.'),
+          ),
         );
       }
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('The emergency number could not be opened.')),
+          const SnackBar(
+            content: Text('The emergency number could not be opened.'),
+          ),
         );
       }
     }
@@ -659,16 +663,16 @@ class _DispatchedView extends StatelessWidget {
                         color: AppColors.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                     child: Text(
-                       status == null
-                           ? 'Availability pending'
-                           : 'Wave ${status.currentWave}',
-                       style: const TextStyle(
-                         fontSize: 10,
-                         fontWeight: FontWeight.w700,
-                         color: AppColors.primary,
-                       ),
-                     ),
+                      child: Text(
+                        status == null
+                            ? 'Availability pending'
+                            : 'Wave ${status.currentWave}',
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primary,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -704,7 +708,7 @@ class _DispatchedView extends StatelessWidget {
                         child: Text(
                           status == null
                               ? 'Availability checked after sending'
-                              : 'Eligible professionals: ${status!.eligibleCount}',
+                              : 'Eligible professionals: ${status.eligibleCount}',
                           style: const TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
@@ -751,32 +755,32 @@ class _DispatchedView extends StatelessWidget {
                     ),
                   ],
                 ),
-                 const SizedBox(height: 6),
-                 if (controller.resolvedLocation case final fix?) ...[
-                   Text(
-                     '${fix.latitude.toStringAsFixed(5)}, ${fix.longitude.toStringAsFixed(5)}',
-                     style: const TextStyle(
-                       fontSize: 13,
-                       fontWeight: FontWeight.w700,
-                       color: AppColors.textPrimary,
-                     ),
-                   ),
-                   const SizedBox(height: 6),
-                   Text(
-                     'Device location accuracy: ±${fix.accuracyMeters.round()} m',
-                     style: const TextStyle(
-                       fontSize: 11,
-                       color: AppColors.textSecondary,
-                     ),
-                   ),
-                 ] else
-                   const Text(
-                     'Location will be confirmed when you send the alert.',
-                     style: TextStyle(
-                       fontSize: 12,
-                       color: AppColors.textSecondary,
-                     ),
-                   ),
+                const SizedBox(height: 6),
+                if (controller.resolvedLocation case final fix?) ...[
+                  Text(
+                    '${fix.latitude.toStringAsFixed(5)}, ${fix.longitude.toStringAsFixed(5)}',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Device location accuracy: ±${fix.accuracyMeters.round()} m',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ] else
+                  const Text(
+                    'Location will be confirmed when you send the alert.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
               ],
             ),
           ),

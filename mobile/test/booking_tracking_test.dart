@@ -6,6 +6,7 @@ import 'package:fixnow_mobile/features/tracking/booking_tracking.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking_controller.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -152,6 +153,50 @@ void main() {
     expect(controller.tracking?.locationAvailability, LocationAvailability.live);
   });
 
+  testWidgets('copies the service-start OTP only after the clipboard succeeds', (
+    tester,
+  ) async {
+    String? copied;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.setData') {
+          copied = (call.arguments as Map<Object?, Object?>)['text'] as String?;
+        }
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
+
+    final controller = BookingTrackingController(
+      bookingId: 'booking-1',
+      source: _Source(
+        _tracking(sequence: 1, status: 'EN_ROUTE', serviceStartOtp: '4821'),
+      ),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.dark,
+        home: BookingTrackingScreen(controller: controller),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    await tester.tap(find.byTooltip('Copy service-start OTP'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(copied, '4821');
+    expect(find.text('OTP copied to clipboard'), findsOneWidget);
+    controller.dispose();
+  });
+
   test('fetches the service-start OTP when a projection goes en route', () async {
     final source = _Source(_tracking(sequence: 1, status: 'ACCEPTED'));
     final controller = BookingTrackingController(
@@ -281,6 +326,52 @@ void main() {
     controller.dispose();
   });
 
+  testWidgets('does not offer customer cancellation after provider departure', (
+    tester,
+  ) async {
+    final controller = BookingTrackingController(
+      bookingId: 'booking-1',
+      source: _Source(_tracking(sequence: 1, status: 'EN_ROUTE')),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.dark,
+        home: BookingTrackingScreen(
+          controller: controller,
+          onCancel: (_) async => throw UnimplementedError(),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.text('Cancel Booking'), findsNothing);
+    controller.dispose();
+  });
+
+  testWidgets('does not invent provider trust data when tracking data is missing', (
+    tester,
+  ) async {
+    final controller = BookingTrackingController(
+      bookingId: 'booking-1',
+      source: _Source(
+        _tracking(sequence: 1, availability: LocationAvailability.unavailable),
+      ),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.dark,
+        home: BookingTrackingScreen(controller: controller),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.text('Rating unavailable'), findsOneWidget);
+    expect(find.text('Job history unavailable'), findsOneWidget);
+    expect(find.text('Aadhaar & Trade Verified'), findsNothing);
+    controller.dispose();
+  });
   testWidgets(
     'hides transit journey map and shows on-site status when work has started',
     (tester) async {
@@ -310,6 +401,37 @@ void main() {
       expect(find.text('Estimated arrival'), findsNothing);
     },
   );
+
+  testWidgets('keeps tracking header within narrow large-text bounds', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final controller = BookingTrackingController(
+      bookingId: 'booking-1',
+      source: _Source(_tracking(sequence: 1)),
+    );
+    await tester.pumpWidget(
+      MediaQuery(
+        data: const MediaQueryData(
+          textScaler: TextScaler.linear(2),
+          disableAnimations: true,
+        ),
+        child: MaterialApp(
+          theme: AppTheme.dark,
+          home: BookingTrackingScreen(controller: controller),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(tester.takeException(), isNull);
+    controller.dispose();
+  });
 }
 
 BookingTracking _tracking({
@@ -319,6 +441,7 @@ BookingTracking _tracking({
   int? eta = 12,
   ProviderMapLocation? provider,
   CustomerMapLocation? customer,
+  String? serviceStartOtp,
 }) => BookingTracking(
   bookingId: 'booking-1',
   status: status,
@@ -327,6 +450,7 @@ BookingTracking _tracking({
   estimatedMinutes: eta,
   providerLocation: provider,
   customerLocation: customer,
+  serviceStartOtp: serviceStartOtp,
 );
 
 class _Source implements BookingTrackingSource {

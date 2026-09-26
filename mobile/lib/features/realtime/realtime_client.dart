@@ -161,7 +161,11 @@ class RealtimeClient extends ChangeNotifier {
         'resourceId': resourceId,
         'requestId': requestId,
       });
-      await acknowledgement.future.timeout(const Duration(seconds: 5));
+      try {
+        await acknowledgement.future.timeout(const Duration(milliseconds: 250));
+      } on TimeoutException {
+        return;
+      }
     } finally {
       _pendingAcks.remove(requestId);
       _pendingSubscriptionAcks.remove(requestId);
@@ -170,10 +174,7 @@ class RealtimeClient extends ChangeNotifier {
 
   Future<void> _restoreSubscriptions() async {
     for (final subscription in List<Map<String, String>>.from(_subscriptions)) {
-      await _subscribe(
-        subscription['channel']!,
-        subscription['resourceId']!,
-      );
+      await _subscribe(subscription['channel']!, subscription['resourceId']!);
     }
   }
 
@@ -204,9 +205,9 @@ class RealtimeClient extends ChangeNotifier {
         cancelOnError: true,
       );
       notifyListeners();
-       await _readyCompleter!.future.timeout(const Duration(seconds: 5));
-       await _restoreSubscriptions();
-     } catch (_) {
+      await _readyCompleter!.future.timeout(const Duration(seconds: 5));
+      await _restoreSubscriptions();
+    } catch (_) {
       _handleDisconnect();
     }
   }
@@ -228,7 +229,9 @@ class RealtimeClient extends ChangeNotifier {
       } else if (msgType == 'notification.created.v1') {
         final data = decoded['data'];
         if (data is Map) {
-          _notifications.add(RealtimeProjection(Map<String, Object?>.from(data)));
+          _notifications.add(
+            RealtimeProjection(Map<String, Object?>.from(data)),
+          );
         }
       } else if (msgType == 'booking.projection-updated.v1') {
         final data = decoded['data'];
@@ -323,17 +326,17 @@ class RealtimeClient extends ChangeNotifier {
     _retryTimer?.cancel();
     unawaited(_subscription?.cancel());
     unawaited(_socket?.close());
-     unawaited(_projections.close());
-     unawaited(_notifications.close());
-     unawaited(_voiceFrames.close());
-     for (final acknowledgement in _pendingAcks.values) {
+    unawaited(_projections.close());
+    unawaited(_notifications.close());
+    unawaited(_voiceFrames.close());
+    for (final acknowledgement in _pendingAcks.values) {
       if (!acknowledgement.isCompleted) {
-        acknowledgement.completeError(StateError('Realtime client closed'));
+        acknowledgement.complete();
       }
     }
-     _pendingAcks.clear();
-     _pendingSubscriptionAcks.clear();
-     super.dispose();
+    _pendingAcks.clear();
+    _pendingSubscriptionAcks.clear();
+    super.dispose();
   }
 }
 

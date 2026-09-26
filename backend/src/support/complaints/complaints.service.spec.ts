@@ -137,6 +137,63 @@ describe('ComplaintsService', () => {
     });
   });
 
+  it('adds evidence only for a complaint participant', async () => {
+    const complaint = {
+      id: 'comp-1',
+      submitterId: 'user-1',
+      targetId: 'user-2',
+      status: ComplaintStatus.OPEN,
+    };
+    mockComplaintRepository.findOne.mockResolvedValue(complaint);
+    mockEvidenceRepository.create.mockReturnValue({
+      complaintId: complaint.id,
+      uploadedBy: 'user-1',
+      fileUrl: 'https://example.test/proof.png',
+      fileType: 'image/png',
+    });
+    mockEvidenceRepository.save.mockResolvedValue({
+      id: 'evidence-1',
+      complaintId: complaint.id,
+    });
+
+    await service.addEvidence('comp-1', 'user-1', {
+      fileUrl: 'https://example.test/proof.png',
+      fileType: 'image/png',
+      description: 'Meter reading',
+    });
+
+    expect(mockEvidenceRepository.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        complaintId: 'comp-1',
+        uploadedBy: 'user-1',
+        fileUrl: 'https://example.test/proof.png',
+      }),
+    );
+  });
+
+  it('records a callback request for a complaint participant', async () => {
+    const complaint = {
+      id: 'comp-1',
+      submitterId: 'user-1',
+      targetId: 'user-2',
+      status: ComplaintStatus.IN_REVIEW,
+    };
+    mockComplaintRepository.findOne.mockResolvedValue(complaint);
+    mockAuditRepository.save.mockResolvedValue({ id: 'audit-1' });
+
+    await service.requestCallback('comp-1', 'user-2');
+
+    expect(mockAuditRepository.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        complaintId: 'comp-1',
+        actorId: 'user-2',
+        previousStatus: ComplaintStatus.IN_REVIEW,
+        newStatus: ComplaintStatus.IN_REVIEW,
+        notes: 'Callback requested by case participant',
+      }),
+    );
+    expect(mockAuditRepository.save).toHaveBeenCalled();
+  });
   it('should update complaint status and add resolution notes', async () => {
     mockComplaintRepository.findOne.mockResolvedValue({
       id: 'comp-1',

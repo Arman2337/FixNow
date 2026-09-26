@@ -15,6 +15,18 @@ class _FakeComplaintsRepo implements ComplaintsRepository {
       items.firstWhere((c) => c.id == id);
 
   @override
+  Future<Complaint> addEvidence(
+    String id, {
+    required String fileUrl,
+    required String fileType,
+    String? description,
+  }) async => items.firstWhere((c) => c.id == id);
+
+  @override
+  Future<Complaint> requestCallback(String id) async =>
+      items.firstWhere((c) => c.id == id);
+
+  @override
   Future<Complaint> submitComplaint({
     String? bookingId,
     required String targetRole,
@@ -67,30 +79,30 @@ void main() {
       // Verify Title & Action
       expect(find.text('Disputes & Cases'), findsOneWidget);
       expect(find.text('Resolution Hub'), findsOneWidget);
-      expect(find.text('+ New Case'), findsOneWidget);
+      expect(find.text('New Case'), findsOneWidget);
 
-      // Verify Escrow Guarantee Banner
       expect(find.text('FixNow Fair Dispute Guarantee'), findsOneWidget);
-      expect(find.textContaining('Escrow funds locked'), findsOneWidget);
+      expect(find.textContaining('Support review is required'), findsOneWidget);
 
       // Verify Active Case Card
-      expect(find.text('AC Jet Servicing'), findsOneWidget);
-      expect(find.text('IN_REVIEW'), findsOneWidget);
-      expect(find.text('Trust & Safety Officer'), findsOneWidget);
-      expect(find.text('Live Lead'), findsOneWidget);
-      expect(find.text('Resolution Milestones'), findsOneWidget);
-      expect(find.text('Stage 3 of 4'), findsOneWidget);
-      expect(find.text('Add Proof'), findsOneWidget);
-      expect(find.text('Instant Callback'), findsOneWidget);
+       expect(find.text('AC Jet Servicing'), findsOneWidget);
+       expect(find.text('IN_REVIEW'), findsOneWidget);
+       expect(find.text('Awaiting assignment'), findsOneWidget);
+       expect(find.text('Assignment pending'), findsOneWidget);
+       expect(find.text('Resolution Milestones'), findsOneWidget);
+       expect(find.text('Stage 3 of 4'), findsOneWidget);
+       expect(find.text('Add Proof'), findsOneWidget);
+       expect(find.text('Request Callback'), findsOneWidget);
 
-      // Tap Instant Callback
-      final callbackBtn = find.text('Instant Callback');
+       // Tap Request Callback
+       final callbackBtn = find.text('Request Callback');
       await tester.ensureVisible(callbackBtn);
       await tester.pumpAndSettle();
       await tester.tap(callbackBtn);
       await tester.pumpAndSettle();
       expect(
-        find.textContaining('Instant callback requested!'),
+         find.textContaining('Callback request recorded for your case.'),
+
         findsOneWidget,
       );
 
@@ -104,4 +116,38 @@ void main() {
       expect(find.text('Resolved'), findsWidgets);
     },
   );
+
+  testWidgets('shows only confirmed case activity for an unassigned review', (
+    tester,
+  ) async {
+    final complaint = Complaint(
+      id: 'case-unassigned',
+      submitterId: 'cust-1',
+      targetRole: 'PROVIDER',
+      category: 'Billing question',
+      description: 'A billing question is waiting for review.',
+      status: 'IN_REVIEW',
+      createdAt: DateTime.utc(2026, 9, 14, 12, 10),
+      updatedAt: DateTime.utc(2026, 9, 14, 12, 45),
+    );
+    final controller = ComplaintsController(_FakeComplaintsRepo([complaint]));
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData.light(),
+        home: ComplaintListScreen(controller: controller),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(find.text('Resolution Milestones'), 200);
+    await tester.drag(find.byType(ListView), const Offset(0, -400));
+    await tester.pumpAndSettle();
+    expect(find.text('No evidence recorded yet.'), findsOneWidget);
+     expect(find.text('Live Lead'), findsNothing);
+     expect(find.text('Evidence & Bill Audited'), findsNothing);
+    expect(find.text('Request Callback'), findsOneWidget);
+    expect(find.text('Instant Callback'), findsNothing);
+    expect(find.text('Awaiting assignment'), findsOneWidget);
+  });
 }

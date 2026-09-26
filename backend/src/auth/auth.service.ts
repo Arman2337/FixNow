@@ -59,7 +59,9 @@ export class AuthService {
     },
   ): Promise<AuthenticationResponse> {
     if (!input.mobile?.trim()) {
-      throw new BadRequestException('Mobile number is required for registration.');
+      throw new BadRequestException(
+        'Mobile number is required for registration.',
+      );
     }
 
     const passwordHash = await argon2.hash(input.password, {

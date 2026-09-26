@@ -95,8 +95,9 @@ class InAppNotification {
       if (cat == null) return NotificationCategory.system;
       final lower = cat.toLowerCase();
       if (lower.contains('book')) return NotificationCategory.bookings;
-      if (lower.contains('pay') || lower.contains('invoice'))
+      if (lower.contains('pay') || lower.contains('invoice')) {
         return NotificationCategory.payments;
+      }
       if (lower.contains('offer') ||
           lower.contains('promo') ||
           lower.contains('coupon')) {

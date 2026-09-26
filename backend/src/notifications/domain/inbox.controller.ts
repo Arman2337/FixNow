@@ -64,10 +64,7 @@ export class InboxController {
       return { success: false };
     }
 
-    await this.notificationRepo.update(
-      { id, userId },
-      { readAt: new Date() },
-    );
+    await this.notificationRepo.update({ id, userId }, { readAt: new Date() });
     return { success: true };
   }
 

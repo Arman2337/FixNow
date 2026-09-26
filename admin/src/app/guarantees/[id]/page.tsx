@@ -3,11 +3,11 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/auth/session";
 import { AdminShell } from "@/components/admin-shell";
 import { env } from "@/config/env";
-import { requireManagementResult, fetchManagementApi } from "@/features/management-api";
-import { getClaim } from "@/features/guarantees/api";
+import { requireManagementResult } from "@/features/management-api";
+import { getClaim, scheduleReService, updateClaimStatus, type GuaranteeStatus } from "@/features/guarantees/api";
 import { StatusBadge } from "@/features/status-badge";
 import { revalidatePath } from "next/cache";
-import { listProviders } from "@/features/providers/api";
+import { listProviderApplications } from "@/features/providers/api";
 
 const shortId = (id: string) => id.replaceAll("-", "").slice(0, 8).toUpperCase();
 
@@ -19,26 +19,24 @@ export default async function GuaranteeClaimDetailsPage(props: {
 
   const params = await props.params;
   const claim = await requireManagementResult(await getClaim(params.id));
-  const providersPage = await requireManagementResult(await listProviders());
+  const providersPage = await requireManagementResult(
+    await listProviderApplications(undefined, "approved"),
+  );
   const providers = providersPage.items;
 
   async function updateStatusAction(formData: FormData) {
     "use server";
-    const status = formData.get("status") as string;
-    await fetchManagementApi(`/api/v1/guarantees/claims/${params.id}/status`, {
-      method: "PATCH",
-      body: JSON.stringify({ status }),
-    });
+    const status = String(formData.get("status") ?? "") as GuaranteeStatus;
+    const result = await updateClaimStatus(params.id, status);
+    if (!result.ok) throw new Error("The claim status could not be updated.");
     revalidatePath(`/guarantees/${params.id}`);
   }
 
   async function scheduleReServiceAction(formData: FormData) {
     "use server";
-    const providerId = formData.get("providerId") as string;
-    await fetchManagementApi(`/api/v1/guarantees/claims/${params.id}/re-service`, {
-      method: "POST",
-      body: JSON.stringify({ providerId }),
-    });
+    const providerId = String(formData.get("providerId") ?? "");
+    const result = await scheduleReService(params.id, providerId);
+    if (!result.ok) throw new Error("The re-service booking could not be scheduled.");
     revalidatePath(`/guarantees/${params.id}`);
   }
 
@@ -74,7 +72,9 @@ export default async function GuaranteeClaimDetailsPage(props: {
                     <h3 className="text-body-md font-bold mb-space-sm">Evidence</h3>
                     <div className="flex gap-space-sm flex-wrap">
                       {claim.evidenceUrls.map((url, i) => (
-                        <img key={i} src={url} alt="Evidence" className="w-32 h-32 object-cover rounded-md border border-outline" />
+                        <a key={i} href={url} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center rounded-md border border-outline px-3 py-2 text-sm text-on-surface hover:bg-surface-container">
+                          Open evidence {i + 1}
+                        </a>
                       ))}
                     </div>
                   </div>
@@ -90,7 +90,8 @@ export default async function GuaranteeClaimDetailsPage(props: {
                       <option value="IN_REVIEW">In Review</option>
                       <option value="MORE_INFO">More Info Needed</option>
                       <option value="APPROVED">Approved</option>
-                      <option value="REJECTED">Rejected</option>
+                       <option value="REJECTED">Rejected</option>
+                       <option value="COMPLETED">Completed</option>
                     </select>
                     <button type="submit" className="bg-primary text-on-primary px-4 py-2 rounded-md font-medium hover:bg-primary-hover transition-colors">
                       Update Status
@@ -105,8 +106,10 @@ export default async function GuaranteeClaimDetailsPage(props: {
                     <form action={scheduleReServiceAction} className="flex items-center gap-space-sm max-w-md">
                       <select name="providerId" className="flex-1 bg-surface-elevated border border-outline rounded-md px-3 py-2 text-body-md focus:outline-none focus:border-primary" required>
                         <option value="">Select a Provider...</option>
-                        {providers.map((p) => (
-                          <option key={p.id} value={p.id}>{p.firstName} {p.lastName}</option>
+                        {providers.map((provider) => (
+                          <option key={provider.id} value={provider.id}>
+                            {provider.displayName ?? "Verified provider"}
+                          </option>
                         ))}
                       </select>
                       <button type="submit" className="bg-accent text-on-accent px-4 py-2 rounded-md font-medium hover:opacity-90 transition-opacity whitespace-nowrap">

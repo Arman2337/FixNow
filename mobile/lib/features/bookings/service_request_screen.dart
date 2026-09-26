@@ -61,6 +61,7 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
   PriceEstimateController? _estimate;
 
   String? _createdBookingId;
+  String? _submissionIdempotencyKey;
 
   @override
   void initState() {
@@ -281,6 +282,8 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
       _error = null;
     });
     try {
+      _submissionIdempotencyKey ??=
+          'mobile-${DateTime.now().toUtc().millisecondsSinceEpoch}';
       final location =
           _confirmedLocation ??
           await (widget.locationProvider ??
@@ -293,11 +296,13 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
         longitude: location.longitude,
         scheduledAt: _schedule?.targetScheduledAt,
         items: widget.initialItems,
+        idempotencyKey: _submissionIdempotencyKey,
       );
       if (mounted) {
         setState(() {
           _createdBookingId = booking.id;
           _showRadar = true;
+          _submissionIdempotencyKey = null;
         });
       }
     } on BookingLocationFailure {

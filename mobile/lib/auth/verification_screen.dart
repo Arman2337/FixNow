@@ -304,7 +304,8 @@ class _VerificationScreenState extends State<VerificationScreen> {
                             children: [
                               // 6 Interactive Digits Row
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: List.generate(6, (index) {
                                   final isFilled = index < codeText.length;
                                   final isCurrent = index == codeText.length;
@@ -315,7 +316,8 @@ class _VerificationScreenState extends State<VerificationScreen> {
                                       color: isFilled
                                           ? AppColors.surfaceContainerLow
                                           : (isCurrent
-                                                ? AppColors.surfaceContainerLowest
+                                                ? AppColors
+                                                      .surfaceContainerLowest
                                                 : AppColors.surfaceContainer),
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
@@ -327,9 +329,8 @@ class _VerificationScreenState extends State<VerificationScreen> {
                                       boxShadow: isCurrent
                                           ? [
                                               BoxShadow(
-                                                color: AppColors.primary.withValues(
-                                                  alpha: 0.15,
-                                                ),
+                                                color: AppColors.primary
+                                                    .withValues(alpha: 0.15),
                                                 blurRadius: 6,
                                                 offset: const Offset(0, 2),
                                               ),
@@ -343,9 +344,8 @@ class _VerificationScreenState extends State<VerificationScreen> {
                                               height: 24,
                                               decoration: BoxDecoration(
                                                 color: AppColors.primary,
-                                                borderRadius: BorderRadius.circular(
-                                                  2,
-                                                ),
+                                                borderRadius:
+                                                    BorderRadius.circular(2),
                                               ),
                                             )
                                           : Text(
@@ -356,7 +356,9 @@ class _VerificationScreenState extends State<VerificationScreen> {
                                                 color: isFilled
                                                     ? AppColors.textPrimary
                                                     : AppColors.textSecondary
-                                                          .withValues(alpha: 0.4),
+                                                          .withValues(
+                                                            alpha: 0.4,
+                                                          ),
                                               ),
                                             ),
                                     ),
@@ -580,7 +582,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                                 width: 48,
                                 height: 48,
                                 fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => Container(
+                                errorBuilder: (_, _, _) => Container(
                                   width: 48,
                                   height: 48,
                                   decoration: BoxDecoration(
@@ -627,7 +629,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                                 width: 48,
                                 height: 48,
                                 fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => Container(
+                                errorBuilder: (_, _, _) => Container(
                                   width: 48,
                                   height: 48,
                                   decoration: BoxDecoration(

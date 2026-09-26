@@ -1,10 +1,29 @@
-import { Controller, Get, Post, Body, Req, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Req,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CustomerAddressEntity } from './customer-address.entity';
 import { RequireOwnPermission } from '../common/authorization/authorization.decorators';
 import { PERMISSIONS } from '../common/authorization/permission-policies';
 import type { AuthorizedRequest } from '../common/authorization/authorization.guard';
+
+type CreateCustomerAddressBody = {
+  isDefault?: boolean;
+  label?: string | null;
+  street: string;
+  city: string;
+  state: string;
+  zip: string;
+  latitude: number;
+  longitude: number;
+};
 
 @Controller('users/me/addresses')
 export class CustomerAddressesController {
@@ -24,7 +43,7 @@ export class CustomerAddressesController {
   @RequireOwnPermission(PERMISSIONS.profileUpdateSelf)
   async create(
     @Req() request: AuthorizedRequest,
-    @Body() body: any,
+    @Body() body: CreateCustomerAddressBody,
   ) {
     const userId = request.authorizationPrincipal!.userId;
     // Set all other addresses to not default if this one is default
@@ -47,10 +66,7 @@ export class CustomerAddressesController {
 
   @Delete(':id')
   @RequireOwnPermission(PERMISSIONS.profileUpdateSelf)
-  async remove(
-    @Req() request: AuthorizedRequest,
-    @Param('id') id: string,
-  ) {
+  async remove(@Req() request: AuthorizedRequest, @Param('id') id: string) {
     const userId = request.authorizationPrincipal!.userId;
     await this.addressRepo.delete({ id, userId });
     return { success: true };

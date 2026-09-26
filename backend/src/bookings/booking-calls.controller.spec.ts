@@ -40,7 +40,7 @@ describe('BookingCallsController', () => {
 
     const result = await controller.initiate(req, bookingId);
 
-    expect(service.initiateCall).toHaveBeenCalledWith(bookingId, userId);
+    expect(service.initiateCall.mock.calls).toEqual([[bookingId, userId]]);
     expect(result.call.id).toBe(callId);
   });
 
@@ -52,7 +52,9 @@ describe('BookingCallsController', () => {
 
     const result = await controller.answer(req, bookingId, callId);
 
-    expect(service.answerCall).toHaveBeenCalledWith(bookingId, callId, userId);
+    expect(service.answerCall.mock.calls).toEqual([
+      [bookingId, callId, userId],
+    ]);
     expect(result.status).toBe('CONNECTED');
   });
 
@@ -64,7 +66,9 @@ describe('BookingCallsController', () => {
 
     const result = await controller.reject(req, bookingId, callId);
 
-    expect(service.rejectCall).toHaveBeenCalledWith(bookingId, callId, userId);
+    expect(service.rejectCall.mock.calls).toEqual([
+      [bookingId, callId, userId],
+    ]);
     expect(result.status).toBe('REJECTED');
   });
 
@@ -77,7 +81,9 @@ describe('BookingCallsController', () => {
 
     const result = await controller.hangup(req, bookingId, callId);
 
-    expect(service.hangupCall).toHaveBeenCalledWith(bookingId, callId, userId);
+    expect(service.hangupCall.mock.calls).toEqual([
+      [bookingId, callId, userId],
+    ]);
     expect(result.status).toBe('ENDED');
   });
 });

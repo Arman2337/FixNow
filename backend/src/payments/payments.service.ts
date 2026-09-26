@@ -33,9 +33,7 @@ import type {
 import { TrustService } from '../trust/trust.service';
 
 /** Booking states for which the customer may open a payment. */
-const PAYABLE_BOOKING_STATUSES: readonly string[] = [
-  BookingStatus.COMPLETED,
-];
+const PAYABLE_BOOKING_STATUSES: readonly string[] = [BookingStatus.COMPLETED];
 
 @Injectable()
 export class PaymentsService {
@@ -363,7 +361,10 @@ export class PaymentsService {
           lock: { mode: 'pessimistic_write' },
         });
         if (!order) throw new NotFoundException('Payment order not found');
-        if (order.status !== PaymentOrderStatus.PAID || !order.gatewayPaymentId) {
+        if (
+          order.status !== PaymentOrderStatus.PAID ||
+          !order.gatewayPaymentId
+        ) {
           throw new ConflictException('Only paid payments can be refunded');
         }
 
@@ -380,7 +381,8 @@ export class PaymentsService {
         }
 
         const alreadyRefunded = await this.refundedTotal(order.id, manager);
-        const amountMinor = input.amountMinor ?? order.amountMinor - alreadyRefunded;
+        const amountMinor =
+          input.amountMinor ?? order.amountMinor - alreadyRefunded;
         if (
           !Number.isInteger(amountMinor) ||
           amountMinor <= 0 ||
@@ -421,7 +423,9 @@ export class PaymentsService {
       requestKey,
     });
     if (gatewayRefund.amountMinor !== reservation.amountMinor) {
-      throw new ConflictException('Payment gateway returned a different refund amount');
+      throw new ConflictException(
+        'Payment gateway returned a different refund amount',
+      );
     }
 
     const completed = await this.dataSource.transaction(
@@ -437,7 +441,8 @@ export class PaymentsService {
           paymentOrderId: order.id,
           requestKey,
         });
-        if (!current) throw new ConflictException('Refund reservation not found');
+        if (!current)
+          throw new ConflictException('Refund reservation not found');
         if (current.status === 'PROCESSED') return current;
         if (!this.isTerminalGatewayStatus(gatewayRefund.status)) return current;
 
@@ -460,7 +465,9 @@ export class PaymentsService {
           order.id,
           'refund.created',
           actorId,
-          createHash('sha256').update(gatewayRefund.gatewayRefundId).digest('hex'),
+          createHash('sha256')
+            .update(gatewayRefund.gatewayRefundId)
+            .digest('hex'),
         );
         return result;
       },
@@ -482,7 +489,9 @@ export class PaymentsService {
   }
 
   private isTerminalGatewayStatus(status: string): boolean {
-    return ['processed', 'completed', 'succeeded'].includes(status.toLowerCase());
+    return ['processed', 'completed', 'succeeded'].includes(
+      status.toLowerCase(),
+    );
   }
 
   private presentRefund(refund: Refund): {
@@ -561,9 +570,7 @@ export class PaymentsService {
     providerId: string,
     bookingId: string,
   ): Promise<{ bookingId: string; paid: boolean }> {
-    const rows = await this.dataSource.query<
-      Array<{ status?: string }>
-    >(
+    const rows = await this.dataSource.query<Array<{ status?: string }>>(
       `SELECT o.status
        FROM payment_orders o
        JOIN bookings b ON b.id = o.booking_id

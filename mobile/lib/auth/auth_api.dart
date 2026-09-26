@@ -78,7 +78,10 @@ class AuthApi {
     );
   }
 
-  Future<AuthSession> refresh(String refreshToken) async {
+  Future<AuthSession> refresh(
+    String refreshToken, {
+    String? verificationEmail,
+  }) async {
     final response = await _transport.send(
       ApiRequest(
         method: ApiMethod.post,
@@ -86,7 +89,7 @@ class AuthApi {
         body: {'refreshToken': refreshToken},
       ),
     );
-    return _parseSession(response.body);
+    return _parseSession(response.body, verificationEmail: verificationEmail);
   }
 
   Future<void> logout(String refreshToken) async {

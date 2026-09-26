@@ -121,8 +121,9 @@ class ProviderHomeScreen extends StatelessWidget {
                       controller: notificationController!,
                       onTap: () {
                         Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => NotificationCenterScreen(
+MaterialPageRoute(
+                             settings: const RouteSettings(name: 'notifications'),
+                             builder: (_) => NotificationCenterScreen(
                               controller: notificationController!,
                               onOpenBooking: onOpenBooking,
                               onOpenInvoice: onOpenInvoice,
@@ -321,8 +322,18 @@ class ProviderHomeScreen extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(height: AppSpacing.sm),
+                              const Text(
+                                'Working schedule',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.xs),
                               Text(
-                                availability?.timingSummary ?? 'No schedule set',
+                                availability?.timingSummary ??
+                                    'No schedule set',
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
@@ -338,7 +349,7 @@ class ProviderHomeScreen extends StatelessWidget {
                                     MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
-                                    'Edit\nSchedule',
+                                    'Edit schedule',
                                     style: Theme.of(context)
                                         .textTheme
                                         .titleMedium
@@ -402,7 +413,12 @@ class ProviderHomeScreen extends StatelessWidget {
                                 const SizedBox(height: AppSpacing.sm),
                                 Builder(
                                   builder: (context) {
-                                    final earnings = controller.profile?.stats?.earningsMinor ?? 0;
+                                    final earnings =
+                                        controller
+                                            .profile
+                                            ?.stats
+                                            ?.earningsMinor ??
+                                        0;
                                     final amount = (earnings ~/ 100).toString();
                                     return Text(
                                       '₹$amount',
@@ -568,8 +584,10 @@ class ProviderHomeScreen extends StatelessWidget {
                             label: 'Accept request',
                             icon: Icons.check_circle_outline_rounded,
                             onPressed: () async {
-                              await controller.acceptRequest(request);
-                              if (context.mounted) {
+                              final accepted = await controller.acceptRequest(
+                                request,
+                              );
+                              if (context.mounted && accepted) {
                                 showFixBanner(
                                   ScaffoldMessenger.of(context),
                                   message:
@@ -865,7 +883,7 @@ class _ProviderNotificationBanner extends StatelessWidget {
                             child: Text(
                               notification.title,
                               style: const TextStyle(
-                                color: AppColors.cream,
+                                color: AppColors.textPrimary,
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
                               ),

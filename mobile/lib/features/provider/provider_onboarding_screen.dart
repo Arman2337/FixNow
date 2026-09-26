@@ -1,5 +1,6 @@
 import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
+import 'package:fixnow_mobile/design_system/app_typography.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 
 import 'package:fixnow_mobile/design_system/fix_state_views.dart';
@@ -34,6 +35,8 @@ class ProviderOnboardingScreen extends StatefulWidget {
 }
 
 class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
+  static const requiredDocumentTypes = {'aadhaar', 'pan', 'trade', 'police'};
+
   bool _emergencyOnCall = true;
   double? _sliderRadius;
   String? _uploadingDocType;
@@ -158,18 +161,25 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
               widget.controller.skills.isNotEmpty || isVerified;
 
           final reviewedDocuments = widget.controller.documents
-              .where((d) => d.status.toUpperCase() == 'APPROVED')
+              .where(
+                (document) =>
+                    requiredDocumentTypes.contains(document.type) &&
+                    document.status.toUpperCase() == 'APPROVED',
+              )
               .length;
-          final documentsComplete =
-              widget.controller.documents.length >= 4 ||
-              reviewedDocuments > 0 ||
-              isVerified;
+          final documentsComplete = requiredDocumentTypes.every(
+            (type) => widget.controller.documents.any(
+              (document) =>
+                  document.type == type &&
+                  document.status.toUpperCase() == 'APPROVED',
+            ),
+          );
 
           final completedSteps = [
             profileComplete,
             skillsComplete,
             documentsComplete,
-            isVerified || isUnderReview,
+            isVerified && documentsComplete,
           ].where((c) => c).length;
 
           final progressPercent = completedSteps * 25;
@@ -249,8 +259,9 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
                       controller: widget.notificationController!,
                       onTap: () {
                         Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => NotificationCenterScreen(
+MaterialPageRoute(
+                             settings: const RouteSettings(name: 'notifications'),
+                             builder: (_) => NotificationCenterScreen(
                               controller: widget.notificationController!,
                             ),
                           ),
@@ -380,6 +391,36 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
                     ),
                     const SizedBox(height: AppSpacing.md),
 
+                    Container(
+                      padding: const EdgeInsets.all(AppSpacing.md),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceContainerLowest,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppColors.primary.withValues(alpha: 0.24),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Profile incomplete',
+                            style: FixNowTypography.label.copyWith(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Complete supported profile',
+                            style: FixNowTypography.bodySmall.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
                     // Multi-Step Onboarding Stepper Header
                     Container(
                       padding: const EdgeInsets.all(AppSpacing.md),
@@ -462,7 +503,7 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
                               ),
                               const SizedBox(width: 6),
                               _StepperSegment(
-                                isComplete: isVerified || isUnderReview,
+                                isComplete: isVerified && documentsComplete,
                               ),
                             ],
                           ),
@@ -485,7 +526,7 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
                               ),
                               _StepIcon(
                                 label: '4. Police Check',
-                                isComplete: isVerified || isUnderReview,
+                                isComplete: isVerified && documentsComplete,
                                 isDimmed: !documentsComplete,
                               ),
                             ],
@@ -518,7 +559,7 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
                           ],
                         ),
                         Text(
-                          '${isVerified ? 4 : reviewedDocuments} of 4 Verified',
+                          '$reviewedDocuments of 4 Verified',
                           style: const TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 11,
@@ -528,6 +569,27 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
                       ],
                     ),
                     const SizedBox(height: AppSpacing.sm),
+
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Identity documents',
+                          style: FixNowTypography.labelLarge.copyWith(
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Documents are used for verification and are never shown publicly.',
+                          style: FixNowTypography.bodySmall.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.md),
 
                     // Aadhaar Card
                     Builder(
@@ -838,71 +900,137 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
                                       Wrap(
                                         spacing: 8,
                                         runSpacing: 8,
-                                        crossAxisAlignment: WrapCrossAlignment.center,
+                                        crossAxisAlignment:
+                                            WrapCrossAlignment.center,
                                         children: [
-                                          for (final skill in widget.controller.skills)
+                                          for (final skill
+                                              in widget.controller.skills)
                                             Chip(
                                               label: Text(
-                                                skill.categoryName ?? 'Unknown',
+                                                skill.categoryName,
                                                 style: const TextStyle(
                                                   fontSize: 12,
                                                   fontWeight: FontWeight.w600,
                                                   color: AppColors.onAccentGold,
                                                 ),
                                               ),
-                                              backgroundColor: AppColors.accentGold,
-                                              deleteIconColor: AppColors.onAccentGold,
+                                              backgroundColor:
+                                                  AppColors.accentGold,
+                                              deleteIconColor:
+                                                  AppColors.onAccentGold,
                                               onDeleted: () {
-                                                widget.controller.removeSkill(skill.id).then((_) {
-                                                  if (!mounted) return;
-                                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Skill removed')));
-                                                }).catchError((e) {
-                                                  if (!mounted) return;
-                                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to remove skill')));
-                                                });
+                                                final messenger =
+                                                    ScaffoldMessenger.of(
+                                                      context,
+                                                    );
+                                                widget.controller
+                                                    .removeSkill(skill.id)
+                                                    .then((_) {
+                                                      if (!mounted) return;
+                                                      messenger.showSnackBar(
+                                                        const SnackBar(
+                                                          content: Text(
+                                                            'Skill removed',
+                                                          ),
+                                                        ),
+                                                      );
+                                                    })
+                                                    .catchError((e) {
+                                                      if (!mounted) return;
+                                                      messenger.showSnackBar(
+                                                        const SnackBar(
+                                                          content: Text(
+                                                            'Failed to remove skill',
+                                                          ),
+                                                        ),
+                                                      );
+                                                    });
                                               },
                                             ),
-                                          if (widget.controller.categories.any((cat) => !widget.controller.skills.any((s) => s.categoryId == cat['id'])))
+                                          if (widget.controller.categories.any(
+                                            (cat) =>
+                                                !widget.controller.skills.any(
+                                                  (s) =>
+                                                      s.categoryId == cat['id'],
+                                                ),
+                                          ))
                                             Theme(
                                               data: Theme.of(context).copyWith(
-                                                canvasColor: AppColors.surfaceElevated,
+                                                canvasColor:
+                                                    AppColors.surfaceElevated,
                                               ),
                                               child: DropdownButtonHideUnderline(
                                                 child: DropdownButton<String>(
                                                   isDense: true,
                                                   hint: Container(
-                                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 12,
+                                                          vertical: 6,
+                                                        ),
                                                     decoration: BoxDecoration(
-                                                      border: Border.all(color: AppColors.primary),
-                                                      borderRadius: BorderRadius.circular(16),
+                                                      border: Border.all(
+                                                        color:
+                                                            AppColors.primary,
+                                                      ),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            16,
+                                                          ),
                                                     ),
                                                     child: const Row(
-                                                      mainAxisSize: MainAxisSize.min,
+                                                      mainAxisSize:
+                                                          MainAxisSize.min,
                                                       children: [
-                                                        Icon(Icons.add, size: 14, color: AppColors.primary),
+                                                        Icon(
+                                                          Icons.add,
+                                                          size: 14,
+                                                          color:
+                                                              AppColors.primary,
+                                                        ),
                                                         SizedBox(width: 4),
                                                         Text(
                                                           'Add Skill',
                                                           style: TextStyle(
-                                                            color: AppColors.primary,
+                                                            color: AppColors
+                                                                .primary,
                                                             fontSize: 12,
-                                                            fontWeight: FontWeight.w600,
+                                                            fontWeight:
+                                                                FontWeight.w600,
                                                           ),
                                                         ),
                                                       ],
                                                     ),
                                                   ),
                                                   icon: const SizedBox.shrink(),
-                                                  items: widget.controller.categories
-                                                      .where((cat) => !widget.controller.skills.any((s) => s.categoryId == cat['id']))
+                                                  items: widget
+                                                      .controller
+                                                      .categories
+                                                      .where(
+                                                        (cat) => !widget
+                                                            .controller
+                                                            .skills
+                                                            .any(
+                                                              (s) =>
+                                                                  s.categoryId ==
+                                                                  cat['id'],
+                                                            ),
+                                                      )
                                                       .map(
-                                                        (cat) => DropdownMenuItem<String>(
-                                                          value: cat['id'] as String,
+                                                        (
+                                                          cat,
+                                                        ) => DropdownMenuItem<String>(
+                                                          value:
+                                                              cat['id']
+                                                                  as String,
                                                           child: Text(
-                                                            cat['name'] as String? ?? 'Unknown',
+                                                            cat['name']
+                                                                    as String? ??
+                                                                'Unknown',
                                                             style: const TextStyle(
                                                               fontSize: 13,
-                                                              color: AppColors.textPrimary,
+                                                              color: AppColors
+                                                                  .textPrimary,
                                                             ),
                                                           ),
                                                         ),
@@ -910,13 +1038,36 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
                                                       .toList(),
                                                   onChanged: (val) {
                                                     if (val != null) {
-                                                      widget.controller.addSkill(val).then((_) {
-                                                        if (!mounted) return;
-                                                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Skill added')));
-                                                      }).catchError((e) {
-                                                        if (!mounted) return;
-                                                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to add skill')));
-                                                      });
+                                                      final messenger =
+                                                          ScaffoldMessenger.of(
+                                                            context,
+                                                          );
+                                                      widget.controller
+                                                          .addSkill(val)
+                                                          .then((_) {
+                                                            if (!mounted) {
+                                                              return;
+                                                            }
+                                                            messenger.showSnackBar(
+                                                              const SnackBar(
+                                                                content: Text(
+                                                                  'Skill added',
+                                                                ),
+                                                              ),
+                                                            );
+                                                          })
+                                                          .catchError((e) {
+                                                            if (!mounted) {
+                                                              return;
+                                                            }
+                                                            messenger.showSnackBar(
+                                                              const SnackBar(
+                                                                content: Text(
+                                                                  'Failed to add skill',
+                                                                ),
+                                                              ),
+                                                            );
+                                                          });
                                                     }
                                                   },
                                                 ),
@@ -1261,15 +1412,17 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
                                 ? Icons.hourglass_top_rounded
                                 : Icons.arrow_forward_rounded),
                       isLoading: _isSubmitting,
-                      onPressed: (isVerified || isUnderReview || _isSubmitting)
+                      onPressed:
+                          (isVerified && documentsComplete || _isSubmitting)
                           ? null
                           : () async {
+                              final messenger = ScaffoldMessenger.of(context);
                               setState(() => _isSubmitting = true);
                               try {
                                 await widget.controller.submitApplication();
                               } catch (e) {
                                 if (mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
+                                  messenger.showSnackBar(
                                     const SnackBar(
                                       content: Text(
                                         'Application could not be submitted. Try again.',
@@ -1293,26 +1446,41 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
                             variant: FixButtonVariant.primary,
                             onPressed: () {
                               final current = widget.controller.profile;
-                              widget.controller.saveProfile(
-                                ProviderProfile(
-                                  displayName: _nameController.text,
-                                  bio: _bioController.text,
-                                  serviceRadiusKm: current?.serviceRadiusKm ?? _sliderRadius ?? 12.0,
-                                  baseLatitude: current?.baseLatitude ?? 0.0,
-                                  baseLongitude: current?.baseLongitude ?? 0.0,
-                                  stats: current?.stats,
-                                ),
-                              ).then((_) {
-                                if (!mounted) return;
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Updates saved successfully')),
-                                );
-                              }).catchError((e) {
-                                if (!mounted) return;
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Failed to save updates')),
-                                );
-                              });
+                              final messenger = ScaffoldMessenger.of(context);
+                              widget.controller
+                                  .saveProfile(
+                                    ProviderProfile(
+                                      displayName: _nameController.text,
+                                      bio: _bioController.text,
+                                      serviceRadiusKm:
+                                          current?.serviceRadiusKm ??
+                                          _sliderRadius ??
+                                          12.0,
+                                      baseLatitude:
+                                          current?.baseLatitude ?? 0.0,
+                                      baseLongitude:
+                                          current?.baseLongitude ?? 0.0,
+                                      stats: current?.stats,
+                                    ),
+                                  )
+                                  .then((_) {
+                                    if (!mounted) return;
+                                    messenger.showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Updates saved successfully',
+                                        ),
+                                      ),
+                                    );
+                                  })
+                                  .catchError((e) {
+                                    if (!mounted) return;
+                                    messenger.showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Failed to save updates'),
+                                      ),
+                                    );
+                                  });
                             },
                           ),
                         ),
@@ -1336,14 +1504,6 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
       ),
     ),
   );
-
-  bool _isDocVerified(String type, List<ProviderDocument> docs) {
-    return docs.any(
-      (d) =>
-          d.type.toLowerCase().contains(type) &&
-          d.status.toUpperCase() == 'APPROVED',
-    );
-  }
 
   ProviderDocument? _getDoc(String type) {
     try {

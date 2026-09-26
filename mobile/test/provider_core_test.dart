@@ -1,5 +1,7 @@
 import 'package:fixnow_mobile/api/api_client.dart';
+import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/features/bookings/booking.dart';
+import 'package:fixnow_mobile/features/provider/provider_incoming_request_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_controller.dart';
 import 'package:fixnow_mobile/features/provider/provider_home_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_onboarding_screen.dart';
@@ -35,6 +37,93 @@ void main() {
       expect(find.textContaining('never shown publicly'), findsOneWidget);
     },
   );
+
+  testWidgets('KYC progress counts only approved required documents', (
+    tester,
+  ) async {
+    final controller = ProviderController(
+      ProviderRepository(
+        api: _ProviderTransport(verified: false),
+        accessToken: () async => 'token',
+      ),
+    );
+    await controller.load(verified: false);
+    controller.documents = [
+      const ProviderDocument(
+        id: 'aadhaar-1',
+        type: 'aadhaar',
+        status: 'APPROVED',
+        sizeBytes: 1,
+      ),
+    ];
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData.dark(),
+        home: ProviderOnboardingScreen(
+          controller: controller,
+          onSignOut: () {},
+        ),
+      ),
+    );
+
+    expect(find.text('1 of 4 Verified'), findsOneWidget);
+    expect(find.text('25% Complete'), findsOneWidget);
+    expect(find.text('Step 2 of 4'), findsOneWidget);
+  });
+  testWidgets('under-review KYC does not claim complete documents', (
+    tester,
+  ) async {
+    final controller = ProviderController(
+      ProviderRepository(
+        api: _ProviderTransport(verified: false),
+        accessToken: () async => 'token',
+      ),
+    );
+    await controller.load(verified: false);
+    controller.application = const ProviderApplication(
+      status: ProviderApplicationStatus.underReview,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData.dark(),
+        home: ProviderOnboardingScreen(
+          controller: controller,
+          onSignOut: () {},
+        ),
+      ),
+    );
+
+    expect(find.text('4 of 4 Verified'), findsNothing);
+    expect(find.text('100% Complete'), findsNothing);
+  });
+
+  testWidgets('approved KYC does not fabricate missing approved documents', (
+    tester,
+  ) async {
+    final controller = ProviderController(
+      ProviderRepository(
+        api: _ProviderTransport(verified: false),
+        accessToken: () async => 'token',
+      ),
+    );
+    await controller.load(verified: false);
+    controller.application = const ProviderApplication(
+      status: ProviderApplicationStatus.approved,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData.dark(),
+        home: ProviderOnboardingScreen(
+          controller: controller,
+          onSignOut: () {},
+        ),
+      ),
+    );
+
+    expect(find.text('4 of 4 Verified'), findsNothing);
+  });
 
   testWidgets('verified provider sees availability without fake work', (
     tester,
@@ -114,6 +203,86 @@ void main() {
     expect(find.text('Accept request'), findsOneWidget);
   });
 
+  testWidgets('incoming request acceptance sends the current booking version', (
+    tester,
+  ) async {
+    final transport = _ProviderTransport(verified: true);
+    final controller = ProviderController(
+      ProviderRepository(api: transport, accessToken: () async => 'token'),
+    );
+    await controller.load(verified: true);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData.dark(),
+        home: ProviderIncomingRequestScreen(
+          providerController: controller,
+          requestData: {
+            'bookingId': 'request-1',
+            'serviceCategoryId': 'plumbing',
+            'description': 'Kitchen sink leak',
+            'version': 4,
+            'createdAt': '2026-08-14T10:00:00.000Z',
+            'distanceKm': 1.2,
+            'priceMinor': '45000',
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Accept'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    final acceptRequest = transport.requests.last;
+    expect(acceptRequest.path, 'bookings/request-1/accept');
+    expect(acceptRequest.body?['expectedVersion'], 4);
+  });
+  testWidgets(
+    'provider home does not report success after an acceptance conflict',
+    (tester) async {
+      final transport = _ProviderTransport(
+        verified: true,
+        acceptConflict: true,
+      );
+      final controller = ProviderController(
+        ProviderRepository(api: transport, accessToken: () async => 'token'),
+      );
+      await controller.load(verified: true);
+      controller.requests = [
+        ProviderRequest(
+          id: 'request-conflict',
+          serviceCategoryId: 'category-1',
+          description: 'Already assigned request',
+          createdAt: DateTime.utc(2026, 8, 14),
+          version: 1,
+          distanceKm: 1.2,
+        ),
+      ];
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData.dark(),
+          home: Scaffold(body: ProviderHomeScreen(controller: controller)),
+        ),
+      );
+      await tester.ensureVisible(find.text('Accept request'));
+      await tester.tap(find.text('Accept request'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(
+        transport.requests.any(
+          (request) => request.path == 'bookings/request-conflict/accept',
+        ),
+        isTrue,
+      );
+      expect(find.text('Request accepted!'), findsNothing);
+      expect(find.textContaining('no longer available'), findsOneWidget);
+      expect(controller.requests, hasLength(1));
+    },
+  );
+
   testWidgets('shows the usual accept-time signal when data is sufficient', (
     tester,
   ) async {
@@ -173,7 +342,10 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
 
       final controller = _loadedVerifiedController();
-      final notifRepo = NotificationRepository();
+      final notifRepo = NotificationRepository(
+        api: _ProviderNotificationTransport(),
+        accessToken: () async => 'token',
+      );
       final notifController = NotificationController(notifRepo);
       await notifController.load();
 
@@ -206,6 +378,35 @@ void main() {
     },
   );
 
+  testWidgets('provider notification banner keeps readable title text', (
+    tester,
+  ) async {
+    final controller = _loadedVerifiedController();
+    final notifRepo = NotificationRepository(
+      api: _ProviderNotificationTransport(),
+      accessToken: () async => 'token',
+    );
+    final notifController = NotificationController(notifRepo);
+    await notifController.load();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData.dark(),
+        home: Scaffold(
+          body: ProviderHomeScreen(
+            controller: controller,
+            notificationController: notifController,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final title = tester.widget<Text>(find.text('Booking Confirmed & Assigned'));
+    expect(title.style?.color, AppColors.textPrimary);
+    notifController.dispose();
+  });
+
   testWidgets('verified provider can dismiss notification banner', (
     tester,
   ) async {
@@ -214,7 +415,10 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
 
     final controller = _loadedVerifiedController();
-    final notifRepo = NotificationRepository();
+    final notifRepo = NotificationRepository(
+      api: _ProviderNotificationTransport(),
+      accessToken: () async => 'token',
+    );
     final notifController = NotificationController(notifRepo);
     await notifController.load();
 
@@ -242,79 +446,82 @@ void main() {
     expect(find.text('Seasonal Home Checkup'), findsOneWidget);
   });
 
-  test('on-site adjustment sends drafts and refreshes the job totals', () async {
-    final transport = _ProviderTransport(verified: true);
-    final controller = ProviderController(
-      ProviderRepository(
-        api: transport,
-        accessToken: () async => 'token',
-      ),
-    );
-    final job = CustomerBooking(
-      id: 'job-1',
-      serviceCategoryId: 'plumbing',
-      status: 'IN_PROGRESS',
-      description: 'Kitchen sink pipe is leaking heavily.',
-      createdAt: DateTime.parse('2026-09-08T09:00:00.000Z'),
-      version: 2,
-    );
-    controller.jobs = [job];
+  test(
+    'on-site adjustment sends drafts and refreshes the job totals',
+    () async {
+      final transport = _ProviderTransport(verified: true);
+      final controller = ProviderController(
+        ProviderRepository(api: transport, accessToken: () async => 'token'),
+      );
+      final job = CustomerBooking(
+        id: 'job-1',
+        serviceCategoryId: 'plumbing',
+        status: 'IN_PROGRESS',
+        description: 'Kitchen sink pipe is leaking heavily.',
+        createdAt: DateTime.parse('2026-09-08T09:00:00.000Z'),
+        version: 2,
+      );
+      controller.jobs = [job];
 
-    final updated = await controller.updateJobItems(job, const [
-      BookingItemDraft(
-        id: 'on-site-1',
-        name: 'New tap cartridge',
-        quantity: 2,
-        unitPriceMinor: 24900,
-      ),
-    ]);
+      final updated = await controller.updateJobItems(job, const [
+        BookingItemDraft(
+          id: 'on-site-1',
+          name: 'New tap cartridge',
+          quantity: 2,
+          unitPriceMinor: 24900,
+        ),
+      ]);
 
-    expect(updated, isNotNull);
-    expect(updated!.items?.single.name, 'New tap cartridge');
-    expect(updated.pricing?.totalMinor, 58764);
-    expect(updated.estimatedDurationMinutes, 90);
-    expect(controller.jobs.single.version, 3);
+      expect(updated, isNotNull);
+      expect(updated!.items?.single.name, 'New tap cartridge');
+      expect(updated.pricing?.totalMinor, 58764);
+      expect(updated.estimatedDurationMinutes, 90);
+      expect(controller.jobs.single.version, 3);
 
-    final body = transport.requests.last.body!;
-    expect(body['expectedVersion'], 2);
-    expect((body['items'] as List).single, {
-      'id': 'on-site-1',
-      'name': 'New tap cartridge',
-      'quantity': 2,
-      'unitPriceMinor': 24900,
-    });
-  });
+      final body = transport.requests.last.body!;
+      expect(body['expectedVersion'], 2);
+      expect((body['items'] as List).single, {
+        'id': 'on-site-1',
+        'name': 'New tap cartridge',
+        'quantity': 2,
+        'unitPriceMinor': 24900,
+      });
+    },
+  );
 
-  test('on-site adjustment surfaces a conflict without losing the job', () async {
-    final controller = ProviderController(
-      ProviderRepository(
-        api: _ProviderTransport(verified: true, itemsConflict: true),
-        accessToken: () async => 'token',
-      ),
-    );
-    final job = CustomerBooking(
-      id: 'job-1',
-      serviceCategoryId: 'plumbing',
-      status: 'IN_PROGRESS',
-      description: 'Kitchen sink pipe is leaking heavily.',
-      createdAt: DateTime.parse('2026-09-08T09:00:00.000Z'),
-      version: 2,
-    );
-    controller.jobs = [job];
+  test(
+    'on-site adjustment surfaces a conflict without losing the job',
+    () async {
+      final controller = ProviderController(
+        ProviderRepository(
+          api: _ProviderTransport(verified: true, itemsConflict: true),
+          accessToken: () async => 'token',
+        ),
+      );
+      final job = CustomerBooking(
+        id: 'job-1',
+        serviceCategoryId: 'plumbing',
+        status: 'IN_PROGRESS',
+        description: 'Kitchen sink pipe is leaking heavily.',
+        createdAt: DateTime.parse('2026-09-08T09:00:00.000Z'),
+        version: 2,
+      );
+      controller.jobs = [job];
 
-    final updated = await controller.updateJobItems(job, const [
-      BookingItemDraft(
-        id: 'on-site-1',
-        name: 'New tap cartridge',
-        quantity: 1,
-        unitPriceMinor: 24900,
-      ),
-    ]);
+      final updated = await controller.updateJobItems(job, const [
+        BookingItemDraft(
+          id: 'on-site-1',
+          name: 'New tap cartridge',
+          quantity: 1,
+          unitPriceMinor: 24900,
+        ),
+      ]);
 
-    expect(updated, isNull);
-    expect(controller.actionError, isNotNull);
-    expect(controller.jobs.single.version, 2);
-  });
+      expect(updated, isNull);
+      expect(controller.actionError, isNotNull);
+      expect(controller.jobs.single.version, 2);
+    },
+  );
 }
 
 ProviderController _loadedVerifiedController() {
@@ -328,10 +535,46 @@ ProviderController _loadedVerifiedController() {
   return controller;
 }
 
+class _ProviderNotificationTransport implements ApiTransport {
+  @override
+  Future<ApiResponse> send(ApiRequest request) async {
+    final now = DateTime.now().toUtc();
+    return ApiResponse(
+      statusCode: 200,
+      body: [
+        {
+          'id': 'booking-seed-1',
+          'title': 'Booking Confirmed & Assigned',
+          'body': 'Your booking is confirmed.',
+          'category': 'bookings',
+          'timestamp': now
+              .subtract(const Duration(minutes: 18))
+              .toIso8601String(),
+          'bookingId': 'booking-seed-1',
+          'isRead': false,
+        },
+        {
+          'id': 'offer-seed-1',
+          'title': 'Seasonal Home Checkup',
+          'body': 'Book a seasonal home checkup.',
+          'category': 'offers',
+          'timestamp': now.subtract(const Duration(hours: 2)).toIso8601String(),
+          'isRead': false,
+        },
+      ],
+    );
+  }
+}
+
 class _ProviderTransport implements ApiTransport {
-  _ProviderTransport({required this.verified, this.itemsConflict = false});
+  _ProviderTransport({
+    required this.verified,
+    this.itemsConflict = false,
+    this.acceptConflict = false,
+  });
   final bool verified;
   final bool itemsConflict;
+  final bool acceptConflict;
   final List<ApiRequest> requests = [];
   @override
   Future<ApiResponse> send(ApiRequest request) async {
@@ -370,6 +613,28 @@ class _ProviderTransport implements ApiTransport {
               'currency': 'INR',
             },
             'estimatedDurationMinutes': 90,
+          },
+        },
+      );
+    }
+    if (request.path.endsWith('/accept')) {
+      if (acceptConflict) {
+        throw const ApiException(
+          ApiFailureKind.server,
+          'Booking version is stale',
+          statusCode: 409,
+        );
+      }
+      return const ApiResponse(
+        statusCode: 200,
+        body: {
+          'booking': {
+            'id': 'request-1',
+            'serviceCategoryId': 'plumbing',
+            'status': 'ASSIGNED',
+            'description': 'Kitchen sink leak',
+            'createdAt': '2026-08-14T10:00:00.000Z',
+            'version': 5,
           },
         },
       );

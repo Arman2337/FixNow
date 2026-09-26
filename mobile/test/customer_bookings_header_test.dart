@@ -66,6 +66,32 @@ void main() {
     expect(profileTapped, isTrue);
   });
 
+  testWidgets('empty bookings offers Schedule New Service and invokes it', (
+    tester,
+  ) async {
+    final controller = BookingController(
+      BookingRepository(api: _FakeTransport(), accessToken: () async => 'token'),
+    );
+    var started = false;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light,
+        home: Scaffold(
+          body: CustomerBookingsScreen(
+            controller: controller,
+            onStartService: () => started = true,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Schedule New Service'), findsOneWidget);
+    await tester.tap(find.text('Schedule New Service'));
+    expect(started, isTrue);
+  });
+
   testWidgets('tapping customer profile button delegates to AppShellScope when callback is null', (
     tester,
   ) async {

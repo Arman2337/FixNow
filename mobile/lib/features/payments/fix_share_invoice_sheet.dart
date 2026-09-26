@@ -172,9 +172,11 @@ class FixShareInvoiceSheet extends StatelessWidget {
               final dir = await getApplicationDocumentsDirectory();
               final file = File('${dir.path}/$fileName');
               await file.writeAsBytes(pdfBytes);
-              await Share.shareXFiles(
-                [XFile(file.path, mimeType: 'application/pdf')],
-                text: text,
+              await SharePlus.instance.share(
+                ShareParams(
+                  files: [XFile(file.path, mimeType: 'application/pdf')],
+                  text: text,
+                ),
               );
             },
           ),
@@ -192,10 +194,12 @@ class FixShareInvoiceSheet extends StatelessWidget {
               final dir = await getApplicationDocumentsDirectory();
               final file = File('${dir.path}/$fileName');
               await file.writeAsBytes(pdfBytes);
-              await Share.shareXFiles(
-                [XFile(file.path, mimeType: 'application/pdf')],
-                subject: 'FixNow Invoice - ${invoice.invoiceNumber}',
-                text: text,
+              await SharePlus.instance.share(
+                ShareParams(
+                  files: [XFile(file.path, mimeType: 'application/pdf')],
+                  subject: 'FixNow Invoice - ${invoice.invoiceNumber}',
+                  text: text,
+                ),
               );
             },
           ),

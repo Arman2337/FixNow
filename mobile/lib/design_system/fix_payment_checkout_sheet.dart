@@ -119,9 +119,9 @@ class _FixPaymentCheckoutSheetState extends State<FixPaymentCheckoutSheet>
   }
 
   int get _subtotalMinor => widget.baseAmountMinor + widget.sparePartsMinor;
-  int get _gstMinor => ((_subtotalMinor / 1.18) * 0.18).round();
-  int get _baseServiceMinor => _subtotalMinor - _gstMinor;
-  int get _grandTotalMinor => _subtotalMinor + _selectedTipMinor;
+  int get _gstMinor => (_subtotalMinor * 0.18).round();
+  int get _baseServiceMinor => widget.baseAmountMinor;
+  int get _grandTotalMinor => _subtotalMinor + _gstMinor + _selectedTipMinor;
 
   String _formatPaise(int minor) {
     final rupees = minor / 100;
@@ -418,10 +418,7 @@ class _FixPaymentCheckoutSheetState extends State<FixPaymentCheckoutSheet>
             ],
           ),
           const Divider(color: AppColors.borderDefault, height: 16),
-          _buildRow(
-            'Base Service & Labour',
-            _formatPaise(_baseServiceMinor),
-          ),
+          _buildRow('Base Service & Labour', _formatPaise(_baseServiceMinor)),
           if (widget.sparePartsMinor > 0)
             _buildRow(
               'Approved Spare Parts',
@@ -764,7 +761,10 @@ class _FixPaymentCheckoutSheetState extends State<FixPaymentCheckoutSheet>
           Text(
             'Paid to ${widget.proName} via ${_selectedMethod == PaymentMethodType.cash ? 'Cash on Delivery' : 'Instant Checkout'}',
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 13,
+            ),
           ),
 
           const SizedBox(height: AppSpacing.lg),
@@ -837,7 +837,10 @@ class _FixPaymentCheckoutSheetState extends State<FixPaymentCheckoutSheet>
         children: [
           Text(
             label,
-            style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 12,
+            ),
           ),
           Text(
             value,

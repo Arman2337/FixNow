@@ -720,7 +720,7 @@ class _CustomerHelpScreenState extends State<CustomerHelpScreen> {
                     ),
                   ),
                 );
-              }).toList(),
+              }),
             const SizedBox(height: AppSpacing.lg),
 
             // Still Need Assistance Card (Inverse Surface Dark)

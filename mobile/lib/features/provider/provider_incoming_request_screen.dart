@@ -2,9 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:fixnow_mobile/features/provider/provider_controller.dart';
-import 'package:fixnow_mobile/notifications/push_enrollment.dart';
+import 'package:fixnow_mobile/features/provider/provider_models.dart';
 import 'package:fixnow_mobile/features/realtime/realtime_client.dart';
-import '../../api/api_client.dart';
 import '../../design_system/app_colors.dart';
 
 class ProviderIncomingRequestScreen extends StatefulWidget {
@@ -82,34 +81,56 @@ class _ProviderIncomingRequestScreenState
 
   Future<void> _acceptRequest() async {
     if (_isAccepting) return;
-    setState(() => _isAccepting = true);
-
-    final bookingId = widget.requestData['bookingId'] as String?;
-    if (bookingId == null) {
-      _dismissScreen();
-      return;
-    }
-
-    try {
-      await widget.providerController.acceptBooking(bookingId);
-
-      // Stop ringing and navigate to active job cockpit
-      _audioPlayer.stop();
-      if (mounted) {
-        // Pop the incoming request screen
-        Navigator.of(context).pop();
-      }
-    } catch (e) {
-      debugPrint('Failed to accept booking: $e');
+    final request = _requestFromData();
+    if (request == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Failed to accept or already assigned.'),
+            content: Text('This request is missing a current version. Refresh and try again.'),
           ),
         );
-        _dismissScreen();
       }
+      return;
     }
+    setState(() => _isAccepting = true);
+
+    final accepted = await widget.providerController.acceptRequest(request);
+    if (!mounted) return;
+    if (!accepted) {
+      setState(() => _isAccepting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            widget.providerController.actionError ??
+              'The request could not be accepted. Refresh and try again.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    await _audioPlayer.stop();
+    if (mounted) Navigator.of(context).pop();
+  }
+
+  ProviderRequest? _requestFromData() {
+    final bookingId = widget.requestData['bookingId'] as String?;
+    if (bookingId == null) return null;
+    final existing = widget.providerController.requests
+        .where((request) => request.id == bookingId)
+        .firstOrNull;
+    if (existing != null) return existing;
+
+    final version = (widget.requestData['version'] as num?)?.toInt();
+    if (version == null) return null;
+    return ProviderRequest(
+      id: bookingId,
+      serviceCategoryId: widget.requestData['serviceCategoryId']?.toString() ?? '',
+      description: widget.requestData['description']?.toString() ?? 'Service request',
+      createdAt: DateTime.tryParse(widget.requestData['createdAt']?.toString() ?? '') ?? DateTime.now(),
+      version: version,
+      distanceKm: (widget.requestData['distanceKm'] as num?)?.toDouble() ?? 0,
+    );
   }
 
   @override

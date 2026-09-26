@@ -46,11 +46,12 @@ class AiRecommendationRepository {
         body: {'description': description, 'clarificationContext': ?context},
       ),
     );
-    if (response.body is! Map<String, dynamic>)
+    if (response.body is! Map<String, dynamic>) {
       throw const ApiException(
         ApiFailureKind.invalidResponse,
         'FixNow AI is unavailable.',
       );
+    }
     return AiRecommendation.fromJson(response.body! as Map<String, dynamic>);
   }
 }

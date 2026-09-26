@@ -127,16 +127,16 @@ export class DomainNotificationService {
     const userId =
       audience === 'customer' ? booking.customerId : booking.providerId;
     if (!userId) return;
-    
+
     const enrichedTemplate = {
       ...template,
       data: {
         bookingId: booking.id,
         status: status,
         type: `booking:${audience}:${status}`,
-      }
+      },
     };
-    
+
     await this.send(
       userId,
       `booking:${audience}:${status}`,
@@ -154,12 +154,15 @@ export class DomainNotificationService {
   ): Promise<void> {
     const template = BOOKING_NOTIFICATION_TEMPLATES['provider:REQUESTED'];
     if (!template) return;
-    
+
     let totalMinor = 0;
     if (booking.lineItems) {
-      totalMinor = booking.lineItems.reduce((sum, item) => sum + item.priceMinor * item.quantity, 0);
+      totalMinor = booking.lineItems.reduce(
+        (sum, item) => sum + item.priceMinor * item.quantity,
+        0,
+      );
     }
-    
+
     const enrichedTemplate = {
       ...template,
       data: {

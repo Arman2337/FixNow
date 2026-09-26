@@ -63,6 +63,9 @@ export const PERMISSIONS = {
   complaintsReadSelf: 'complaints.read.self',
   adminComplaintsRead: 'admin.complaints.read',
   adminComplaintsUpdate: 'admin.complaints.update',
+  adminGuaranteesRead: 'admin.guarantees.read',
+  adminGuaranteesUpdate: 'admin.guarantees.update',
+  guaranteeClaimCreateSelf: 'guarantees.claims.create.self',
   bookingChatSendSelf: 'bookings.chat.send.self',
   bookingChatReadSelf: 'bookings.chat.read.self',
   bookingCallInitiateSelf: 'bookings.call.initiate.self',
@@ -428,5 +431,26 @@ export const PERMISSION_POLICIES: Readonly<
       'operations_administrator',
     ],
     audience: 'admin',
+  },
+  [PERMISSIONS.adminGuaranteesRead]: {
+    roles: [
+      'support_agent',
+      'trust_safety_reviewer',
+      'operations_administrator',
+      'auditor',
+    ],
+    audience: 'admin',
+  },
+  [PERMISSIONS.adminGuaranteesUpdate]: {
+    roles: [
+      'support_agent',
+      'trust_safety_reviewer',
+      'operations_administrator',
+    ],
+    audience: 'admin',
+  },
+  [PERMISSIONS.guaranteeClaimCreateSelf]: {
+    roles: ['customer', 'verified_provider'],
+    relationship: 'self',
   },
 };

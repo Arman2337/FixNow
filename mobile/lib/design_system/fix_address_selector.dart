@@ -82,7 +82,9 @@ class _SavedAddressSelectorCardState extends State<SavedAddressSelectorCard> {
         _select(live);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Selected live GPS address: ${live.formattedSnippet}'),
+            content: Text(
+              'Selected live GPS address: ${live.formattedSnippet}',
+            ),
             duration: const Duration(seconds: 2),
           ),
         );
@@ -210,7 +212,10 @@ class _SavedAddressSelectorCardState extends State<SavedAddressSelectorCard> {
                   onTap: _isLocating ? null : _detectAndUseLiveLocation,
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.focus.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -502,7 +507,9 @@ class _AddEditAddressModalSheetState extends State<AddEditAddressModalSheet> {
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Auto-filled from live GPS: ${live.formattedSnippet}'),
+            content: Text(
+              'Auto-filled from live GPS: ${live.formattedSnippet}',
+            ),
             duration: const Duration(seconds: 2),
           ),
         );
@@ -521,7 +528,8 @@ class _AddEditAddressModalSheetState extends State<AddEditAddressModalSheet> {
     if (!_formKey.currentState!.validate()) return;
 
     final address = SavedAddress(
-      id: widget.initialAddress?.id ??
+      id:
+          widget.initialAddress?.id ??
           'addr-${DateTime.now().millisecondsSinceEpoch}',
       label: _label,
       customTitle: _titleController.text.trim(),
@@ -538,6 +546,7 @@ class _AddEditAddressModalSheetState extends State<AddEditAddressModalSheet> {
     );
 
     await SavedAddressRepository.instance.saveAddress(address);
+    if (!mounted) return;
     Navigator.of(context).pop(address);
   }
 

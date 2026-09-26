@@ -115,7 +115,7 @@ export class BookingCallsService {
     const presented = presentBookingCall(saved);
 
     // Broadcast incoming call signal to subscribed sockets
-    this.projections.publishCallSignal(
+    void this.projections.publishCallSignal(
       bookingId,
       'call.incoming.v1',
       presented as unknown as Record<string, unknown>,
@@ -185,7 +185,7 @@ export class BookingCallsService {
     const saved = await this.callsRepo.save(call);
     const presented = presentBookingCall(saved);
 
-    this.projections.publishCallSignal(
+    void this.projections.publishCallSignal(
       bookingId,
       'call.answered.v1',
       presented as unknown as Record<string, unknown>,
@@ -221,7 +221,7 @@ export class BookingCallsService {
     const saved = await this.callsRepo.save(call);
     const presented = presentBookingCall(saved);
 
-    this.projections.publishCallSignal(
+    void this.projections.publishCallSignal(
       bookingId,
       'call.rejected.v1',
       presented as unknown as Record<string, unknown>,
@@ -237,7 +237,7 @@ export class BookingCallsService {
         readAt: null,
       }),
     );
-    this.projections.publishChatMessage(
+    void this.projections.publishChatMessage(
       bookingId,
       presentBookingMessage(message) as unknown as Record<string, unknown>,
     );
@@ -282,7 +282,7 @@ export class BookingCallsService {
     const saved = await this.callsRepo.save(call);
     const presented = presentBookingCall(saved);
 
-    this.projections.publishCallSignal(
+    void this.projections.publishCallSignal(
       bookingId,
       'call.ended.v1',
       presented as unknown as Record<string, unknown>,
@@ -310,7 +310,7 @@ export class BookingCallsService {
         readAt: null,
       }),
     );
-    this.projections.publishChatMessage(
+    void this.projections.publishChatMessage(
       bookingId,
       presentBookingMessage(message) as unknown as Record<string, unknown>,
     );

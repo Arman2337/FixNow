@@ -12,6 +12,7 @@ import 'package:fixnow_mobile/features/bookings/booking.dart';
 import 'package:fixnow_mobile/features/bookings/booking_controller.dart';
 import 'package:fixnow_mobile/features/bookings/recurring_schedule.dart';
 import 'package:fixnow_mobile/features/notifications/notification_controller.dart';
+import 'package:fixnow_mobile/features/notifications/notification_model.dart';
 import 'package:fixnow_mobile/features/notifications/notification_center_screen.dart';
 import 'package:flutter/material.dart';
 
@@ -22,10 +23,12 @@ class CustomerBookingsScreen extends StatefulWidget {
     required this.controller,
     this.onBookingSelected,
     this.onBookAgain,
+    this.onStartService,
     this.schedulesController,
     this.onOccurrenceConfirmed,
     this.notificationController,
     this.onOpenProfile,
+    this.onInvoiceSelected,
     super.key,
   });
   final BookingController controller;
@@ -39,12 +42,14 @@ class CustomerBookingsScreen extends StatefulWidget {
 
   /// Opens a prefilled request for a completed booking; null hides the action.
   final ValueChanged<CustomerBooking>? onBookAgain;
+  final VoidCallback? onStartService;
 
   /// In-app notification controller for bell notifications.
   final NotificationController? notificationController;
 
   /// Opens customer profile tab/screen.
   final VoidCallback? onOpenProfile;
+  final ValueChanged<InAppNotification>? onInvoiceSelected;
 
   @override
   State<CustomerBookingsScreen> createState() => _CustomerBookingsScreenState();
@@ -114,8 +119,9 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
                       controller: widget.notificationController!,
                       onTap: () {
                         Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => NotificationCenterScreen(
+MaterialPageRoute(
+                             settings: const RouteSettings(name: 'notifications'),
+                             builder: (_) => NotificationCenterScreen(
                               controller: widget.notificationController!,
                               onOpenBooking: (bookingId) {
                                 final match = widget.controller.bookings
@@ -126,7 +132,7 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
                                   widget.onBookingSelected!(match);
                                 }
                               },
-                              onOpenInvoice: (_) {},
+                              onOpenInvoice: widget.onInvoiceSelected,
                             ),
                           ),
                         );
@@ -134,12 +140,13 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
                     )
                   else
                     IconButton(
+                      tooltip: 'Notifications unavailable',
                       icon: const Icon(
                         Icons.notifications_none_rounded,
-                        color: AppColors.textPrimary,
+                        color: AppColors.textTertiary,
                         size: 24,
                       ),
-                      onPressed: () {},
+                      onPressed: null,
                     ),
                   const SizedBox(width: AppSpacing.xs),
                   Semantics(
@@ -252,7 +259,9 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
                 ),
               ),
             ],
-            BookingListStatus.empty => [const _EmptyBookings()],
+             BookingListStatus.empty => [
+               _EmptyBookings(onStartService: widget.onStartService),
+             ],
             BookingListStatus.offline => [
               _Failure(
                 title: 'You are offline',
@@ -270,14 +279,15 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
             BookingListStatus.ready =>
               _filteredBookings().isEmpty
                   ? [
-                      _EmptyBookings(
-                        filter: _filter,
-                        onReset: () {
-                          setState(() {
-                            _filter = _BookingFilter.active;
-                          });
-                        },
-                      ),
+                       _EmptyBookings(
+                         filter: _filter,
+                         onReset: () {
+                           setState(() {
+                             _filter = _BookingFilter.active;
+                           });
+                         },
+                         onStartService: widget.onStartService,
+                       ),
                     ]
                   : [
                       ..._filteredBookings().map(
@@ -296,41 +306,38 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
                           ),
                         ),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.only(
-                          top: AppSpacing.sm,
-                          bottom: AppSpacing.lg,
-                        ),
-                        child: SizedBox(
-                          width: double.infinity,
-                          height: 52,
-                          child: FilledButton.icon(
-                            onPressed: () {
-                              if (Navigator.of(context).canPop()) {
-                                Navigator.of(context).pop();
-                              }
-                            },
-                            style: FilledButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              foregroundColor: AppColors.onPrimary,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
+                      if (widget.onStartService != null)
+                        Padding(
+                          padding: const EdgeInsets.only(
+                            top: AppSpacing.sm,
+                            bottom: AppSpacing.lg,
+                          ),
+                          child: SizedBox(
+                            width: double.infinity,
+                            height: 52,
+                            child: FilledButton.icon(
+                              onPressed: widget.onStartService,
+                              style: FilledButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                foregroundColor: AppColors.onPrimary,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
                               ),
-                            ),
-                            icon: const Icon(
-                              Icons.add_circle_outline_rounded,
-                              size: 20,
-                            ),
-                            label: const Text(
-                              'Schedule New Service',
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
+                              icon: const Icon(
+                                Icons.add_circle_outline_rounded,
+                                size: 20,
+                              ),
+                              label: const Text(
+                                'Schedule New Service',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
                     ],
           },
         ],
@@ -1269,9 +1276,14 @@ class _BookingCard extends StatelessWidget {
 }
 
 class _EmptyBookings extends StatelessWidget {
-  const _EmptyBookings({this.filter, this.onReset});
+  const _EmptyBookings({
+    this.filter,
+    this.onReset,
+    this.onStartService,
+  });
   final _BookingFilter? filter;
   final VoidCallback? onReset;
+  final VoidCallback? onStartService;
 
   @override
   Widget build(BuildContext context) => Container(
@@ -1332,6 +1344,31 @@ class _EmptyBookings extends StatelessWidget {
             child: const Text(
               'Reset Filters',
               style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+        if (onStartService != null) ...[
+          const SizedBox(height: AppSpacing.md),
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: FilledButton.icon(
+              onPressed: onStartService,
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: AppColors.onPrimary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.medium),
+                ),
+              ),
+              icon: const Icon(Icons.add_circle_outline_rounded, size: 20),
+              label: const Text(
+                'Schedule New Service',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
           ),
         ],

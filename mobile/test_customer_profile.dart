@@ -6,5 +6,7 @@ void main() {
     'stats': {'completedJobs': 5, 'cashbackMinor': 0, 'activeWarranties': 1},
   };
   final p = CustomerProfile.fromJson(json);
-  print(p.displayName);
+  if (p.displayName != 'Test') {
+    throw StateError('Unexpected customer profile display name');
+  }
 }

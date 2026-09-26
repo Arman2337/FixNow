@@ -15,6 +15,9 @@ class ComplaintsController extends ChangeNotifier {
 
   SubmitComplaintStatus submitStatus = SubmitComplaintStatus.initial;
   String? submitError;
+  bool proofSubmitting = false;
+  bool callbackSubmitting = false;
+  String? actionError;
 
   Future<void> loadComplaints() async {
     listStatus = ComplaintsListStatus.loading;
@@ -65,6 +68,57 @@ class ComplaintsController extends ChangeNotifier {
       notifyListeners();
       return null;
     }
+  }
+
+  Future<bool> addEvidence(
+    String complaintId, {
+    required String fileUrl,
+    required String fileType,
+    String? description,
+  }) async {
+    proofSubmitting = true;
+    actionError = null;
+    notifyListeners();
+    try {
+      final updated = await _repository.addEvidence(
+        complaintId,
+        fileUrl: fileUrl,
+        fileType: fileType,
+        description: description,
+      );
+      _replaceComplaint(updated);
+      return true;
+    } catch (error) {
+      actionError = error.toString();
+      return false;
+    } finally {
+      proofSubmitting = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> requestCallback(String complaintId) async {
+    callbackSubmitting = true;
+    actionError = null;
+    notifyListeners();
+    try {
+      final updated = await _repository.requestCallback(complaintId);
+      _replaceComplaint(updated);
+      return true;
+    } catch (error) {
+      actionError = error.toString();
+      return false;
+    } finally {
+      callbackSubmitting = false;
+      notifyListeners();
+    }
+  }
+
+  void _replaceComplaint(Complaint updated) {
+    complaints = [
+      for (final complaint in complaints)
+        if (complaint.id == updated.id) updated else complaint,
+    ];
   }
 
   void resetSubmitStatus() {

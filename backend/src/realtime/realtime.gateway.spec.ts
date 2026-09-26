@@ -61,7 +61,7 @@ describe('RealtimeGateway heartbeat', () => {
     );
 
     const client1Send = jest.fn();
-    const client2Send = jest.fn();
+    const client2Send = jest.fn<void, [data: string]>();
     const client1 = {
       readyState: WebSocket.OPEN,
       send: client1Send,
@@ -127,7 +127,10 @@ describe('RealtimeGateway heartbeat', () => {
 
     // Client 2 SHOULD receive the relayed voice frame
     expect(client2Send).toHaveBeenCalledTimes(1);
-    const received = JSON.parse(client2Send.mock.calls[0][0]);
+    const rawReceived: unknown = client2Send.mock.calls[0]?.[0];
+    expect(typeof rawReceived).toBe('string');
+    if (typeof rawReceived !== 'string') throw new Error('Missing voice frame');
+    const received: unknown = JSON.parse(rawReceived);
     expect(received).toEqual({
       type: 'call.voice-frame.v1',
       bookingId: 'booking-123',
@@ -159,7 +162,7 @@ describe('RealtimeGateway heartbeat', () => {
       {} as never,
     );
     const client1Send = jest.fn();
-    const client2Send = jest.fn();
+    const client2Send = jest.fn<void, [data: string]>();
     const client1 = {
       readyState: WebSocket.OPEN,
       send: client1Send,
@@ -228,8 +231,8 @@ describe('RealtimeGateway heartbeat', () => {
       registry,
       telemetry,
       {
-        get: jest.fn(
-          (key: string) => (key === 'NODE_ENV' ? 'development' : undefined),
+        get: jest.fn((key: string) =>
+          key === 'NODE_ENV' ? 'development' : undefined,
         ),
       } as unknown as ConfigService,
       {} as LocationService,
@@ -258,8 +261,8 @@ describe('RealtimeGateway heartbeat', () => {
       registry,
       telemetry,
       {
-        get: jest.fn(
-          (key: string) => (key === 'NODE_ENV' ? 'production' : undefined),
+        get: jest.fn((key: string) =>
+          key === 'NODE_ENV' ? 'production' : undefined,
         ),
       } as unknown as ConfigService,
       {} as LocationService,
@@ -277,9 +280,6 @@ describe('RealtimeGateway heartbeat', () => {
 
     gateway.handleConnection(client, request);
 
-    expect(close).toHaveBeenCalledWith(
-      expect.anything(),
-      'origin-not-allowed',
-    );
+    expect(close).toHaveBeenCalledWith(expect.anything(), 'origin-not-allowed');
   });
 });

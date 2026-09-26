@@ -7,13 +7,13 @@ class SubmitClaimScreen extends StatefulWidget {
   final GuaranteeRepository repository;
 
   const SubmitClaimScreen({
-    Key? key,
     required this.bookingId,
     required this.repository,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
-  _SubmitClaimScreenState createState() => _SubmitClaimScreenState();
+  State<SubmitClaimScreen> createState() => _SubmitClaimScreenState();
 }
 
 class _SubmitClaimScreenState extends State<SubmitClaimScreen> {
@@ -29,18 +29,20 @@ class _SubmitClaimScreenState extends State<SubmitClaimScreen> {
         bookingId: widget.bookingId,
         description: _descriptionController.text.trim(),
       );
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Guarantee Claim submitted successfully.')),
+          const SnackBar(
+            content: Text('Guarantee Claim submitted successfully.'),
+          ),
         );
         Navigator.of(context).pop(); // Go back to booking screen
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -55,7 +57,10 @@ class _SubmitClaimScreenState extends State<SubmitClaimScreen> {
         elevation: 0,
         scrolledUnderElevation: 1,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+          icon: const Icon(
+            Icons.arrow_back_rounded,
+            color: AppColors.textPrimary,
+          ),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         title: const Text(
@@ -98,7 +103,13 @@ class _SubmitClaimScreenState extends State<SubmitClaimScreen> {
                 ),
                 child: _isSubmitting
                     ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('Submit Claim', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    : const Text(
+                        'Submit Claim',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
               ),
             ],
           ),

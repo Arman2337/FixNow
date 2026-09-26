@@ -33,9 +33,9 @@ class ComplaintsRepository {
         path: 'support/complaints',
         bearerToken: token,
         body: {
-          if (bookingId != null) 'bookingId': bookingId,
+          'bookingId': ?bookingId,
           'targetRole': targetRole,
-          if (targetId != null) 'targetId': targetId,
+          'targetId': ?targetId,
           'category': category,
           'description': description,
         },
@@ -57,6 +57,41 @@ class ComplaintsRepository {
     return list
         .map((e) => Complaint.fromJson(e as Map<String, dynamic>))
         .toList();
+  }
+
+  Future<Complaint> addEvidence(
+    String id, {
+    required String fileUrl,
+    required String fileType,
+    String? description,
+  }) async {
+    final token = await _requireToken();
+    final response = await _client.send(
+      ApiRequest(
+        method: ApiMethod.post,
+        path: 'support/complaints/$id/evidence',
+        bearerToken: token,
+        body: {
+          'fileUrl': fileUrl,
+          'fileType': fileType,
+          if (description != null && description.isNotEmpty)
+            'description': description,
+        },
+      ),
+    );
+    return Complaint.fromJson(response.body as Map<String, dynamic>);
+  }
+
+  Future<Complaint> requestCallback(String id) async {
+    final token = await _requireToken();
+    final response = await _client.send(
+      ApiRequest(
+        method: ApiMethod.post,
+        path: 'support/complaints/$id/callback-request',
+        bearerToken: token,
+      ),
+    );
+    return Complaint.fromJson(response.body as Map<String, dynamic>);
   }
 
   Future<Complaint> getComplaint(String id) async {

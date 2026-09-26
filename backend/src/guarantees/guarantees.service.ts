@@ -1,7 +1,14 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { GuaranteeClaim, GuaranteeClaimStatus } from './domain/guarantee-claim.entity';
+import {
+  GuaranteeClaim,
+  GuaranteeClaimStatus,
+} from './domain/guarantee-claim.entity';
 import { Booking } from '../bookings/domain/booking.entity';
 import { BookingStatus } from '../../../shared/booking-lifecycle.types';
 import { CreateGuaranteeClaimDto } from './dto/create-guarantee-claim.dto';
@@ -29,7 +36,9 @@ export class GuaranteesService {
     }
 
     if (booking.status !== BookingStatus.COMPLETED) {
-      throw new BadRequestException('Guarantee claim can only be submitted for completed bookings');
+      throw new BadRequestException(
+        'Guarantee claim can only be submitted for completed bookings',
+      );
     }
 
     if (!booking.completedAt) {
@@ -40,7 +49,9 @@ export class GuaranteesService {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
     if (booking.completedAt < thirtyDaysAgo) {
-      throw new BadRequestException('Guarantee claim period (30 days) has expired');
+      throw new BadRequestException(
+        'Guarantee claim period (30 days) has expired',
+      );
     }
 
     const existingClaim = await this.claimsRepository.findOne({
@@ -48,7 +59,9 @@ export class GuaranteesService {
     });
 
     if (existingClaim) {
-      throw new BadRequestException('A guarantee claim already exists for this booking');
+      throw new BadRequestException(
+        'A guarantee claim already exists for this booking',
+      );
     }
 
     const claim = this.claimsRepository.create({
@@ -65,13 +78,13 @@ export class GuaranteesService {
 
   async findAll(status?: GuaranteeClaimStatus): Promise<GuaranteeClaim[]> {
     const query = this.claimsRepository.createQueryBuilder('claim');
-    
+
     if (status) {
       query.where('claim.status = :status', { status });
     }
-    
+
     query.orderBy('claim.createdAt', 'DESC');
-    
+
     return query.getMany();
   }
 
@@ -88,11 +101,11 @@ export class GuaranteesService {
     updateDto: UpdateGuaranteeClaimDto,
   ): Promise<GuaranteeClaim> {
     const claim = await this.findOne(id);
-    
+
     if (updateDto.status) {
       claim.status = updateDto.status;
     }
-    
+
     if (updateDto.adminNotes !== undefined) {
       claim.adminNotes = updateDto.adminNotes;
     }
@@ -100,20 +113,28 @@ export class GuaranteesService {
     return this.claimsRepository.save(claim);
   }
 
-  async createReServiceBooking(id: string, assignedProviderId: string): Promise<Booking> {
+  async createReServiceBooking(
+    id: string,
+    assignedProviderId: string,
+  ): Promise<Booking> {
     const claim = await this.findOne(id);
     if (claim.status !== GuaranteeClaimStatus.APPROVED) {
-      throw new BadRequestException('Claim must be approved to schedule re-service');
+      throw new BadRequestException(
+        'Claim must be approved to schedule re-service',
+      );
     }
     if (claim.reServiceBookingId) {
-      throw new BadRequestException('A re-service booking has already been scheduled');
+      throw new BadRequestException(
+        'A re-service booking has already been scheduled',
+      );
     }
 
     const originalBooking = await this.bookingsRepository.findOne({
       where: { id: claim.bookingId },
     });
 
-    if (!originalBooking) throw new NotFoundException('Original booking not found');
+    if (!originalBooking)
+      throw new NotFoundException('Original booking not found');
 
     const newBooking = this.bookingsRepository.create({
       customerId: claim.customerId,

@@ -74,10 +74,13 @@ describe('ProviderProfileService', () => {
       ...profile,
       skillIds: ['skill-id'],
       stats: {
-        acceptanceRate: 98,
+        // acceptanceRate was a hardcoded 98. It is not derivable from the
+        // current schema, so it reports 0 rather than inventing a number.
+        acceptanceRate: 0,
         completedJobs: 0,
         earningsMinor: 0,
         rating: 0,
+        reviewCount: 0,
       },
     });
     expect(profiles.findOne).toHaveBeenCalledWith({

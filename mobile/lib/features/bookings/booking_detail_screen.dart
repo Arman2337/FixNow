@@ -636,23 +636,33 @@ class BookingDetailScreen extends StatelessWidget {
                                         size: 16,
                                       ),
                                       const SizedBox(width: 4),
+                                      // No published reviews means no score to
+                                      // show. These used to fall back to a
+                                      // fabricated 4.9 and 48 completed jobs.
                                       Text(
-                                        (booking.providerRating ?? 4.9)
-                                            .toStringAsFixed(1),
-                                        style: const TextStyle(
-                                          color: AppColors.textPrimary,
+                                        booking.providerRating == null
+                                            ? 'Not yet rated'
+                                            : booking.providerRating!
+                                                  .toStringAsFixed(1),
+                                        style: TextStyle(
+                                          color: booking.providerRating == null
+                                              ? AppColors.textSecondary
+                                              : AppColors.textPrimary,
                                           fontWeight: FontWeight.w700,
                                           fontSize: 13,
                                         ),
                                       ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        '(${booking.providerJobsCount ?? 48} jobs completed)',
-                                        style: const TextStyle(
-                                          color: AppColors.textSecondary,
-                                          fontSize: 12,
+                                      if (booking.providerJobsCount !=
+                                          null) ...[
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          '(${booking.providerJobsCount} jobs completed)',
+                                          style: const TextStyle(
+                                            color: AppColors.textSecondary,
+                                            fontSize: 12,
+                                          ),
                                         ),
-                                      ),
+                                      ],
                                     ],
                                   ),
                                   if (booking.providerPhone != null &&

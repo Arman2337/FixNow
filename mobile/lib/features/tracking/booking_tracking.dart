@@ -1,3 +1,5 @@
+import 'package:fixnow_mobile/features/bookings/booking.dart';
+
 enum TrackingConnection { connecting, live, reconciling, offline }
 
 enum LocationAvailability { live, stale, unavailable }
@@ -54,6 +56,8 @@ class BookingTracking {
     this.providerName,
     this.providerRating,
     this.providerJobsCount,
+    this.items = const [],
+    this.pricing,
   });
 
   final String bookingId;
@@ -68,6 +72,14 @@ class BookingTracking {
   final String? providerName;
   final double? providerRating;
   final int? providerJobsCount;
+
+  /// Server-persisted line items. Empty when the booking has none, which the UI
+  /// must state rather than replace with invented rows.
+  final List<BookingLineItem> items;
+
+  /// Server-computed totals, including GST. Null until the booking is
+  /// itemized, so the UI shows "not available" instead of a made-up figure.
+  final BookingPricing? pricing;
 }
 
 abstract interface class BookingTrackingSource {

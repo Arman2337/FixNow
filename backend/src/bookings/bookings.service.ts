@@ -37,6 +37,8 @@ import { BookingLineItem } from './domain/booking-line-item.entity';
 import { SubServiceEntity } from '../services/sub-service.entity';
 import { UserEntity } from '../users/user.entity';
 import { ProviderProfileEntity } from '../providers/provider-profile.entity';
+import { BookingReview } from '../ratings/domain/review.entity';
+import { ReviewModerationStatus } from '../../../shared/ratings.types';
 
 export interface BookingHistoryPage {
   bookings: Booking[];
@@ -1002,14 +1004,53 @@ export class BookingsService {
       jobsCounts.map((j) => [j.providerId, Number(j.count)]),
     );
 
+    // Real published-review aggregate per provider. Previously this stamped
+    // providerRating = 4.9 and fell back to 48 completed jobs on every booking
+    // in every list, so customers were shown a score nobody had given.
+    const ratingCounts =
+      providerIds.size > 0
+        ? await this.dataSource
+            .getRepository(BookingReview)
+            .createQueryBuilder('r')
+            .innerJoin('r.booking', 'b')
+            .select('b.provider_id', 'providerId')
+            .addSelect('AVG(r.rating)', 'avgRating')
+            .addSelect('COUNT(r.id)', 'reviewCount')
+            .where('b.provider_id IN (:...providerIds)', {
+              providerIds: [...providerIds],
+            })
+            .andWhere('b.status = :completedStatus', {
+              completedStatus: BookingStatus.COMPLETED,
+            })
+            .andWhere('r.moderation_status = :published', {
+              published: ReviewModerationStatus.PUBLISHED,
+            })
+            .groupBy('b.provider_id')
+            .getRawMany<{
+              providerId: string;
+              avgRating: string | number;
+              reviewCount: string | number;
+            }>()
+        : [];
+    const ratingMap = new Map(
+      ratingCounts.map((r) => [
+        r.providerId,
+        {
+          average: Number(r.avgRating),
+          count: Number(r.reviewCount),
+        },
+      ]),
+    );
+
     bookings.forEach((b) => {
       b.customerPhone = phoneMap.get(b.customerId) ?? null;
       if (b.providerId) {
         b.providerPhone = phoneMap.get(b.providerId) ?? null;
         b.providerName = profileMap.get(b.providerId) ?? 'Verified Specialist';
-        b.providerRating = 4.9;
-        const count = jobsMap.get(b.providerId);
-        b.providerJobsCount = count && count > 0 ? count : 48;
+        const rating = ratingMap.get(b.providerId);
+        // null means "no reviews yet", which the client renders as such.
+        b.providerRating = rating && rating.count > 0 ? rating.average : null;
+        b.providerJobsCount = jobsMap.get(b.providerId) ?? 0;
       }
     });
   }

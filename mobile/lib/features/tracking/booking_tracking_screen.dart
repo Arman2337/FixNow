@@ -460,8 +460,12 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
                             children: [
                               Flexible(
                                 child: Text(
-                                  widget.controller.tracking?.providerRating != null
-                                      ? widget.controller.tracking!.providerRating!
+                                  widget.controller.tracking?.providerRating !=
+                                          null
+                                      ? widget
+                                            .controller
+                                            .tracking!
+                                            .providerRating!
                                             .toStringAsFixed(1)
                                       : 'Rating unavailable',
                                   maxLines: 2,
@@ -476,7 +480,11 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
                               const SizedBox(width: 4),
                               Flexible(
                                 child: Text(
-                                  widget.controller.tracking?.providerJobsCount != null
+                                  widget
+                                              .controller
+                                              .tracking
+                                              ?.providerJobsCount !=
+                                          null
                                       ? '(${widget.controller.tracking!.providerJobsCount} jobs)'
                                       : 'Job history unavailable',
                                   maxLines: 2,
@@ -695,6 +703,10 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
   }
 
   Widget _buildServiceSummaryCard(BuildContext context) {
+    final tracking = widget.controller.tracking;
+    final items = tracking?.items ?? const <BookingLineItem>[];
+    final pricing = tracking?.pricing;
+
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerLowest,
@@ -737,10 +749,14 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
-              const Text(
-                '₹449',
+              // Server-computed total, GST included. Was a hardcoded "₹449"
+              // that had no relationship to the booking.
+              Text(
+                pricing?.formattedTotal ?? '—',
                 style: TextStyle(
-                  color: AppColors.textPrimary,
+                  color: pricing == null
+                      ? AppColors.textSecondary
+                      : AppColors.textPrimary,
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
                 ),
@@ -754,96 +770,125 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
               color: AppColors.surfaceContainerLow,
               borderRadius: BorderRadius.circular(AppRadius.medium),
             ),
-            child: const Column(
+            child: Column(
               children: [
-                 Row(
-                   children: [
-                     const Expanded(
-                       child: Text(
-                         'Standard Inspection & Diagnosis',
-                         maxLines: 2,
-                         overflow: TextOverflow.ellipsis,
-                         style: TextStyle(
-                           color: AppColors.textSecondary,
-                           fontSize: 12,
-                         ),
-                       ),
-                     ),
-                     const SizedBox(width: AppSpacing.sm),
-                     Text(
-                       '₹299',
-                       style: const TextStyle(
-                         color: AppColors.textPrimary,
-                         fontSize: 12,
-                         fontWeight: FontWeight.w600,
-                       ),
-                     ),
-                   ],
-                 ),
-                SizedBox(height: 8),
-                 Row(
-                   children: [
-                     const Expanded(
-                       child: Text(
-                         'Emergency Dispatch Convenience Fee',
-                         maxLines: 2,
-                         overflow: TextOverflow.ellipsis,
-                         style: TextStyle(
-                           color: AppColors.textSecondary,
-                           fontSize: 12,
-                         ),
-                       ),
-                     ),
-                     const SizedBox(width: AppSpacing.sm),
-                     Text(
-                       '₹150',
-                       style: const TextStyle(
-                         color: AppColors.textPrimary,
-                         fontSize: 12,
-                         fontWeight: FontWeight.w600,
-                       ),
-                     ),
-                   ],
-                 ),
+                if (items.isEmpty)
+                  // Honest absence beats an invented breakdown.
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                    child: Text(
+                      'No itemised services on this booking yet. Your '
+                      'professional will confirm the work and the exact amount '
+                      'before the job is closed.',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                      ),
+                    ),
+                  )
+                else ...[
+                  for (var i = 0; i < items.length; i++) ...[
+                    _buildSummaryRow(items[i]),
+                    if (i != items.length - 1) const SizedBox(height: 8),
+                  ],
+                  if (pricing != null) ...[
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Divider(color: AppColors.borderDefault, height: 1),
+                    ),
+                    _buildSummaryRow(
+                      BookingLineItem(
+                        id: 'subtotal',
+                        name: 'Subtotal',
+                        quantity: 1,
+                        unitPriceMinor: pricing.subtotalMinor,
+                      ),
+                      emphasise: false,
+                    ),
+                    const SizedBox(height: 6),
+                    _buildSummaryRow(
+                      BookingLineItem(
+                        id: 'gst',
+                        name: 'GST (18%)',
+                        quantity: 1,
+                        unitPriceMinor: pricing.gstMinor,
+                      ),
+                      emphasise: false,
+                    ),
+                  ],
+                ],
                 Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8),
+                  padding: const EdgeInsets.symmetric(vertical: 8),
                   child: Divider(color: AppColors.borderDefault, height: 1),
                 ),
-                 Row(
-                   children: [
-                     const Expanded(
-                       child: Text(
-                         'FixNow 30-Day Guarantee',
-                         maxLines: 2,
-                         overflow: TextOverflow.ellipsis,
-                         style: TextStyle(
-                           color: AppColors.primary,
-                           fontSize: 12,
-                           fontWeight: FontWeight.w600,
-                         ),
-                       ),
-                     ),
-                     const SizedBox(width: AppSpacing.sm),
-                      Flexible(
-                        child: Text(
-                          'Included FREE',
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.right,
-                          style: const TextStyle(
-                            color: AppColors.primary,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                          ),
+                const Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'FixNow 30-Day Guarantee',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: AppColors.primary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                   ],
-                 ),
+                    ),
+                    SizedBox(width: AppSpacing.sm),
+                    Flexible(
+                      child: Text(
+                        'Included FREE',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.right,
+                        style: TextStyle(
+                          color: AppColors.primary,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
         ],
       ),
+    );
+  }
+
+  static String _money(int minor) =>
+      '₹${(minor / 100).toStringAsFixed(minor % 100 == 0 ? 0 : 2)}';
+
+  Widget _buildSummaryRow(BookingLineItem item, {bool emphasise = true}) {
+    final label = item.quantity == 1
+        ? item.name
+        : '${item.name} ×${item.quantity}';
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            label,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: emphasise ? AppColors.textSecondary : AppColors.textMuted,
+              fontSize: 12,
+            ),
+          ),
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        Text(
+          _money(item.lineTotalMinor),
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 12,
+            fontWeight: emphasise ? FontWeight.w600 : FontWeight.w500,
+          ),
+        ),
+      ],
     );
   }
 

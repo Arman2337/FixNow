@@ -34,15 +34,23 @@ class ProviderStats {
     required this.completedJobs,
     required this.earningsMinor,
     required this.acceptanceRate,
+    this.reviewCount = 0,
   });
   final double rating;
+
+  /// Published reviews behind [rating]. Zero means the provider has not been
+  /// rated yet, which is not the same as a zero-star score.
+  final int reviewCount;
   final int completedJobs;
   final int earningsMinor;
   final int acceptanceRate;
 
+  bool get hasRating => reviewCount > 0;
+
   factory ProviderStats.fromJson(Map<String, Object?> json) {
     return ProviderStats(
       rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
+      reviewCount: (json['reviewCount'] as num?)?.toInt() ?? 0,
       completedJobs: (json['completedJobs'] as num?)?.toInt() ?? 0,
       earningsMinor: (json['earningsMinor'] as num?)?.toInt() ?? 0,
       acceptanceRate: (json['acceptanceRate'] as num?)?.toInt() ?? 0,

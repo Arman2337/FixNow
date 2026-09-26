@@ -71,6 +71,8 @@ export class ProviderProfileResponseDto {
 
   stats?: {
     rating: number;
+    /** Published reviews behind `rating`. 0 means "not yet rated", not 0 stars. */
+    reviewCount: number;
     completedJobs: number;
     earningsMinor: number;
     acceptanceRate: number;

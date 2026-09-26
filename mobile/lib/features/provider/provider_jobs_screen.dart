@@ -273,7 +273,10 @@ class _ProviderJobsScreenState extends State<ProviderJobsScreen> {
                 borderRadius: BorderRadius.circular(999),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: online
                         ? AppColors.primaryFixed
@@ -343,7 +346,11 @@ class _ProviderJobsScreenState extends State<ProviderJobsScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.bolt_rounded, color: AppColors.accentGold, size: 20),
+              const Icon(
+                Icons.bolt_rounded,
+                color: AppColors.accentGold,
+                size: 20,
+              ),
               const SizedBox(width: 8),
               const Flexible(
                 child: Text(
@@ -405,63 +412,49 @@ class _ProviderJobsScreenState extends State<ProviderJobsScreen> {
               borderRadius: BorderRadius.circular(12),
               child: InkWell(
                 onTap: () => setState(() => _selectedDayIndex = index),
-              borderRadius: BorderRadius.circular(12),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                width: 60,
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? AppColors.primary
-                      : AppColors.surfaceContainerLow,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: isSelected ? AppColors.primary : AppColors.border,
+                borderRadius: BorderRadius.circular(12),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  width: 60,
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? AppColors.primary
+                        : AppColors.surfaceContainerLow,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isSelected ? AppColors.primary : AppColors.border,
+                    ),
                   ),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      label,
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: isSelected
-                            ? AppColors.onPrimary
-                            : AppColors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${date.day}',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        color: isSelected
-                            ? AppColors.onPrimary
-                            : AppColors.textPrimary,
-                        height: 1.1,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 4,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: isSelected
-                                ? AppColors.primaryFixed
-                                : (index == 0 && activeJobCount > 0)
-                                ? AppColors.primary
-                                : AppColors.borderStrong,
-                          ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        label,
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: isSelected
+                              ? AppColors.onPrimary
+                              : AppColors.textSecondary,
                         ),
-                        if (index == 0 && activeJobCount > 1) ...[
-                          const SizedBox(width: 3),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${date.day}',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: isSelected
+                              ? AppColors.onPrimary
+                              : AppColors.textPrimary,
+                          height: 1.1,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
                           Container(
                             width: 4,
                             height: 4,
@@ -469,16 +462,30 @@ class _ProviderJobsScreenState extends State<ProviderJobsScreen> {
                               shape: BoxShape.circle,
                               color: isSelected
                                   ? AppColors.primaryFixed
-                                  : AppColors.primary,
+                                  : (index == 0 && activeJobCount > 0)
+                                  ? AppColors.primary
+                                  : AppColors.borderStrong,
                             ),
                           ),
+                          if (index == 0 && activeJobCount > 1) ...[
+                            const SizedBox(width: 3),
+                            Container(
+                              width: 4,
+                              height: 4,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: isSelected
+                                    ? AppColors.primaryFixed
+                                    : AppColors.primary,
+                              ),
+                            ),
+                          ],
                         ],
-                      ],
-                    ),
-                  ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
             ),
           );
         }),
@@ -501,40 +508,40 @@ class _ProviderJobsScreenState extends State<ProviderJobsScreen> {
               borderRadius: BorderRadius.circular(8),
               child: InkWell(
                 onTap: () => setState(() => _showHistory = false),
-              borderRadius: BorderRadius.circular(8),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                decoration: BoxDecoration(
-                  color: !_showHistory
-                      ? AppColors.surfaceContainerLowest
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: !_showHistory
-                      ? [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
-                            blurRadius: 4,
-                            offset: const Offset(0, 1),
-                          ),
-                        ]
-                      : null,
-                ),
-                child: Text(
-                  'Assigned Jobs ($assignedCount)',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: !_showHistory
-                        ? FontWeight.w800
-                        : FontWeight.w600,
+                borderRadius: BorderRadius.circular(8),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  decoration: BoxDecoration(
                     color: !_showHistory
-                        ? AppColors.textPrimary
-                        : AppColors.textSecondary,
+                        ? AppColors.surfaceContainerLowest
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: !_showHistory
+                        ? [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.05),
+                              blurRadius: 4,
+                              offset: const Offset(0, 1),
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: Text(
+                    'Assigned Jobs ($assignedCount)',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: !_showHistory
+                          ? FontWeight.w800
+                          : FontWeight.w600,
+                      color: !_showHistory
+                          ? AppColors.textPrimary
+                          : AppColors.textSecondary,
+                    ),
                   ),
                 ),
               ),
-            ),
             ),
           ),
           Expanded(
@@ -543,40 +550,40 @@ class _ProviderJobsScreenState extends State<ProviderJobsScreen> {
               borderRadius: BorderRadius.circular(8),
               child: InkWell(
                 onTap: () => setState(() => _showHistory = true),
-              borderRadius: BorderRadius.circular(8),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                decoration: BoxDecoration(
-                  color: _showHistory
-                      ? AppColors.surfaceContainerLowest
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: _showHistory
-                      ? [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
-                            blurRadius: 4,
-                            offset: const Offset(0, 1),
-                          ),
-                        ]
-                      : null,
-                ),
-                child: Text(
-                  'Completed History ($historyCount)',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: _showHistory
-                        ? FontWeight.w800
-                        : FontWeight.w600,
+                borderRadius: BorderRadius.circular(8),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  decoration: BoxDecoration(
                     color: _showHistory
-                        ? AppColors.textPrimary
-                        : AppColors.textSecondary,
+                        ? AppColors.surfaceContainerLowest
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: _showHistory
+                        ? [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.05),
+                              blurRadius: 4,
+                              offset: const Offset(0, 1),
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: Text(
+                    'Completed History ($historyCount)',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: _showHistory
+                          ? FontWeight.w800
+                          : FontWeight.w600,
+                      color: _showHistory
+                          ? AppColors.textPrimary
+                          : AppColors.textSecondary,
+                    ),
                   ),
                 ),
               ),
-            ),
             ),
           ),
         ],
@@ -585,6 +592,14 @@ class _ProviderJobsScreenState extends State<ProviderJobsScreen> {
   }
 
   Widget _buildWorkingRadiusShortcut() {
+    // Was a fully const card reading "Working Hours & 8 km Radius" and
+    // "09:00 - 19:30" regardless of the provider's real schedule or radius.
+    // Both values now come from the controller.
+    final availability = widget.controller.availability;
+    final radiusKm = widget.controller.profile?.serviceRadiusKm;
+    final schedule = availability?.scheduleSummary ?? 'No schedule set';
+    final isOnline = availability?.status == 'online';
+
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.md,
@@ -600,12 +615,18 @@ class _ProviderJobsScreenState extends State<ProviderJobsScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.tune_rounded, color: AppColors.primary, size: 18),
+              const Icon(
+                Icons.tune_rounded,
+                color: AppColors.primary,
+                size: 18,
+              ),
               const SizedBox(width: 8),
-              const Flexible(
+              Flexible(
                 child: Text(
-                  'Working Hours & 8 km Radius',
-                  style: TextStyle(
+                  radiusKm == null
+                      ? 'Working Hours & Service Radius'
+                      : 'Working Hours & ${_formatRadius(radiusKm)} Radius',
+                  style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
@@ -615,21 +636,27 @@ class _ProviderJobsScreenState extends State<ProviderJobsScreen> {
             ],
           ),
           const SizedBox(height: 8),
-          const Align(
+          Align(
             alignment: Alignment.centerRight,
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Flexible(
                   child: Text(
-                    '09:00 - 19:30',
+                    schedule,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: isOnline
+                          ? AppColors.successOnLight
+                          : AppColors.textSecondary,
+                      fontWeight: isOnline ? FontWeight.w700 : FontWeight.w400,
+                    ),
                   ),
                 ),
-                SizedBox(width: 4),
-                Icon(
+                const SizedBox(width: 4),
+                const Icon(
                   Icons.chevron_right_rounded,
                   color: AppColors.textSecondary,
                   size: 16,
@@ -640,6 +667,11 @@ class _ProviderJobsScreenState extends State<ProviderJobsScreen> {
         ],
       ),
     );
+  }
+
+  static String _formatRadius(double km) {
+    final rounded = km.round();
+    return '$rounded km';
   }
 
   Widget _buildHistorySummaryPill(List<CustomerBooking> history) {
@@ -824,23 +856,23 @@ class _TopUrgentJobCard extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                           Row(
-                             children: [
-                               Flexible(
-                                 child: Text(
-                                   'JOB #${_shortId(job.id)}',
-                                   maxLines: 1,
-                                   overflow: TextOverflow.ellipsis,
-                                   style: const TextStyle(
-                                     fontSize: 11,
-                                     fontWeight: FontWeight.w700,
-                                     color: AppColors.textSecondary,
-                                     letterSpacing: 0.5,
-                                   ),
-                                 ),
-                               ),
-                             ],
-                           ),
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  'JOB #${_shortId(job.id)}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.textSecondary,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                           const SizedBox(height: 2),
                           Text(
                             providerServiceName(
@@ -989,18 +1021,18 @@ class _TopUrgentJobCard extends StatelessWidget {
                                   color: AppColors.textPrimary,
                                 ),
                                 SizedBox(width: 3),
-                                 Flexible(
-                                   child: Text(
-                                     'Navigate',
-                                     maxLines: 1,
-                                     overflow: TextOverflow.ellipsis,
-                                     style: TextStyle(
-                                       fontSize: 12,
-                                       fontWeight: FontWeight.w700,
-                                       color: AppColors.textPrimary,
-                                     ),
-                                   ),
-                                 ),
+                                Flexible(
+                                  child: Text(
+                                    'Navigate',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                ),
                                 SizedBox(width: 4),
                                 Icon(
                                   Icons.chevron_right_rounded,
@@ -1060,7 +1092,8 @@ class _TopUrgentJobCard extends StatelessWidget {
                           showOverlay: false,
                           height: 120,
                           route: controller.currentRoute,
-                          customerLocation: (job.locationLatitude != null &&
+                          customerLocation:
+                              (job.locationLatitude != null &&
                                   job.locationLongitude != null)
                               ? CustomerMapLocation(
                                   latitude: job.locationLatitude!,
@@ -1070,51 +1103,54 @@ class _TopUrgentJobCard extends StatelessWidget {
                           providerLocation: controller.currentLocation,
                         ),
                       ),
-                       Positioned(
-                         top: 8,
-                         left: 8,
-                         child: Material(
-                           color: Colors.white,
-                           borderRadius: BorderRadius.circular(8),
-                           child: InkWell(
-                             onTap: () {
-                               Navigator.of(context).push(
-                                 MaterialPageRoute(
-                                   builder: (_) => ProviderNavigationMapScreen(
-                                     job: job,
-                                     controller: controller,
-                                   ),
-                                 ),
-                               );
-                             },
-                             borderRadius: BorderRadius.circular(8),
-                             child: const Padding(
-                               padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                               child: Row(
-                                 mainAxisSize: MainAxisSize.min,
-                                 children: [
-                                   Icon(
-                                     Icons.map_outlined,
-                                     size: 16,
-                                     color: AppColors.textPrimary,
-                                   ),
-                                   SizedBox(width: 4),
-                                   Text(
-                                     'Route Map',
-                                     style: TextStyle(
-                                       fontSize: 12,
-                                       fontWeight: FontWeight.w700,
-                                       color: AppColors.textPrimary,
-                                     ),
-                                   ),
-                                 ],
-                               ),
-                             ),
-                           ),
-                         ),
-                       ),
-                       Positioned(
-                         bottom: 8,
+                      Positioned(
+                        top: 8,
+                        left: 8,
+                        child: Material(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          child: InkWell(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => ProviderNavigationMapScreen(
+                                    job: job,
+                                    controller: controller,
+                                  ),
+                                ),
+                              );
+                            },
+                            borderRadius: BorderRadius.circular(8),
+                            child: const Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 6,
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.map_outlined,
+                                    size: 16,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'Route Map',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        bottom: 8,
                         right: 8,
                         child: Container(
                           decoration: BoxDecoration(
@@ -1212,10 +1248,14 @@ class _TopUrgentJobCard extends StatelessWidget {
                           variant: FixButtonVariant.secondary,
                           onPressed: () {
                             if (job.customerPhone != null) {
-                              const CallController().launchCall(job.customerPhone!);
+                              const CallController().launchCall(
+                                job.customerPhone!,
+                              );
                             } else {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Phone number unavailable')),
+                                const SnackBar(
+                                  content: Text('Phone number unavailable'),
+                                ),
                               );
                             }
                           },
@@ -1517,7 +1557,11 @@ class _HistoryJobCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '${_category(job.serviceCategoryId)} • Rating ★ 5.0',
+                      // Was a hardcoded "Rating ★ 5.0" on every history card,
+                      // implying customers had rated a job they never reviewed.
+                      // The provider's own aggregate now comes from the API, and
+                      // an unrated provider says so instead of inventing a score.
+                      _historyMetaLine(job, controller),
                       style: const TextStyle(
                         fontSize: 11,
                         color: AppColors.textSecondary,
@@ -1539,7 +1583,6 @@ class _HistoryJobCard extends StatelessWidget {
   }
 }
 
-
 String _weekdayShort(int weekday) => switch (weekday) {
   1 => 'MON',
   2 => 'TUE',
@@ -1556,6 +1599,21 @@ String _category(String value) => value
     .where((word) => word.isNotEmpty)
     .map((word) => '${word[0].toUpperCase()}${word.substring(1)}')
     .join(' ');
+
+/// Category plus the provider's real review standing.
+///
+/// The booking's own `providerRating` is the customer-facing aggregate the API
+/// stamps on the list; when it is absent there is nothing to show, and an
+/// invented "★ 5.0" is worse than an honest "Not yet rated".
+String _historyMetaLine(CustomerBooking job, ProviderController controller) {
+  final category = _category(job.serviceCategoryId);
+  final stats = controller.profile?.stats;
+  final rating = job.providerRating ?? stats?.rating;
+  if (rating == null || rating <= 0 || (stats != null && !stats.hasRating)) {
+    return '$category • Not yet rated';
+  }
+  return '$category • Rating ★ ${rating.toStringAsFixed(1)}';
+}
 
 String _shortId(String value) {
   final compact = value.replaceAll('-', '');
@@ -1587,56 +1645,56 @@ class _LiveTrackingBlock extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-           Column(
-             crossAxisAlignment: CrossAxisAlignment.start,
-             children: [
-               const Text(
-                 'LIVE TRACKING',
-                 style: TextStyle(
-                   color: AppColors.primary,
-                   fontWeight: FontWeight.w700,
-                   letterSpacing: 1,
-                 ),
-               ),
-               if (sharing) ...[
-                 const SizedBox(height: 8),
-                 Container(
-                   padding: const EdgeInsets.symmetric(
-                     horizontal: 8,
-                     vertical: 4,
-                   ),
-                   decoration: BoxDecoration(
-                     color: AppColors.success,
-                     borderRadius: BorderRadius.circular(20),
-                   ),
-                   child: const Row(
-                     mainAxisSize: MainAxisSize.min,
-                     children: [
-                       SizedBox(
-                         width: 6,
-                         height: 6,
-                         child: DecoratedBox(
-                           decoration: BoxDecoration(
-                             shape: BoxShape.circle,
-                             color: Colors.white,
-                           ),
-                         ),
-                       ),
-                       SizedBox(width: 4),
-                       Text(
-                         'Sharing',
-                         style: TextStyle(
-                           color: Colors.white,
-                           fontSize: 10,
-                           fontWeight: FontWeight.w700,
-                         ),
-                       ),
-                     ],
-                   ),
-                 ),
-               ],
-             ],
-           ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'LIVE TRACKING',
+                style: TextStyle(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1,
+                ),
+              ),
+              if (sharing) ...[
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.success,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: 6,
+                        height: 6,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 4),
+                      Text(
+                        'Sharing',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
           const SizedBox(height: AppSpacing.sm),
           Row(
             children: [

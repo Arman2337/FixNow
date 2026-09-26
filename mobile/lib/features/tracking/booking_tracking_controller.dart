@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:fixnow_mobile/features/bookings/booking.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking.dart';
 import 'package:fixnow_mobile/features/realtime/realtime_client.dart';
 import 'package:flutter/foundation.dart';
@@ -34,9 +35,12 @@ class BookingTrackingController extends ChangeNotifier {
           locationAvailability: snapshot.providerLocation != null
               ? snapshot.locationAvailability
               : current.locationAvailability,
-          estimatedMinutes: current.estimatedMinutes ?? snapshot.estimatedMinutes,
-          providerLocation: snapshot.providerLocation ?? current.providerLocation,
-          customerLocation: snapshot.customerLocation ?? current.customerLocation,
+          estimatedMinutes:
+              current.estimatedMinutes ?? snapshot.estimatedMinutes,
+          providerLocation:
+              snapshot.providerLocation ?? current.providerLocation,
+          customerLocation:
+              snapshot.customerLocation ?? current.customerLocation,
           route: current.route ?? snapshot.route,
           serviceStartOtp: snapshot.serviceStartOtp ?? current.serviceStartOtp,
         );
@@ -68,12 +72,14 @@ class BookingTrackingController extends ChangeNotifier {
   Future<void> _applyProjection(RealtimeProjection projection) async {
     final data = projection.data;
     final parsedLoc = _providerLocation(data);
-    final preservedLoc = parsedLoc ??
+    final preservedLoc =
+        parsedLoc ??
         ((data['status'] == 'EN_ROUTE' || tracking?.status == 'EN_ROUTE')
             ? tracking?.providerLocation
             : null);
     final parsedRoute = _route(data);
-    final preservedRoute = parsedRoute ??
+    final preservedRoute =
+        parsedRoute ??
         ((data['status'] == 'EN_ROUTE' || tracking?.status == 'EN_ROUTE')
             ? tracking?.route
             : null);
@@ -84,12 +90,13 @@ class BookingTrackingController extends ChangeNotifier {
       locationAvailability: switch (data['locationAvailability']) {
         'live' => LocationAvailability.live,
         'stale' => LocationAvailability.stale,
-        _ => preservedLoc != null
-            ? (tracking?.locationAvailability ?? LocationAvailability.live)
-            : LocationAvailability.unavailable,
+        _ =>
+          preservedLoc != null
+              ? (tracking?.locationAvailability ?? LocationAvailability.live)
+              : LocationAvailability.unavailable,
       },
-      estimatedMinutes: ((data['eta'] as Map?)?['estimatedMinutes'] as num?)
-              ?.toInt() ??
+      estimatedMinutes:
+          ((data['eta'] as Map?)?['estimatedMinutes'] as num?)?.toInt() ??
           tracking?.estimatedMinutes,
       providerLocation: preservedLoc,
       customerLocation: tracking?.customerLocation,
@@ -97,8 +104,44 @@ class BookingTrackingController extends ChangeNotifier {
       serviceStartOtp: data['status'] == 'EN_ROUTE'
           ? tracking?.serviceStartOtp
           : null,
+      // A live frame carries no provider identity, so keep the snapshot's
+      // rather than blanking the specialist card on the first projection.
+      providerName: tracking?.providerName,
+      providerRating: tracking?.providerRating,
+      providerJobsCount: tracking?.providerJobsCount,
+      // A provider's on-site price adjustment arrives on this same frame.
+      // Rendering the snapshot's totals until the next load would show the
+      // customer a stale amount while the technician watches it change.
+      items: _items(data) ?? tracking?.items ?? const [],
+      pricing: _pricing(data) ?? tracking?.pricing,
     );
     await applyRealtime(next);
+  }
+
+  List<BookingLineItem>? _items(Map<String, Object?> data) {
+    final raw = data['items'];
+    if (raw is! List || raw.isEmpty) return null;
+    try {
+      return raw
+          .map(
+            (item) => BookingLineItem.fromJson(
+              Map<String, Object?>.from(item as Map),
+            ),
+          )
+          .toList(growable: false);
+    } on FormatException {
+      return null;
+    }
+  }
+
+  BookingPricing? _pricing(Map<String, Object?> data) {
+    final raw = data['pricing'];
+    if (raw is! Map || raw.isEmpty) return null;
+    try {
+      return BookingPricing.fromJson(Map<String, Object?>.from(raw));
+    } on FormatException {
+      return null;
+    }
   }
 
   ProviderMapLocation? _providerLocation(Map<String, Object?> data) {

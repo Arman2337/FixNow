@@ -121,9 +121,11 @@ class ProviderHomeScreen extends StatelessWidget {
                       controller: notificationController!,
                       onTap: () {
                         Navigator.of(context).push(
-MaterialPageRoute(
-                             settings: const RouteSettings(name: 'notifications'),
-                             builder: (_) => NotificationCenterScreen(
+                          MaterialPageRoute(
+                            settings: const RouteSettings(
+                              name: 'notifications',
+                            ),
+                            builder: (_) => NotificationCenterScreen(
                               controller: notificationController!,
                               onOpenBooking: onOpenBooking,
                               onOpenInvoice: onOpenInvoice,
@@ -616,7 +618,7 @@ MaterialPageRoute(
                     children: [
                       Icon(
                         Icons.work_history_rounded,
-                        color: AppColors.textMuted,
+                        color: AppColors.textSecondary,
                       ),
                       SizedBox(width: AppSpacing.md),
                       Expanded(
@@ -664,7 +666,8 @@ MaterialPageRoute(
                                     Text(
                                       'Open Cockpit',
                                       style: TextStyle(
-                                        color: AppColors.accentGold,
+                                        // accentGold on white is 2.15:1.
+                                        color: AppColors.tertiary,
                                         fontSize: 12,
                                         fontWeight: FontWeight.w600,
                                       ),
@@ -673,7 +676,7 @@ MaterialPageRoute(
                                     Icon(
                                       Icons.arrow_forward_rounded,
                                       size: 16,
-                                      color: AppColors.accentGold,
+                                      color: AppColors.tertiary,
                                     ),
                                   ],
                                 ),
@@ -749,7 +752,8 @@ MaterialPageRoute(
                                   'Tap to update status / OTP',
                                   style: TextStyle(
                                     fontSize: 11,
-                                    color: AppColors.textMuted,
+                                    // textMuted on white is 4.49:1, just under AA.
+                                    color: AppColors.textSecondary,
                                   ),
                                 ),
                               ],
@@ -960,7 +964,7 @@ class _ProviderNotificationBanner extends StatelessWidget {
                   icon: const Icon(
                     Icons.close_rounded,
                     size: 16,
-                    color: AppColors.textMuted,
+                    color: AppColors.textSecondary,
                   ),
                   tooltip: 'Dismiss notification',
                   onPressed: onDismiss,
@@ -993,7 +997,9 @@ class _IncomingRequestBanner extends StatelessWidget {
         color: AppColors.surfaceElevated,
         borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(
-          color: AppColors.accentGold.withValues(alpha: 0.45),
+          // The card is white on a near-white page, so the gold edge is the
+          // only thing separating them: keep it strong enough to be seen.
+          color: AppColors.accentGold.withValues(alpha: 0.7),
           width: 1.2,
         ),
         boxShadow: [
@@ -1023,13 +1029,15 @@ class _IncomingRequestBanner extends StatelessWidget {
                     color: AppColors.accentGold.withValues(alpha: 0.18),
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: AppColors.accentGold.withValues(alpha: 0.3),
+                      color: AppColors.accentGold.withValues(alpha: 0.55),
                     ),
                   ),
                   child: const Icon(
                     Icons.radar_rounded,
                     size: 18,
-                    color: AppColors.accentGold,
+                    // ratingOnLight, not accentGold: raw gold on the 18% gold
+                    // disc measured 1.9:1.
+                    color: AppColors.ratingOnLight,
                   ),
                 ),
                 const SizedBox(width: AppSpacing.md),
@@ -1044,8 +1052,10 @@ class _IncomingRequestBanner extends StatelessWidget {
                               count == 1
                                   ? 'New Request Available!'
                                   : '$count New Requests Available!',
+                              // Was AppColors.cream (#FFFFFF) on a #FFFFFF card:
+                              // 1.0:1, i.e. an invisible title.
                               style: const TextStyle(
-                                color: AppColors.cream,
+                                color: AppColors.textPrimary,
                                 fontWeight: FontWeight.w700,
                                 fontSize: 13,
                               ),
@@ -1065,7 +1075,7 @@ class _IncomingRequestBanner extends StatelessWidget {
                             child: const Text(
                               'ACTION NEEDED',
                               style: TextStyle(
-                                color: Colors.black,
+                                color: AppColors.onAccentGold,
                                 fontSize: 8.5,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: 0.4,
@@ -1091,7 +1101,7 @@ class _IncomingRequestBanner extends StatelessWidget {
                 const Icon(
                   Icons.arrow_forward_ios_rounded,
                   size: 13,
-                  color: AppColors.accentGold,
+                  color: AppColors.tertiary,
                 ),
               ],
             ),

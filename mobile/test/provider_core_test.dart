@@ -4,6 +4,7 @@ import 'package:fixnow_mobile/features/bookings/booking.dart';
 import 'package:fixnow_mobile/features/provider/provider_incoming_request_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_controller.dart';
 import 'package:fixnow_mobile/features/provider/provider_home_screen.dart';
+import 'package:fixnow_mobile/features/provider/provider_jobs_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_onboarding_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_models.dart';
 import 'package:fixnow_mobile/features/provider/provider_repository.dart';
@@ -201,6 +202,157 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Accept request'), findsOneWidget);
+  });
+
+  // Regression: every history card rendered a hardcoded "Rating ★ 5.0" and the
+  // working-hours card rendered hardcoded "8 km Radius" / "09:00 - 19:30", so
+  // the provider saw a perfect score and a schedule nobody had set.
+  group('history tab shows real data, never invented values', () {
+    Future<void> openHistory(WidgetTester tester) async {
+      final controller = ProviderController(
+        ProviderRepository(
+          api: _ProviderTransport(verified: true),
+          accessToken: () async => 'token',
+        ),
+      );
+      await controller.load(verified: true);
+      controller.jobs = [
+        CustomerBooking(
+          id: 'job-history-1',
+          serviceCategoryId: 'ac_repair',
+          status: 'COMPLETED',
+          description: 'AC servicing',
+          createdAt: DateTime.utc(2026, 8, 14),
+          version: 4,
+        ),
+      ];
+      controller.profile = ProviderProfile(
+        displayName: 'Test Tech',
+        bio: '',
+        serviceRadiusKm: 12,
+        baseLatitude: 23.02,
+        baseLongitude: 72.57,
+        stats: const ProviderStats(
+          rating: 0,
+          reviewCount: 0,
+          completedJobs: 3,
+          earningsMinor: 0,
+          acceptanceRate: 0,
+        ),
+      );
+      controller.availability = const ProviderAvailability(
+        status: 'online',
+        version: 1,
+        timeZone: 'Asia/Kolkata',
+        weeklyRules: [],
+      );
+      addTearDown(controller.dispose);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData.dark(),
+          home: Scaffold(
+            body: ProviderJobsScreen(controller: controller, showHistory: true),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('an unrated provider is not shown a 5.0 score', (tester) async {
+      await openHistory(tester);
+
+      expect(find.textContaining('Not yet rated'), findsWidgets);
+      expect(find.textContaining('Rating ★ 5.0'), findsNothing);
+      expect(find.textContaining('Rating ★'), findsNothing);
+    });
+
+    testWidgets('working hours and radius come from the profile', (
+      tester,
+    ) async {
+      await openHistory(tester);
+
+      expect(find.textContaining('12 km Radius'), findsOneWidget);
+      expect(find.textContaining('8 km Radius'), findsNothing);
+      // weeklyRules is empty, so the honest summary is the model's own
+      // "no recurring hours set" wording rather than an invented time range.
+      expect(find.text('No recurring hours set.'), findsOneWidget);
+      expect(find.text('09:00 - 19:30'), findsNothing);
+    });
+  });
+
+  // Regression: the incoming request banner title was AppColors.cream
+  // (#FFFFFF) on a surfaceElevated (#FFFFFF) card, i.e. 1.0:1 - the
+  // "New Request Available!" headline was invisible while the sub-line
+  // underneath it read fine, which made the card look like it had lost its
+  // heading.
+
+  testWidgets('incoming request banner text is legible on its white card', (
+    tester,
+  ) async {
+    final controller = ProviderController(
+      ProviderRepository(
+        api: _ProviderTransport(verified: true),
+        accessToken: () async => 'token',
+      ),
+    );
+    await controller.load(verified: true);
+    controller.requests = [
+      ProviderRequest(
+        id: 'request-1',
+        serviceCategoryId: 'category-1',
+        description: 'Kitchen sink leak',
+        createdAt: DateTime.utc(2026, 8, 14),
+        version: 1,
+        distanceKm: 0.0,
+      ),
+    ];
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData.dark(),
+        home: Scaffold(body: ProviderHomeScreen(controller: controller)),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    Color styleOf(String label) {
+      final finder = find.text(label);
+      expect(finder, findsOneWidget, reason: 'missing label: $label');
+      final text = tester.widget<Text>(finder);
+      return text.style?.color ??
+          DefaultTextStyle.of(tester.element(finder)).style.color!;
+    }
+
+    // Both sit on the white card, so both must clear AA against white.
+    for (final label in const [
+      'New Request Available!',
+      '0.0 km away · Tap to review and accept',
+    ]) {
+      expect(
+        _contrastRatio(styleOf(label), AppColors.surfaceElevated),
+        greaterThanOrEqualTo(4.5),
+        reason: '"$label" must meet AA on the white request card',
+      );
+    }
+
+    // The gold badge keeps dark ink on gold; the gold accents must not rely on
+    // raw #F59E0B against white.
+    expect(
+      _contrastRatio(styleOf('ACTION NEEDED'), AppColors.accentGold),
+      greaterThanOrEqualTo(4.5),
+    );
+    final radar = tester.widget<Icon>(find.byIcon(Icons.radar_rounded).first);
+    expect(
+      _contrastRatio(
+        radar.color!,
+        Color.alphaBlend(
+          AppColors.accentGold.withValues(alpha: 0.18),
+          AppColors.surfaceElevated,
+        ),
+      ),
+      greaterThanOrEqualTo(4.5),
+      reason: 'radar icon must read against its own gold-tinted disc',
+    );
   });
 
   testWidgets('incoming request acceptance sends the current booking version', (
@@ -402,7 +554,9 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final title = tester.widget<Text>(find.text('Booking Confirmed & Assigned'));
+    final title = tester.widget<Text>(
+      find.text('Booking Confirmed & Assigned'),
+    );
     expect(title.style?.color, AppColors.textPrimary);
     notifController.dispose();
   });
@@ -693,4 +847,16 @@ class _ProviderTransport implements ApiTransport {
       'Unexpected request',
     );
   }
+}
+
+double _contrastRatio(Color foreground, Color background) {
+  final foregroundLuminance = foreground.computeLuminance();
+  final backgroundLuminance = background.computeLuminance();
+  final lighter = foregroundLuminance > backgroundLuminance
+      ? foregroundLuminance
+      : backgroundLuminance;
+  final darker = foregroundLuminance > backgroundLuminance
+      ? backgroundLuminance
+      : foregroundLuminance;
+  return (lighter + 0.05) / (darker + 0.05);
 }

@@ -140,6 +140,24 @@ export class EnvironmentVariables {
   @IsOptional()
   OPENROUTESERVICE_API_KEY?: string;
 
+  // The free OpenRouteService plan allows 200 requests/day, so a live route is
+  // refreshed only after the technician has moved this far (or the interval
+  // below has elapsed). GPS jitter must not spend the daily quota.
+  @IsNumber()
+  @Min(1)
+  @IsOptional()
+  ROUTE_REFRESH_MIN_METERS: number = 50;
+
+  @IsInt()
+  @Min(1_000)
+  @IsOptional()
+  ROUTE_REFRESH_MIN_INTERVAL_MS: number = 60_000;
+
+  @IsInt()
+  @Min(1_000)
+  @IsOptional()
+  ROUTE_MAX_CACHE_AGE_MS: number = 600_000;
+
   @IsEnum(BooleanString)
   @IsOptional()
   AI_ENABLED: BooleanString = BooleanString.False;

@@ -1,6 +1,9 @@
 export type TrackingAvailability = 'live' | 'stale' | 'unavailable';
 
-import type { BookingItemContract } from './booking-lifecycle.types';
+import type {
+  BookingItemContract,
+  BookingPricingContract,
+} from './booking-lifecycle.types';
 
 export interface BookingTrackingProjection {
   bookingId: string;
@@ -13,6 +16,12 @@ export interface BookingTrackingProjection {
    * refetch. Absent for bookings without line items.
    */
   items?: BookingItemContract[];
+  /**
+   * Server-computed totals for the items above. Carried on the same frame so a
+   * customer never sees a revised line list next to a stale "Total" — the
+   * figure is authoritative, derived from the persisted item snapshot.
+   */
+  pricing?: BookingPricingContract | null;
   estimatedDurationMinutes?: number | null;
   location: {
     latitude: number;

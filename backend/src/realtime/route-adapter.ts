@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { EtaInput } from './eta-adapter';
 
@@ -12,13 +12,114 @@ export abstract class RouteAdapter {
   abstract route(input: EtaInput): Promise<DrivingRoute | null>;
 }
 
+interface RouteCacheEntry {
+  originLatitude: number;
+  originLongitude: number;
+  destinationLatitude: number;
+  destinationLongitude: number;
+  fetchedAtMs: number;
+  route: DrivingRoute;
+}
+
+/**
+ * The free OpenRouteService plan allows 200 requests per day. The provider app
+ * publishes live GPS every 11 seconds, so an unrouted projection would spend the
+ * whole daily budget in half an hour and then silently degrade to a straight
+ * line for the rest of the day.
+ *
+ * A road route between two points 50 m apart is the same road route, so the
+ * adapter reuses the last answer until the technician has actually moved or the
+ * refresh window has elapsed.
+ */
 @Injectable()
 export class OpenRouteServiceAdapter implements RouteAdapter {
+  private readonly logger = new Logger(OpenRouteServiceAdapter.name);
+  private readonly cache = new Map<string, RouteCacheEntry>();
+  private readonly inFlight = new Map<string, Promise<DrivingRoute | null>>();
+
   constructor(private readonly config: ConfigService) {}
+
+  private get refreshMinIntervalMs(): number {
+    return this.positiveInt('ROUTE_REFRESH_MIN_INTERVAL_MS', 60_000);
+  }
+
+  private get refreshMinMeters(): number {
+    return this.positiveNumber('ROUTE_REFRESH_MIN_METERS', 50);
+  }
+
+  private get maxCacheAgeMs(): number {
+    return this.positiveInt('ROUTE_MAX_CACHE_AGE_MS', 600_000);
+  }
+
+  private positiveInt(key: string, fallback: number): number {
+    const raw = this.config.get<string>(key);
+    const parsed = raw ? Number.parseInt(raw, 10) : Number.NaN;
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+  }
+
+  private positiveNumber(key: string, fallback: number): number {
+    const raw = this.config.get<string>(key);
+    const parsed = raw ? Number.parseFloat(raw) : Number.NaN;
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+  }
 
   async route(input: EtaInput): Promise<DrivingRoute | null> {
     const key = this.config.get<string>('OPENROUTESERVICE_API_KEY')?.trim();
     if (!key) return null;
+
+    const destinationKey = `${input.destinationLatitude.toFixed(5)},${input.destinationLongitude.toFixed(5)}`;
+    const cached = this.cache.get(destinationKey);
+    const fresh = cached ? this.isUsable(cached, input) : false;
+    if (cached && fresh) return cached.route;
+
+    // Collapse the bursts that arrive while a request is already open.
+    const pending = this.inFlight.get(destinationKey);
+    if (pending) return pending;
+
+    const request = this.fetchRoute(key, input)
+      .then((route) => {
+        if (route) {
+          this.cache.set(destinationKey, {
+            originLatitude: input.providerLatitude,
+            originLongitude: input.providerLongitude,
+            destinationLatitude: input.destinationLatitude,
+            destinationLongitude: input.destinationLongitude,
+            fetchedAtMs: Date.now(),
+            route,
+          });
+          return route;
+        }
+        // A failed refresh must not blank a route the technician is following.
+        return cached && this.isWithinMaxAge(cached) ? cached.route : null;
+      })
+      .finally(() => this.inFlight.delete(destinationKey));
+
+    this.inFlight.set(destinationKey, request);
+    return request;
+  }
+
+  private isUsable(entry: RouteCacheEntry, input: EtaInput): boolean {
+    if (!this.isWithinMaxAge(entry)) return false;
+    if (entry.destinationLatitude !== input.destinationLatitude) return false;
+    if (entry.destinationLongitude !== input.destinationLongitude) return false;
+    const movedMeters = haversineMeters(
+      entry.originLatitude,
+      entry.originLongitude,
+      input.providerLatitude,
+      input.providerLongitude,
+    );
+    if (movedMeters < this.refreshMinMeters) return true;
+    return Date.now() - entry.fetchedAtMs >= this.refreshMinIntervalMs;
+  }
+
+  private isWithinMaxAge(entry: RouteCacheEntry): boolean {
+    return Date.now() - entry.fetchedAtMs < this.maxCacheAgeMs;
+  }
+
+  private async fetchRoute(
+    key: string,
+    input: EtaInput,
+  ): Promise<DrivingRoute | null> {
     try {
       const response = await fetch(
         'https://api.openrouteservice.org/v2/directions/driving-car/geojson',
@@ -37,7 +138,14 @@ export class OpenRouteServiceAdapter implements RouteAdapter {
           signal: AbortSignal.timeout(5_000),
         },
       );
-      if (!response.ok) return null;
+      if (!response.ok) {
+        if (response.status === 429 || response.status === 401 || response.status === 403) {
+          this.logger.warn(
+            `OpenRouteService rejected the request (${response.status}); the daily quota is 200 and the cached route is being reused until it expires.`,
+          );
+        }
+        return null;
+      }
       return parseOpenRouteServiceRoute(
         JSON.parse(await response.text()) as unknown,
       );
@@ -47,6 +155,25 @@ export class OpenRouteServiceAdapter implements RouteAdapter {
       return null;
     }
   }
+}
+
+/** Great-circle distance in meters. Exported for the refresh-threshold tests. */
+export function haversineMeters(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number,
+): number {
+  const toRadians = Math.PI / 180;
+  const dLat = (lat2 - lat1) * toRadians;
+  const dLon = (lon2 - lon1) * toRadians;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * toRadians) *
+      Math.cos(lat2 * toRadians) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  return 2 * 6371000 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
 export function parseOpenRouteServiceRoute(

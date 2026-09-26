@@ -45,6 +45,7 @@ class ProviderLiveMap extends StatefulWidget {
     this.distanceKm,
     this.showOverlay = true,
     this.isProviderPerspective = false,
+    this.height = 348,
     super.key,
   });
 
@@ -55,6 +56,10 @@ class ProviderLiveMap extends StatefulWidget {
   final double? distanceKm;
   final bool showOverlay;
   final bool isProviderPerspective;
+
+  /// Height of the map viewport. The cockpit embeds this in a 110px snippet,
+  /// so the fit padding has to be derived from the real size, never assumed.
+  final double height;
 
   @override
   State<ProviderLiveMap> createState() => _ProviderLiveMapState();
@@ -76,6 +81,23 @@ class _ProviderLiveMapState extends State<ProviderLiveMap>
   LatLng? _drawPos;
   double _drawBearing = 0.0;
   bool _routeIntroduced = false;
+  bool _showTextView = false;
+
+  /// Live viewport size, captured during layout. Camera fitting needs it: a
+  /// fixed padding larger than the viewport collapses the fit to zoom 0.
+  Size? _mapSize;
+
+  /// Set once the driver pans or zooms, so the 11s GPS cadence stops fighting
+  /// them for the camera.
+  bool _userMovedCamera = false;
+
+  /// Never zoom out past a country view: below this the tile layer repeats the
+  /// world horizontally and the job markers render several times.
+  static const double _minMapZoom = 2.5;
+
+  /// Cap for a fitted viewport so two nearby pins don't fill the screen with
+  /// one rooftop.
+  static const double _maxFitZoom = 17.5;
 
   @override
   void initState() {
@@ -146,6 +168,12 @@ class _ProviderLiveMapState extends State<ProviderLiveMap>
   /// bearing from the travel direction. Single home for marker movement.
   void _animateProviderTo(LatLng from, LatLng to) {
     final bearing = _calculateBearing(from, to);
+    if (MediaQuery.maybeOf(context)?.disableAnimations ?? false) {
+      if (mounted) {
+        setState(() => _animatedProviderPos = to);
+      }
+      return;
+    }
     if (bearing != 0.0) {
       _currentBearing = bearing;
     }
@@ -250,8 +278,12 @@ class _ProviderLiveMapState extends State<ProviderLiveMap>
     return (rad * 180.0 / math.pi + 360.0) % 360.0;
   }
 
-  void _fitCamera() {
+  /// [force] re-fits even after the user has panned or zoomed, which is what
+  /// the "Fit View" control does. Automatic refits stop once the driver takes
+  /// manual control of the camera, so live GPS updates never yank the view.
+  void _fitCamera({bool force = false}) {
     if (!mounted) return;
+    if (_userMovedCamera && !force) return;
     // Mid-draw the marker position is choreographed, not real GPS — don't
     // refit the viewport to it (the move-anim keeps updating the real pos).
     if (_drawPos != null) return;
@@ -272,18 +304,99 @@ class _ProviderLiveMapState extends State<ProviderLiveMap>
 
     try {
       if (provider != null && customer != null) {
-        _mapController.fitCamera(
-          CameraFit.bounds(
-            bounds: LatLngBounds.fromPoints([provider, customer]),
-            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 56),
-          ),
-        );
+        _mapController.fitCamera(_boundsFit(provider, customer, _mapSize));
       } else if (provider != null) {
         _mapController.move(provider, 14.5);
       } else if (customer != null) {
         _mapController.move(customer, 14.5);
       }
     } catch (_) {}
+  }
+
+  /// Fit for the two endpoints, padded so the pins and their labels stay
+  /// inside the viewport.
+  CameraFit _boundsFit(LatLng a, LatLng b, Size? size) => CameraFit.bounds(
+    bounds: LatLngBounds.fromPoints([a, b]),
+    padding: _fitPadding(size),
+    minZoom: _minMapZoom,
+    maxZoom: _maxFitZoom,
+  );
+
+  /// Padding is a fraction of the real viewport, capped at the roomy default.
+  ///
+  /// A constant 40/56 padding is fatal in the 110px cockpit snippet: the
+  /// vertical padding alone exceeds the height, so the fit math divides by a
+  /// zero-height box and the camera falls back to zoom 0 — the whole world,
+  /// tiled five times over.
+  EdgeInsets _fitPadding(Size? size) {
+    if (size == null || size.isEmpty) {
+      return const EdgeInsets.symmetric(horizontal: 24, vertical: 24);
+    }
+    return EdgeInsets.symmetric(
+      horizontal: math.min(40, size.width * 0.15),
+      vertical: math.min(56, size.height * 0.15),
+    );
+  }
+
+  String _formatAge(DateTime value) {
+    final minutes = DateTime.now().difference(value.toLocal()).inMinutes;
+    if (minutes <= 0) return 'just now';
+    if (minutes == 1) return '1 minute ago';
+    if (minutes < 60) return '$minutes minutes ago';
+    final hours = minutes ~/ 60;
+    return hours == 1 ? '1 hour ago' : '$hours hours ago';
+  }
+
+  Widget _buildTextAlternative() {
+    final provider = widget.providerLocation;
+    final route = widget.route;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainerLowest.withValues(alpha: 0.94),
+        borderRadius: AppRadius.cardBorder,
+        border: Border.all(
+          color: AppColors.outlineVariant.withValues(alpha: 0.2),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Tracking text view',
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            provider == null
+                ? 'Provider location is not available.'
+                : 'Provider location received ${_formatAge(provider.receivedAt)} · accuracy ${provider.accuracyMeters.round()} m',
+            style: const TextStyle(
+              fontSize: 11,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          Text(
+            widget.estimatedMinutes == null
+                ? 'ETA is not available.'
+                : 'Estimated arrival: ${widget.estimatedMinutes} minutes. This is an estimate.',
+            style: const TextStyle(
+              fontSize: 11,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          if (route != null)
+            Text(
+              'Route distance: ${(route.distanceMeters / 1000).toStringAsFixed(1)} km · ${route.coordinates.length} route points',
+              style: const TextStyle(
+                fontSize: 11,
+                color: AppColors.textSecondary,
+              ),
+            ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -309,7 +422,7 @@ class _ProviderLiveMapState extends State<ProviderLiveMap>
         child: ClipRRect(
           borderRadius: AppRadius.cardBorder,
           child: SizedBox(
-            height: 348,
+            height: widget.height,
             child: Container(
               color: AppColors.surfaceContainerHigh,
               alignment: Alignment.center,
@@ -348,98 +461,119 @@ class _ProviderLiveMapState extends State<ProviderLiveMap>
       child: ClipRRect(
         borderRadius: AppRadius.cardBorder,
         child: SizedBox(
-          height: 348,
+          height: widget.height,
           child: Stack(
             children: [
-              FlutterMap(
-                mapController: _mapController,
-                options: MapOptions(
-                  initialCenter: center,
-                  initialZoom: (provider != null && customer != null)
-                      ? 11.5
-                      : 14.5,
-                ),
-                children: [
-                  TileLayer(
-                    urlTemplate:
-                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    userAgentPackageName: 'com.fixnow.app',
-                  ),
-                  if (provider != null && customer != null)
-                    PolylineLayer(
-                      polylines: [
-                        Polyline(
-                          points:
-                              widget.route?.coordinates
-                                  .map(
-                                    (point) =>
-                                        LatLng(point.latitude, point.longitude),
-                                  )
-                                  .toList() ??
-                              [provider, customer],
-                          strokeWidth: widget.route == null ? 6 : 9,
-                          color: Colors.white.withValues(alpha: 0.9),
-                          pattern: widget.route == null
-                              ? const StrokePattern.dotted()
-                              : const StrokePattern.solid(),
-                        ),
-                        Polyline(
-                          points:
-                              widget.route?.coordinates
-                                  .map(
-                                    (point) =>
-                                        LatLng(point.latitude, point.longitude),
-                                  )
-                                  .toList() ??
-                              [provider, customer],
-                          strokeWidth: widget.route == null ? 3 : 5,
-                          color: AppColors.primary,
-                          pattern: widget.route == null
-                              ? const StrokePattern.dotted()
-                              : const StrokePattern.solid(),
-                        ),
-                        // Progressive draw-on overlay (replays once on route
-                        // arrival — see _maybeStartRouteDraw).
-                        if (_sliced.length > 1)
-                          Polyline(
-                            points: _sliced,
-                            strokeWidth: 5,
-                            color: AppColors.live,
-                            pattern: const StrokePattern.solid(),
-                          ),
-                      ],
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  // Captured before FlutterMap lays out, so the very first
+                  // frame already fits the job instead of flashing the world.
+                  _mapSize = constraints.biggest;
+                  return FlutterMap(
+                    mapController: _mapController,
+                    options: MapOptions(
+                      initialCenter: center,
+                      initialZoom: (provider != null && customer != null)
+                          ? 11.5
+                          : 14.5,
+                      initialCameraFit: (provider != null && customer != null)
+                          ? _boundsFit(provider, customer, _mapSize)
+                          : null,
+                      minZoom: _minMapZoom,
+                      maxZoom: 19,
+                      keepAlive: true,
+                      onPositionChanged: (camera, hasGesture) {
+                        if (!hasGesture) return;
+                        _userMovedCamera = true;
+                      },
                     ),
-                  MarkerLayer(
-                    markers: [
-                      if (provider != null)
-                        Marker(
-                          // During the draw-on the marker rides the route
-                          // head; afterwards it follows live GPS.
-                          point: _drawPos ?? provider,
-                          width: 72,
-                          height: 84,
-                          child: _VehicleMapPin(
-                            bearing: _drawPos != null
-                                ? _drawBearing
-                                : _currentBearing,
-                            isLive: true,
-                          ),
+                    children: [
+                      TileLayer(
+                        urlTemplate:
+                            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        userAgentPackageName: 'com.fixnow.app',
+                      ),
+                      if (provider != null && customer != null)
+                        PolylineLayer(
+                          polylines: [
+                            Polyline(
+                              points:
+                                  widget.route?.coordinates
+                                      .map(
+                                        (point) => LatLng(
+                                          point.latitude,
+                                          point.longitude,
+                                        ),
+                                      )
+                                      .toList() ??
+                                  [provider, customer],
+                              strokeWidth: widget.route == null ? 6 : 9,
+                              color: Colors.white.withValues(alpha: 0.9),
+                              pattern: widget.route == null
+                                  ? const StrokePattern.dotted()
+                                  : const StrokePattern.solid(),
+                            ),
+                            Polyline(
+                              points:
+                                  widget.route?.coordinates
+                                      .map(
+                                        (point) => LatLng(
+                                          point.latitude,
+                                          point.longitude,
+                                        ),
+                                      )
+                                      .toList() ??
+                                  [provider, customer],
+                              strokeWidth: widget.route == null ? 3 : 5,
+                              color: AppColors.primary,
+                              pattern: widget.route == null
+                                  ? const StrokePattern.dotted()
+                                  : const StrokePattern.solid(),
+                            ),
+                            // Progressive draw-on overlay (replays once on route
+                            // arrival — see _maybeStartRouteDraw).
+                            if (_sliced.length > 1)
+                              Polyline(
+                                points: _sliced,
+                                strokeWidth: 5,
+                                color: AppColors.live,
+                                pattern: const StrokePattern.solid(),
+                              ),
+                          ],
                         ),
-                      if (customer != null)
-                        Marker(
-                          point: customer,
-                          width: 64,
-                          height: 76,
-                          child: const _MapPin(
-                            icon: Icons.home_rounded,
-                            color: AppColors.success,
-                            label: 'You',
-                            caption: 'Service address',
-                          ),
-                        ),
+                      MarkerLayer(
+                        markers: [
+                          if (provider != null)
+                            Marker(
+                              // During the draw-on the marker rides the route
+                              // head; afterwards it follows live GPS.
+                              point: _drawPos ?? provider,
+                              width: 72,
+                              height: 84,
+                              child: _VehicleMapPin(
+                                bearing: _drawPos != null
+                                    ? _drawBearing
+                                    : _currentBearing,
+                                isLive: true,
+                              ),
+                            ),
+                          if (customer != null)
+                            Marker(
+                              point: customer,
+                              width: 64,
+                              height: 76,
+                              child: const _MapPin(
+                                icon: Icons.home_rounded,
+                                color: AppColors.success,
+                                label: 'You',
+                                caption: 'Service address',
+                              ),
+                            ),
+                        ],
+                      ),
                     ],
-                  ),
-                ],
+                  );
+                },
               ),
               if (widget.showOverlay)
                 const Positioned.fill(
@@ -526,7 +660,7 @@ class _ProviderLiveMapState extends State<ProviderLiveMap>
                     elevation: 4,
                     child: InkWell(
                       borderRadius: BorderRadius.circular(AppRadius.pill),
-                      onTap: _fitCamera,
+                      onTap: () => _fitCamera(force: true),
                       child: const Padding(
                         padding: EdgeInsets.symmetric(
                           horizontal: 10,
@@ -560,12 +694,46 @@ class _ProviderLiveMapState extends State<ProviderLiveMap>
                   left: AppSpacing.md,
                   right: AppSpacing.md,
                   bottom: AppSpacing.md,
-                  child: IgnorePointer(
-                    child: _JourneyOverlay(
-                      hasCustomerLocation: customer != null,
-                      estimatedMinutes: widget.estimatedMinutes,
-                      distanceKm: widget.distanceKm,
-                      isProviderPerspective: widget.isProviderPerspective,
+                  child: _showTextView
+                      ? _buildTextAlternative()
+                      : IgnorePointer(
+                          child: _JourneyOverlay(
+                            hasCustomerLocation: customer != null,
+                            estimatedMinutes: widget.estimatedMinutes,
+                            distanceKm: widget.distanceKm,
+                            isProviderPerspective: widget.isProviderPerspective,
+                          ),
+                        ),
+                ),
+              if (widget.showOverlay)
+                Positioned(
+                  right: AppSpacing.md,
+                  bottom: _showTextView ? 142 : 86,
+                  child: Semantics(
+                    button: true,
+                    label: _showTextView
+                        ? 'Hide tracking text view'
+                        : 'Show tracking text view',
+                    child: TextButton.icon(
+                      onPressed: () =>
+                          setState(() => _showTextView = !_showTextView),
+                      icon: Icon(
+                        _showTextView
+                            ? Icons.map_rounded
+                            : Icons.text_snippet_outlined,
+                        size: 15,
+                      ),
+                      label: Text(_showTextView ? 'Map view' : 'Text view'),
+                      style: TextButton.styleFrom(
+                        backgroundColor: AppColors.surfaceElevated.withValues(
+                          alpha: 0.94,
+                        ),
+                        foregroundColor: AppColors.textPrimary,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -629,11 +797,11 @@ class _JourneyOverlay extends StatelessWidget {
               Text(
                 isProviderPerspective
                     ? (hasCustomerLocation
-                        ? 'Heading to customer destination'
-                        : 'Your location is active')
+                          ? 'Heading to customer destination'
+                          : 'Your location is active')
                     : (hasCustomerLocation
-                        ? 'Provider is on the way'
-                        : 'Provider location is live'),
+                          ? 'Provider is on the way'
+                          : 'Provider location is live'),
                 style: const TextStyle(
                   color: AppColors.textOnDarkPrimary,
                   fontWeight: FontWeight.w700,

@@ -15,7 +15,9 @@ const toIsoString = (value: Date | null | undefined): string | null =>
  * matches what the service persisted at creation time. Bookings without
  * line items present no pricing (payment falls back to category price).
  */
-const presentPricing = (booking: Booking): BookingPricingContract | null => {
+export const presentBookingPricing = (
+  booking: Booking,
+): BookingPricingContract | null => {
   const totals = computeBookingTotals(booking.items);
   if (!booking.items?.length || !booking.totalAmountMinor) return null;
   return {
@@ -25,6 +27,8 @@ const presentPricing = (booking: Booking): BookingPricingContract | null => {
     currency: 'INR',
   };
 };
+
+const presentPricing = presentBookingPricing;
 
 export const presentBooking = (booking: Booking): BookingContract => ({
   id: booking.id,

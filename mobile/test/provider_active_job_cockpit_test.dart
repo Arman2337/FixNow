@@ -1,3 +1,4 @@
+import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_theme.dart';
 import 'package:fixnow_mobile/design_system/fix_otp_input_sheet.dart';
 import 'package:fixnow_mobile/features/bookings/booking.dart';
@@ -14,6 +15,7 @@ class _FakeProviderRepository implements ProviderRepository {
   CustomerBooking? lastUpdatedJob;
   String? lastUpdatedStatus;
   String? lastVerifiedOtp;
+  List<BookingItemDraft>? lastSubmittedItems;
 
   @override
   Future<List<CustomerBooking>> jobs() async => [];
@@ -66,14 +68,16 @@ class _FakeProviderRepository implements ProviderRepository {
     String bookingId,
     List<Map<String, dynamic>> lineItems,
   ) async {
-    final job = lastUpdatedJob ?? CustomerBooking(
-      id: bookingId,
-      serviceCategoryId: 'plumbing',
-      status: 'IN_PROGRESS',
-      description: '',
-      createdAt: DateTime.now(),
-      version: 1,
-    );
+    final job =
+        lastUpdatedJob ??
+        CustomerBooking(
+          id: bookingId,
+          serviceCategoryId: 'plumbing',
+          status: 'IN_PROGRESS',
+          description: '',
+          createdAt: DateTime.now(),
+          version: 1,
+        );
     return job.copyWith(version: job.version + 1);
   }
 
@@ -88,7 +92,21 @@ class _FakeProviderRepository implements ProviderRepository {
     List<BookingItemDraft> items,
   ) async {
     lastUpdatedJob = job;
-    return job.copyWith(items: null, version: job.version + 1);
+    lastSubmittedItems = items;
+    final updated = job.copyWith(
+      items: items
+          .map(
+            (draft) => BookingLineItem(
+              id: draft.id,
+              name: draft.name,
+              quantity: draft.quantity,
+              unitPriceMinor: draft.unitPriceMinor,
+            ),
+          )
+          .toList(growable: false),
+      version: job.version + 1,
+    );
+    return updated;
   }
 
   @override
@@ -155,6 +173,14 @@ class _FakeProviderRepository implements ProviderRepository {
 }
 
 void main() {
+  test('maps provider statuses to user-facing labels', () {
+    expect(providerStatusLabel('ASSIGNED'), 'Assigned');
+    expect(providerStatusLabel('EN_ROUTE'), 'En route');
+    expect(providerStatusLabel('ARRIVED'), 'Arrived');
+    expect(providerStatusLabel('IN_PROGRESS'), 'In progress');
+    expect(providerStatusLabel('COMPLETED'), 'Completed');
+  });
+
   late _FakeProviderRepository repository;
   late ProviderController controller;
 
@@ -206,13 +232,17 @@ void main() {
 
     Future<void> openCockpit(WidgetTester tester, CustomerBooking job) async {
       controller.jobs = [job];
-      await tester.pumpWidget(wrapWidget(
-        ProviderActiveJobCockpitScreen(job: job, controller: controller),
-      ));
+      await tester.pumpWidget(
+        wrapWidget(
+          ProviderActiveJobCockpitScreen(job: job, controller: controller),
+        ),
+      );
       await tester.pumpAndSettle();
     }
 
-    testWidgets('Navigate opens directions without changing sharing consent', (tester) async {
+    testWidgets('Navigate opens directions without changing sharing consent', (
+      tester,
+    ) async {
       await openCockpit(tester, createJob('ASSIGNED'));
       await tester.tap(find.text('Navigate'));
       await tester.pumpAndSettle();
@@ -237,10 +267,16 @@ void main() {
       expect(calls, hasLength(1));
     });
 
-    testWidgets('missing destination never launches default coordinates', (tester) async {
+    testWidgets('missing destination never launches default coordinates', (
+      tester,
+    ) async {
       final job = CustomerBooking(
-        id: 'job-1234-5678-90ab', serviceCategoryId: 'plumbing',
-        status: 'ASSIGNED', description: 'Repair sink', createdAt: DateTime(2026), version: 1,
+        id: 'job-1234-5678-90ab',
+        serviceCategoryId: 'plumbing',
+        status: 'ASSIGNED',
+        description: 'Repair sink',
+        createdAt: DateTime(2026),
+        version: 1,
       );
       await openCockpit(tester, job);
       expect(find.byType(ProviderLiveMap), findsNothing);
@@ -249,10 +285,14 @@ void main() {
     });
 
     for (final failure in ['platform', 'missing', 'false']) {
-      testWidgets('shows recoverable error for $failure navigation failure', (tester) async {
+      testWidgets('shows recoverable error for $failure navigation failure', (
+        tester,
+      ) async {
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
             .setMockMethodCallHandler(channel, (call) async {
-              if (failure == 'platform') throw PlatformException(code: 'NAVIGATION_ERROR');
+              if (failure == 'platform') {
+                throw PlatformException(code: 'NAVIGATION_ERROR');
+              }
               if (failure == 'missing') throw MissingPluginException();
               return false;
             });
@@ -333,14 +373,11 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('ARRIVED AT LOCATION'), findsOneWidget);
+      expect(find.text('EN ROUTE'), findsOneWidget);
       expect(find.text('Verify PIN & Start Job'), findsOneWidget);
 
       // Inline 4-digit input feeds the verify flow directly
-      await tester.enterText(
-        find.byKey(const Key('otp_hidden_input')),
-        '7362',
-      );
+      await tester.enterText(find.byKey(const Key('otp_hidden_input')), '7362');
       await tester.pumpAndSettle();
       await tester.tap(find.text('Verify PIN & Start Job'));
       await tester.pumpAndSettle();
@@ -389,8 +426,51 @@ void main() {
     },
   );
 
-  testWidgets('ProviderActiveJobCockpitScreen allows opening and updating Adjust Services & Price with BookingLineItem', (tester) async {
-    final job = CustomerBooking(
+  testWidgets(
+    'ProviderActiveJobCockpitScreen allows opening and updating Adjust Services & Price with BookingLineItem',
+    (tester) async {
+      final job = CustomerBooking(
+        id: 'job-1234-5678-90ab',
+        serviceCategoryId: 'plumbing',
+        status: 'IN_PROGRESS',
+        description: 'Kitchen sink pipe is leaking heavily.',
+        createdAt: DateTime.now(),
+        version: 1,
+        locationLatitude: 18.9220,
+        locationLongitude: 72.8347,
+        items: const [
+          BookingLineItem(
+            id: 'item-1',
+            name: 'Pipe Replacement',
+            quantity: 1,
+            unitPriceMinor: 49900,
+          ),
+        ],
+      );
+      controller.jobs = [job];
+
+      await tester.pumpWidget(
+        wrapWidget(
+          ProviderActiveJobCockpitScreen(job: job, controller: controller),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const Key('cockpit_adjust_services_button')),
+        findsOneWidget,
+      );
+      await tester.tap(find.byKey(const Key('cockpit_adjust_services_button')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Adjust Services'), findsOneWidget);
+      expect(find.text('Pipe Replacement'), findsOneWidget);
+      expect(find.text('Update Booking'), findsOneWidget);
+    },
+  );
+
+  group('Adjust Services sheet', () {
+    CustomerBooking adjustableJob() => CustomerBooking(
       id: 'job-1234-5678-90ab',
       serviceCategoryId: 'plumbing',
       status: 'IN_PROGRESS',
@@ -408,24 +488,166 @@ void main() {
         ),
       ],
     );
-    controller.jobs = [job];
 
-    await tester.pumpWidget(
-      wrapWidget(
-        ProviderActiveJobCockpitScreen(
-          job: job,
-          controller: controller,
+    Future<void> openSheet(WidgetTester tester) async {
+      final job = adjustableJob();
+      controller.jobs = [job];
+      await tester.pumpWidget(
+        wrapWidget(
+          ProviderActiveJobCockpitScreen(job: job, controller: controller),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('cockpit_adjust_services_button')));
+      await tester.pumpAndSettle();
+    }
 
-    expect(find.byKey(const Key('cockpit_adjust_services_button')), findsOneWidget);
-    await tester.tap(find.byKey(const Key('cockpit_adjust_services_button')));
-    await tester.pumpAndSettle();
+    // Regression: the sheet painted a light surface while every label was still
+    // styled for a dark one, so the title, the line items, the "Customer pays"
+    // row and both inputs were white-on-white and effectively invisible.
+    testWidgets('renders every label at AA contrast on the sheet surface', (
+      tester,
+    ) async {
+      await openSheet(tester);
 
-    expect(find.text('Adjust Services'), findsOneWidget);
-    expect(find.text('Pipe Replacement'), findsOneWidget);
-    expect(find.text('Update Booking'), findsOneWidget);
+      // The two opaque surfaces the sheet actually paints.
+      const surfaces = [
+        AppColors.surfaceContainerLowest,
+        AppColors.surfaceContainerLow,
+      ];
+      const labels = [
+        'Adjust Services',
+        'Update the work actually done. The customer sees the revised list and total.',
+        'Pipe Replacement',
+        'Customer pays (incl. 18% GST)',
+        'Add work found on site',
+      ];
+
+      for (final label in labels) {
+        final finder = find.text(label);
+        expect(finder, findsOneWidget, reason: 'missing label: $label');
+        final text = tester.widget<Text>(finder);
+        final color =
+            text.style?.color ??
+            DefaultTextStyle.of(tester.element(finder)).style.color;
+        expect(color, isNotNull, reason: 'label has no resolved color: $label');
+        for (final surface in surfaces) {
+          expect(
+            _contrastRatio(color!, surface),
+            greaterThanOrEqualTo(4.5),
+            reason: '"$label" must meet AA on $surface',
+          );
+        }
+      }
+    });
+
+    testWidgets('input hints and the close control stay readable', (
+      tester,
+    ) async {
+      await openSheet(tester);
+
+      final fields = tester
+          .widgetList<TextField>(find.byType(TextField))
+          .map((field) => field.decoration)
+          .where((decoration) => decoration?.hintText != null)
+          .cast<InputDecoration>()
+          .toList();
+      expect(fields, hasLength(2));
+
+      for (final decoration in fields) {
+        // Judged against the field's own fill, which is what the user sees.
+        const fill = AppColors.surfaceContainerLowest;
+        expect(
+          _contrastRatio(decoration.hintStyle!.color!, fill),
+          greaterThanOrEqualTo(4.5),
+          reason: 'field hint must meet AA on its own fill',
+        );
+        expect(
+          _contrastRatio(decoration.enabledBorder!.borderSide.color, fill),
+          greaterThanOrEqualTo(1.4),
+          reason: 'field border must be clearly perceptible on its own fill',
+        );
+      }
+
+      final close = tester.widget<Icon>(find.byIcon(Icons.close_rounded));
+      expect(
+        _contrastRatio(close.color!, AppColors.surfaceContainerLowest),
+        greaterThanOrEqualTo(4.5),
+      );
+    });
+
+    testWidgets('adds on-site work and charges 18% GST on the new subtotal', (
+      tester,
+    ) async {
+      await openSheet(tester);
+
+      // 499.00 base + 250.00 on-site = 749.00 subtotal, +18% GST = 883.82.
+      expect(find.text('₹588.82'), findsOneWidget);
+
+      await tester.enterText(
+        find.widgetWithText(TextField, 'e.g. New tap cartridge'),
+        'New tap cartridge',
+      );
+      await tester.enterText(find.widgetWithText(TextField, '₹ price'), '250');
+      await tester.tap(find.bySemanticsLabel('Add custom service line'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('New tap cartridge'), findsOneWidget);
+      expect(find.text('₹250 × 1 = ₹250'), findsOneWidget);
+      // Subtotal 74900 + 18% = 88382 minor.
+      expect(find.text('₹883.82'), findsOneWidget);
+    });
+
+    testWidgets('submits the edited line list and closes on success', (
+      tester,
+    ) async {
+      await openSheet(tester);
+
+      await tester.enterText(
+        find.widgetWithText(TextField, 'e.g. New tap cartridge'),
+        'New tap cartridge',
+      );
+      await tester.enterText(find.widgetWithText(TextField, '₹ price'), '250');
+      await tester.tap(find.bySemanticsLabel('Add custom service line'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Update Booking'));
+      await tester.pumpAndSettle();
+
+      final submitted = repository.lastSubmittedItems;
+      expect(submitted, isNotNull);
+      expect(submitted, hasLength(2));
+      expect(submitted!.first.name, 'Pipe Replacement');
+      expect(submitted.last.name, 'New tap cartridge');
+      expect(submitted.last.unitPriceMinor, 25000);
+      expect(find.text('Adjust Services'), findsNothing);
+    });
+
+    testWidgets('quantity stepper edits the line and repriced the total', (
+      tester,
+    ) async {
+      await openSheet(tester);
+
+      await tester.tap(
+        find.bySemanticsLabel('Increase quantity of Pipe Replacement'),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('₹499 × 2 = ₹998'), findsOneWidget);
+      // 998.00 subtotal + 18% = 1177.64.
+      expect(find.text('₹1177.64'), findsOneWidget);
+    });
   });
+}
+
+double _contrastRatio(Color foreground, Color background) {
+  final foregroundLuminance = foreground.computeLuminance();
+  final backgroundLuminance = background.computeLuminance();
+  final lighter = foregroundLuminance > backgroundLuminance
+      ? foregroundLuminance
+      : backgroundLuminance;
+  final darker = foregroundLuminance > backgroundLuminance
+      ? backgroundLuminance
+      : foregroundLuminance;
+  return (lighter + 0.05) / (darker + 0.05);
 }

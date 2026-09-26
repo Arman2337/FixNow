@@ -17,8 +17,18 @@ import 'package:fixnow_mobile/features/provider/provider_controller.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking.dart';
 import 'package:fixnow_mobile/features/tracking/provider_live_map.dart';
 import 'package:fixnow_mobile/features/provider/provider_home_screen.dart';
+import 'package:fixnow_mobile/features/provider/provider_navigation_map_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+String providerStatusLabel(String status) => switch (status) {
+  'ASSIGNED' => 'Assigned',
+  'EN_ROUTE' => 'En route',
+  'ARRIVED' => 'Arrived',
+  'IN_PROGRESS' => 'In progress',
+  'COMPLETED' => 'Completed',
+  _ => 'Status unavailable',
+};
 
 class ProviderActiveJobCockpitScreen extends StatefulWidget {
   const ProviderActiveJobCockpitScreen({
@@ -82,8 +92,6 @@ class _ProviderActiveJobCockpitScreenState
     _locationTimer?.cancel();
     _locationTimer = null;
   }
-
-
 
   @override
   void dispose() {
@@ -202,9 +210,9 @@ class _ProviderActiveJobCockpitScreenState
     if (job.customerPhone != null) {
       const CallController().launchCall(job.customerPhone!);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Phone number unavailable')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Phone number unavailable')));
     }
   }
 
@@ -213,10 +221,8 @@ class _ProviderActiveJobCockpitScreenState
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => _ServiceAdjustmentSheet(
-        job: job,
-        controller: widget.controller,
-      ),
+      builder: (ctx) =>
+          _ServiceAdjustmentSheet(job: job, controller: widget.controller),
     );
     if (updated != null && mounted) {
       showFixBanner(
@@ -378,19 +384,15 @@ class _ProviderActiveJobCockpitScreenState
 
   Widget _buildPriorityCockpit(CustomerBooking job) {
     final shortId = job.id.replaceAll('-', '').substring(0, 8).toUpperCase();
-    String pillText = 'WAITING FOR START';
+    final pillText = switch (job.status) {
+      'IN_PROGRESS' => 'SERVICE IN PROGRESS',
+      'COMPLETED' => 'JOB COMPLETED',
+      _ => providerStatusLabel(job.status).toUpperCase(),
+    };
     Color pillColor = AppColors.textSecondary;
-    if (job.status == 'EN_ROUTE') {
-      pillText = 'Arrived At Location';
+    if (job.status == 'EN_ROUTE' || job.status == 'COMPLETED') {
       pillColor = AppColors.primary;
-    } else if (job.status == 'IN_PROGRESS') {
-      pillText = 'Service In Progress';
-      pillColor = const Color(0xFFa36700); // tertiary
-    } else if (job.status == 'COMPLETED') {
-      pillText = 'Job Completed';
-      pillColor = AppColors.primary;
-    } else if (job.status == 'ASSIGNED') {
-      pillText = 'Assigned Job';
+    } else if (job.status == 'IN_PROGRESS' || job.status == 'ASSIGNED') {
       pillColor = const Color(0xFFa36700);
     }
 
@@ -605,88 +607,137 @@ class _ProviderActiveJobCockpitScreenState
                     onTap: () => _openMaps(job),
                     child: Container(
                       height: 110,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceContainer,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Stack(
-                      children: [
-                        Positioned.fill(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: AppColors.surfaceContainerHighest,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: IgnorePointer(
-                                child: ProviderLiveMap(
-                                  showOverlay: false,
-                                  route: widget.controller.currentRoute,
-                                  providerLocation:
-                                      widget.controller.currentLocation,
-                                  customerLocation:
-                                      job.locationLatitude != null &&
-                                              job.locationLongitude != null
-                                          ? CustomerMapLocation(
-                                              latitude: job.locationLatitude!,
-                                              longitude: job.locationLongitude!,
-                                            )
-                                          : null,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceContainer,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Stack(
+                        children: [
+                          Positioned.fill(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: AppColors.surfaceContainerHighest,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: IgnorePointer(
+                                  child: ProviderLiveMap(
+                                    showOverlay: false,
+                                    height: 110,
+                                    route: widget.controller.currentRoute,
+                                    providerLocation:
+                                        widget.controller.currentLocation,
+                                    customerLocation:
+                                        job.locationLatitude != null &&
+                                            job.locationLongitude != null
+                                        ? CustomerMapLocation(
+                                            latitude: job.locationLatitude!,
+                                            longitude: job.locationLongitude!,
+                                          )
+                                        : null,
+                                  ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                        Positioned.fill(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
-                              color: Colors.black.withValues(alpha: 0.1),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          bottom: 8,
-                          left: 8,
-                          child: GestureDetector(
-                            onTap: () => _openMaps(job),
+                          Positioned.fill(
                             child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
                               decoration: BoxDecoration(
-                                color: AppColors.surfaceContainerLowest
-                                    .withValues(alpha: 0.9),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Row(
-                                children: const [
-                                  Icon(
-                                    Icons.navigation_rounded,
-                                    color: AppColors.primary,
-                                    size: 14,
-                                  ),
-                                  SizedBox(width: 4),
-                                  Text(
-                                    'Navigate',
-                                    style: TextStyle(
-                                      color: AppColors.textPrimary,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
+                                borderRadius: BorderRadius.circular(8),
+                                color: Colors.black.withValues(alpha: 0.1),
                               ),
                             ),
                           ),
-                        ),
-                      ],
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: Material(
+                              color: AppColors.surfaceContainerLowest
+                                  .withValues(alpha: 0.92),
+                              borderRadius: BorderRadius.circular(8),
+                              child: InkWell(
+                                onTap: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          ProviderNavigationMapScreen(
+                                            job: job,
+                                            controller: widget.controller,
+                                          ),
+                                    ),
+                                  );
+                                },
+                                borderRadius: BorderRadius.circular(8),
+                                child: const Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 6,
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.map_outlined,
+                                        size: 16,
+                                        color: AppColors.textPrimary,
+                                      ),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        'Route Map',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.textPrimary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 8,
+                            left: 8,
+                            child: GestureDetector(
+                              onTap: () => _openMaps(job),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.surfaceContainerLowest
+                                      .withValues(alpha: 0.9),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Row(
+                                  children: const [
+                                    Icon(
+                                      Icons.navigation_rounded,
+                                      color: AppColors.primary,
+                                      size: 14,
+                                    ),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      'Navigate',
+                                      style: TextStyle(
+                                        color: AppColors.textPrimary,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
               ],
             ),
           ),
@@ -880,8 +931,8 @@ class _ProviderActiveJobCockpitScreenState
                     child: Text(
                       isSharing
                           ? (currentLoc != null
-                              ? 'Live GPS shared with customer (${currentLoc.latitude.toStringAsFixed(4)}, ${currentLoc.longitude.toStringAsFixed(4)})'
-                              : 'Broadcasting live GPS to customer')
+                                ? 'Live GPS shared with customer (${currentLoc.latitude.toStringAsFixed(4)}, ${currentLoc.longitude.toStringAsFixed(4)})'
+                                : 'Broadcasting live GPS to customer')
                           : 'Location sharing is paused',
                       style: TextStyle(
                         color: isSharing
@@ -1020,7 +1071,9 @@ class _ProviderActiveJobCockpitScreenState
                   ],
                 ),
                 const SizedBox(height: 8),
-                if (job.lineItems.where((item) => item.type == 'EXTRA_CHARGE').isEmpty)
+                if (job.lineItems
+                    .where((item) => item.type == 'EXTRA_CHARGE')
+                    .isEmpty)
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 8),
                     child: Center(
@@ -1034,29 +1087,33 @@ class _ProviderActiveJobCockpitScreenState
                     ),
                   )
                 else
-                  ...job.lineItems.where((item) => item.type == 'EXTRA_CHARGE').map((item) => Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              item.description,
-                              style: const TextStyle(
-                                color: AppColors.textPrimary,
-                                fontSize: 13,
+                  ...job.lineItems
+                      .where((item) => item.type == 'EXTRA_CHARGE')
+                      .map(
+                        (item) => Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                item.description,
+                                style: const TextStyle(
+                                  color: AppColors.textPrimary,
+                                  fontSize: 13,
+                                ),
                               ),
-                            ),
-                            Text(
-                              '₹${(item.amount / 100).toStringAsFixed(2)}',
-                              style: const TextStyle(
-                                color: AppColors.textPrimary,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
+                              Text(
+                                '₹${(item.amount / 100).toStringAsFixed(2)}',
+                                style: const TextStyle(
+                                  color: AppColors.textPrimary,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      )),
+                      ),
               ],
             ),
           ),
@@ -1225,7 +1282,7 @@ class _ProviderActiveJobCockpitScreenState
   Future<void> _handleAddExtraCharge(CustomerBooking job) async {
     final descriptionController = TextEditingController();
     final amountController = TextEditingController();
-    
+
     final result = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
       isScrollControlled: true,
@@ -1274,7 +1331,8 @@ class _ProviderActiveJobCockpitScreenState
                     Navigator.pop(context, {
                       'type': 'EXTRA_CHARGE',
                       'description': desc,
-                      'amount': (amount * 100).toInt(), // assuming backend wants minor units, wait, DTO says positive number, backend expects minor units usually? Yes, amount is typically in paise.
+                      'amount': (amount * 100)
+                          .toInt(), // assuming backend wants minor units, wait, DTO says positive number, backend expects minor units usually? Yes, amount is typically in paise.
                     });
                   }
                 },
@@ -1408,15 +1466,15 @@ Future<bool> openCustomerNavigation(CustomerBooking job) async {
   if (!hasNavigationDestination(job)) return false;
   try {
     return await _navigationChannel.invokeMethod<bool>('openNavigation', {
-      'latitude': job.locationLatitude,
-      'longitude': job.locationLongitude,
-      'label': 'Customer Location',
-    }) ?? false;
+          'latitude': job.locationLatitude,
+          'longitude': job.locationLongitude,
+          'label': 'Customer Location',
+        }) ??
+        false;
   } catch (_) {
     return false;
   }
 }
-
 
 class _ServiceAdjustmentSheet extends StatefulWidget {
   const _ServiceAdjustmentSheet({required this.job, required this.controller});
@@ -1469,10 +1527,8 @@ class _ServiceAdjustmentSheetState extends State<_ServiceAdjustmentSheet> {
   String _money(int minor) =>
       '₹${(minor / 100).toStringAsFixed(minor % 100 == 0 ? 0 : 2)}';
 
-  int get _subtotalMinor => _lines.fold(
-        0,
-        (sum, item) => sum + item.unitPriceMinor * item.quantity,
-      );
+  int get _subtotalMinor =>
+      _lines.fold(0, (sum, item) => sum + item.unitPriceMinor * item.quantity);
 
   void _increment(int index) {
     final line = _lines[index];
@@ -1529,8 +1585,7 @@ class _ServiceAdjustmentSheetState extends State<_ServiceAdjustmentSheet> {
       _saving = true;
       _error = null;
     });
-    final updated =
-        await widget.controller.updateJobItems(widget.job, _lines);
+    final updated = await widget.controller.updateJobItems(widget.job, _lines);
     if (!mounted) return;
     if (updated == null) {
       setState(() {
@@ -1546,14 +1601,15 @@ class _ServiceAdjustmentSheetState extends State<_ServiceAdjustmentSheet> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding:
-          EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.lg),
         decoration: const BoxDecoration(
-          color: AppColors.backgroundPrimary,
+          color: AppColors.surfaceContainerLowest,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          border: Border(top: BorderSide(color: Colors.white12)),
+          border: Border(top: BorderSide(color: AppColors.border)),
         ),
         child: SafeArea(
           top: false,
@@ -1568,20 +1624,26 @@ class _ServiceAdjustmentSheetState extends State<_ServiceAdjustmentSheet> {
                     Text(
                       'Adjust Services',
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: AppColors.textPrimary,
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.close_rounded, color: Colors.white70),
+                      icon: const Icon(
+                        Icons.close_rounded,
+                        color: AppColors.textSecondary,
+                      ),
                       onPressed: () => Navigator.of(context).pop(),
                     ),
                   ],
                 ),
                 const Text(
                   'Update the work actually done. The customer sees the revised list and total.',
-                  style: TextStyle(color: Colors.white54, fontSize: 12),
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.md),
 
@@ -1590,7 +1652,10 @@ class _ServiceAdjustmentSheetState extends State<_ServiceAdjustmentSheet> {
                     padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
                     child: Text(
                       'No services on this booking yet. Add the work you are doing.',
-                      style: TextStyle(color: Colors.white54, fontSize: 13),
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 13,
+                      ),
                     ),
                   )
                 else
@@ -1600,18 +1665,21 @@ class _ServiceAdjustmentSheetState extends State<_ServiceAdjustmentSheet> {
                   ],
 
                 const SizedBox(height: AppSpacing.md),
-                const Divider(color: Colors.white12),
+                const Divider(color: AppColors.border),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
                       'Customer pays (incl. 18% GST)',
-                      style: TextStyle(color: Colors.white70, fontSize: 12),
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                      ),
                     ),
                     Text(
                       _money((_subtotalMinor * 1.18).round()),
                       style: const TextStyle(
-                        color: AppColors.focus,
+                        color: AppColors.primary,
                         fontWeight: FontWeight.w800,
                         fontSize: 16,
                       ),
@@ -1623,7 +1691,7 @@ class _ServiceAdjustmentSheetState extends State<_ServiceAdjustmentSheet> {
                 const Text(
                   'Add work found on site',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: AppColors.textPrimary,
                     fontWeight: FontWeight.w700,
                     fontSize: 13,
                   ),
@@ -1635,7 +1703,10 @@ class _ServiceAdjustmentSheetState extends State<_ServiceAdjustmentSheet> {
                       flex: 3,
                       child: TextField(
                         controller: _nameCtrl,
-                        style: const TextStyle(color: Colors.white, fontSize: 13),
+                        style: const TextStyle(
+                          color: AppColors.inputText,
+                          fontSize: 13,
+                        ),
                         decoration: _sheetInput('e.g. New tap cartridge'),
                       ),
                     ),
@@ -1644,24 +1715,35 @@ class _ServiceAdjustmentSheetState extends State<_ServiceAdjustmentSheet> {
                       flex: 2,
                       child: TextField(
                         controller: _priceCtrl,
-                        keyboardType:
-                            const TextInputType.numberWithOptions(decimal: true),
-                        style: const TextStyle(color: Colors.white, fontSize: 13),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        style: const TextStyle(
+                          color: AppColors.inputText,
+                          fontSize: 13,
+                        ),
                         decoration: _sheetInput('₹ price'),
                       ),
                     ),
                     const SizedBox(width: AppSpacing.sm),
-                    InkWell(
-                      onTap: _addCustomItem,
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                      child: Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                    Semantics(
+                      button: true,
+                      label: 'Add custom service line',
+                      child: InkWell(
+                        onTap: _addCustomItem,
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary,
+                            borderRadius: BorderRadius.circular(AppRadius.pill),
+                          ),
+                          child: const Icon(
+                            Icons.add_rounded,
+                            color: AppColors.onPrimary,
+                            size: 20,
+                          ),
                         ),
-                        child: const Icon(Icons.add_rounded,
-                            color: Colors.white, size: 20),
                       ),
                     ),
                   ],
@@ -1671,7 +1753,10 @@ class _ServiceAdjustmentSheetState extends State<_ServiceAdjustmentSheet> {
                   const SizedBox(height: AppSpacing.md),
                   Text(
                     _error!,
-                    style: const TextStyle(color: AppColors.danger, fontSize: 12),
+                    style: const TextStyle(
+                      color: AppColors.danger,
+                      fontSize: 12,
+                    ),
                   ),
                 ],
                 const SizedBox(height: AppSpacing.lg),
@@ -1694,9 +1779,9 @@ class _ServiceAdjustmentSheetState extends State<_ServiceAdjustmentSheet> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.surfaceElevated,
+        color: AppColors.surfaceContainerLow,
         borderRadius: BorderRadius.circular(AppRadius.small),
-        border: Border.all(color: Colors.white10),
+        border: Border.all(color: AppColors.border),
       ),
       child: Row(
         children: [
@@ -1707,7 +1792,7 @@ class _ServiceAdjustmentSheetState extends State<_ServiceAdjustmentSheet> {
                 Text(
                   line.name,
                   style: const TextStyle(
-                    color: Colors.white,
+                    color: AppColors.textPrimary,
                     fontWeight: FontWeight.w600,
                     fontSize: 13,
                   ),
@@ -1715,25 +1800,44 @@ class _ServiceAdjustmentSheetState extends State<_ServiceAdjustmentSheet> {
                 Text(
                   '${_money(line.unitPriceMinor)} × ${line.quantity} = '
                   '${_money(line.unitPriceMinor * line.quantity)}',
-                  style: const TextStyle(color: Colors.white54, fontSize: 11),
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 11,
+                  ),
                 ),
               ],
             ),
           ),
-          InkWell(
-            onTap: () => _decrement(index),
-            borderRadius: BorderRadius.circular(AppRadius.pill),
-            child: const Padding(
-              padding: EdgeInsets.all(6),
-              child: Icon(Icons.remove_rounded, color: Colors.white, size: 18),
+          Semantics(
+            button: true,
+            label: 'Decrease quantity of ${line.name}',
+            child: InkWell(
+              onTap: () => _decrement(index),
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+              child: const Padding(
+                padding: EdgeInsets.all(6),
+                child: Icon(
+                  Icons.remove_rounded,
+                  color: AppColors.textSecondary,
+                  size: 18,
+                ),
+              ),
             ),
           ),
-          InkWell(
-            onTap: () => _increment(index),
-            borderRadius: BorderRadius.circular(AppRadius.pill),
-            child: const Padding(
-              padding: EdgeInsets.all(6),
-              child: Icon(Icons.add_rounded, color: Colors.white, size: 18),
+          Semantics(
+            button: true,
+            label: 'Increase quantity of ${line.name}',
+            child: InkWell(
+              onTap: () => _increment(index),
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+              child: const Padding(
+                padding: EdgeInsets.all(6),
+                child: Icon(
+                  Icons.add_rounded,
+                  color: AppColors.textSecondary,
+                  size: 18,
+                ),
+              ),
             ),
           ),
         ],
@@ -1742,23 +1846,24 @@ class _ServiceAdjustmentSheetState extends State<_ServiceAdjustmentSheet> {
   }
 
   InputDecoration _sheetInput(String hint) => InputDecoration(
-        hintText: hint,
-        hintStyle: const TextStyle(color: Colors.white38, fontSize: 12),
-        filled: true,
-        fillColor: AppColors.surfaceElevated,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.small),
-          borderSide: const BorderSide(color: Colors.white12),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.small),
-          borderSide: const BorderSide(color: Colors.white12),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.small),
-          borderSide: const BorderSide(color: AppColors.primary),
-        ),
-      );
+    hintText: hint,
+    // inputHint (#94A3B8) only reaches ~2.6:1 on a white field, so the
+    // placeholder uses the readable secondary tone instead.
+    hintStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+    filled: true,
+    fillColor: AppColors.surfaceContainerLowest,
+    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(AppRadius.small),
+      borderSide: const BorderSide(color: AppColors.borderStrong),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(AppRadius.small),
+      borderSide: const BorderSide(color: AppColors.borderStrong),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(AppRadius.small),
+      borderSide: const BorderSide(color: AppColors.primary),
+    ),
+  );
 }

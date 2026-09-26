@@ -10,7 +10,10 @@ import 'package:fixnow_mobile/features/provider/provider_jobs_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_models.dart';
 import 'package:fixnow_mobile/features/provider/provider_navigation_map_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_repository.dart';
+import 'package:fixnow_mobile/features/tracking/booking_tracking.dart';
 import 'package:fixnow_mobile/features/tracking/provider_live_map.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 
 class _MockProviderRepository implements ProviderRepository {
   @override
@@ -209,6 +212,7 @@ void main() {
       expect(find.text('Navigate'), findsOneWidget);
 
       // Tapping Route Map pushes ProviderNavigationMapScreen
+      await tester.ensureVisible(find.text('Route Map'));
       await tester.tap(find.text('Route Map'));
       await tester.pumpAndSettle();
 
@@ -234,16 +238,101 @@ void main() {
       expect(find.text('Route Map'), findsOneWidget);
       expect(find.text('Navigate'), findsOneWidget);
 
-      // Verifies the in-cockpit Transit Route Preview card (scrolls to it in ListView)
-      await tester.scrollUntilVisible(find.text('Transit Route Preview'), 200);
-      expect(find.text('Transit Route Preview'), findsOneWidget);
-      expect(find.text('Tap to open full route map'), findsOneWidget);
+      expect(tester.takeException(), isNull);
 
       // Tapping Route Map opens ProviderNavigationMapScreen
       await tester.tap(find.text('Route Map'));
       await tester.pumpAndSettle();
 
       expect(find.byType(ProviderNavigationMapScreen), findsOneWidget);
+    });
+
+    // Regression: the screen used to plot the technician at the registered
+    // base pin (or a hard-coded 0.035 deg offset) and then draw a synthetic
+    // curved route between the two. For a job a few hundred metres away that
+    // detour dwarfed the trip, so the map claimed kilometres.
+    testWidgets('nearby job reports the real distance, not a synthetic detour', (
+      tester,
+    ) async {
+      final job = testJob('EN_ROUTE');
+      controller.jobs = [job];
+      controller.currentLocation = ProviderMapLocation(
+        latitude: 23.0305,
+        longitude: 72.5850,
+        accuracyMeters: 5,
+        capturedAt: DateTime(2026, 9, 26, 10),
+        receivedAt: DateTime(2026, 9, 26, 10),
+      );
+
+      await tester.pumpWidget(
+        wrap(ProviderNavigationMapScreen(job: job, controller: controller)),
+      );
+      await tester.pumpAndSettle();
+
+      // Provider and customer are ~250 m apart: the pill must read single
+      // digit hundreds of metres, not a multi-kilometre fabrication.
+      expect(find.textContaining('0.3 km'), findsOneWidget);
+
+      final camera = MapCamera.of(
+        tester.element(find.byType(TileLayer).first),
+      );
+      final visible = camera.visibleBounds;
+      expect(visible.contains(const LatLng(23.0305, 72.5850)), isTrue);
+      expect(visible.contains(const LatLng(23.0330, 72.5850)), isTrue);
+    });
+
+    testWidgets('route map uses the live GPS pin over the registered base pin', (
+      tester,
+    ) async {
+      final job = testJob('EN_ROUTE');
+      controller.jobs = [job];
+      // Base pin is ~1.2 km away; live GPS is next door.
+      controller.currentLocation = ProviderMapLocation(
+        latitude: 23.0305,
+        longitude: 72.5850,
+        accuracyMeters: 5,
+        capturedAt: DateTime(2026, 9, 26, 10),
+        receivedAt: DateTime(2026, 9, 26, 10),
+      );
+
+      await tester.pumpWidget(
+        wrap(ProviderNavigationMapScreen(job: job, controller: controller)),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('0.3 km'), findsOneWidget);
+    });
+
+    testWidgets('active job card remains usable at 320px with large text', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(320, 640);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final job = testJob('EN_ROUTE').copyWith(
+        description:
+            'Air conditioner repair for a very long customer address and issue description',
+      );
+      controller.jobs = [job];
+
+      await tester.pumpWidget(
+        MediaQuery(
+          data: const MediaQueryData(textScaler: TextScaler.linear(2)),
+          child: MaterialApp(
+            theme: AppTheme.dark,
+            home: ProviderJobsScreen(
+              controller: controller,
+              showHistory: false,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Route Map'), findsOneWidget);
+      expect(find.text('Navigate'), findsOneWidget);
     });
 
     testWidgets('MapNavigationLauncher invokes navigation channel cleanly', (tester) async {

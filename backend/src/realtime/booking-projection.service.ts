@@ -8,6 +8,7 @@ import { RealtimeConnectionRegistry } from './realtime-connection-registry.servi
 import { EtaAdapter } from './eta-adapter';
 import { RouteAdapter } from './route-adapter';
 import { RealtimeNotificationPublisher } from './realtime-notification-publisher.service';
+import { presentBookingPricing } from '../bookings/booking.presenter';
 
 @Injectable()
 export class BookingProjectionService {
@@ -40,6 +41,9 @@ export class BookingProjectionService {
     availability: BookingTrackingProjection['locationAvailability'],
   ): Promise<void> {
     const occurredAt = new Date().toISOString();
+    // One frame carries both the revised line list and the authoritative total,
+    // so a customer can never read new items beside a stale "Total" figure.
+    const pricing = presentBookingPricing(booking);
     const route = location
       ? await this.routes.route({
           providerLatitude: location.latitude,
@@ -82,6 +86,7 @@ export class BookingProjectionService {
         : null,
       locationAvailability: availability,
       eta: estimate ? { ...estimate, calculatedAt: occurredAt } : null,
+      pricing,
       route,
     };
     const frame = {

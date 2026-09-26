@@ -78,13 +78,11 @@ export class PaymentsService {
       category?.priceCurrency === 'INR' ? category.priceCurrency : null;
     // The itemized booking total is authoritative; the category's published
     // price is only a fallback for bookings created without line items.
-    let totalMinor = booking.totalAmountMinor ?? category?.priceAmount ?? 0;
-    if (booking.lineItems && booking.lineItems.length > 0) {
-      totalMinor = booking.lineItems.reduce(
-        (sum, item) => sum + item.priceMinor * item.quantity,
-        0,
-      );
-    }
+    // totalAmountMinor already includes GST (computeBookingTotals adds 18%), so
+    // it must not be replaced by the raw lineItems subtotal: doing so charged the
+    // customer the pre-GST figure and left the invoice's CGST/SGST split
+    // subtracting tax that was never added.
+    const totalMinor = booking.totalAmountMinor ?? category?.priceAmount ?? 0;
     if (!totalMinor || !currency) {
       throw new ConflictException(
         'This service is priced on request; online payment is unavailable',

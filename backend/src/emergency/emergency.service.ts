@@ -33,6 +33,17 @@ const ACTIVE_DISPATCH_STATUSES = [
 ];
 
 /**
+ * How many dispatch operations may be in flight at once.
+ *
+ * An implementation bound rather than a policy number, so it is deliberately
+ * kept out of `EMERGENCY_POLICY_V1` (which mirrors
+ * `docs/safety/emergency-dispatch-policy-v1.md`). Bounded rather than
+ * unlimited: 50 concurrent fan-outs would open 2,500 sockets at the push
+ * provider at once, which is its own outage.
+ */
+const WAVE_CONCURRENCY = 10;
+
+/**
  * FN-063 priority dispatch over ordinary bookings, exactly as approved in
  * docs/safety/emergency-dispatch-policy-v1.md. The booking lifecycle is
  * never bypassed; this service adds eligibility confirmation, abuse
@@ -41,6 +52,12 @@ const ACTIVE_DISPATCH_STATUSES = [
 @Injectable()
 export class EmergencyService implements OnModuleInit, OnModuleDestroy {
   private timer: NodeJS.Timeout | null = null;
+  /**
+   * BUG-006: `setInterval` fired every 30 seconds whether or not the previous
+   * scan had finished. A slow scan therefore stacked up behind itself, and each
+   * overlapping scan could re-fan-out the same dispatches.
+   */
+  private scanning = false;
 
   constructor(
     @InjectDataSource() private readonly dataSource: DataSource,
@@ -262,7 +279,11 @@ export class EmergencyService implements OnModuleInit, OnModuleDestroy {
         version: number | string;
       }>();
 
-    let waves = 0;
+    // Waves are dispatched concurrently under a bounded pool rather than one at
+    // a time. Awaiting each wave in turn meant a single slow provider stalled
+    // every other wave, and the worst case (50 dispatches x 50 providers) was
+    // 2,500 strictly sequential sends against a 30-second timer.
+    const waves: Array<() => Promise<unknown>> = [];
     for (const row of candidates) {
       const currentWave = Number(row.current_wave);
       const reference = new Date(row.last_escalated_at ?? row.created_at);
@@ -288,10 +309,45 @@ export class EmergencyService implements OnModuleInit, OnModuleDestroy {
       dispatch.currentWave = currentWave;
       dispatch.lastEscalatedAt = reference;
 
-      await this.runWave(booking, dispatch, nextWave);
-      waves += 1;
+      waves.push(() => this.runWave(booking, dispatch, nextWave));
     }
-    return waves;
+
+    await this.runBounded(waves);
+    return waves.length;
+  }
+
+  /**
+   * Runs thunks with at most `WAVE_CONCURRENCY` in flight.
+   *
+   * Bounded rather than unlimited: 50 concurrent fan-outs would open 2,500
+   * sockets at the push provider at once, which is its own outage. Ten keeps the
+   * 30-second tick comfortably achievable while removing the head-of-line
+   * blocking that made a single slow provider stall the batch.
+   *
+   * Takes thunks rather than promises on purpose. An array of already-started
+   * promises is already `WAVE_CONCURRENCY`-times-too-many in flight by the time
+   * this is called, so awaiting them in a bounded pool would bound nothing.
+   */
+  private async runBounded(
+    work: ReadonlyArray<() => Promise<unknown>>,
+  ): Promise<void> {
+    if (work.length === 0) return;
+    let next = 0;
+    const worker = async (): Promise<void> => {
+      while (next < work.length) {
+        const index = next;
+        next += 1;
+        try {
+          await work[index]();
+        } catch {
+          // Per-send failures are already swallowed; this is a belt-and-braces
+          // guard so one broken item cannot abandon the rest of the batch.
+        }
+      }
+    };
+    await Promise.all(
+      Array.from({ length: Math.min(WAVE_CONCURRENCY, work.length) }, worker),
+    );
   }
 
   /**
@@ -312,20 +368,25 @@ export class EmergencyService implements OnModuleInit, OnModuleDestroy {
       wave >= 2 ? EMERGENCY_POLICY_V1.radiusMultiplierWave2 : 1,
     );
 
-    for (const { providerId } of eligible) {
-      try {
-        await this.notifications.send(
-          providerId,
-          'provider:EMERGENCY_REQUEST',
-          `emergency:${booking.id}:w${wave}:${providerId}`,
-          EMERGENCY_NOTIFICATION_TEMPLATES['provider:EMERGENCY_REQUEST'],
-          booking.id,
-          { bypassQuietHours: true },
-        );
-      } catch {
-        // Single-attempt per send; delivery records capture failures.
-      }
-    }
+    // Sends within a wave are also bounded: 50 providers awaited one at a time
+    // meant one slow push stalled the rest of the wave.
+    await this.runBounded(
+      eligible.map(
+        ({ providerId }) =>
+          () =>
+            this.notifications
+              .send(
+                providerId,
+                'provider:EMERGENCY_REQUEST',
+                `emergency:${booking.id}:w${wave}:${providerId}`,
+                EMERGENCY_NOTIFICATION_TEMPLATES['provider:EMERGENCY_REQUEST'],
+                booking.id,
+                { bypassQuietHours: true },
+              )
+              // Single-attempt per send; delivery records capture failures.
+              .catch(() => undefined),
+      ),
+    );
 
     const dispatches = this.dataSource.getRepository(EmergencyDispatch);
     const existing = await dispatches.findOneBy({ bookingId: booking.id });
@@ -432,10 +493,17 @@ export class EmergencyService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async scanSafely(): Promise<void> {
+    // BUG-006: skip the tick entirely if the previous scan is still running.
+    // Overlapping scans multiplied the fan-out and could re-send the same
+    // dispatch.
+    if (this.scanning) return;
+    this.scanning = true;
     try {
       await this.scanOnce();
     } catch {
       // Next tick retries; sends are deduplicated.
+    } finally {
+      this.scanning = false;
     }
   }
 }

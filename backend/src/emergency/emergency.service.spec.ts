@@ -335,4 +335,71 @@ describe('EmergencyService (FN-063)', () => {
     await buildService().createEmergency(customerId, baseDto, 'key-7');
     expect(trustRecord).toHaveBeenCalledWith(customerId, 3);
   });
+
+  // BUG-006: the scanner used to await every dispatch and every send in turn.
+  // Worst case was 50 dispatches x 50 providers = 2,500 strictly sequential
+  // sends on a 30-second timer, with no guard against a scan overlapping the
+  // one before it.
+  describe('scan fan-out is bounded and never overlaps (BUG-006)', () => {
+    it('never exceeds the wave concurrency limit', async () => {
+      let inFlight = 0;
+      let peak = 0;
+      // A send that yields, so anything awaited strictly one at a time would
+      // serialise and any real bound would be observable.
+      notificationSend.mockImplementation(async () => {
+        inFlight += 1;
+        peak = Math.max(peak, inFlight);
+        await new Promise((resolve) => setTimeout(resolve, 1));
+        inFlight -= 1;
+        return undefined;
+      });
+      matchingFind.mockResolvedValue(
+        Array.from({ length: 30 }, (_, index) => ({
+          providerId: `p${index}`,
+          distanceKm: index,
+        })),
+      );
+
+      await buildService().createEmergency(customerId, baseDto, 'key-bounded');
+
+      expect(notificationSend).toHaveBeenCalledTimes(30);
+      // Concurrent, but bounded.
+      expect(peak).toBeGreaterThan(1);
+      expect(peak).toBeLessThanOrEqual(10);
+    });
+
+    it('skips a tick while the previous scan is still running', async () => {
+      let releaseScan: (() => void) | undefined;
+      const blocked = new Promise<void>((resolve) => {
+        releaseScan = resolve;
+      });
+      const scanOnce = jest.fn(() => blocked);
+
+      const service = buildService();
+      (service as unknown as { scanOnce: unknown }).scanOnce = scanOnce;
+      const scanSafely = (
+        service as unknown as { scanSafely: () => Promise<void> }
+      ).scanSafely.bind(service);
+
+      const first = scanSafely();
+      // The flag is set synchronously before the first await resolves.
+      await scanSafely();
+      expect(scanOnce).toHaveBeenCalledTimes(1);
+
+      releaseScan?.();
+      await first;
+
+      // Once the first scan finishes, the next tick runs again.
+      let releaseSecond: (() => void) | undefined;
+      const second = new Promise<void>((resolve) => {
+        releaseSecond = resolve;
+      });
+      (service as unknown as { scanOnce: unknown }).scanOnce = jest.fn(
+        () => second,
+      );
+      const next = scanSafely();
+      releaseSecond?.();
+      await next;
+    });
+  });
 });

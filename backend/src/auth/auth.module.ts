@@ -15,6 +15,7 @@ import { AuthorizationGuard } from '../common/authorization/authorization.guard'
 import { AuthorizationPolicyService } from '../common/authorization/authorization-policy.service';
 import { AuthorizationService } from '../common/authorization/authorization.service';
 import { AdminAuthController } from './admin-auth.controller';
+import { PasswordResetTokenEntity } from '../users/password-reset-token.entity';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { AdminAuthController } from './admin-auth.controller';
       AuthSessionEntity,
       OtpChallengeEntity,
       AuthAuditEventEntity,
+      PasswordResetTokenEntity,
     ]),
     NotificationsModule,
     JwtModule.registerAsync({

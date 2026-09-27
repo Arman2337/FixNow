@@ -1,4 +1,8 @@
-import { ConflictException, UnauthorizedException } from '@nestjs/common';
+import {
+  ConflictException,
+  HttpException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import * as argon2 from 'argon2';
 import { DataSource, EntityManager, Repository } from 'typeorm';
 import { AccountStatus } from '../users/account-status';
@@ -33,8 +37,11 @@ describe('AuthService', () => {
   const identityRepository = {
     findOne: jest.fn(),
   } as unknown as jest.Mocked<Repository<IdentityEntity>>;
+  const credentialUpdateMock = jest.fn().mockResolvedValue({ affected: 1 });
   const credentialRepository = {
     findOneBy: jest.fn(),
+    // A07: the lockout counter is written back on every failure and on success.
+    update: credentialUpdateMock,
   } as unknown as jest.Mocked<Repository<CredentialEntity>>;
   const userRoleRepository = {
     findOneBy: jest.fn(),
@@ -57,6 +64,9 @@ describe('AuthService', () => {
     manager.findOneBy.mockResolvedValue(null);
     userRoleRepository.findOneBy.mockResolvedValue(null);
     userRoleRepository.find.mockResolvedValue([]);
+    (credentialRepository.update as jest.Mock).mockResolvedValue({
+      affected: 1,
+    });
   });
 
   it('registers a normalized customer with an Argon2id hash', async () => {
@@ -168,6 +178,142 @@ describe('AuthService', () => {
     await expect(unknownIdentity).rejects.toEqual(
       new UnauthorizedException('Invalid email or password'),
     );
+  });
+
+  // A07: no per-account lockout. The global throttle is keyed on the caller
+  // address, so it bounds one egress, not one account.
+  describe('per-account login lockout', () => {
+    const validPassword = 'Correct Horse Battery Staple!';
+
+    const lockedCredential = (
+      overrides: Partial<CredentialEntity> = {},
+    ): CredentialEntity =>
+      ({
+        id: 'credential-1',
+        failedLoginCount: 0,
+        lockedUntil: null,
+        ...overrides,
+      }) as CredentialEntity;
+
+    const activeIdentity = (): IdentityEntity =>
+      ({
+        id: 'identity-1',
+        userId: 'user-1',
+        user: { id: 'user-1', status: AccountStatus.Active },
+      }) as IdentityEntity;
+
+    const credentialUpdate = credentialUpdateMock;
+    let passwordHash: string;
+
+    beforeEach(async () => {
+      identityRepository.findOne.mockResolvedValue(activeIdentity());
+      passwordHash = await argon2.hash(validPassword, {
+        type: argon2.argon2id,
+      });
+    });
+
+    const attempt = (password: string) =>
+      service.login({ email: 'customer@example.com', password });
+
+    const rejectedWith = (password: string): Promise<HttpException> =>
+      attempt(password).then(
+        () => {
+          throw new Error('expected the login to be rejected');
+        },
+        (e: unknown) => e as HttpException,
+      );
+
+    it('counts a failed attempt', async () => {
+      credentialRepository.findOneBy.mockResolvedValue(
+        lockedCredential({ passwordHash }),
+      );
+
+      await expect(attempt('Wrong Password Value!')).rejects.toBeInstanceOf(
+        UnauthorizedException,
+      );
+      expect(credentialUpdate).toHaveBeenCalledWith(
+        { id: 'credential-1' },
+        { failedLoginCount: 1 },
+      );
+    });
+
+    it('locks at the threshold', async () => {
+      credentialRepository.findOneBy.mockResolvedValue(
+        lockedCredential({
+          passwordHash,
+          failedLoginCount: AuthService.MAX_FAILED_LOGINS - 1,
+        }),
+      );
+
+      await expect(attempt('Wrong Password Value!')).rejects.toBeInstanceOf(
+        UnauthorizedException,
+      );
+
+      const calls = credentialUpdate.mock.calls as Array<
+        [unknown, { failedLoginCount: number; lockedUntil: Date }]
+      >;
+      // The lock is applied conditionally on the pre-increment value, so two
+      // concurrent failures cannot both read it and leave the count short.
+      expect(calls[0][0]).toEqual({
+        id: 'credential-1',
+        failedLoginCount: AuthService.MAX_FAILED_LOGINS - 1,
+      });
+      expect(calls[0][1].failedLoginCount).toBe(AuthService.MAX_FAILED_LOGINS);
+      expect(calls[0][1].lockedUntil).toBeInstanceOf(Date);
+    });
+
+    it('refuses a locked account without verifying the password', async () => {
+      // The hash is deliberately not a valid argon2 digest. If the locked path
+      // reached argon2.verify this would surface argon2's parse error rather
+      // than our own rejection, so asserting the exact error also proves the
+      // expensive verify was skipped - a locked account should not be usable
+      // to burn CPU.
+      credentialRepository.findOneBy.mockResolvedValue(
+        lockedCredential({
+          passwordHash: 'not-an-argon2-digest',
+          lockedUntil: new Date(Date.now() + 60_000),
+        }),
+      );
+
+      await expect(attempt(validPassword)).rejects.toEqual(
+        new UnauthorizedException('Invalid email or password'),
+      );
+    });
+
+    it('reports a lockout identically to a wrong password', async () => {
+      credentialRepository.findOneBy.mockResolvedValue(
+        lockedCredential({ passwordHash }),
+      );
+      const wrongPassword = rejectedWith('Wrong Password Value!');
+
+      credentialRepository.findOneBy.mockResolvedValue(
+        lockedCredential({
+          passwordHash,
+          failedLoginCount: 99,
+          lockedUntil: new Date(Date.now() + 60_000),
+        }),
+      );
+      const locked = rejectedWith(validPassword);
+
+      const [a, b] = await Promise.all([wrongPassword, locked]);
+      // Distinguishing them would tell an attacker which emails have accounts.
+      expect(a.getStatus()).toBe(b.getStatus());
+      expect(a.message).toBe(b.message);
+    });
+
+    it('clears the counter on a successful login', async () => {
+      credentialRepository.findOneBy.mockResolvedValue(
+        lockedCredential({ passwordHash, failedLoginCount: 3 }),
+      );
+
+      await expect(attempt(validPassword)).resolves.toEqual(
+        expect.objectContaining({ userId: 'user-1' }),
+      );
+      expect(credentialUpdate).toHaveBeenCalledWith(
+        { id: 'credential-1' },
+        { failedLoginCount: 0, lockedUntil: null },
+      );
+    });
   });
 
   it('resolves provider role from persisted assignments at login', async () => {

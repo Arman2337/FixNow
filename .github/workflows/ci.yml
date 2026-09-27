@@ -8,7 +8,11 @@ name: CI
 
 on:
   push:
-    branches: [main, master]
+    # Every branch, not just main. The repository has no branch protection, so a
+    # push-triggered run is the only automatic signal a change gets before
+    # anyone remembers to open a pull request. Narrow this to [main, master] once
+    # PRs are the enforced path.
+    branches: ['**']
   pull_request:
   workflow_dispatch:
 

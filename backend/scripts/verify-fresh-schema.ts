@@ -12,7 +12,7 @@ import 'dotenv/config';
 import { DataSource } from 'typeorm';
 import { spawnSync } from 'child_process';
 import { join } from 'path';
-import { migrationDataSourceOptions } from '../src/database/data-source';
+import { dataSourceOptions } from '../typeorm.config';
 
 const SCRATCH = process.env.SCHEMA_SCRATCH_DB || 'fixnow_schema_gate';
 
@@ -30,7 +30,7 @@ if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(SCRATCH)) {
 
 function withUrl(url: string): DataSource {
   return new DataSource({
-    ...(migrationDataSourceOptions as unknown as Record<string, unknown>),
+    ...(dataSourceOptions as unknown as Record<string, unknown>),
     url,
   } as never);
 }

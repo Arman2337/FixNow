@@ -15,7 +15,7 @@
  */
 import 'dotenv/config';
 import { DataSource } from 'typeorm';
-import { migrationDataSourceOptions } from '../src/database/data-source';
+import { dataSourceOptions } from '../typeorm.config';
 
 interface Failure {
   label: string;
@@ -119,7 +119,7 @@ async function main(): Promise<void> {
   // Reuse the application's data source so this script needs no direct `pg`
   // dependency and always queries the same way the app does.
   const ds = new DataSource({
-    ...(migrationDataSourceOptions as unknown as Record<string, unknown>),
+    ...(dataSourceOptions as unknown as Record<string, unknown>),
     url,
   } as never);
   await ds.initialize();

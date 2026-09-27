@@ -6,6 +6,7 @@ import { BookingsService } from '../src/bookings/bookings.service';
 import { BookingEvent } from '../src/bookings/domain/booking-event.entity';
 import { Booking } from '../src/bookings/domain/booking.entity';
 import { MatchingService } from '../src/matching/matching.service';
+import { ProviderCapacityService } from '../src/providers/availability/provider-capacity.service';
 import { ProviderAvailabilityEntity } from '../src/providers/availability/provider-availability.entity';
 import { ProviderProfileEntity } from '../src/providers/provider-profile.entity';
 import { ProviderSkillEntity } from '../src/providers/provider-skill.entity';
@@ -55,7 +56,13 @@ describe('booking lifecycle PostgreSQL boundaries', () => {
     matchingService = new MatchingService(
       dataSource.getRepository(ProviderProfileEntity),
     );
-    service = new BookingsService(dataSource, matchingService);
+    service = new BookingsService(
+      dataSource,
+      matchingService,
+      new ProviderCapacityService(
+        dataSource.getRepository(ProviderAvailabilityEntity),
+      ),
+    );
   });
 
   beforeEach(async () => {

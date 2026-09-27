@@ -109,6 +109,16 @@ export class EnvironmentVariables {
   @IsOptional()
   LOCATION_PRESENCE_TTL_MS: number = 45_000;
 
+  /**
+   * How many jobs a provider may hold at once (BUG-008). Previously unbounded,
+   * so a provider could accept any number of concurrent bookings.
+   */
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  @IsOptional()
+  PROVIDER_MAX_CONCURRENT_BOOKINGS: number = 5;
+
   @IsInt()
   @Min(60_000)
   @IsOptional()

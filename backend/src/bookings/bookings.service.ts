@@ -40,6 +40,7 @@ import { UserEntity } from '../users/user.entity';
 import { ProviderProfileEntity } from '../providers/provider-profile.entity';
 import { BookingReview } from '../ratings/domain/review.entity';
 import { ReviewModerationStatus } from '../../../shared/ratings.types';
+import { ProviderCapacityService } from '../providers/availability/provider-capacity.service';
 
 export interface BookingHistoryPage {
   bookings: Booking[];
@@ -60,12 +61,35 @@ export class BookingsService {
   constructor(
     @InjectDataSource() private readonly dataSource: DataSource,
     private readonly matchingService: MatchingService,
+    // Required, and declared before the optional dependencies. An optional
+    // capacity service would silently disable the BUG-008 limit whenever the
+    // wiring was wrong, which is the same fail-open shape as the ownership bug
+    // this branch closed. A missing provider now fails at boot instead.
+    private readonly capacity: ProviderCapacityService,
     private readonly locationService?: LocationService,
     private readonly bookingProjections?: BookingProjectionService,
     private readonly config?: ConfigService,
     private readonly domainNotifications?: DomainNotificationService,
     private readonly trust?: TrustService,
   ) {}
+
+  /**
+   * BUG-008: a provider's availability must follow their workload, otherwise a
+   * provider who finished their last job stays invisible to matching, or keeps
+   * being offered jobs they have no capacity for. Best-effort: capacity is a
+   * convenience signal, and failing a completed booking because a status update
+   * could not be written would be worse than a stale status.
+   */
+  private async releaseCapacity(
+    manager: EntityManager,
+    providerId: string,
+  ): Promise<void> {
+    try {
+      await this.capacity.syncAvailabilityForWorkload(manager, providerId);
+    } catch {
+      // Swallowed on purpose; see the note above.
+    }
+  }
 
   /** FN-062: push is best-effort; a notification failure never fails a booking. */
   private async notifySafely(notify: () => Promise<void>): Promise<void> {
@@ -255,17 +279,23 @@ export class BookingsService {
       bookingId,
       providerId,
       expectedVersion,
-      (booking) => {
-        if (booking.customerId === providerId) {
+      async (candidate, manager) => {
+        if (candidate.customerId === providerId) {
           throw new ForbiddenException(
             'Customers cannot accept their own booking',
           );
         }
-        if (booking.status !== BookingStatus.REQUESTED) {
+        if (candidate.status !== BookingStatus.REQUESTED) {
           throw new ConflictException('Booking is no longer available');
         }
-        booking.providerId = providerId;
-        booking.transitionTo(BookingStatus.ASSIGNED);
+        // BUG-008: capacity is checked inside the assigning transaction, after
+        // the availability row is locked, so two simultaneous accepts cannot
+        // both see a count below the limit.
+        await this.capacity.assertCanAccept(manager, providerId);
+        candidate.providerId = providerId;
+        candidate.transitionTo(BookingStatus.ASSIGNED);
+        // The provider now has work, so stop offering them more jobs.
+        await this.capacity.syncAvailabilityForWorkload(manager, providerId);
       },
     );
     await this.bookingProjections?.publishBooking(booking);
@@ -297,11 +327,14 @@ export class BookingsService {
       bookingId,
       providerId,
       expectedVersion,
-      (booking) => {
+      async (booking, manager) => {
         if (booking.providerId !== providerId) {
           throw new ForbiddenException('You are not assigned to this booking');
         }
         this.applyDomainTransition(booking, status);
+        if (status === BookingStatus.COMPLETED) {
+          await this.releaseCapacity(manager, providerId);
+        }
       },
     );
     if (
@@ -412,7 +445,7 @@ export class BookingsService {
       bookingId,
       userId,
       expectedVersion,
-      (booking) => {
+      async (booking, manager) => {
         const isCustomer = booking.customerId === userId;
         const isProvider = booking.providerId === userId;
         if (!isCustomer && !isProvider) {
@@ -433,6 +466,10 @@ export class BookingsService {
           BookingStatus.CANCELLED,
           normalizedReason,
         );
+        // A cancellation frees a slot, so the provider may be available again.
+        if (booking.providerId) {
+          await this.releaseCapacity(manager, booking.providerId);
+        }
       },
       normalizedReason,
     );

@@ -16,6 +16,7 @@ import { SchedulesService } from './schedules.service';
 import { BookingMessagesService } from './booking-messages.service';
 import { BookingCallsService } from './booking-calls.service';
 import { MatchingModule } from '../matching/matching.module';
+import { ProvidersModule } from '../providers/providers.module';
 import { LocationModule } from '../location/location.module';
 import { RealtimeModule } from '../realtime/realtime.module';
 import { DomainNotificationsModule } from '../notifications/domain/domain-notifications.module';
@@ -33,6 +34,10 @@ import { TrustModule } from '../trust/trust.module';
       ServiceCategoryEntity,
     ]),
     MatchingModule,
+    // Provides ProviderCapacityService, which enforces the BUG-008 concurrent
+    // booking limit. ProvidersModule does not import BookingsModule, so this
+    // introduces no cycle.
+    ProvidersModule,
     LocationModule,
     RealtimeModule,
     DomainNotificationsModule,

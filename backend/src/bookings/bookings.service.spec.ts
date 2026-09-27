@@ -9,6 +9,7 @@ import {
 import type { DataSource, EntityManager, Repository } from 'typeorm';
 import { BookingStatus } from '../../../shared/booking-lifecycle.types';
 import type { MatchingService } from '../matching/matching.service';
+import type { ProviderCapacityService } from '../providers/availability/provider-capacity.service';
 import { BookingsService } from './bookings.service';
 import { BookingEvent } from './domain/booking-event.entity';
 import { Booking } from './domain/booking.entity';
@@ -60,6 +61,9 @@ describe('BookingsService', () => {
   let bookingSave: jest.Mock;
   let eventSave: jest.Mock;
   let orderExist: jest.Mock;
+  let capacity: jest.Mocked<ProviderCapacityService>;
+  const capacityAssert = jest.fn().mockResolvedValue(undefined);
+  const capacitySync = jest.fn().mockResolvedValue(undefined);
   let subServiceFindBy: jest.Mock;
 
   const booking = (overrides: Partial<Booking> = {}): Booking =>
@@ -141,7 +145,11 @@ describe('BookingsService', () => {
       findEligibleProviders: jest.fn(),
       isProviderEligible: jest.fn(),
     } as unknown as jest.Mocked<MatchingService>;
-    service = new BookingsService(dataSource, matchingService);
+    capacity = {
+      assertCanAccept: capacityAssert,
+      syncAvailabilityForWorkload: capacitySync,
+    } as unknown as jest.Mocked<ProviderCapacityService>;
+    service = new BookingsService(dataSource, matchingService, capacity);
   });
   it('creates a booking and an initial immutable lifecycle event', async () => {
     bookingFindOneBy.mockResolvedValue(null);

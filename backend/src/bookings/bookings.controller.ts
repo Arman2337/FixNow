@@ -105,7 +105,7 @@ export class BookingsController {
 
   @Patch(':id/items')
   @HttpCode(HttpStatus.OK)
-  @RequireOwnPermission(PERMISSIONS.bookingUpdateStatus)
+  @RequireOwnPermission(PERMISSIONS.bookingManageItems)
   async updateItems(
     @Param('id') bookingId: string,
     @Req() req: AuthorizedRequest,
@@ -122,7 +122,7 @@ export class BookingsController {
 
   @Put(':id/line-items')
   @HttpCode(HttpStatus.OK)
-  @RequireOwnPermission(PERMISSIONS.bookingUpdateStatus)
+  @RequireOwnPermission(PERMISSIONS.bookingManageItems)
   async updateLineItems(
     @Param('id') bookingId: string,
     @Req() req: AuthorizedRequest,
@@ -142,7 +142,7 @@ export class BookingsController {
   }
 
   @Post(':id/service-start-otp')
-  @RequireOwnPermission(PERMISSIONS.bookingHistoryReadSelf)
+  @RequireOwnPermission(PERMISSIONS.bookingServiceStartOtp)
   async serviceStartOtp(
     @Param('id') bookingId: string,
     @Req() req: AuthorizedRequest,

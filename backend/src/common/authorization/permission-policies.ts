@@ -34,6 +34,8 @@ export const PERMISSIONS = {
   bookingAccept: 'bookings.accept',
   bookingAvailableRead: 'bookings.available.read',
   bookingUpdateStatus: 'bookings.update.status',
+  bookingManageItems: 'bookings.items.manage.self',
+  bookingServiceStartOtp: 'bookings.service-start-otp.issue',
   bookingCancelSelf: 'bookings.cancel.self',
   bookingHistoryReadSelf: 'bookings.history.read.self',
   reviewCreateSelf: 'ratings.review.create.self',
@@ -285,6 +287,21 @@ export const PERMISSION_POLICIES: Readonly<
   },
   [PERMISSIONS.bookingUpdateStatus]: {
     roles: ['verified_provider'],
+    relationship: 'self',
+  },
+  // Rewriting the priced item snapshot and the booking total. This was gated on
+  // `bookings.update.status`, which made a price-affecting mutation look like a
+  // status change during review. The service still restricts it to the provider
+  // assigned to the booking.
+  [PERMISSIONS.bookingManageItems]: {
+    roles: ['verified_provider'],
+    relationship: 'self',
+  },
+  // Issuing the service-start OTP. This was gated on
+  // `bookings.history.read.self`, so a read permission authorised handing out a
+  // one-time code. The service restricts it to the booking's customer.
+  [PERMISSIONS.bookingServiceStartOtp]: {
+    roles: ['customer'],
     relationship: 'self',
   },
   [PERMISSIONS.bookingCancelSelf]: {

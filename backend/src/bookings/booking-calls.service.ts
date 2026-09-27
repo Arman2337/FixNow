@@ -231,8 +231,8 @@ export class BookingCallsService {
     const message = await this.messagesRepo.save(
       this.messagesRepo.create({
         bookingId,
-        senderUserId: call.callerUserId,
-        senderRole: call.callerRole,
+        senderUserId: userId,
+        senderRole: this.actorRoleFor(call, userId),
         messageText: '📞 Missed in-app audio call',
         readAt: null,
       }),
@@ -304,8 +304,8 @@ export class BookingCallsService {
     const message = await this.messagesRepo.save(
       this.messagesRepo.create({
         bookingId,
-        senderUserId: call.callerUserId,
-        senderRole: call.callerRole,
+        senderUserId: userId,
+        senderRole: this.actorRoleFor(call, userId),
         messageText: summaryText,
         readAt: null,
       }),
@@ -316,5 +316,27 @@ export class BookingCallsService {
     );
 
     return presented;
+  }
+
+  /**
+   * The role of whoever actually performed the action, not the role of whoever
+   * placed the call.
+   *
+   * Reject and hangup are both callable by the callee, and the transcript entry
+   * used to be written with `callerUserId`/`callerRole` unconditionally. A
+   * callee rejecting or hanging up was therefore recorded in the booking chat
+   * as though the caller had done it, which misrepresents who acted in the one
+   * record a dispute is settled from. `ChatSenderRole` only has two values and
+   * the two parties are always on opposite sides, so the other role is the
+   * callee's.
+   */
+  private actorRoleFor(
+    call: Pick<BookingCall, 'callerUserId' | 'callerRole'>,
+    actorUserId: string,
+  ): ChatSenderRole {
+    if (actorUserId === call.callerUserId) {
+      return call.callerRole;
+    }
+    return call.callerRole === 'CUSTOMER' ? 'PROVIDER' : 'CUSTOMER';
   }
 }

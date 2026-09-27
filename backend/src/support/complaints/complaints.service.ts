@@ -13,6 +13,7 @@ import { AppealStatus } from '../../../../shared/trust.types';
 import { ComplaintTargetRole } from './domain/complaint.entity';
 import { TrustService } from '../../trust/trust.service';
 import { Booking } from '../../bookings/domain/booking.entity';
+import { TrustedEvidenceUrl } from './trusted-evidence-url';
 
 @Injectable()
 export class ComplaintsService {
@@ -25,22 +26,29 @@ export class ComplaintsService {
     private readonly auditRepository: Repository<ComplaintAudit>,
     @InjectRepository(Booking)
     private readonly bookingRepository: Repository<Booking>,
+    private readonly trustedEvidenceUrl: TrustedEvidenceUrl,
     private readonly trust?: TrustService,
   ) {}
 
   /**
-   * SEC-002: `bookingId` and `targetId` used to be written straight from the
-   * request body. Because the trust engine counts stored complaints per target,
+   * SEC-002: `bookingId` and `targetId` used to be written straight from
+   * the request body. Because the trust engine counts stored complaints per target,
    * a single account could replay this endpoint to manufacture a MEDIUM
    * trust-and-safety signal against any user, and could attach an uninvolved
    * customer's booking to its own case. Both ids are now proved against the
    * caller before anything is written.
+   *
+   * SEC-003: evidence links are validated here too, before the first write, so
+   * a rejected submission leaves no partial complaint row behind.
    */
   async createComplaint(
     submitterId: string,
     dto: CreateComplaintDto,
   ): Promise<Complaint> {
     await this.assertTargetIsRelatedToCaller(submitterId, dto);
+    for (const ev of dto.evidence ?? []) {
+      this.trustedEvidenceUrl.assertTrusted(ev.fileUrl, 'evidence[].fileUrl');
+    }
 
     const complaint = this.complaintsRepository.create({
       submitterId,
@@ -181,6 +189,8 @@ export class ComplaintsService {
         'Only parties involved can add evidence to this complaint',
       );
     }
+
+    this.trustedEvidenceUrl.assertTrusted(dto.fileUrl);
 
     await this.evidenceRepository.save(
       this.evidenceRepository.create({

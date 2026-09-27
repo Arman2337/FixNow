@@ -225,4 +225,65 @@ describe('BookingCallsService', () => {
       );
     });
   });
+
+  // The transcript entry used to be written with the caller's id and role
+  // whatever the actor was, so a callee hanging up or rejecting was recorded as
+  // though the caller had done it. This is the record a dispute is read from.
+  describe('call transcript attributes the actor, not the caller', () => {
+    it('records the callee when the callee rejects the call', async () => {
+      callsRepo.findOne.mockResolvedValue(mockCall());
+
+      // providerId is the callee here.
+      await service.rejectCall(bookingId, callId, providerId);
+
+      const saved = messagesRepo.save.mock.calls[0]?.[0];
+      expect(saved?.senderUserId).toBe(providerId);
+      expect(saved?.senderRole).toBe('PROVIDER');
+    });
+
+    it('records the caller when the caller rejects their own call', async () => {
+      callsRepo.findOne.mockResolvedValue(mockCall());
+
+      await service.rejectCall(bookingId, callId, customerId);
+
+      const saved = messagesRepo.save.mock.calls[0]?.[0];
+      expect(saved?.senderUserId).toBe(customerId);
+      expect(saved?.senderRole).toBe('CUSTOMER');
+    });
+
+    it('records the callee when the callee hangs up', async () => {
+      callsRepo.findOne.mockResolvedValue(
+        mockCall({
+          status: 'CONNECTED',
+          connectedAt: new Date(Date.now() - 5000),
+        }),
+      );
+
+      await service.hangupCall(bookingId, callId, providerId);
+
+      const saved = messagesRepo.save.mock.calls[0]?.[0];
+      expect(saved?.senderUserId).toBe(providerId);
+      expect(saved?.senderRole).toBe('PROVIDER');
+    });
+
+    it('derives the actor role correctly when the provider placed the call', async () => {
+      // A provider-initiated call flips which side is the caller.
+      callsRepo.findOne.mockResolvedValue(
+        mockCall({
+          callerUserId: providerId,
+          callerRole: 'PROVIDER',
+          calleeUserId: customerId,
+          status: 'CONNECTED',
+          connectedAt: new Date(Date.now() - 5000),
+        }),
+      );
+
+      // The customer (now the callee) ends it.
+      await service.hangupCall(bookingId, callId, customerId);
+
+      const saved = messagesRepo.save.mock.calls[0]?.[0];
+      expect(saved?.senderUserId).toBe(customerId);
+      expect(saved?.senderRole).toBe('CUSTOMER');
+    });
+  });
 });

@@ -5,6 +5,11 @@ import { CreateBookingDto } from './bookings.dto';
 import { BookingStatus } from '../../../shared/booking-lifecycle.types';
 import { Booking } from './domain/booking.entity';
 import type { AuthorizedRequest } from '../common/authorization/authorization.guard';
+import { REQUIRED_PERMISSION_KEY } from '../common/authorization/authorization.decorators';
+import {
+  PERMISSIONS,
+  PERMISSION_POLICIES,
+} from '../common/authorization/permission-policies';
 import type { RoleCode } from '../common/authorization/permission-policies';
 
 describe('BookingsController', () => {
@@ -262,6 +267,56 @@ describe('BookingsController', () => {
       ]);
       expect(result.bookings[0]).not.toHaveProperty('locationLat');
       expect(result.bookings[0]).not.toHaveProperty('customerId');
+    });
+  });
+
+  // A price-affecting mutation authorised by a permission named "update status"
+  // reads as harmless during review, and an OTP was gated on a read permission.
+  // These assert the wiring so the names cannot drift back.
+  describe('authorization metadata', () => {
+    const permissionFor = (methodName: string): unknown => {
+      const descriptor = Object.getOwnPropertyDescriptor(
+        BookingsController.prototype,
+        methodName,
+      );
+      const handler: unknown = descriptor?.value;
+      if (typeof handler !== 'function') {
+        throw new Error(`BookingsController.${methodName} is not defined`);
+      }
+      return Reflect.getMetadata(REQUIRED_PERMISSION_KEY, handler);
+    };
+
+    it('gates the priced-item routes on a permission that says so', () => {
+      expect(permissionFor('updateItems')).toBe(PERMISSIONS.bookingManageItems);
+      expect(permissionFor('updateLineItems')).toBe(
+        PERMISSIONS.bookingManageItems,
+      );
+    });
+
+    it('keeps the status route on the status permission', () => {
+      expect(permissionFor('updateStatus')).toBe(
+        PERMISSIONS.bookingUpdateStatus,
+      );
+    });
+
+    it('does not let a read permission issue the service-start OTP', () => {
+      expect(permissionFor('serviceStartOtp')).toBe(
+        PERMISSIONS.bookingServiceStartOtp,
+      );
+      expect(PERMISSIONS.bookingServiceStartOtp).not.toBe(
+        PERMISSIONS.bookingHistoryReadSelf,
+      );
+    });
+
+    it('restricts the new permissions to the right roles and scope', () => {
+      expect(PERMISSION_POLICIES[PERMISSIONS.bookingManageItems]).toEqual({
+        roles: ['verified_provider'],
+        relationship: 'self',
+      });
+      expect(PERMISSION_POLICIES[PERMISSIONS.bookingServiceStartOtp]).toEqual({
+        roles: ['customer'],
+        relationship: 'self',
+      });
     });
   });
 });

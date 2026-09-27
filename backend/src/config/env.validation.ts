@@ -79,6 +79,15 @@ export class EnvironmentVariables {
   @IsOptional()
   WEB_ALLOWED_ORIGINS?: string;
 
+  /**
+   * Origins a customer-supplied evidence link may point at. Defaults to
+   * WEB_ALLOWED_ORIGINS when unset, so a deployment only has to set this if
+   * evidence is hosted somewhere the web app is not.
+   */
+  @IsString()
+  @IsOptional()
+  EVIDENCE_ALLOWED_ORIGINS?: string;
+
   @IsInt()
   @Min(10_000)
   @Max(15_000)
@@ -391,6 +400,11 @@ function validateLocalOtpBypass(config: EnvironmentVariables): void {
 
 function validateWebOrigins(config: EnvironmentVariables): void {
   validateOriginList(config, config.WEB_ALLOWED_ORIGINS, 'WEB_ALLOWED_ORIGINS');
+  validateOriginList(
+    config,
+    config.EVIDENCE_ALLOWED_ORIGINS,
+    'EVIDENCE_ALLOWED_ORIGINS',
+  );
 }
 
 function validateRealtimeOrigins(config: EnvironmentVariables): void {

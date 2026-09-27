@@ -18,6 +18,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost): void {
     const { httpAdapter } = this.httpAdapterHost;
     const ctx = host.switchToHttp();
+    const request = ctx.getRequest<{ id?: unknown }>();
+    const correlationId =
+      typeof request?.id === 'string' && request.id ? request.id : undefined;
 
     let httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
     let message: string | string[] = 'Internal server error';
@@ -35,6 +38,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
       message,
       timestamp: new Date().toISOString(),
       path: String(httpAdapter.getRequestUrl(ctx.getRequest<unknown>())),
+      // A09: the id the client was already sent in X-Request-Id, repeated in
+      // the body for clients that surface only the parsed error. A 5xx report
+      // without it is not actionable.
+      ...(correlationId ? { correlationId } : {}),
     };
 
     httpAdapter.reply(ctx.getResponse(), responseBody, httpStatus);

@@ -6,6 +6,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { WsAdapter } from '@nestjs/platform-ws';
 import type { Express } from 'express';
 import { SecurityHeadersMiddleware } from './common/middleware/security-headers.middleware';
+import { RequestCorrelationMiddleware } from './logging/request-correlation.middleware';
 
 async function bootstrap() {
   // rawBody is required for HMAC webhook signature verification (FN-052).
@@ -41,6 +42,7 @@ async function bootstrap() {
   // OPS-003. Registered before CORS and the global prefix so no route can opt
   // out by being mounted earlier.
   app.use(new SecurityHeadersMiddleware(configService));
+  app.use(new RequestCorrelationMiddleware());
 
   const webOrigins = configService
     .get<string>('WEB_ALLOWED_ORIGINS')

@@ -450,6 +450,30 @@ describe('BookingsService', () => {
       ).rejects.toBeInstanceOf(ConflictException);
     });
 
+    // BUG-010: the sibling line-items path re-priced the booking with no payment
+    // guard, so a provider could change the total after a payment order existed
+    // and the capture then failed permanently on an amount mismatch.
+    it('rejects a line-item rewrite once a payment order exists', async () => {
+      orderExist.mockResolvedValue(true);
+      // IN_PROGRESS, so the completed/cancelled status guard cannot be what
+      // rejects this - only the payment guard can.
+      bookingFindOneBy.mockResolvedValue(activeJob());
+
+      await expect(
+        service.updateBookingLineItems(
+          '00000000-0000-4000-8000-000000000101',
+          'provider-1',
+          [
+            {
+              subServiceId: 'plumb-3',
+              quantity: 2,
+            },
+          ],
+          2,
+        ),
+      ).rejects.toThrow(/payment has started/);
+    });
+
     it('rejects adjustment after the job is completed', async () => {
       bookingFindOneBy.mockResolvedValue(
         booking({

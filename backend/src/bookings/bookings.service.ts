@@ -345,6 +345,21 @@ export class BookingsService {
           );
         }
 
+        // BUG-010: this path re-priced the booking with no guard, while the
+        // sibling `updateBookingItems` had one. A payment order created in the
+        // window between a check outside the transaction and this write left a
+        // paid order whose amount no longer matched the booking, and its capture
+        // failed permanently with `payment.captured.amount_mismatch`. The check
+        // runs inside the same transaction as the write, so the window is closed.
+        const alreadyPaid = await manager.getRepository(PaymentOrder).exists({
+          where: { bookingId },
+        });
+        if (alreadyPaid) {
+          throw new ConflictException(
+            'Line items cannot be changed once payment has started',
+          );
+        }
+
         const lineItemRepo = manager.getRepository(BookingLineItem);
         const subServiceRepo = manager.getRepository(SubServiceEntity);
 

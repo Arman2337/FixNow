@@ -80,6 +80,40 @@ export class EnvironmentVariables {
   WEB_ALLOWED_ORIGINS?: string;
 
   /**
+   * How many reverse proxies sit in front of this app, for Express'
+   * `trust proxy`. Unset means trust no proxy, which is the safe default: with
+   * it unset, `req.ip` is the socket address, so a client cannot forge
+   * `X-Forwarded-For` to escape the global rate-limit bucket (SEC-006).
+   *
+   * Set to the real hop count in production. A wrong value in the permissive
+   * direction re-opens the spoofing hole, so this is a number, not "true".
+   */
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(10)
+  TRUST_PROXY_HOPS?: number;
+
+  /**
+   * Content-Security-Policy. The API serves JSON and a small set of static
+   * assets, so the default is deliberately restrictive (OPS-003).
+   */
+  @IsString()
+  @IsOptional()
+  CSP_DIRECTIVES?: string;
+
+  /**
+   * How long a browser should remember that this origin is HTTPS-only. Ignored
+   * outside production, where the app is normally reached over plain HTTP in
+   * development and would otherwise be locked out of its own origin.
+   */
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(63072000)
+  HSTS_MAX_AGE_SECONDS?: number;
+
+  /**
    * Origins a customer-supplied evidence link may point at. Defaults to
    * WEB_ALLOWED_ORIGINS when unset, so a deployment only has to set this if
    * evidence is hosted somewhere the web app is not.

@@ -39,6 +39,18 @@ services:
         sync: false
       - key: OPENROUTESERVICE_API_KEY
         sync: false
+      # OPS-003 / SEC-006. Render terminates TLS and forwards to this service
+      # over one hop, so the app must trust exactly one proxy to read a
+      # client-accurate req.ip. Trusting more than the real hop count would let
+      # a client forge X-Forwarded-For and escape the rate limit.
+      - key: TRUST_PROXY_HOPS
+        value: 1
+      # One year. HSTS is only emitted in production, so this is safe here.
+      - key: HSTS_MAX_AGE_SECONDS
+        value: 31536000
+      # Leave unset to use the default deny-all CSP; the API serves JSON.
+      # - key: CSP_DIRECTIVES
+      #   value: "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"
       # Required in production: env.validation.ts refuses to boot with
       # PAYMENT_PROVIDER=fake. This is the one variable still standing between
       # the repository and a bootable production deploy, and it is intentionally

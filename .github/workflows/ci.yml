@@ -115,6 +115,12 @@ jobs:
       - name: Lint
         run: npx eslint "src/**/*.ts" "scripts/**/*.ts"
 
+      # The deploy definition and the code must agree on every variable name.
+      # render.yaml once set AI_PROVIDER_API_KEY, which exists nowhere in the
+      # backend, so the secret was collected with no effect.
+      - name: Verify render.yaml matches the code's configuration
+        run: npm run deploy:verify-env
+
       - name: Test
         run: npx jest --ci
 

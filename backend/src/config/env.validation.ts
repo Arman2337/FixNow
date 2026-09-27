@@ -329,6 +329,20 @@ export class EnvironmentVariables {
   @IsString()
   @IsOptional()
   PROVIDER_DOCUMENT_S3_ENDPOINT?: string;
+
+  /**
+   * How many AI media uploads may be in flight at once, across all users.
+   *
+   * An implementation bound, not a policy number: each in-flight upload holds
+   * up to 32 MiB (image) or 50 MiB (audio) resident in the Node heap while it
+   * waits on the provider, so this caps peak memory. Text-only classification
+   * takes no slot.
+   */
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(64)
+  AI_MAX_CONCURRENT_MEDIA?: number;
 }
 
 export function validate(config: Record<string, unknown>) {

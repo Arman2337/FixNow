@@ -20,6 +20,7 @@ import {
   assertAllowedImage,
   stripImageMetadata,
 } from './policy/ai-media-policy';
+import { ConcurrencyLimiter } from '../common/concurrency-limiter';
 import {
   StructuredOutputSchema,
   parseStructuredOutput,
@@ -92,6 +93,29 @@ export type AiExecutionResult<T> =
 @Injectable()
 export class AiService {
   private readonly requestTimestamps = new Map<string, number[]>();
+
+  /**
+   * Global ceiling on media operations in flight, across all users.
+   *
+   * The per-user rate limit (10 per 60s by default) is not a memory bound: one
+   * caller alone could keep 10 x 50 MiB of audio resident. The multipart
+   * ceilings are 32 MiB for an image and 50 MiB for audio, so without this a
+   * handful of concurrent callers can exhaust a container's heap. Over-cap
+   * requests are rejected with the same clean `unavailable` shape every other
+   * AI failure returns, so the client falls back to manual selection rather
+   * than seeing a 500.
+   *
+   * Initialised lazily because `config` is a constructor parameter, not
+   * available to field initialisers.
+   */
+  private mediaLimiter?: ConcurrencyLimiter;
+
+  private mediaSlots(): ConcurrencyLimiter {
+    this.mediaLimiter ??= new ConcurrencyLimiter(
+      this.config.get<number>('AI_MAX_CONCURRENT_MEDIA') ?? 4,
+    );
+    return this.mediaLimiter;
+  }
 
   constructor(
     private readonly config: ConfigService<EnvironmentVariables>,
@@ -170,46 +194,57 @@ export class AiService {
     if (!transcribeAudio)
       return this.fallback('UNSUPPORTED_OPERATION', requestId, label);
 
-    try {
-      assertAllowedAudio(
-        operation.audio,
-        this.numberConfig('AI_MAX_AUDIO_BYTES', 15 * 1024 * 1024),
-      );
-      this.assertWithinRateLimit(operation.userId);
-    } catch (error) {
-      return this.fallback(this.errorCode(error), requestId, label);
+    if (!this.mediaSlots().tryAcquire()) {
+      return this.fallback('RATE_LIMITED', requestId, label);
     }
 
-    return this.runGuarded<AiTranscriptionValue>({
-      operation: label,
-      requestId,
-      externalSignal: operation.signal,
-      run: async (signal) => {
-        const response = await transcribeAudio({
-          operation: 'transcribe_audio',
-          requestId,
-          audio: operation.audio,
-          ...(operation.languageHint
-            ? { languageHint: operation.languageHint }
-            : {}),
-          signal,
-        });
-        const transcription = redactSensitiveText(
-          (response.transcription ?? '').trim(),
+    // The slot is held for the whole operation, not just validation: the
+    // audio buffer stays referenced by `operation.audio` until the provider
+    // call resolves, so releasing early would bound nothing that matters.
+    try {
+      try {
+        assertAllowedAudio(
+          operation.audio,
+          this.numberConfig('AI_MAX_AUDIO_BYTES', 15 * 1024 * 1024),
         );
-        if (!transcription) throw new AiError('INVALID_MODEL_OUTPUT');
-        return {
-          value: {
-            transcription,
-            ...(response.detectedLanguage
-              ? { detectedLanguage: response.detectedLanguage }
+        this.assertWithinRateLimit(operation.userId);
+      } catch (error) {
+        return this.fallback(this.errorCode(error), requestId, label);
+      }
+
+      return await this.runGuarded<AiTranscriptionValue>({
+        operation: label,
+        requestId,
+        externalSignal: operation.signal,
+        run: async (signal) => {
+          const response = await transcribeAudio({
+            operation: 'transcribe_audio',
+            requestId,
+            audio: operation.audio,
+            ...(operation.languageHint
+              ? { languageHint: operation.languageHint }
               : {}),
-          },
-          metadata: response.metadata,
-          ...(response.usage ? { usage: response.usage } : {}),
-        };
-      },
-    });
+            signal,
+          });
+          const transcription = redactSensitiveText(
+            (response.transcription ?? '').trim(),
+          );
+          if (!transcription) throw new AiError('INVALID_MODEL_OUTPUT');
+          return {
+            value: {
+              transcription,
+              ...(response.detectedLanguage
+                ? { detectedLanguage: response.detectedLanguage }
+                : {}),
+            },
+            metadata: response.metadata,
+            ...(response.usage ? { usage: response.usage } : {}),
+          };
+        },
+      });
+    } finally {
+      this.mediaSlots().release();
+    }
   }
 
   /**
@@ -237,49 +272,61 @@ export class AiService {
       return this.fallback('INPUT_REJECTED', requestId, label);
 
     let image = operation.image;
-    try {
-      if (image) {
-        assertAllowedImage(
-          image,
-          this.numberConfig('AI_MAX_IMAGE_BYTES', 8 * 1024 * 1024),
-        );
-        // Strip EXIF/XMP/IPTC before the image crosses the provider boundary.
-        // Runs only after validation and behind AI_VISION_ENABLED.
-        image = stripImageMetadata(image);
-      }
-      this.assertWithinRateLimit(operation.userId);
-    } catch (error) {
-      return this.fallback(this.errorCode(error), requestId, label);
+    // Text-only classification carries no buffer, so it takes no slot.
+    const holdsSlot = operation.image !== undefined;
+    if (holdsSlot && !this.mediaSlots().tryAcquire()) {
+      return this.fallback('RATE_LIMITED', requestId, label);
     }
 
     const maxOutputTokens = this.numberConfig('AI_MAX_OUTPUT_TOKENS', 256);
-    return this.runGuarded<T>({
-      operation: label,
-      requestId,
-      externalSignal: operation.signal,
-      run: async (signal) => {
-        const response = await analyzeMedia({
-          operation: 'classify_multimodal',
-          requestId,
-          ...(image ? { image } : {}),
-          ...(operation.issueText ? { issueText: operation.issueText } : {}),
-          catalog: operation.catalog ?? [],
-          prompt: operation.prompt,
-          maxOutputTokens,
-          signal,
-        });
-        const value = parseStructuredOutput(
-          response.rawOutput,
-          operation.schema,
-          maxOutputTokens * MAX_CHARACTERS_PER_TOKEN,
-        );
-        return {
-          value,
-          metadata: response.metadata,
-          ...(response.usage ? { usage: response.usage } : {}),
-        };
-      },
-    });
+    try {
+      // Held across the provider call, not just validation - `image` stays
+      // referenced until it resolves.
+      try {
+        if (image) {
+          assertAllowedImage(
+            image,
+            this.numberConfig('AI_MAX_IMAGE_BYTES', 8 * 1024 * 1024),
+          );
+          // Strip EXIF/XMP/IPTC before the image crosses the provider boundary.
+          // Runs only after validation and behind AI_VISION_ENABLED.
+          image = stripImageMetadata(image);
+        }
+        this.assertWithinRateLimit(operation.userId);
+      } catch (error) {
+        return this.fallback(this.errorCode(error), requestId, label);
+      }
+
+      return await this.runGuarded<T>({
+        operation: label,
+        requestId,
+        externalSignal: operation.signal,
+        run: async (signal) => {
+          const response = await analyzeMedia({
+            operation: 'classify_multimodal',
+            requestId,
+            ...(image ? { image } : {}),
+            ...(operation.issueText ? { issueText: operation.issueText } : {}),
+            catalog: operation.catalog ?? [],
+            prompt: operation.prompt,
+            maxOutputTokens,
+            signal,
+          });
+          const value = parseStructuredOutput(
+            response.rawOutput,
+            operation.schema,
+            maxOutputTokens * MAX_CHARACTERS_PER_TOKEN,
+          );
+          return {
+            value,
+            metadata: response.metadata,
+            ...(response.usage ? { usage: response.usage } : {}),
+          };
+        },
+      });
+    } finally {
+      if (holdsSlot) this.mediaSlots().release();
+    }
   }
 
   /**

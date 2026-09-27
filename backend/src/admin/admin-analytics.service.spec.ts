@@ -28,10 +28,22 @@ describe('AdminAnalyticsService', () => {
     findOne: jest.fn(),
     find: jest.fn(),
   } as unknown as Repository<ServiceCategoryEntity>;
-  const service = new AdminAnalyticsService(bookings, applications, services);
+  // Untyped on purpose: two versions of cache-manager are present in the tree
+  // and the structural cast at the call site is the one the DI token uses.
+  const cacheGet = jest.fn();
+  const cacheSet = jest.fn();
+  const cache = { get: cacheGet, set: cacheSet } as never;
+  const service = new AdminAnalyticsService(
+    bookings,
+    applications,
+    services,
+    cache,
+  );
 
   beforeEach(() => {
     jest.clearAllMocks();
+    cacheGet.mockResolvedValue(undefined);
+    cacheSet.mockResolvedValue(undefined);
     (bookings.count as jest.Mock)
       .mockResolvedValueOnce(12)
       .mockResolvedValueOnce(4)
@@ -88,6 +100,39 @@ describe('AdminAnalyticsService', () => {
     });
     await expect(service.getOperationalAnalytics()).resolves.toMatchObject({
       trust: { averageAcceptMinutes: null, sampleSize: 2, windowDays: 90 },
+    });
+  });
+
+  // The audit counted nine sequential aggregate queries per dashboard load.
+  // A short-TTL cache is the fix it proposed; this pins that it is consulted.
+  it('serves a repeat dashboard load from cache without re-aggregating', async () => {
+    const first = await service.getOperationalAnalytics();
+    expect(cacheSet).toHaveBeenCalledTimes(1);
+
+    const countsAfterFirst = (bookings.count as jest.Mock).mock.calls.length;
+    cacheGet.mockResolvedValue(first);
+
+    const second = await service.getOperationalAnalytics();
+
+    expect(second).toEqual(first);
+    expect((bookings.count as jest.Mock).mock.calls).toHaveLength(
+      countsAfterFirst,
+    );
+  });
+
+  it('still computes when the cache read fails', async () => {
+    cacheGet.mockRejectedValue(new Error('redis down'));
+
+    await expect(service.getOperationalAnalytics()).resolves.toMatchObject({
+      bookings: { total: 12 },
+    });
+  });
+
+  it('still returns analytics when the cache write fails', async () => {
+    cacheSet.mockRejectedValue(new Error('redis down'));
+
+    await expect(service.getOperationalAnalytics()).resolves.toMatchObject({
+      bookings: { total: 12 },
     });
   });
 });

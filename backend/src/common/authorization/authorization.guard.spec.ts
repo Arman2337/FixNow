@@ -59,8 +59,7 @@ describe('AuthorizationGuard', () => {
   it('delegates protected requests to authoritative authorization', async () => {
     reflector.getAllAndOverride
       .mockReturnValueOnce(false)
-      .mockReturnValueOnce(PERMISSIONS.securityAuditReadAuthorized)
-      .mockReturnValueOnce(false);
+      .mockReturnValueOnce(PERMISSIONS.securityAuditReadAuthorized);
     request.headers = { authorization: 'Bearer header.payload.signature' };
     authorization.authorizeAccessToken.mockResolvedValue({
       userId: 'user-1',
@@ -71,28 +70,28 @@ describe('AuthorizationGuard', () => {
     expect(authorization.authorizeAccessToken).toHaveBeenCalledWith(
       'header.payload.signature',
       PERMISSIONS.securityAuditReadAuthorized,
-      undefined,
-      false,
     );
   });
 
-  it('binds self-service permissions to the authenticated principal', async () => {
+  it('does not claim to have verified ownership (SEC-002)', async () => {
+    // The guard cannot see the resource, so it must not pass a fabricated
+    // owner id to the policy: doing so made `ownerId !== userId` compare a
+    // value with itself and turned every self-scoped route into a no-op check.
     reflector.getAllAndOverride
       .mockReturnValueOnce(false)
-      .mockReturnValueOnce(PERMISSIONS.profileReadSelf)
-      .mockReturnValueOnce(true);
+      .mockReturnValueOnce(PERMISSIONS.profileReadSelf);
     request.headers = { authorization: 'Bearer header.payload.signature' };
     authorization.authorizeAccessToken.mockResolvedValue({
       userId: 'user-1',
       sessionId: 'session-1',
       roles: ['customer'],
     });
+
     await expect(guard.canActivate(context)).resolves.toBe(true);
+
     expect(authorization.authorizeAccessToken).toHaveBeenCalledWith(
       'header.payload.signature',
       PERMISSIONS.profileReadSelf,
-      undefined,
-      true,
     );
   });
 });

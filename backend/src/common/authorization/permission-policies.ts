@@ -243,22 +243,29 @@ export const PERMISSION_POLICIES: Readonly<
     roles: ['service_catalog_manager', 'operations_administrator'],
     audience: 'admin',
   },
-  [PERMISSIONS.adminSkillsUpdate]: {
-    roles: [
-      'provider_reviewer',
-      'service_catalog_manager',
-      'operations_administrator',
-    ],
-  },
   [PERMISSIONS.adminSkillsVerify]: {
     roles: [
       'provider_reviewer',
       'service_catalog_manager',
       'operations_administrator',
     ],
+    // Admin console only: this permission is used by
+    // `PUT /provider-skills/:id/verify`, which lets one provider act on
+    // another provider's skill. Without an explicit admin audience the guard
+    // would accept a mobile access token here.
+    audience: 'admin',
+  },
+  [PERMISSIONS.adminSkillsUpdate]: {
+    roles: [
+      'provider_reviewer',
+      'service_catalog_manager',
+      'operations_administrator',
+    ],
+    audience: 'admin',
   },
   [PERMISSIONS.adminSkillsDelete]: {
     roles: ['service_catalog_manager', 'operations_administrator'],
+    audience: 'admin',
   },
   [PERMISSIONS.bookingCreateSelf]: {
     roles: ['customer'],
@@ -358,6 +365,9 @@ export const PERMISSION_POLICIES: Readonly<
   },
   [PERMISSIONS.complaintsCreate]: {
     roles: ['customer', 'verified_provider'],
+    // Self-scoped: a complaint may only ever concern a booking the caller is a
+    // party to, which ComplaintsService now proves before writing.
+    relationship: 'self',
   },
   [PERMISSIONS.aiRecommendationCreate]: {
     roles: ['customer'],

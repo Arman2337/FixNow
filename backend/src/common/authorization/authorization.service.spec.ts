@@ -1,4 +1,5 @@
 import { ForbiddenException, UnauthorizedException } from '@nestjs/common';
+import type { JwtService } from '@nestjs/jwt';
 import { DataSource } from 'typeorm';
 import { AuthAuditEventEntity } from '../../auth/auth-audit-event.entity';
 import { AuthSessionEntity } from '../../auth/auth-session.entity';
@@ -31,7 +32,7 @@ describe('AuthorizationService', () => {
   } as unknown as DataSource;
   const service = new AuthorizationService(
     dataSource,
-    { verifyAsync },
+    { verifyAsync } as unknown as JwtService,
     new AuthorizationPolicyService(),
   );
 
@@ -86,8 +87,7 @@ describe('AuthorizationService', () => {
       service.authorizeAccessToken(
         'admin-access-token',
         PERMISSIONS.adminSessionReadSelf,
-        undefined,
-        true,
+        { ownerId: '00000000-0000-4000-8000-000000000001' },
       ),
     ).resolves.toMatchObject({ roles: ['support_agent'] });
     expect(verifyAsync).toHaveBeenCalledWith('admin-access-token', {

@@ -44,6 +44,29 @@ export class RealtimeConnectionRegistry {
       return false;
     const state = this.states.get(client);
     if (!state) return false;
+
+    // BUG-013. A socket may re-authenticate at any time, and the handler used
+    // to overwrite the principal while keeping every subscription. Those
+    // subscriptions were granted on the strength of the *previous* principal, so
+    // a socket that re-authenticated as a different account kept receiving the
+    // first account's booking and account frames.
+    //
+    // Subscriptions are therefore dropped whenever the identity actually
+    // changes. The common cases - a token refresh, or signing in again on the
+    // same socket - keep their subscriptions, because a subscription is granted
+    // to a *user*, not to a session, so a new sessionId for the same userId is
+    // not an identity change.
+    //
+    // The rate-limit windows are deliberately NOT reset: they are per socket,
+    // not per principal, and clearing them here would let a client reset its
+    // own limit by re-authenticating.
+    const identityChanged =
+      state.principal !== undefined &&
+      state.principal.userId !== principal.userId;
+    if (identityChanged) {
+      state.subscriptions.clear();
+    }
+
     state.principal = principal;
     state.accessToken = accessToken;
     state.authenticatedAt = now;

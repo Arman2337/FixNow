@@ -320,6 +320,15 @@ export class EnvironmentVariables {
   @IsString()
   @IsOptional()
   RAZORPAY_WEBHOOK_SECRET?: string;
+
+  /**
+   * Where provider identity documents are stored. Optional only outside
+   * production, where it falls back to a local MinIO on loopback; in production
+   * it is required and must be HTTPS. See validateObjectStorageEndpoint.
+   */
+  @IsString()
+  @IsOptional()
+  PROVIDER_DOCUMENT_S3_ENDPOINT?: string;
 }
 
 export function validate(config: Record<string, unknown>) {
@@ -334,6 +343,7 @@ export function validate(config: Record<string, unknown>) {
   if (errors.length > 0) {
     throw new Error(errors.toString());
   }
+  validateObjectStorageConfiguration(validatedConfig);
   validateRealtimeOrigins(validatedConfig);
   validateWebOrigins(validatedConfig);
   validateLocalOtpBypass(validatedConfig);
@@ -451,6 +461,12 @@ function validateWebOrigins(config: EnvironmentVariables): void {
   );
 }
 
+function validateObjectStorageConfiguration(
+  config: EnvironmentVariables,
+): void {
+  validateObjectStorageEndpoint(config);
+}
+
 function validateRealtimeOrigins(config: EnvironmentVariables): void {
   validateOriginList(
     config,
@@ -489,5 +505,39 @@ function validateOriginList(
         `${name} must use HTTPS origins (loopback HTTP is allowed outside production)`,
       );
     }
+  }
+}
+
+/**
+ * The S3 endpoint that stores provider identity documents.
+ *
+ * This is operator-supplied rather than attacker-supplied, so it is not an
+ * SSRF vector in the usual sense. The reason to pin it down is confidentiality:
+ * these are government IDs and selfies, and a cleartext endpoint would put
+ * them on the wire in the clear to whatever answered. HTTPS is therefore
+ * required in production, and cleartext is permitted only to a loopback
+ * address outside production, which is the local MinIO.
+ */
+function validateObjectStorageEndpoint(config: EnvironmentVariables): void {
+  const value = config.PROVIDER_DOCUMENT_S3_ENDPOINT;
+  if (!value) return;
+  let endpoint: URL;
+  try {
+    endpoint = new URL(value.trim());
+  } catch {
+    throw new Error('PROVIDER_DOCUMENT_S3_ENDPOINT must be a valid URL');
+  }
+  const localDevelopment =
+    config.NODE_ENV !== Environment.Production &&
+    endpoint.protocol === 'http:' &&
+    ['localhost', '127.0.0.1', '::1'].includes(endpoint.hostname);
+  if (
+    (endpoint.protocol !== 'https:' && !localDevelopment) ||
+    endpoint.username ||
+    endpoint.password
+  ) {
+    throw new Error(
+      'PROVIDER_DOCUMENT_S3_ENDPOINT must use HTTPS (loopback HTTP is allowed outside production)',
+    );
   }
 }

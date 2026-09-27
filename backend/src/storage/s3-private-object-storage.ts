@@ -6,6 +6,7 @@ import {
 } from '@aws-sdk/client-s3';
 import { Injectable } from '@nestjs/common';
 import { PrivateObjectStorage } from './private-object-storage';
+import { Environment } from '../config/env.validation';
 
 function requiredEnvironment(name: string): string {
   const value = process.env[name];
@@ -14,13 +15,33 @@ function requiredEnvironment(name: string): string {
   return value;
 }
 
+/**
+ * The bucket endpoint.
+ *
+ * There is deliberately no production default. The previous default was
+ * `http://127.0.0.1:8333`, which meant a deployment that forgot to set the
+ * endpoint would silently attempt to send government IDs and selfies over
+ * cleartext to loopback and fail with an opaque connection error. Failing at
+ * construction with a named variable is a better failure than that.
+ */
+function objectStorageEndpoint(): string {
+  const configured = process.env.PROVIDER_DOCUMENT_S3_ENDPOINT;
+  if (configured) return configured;
+  if (process.env.NODE_ENV === Environment.Production) {
+    throw new Error(
+      'PROVIDER_DOCUMENT_S3_ENDPOINT is required in production; there is no default because these are identity documents',
+    );
+  }
+  // Local MinIO, which serves cleartext over loopback.
+  return 'http://127.0.0.1:8333';
+}
+
 @Injectable()
 export class S3PrivateObjectStorage implements PrivateObjectStorage {
   private readonly bucket =
     process.env.PROVIDER_DOCUMENT_BUCKET ?? 'fixnow-provider-documents';
   private readonly client = new S3Client({
-    endpoint:
-      process.env.PROVIDER_DOCUMENT_S3_ENDPOINT ?? 'http://127.0.0.1:8333',
+    endpoint: objectStorageEndpoint(),
     region: process.env.PROVIDER_DOCUMENT_S3_REGION ?? 'local',
     forcePathStyle: true,
     credentials: {

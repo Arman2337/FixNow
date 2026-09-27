@@ -275,3 +275,74 @@ describe('Payment configuration', () => {
     expect(() => validate(partial)).toThrow(/RAZORPAY_WEBHOOK_SECRET/);
   });
 });
+
+describe('Object storage configuration', () => {
+  const base = {
+    DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/test',
+    REDIS_URL: 'redis://localhost:6379',
+    JWT_SECRET: 'test-only-jwt-secret-at-least-32-characters',
+    OTP_SECRET: 'test-only-otp-secret-at-least-32-characters',
+  };
+
+  // These buckets hold government IDs and selfies. A cleartext endpoint puts
+  // them on the wire in the clear, so production gets no cleartext option.
+  it('accepts an HTTPS endpoint', () => {
+    expect(() =>
+      validate({
+        ...base,
+        PROVIDER_DOCUMENT_S3_ENDPOINT: 'https://s3.example.com',
+      }),
+    ).not.toThrow();
+  });
+
+  it('rejects a cleartext endpoint in production', () => {
+    expect(() =>
+      validate({
+        ...base,
+        NODE_ENV: 'production',
+        PAYMENT_PROVIDER: 'razorpay',
+        RAZORPAY_KEY_ID: 'k',
+        RAZORPAY_KEY_SECRET: 's',
+        RAZORPAY_WEBHOOK_SECRET: 'w',
+        PROVIDER_DOCUMENT_S3_ENDPOINT: 'http://s3.example.com',
+      }),
+    ).toThrow(/PROVIDER_DOCUMENT_S3_ENDPOINT must use HTTPS/);
+  });
+
+  it('allows loopback HTTP outside production for local MinIO', () => {
+    expect(() =>
+      validate({
+        ...base,
+        PROVIDER_DOCUMENT_S3_ENDPOINT: 'http://127.0.0.1:8333',
+      }),
+    ).not.toThrow();
+  });
+
+  it('rejects a non-loopback cleartext endpoint outside production', () => {
+    expect(() =>
+      validate({
+        ...base,
+        PROVIDER_DOCUMENT_S3_ENDPOINT: 'http://s3.example.com',
+      }),
+    ).toThrow(/must use HTTPS/);
+  });
+
+  it('rejects an unparseable endpoint', () => {
+    expect(() =>
+      validate({ ...base, PROVIDER_DOCUMENT_S3_ENDPOINT: 'not a url' }),
+    ).toThrow(/must be a valid URL/);
+  });
+
+  it('rejects credentials embedded in the endpoint', () => {
+    expect(() =>
+      validate({
+        ...base,
+        PROVIDER_DOCUMENT_S3_ENDPOINT: 'https://user:pass@s3.example.com',
+      }),
+    ).toThrow(/must use HTTPS/);
+  });
+
+  it('is optional when unset', () => {
+    expect(() => validate(base)).not.toThrow();
+  });
+});

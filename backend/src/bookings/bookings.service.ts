@@ -238,13 +238,17 @@ export class BookingsService {
       .getRepository(Booking)
       .findOneBy({ id: bookingId });
     if (!candidate) throw new NotFoundException('Booking not found');
-    const eligibleProviders = await this.matchingService.findEligibleProviders(
+    // BUG-007: eligibility must not depend on the provider's rank in a
+    // distance-ordered shortlist. `isProviderEligible` applies the same
+    // predicate with no LIMIT, so a provider is judged on merit rather than on
+    // whether they made the top 50.
+    const eligible = await this.matchingService.isProviderEligible(
+      providerId,
       candidate.locationLat!,
       candidate.locationLng!,
       candidate.serviceCategoryId,
-      50,
     );
-    if (!eligibleProviders.some(({ providerId: id }) => id === providerId)) {
+    if (!eligible) {
       throw new ForbiddenException('Provider is not eligible for this booking');
     }
     const booking = await this.transition(

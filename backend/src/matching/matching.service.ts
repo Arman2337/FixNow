@@ -100,4 +100,76 @@ export class MatchingService {
       distanceKm: parseFloat(row.distanceKm),
     }));
   }
+
+  /**
+   * Whether one specific provider may take a specific job.
+   *
+   * BUG-007. `acceptBooking` used to decide eligibility by looking for the
+   * provider inside `findEligibleProviders(..., 50)`. That list is a
+   * distance-ordered fan-out capped at 50, so in a city with more than 50
+   * eligible providers everyone past the cut was refused with "Provider is not
+   * eligible for this booking" - a factually false answer. The tie-break is
+   * `profile.userId ASC`, so the outcome was also perfectly deterministic: the
+   * same 50 providers won every job, forever.
+   *
+   * This is the same predicate with no `ORDER BY` and no `LIMIT`, so the answer
+   * cannot depend on a provider's rank. Kept separate from
+   * `findEligibleProviders` rather than reusing it, because ranking a shortlist
+   * and judging eligibility are different questions.
+   */
+  async isProviderEligible(
+    providerId: string,
+    locationLat: number,
+    locationLng: number,
+    serviceCategoryId: string,
+    radiusMultiplier = 1,
+  ): Promise<boolean> {
+    const boundedMultiplier = Math.min(Math.max(radiusMultiplier, 1), 4);
+    const haversineSql = `
+      (6371 * acos(LEAST(1, GREATEST(-1,
+        cos(radians(:lat)) *
+        cos(radians(profile.baseLatitude)) *
+        cos(radians(profile.baseLongitude) - radians(:lng)) +
+        sin(radians(:lat)) *
+        sin(radians(profile.baseLatitude))
+      ))))
+    `;
+
+    const count = await this.profileRepository
+      .createQueryBuilder('profile')
+      .innerJoin('profile.user', 'user')
+      .innerJoin(
+        'provider_availability',
+        'availability',
+        'availability.user_id = profile.user_id',
+      )
+      .innerJoin('provider_skills', 'skill', 'skill.user_id = profile.user_id')
+      .innerJoin(
+        'service_categories',
+        'category',
+        'category.id = skill.service_category_id',
+      )
+      .where('profile.user_id = :providerId', { providerId })
+      .andWhere('user.status = :accountStatus', {
+        accountStatus: AccountStatus.Active,
+      })
+      .andWhere('availability.status = :availStatus', {
+        availStatus: ProviderAvailabilityStatus.Online,
+      })
+      .andWhere('availability.status_expires_at > CURRENT_TIMESTAMP')
+      .andWhere('skill.service_category_id = :categoryId', {
+        categoryId: serviceCategoryId,
+      })
+      .andWhere('skill.is_verified = :isVerified', { isVerified: true })
+      .andWhere('category.is_active = :categoryActive', {
+        categoryActive: true,
+      })
+      .andWhere(
+        `${haversineSql} <= profile.serviceRadiusKm * ${boundedMultiplier}`,
+        { lat: locationLat, lng: locationLng },
+      )
+      .getCount();
+
+    return count > 0;
+  }
 }

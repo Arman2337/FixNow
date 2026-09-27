@@ -33,6 +33,7 @@ describe('MatchingService', () => {
       addOrderBy: addOrderByMock,
       limit: limitMock,
       getRawMany: jest.fn(),
+      getCount: jest.fn(),
     } as unknown as jest.Mocked<SelectQueryBuilder<ProviderProfileEntity>>;
 
     const mockRepository = {
@@ -101,6 +102,89 @@ describe('MatchingService', () => {
         { providerId: 'provider-1', distanceKm: 2.5 },
         { providerId: 'provider-2', distanceKm: 5.1 },
       ]);
+    });
+  });
+
+  // BUG-007: eligibility must not depend on a provider's rank in a
+  // distance-ordered shortlist, so this path must never order or limit.
+  describe('isProviderEligible', () => {
+    it('reports a provider with a matching row as eligible', async () => {
+      mockQueryBuilder.getCount.mockResolvedValue(1);
+
+      const eligible = await service.isProviderEligible(
+        'provider-1',
+        17.385,
+        78.4867,
+        'category-1',
+      );
+
+      expect(eligible).toBe(true);
+    });
+
+    it('reports a provider with no matching row as ineligible', async () => {
+      mockQueryBuilder.getCount.mockResolvedValue(0);
+
+      const eligible = await service.isProviderEligible(
+        'provider-9',
+        17.385,
+        78.4867,
+        'category-1',
+      );
+
+      expect(eligible).toBe(false);
+    });
+
+    it('never applies a LIMIT or an ORDER BY', async () => {
+      mockQueryBuilder.getCount.mockResolvedValue(1);
+
+      await service.isProviderEligible(
+        'provider-1',
+        17.385,
+        78.4867,
+        'category-1',
+      );
+
+      // A limit or ordering here is exactly what made the old check rank-based.
+      expect(limitMock).not.toHaveBeenCalled();
+      expect(orderByMock).not.toHaveBeenCalled();
+      expect(addOrderByMock).not.toHaveBeenCalled();
+    });
+
+    it('scopes the query to the provider being judged and keeps the same predicate', async () => {
+      mockQueryBuilder.getCount.mockResolvedValue(1);
+
+      await service.isProviderEligible(
+        'provider-7',
+        17.385,
+        78.4867,
+        'category-1',
+      );
+
+      const whereCalls = whereMock.mock.calls as [
+        string,
+        Record<string, unknown>,
+      ][];
+      expect(whereCalls[0][0]).toBe('profile.user_id = :providerId');
+      expect(whereCalls[0][1]).toEqual({ providerId: 'provider-7' });
+
+      const andWhereCalls = andWhereMock.mock.calls as [string][];
+      const predicates = andWhereCalls.map((call) => String(call[0]).trim());
+      expect(
+        predicates.some((p) => p.includes('skill.is_verified = :isVerified')),
+      ).toBe(true);
+      expect(
+        predicates.some((p) =>
+          p.includes('availability.status = :availStatus'),
+        ),
+      ).toBe(true);
+      expect(
+        predicates.some((p) => p.includes('user.status = :accountStatus')),
+      ).toBe(true);
+      expect(
+        predicates.some((p) =>
+          p.includes('skill.service_category_id = :categoryId'),
+        ),
+      ).toBe(true);
     });
   });
 });

@@ -1,3 +1,5 @@
+/* Jest service mocks are intentionally asserted as detached functions. */
+/* eslint-disable @typescript-eslint/unbound-method */
 import {
   BadRequestException,
   ConflictException,
@@ -137,6 +139,7 @@ describe('BookingsService', () => {
     } as unknown as jest.Mocked<DataSource>;
     matchingService = {
       findEligibleProviders: jest.fn(),
+      isProviderEligible: jest.fn(),
     } as unknown as jest.Mocked<MatchingService>;
     service = new BookingsService(dataSource, matchingService);
   });
@@ -265,7 +268,7 @@ describe('BookingsService', () => {
 
   it('rejects acceptance by an ineligible provider', async () => {
     bookingFindOneBy.mockResolvedValue(booking());
-    matchingService.findEligibleProviders.mockResolvedValue([]);
+    matchingService.isProviderEligible.mockResolvedValue(false);
 
     await expect(
       service.acceptBooking(
@@ -274,6 +277,30 @@ describe('BookingsService', () => {
         1,
       ),
     ).rejects.toBeInstanceOf(ForbiddenException);
+  });
+
+  // BUG-007: eligibility is judged for the provider who is asking, not by
+  // looking for them in a distance-ordered shortlist.
+  it('judges acceptance eligibility for the asking provider, not a shortlist', async () => {
+    const target = booking();
+    bookingFindOneBy.mockResolvedValue(target);
+    stubTransition(target);
+    matchingService.isProviderEligible.mockResolvedValue(true);
+
+    await service.acceptBooking(
+      '00000000-0000-4000-8000-000000000101',
+      '00000000-0000-4000-8000-000000000002',
+      1,
+    );
+
+    expect(matchingService.isProviderEligible).toHaveBeenCalledWith(
+      '00000000-0000-4000-8000-000000000002',
+      target.locationLat,
+      target.locationLng,
+      target.serviceCategoryId,
+    );
+    // The capped fan-out must not be consulted to decide eligibility.
+    expect(matchingService.findEligibleProviders).not.toHaveBeenCalled();
   });
 
   it('rejects malformed history cursors', async () => {
@@ -363,23 +390,26 @@ describe('BookingsService', () => {
     expect(eventSave).not.toHaveBeenCalled();
   });
 
-  describe('updateBookingItems', () => {
-    const stubTransition = (updated: Booking) => {
-      const builder = {
-        update: jest.fn().mockReturnThis(),
-        set: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        execute: jest.fn().mockResolvedValue({ affected: 1 }),
-      };
-      (bookingRepository.createQueryBuilder as jest.Mock).mockReturnValue(
-        builder,
-      );
-      (bookingRepository.findOneByOrFail as jest.Mock).mockResolvedValue(
-        updated,
-      );
-      return builder;
+  /**
+   * `transition()` finishes with a compare-and-set
+   * (`createQueryBuilder().update().set().where().execute()`). Tests that only
+   * care about what happened *before* the write need this to get past it.
+   */
+  const stubTransition = (updated: Booking) => {
+    const builder = {
+      update: jest.fn().mockReturnThis(),
+      set: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      execute: jest.fn().mockResolvedValue({ affected: 1 }),
     };
+    (bookingRepository.createQueryBuilder as jest.Mock).mockReturnValue(
+      builder,
+    );
+    (bookingRepository.findOneByOrFail as jest.Mock).mockResolvedValue(updated);
+    return builder;
+  };
 
+  describe('updateBookingItems', () => {
     const activeJob = () =>
       booking({
         providerId: 'provider-1',

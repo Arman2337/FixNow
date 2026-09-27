@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   ManyToOne,
   JoinColumn,
+  type Relation,
 } from 'typeorm';
 import { Complaint } from './complaint.entity';
 
@@ -35,5 +36,5 @@ export class ComplaintEvidence {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'complaint_id' })
-  complaint: Complaint;
+  complaint: Relation<Complaint>;
 }

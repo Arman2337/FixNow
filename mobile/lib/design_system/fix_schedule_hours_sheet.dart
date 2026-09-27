@@ -112,28 +112,35 @@ class _FixProviderWorkingHoursSheetState
           timePickerTheme: TimePickerThemeData(
             backgroundColor: AppColors.surfaceElevated,
             dialBackgroundColor: AppColors.surfaceSecondary,
-            dialTextColor: WidgetStateColor.resolveWith((states) =>
-                states.contains(WidgetState.selected)
-                    ? Colors.white
-                    : AppColors.textPrimary),
+            dialTextColor: WidgetStateColor.resolveWith(
+              (states) => states.contains(WidgetState.selected)
+                  ? Colors.white
+                  : AppColors.textPrimary,
+            ),
             dialHandColor: AppColors.primary,
-            hourMinuteColor: WidgetStateColor.resolveWith((states) =>
-                states.contains(WidgetState.selected)
-                    ? AppColors.primary
-                    : AppColors.surfaceSecondary),
-            hourMinuteTextColor: WidgetStateColor.resolveWith((states) =>
-                states.contains(WidgetState.selected)
-                    ? Colors.white
-                    : AppColors.textPrimary),
-            dayPeriodColor: WidgetStateColor.resolveWith((states) =>
-                states.contains(WidgetState.selected)
-                    ? AppColors.primarySoft
-                    : Colors.transparent),
-            dayPeriodTextColor: WidgetStateColor.resolveWith((states) =>
-                states.contains(WidgetState.selected)
-                    ? AppColors.primary
-                    : AppColors.textSecondary),
-            dayPeriodBorderSide: const BorderSide(color: AppColors.borderDefault),
+            hourMinuteColor: WidgetStateColor.resolveWith(
+              (states) => states.contains(WidgetState.selected)
+                  ? AppColors.primary
+                  : AppColors.surfaceSecondary,
+            ),
+            hourMinuteTextColor: WidgetStateColor.resolveWith(
+              (states) => states.contains(WidgetState.selected)
+                  ? Colors.white
+                  : AppColors.textPrimary,
+            ),
+            dayPeriodColor: WidgetStateColor.resolveWith(
+              (states) => states.contains(WidgetState.selected)
+                  ? AppColors.primarySoft
+                  : Colors.transparent,
+            ),
+            dayPeriodTextColor: WidgetStateColor.resolveWith(
+              (states) => states.contains(WidgetState.selected)
+                  ? AppColors.primary
+                  : AppColors.textSecondary,
+            ),
+            dayPeriodBorderSide: const BorderSide(
+              color: AppColors.borderDefault,
+            ),
           ),
           textButtonTheme: TextButtonThemeData(
             style: TextButton.styleFrom(foregroundColor: AppColors.primary),
@@ -260,7 +267,9 @@ class _FixProviderWorkingHoursSheetState
                       ),
                       child: const Icon(
                         Icons.calendar_month_rounded,
-                        color: AppColors.primary,
+                        // Dark surface: the light-surface primary token
+                        // measured 2.65:1 against #0F172A.
+                        color: AppColors.primaryFixed,
                         size: 20,
                       ),
                     ),
@@ -284,7 +293,9 @@ class _FixProviderWorkingHoursSheetState
             const SizedBox(height: AppSpacing.xs),
             const Text(
               'Set the days and daily hours when you are available to accept incoming jobs.',
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+              // This sheet is a dark surface (backgroundSecondary #0F172A), so
+              // the light-surface textSecondary token measured 2.76:1 here.
+              style: TextStyle(color: AppColors.textOnDarkMuted, fontSize: 13),
             ),
             const SizedBox(height: AppSpacing.lg),
 

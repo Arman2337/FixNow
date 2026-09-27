@@ -34,7 +34,9 @@ export class CustomerProfileService {
         .getRepository(Booking)
         .createQueryBuilder('booking')
         .where('booking.customerId = :userId', { userId })
-        .andWhere('booking.status = :status', { status: BookingStatus.COMPLETED })
+        .andWhere('booking.status = :status', {
+          status: BookingStatus.COMPLETED,
+        })
         .andWhere('booking.completedAt > :date', { date: thirtyDaysAgo })
         .getCount();
 
@@ -79,7 +81,9 @@ export class CustomerProfileService {
         .getRepository(Booking)
         .createQueryBuilder('booking')
         .where('booking.customerId = :userId', { userId })
-        .andWhere('booking.status = :status', { status: BookingStatus.COMPLETED })
+        .andWhere('booking.status = :status', {
+          status: BookingStatus.COMPLETED,
+        })
         .andWhere('booking.completedAt > :date', { date: thirtyDaysAgo })
         .getCount();
 

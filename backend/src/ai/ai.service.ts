@@ -28,7 +28,7 @@ import {
 const MAX_CHARACTERS_PER_TOKEN = 4;
 
 interface AiOperationalLogger {
-  info(metadata: Record<string, unknown>, message: string): void;
+  readonly info?: (metadata: Record<string, unknown>, message: string) => void;
 }
 
 export interface AiStructuredOperation<T> {
@@ -390,8 +390,13 @@ export class AiService {
     readonly metadata?: AiModelMetadata;
     readonly usage?: AiUsage;
   }): void {
-    const pinoLogger = (this.logger as any)?.logger ?? this.logger;
-    pinoLogger?.info?.(
+    const pinoLogger: AiOperationalLogger =
+      (
+        this.logger as unknown as {
+          readonly logger?: AiOperationalLogger;
+        }
+      ).logger ?? (this.logger as unknown as AiOperationalLogger);
+    pinoLogger.info?.(
       {
         ai: {
           operation: event.operation,

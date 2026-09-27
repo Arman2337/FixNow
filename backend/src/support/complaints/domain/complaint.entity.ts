@@ -6,6 +6,7 @@ import {
   UpdateDateColumn,
   VersionColumn,
   OneToMany,
+  type Relation,
 } from 'typeorm';
 import { ComplaintEvidence } from './complaint-evidence.entity';
 import { AppealStatus } from '../../../../../shared/trust.types';
@@ -74,7 +75,7 @@ export class Complaint {
   version: number;
 
   @OneToMany(() => ComplaintEvidence, (evidence) => evidence.complaint)
-  evidence: ComplaintEvidence[];
+  evidence: Relation<ComplaintEvidence>[];
 
   @Column({
     type: 'enum',

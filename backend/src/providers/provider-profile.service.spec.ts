@@ -52,7 +52,9 @@ describe('ProviderProfileService', () => {
           provide: DataSource,
           useValue: {
             transaction: jest.fn(),
-            query: jest.fn().mockResolvedValue([{ rating: 0, reviewsCount: 0 }]),
+            query: jest
+              .fn()
+              .mockResolvedValue([{ rating: 0, reviewsCount: 0 }]),
           },
         },
       ],
@@ -72,10 +74,13 @@ describe('ProviderProfileService', () => {
       ...profile,
       skillIds: ['skill-id'],
       stats: {
-        acceptanceRate: 98,
+        // acceptanceRate was a hardcoded 98. It is not derivable from the
+        // current schema, so it reports 0 rather than inventing a number.
+        acceptanceRate: 0,
         completedJobs: 0,
         earningsMinor: 0,
         rating: 0,
+        reviewCount: 0,
       },
     });
     expect(profiles.findOne).toHaveBeenCalledWith({
@@ -125,7 +130,9 @@ describe('ProviderProfileService', () => {
   it('updates only the profile selected by authenticated user ID', async () => {
     applications.findOne.mockResolvedValue({} as ProviderApplicationEntity);
     profiles.findOne.mockResolvedValue({ ...profile });
-    profiles.save.mockImplementation((value) => Promise.resolve(value));
+    profiles.save.mockImplementation(
+      async (value) => value as ProviderProfileEntity,
+    );
 
     await service.upsertOwnProfile('provider-id', {
       displayName: 'Updated Name',

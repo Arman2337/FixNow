@@ -114,7 +114,7 @@ class _FixOtpInputSheetState extends State<FixOtpInputSheet> {
                     Text(
                       'Customer Service Code',
                       style: FixNowTypography.heading3.copyWith(
-                        color: AppColors.cream,
+                        color: AppColors.textPrimary,
                         fontSize: 18,
                       ),
                     ),
@@ -162,7 +162,7 @@ class _FixOtpInputSheetState extends State<FixOtpInputSheet> {
                     style: const TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.cream,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                 );

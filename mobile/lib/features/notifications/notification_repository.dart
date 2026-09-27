@@ -22,18 +22,34 @@ class NotificationRepository {
             bearerToken: token,
           ),
         );
-        if (response.statusCode == 200 && response.body is List) {
-          final raw = response.body as List;
-          remoteList = raw
-              .whereType<Map>()
-              .map(
-                (m) => InAppNotification.fromJson(Map<String, dynamic>.from(m)),
-              )
-              .toList();
-        }
-      } catch (_) {
-        // No fallback, return what we have (empty or cached)
-      }
+         if (response.statusCode < 200 || response.statusCode >= 300) {
+           throw ApiException(
+             ApiFailureKind.server,
+             'Notifications are temporarily unavailable.',
+             statusCode: response.statusCode,
+           );
+         }
+         if (response.body is! List) {
+           throw const ApiException(
+             ApiFailureKind.invalidResponse,
+             'Notifications returned an invalid response.',
+           );
+         }
+         final raw = response.body as List;
+         remoteList = raw
+             .whereType<Map>()
+             .map(
+               (m) => InAppNotification.fromJson(Map<String, dynamic>.from(m)),
+             )
+             .toList();
+       } on ApiException {
+         rethrow;
+       } catch (_) {
+         throw const ApiException(
+           ApiFailureKind.server,
+           'Notifications are temporarily unavailable.',
+         );
+       }
     }
 
     final combined = <String, InAppNotification>{};
@@ -52,10 +68,23 @@ class NotificationRepository {
 
   void markAsRead(String id) {
     _readIds.add(id);
+    if (api != null) {
+      accessToken?.call().then((token) {
+        api!.send(
+          ApiRequest(
+            method: ApiMethod.patch,
+            path: 'users/me/notifications/$id/read',
+            bearerToken: token,
+          ),
+        );
+      }).catchError((_) {});
+    }
   }
 
   void markAllAsRead(Iterable<String> ids) {
-    _readIds.addAll(ids);
+    for (final id in ids) {
+      markAsRead(id);
+    }
   }
 
   void deleteNotification(String id) {

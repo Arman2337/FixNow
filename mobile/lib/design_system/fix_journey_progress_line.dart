@@ -146,7 +146,7 @@ class FixJourneyProgressLine extends StatelessWidget {
                               ? FontWeight.w700
                               : FontWeight.w500,
                           color: i == activeIndex
-                              ? AppColors.cream
+                              ? AppColors.textPrimary
                               : (i < activeIndex
                                     ? AppColors.textSecondary
                                     : AppColors.textMuted),

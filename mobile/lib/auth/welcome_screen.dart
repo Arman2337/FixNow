@@ -20,9 +20,12 @@ class WelcomeScreen extends StatefulWidget {
 
 class _WelcomeScreenState extends State<WelcomeScreen> {
   AccountRole _selected = AccountRole.customer;
+  bool _roleSelectionRequested = false;
 
-  String get _ctaLabel => _selected == AccountRole.customer
-      ? 'Continue as Customer'
+  String get _ctaLabel => _roleSelectionRequested
+      ? 'Continue'
+      : _selected == AccountRole.customer
+      ? 'Get started'
       : 'Join as Service Partner';
 
   /// Entrance delay for the block at [slot] on the 60ms stagger clock.
@@ -243,9 +246,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                   width: 48,
                                   height: 48,
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withValues(
-                                      alpha: 0.15,
-                                    ),
+                                    color: Colors.white.withValues(alpha: 0.15),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: Icon(
@@ -273,14 +274,24 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
-                                        'Repair service at your door step',
-                                        maxLines: 2,
+                                        'Trusted help.',
+                                        maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                         style: FixNowTypography.headlineMd
                                             .copyWith(
                                               color: Colors.white,
                                               fontWeight: FontWeight.w800,
                                             ),
+                                      ),
+                                      Text(
+                                        'When you need it.',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: FixNowTypography.body.copyWith(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.85,
+                                          ),
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -302,13 +313,25 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                         children: [
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 4),
-                            child: Text(
-                              'CHOOSE YOUR ACCOUNT TYPE',
-                              style: FixNowTypography.labelSmall.copyWith(
-                                color: AppColors.textSecondary,
-                                letterSpacing: 1.2,
-                                fontWeight: FontWeight.w700,
-                              ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'CHOOSE ACCOUNT MODE',
+                                  style: FixNowTypography.labelSmall.copyWith(
+                                    color: AppColors.textSecondary,
+                                    letterSpacing: 1.2,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'How would you like to continue?',
+                                  style: FixNowTypography.bodySmall.copyWith(
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -317,8 +340,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                             children: [
                               Expanded(
                                 child: _StitchRoleCard(
-                                  title: 'I need a service',
-                                  subtitle: 'For homeowners\nand residents',
+                                  title: 'Customer',
+                                  subtitle: 'I Need a Service',
                                   icon: Icons.person_rounded,
                                   selected: _selected == AccountRole.customer,
                                   onTap: () => setState(
@@ -329,9 +352,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                               const SizedBox(width: 12),
                               Expanded(
                                 child: _StitchRoleCard(
-                                  title: 'I am a professional',
-                                  subtitle:
-                                      'For technicians\nand service providers',
+                                  title: 'Service provider',
+                                  subtitle: 'I Am a Service Professional',
                                   icon: Icons.work_rounded,
                                   selected:
                                       _selected ==
@@ -361,8 +383,15 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                               height: 54,
                               width: double.infinity,
                               child: ElevatedButton(
-                                onPressed: () =>
-                                    widget.onContinue(_selected, true),
+                                onPressed: () {
+                                  if (!_roleSelectionRequested) {
+                                    setState(
+                                      () => _roleSelectionRequested = true,
+                                    );
+                                    return;
+                                  }
+                                  widget.onContinue(_selected, true);
+                                },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.primary,
                                   foregroundColor: AppColors.onPrimary,
@@ -377,23 +406,27 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                     fontWeight: FontWeight.w700,
                                   ),
                                 ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(_ctaLabel),
-                                    const SizedBox(width: 8),
-                                    const Icon(
-                                      Icons.arrow_forward_rounded,
-                                      size: 20,
-                                    ),
-                                  ],
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(_ctaLabel),
+                                      const SizedBox(width: 8),
+                                      const Icon(
+                                        Icons.arrow_forward_rounded,
+                                        size: 20,
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
                           ),
                           const SizedBox(height: AppSpacing.sm),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                          Wrap(
+                            alignment: WrapAlignment.center,
+                            crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
                               Text(
                                 'Already have an account?',
@@ -437,12 +470,12 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                   ),
                                 ),
                               ),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                ),
+                              Flexible(
                                 child: Text(
-                                  'TRUSTED SAFE NETWORK',
+                                  'TRUST SIGNALS',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: TextAlign.center,
                                   style: FixNowTypography.dataMono.copyWith(
                                     color: AppColors.textSecondary,
                                     fontSize: 10,
@@ -469,8 +502,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                   icon: Icons.fingerprint_rounded,
                                   badgeColor: AppColors.primaryFixed,
                                   iconColor: AppColors.onPrimaryFixed,
-                                  title: 'UIDAI Aadhaar',
-                                  subtitle: 'Verified Techs',
+                                  title: 'Provider checks',
+                                  subtitle: 'Shown when available',
                                 ),
                               ),
                               const SizedBox(width: 8),
@@ -479,8 +512,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                   icon: Icons.lock_rounded,
                                   badgeColor: AppColors.secondaryContainer,
                                   iconColor: AppColors.onSecondaryContainer,
-                                  title: 'Escrow Held',
-                                  subtitle: 'Pay Post-Job',
+                                  title: 'Payment terms',
+                                  subtitle: 'Shown before payment',
                                 ),
                               ),
                               const SizedBox(width: 8),
@@ -489,8 +522,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                   icon: Icons.star_rounded,
                                   badgeColor: AppColors.tertiaryFixed,
                                   iconColor: AppColors.onTertiaryFixed,
-                                  title: '4.9★ Rated',
-                                  subtitle: '100K+ Repaired',
+                                  title: 'Trust signals',
+                                  subtitle: 'Evidence when available',
                                 ),
                               ),
                             ],
@@ -674,85 +707,6 @@ class _StitchRoleCard extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─── _PingDot: Stitch animate-ping equivalent ────────────────────────────────
-class _PingDot extends StatefulWidget {
-  const _PingDot({this.color = AppColors.primary, this.size = 8.0});
-
-  final Color color;
-  final double size;
-
-  @override
-  State<_PingDot> createState() => _PingDotState();
-}
-
-class _PingDotState extends State<_PingDot>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1000),
-    )..repeat();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final reduceMotion =
-        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
-
-    return SizedBox(
-      width: widget.size * 2,
-      height: widget.size * 2,
-      child: Center(
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            if (!reduceMotion)
-              AnimatedBuilder(
-                animation: _controller,
-                builder: (context, child) {
-                  final scale = 1.0 + _controller.value * 1.5;
-                  final opacity = (1.0 - _controller.value).clamp(0.0, 0.75);
-                  return Transform.scale(
-                    scale: scale,
-                    child: Opacity(
-                      opacity: opacity,
-                      child: Container(
-                        width: widget.size,
-                        height: widget.size,
-                        decoration: BoxDecoration(
-                          color: widget.color,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            Container(
-              width: widget.size,
-              height: widget.size,
-              decoration: BoxDecoration(
-                color: widget.color,
-                shape: BoxShape.circle,
-              ),
-            ),
-          ],
         ),
       ),
     );

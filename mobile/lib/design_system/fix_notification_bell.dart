@@ -97,7 +97,7 @@ class _FixNotificationBellIconState extends State<FixNotificationBellIcon> {
             hasUnread
                 ? Icons.notifications_active_rounded
                 : Icons.notifications_outlined,
-            color: hasUnread ? Colors.white : AppColors.textSecondary,
+            color: hasUnread ? AppColors.primary : AppColors.textPrimary,
             size: 22,
           ),
           if (hasUnread)

@@ -26,12 +26,18 @@ class SubServiceCatalogScreen extends StatefulWidget {
   final ApiTransport api;
 
   /// Callback when user confirms cart items to proceed to booking.
+  ///
+  /// `items` carries only catalogue ids and quantities — the server prices them
+  /// (SEC-001). `pricedItems` carries the same lines with their catalogue names
+  /// and prices purely so the request screen can render a recap; it is
+  /// display-only and is never submitted.
   final void Function(
     ServiceCategory updatedCategory,
     String itemizedDescription,
     int calculatedPriceMinor,
     BookingLocationFix? location,
     List<BookingItemDraft> items,
+    List<BookingLineItem> pricedItems,
   )? onProceedToBooking;
 
   @override
@@ -122,6 +128,17 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
         _cart.items
             .map(
               (item) => BookingItemDraft(
+                // Only the catalogue entry and quantity travel to the server.
+                // The backend resolves the name and price (SEC-001).
+                subServiceId: item.subService.id,
+                quantity: item.quantity,
+              ),
+            )
+            .toList(growable: false),
+        // Display-only mirror of the same lines, priced from the catalogue.
+        _cart.items
+            .map(
+              (item) => BookingLineItem(
                 id: item.subService.id,
                 name: item.subService.name,
                 quantity: item.quantity,
@@ -719,7 +736,7 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
                         ? Image.network(
                             item.imageUrl!,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Icon(
+                            errorBuilder: (_, _, _) => Icon(
                               item.icon,
                               color: qty > 0
                                   ? AppColors.primary
@@ -1015,104 +1032,101 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Count Badge + Details
-                GestureDetector(
-                  onTap: _openCartSummarySheet,
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 26,
-                        height: 26,
-                        decoration: const BoxDecoration(
-                          color: AppColors.primary,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Center(
-                          child: Text(
-                            '${_cart.totalItemCount}',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 12,
-                            ),
+                // Count Badge + Price / Details
+                Expanded(
+                  child: GestureDetector(
+                    onTap: _openCartSummarySheet,
+                    behavior: HitTestBehavior.opaque,
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 28,
+                          height: 28,
+                          decoration: const BoxDecoration(
+                            color: AppColors.primary,
+                            shape: BoxShape.circle,
                           ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '${_cart.totalItemCount} ${_cart.totalItemCount == 1 ? 'item' : 'items'} selected',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 13,
-                            ),
-                          ),
-                          Text(
-                            'Government GST (${_cart.formattedGst})',
-                            style: const TextStyle(
-                              color: Colors.white60,
-                              fontSize: 10,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Grand total & Book Now CTA
-                Row(
-                  children: [
-                    Text(
-                      _cart.formattedGrandTotal,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 15,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    InkWell(
-                      onTap: _handleProceed,
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'Review Cart & Schedule',
-                              style: TextStyle(
+                          child: Center(
+                            child: Text(
+                              '${_cart.totalItemCount}',
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w800,
-                                fontSize: 13,
+                                fontSize: 12,
                               ),
                             ),
-                            SizedBox(width: 4),
-                            Icon(
-                              Icons.arrow_forward_rounded,
-                              color: Colors.white,
-                              size: 14,
-                            ),
-                          ],
+                          ),
                         ),
-                      ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                _cart.formattedGrandTotal,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 15,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              Text(
+                                '${_cart.totalItemCount} ${_cart.totalItemCount == 1 ? 'item' : 'items'} • View cart',
+                                style: const TextStyle(
+                                  color: Colors.white60,
+                                  fontSize: 11,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+
+                // Proceed / Review Cart & Schedule CTA
+                InkWell(
+                  onTap: _handleProceed,
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 9,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Review Cart & Schedule',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 12,
+                          ),
+                        ),
+                        SizedBox(width: 4),
+                        Icon(
+                          Icons.arrow_forward_rounded,
+                          color: Colors.white,
+                          size: 14,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ],
             ),

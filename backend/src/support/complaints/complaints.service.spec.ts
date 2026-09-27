@@ -8,8 +8,15 @@ import {
 } from './domain/complaint.entity';
 import { ComplaintEvidence } from './domain/complaint-evidence.entity';
 import { ComplaintAudit } from './domain/complaint-audit.entity';
-import { ForbiddenException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { TrustService } from '../../trust/trust.service';
+import { Booking } from '../../bookings/domain/booking.entity';
+import { TrustedEvidenceUrl } from './trusted-evidence-url';
+import type { ConfigService } from '@nestjs/config';
 
 describe('ComplaintsService', () => {
   let service: ComplaintsService;
@@ -33,6 +40,10 @@ describe('ComplaintsService', () => {
     save: jest.fn(),
   };
 
+  const mockBookingRepository = {
+    findOne: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -50,6 +61,19 @@ describe('ComplaintsService', () => {
           useValue: mockAuditRepository,
         },
         {
+          provide: getRepositoryToken(Booking),
+          useValue: mockBookingRepository,
+        },
+        {
+          provide: TrustedEvidenceUrl,
+          useValue: new TrustedEvidenceUrl({
+            get: (key: string) =>
+              key === 'EVIDENCE_ALLOWED_ORIGINS'
+                ? 'https://cdn.fixnow.test'
+                : undefined,
+          } as unknown as ConfigService<never, true>),
+        },
+        {
           provide: TrustService,
           useValue: { evaluateComplaintSignal: mockEvaluateComplaintSignal },
         },
@@ -58,15 +82,25 @@ describe('ComplaintsService', () => {
 
     service = module.get<ComplaintsService>(ComplaintsService);
     jest.clearAllMocks();
+    // Default: the caller is the customer on the booking they complain about.
+    mockBookingRepository.findOne.mockResolvedValue({
+      id: 'booking-1',
+      customerId: 'user-1',
+      providerId: 'provider-1',
+    });
   });
 
   it('should create a complaint and save evidence', async () => {
     const submitterId = 'user-1';
     const dto = {
+      bookingId: 'booking-1',
       targetRole: ComplaintTargetRole.PROVIDER,
+      targetId: 'provider-1',
       category: 'Unprofessional Behavior',
       description: 'The provider was rude.',
-      evidence: [{ fileUrl: 'http://test.com/img.png', fileType: 'image/png' }],
+      evidence: [
+        { fileUrl: 'https://cdn.fixnow.test/img.png', fileType: 'image/png' },
+      ],
     };
 
     mockComplaintRepository.create.mockReturnValue({
@@ -90,6 +124,123 @@ describe('ComplaintsService', () => {
     expect(mockComplaintRepository.save).toHaveBeenCalled();
     expect(mockEvidenceRepository.save).toHaveBeenCalled();
     expect(result.id).toBe('comp-1');
+  });
+
+  // SEC-002 regression: bookingId/targetId used to be written straight from
+  // the request body, so one account could replay this endpoint to manufacture
+  // a trust-and-safety signal against an arbitrary user.
+  describe('complaint target validation (SEC-002)', () => {
+    const baseDto = {
+      targetRole: ComplaintTargetRole.PROVIDER,
+      category: 'Unprofessional Behavior',
+      description: 'The provider was rude.',
+    };
+
+    it('refuses a complaint with no bookingId, so no target can be named freely', async () => {
+      await expect(
+        service.createComplaint('user-1', { ...baseDto, targetId: 'victim' }),
+      ).rejects.toThrow(ForbiddenException);
+
+      expect(mockComplaintRepository.save).not.toHaveBeenCalled();
+      expect(mockEvaluateComplaintSignal).not.toHaveBeenCalled();
+    });
+
+    it('refuses a booking the caller is not a party to', async () => {
+      mockBookingRepository.findOne.mockResolvedValue({
+        id: 'booking-1',
+        customerId: 'someone-else',
+        providerId: 'provider-1',
+      });
+
+      await expect(
+        service.createComplaint('attacker', {
+          ...baseDto,
+          bookingId: 'booking-1',
+          targetId: 'provider-1',
+        }),
+      ).rejects.toThrow(NotFoundException);
+
+      expect(mockComplaintRepository.save).not.toHaveBeenCalled();
+      expect(mockEvaluateComplaintSignal).not.toHaveBeenCalled();
+    });
+
+    it('refuses a target that is not the counterparty on the booking', async () => {
+      await expect(
+        service.createComplaint('user-1', {
+          ...baseDto,
+          bookingId: 'booking-1',
+          targetId: 'unrelated-victim',
+        }),
+      ).rejects.toThrow(NotFoundException);
+
+      expect(mockComplaintRepository.save).not.toHaveBeenCalled();
+      expect(mockEvaluateComplaintSignal).not.toHaveBeenCalled();
+    });
+
+    it('refuses a provider complaint raised by the provider themselves', async () => {
+      await expect(
+        service.createComplaint('provider-1', {
+          ...baseDto,
+          bookingId: 'booking-1',
+          targetId: 'provider-1',
+        }),
+      ).rejects.toThrow(NotFoundException);
+
+      expect(mockEvaluateComplaintSignal).not.toHaveBeenCalled();
+    });
+  });
+
+  // A customer-controlled link rendered in the support-agent console is an
+  // outbound phishing primitive: the agent opening the case is the target.
+  describe('evidence links (SEC-003)', () => {
+    const baseEvidenceDto = {
+      bookingId: 'booking-1',
+      targetRole: ComplaintTargetRole.PROVIDER,
+      targetId: 'provider-1',
+      category: 'Unprofessional Behavior',
+      description: 'See attached.',
+    };
+
+    it('refuses evidence on a host we do not control', async () => {
+      await expect(
+        service.createComplaint('user-1', {
+          ...baseEvidenceDto,
+          evidence: [
+            {
+              fileUrl: 'https://fixnow-evidence-verify.example/login',
+              fileType: 'image/png',
+            },
+          ],
+        }),
+      ).rejects.toThrow(BadRequestException);
+      expect(mockEvidenceRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('refuses a plain-http evidence link', async () => {
+      await expect(
+        service.createComplaint('user-1', {
+          ...baseEvidenceDto,
+          evidence: [
+            { fileUrl: 'http://cdn.fixnow.test/a.png', fileType: 'image/png' },
+          ],
+        }),
+      ).rejects.toThrow(BadRequestException);
+      expect(mockEvidenceRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('writes nothing at all when an evidence link is refused', async () => {
+      await expect(
+        service.createComplaint('user-1', {
+          ...baseEvidenceDto,
+          evidence: [
+            { fileUrl: 'https://evil.example/a.png', fileType: 'image/png' },
+          ],
+        }),
+      ).rejects.toThrow(BadRequestException);
+      // Validation happens before the first write, so there is no orphaned
+      // complaint row left behind.
+      expect(mockComplaintRepository.save).not.toHaveBeenCalled();
+    });
   });
 
   it('should restrict access to complaint by non-submitter/target if not admin', async () => {
@@ -137,6 +288,63 @@ describe('ComplaintsService', () => {
     });
   });
 
+  it('adds evidence only for a complaint participant', async () => {
+    const complaint = {
+      id: 'comp-1',
+      submitterId: 'user-1',
+      targetId: 'user-2',
+      status: ComplaintStatus.OPEN,
+    };
+    mockComplaintRepository.findOne.mockResolvedValue(complaint);
+    mockEvidenceRepository.create.mockReturnValue({
+      complaintId: complaint.id,
+      uploadedBy: 'user-1',
+      fileUrl: 'https://cdn.fixnow.test/proof.png',
+      fileType: 'image/png',
+    });
+    mockEvidenceRepository.save.mockResolvedValue({
+      id: 'evidence-1',
+      complaintId: complaint.id,
+    });
+
+    await service.addEvidence('comp-1', 'user-1', {
+      fileUrl: 'https://cdn.fixnow.test/proof.png',
+      fileType: 'image/png',
+      description: 'Meter reading',
+    });
+
+    expect(mockEvidenceRepository.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        complaintId: 'comp-1',
+        uploadedBy: 'user-1',
+        fileUrl: 'https://cdn.fixnow.test/proof.png',
+      }),
+    );
+  });
+
+  it('records a callback request for a complaint participant', async () => {
+    const complaint = {
+      id: 'comp-1',
+      submitterId: 'user-1',
+      targetId: 'user-2',
+      status: ComplaintStatus.IN_REVIEW,
+    };
+    mockComplaintRepository.findOne.mockResolvedValue(complaint);
+    mockAuditRepository.save.mockResolvedValue({ id: 'audit-1' });
+
+    await service.requestCallback('comp-1', 'user-2');
+
+    expect(mockAuditRepository.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        complaintId: 'comp-1',
+        actorId: 'user-2',
+        previousStatus: ComplaintStatus.IN_REVIEW,
+        newStatus: ComplaintStatus.IN_REVIEW,
+        notes: 'Callback requested by case participant',
+      }),
+    );
+    expect(mockAuditRepository.save).toHaveBeenCalled();
+  });
   it('should update complaint status and add resolution notes', async () => {
     mockComplaintRepository.findOne.mockResolvedValue({
       id: 'comp-1',

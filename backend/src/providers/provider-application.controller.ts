@@ -1,4 +1,11 @@
-import { Controller, Get, Post, NotFoundException, BadRequestException, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  NotFoundException,
+  BadRequestException,
+  Request,
+} from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { RequireOwnPermission } from '../common/authorization/authorization.decorators';
@@ -34,18 +41,22 @@ export class ProviderApplicationController {
     @Request() request: AuthorizedRequest,
   ): Promise<ProviderApplicationEntity> {
     const userId = request.authorizationPrincipal!.userId;
-    
+
     return this.dataSource.transaction(async (manager) => {
-      const application = await manager.findOneBy(ProviderApplicationEntity, { userId });
+      const application = await manager.findOneBy(ProviderApplicationEntity, {
+        userId,
+      });
       if (!application) {
         throw new NotFoundException('Provider application not found');
       }
-      
+
       if (
         application.status !== ProviderOnboardingStatus.Unverified &&
         application.status !== ProviderOnboardingStatus.ResubmissionRequested
       ) {
-        throw new BadRequestException('Application cannot be submitted in its current state');
+        throw new BadRequestException(
+          'Application cannot be submitted in its current state',
+        );
       }
 
       const from = application.status;
@@ -53,14 +64,17 @@ export class ProviderApplicationController {
       application.version += 1;
       const saved = await manager.save(ProviderApplicationEntity, application);
 
-      await manager.save(ProviderVerificationEventEntity, manager.create(ProviderVerificationEventEntity, {
-        applicationId: saved.id,
-        actorUserId: userId,
-        fromStatus: from,
-        toStatus: ProviderOnboardingStatus.UnderReview,
-        reason: 'provider-submitted',
-        applicationVersion: saved.version,
-      }));
+      await manager.save(
+        ProviderVerificationEventEntity,
+        manager.create(ProviderVerificationEventEntity, {
+          applicationId: saved.id,
+          actorUserId: userId,
+          fromStatus: from,
+          toStatus: ProviderOnboardingStatus.UnderReview,
+          reason: 'provider-submitted',
+          applicationVersion: saved.version,
+        }),
+      );
 
       return saved;
     });

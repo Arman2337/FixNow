@@ -26,6 +26,7 @@ class EmergencyController extends ChangeNotifier {
   EmergencyFlowState state = EmergencyFlowState.idle;
   EmergencyCreationResult? creation;
   EmergencyStatusResult? status;
+  BookingLocationFix? resolvedLocation;
   String? errorMessage;
 
   bool get showFallback =>
@@ -39,6 +40,7 @@ class EmergencyController extends ChangeNotifier {
   }) async {
     if (state == EmergencyFlowState.creating) return false;
     state = EmergencyFlowState.resolvingLocation;
+    resolvedLocation = null;
     errorMessage = null;
     notifyListeners();
 
@@ -50,6 +52,7 @@ class EmergencyController extends ChangeNotifier {
         'Location is needed to alert nearby professionals. Enable location and try again.',
       );
     }
+    resolvedLocation = fix;
 
     state = EmergencyFlowState.creating;
     notifyListeners();

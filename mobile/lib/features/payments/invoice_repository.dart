@@ -83,6 +83,7 @@ class InvoiceController extends ChangeNotifier {
   InvoiceController(
     this._repository,
     this._bookingId, {
+    this.paymentId,
     Invoice? initialInvoice,
   }) : invoice = initialInvoice,
        state = initialInvoice != null
@@ -91,6 +92,7 @@ class InvoiceController extends ChangeNotifier {
 
   final InvoiceRepository _repository;
   final String _bookingId;
+  final String? paymentId;
 
   InvoiceState state;
   Invoice? invoice;
@@ -101,7 +103,9 @@ class InvoiceController extends ChangeNotifier {
       notifyListeners();
     }
     try {
-      final fetched = await _repository.fetch(_bookingId);
+      final fetched = paymentId == null
+          ? await _repository.fetch(_bookingId)
+          : await _repository.fetchByPaymentId(paymentId!);
       if (fetched != null) {
         invoice = fetched;
         state = InvoiceState.ready;
@@ -120,6 +124,7 @@ class InvoiceController extends ChangeNotifier {
     notifyListeners();
   }
 }
+
 
 class InvoiceRepository {
   InvoiceRepository(this._transport, {Future<String?> Function()? accessToken})
@@ -175,6 +180,30 @@ class InvoiceRepository {
       // 409 (invoices exist only for paid payments) is a defensive guard given
       // we already checked PAID; a 404 order-race is likewise "not yet".
       if (error.statusCode == 409 || error.statusCode == 404) return null;
+      rethrow;
+    }
+  }
+
+  Future<Invoice?> fetchByPaymentId(String paymentId) async {
+    final token = await _accessToken?.call();
+    try {
+      final response = await _transport.send(
+        ApiRequest(
+          method: ApiMethod.get,
+          path: 'payments/invoices/$paymentId',
+          bearerToken: token,
+        ),
+      );
+      if (response.statusCode != 200 ||
+          response.body is! Map<String, Object?>) {
+        throw const ApiException(
+          ApiFailureKind.invalidResponse,
+          'Unexpected invoice response.',
+        );
+      }
+      return Invoice.fromJson(response.body as Map<String, Object?>);
+    } on ApiException catch (error) {
+      if (error.statusCode == 404 || error.statusCode == 409) return null;
       rethrow;
     }
   }

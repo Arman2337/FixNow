@@ -1,21 +1,31 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:fixnow_mobile/features/notifications/notification_model.dart';
 import 'package:fixnow_mobile/features/notifications/notification_repository.dart';
+import 'package:fixnow_mobile/features/realtime/realtime_client.dart';
 
 class NotificationController extends ChangeNotifier {
-  NotificationController(this._repository) {
+  NotificationController(this._repository, {RealtimeClient? realtime})
+      : _realtime = realtime {
+    _realtimeSubscription = _realtime?.notifications.listen(_onRealtimeNotification);
     load();
   }
 
   final NotificationRepository _repository;
+  final RealtimeClient? _realtime;
+  StreamSubscription<RealtimeProjection>? _realtimeSubscription;
   List<InAppNotification> _notifications = [];
   NotificationCategory _selectedCategory = NotificationCategory.all;
   bool _loading = false;
+  String? _errorMessage;
 
   List<InAppNotification> get notifications =>
       List.unmodifiable(_notifications);
   NotificationCategory get selectedCategory => _selectedCategory;
   bool get isLoading => _loading;
+  bool get hasError => _errorMessage != null;
+  String? get errorMessage => _errorMessage;
 
   int get unreadCount => _notifications.where((n) => !n.isRead).length;
 
@@ -34,13 +44,14 @@ class NotificationController extends ChangeNotifier {
   }
 
   Future<void> load() async {
-    _loading = true;
-    notifyListeners();
-    try {
-      _notifications = await _repository.fetchNotifications();
-    } catch (_) {
-      // keep existing
-    } finally {
+     _loading = true;
+     _errorMessage = null;
+     notifyListeners();
+     try {
+       _notifications = await _repository.fetchNotifications();
+     } catch (_) {
+       _errorMessage = 'Notifications are unavailable. Check your connection and try again.';
+     } finally {
       _loading = false;
       notifyListeners();
     }
@@ -89,11 +100,28 @@ class NotificationController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void addNotification(InAppNotification notification) {
-    _notifications = [
+   void addNotification(InAppNotification notification) {
+     _errorMessage = null;
+     _notifications = [
       notification,
       ..._notifications.where((n) => n.id != notification.id),
     ];
     notifyListeners();
+  }
+
+  void _onRealtimeNotification(RealtimeProjection projection) {
+    try {
+      addNotification(
+        InAppNotification.fromJson(
+          Map<String, dynamic>.from(projection.data),
+        ),
+      );
+    } catch (_) {}
+  }
+
+  @override
+  void dispose() {
+    unawaited(_realtimeSubscription?.cancel());
+    super.dispose();
   }
 }

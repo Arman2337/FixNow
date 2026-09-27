@@ -55,8 +55,7 @@ export function LoginForm({ expired }: { expired?: boolean }) {
 
         <div className="flex flex-col gap-1.5 text-left">
           <label className="font-label-md text-label-md text-on-surface flex items-center justify-between" htmlFor="password">
-            <span>Hardware Key / Master Secret</span>
-            <span className="font-label-sm text-label-sm text-primary font-medium cursor-pointer hover:underline">Reset Token</span>
+            <span>Password</span>
           </label>
           <div className="relative flex items-center">
             <span className="material-symbols-outlined absolute left-3 text-on-surface-variant text-[20px]">lock</span>
@@ -81,32 +80,11 @@ export function LoginForm({ expired }: { expired?: boolean }) {
           {state.errors?.password && <p className="mt-1 text-sm text-error">{state.errors.password}</p>}
         </div>
 
-        <div className="flex flex-col gap-1.5 text-left">
-          <label className="font-label-md text-label-md text-on-surface" htmlFor="role-select">
-            Console Privileges & Role Scope
-          </label>
-          <div className="relative flex items-center">
-            <span className="material-symbols-outlined absolute left-3 text-on-surface-variant text-[20px]">shield_person</span>
-            <select
-              id="role-select"
-              name="role"
-              className="w-full h-12 pl-10 pr-9 rounded-lg bg-surface-container-low font-body-md text-body-md text-on-surface appearance-none outline-none focus:bg-surface-container-lowest focus:shadow-md transition-all cursor-pointer"
-            >
-              <option value="superadmin">Chief Dispatcher / Operations Superadmin</option>
-              <option value="trust-safety">Trust & Safety Officer</option>
-              <option value="compliance">KYC Compliance Auditor</option>
-            </select>
-            <span className="material-symbols-outlined absolute right-3 pointer-events-none text-on-surface-variant text-[20px]">expand_more</span>
-          </div>
-        </div>
-
         <div className="p-3 rounded-lg bg-surface-container flex items-start gap-2.5 text-left">
-          <span className="material-symbols-outlined text-primary text-[18px] shrink-0 mt-0.5" style={{ fontVariationSettings: "'FILL' 1" }}>passkey</span>
+          <span className="material-symbols-outlined text-primary text-[18px] shrink-0 mt-0.5" style={{ fontVariationSettings: "'FILL' 1" }}>shield_person</span>
           <div className="flex flex-col">
-            <span className="font-label-sm text-label-sm text-on-surface">2-Factor Authentication Protocol</span>
-            <span className="font-body-sm text-body-sm text-on-surface-variant leading-tight">
-              FIDO2 WebAuthn or Authenticator App challenge prompt required immediately upon credential dispatch.
-            </span>
+            <span className="font-label-sm text-label-sm text-on-surface">Access is assigned by the server</span>
+            <span className="font-body-sm text-body-sm text-on-surface-variant leading-tight">Your staff roles determine which operations and data you can access after sign-in.</span>
           </div>
         </div>
 
@@ -121,11 +99,14 @@ export function LoginForm({ expired }: { expired?: boolean }) {
           </button>
           <button
             type="button"
-            className="w-full h-12 rounded-xl bg-surface-container text-on-surface font-label-md text-label-md flex items-center justify-center gap-2 hover:bg-surface-container-high transition-colors"
+            disabled
+            aria-describedby="sso-unavailable"
+            className="w-full h-12 rounded-xl bg-surface-container text-on-surface font-label-md text-label-md flex items-center justify-center gap-2 opacity-60 cursor-not-allowed"
           >
             <span className="material-symbols-outlined text-[20px] text-secondary">domain</span>
-            <span>Sign in with Corporate SSO / Okta</span>
+            <span>Corporate SSO unavailable</span>
           </button>
+          <p id="sso-unavailable" className="m-0 text-center text-xs text-on-surface-variant">Ask an administrator to configure an approved SSO provider.</p>
         </div>
       </form>
     </>

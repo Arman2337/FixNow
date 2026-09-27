@@ -158,7 +158,7 @@ export class BookingMessagesService {
     const presented = presentBookingMessage(saved);
 
     // Broadcast to real-time WebSocket subscribers
-    this.projections.publishChatMessage(
+    void this.projections.publishChatMessage(
       bookingId,
       presented as unknown as Record<string, unknown>,
     );

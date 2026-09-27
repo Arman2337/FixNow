@@ -54,9 +54,8 @@ export default async function ComplaintDetailPage({ params, searchParams }: { pa
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-space-md">
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-data-mono text-data-mono uppercase tracking-widest text-primary font-bold">Trust & Safety Core</span>
-                <span className="w-1 h-1 rounded-full bg-outline"></span>
-                <span className="font-label-sm text-label-sm text-on-surface-variant font-medium">Escrow Ledger Linked</span>
+                 <span className="font-data-mono text-data-mono uppercase tracking-widest text-primary font-bold">Support case record</span>
+                 <span className="font-label-sm text-label-sm text-on-surface-variant font-medium">Management API record</span>
               </div>
               <h1 className="font-headline-lg text-headline-lg text-on-surface tracking-tight mt-1">Complaints & Escrow Management</h1>
             </div>
@@ -164,13 +163,13 @@ export default async function ComplaintDetailPage({ params, searchParams }: { pa
                   </div>
                   
                   {complaint.bookingId && (
-                    <div className="flex items-center gap-space-xs bg-surface-container-low px-space-md py-2 rounded-xl border border-outline-variant/30">
-                      <span className="material-symbols-outlined text-primary text-xl">shield_lock</span>
-                      <div className="flex flex-col">
-                        <span className="font-label-sm text-label-sm text-secondary leading-none uppercase">Escrow Locked</span>
-                        <span className="font-price-display text-price-display text-primary font-bold">YES</span>
-                      </div>
-                    </div>
+                     <div className="flex items-center gap-space-xs bg-surface-container-low px-space-md py-2 rounded-xl border border-outline-variant/30">
+                       <span className="material-symbols-outlined text-primary text-xl">receipt_long</span>
+                       <div className="flex flex-col">
+                         <span className="font-label-sm text-label-sm text-secondary leading-none uppercase">Payment status</span>
+                         <span className="font-price-display text-price-display text-primary font-bold">Unavailable</span>
+                       </div>
+                     </div>
                   )}
                 </div>
 

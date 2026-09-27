@@ -7,6 +7,7 @@ import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/app_typography.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
+import 'package:fixnow_mobile/config/app_environment.dart';
 import 'package:fixnow_mobile/design_system/fix_components.dart';
 import 'package:fixnow_mobile/design_system/fix_motion.dart';
 import 'package:fixnow_mobile/design_system/fix_motion_suite.dart';
@@ -27,6 +28,7 @@ import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
+import 'package:url_launcher/url_launcher.dart';
 import 'package:fixnow_mobile/features/ai/ai_recommendation_repository.dart';
 import 'package:fixnow_mobile/features/ai/problem_analysis_repository.dart';
 import 'package:fixnow_mobile/features/ai/problem_diagnosis_controller.dart';
@@ -187,7 +189,8 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
         final state = data['principalSubdivision'] ?? data['countryName'];
         if (mounted && city != null && city.toString().trim().isNotEmpty) {
           setState(() {
-            _locationName = (state != null && state.toString().trim().isNotEmpty)
+            _locationName =
+                (state != null && state.toString().trim().isNotEmpty)
                 ? '${city.toString().trim()}, ${state.toString().trim()}'
                 : city.toString().trim();
           });
@@ -309,6 +312,12 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
             builder: (_) => EmergencyConfirmScreen(
               categories: emergencies,
               repository: repository,
+              locationProvider: BookingLocationResolver(
+                initialFix: _bookingLocation,
+              ),
+              hotlineNumber: AppEnvironment.emergencyHotline.isEmpty
+                  ? null
+                  : AppEnvironment.emergencyHotline,
             ),
           ),
         )
@@ -343,7 +352,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
             Text(
               'If anyone is in danger, call your local emergency number first.',
               style: TextStyle(
-                color: AppColors.cream,
+                color: AppColors.textPrimary,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -357,21 +366,31 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
               style: TextStyle(color: AppColors.textSecondary),
             ),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.emergency,
-              foregroundColor: Colors.white,
+          if (AppEnvironment.emergencyHotline.isNotEmpty)
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.emergency,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () async {
+                final messenger = ScaffoldMessenger.of(context);
+                Navigator.of(ctx).pop();
+                final opened = await launchUrl(
+                  Uri(scheme: 'tel', path: AppEnvironment.emergencyHotline),
+                  mode: LaunchMode.externalApplication,
+                );
+                if (!opened && mounted) {
+                  messenger.showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'The emergency number could not be opened.',
+                      ),
+                    ),
+                  );
+                }
+              },
+              child: const Text('Call configured hotline'),
             ),
-            onPressed: () {
-              Navigator.of(ctx).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Connecting to 24/7 Emergency Dispatch...'),
-                ),
-              );
-            },
-            child: const Text('Call Dispatch'),
-          ),
         ],
       ),
     );
@@ -555,7 +574,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
               'No services found for "${_searchController.text.trim()}"',
               style: const TextStyle(
                 fontWeight: FontWeight.w700,
-                color: AppColors.cream,
+                color: AppColors.textPrimary,
                 fontSize: 16,
               ),
               textAlign: TextAlign.center,
@@ -577,7 +596,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                     s,
                     style: const TextStyle(
                       fontSize: 12,
-                      color: AppColors.cream,
+                      color: AppColors.onSecondary,
                     ),
                   ),
                   backgroundColor: AppColors.backgroundSecondary,
@@ -606,7 +625,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
               style: const TextStyle(
                 fontWeight: FontWeight.w700,
                 fontSize: 16,
-                color: AppColors.cream,
+                color: AppColors.textPrimary,
               ),
             ),
             TextButton(
@@ -724,7 +743,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                               style: const TextStyle(
                                 fontWeight: FontWeight.w700,
                                 fontSize: 15,
-                                color: AppColors.cream,
+                                color: AppColors.textPrimary,
                               ),
                             ),
                             const SizedBox(height: 2),
@@ -1489,8 +1508,8 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
             widget.locationController.state == LocationPermissionState.granted;
         final locationText = isGranted
             ? (_isLoadingLocation && _locationName == null
-                ? 'Detecting live location...'
-                : (_locationName ?? 'Current Location'))
+                  ? 'Detecting live location...'
+                  : (_locationName ?? 'Current Location'))
             : 'Enable Location';
         final onlineCount = widget.controller.categories.fold<int>(
           0,
@@ -1503,16 +1522,25 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
             // Stitch Brand Header Bar
             Row(
               children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    image: const DecorationImage(
-                      image: NetworkImage(
-                        'https://lh3.googleusercontent.com/aida-public/AB6AXuBq3W54yVgIIYzS2ZmyZZ0d9kwFAN6ICfuhZt7xwzFvvtpyeMbbct9nXWFyX6ptnBKyMW12g8HEm89mm4UmVE44PrFuYKwUIb3SRYCHXq6Kv8tUUv752LSORLe_9kWLBzwm99CMXx7tdvhIVHJJ7TmMjQ0d0QncryYSbDns4E39pUp7H_O9pED5oar2w3k3xSsY_XM0-6M2n5Rytv5n6ety7Afuy6O3MEGapgQX1Qgy5iqdYxMhAfBqp19_6hNc40YqTw',
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    'https://lh3.googleusercontent.com/aida-public/AB6AXuBq3W54yVgIIYzS2ZmyZZ0d9kwFAN6ICfuhZt7xwzFvvtpyeMbbct9nXWFyX6ptnBKyMW12g8HEm89mm4UmVE44PrFuYKwUIb3SRYCHXq6Kv8tUUv752LSORLe_9kWLBzwm99CMXx7tdvhIVHJJ7TmMjQ0d0QncryYSbDns4E39pUp7H_O9pED5oar2w3k3xSsY_XM0-6M2n5Rytv5n6ety7Afuy6O3MEGapgQX1Qgy5iqdYxMhAfBqp19_6hNc40YqTw',
+                    width: 32,
+                    height: 32,
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, _, _) => Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryContainer,
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      fit: BoxFit.contain,
+                      child: const Icon(
+                        Icons.build_rounded,
+                        color: AppColors.primary,
+                        size: 20,
+                      ),
                     ),
                   ),
                 ),
@@ -1560,8 +1588,9 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                     controller: widget.notificationController!,
                     onTap: () {
                       Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => NotificationCenterScreen(
+MaterialPageRoute(
+                           settings: const RouteSettings(name: 'notifications'),
+                           builder: (_) => NotificationCenterScreen(
                             controller: widget.notificationController!,
                             onOpenBooking: widget.onBookingSelected,
                             onOpenInvoice: widget.onInvoiceSelected,
@@ -1608,7 +1637,9 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                                         ?.longitude ??
                                     78.9629,
                               ),
-                              initialZoom: _bookingLocation != null ? 14.0 : 5.0,
+                              initialZoom: _bookingLocation != null
+                                  ? 14.0
+                                  : 5.0,
                               interactionOptions: const InteractionOptions(
                                 flags: InteractiveFlag.none,
                               ),

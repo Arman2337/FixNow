@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Booking } from '../../bookings/domain/booking.entity';
@@ -13,6 +13,8 @@ import {
   NotificationDelivery,
   NotificationDeliveryStatus,
 } from './notification-delivery.entity';
+import { InAppNotification } from './in-app-notification.entity';
+import { RealtimeNotificationPublisher } from '../../realtime/realtime-notification-publisher.service';
 
 /**
  * Lock-screen-safe templates. Booking identifiers and generic wording only —
@@ -99,6 +101,31 @@ export const EMERGENCY_NOTIFICATION_TEMPLATES: Readonly<
  * e.g. "23-7", empty = disabled) because no per-user timezone is captured yet.
  * Per-user local quiet hours and emergency override arrive with FN-063.
  */
+/**
+ * Outcomes that a later attempt can still fix. SENT and SKIPPED_QUIET_HOURS are
+ * terminal; NO_DEVICES and FAILED are not, because the user may enroll a device
+ * or the provider may recover.
+ */
+const RETRYABLE_DELIVERY_STATUSES: ReadonlySet<NotificationDeliveryStatus> =
+  new Set([
+    NotificationDeliveryStatus.NO_DEVICES,
+    NotificationDeliveryStatus.FAILED,
+  ]);
+
+/** Surfaces the provider's own error code so a log line is actionable. */
+function describePushError(error: unknown): string {
+  if (typeof error === 'object' && error !== null) {
+    const code =
+      'code' in error ? String((error as { code?: unknown }).code) : '';
+    const message =
+      'message' in error
+        ? String((error as { message?: unknown }).message)
+        : '';
+    if (code || message) return [code, message].filter(Boolean).join(': ');
+  }
+  return error instanceof Error ? error.message : String(error);
+}
+
 @Injectable()
 export class DomainNotificationService {
   constructor(
@@ -107,7 +134,17 @@ export class DomainNotificationService {
     @InjectRepository(PushDeviceTokenEntity)
     private readonly devices: Repository<PushDeviceTokenEntity>,
     @Inject(PUSH_DELIVERY) private readonly delivery: PushDelivery,
-  ) {}
+    @Optional()
+    @InjectRepository(InAppNotification)
+    private readonly inAppNotifications?: Repository<InAppNotification>,
+    @Optional()
+    @Inject(RealtimeNotificationPublisher)
+    private readonly realtimePublisher?: RealtimeNotificationPublisher,
+  ) {
+    this.logger = new Logger(DomainNotificationService.name);
+  }
+
+  private readonly logger: Logger;
 
   async notifyBookingEvent(
     booking: Booking,
@@ -119,16 +156,16 @@ export class DomainNotificationService {
     const userId =
       audience === 'customer' ? booking.customerId : booking.providerId;
     if (!userId) return;
-    
+
     const enrichedTemplate = {
       ...template,
       data: {
         bookingId: booking.id,
         status: status,
         type: `booking:${audience}:${status}`,
-      }
+      },
     };
-    
+
     await this.send(
       userId,
       `booking:${audience}:${status}`,
@@ -146,12 +183,15 @@ export class DomainNotificationService {
   ): Promise<void> {
     const template = BOOKING_NOTIFICATION_TEMPLATES['provider:REQUESTED'];
     if (!template) return;
-    
+
     let totalMinor = 0;
     if (booking.lineItems) {
-      totalMinor = booking.lineItems.reduce((sum, item) => sum + item.priceMinor * item.quantity, 0);
+      totalMinor = booking.lineItems.reduce(
+        (sum, item) => sum + item.priceMinor * item.quantity,
+        0,
+      );
     }
-    
+
     const enrichedTemplate = {
       ...template,
       data: {
@@ -207,7 +247,38 @@ export class DomainNotificationService {
       userId,
       dedupeKey,
     });
-    if (existing) return; // Deduplicated replay.
+    // Retryable outcomes must not burn the dedupe slot. A NO_DEVICES row used
+    // to make the notification permanently undeliverable, so a user who
+    // enrolled their phone ten seconds later never received it.
+    if (existing && !RETRYABLE_DELIVERY_STATUSES.has(existing.status)) {
+      return; // Deduplicated replay.
+    }
+
+    if (this.inAppNotifications) {
+      try {
+        const persisted = await this.inAppNotifications.save({
+          userId,
+          title: content.title,
+          body: content.body,
+          kind,
+          bookingId,
+          paymentId: null,
+          readAt: null,
+        });
+        await this.realtimePublisher?.publishAccountNotification(userId, {
+          id: persisted.id,
+          title: persisted.title,
+          body: persisted.body,
+          category: persisted.kind,
+          bookingId: persisted.bookingId,
+          paymentId: persisted.paymentId,
+          timestamp: persisted.createdAt.toISOString(),
+          isRead: false,
+        });
+      } catch {
+        // Continue even if in-app persistence fails
+      }
+    }
 
     if (!options.bypassQuietHours && this.inQuietHours()) {
       await this.record(
@@ -238,16 +309,23 @@ export class DomainNotificationService {
     }
 
     let sentAny = false;
+    let unavailable = false;
     for (const { token } of tokens) {
       try {
         const result = await this.delivery.sendToToken(token, content);
         if (result.status === 'sent') sentAny = true;
+        if (result.status === 'unavailable') unavailable = true;
         if (result.status === 'unregistered') {
           // Stale token: drop it so future sends skip the dead device.
           await this.devices.update({ token }, { enabled: false });
         }
-      } catch {
-        // Single attempt per send; the delivery row records the failure.
+      } catch (error) {
+        // Was a bare `catch {}`: a 401 from FCM, an unreadable credential file
+        // or an APNs auth error all vanished with no trace, so the only signal
+        // was a FAILED row nobody reads. Log the provider's own error code.
+        this.logger.warn(
+          `Push send failed for a device token: ${describePushError(error)}`,
+        );
       }
     }
     await this.record(
@@ -257,7 +335,9 @@ export class DomainNotificationService {
       bookingId,
       sentAny
         ? NotificationDeliveryStatus.SENT
-        : NotificationDeliveryStatus.FAILED,
+        : unavailable
+          ? NotificationDeliveryStatus.NO_DEVICES
+          : NotificationDeliveryStatus.FAILED,
       null,
     );
   }

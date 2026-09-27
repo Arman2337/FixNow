@@ -9,9 +9,9 @@ import {
 } from 'typeorm';
 import { UserEntity } from '../../users/user.entity';
 import {
-  AvailabilityException,
+  type AvailabilityException,
   ProviderAvailabilityStatus,
-  WeeklyAvailabilityRule,
+  type WeeklyAvailabilityRule,
 } from '../../../../shared/provider-availability.types';
 
 @Entity({ name: 'provider_availability' })

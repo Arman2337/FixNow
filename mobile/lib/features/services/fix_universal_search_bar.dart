@@ -144,7 +144,174 @@ class FixUniversalSearchBar extends StatelessWidget {
             ),
           ),
         ),
+        const SizedBox(height: AppSpacing.sm),
+
+        // Horizontally scrollable Filter & Sort Pills
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              // Sort dropdown chip
+              _buildSortMenu(context),
+              const SizedBox(width: AppSpacing.xs),
+
+              // Filter: All
+              _buildFilterChip(
+                label: 'All Services',
+                selected: activeFilter == SearchFilterOption.all,
+                onTap: () => onFilterChanged(SearchFilterOption.all),
+              ),
+              const SizedBox(width: AppSpacing.xs),
+
+              // Filter: Emergency ⚡
+              _buildFilterChip(
+                label: '⚡ Emergency',
+                selected: activeFilter == SearchFilterOption.emergency,
+                onTap: () => onFilterChanged(
+                  activeFilter == SearchFilterOption.emergency
+                      ? SearchFilterOption.all
+                      : SearchFilterOption.emergency,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.xs),
+
+              // Filter: Under ₹300
+              _buildFilterChip(
+                label: 'Under ₹300',
+                selected: activeFilter == SearchFilterOption.under300,
+                onTap: () => onFilterChanged(
+                  activeFilter == SearchFilterOption.under300
+                      ? SearchFilterOption.all
+                      : SearchFilterOption.under300,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.xs),
+
+              // Filter: Under ₹500
+              _buildFilterChip(
+                label: 'Under ₹500',
+                selected: activeFilter == SearchFilterOption.under500,
+                onTap: () => onFilterChanged(
+                  activeFilter == SearchFilterOption.under500
+                      ? SearchFilterOption.all
+                      : SearchFilterOption.under500,
+                ),
+              ),
+            ],
+          ),
+        ),
       ],
+    );
+  }
+
+  Widget _buildSortMenu(BuildContext context) {
+    final sortLabel = switch (activeSort) {
+      SearchSortOption.priceLowHigh => 'Price: Low → High',
+      SearchSortOption.priceHighLow => 'Price: High → Low',
+      SearchSortOption.fastest => 'Fastest (<45 min)',
+      SearchSortOption.popular => 'Popular First',
+      SearchSortOption.relevance => 'Sort by',
+    };
+
+    final isCustom = activeSort != SearchSortOption.relevance;
+
+    return PopupMenuButton<SearchSortOption>(
+      initialValue: activeSort,
+      onSelected: onSortChanged,
+      color: AppColors.surfaceElevated,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        side: const BorderSide(color: AppColors.borderDefault),
+      ),
+      itemBuilder: (context) => [
+        const PopupMenuItem(
+          value: SearchSortOption.relevance,
+          child: Text('Default Relevance', style: TextStyle(color: AppColors.textPrimary)),
+        ),
+        const PopupMenuItem(
+          value: SearchSortOption.priceLowHigh,
+          child: Text('Price: Low to High', style: TextStyle(color: AppColors.textPrimary)),
+        ),
+        const PopupMenuItem(
+          value: SearchSortOption.priceHighLow,
+          child: Text('Price: High to Low', style: TextStyle(color: AppColors.textPrimary)),
+        ),
+        const PopupMenuItem(
+          value: SearchSortOption.fastest,
+          child: Text('Fastest (<45 min)', style: TextStyle(color: AppColors.textPrimary)),
+        ),
+        const PopupMenuItem(
+          value: SearchSortOption.popular,
+          child: Text('Most Popular', style: TextStyle(color: AppColors.textPrimary)),
+        ),
+      ],
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: isCustom ? AppColors.primarySoft.withValues(alpha: 0.2) : AppColors.backgroundSecondary,
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          border: Border.all(
+            color: isCustom ? AppColors.primary : AppColors.borderDefault,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.swap_vert_rounded,
+              size: 16,
+              color: isCustom ? AppColors.primary : AppColors.textSecondary,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              sortLabel,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: isCustom ? FontWeight.w600 : FontWeight.w500,
+                color: isCustom ? AppColors.primary : AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(width: 2),
+            const Icon(
+              Icons.arrow_drop_down_rounded,
+              size: 16,
+              color: AppColors.textMuted,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterChip({
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(AppRadius.pill),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: selected
+              ? AppColors.primary.withValues(alpha: 0.15)
+              : AppColors.backgroundSecondary,
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          border: Border.all(
+            color: selected ? AppColors.primary : AppColors.borderDefault,
+            width: selected ? 1.5 : 1,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+            color: selected ? AppColors.primary : AppColors.textSecondary,
+          ),
+        ),
+      ),
     );
   }
 }

@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/unbound-method -- Jest assertions inspect mocks without invoking them. */
 import { ConfigService } from '@nestjs/config';
+import type { EnvironmentVariables } from '../config/env.validation';
 import { Logger } from 'nestjs-pino';
 import { ServiceCategoriesService } from '../services/service-categories.service';
 import { AiService } from './ai.service';
@@ -45,7 +46,7 @@ describe('IssueRecommendationService', () => {
       get: jest.fn((key: string, fallback?: unknown) =>
         key == 'AI_ENABLED' ? 'true' : fallback,
       ),
-    } as unknown as ConfigService;
+    } as unknown as ConfigService<EnvironmentVariables>;
     return new IssueRecommendationService(
       new AiService(config, provider, logger),
       categoriesService,
@@ -102,6 +103,11 @@ describe('IssueRecommendationService', () => {
       description: 'I smell gas',
     });
     expect(result.kind).toBe('NO_MATCH');
+    // `safetyNotice` is absent from the UNAVAILABLE arm, so narrow first rather
+    // than assuming every response carries it.
+    if (result.kind !== 'NO_MATCH') {
+      throw new Error(`expected NO_MATCH, received ${result.kind}`);
+    }
     expect(result.safetyNotice).toContain('safe');
   });
 

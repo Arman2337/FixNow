@@ -31,9 +31,7 @@ class ApiBookingTrackingSource implements BookingTrackingSource {
         'The booking snapshot was invalid.',
       );
     }
-    final booking = CustomerBooking.fromJson(
-      Map<String, Object?>.from(raw),
-    );
+    final booking = CustomerBooking.fromJson(Map<String, Object?>.from(raw));
     String? serviceStartOtp;
     if (booking.status == 'EN_ROUTE') {
       serviceStartOtp = await fetchServiceStartOtp(bookingId);
@@ -51,6 +49,13 @@ class ApiBookingTrackingSource implements BookingTrackingSource {
             )
           : null,
       serviceStartOtp: serviceStartOtp,
+      providerName: booking.providerName,
+      providerRating: booking.providerRating,
+      providerJobsCount: booking.providerJobsCount,
+      // The snapshot already carries the real line items and totals; they were
+      // being fetched and dropped here.
+      items: booking.items ?? const [],
+      pricing: booking.pricing,
     );
   }
 

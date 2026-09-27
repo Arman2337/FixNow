@@ -7,6 +7,7 @@ import { ServiceCategoryEntity } from '../services/service-category.entity';
 import { ProviderRegistrationController } from './provider-registration.controller';
 import { ProviderSkillsController } from './provider-skills.controller';
 import { ProviderSkillsService } from './provider-skills.service';
+import { UserEntity } from '../users/user.entity';
 import { ProviderProfileEntity } from './provider-profile.entity';
 import { ProviderProfileController } from './provider-profile.controller';
 import { ProviderProfileService } from './provider-profile.service';
@@ -37,6 +38,7 @@ import { ProviderApplicationController } from './provider-application.controller
       ProviderDocumentAuditEntity,
       ProviderVerificationEventEntity,
       ProviderAvailabilityEntity,
+      UserEntity,
     ]),
     AuthModule,
   ],

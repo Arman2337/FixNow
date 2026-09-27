@@ -40,30 +40,30 @@ enum BookingStatusValue {
 }
 
 /// A line item sent when creating a booking (from the service cart).
+///
+/// SECURITY: this is the REQUEST shape. It carries only a catalogue entry and
+/// a quantity. `name`, `unitPriceMinor` and `durationMinutes` are resolved by
+/// the backend from `sub_services`, so the amount charged can never be chosen
+/// by the client. The backend rejects any body that still contains
+/// `unitPriceMinor` (global `forbidNonWhitelisted: true`).
 class BookingItemDraft {
   const BookingItemDraft({
-    required this.id,
-    required this.name,
+    required this.subServiceId,
     required this.quantity,
-    required this.unitPriceMinor,
-    this.durationMinutes,
   });
-  final String id;
-  final String name;
+
+  final String subServiceId;
   final int quantity;
-  final int unitPriceMinor;
-  final int? durationMinutes;
 
   Map<String, Object?> toJson() => {
-        'id': id,
-        'name': name,
+        'subServiceId': subServiceId,
         'quantity': quantity,
-        'unitPriceMinor': unitPriceMinor,
-        if (durationMinutes != null) 'durationMinutes': durationMinutes,
       };
 }
 
 /// An itemized line stored on a booking by the backend.
+///
+/// This is the priced OUTPUT shape. The backend is the only writer.
 class BookingLineItem {
   const BookingLineItem({
     required this.id,
@@ -80,12 +80,11 @@ class BookingLineItem {
 
   int get lineTotalMinor => unitPriceMinor * quantity;
 
+  /// `id` is the sub-service id on a server-priced snapshot, so a stored line
+  /// round-trips back into a valid request shape.
   BookingItemDraft toDraft() => BookingItemDraft(
-        id: id,
-        name: name,
+        subServiceId: id,
         quantity: quantity,
-        unitPriceMinor: unitPriceMinor,
-        durationMinutes: durationMinutes,
       );
 
   factory BookingLineItem.fromJson(Map<String, Object?> json) {
@@ -182,6 +181,9 @@ class CustomerBooking {
     required this.version,
     this.customerPhone,
     this.providerPhone,
+    this.providerName,
+    this.providerRating,
+    this.providerJobsCount,
     this.locationLatitude,
     this.locationLongitude,
     this.scheduledAt,
@@ -198,6 +200,9 @@ class CustomerBooking {
   final int version;
   final String? customerPhone;
   final String? providerPhone;
+  final String? providerName;
+  final double? providerRating;
+  final int? providerJobsCount;
   final double? locationLatitude;
   final double? locationLongitude;
   final DateTime? scheduledAt;
@@ -217,6 +222,9 @@ class CustomerBooking {
     int? version,
     String? customerPhone,
     String? providerPhone,
+    String? providerName,
+    double? providerRating,
+    int? providerJobsCount,
     double? locationLatitude,
     double? locationLongitude,
     DateTime? scheduledAt,
@@ -234,6 +242,9 @@ class CustomerBooking {
         version: version ?? this.version,
         customerPhone: customerPhone ?? this.customerPhone,
         providerPhone: providerPhone ?? this.providerPhone,
+        providerName: providerName ?? this.providerName,
+        providerRating: providerRating ?? this.providerRating,
+        providerJobsCount: providerJobsCount ?? this.providerJobsCount,
         locationLatitude: locationLatitude ?? this.locationLatitude,
         locationLongitude: locationLongitude ?? this.locationLongitude,
         scheduledAt: scheduledAt ?? this.scheduledAt,
@@ -252,6 +263,9 @@ class CustomerBooking {
     final createdAt = DateTime.tryParse(json['createdAt']?.toString() ?? '');
     final customerPhone = json['customerPhone'] as String?;
     final providerPhone = json['providerPhone'] as String?;
+    final providerName = json['providerName'] as String?;
+    final providerRating = (json['providerRating'] as num?)?.toDouble();
+    final providerJobsCount = (json['providerJobsCount'] as num?)?.toInt();
     final latitude = json['locationLat'];
     final longitude = json['locationLng'];
     final scheduledAt = json['scheduledAt'] != null
@@ -276,6 +290,9 @@ class CustomerBooking {
       version: (json['version'] as num?)?.toInt() ?? 1,
       customerPhone: customerPhone,
       providerPhone: providerPhone,
+      providerName: providerName,
+      providerRating: providerRating,
+      providerJobsCount: providerJobsCount,
       locationLatitude: latitude is num ? latitude.toDouble() : null,
       locationLongitude: longitude is num ? longitude.toDouble() : null,
       scheduledAt: scheduledAt,

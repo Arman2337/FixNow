@@ -7,7 +7,12 @@ import {
 } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { createHash } from 'crypto';
-import { DataSource, QueryFailedError, Repository } from 'typeorm';
+import {
+  DataSource,
+  EntityManager,
+  QueryFailedError,
+  Repository,
+} from 'typeorm';
 import { Booking } from '../bookings/domain/booking.entity';
 import { ServiceCategoryEntity } from '../services/service-category.entity';
 import { BookingStatus } from '../../../shared/booking-lifecycle.types';
@@ -28,9 +33,7 @@ import type {
 import { TrustService } from '../trust/trust.service';
 
 /** Booking states for which the customer may open a payment. */
-const PAYABLE_BOOKING_STATUSES: readonly string[] = [
-  BookingStatus.COMPLETED,
-];
+const PAYABLE_BOOKING_STATUSES: readonly string[] = [BookingStatus.COMPLETED];
 
 @Injectable()
 export class PaymentsService {
@@ -75,13 +78,11 @@ export class PaymentsService {
       category?.priceCurrency === 'INR' ? category.priceCurrency : null;
     // The itemized booking total is authoritative; the category's published
     // price is only a fallback for bookings created without line items.
-    let totalMinor = booking.totalAmountMinor ?? category?.priceAmount ?? 0;
-    if (booking.lineItems && booking.lineItems.length > 0) {
-      totalMinor = booking.lineItems.reduce(
-        (sum, item) => sum + item.priceMinor * item.quantity,
-        category?.priceAmount ?? 0,
-      );
-    }
+    // totalAmountMinor already includes GST (computeBookingTotals adds 18%), so
+    // it must not be replaced by the raw lineItems subtotal: doing so charged the
+    // customer the pre-GST figure and left the invoice's CGST/SGST split
+    // subtracting tax that was never added.
+    const totalMinor = booking.totalAmountMinor ?? category?.priceAmount ?? 0;
     if (!totalMinor || !currency) {
       throw new ConflictException(
         'This service is priced on request; online payment is unavailable',
@@ -340,101 +341,179 @@ export class PaymentsService {
     amountMinor: number;
     status: string;
   }> {
-    if (input.requestKey) {
-      const existing = await this.dataSource
-        .getRepository(Refund)
-        .findOneBy({ requestKey: input.requestKey });
-      if (existing) {
-        return {
-          id: existing.id,
-          gatewayRefundId: existing.gatewayRefundId,
-          amountMinor: existing.amountMinor,
-          status: existing.status,
-        };
-      }
-    }
-    const order = await this.orders.findOneByOrFail({ id: orderId });
-    if (order.status !== PaymentOrderStatus.PAID || !order.gatewayPaymentId) {
-      throw new ConflictException('Only paid payments can be refunded');
+    const requestKey = input.requestKey?.trim();
+    if (!requestKey || !/^[A-Za-z0-9._:-]{8,128}$/.test(requestKey)) {
+      throw new BadRequestException(
+        'A valid refund idempotency key is required',
+      );
     }
     if (!input.reason.trim() || input.reason.length > 200) {
       throw new BadRequestException('A bounded refund reason is required');
     }
-    const alreadyRefunded = await this.refundedTotal(order.id);
-    const amountMinor = input.amountMinor ?? order.amountMinor;
-    if (
-      !Number.isInteger(amountMinor) ||
-      amountMinor <= 0 ||
-      alreadyRefunded + amountMinor > order.amountMinor
-    ) {
-      throw new ConflictException(
-        'Refund exceeds the refundable balance for this payment',
-      );
+
+    const reservation = await this.dataSource.transaction(
+      'SERIALIZABLE',
+      async (manager) => {
+        const order = await manager.getRepository(PaymentOrder).findOne({
+          where: { id: orderId },
+          lock: { mode: 'pessimistic_write' },
+        });
+        if (!order) throw new NotFoundException('Payment order not found');
+        if (
+          order.status !== PaymentOrderStatus.PAID ||
+          !order.gatewayPaymentId
+        ) {
+          throw new ConflictException('Only paid payments can be refunded');
+        }
+
+        const refundRepository = manager.getRepository(Refund);
+        const existing = await refundRepository.findOneBy({
+          paymentOrderId: order.id,
+          requestKey,
+        });
+        if (existing?.status === 'PROCESSED') {
+          return { order, refund: existing, amountMinor: existing.amountMinor };
+        }
+        if (existing) {
+          return { order, refund: existing, amountMinor: existing.amountMinor };
+        }
+
+        const alreadyRefunded = await this.refundedTotal(order.id, manager);
+        const amountMinor =
+          input.amountMinor ?? order.amountMinor - alreadyRefunded;
+        if (
+          !Number.isInteger(amountMinor) ||
+          amountMinor <= 0 ||
+          alreadyRefunded + amountMinor > order.amountMinor
+        ) {
+          throw new ConflictException(
+            'Refund exceeds the refundable balance for this payment',
+          );
+        }
+
+        const pending = await refundRepository.save(
+          refundRepository.create({
+            paymentOrderId: order.id,
+            gatewayRefundId: this.pendingGatewayRefundId(requestKey),
+            requestKey,
+            amountMinor,
+            currency: order.currency,
+            status: 'PENDING',
+            reason: input.reason.trim(),
+            createdBy: actorId,
+          }),
+        );
+        return { order, refund: pending, amountMinor };
+      },
+    );
+
+    if (reservation.refund.status === 'PROCESSED') {
+      return this.presentRefund(reservation.refund);
+    }
+
+    const gatewayPaymentId = reservation.order.gatewayPaymentId;
+    if (!gatewayPaymentId) {
+      throw new ConflictException('Payment gateway reference is missing');
     }
     const gatewayRefund = await this.gateway.createRefund({
-      gatewayPaymentId: order.gatewayPaymentId,
-      amountMinor,
-      requestKey: input.requestKey,
+      gatewayPaymentId,
+      amountMinor: reservation.amountMinor,
+      requestKey,
     });
-    try {
-      const saved = await this.dataSource.getRepository(Refund).save(
-        this.dataSource.getRepository(Refund).create({
-          paymentOrderId: order.id,
-          gatewayRefundId: gatewayRefund.gatewayRefundId,
-          requestKey: input.requestKey ?? null,
-          amountMinor,
-          currency: order.currency,
-          status: 'PROCESSED',
-          reason: input.reason.trim(),
-          createdBy: actorId,
-        }),
+    if (gatewayRefund.amountMinor !== reservation.amountMinor) {
+      throw new ConflictException(
+        'Payment gateway returned a different refund amount',
       );
-      await this.appendEvent(
-        order.id,
-        'refund.created',
-        actorId,
-        createHash('sha256')
-          .update(gatewayRefund.gatewayRefundId)
-          .digest('hex'),
-      );
-      // FN-060: refund-frequency review signal is best-effort; it can never
-      // fail a recorded refund.
-      try {
-        const booking = await this.dataSource
-          .getRepository(Booking)
-          .findOneBy({ id: order.bookingId });
-        if (booking?.providerId) {
-          await this.trust?.evaluateProviderRefundSignal(booking.providerId);
-        }
-      } catch {
-        // Signal evaluation failures are non-fatal by design.
-      }
-      return {
-        id: saved.id,
-        gatewayRefundId: saved.gatewayRefundId,
-        amountMinor: saved.amountMinor,
-        status: saved.status,
-      };
-    } catch (error: unknown) {
-      if (this.isUniqueViolation(error)) {
-        // Lost the idempotency race; the first refund stands.
-        const raced = await this.dataSource
-          .getRepository(Refund)
-          .findOneByOrFail({ gatewayRefundId: gatewayRefund.gatewayRefundId });
-        return {
-          id: raced.id,
-          gatewayRefundId: raced.gatewayRefundId,
-          amountMinor: raced.amountMinor,
-          status: raced.status,
-        };
-      }
-      throw error;
     }
+
+    const completed = await this.dataSource.transaction(
+      'SERIALIZABLE',
+      async (manager) => {
+        const order = await manager.getRepository(PaymentOrder).findOne({
+          where: { id: orderId },
+          lock: { mode: 'pessimistic_write' },
+        });
+        if (!order) throw new NotFoundException('Payment order not found');
+        const refundRepository = manager.getRepository(Refund);
+        const current = await refundRepository.findOneBy({
+          paymentOrderId: order.id,
+          requestKey,
+        });
+        if (!current)
+          throw new ConflictException('Refund reservation not found');
+        if (current.status === 'PROCESSED') return current;
+        if (!this.isTerminalGatewayStatus(gatewayRefund.status)) return current;
+
+        const updated = await refundRepository.update(
+          { id: current.id, requestKey, status: 'PENDING' },
+          {
+            gatewayRefundId: gatewayRefund.gatewayRefundId,
+            status: 'PROCESSED',
+          },
+        );
+        if (!updated.affected) {
+          return await refundRepository.findOneByOrFail({ id: current.id });
+        }
+        const result = Object.assign(current, {
+          gatewayRefundId: gatewayRefund.gatewayRefundId,
+          status: 'PROCESSED',
+        });
+        await this.appendEventWithManager(
+          manager,
+          order.id,
+          'refund.created',
+          actorId,
+          createHash('sha256')
+            .update(gatewayRefund.gatewayRefundId)
+            .digest('hex'),
+        );
+        return result;
+      },
+    );
+
+    if (completed.status === 'PROCESSED') {
+      const booking = await this.dataSource
+        .getRepository(Booking)
+        .findOneBy({ id: reservation.order.bookingId });
+      if (booking?.providerId) {
+        await this.trust?.evaluateProviderRefundSignal(booking.providerId);
+      }
+    }
+    return this.presentRefund(completed);
   }
 
-  private async refundedTotal(paymentOrderId: string): Promise<number> {
-    const rows = await this.dataSource.query<Array<{ total?: string }>>(
-      `SELECT COALESCE(SUM(amount_minor), 0) AS total FROM refunds WHERE payment_order_id = $1`,
+  private pendingGatewayRefundId(requestKey: string): string {
+    return `pending-${createHash('sha256').update(requestKey).digest('hex').slice(0, 56)}`;
+  }
+
+  private isTerminalGatewayStatus(status: string): boolean {
+    return ['processed', 'completed', 'succeeded'].includes(
+      status.toLowerCase(),
+    );
+  }
+
+  private presentRefund(refund: Refund): {
+    id: string;
+    gatewayRefundId: string;
+    amountMinor: number;
+    status: string;
+  } {
+    return {
+      id: refund.id,
+      gatewayRefundId: refund.gatewayRefundId,
+      amountMinor: refund.amountMinor,
+      status: refund.status,
+    };
+  }
+
+  private async refundedTotal(
+    paymentOrderId: string,
+    manager: EntityManager = this.dataSource.manager,
+  ): Promise<number> {
+    const rows = await manager.query<Array<{ total?: string }>>(
+      `SELECT COALESCE(SUM(amount_minor), 0) AS total
+       FROM refunds
+       WHERE payment_order_id = $1 AND status IN ('PENDING', 'PROCESSED')`,
       [paymentOrderId],
     );
     return parseInt(rows[0]?.total ?? '0', 10);
@@ -489,9 +568,7 @@ export class PaymentsService {
     providerId: string,
     bookingId: string,
   ): Promise<{ bookingId: string; paid: boolean }> {
-    const rows = await this.dataSource.query<
-      Array<{ status?: string }>
-    >(
+    const rows = await this.dataSource.query<Array<{ status?: string }>>(
       `SELECT o.status
        FROM payment_orders o
        JOIN bookings b ON b.id = o.booking_id
@@ -499,6 +576,29 @@ export class PaymentsService {
       [bookingId, providerId],
     );
     return { bookingId, paid: rows[0]?.status === 'PAID' };
+  }
+
+  private async appendEventWithManager(
+    manager: EntityManager,
+    orderId: string,
+    eventType: string,
+    actor: string,
+    payloadDigest: string,
+  ): Promise<void> {
+    const repository = manager.getRepository(PaymentEvent);
+    try {
+      await repository.insert(
+        repository.create({
+          orderId,
+          eventType,
+          actor,
+          payloadDigest,
+        }),
+      );
+    } catch (error: unknown) {
+      if (this.isUniqueViolation(error)) return;
+      throw error;
+    }
   }
 
   private async appendEvent(

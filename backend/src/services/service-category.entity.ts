@@ -5,6 +5,7 @@ import {
   Entity,
   OneToMany,
   PrimaryGeneratedColumn,
+  type Relation,
   UpdateDateColumn,
 } from 'typeorm';
 import { ProviderSkillEntity } from '../providers/provider-skill.entity';
@@ -62,7 +63,7 @@ export class ServiceCategoryEntity {
   isEmergency!: boolean;
 
   @OneToMany(() => ProviderSkillEntity, (skill) => skill.serviceCategory)
-  providerSkills!: ProviderSkillEntity[];
+  providerSkills!: Relation<ProviderSkillEntity>[];
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;

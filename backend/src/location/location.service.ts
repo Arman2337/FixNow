@@ -255,7 +255,7 @@ export class LocationService {
     ];
     if (
       booking.providerId !== providerId ||
-      !allowedStatuses.includes(booking.status as BookingStatus)
+      !allowedStatuses.includes(booking.status)
     )
       throw new ForbiddenException('Active travel booking required');
   }
@@ -275,7 +275,7 @@ export class LocationService {
     ];
     if (
       (booking.providerId !== userId && booking.customerId !== userId) ||
-      !allowedStatuses.includes(booking.status as BookingStatus)
+      !allowedStatuses.includes(booking.status)
     )
       throw new ForbiddenException('Active travel booking required');
     return booking;

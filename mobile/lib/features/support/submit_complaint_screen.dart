@@ -71,7 +71,24 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('File a complaint')),
+      appBar: AppBar(
+        backgroundColor: AppColors.surfaceContainerLowest,
+        elevation: 0,
+        scrolledUnderElevation: 1,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
+        title: const Text(
+          'File a Complaint',
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        centerTitle: false,
+      ),
       body: FixPageFrame(
         child: ListenableBuilder(
           listenable: widget.controller,

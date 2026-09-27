@@ -1,8 +1,4 @@
-import {
-  ConflictException,
-  ForbiddenException,
-  NotFoundException,
-} from '@nestjs/common';
+import { ConflictException, ForbiddenException } from '@nestjs/common';
 import type { Repository } from 'typeorm';
 import { BookingStatus } from '../../../shared/booking-lifecycle.types';
 import { Booking } from './domain/booking.entity';
@@ -55,7 +51,7 @@ describe('BookingCallsService', () => {
 
     callsRepo = {
       findOne: jest.fn(),
-      create: jest.fn((dto) =>
+      create: jest.fn((dto: Partial<BookingCall>) =>
         Object.assign(new BookingCall(), dto, {
           id: callId,
           startedAt: new Date(),
@@ -66,7 +62,7 @@ describe('BookingCallsService', () => {
     } as unknown as jest.Mocked<Repository<BookingCall>>;
 
     messagesRepo = {
-      create: jest.fn((dto) =>
+      create: jest.fn((dto: Partial<BookingMessage>) =>
         Object.assign(new BookingMessage(), dto, {
           id: 'msg-id',
           createdAt: new Date(),
@@ -98,11 +94,11 @@ describe('BookingCallsService', () => {
 
       expect(result.call.status).toBe('RINGING');
       expect(result.call.calleeUserId).toBe(providerId);
-      expect(projections.publishCallSignal).toHaveBeenCalledWith(
-        bookingId,
-        'call.incoming.v1',
-        expect.objectContaining({ status: 'RINGING' }),
-      );
+      const [signalBookingId, signalType, signal] =
+        projections.publishCallSignal.mock.calls[0] ?? [];
+      expect(signalBookingId).toBe(bookingId);
+      expect(signalType).toBe('call.incoming.v1');
+      expect(signal).toMatchObject({ status: 'RINGING' });
     });
 
     it('creates call during EN_ROUTE status', async () => {
@@ -175,11 +171,11 @@ describe('BookingCallsService', () => {
 
       expect(result.status).toBe('CONNECTED');
       expect(result.connectedAt).toBeDefined();
-      expect(projections.publishCallSignal).toHaveBeenCalledWith(
-        bookingId,
-        'call.answered.v1',
-        expect.objectContaining({ status: 'CONNECTED' }),
-      );
+      const [signalBookingId, signalType, signal] =
+        projections.publishCallSignal.mock.calls[0] ?? [];
+      expect(signalBookingId).toBe(bookingId);
+      expect(signalType).toBe('call.answered.v1');
+      expect(signal).toMatchObject({ status: 'CONNECTED' });
     });
 
     it('rejects answer from wrong user with ForbiddenException', async () => {
@@ -198,16 +194,12 @@ describe('BookingCallsService', () => {
       const result = await service.rejectCall(bookingId, callId, providerId);
 
       expect(result.status).toBe('REJECTED');
-      expect(projections.publishCallSignal).toHaveBeenCalledWith(
-        bookingId,
-        'call.rejected.v1',
-        expect.anything(),
-      );
-      expect(messagesRepo.save).toHaveBeenCalledWith(
-        expect.objectContaining({
-          messageText: expect.stringContaining('Missed in-app audio call'),
-        }),
-      );
+      const [signalBookingId, signalType] =
+        projections.publishCallSignal.mock.calls[0] ?? [];
+      expect(signalBookingId).toBe(bookingId);
+      expect(signalType).toBe('call.rejected.v1');
+      const savedMessage = messagesRepo.save.mock.calls[0]?.[0];
+      expect(savedMessage?.messageText).toContain('Missed in-app audio call');
     });
   });
 
@@ -223,18 +215,75 @@ describe('BookingCallsService', () => {
 
       expect(result.status).toBe('ENDED');
       expect(result.durationSeconds).toBeGreaterThanOrEqual(130);
-      expect(projections.publishCallSignal).toHaveBeenCalledWith(
-        bookingId,
-        'call.ended.v1',
-        expect.anything(),
+      const [signalBookingId, signalType] =
+        projections.publishCallSignal.mock.calls[0] ?? [];
+      expect(signalBookingId).toBe(bookingId);
+      expect(signalType).toBe('call.ended.v1');
+      const savedMessage = messagesRepo.save.mock.calls[0]?.[0];
+      expect(savedMessage?.messageText).toMatch(
+        /📞 In-app audio call ended • \d+m \d+s/,
       );
-      expect(messagesRepo.save).toHaveBeenCalledWith(
-        expect.objectContaining({
-          messageText: expect.stringMatching(
-            /📞 In-app audio call ended • \d+m \d+s/,
-          ),
+    });
+  });
+
+  // The transcript entry used to be written with the caller's id and role
+  // whatever the actor was, so a callee hanging up or rejecting was recorded as
+  // though the caller had done it. This is the record a dispute is read from.
+  describe('call transcript attributes the actor, not the caller', () => {
+    it('records the callee when the callee rejects the call', async () => {
+      callsRepo.findOne.mockResolvedValue(mockCall());
+
+      // providerId is the callee here.
+      await service.rejectCall(bookingId, callId, providerId);
+
+      const saved = messagesRepo.save.mock.calls[0]?.[0];
+      expect(saved?.senderUserId).toBe(providerId);
+      expect(saved?.senderRole).toBe('PROVIDER');
+    });
+
+    it('records the caller when the caller rejects their own call', async () => {
+      callsRepo.findOne.mockResolvedValue(mockCall());
+
+      await service.rejectCall(bookingId, callId, customerId);
+
+      const saved = messagesRepo.save.mock.calls[0]?.[0];
+      expect(saved?.senderUserId).toBe(customerId);
+      expect(saved?.senderRole).toBe('CUSTOMER');
+    });
+
+    it('records the callee when the callee hangs up', async () => {
+      callsRepo.findOne.mockResolvedValue(
+        mockCall({
+          status: 'CONNECTED',
+          connectedAt: new Date(Date.now() - 5000),
         }),
       );
+
+      await service.hangupCall(bookingId, callId, providerId);
+
+      const saved = messagesRepo.save.mock.calls[0]?.[0];
+      expect(saved?.senderUserId).toBe(providerId);
+      expect(saved?.senderRole).toBe('PROVIDER');
+    });
+
+    it('derives the actor role correctly when the provider placed the call', async () => {
+      // A provider-initiated call flips which side is the caller.
+      callsRepo.findOne.mockResolvedValue(
+        mockCall({
+          callerUserId: providerId,
+          callerRole: 'PROVIDER',
+          calleeUserId: customerId,
+          status: 'CONNECTED',
+          connectedAt: new Date(Date.now() - 5000),
+        }),
+      );
+
+      // The customer (now the callee) ends it.
+      await service.hangupCall(bookingId, callId, customerId);
+
+      const saved = messagesRepo.save.mock.calls[0]?.[0];
+      expect(saved?.senderUserId).toBe(customerId);
+      expect(saved?.senderRole).toBe('CUSTOMER');
     });
   });
 });

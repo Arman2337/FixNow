@@ -74,8 +74,16 @@ export class ProviderSkillsController {
 
   @Get(':id')
   @RequireOwnPermission('provider.skills.read')
-  findById(@Param('id') id: string): Promise<ProviderSkillResponseDto> {
-    return this.providerSkillsService.findById(id);
+  findById(
+    @Param('id') id: string,
+    @Request() request: AuthorizedRequest,
+  ): Promise<ProviderSkillResponseDto> {
+    // Scoped to the caller's own skills: this route is self-scoped, so a
+    // foreign id must not resolve (SEC-002).
+    return this.providerSkillsService.findOwnedById(
+      id,
+      request.authorizationPrincipal!.userId,
+    );
   }
 
   @Post()

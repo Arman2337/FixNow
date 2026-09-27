@@ -34,6 +34,8 @@ export const PERMISSIONS = {
   bookingAccept: 'bookings.accept',
   bookingAvailableRead: 'bookings.available.read',
   bookingUpdateStatus: 'bookings.update.status',
+  bookingManageItems: 'bookings.items.manage.self',
+  bookingServiceStartOtp: 'bookings.service-start-otp.issue',
   bookingCancelSelf: 'bookings.cancel.self',
   bookingHistoryReadSelf: 'bookings.history.read.self',
   reviewCreateSelf: 'ratings.review.create.self',
@@ -52,6 +54,7 @@ export const PERMISSIONS = {
   adminBookingsRead: 'admin.bookings.read',
   adminBookingsIntervene: 'admin.bookings.intervene',
   pushTokenManageSelf: 'notifications.push.token.manage.self',
+  notificationInboxReadSelf: 'notifications.inbox.read.self',
   trustAcceptTimeReadSelf: 'trust.accept-time.read.self',
   complaintsCreate: 'complaints.create',
   aiRecommendationCreate: 'ai.recommendation.create',
@@ -62,6 +65,9 @@ export const PERMISSIONS = {
   complaintsReadSelf: 'complaints.read.self',
   adminComplaintsRead: 'admin.complaints.read',
   adminComplaintsUpdate: 'admin.complaints.update',
+  adminGuaranteesRead: 'admin.guarantees.read',
+  adminGuaranteesUpdate: 'admin.guarantees.update',
+  guaranteeClaimCreateSelf: 'guarantees.claims.create.self',
   bookingChatSendSelf: 'bookings.chat.send.self',
   bookingChatReadSelf: 'bookings.chat.read.self',
   bookingCallInitiateSelf: 'bookings.call.initiate.self',
@@ -239,22 +245,29 @@ export const PERMISSION_POLICIES: Readonly<
     roles: ['service_catalog_manager', 'operations_administrator'],
     audience: 'admin',
   },
-  [PERMISSIONS.adminSkillsUpdate]: {
-    roles: [
-      'provider_reviewer',
-      'service_catalog_manager',
-      'operations_administrator',
-    ],
-  },
   [PERMISSIONS.adminSkillsVerify]: {
     roles: [
       'provider_reviewer',
       'service_catalog_manager',
       'operations_administrator',
     ],
+    // Admin console only: this permission is used by
+    // `PUT /provider-skills/:id/verify`, which lets one provider act on
+    // another provider's skill. Without an explicit admin audience the guard
+    // would accept a mobile access token here.
+    audience: 'admin',
+  },
+  [PERMISSIONS.adminSkillsUpdate]: {
+    roles: [
+      'provider_reviewer',
+      'service_catalog_manager',
+      'operations_administrator',
+    ],
+    audience: 'admin',
   },
   [PERMISSIONS.adminSkillsDelete]: {
     roles: ['service_catalog_manager', 'operations_administrator'],
+    audience: 'admin',
   },
   [PERMISSIONS.bookingCreateSelf]: {
     roles: ['customer'],
@@ -274,6 +287,21 @@ export const PERMISSION_POLICIES: Readonly<
   },
   [PERMISSIONS.bookingUpdateStatus]: {
     roles: ['verified_provider'],
+    relationship: 'self',
+  },
+  // Rewriting the priced item snapshot and the booking total. This was gated on
+  // `bookings.update.status`, which made a price-affecting mutation look like a
+  // status change during review. The service still restricts it to the provider
+  // assigned to the booking.
+  [PERMISSIONS.bookingManageItems]: {
+    roles: ['verified_provider'],
+    relationship: 'self',
+  },
+  // Issuing the service-start OTP. This was gated on
+  // `bookings.history.read.self`, so a read permission authorised handing out a
+  // one-time code. The service restricts it to the booking's customer.
+  [PERMISSIONS.bookingServiceStartOtp]: {
+    roles: ['customer'],
     relationship: 'self',
   },
   [PERMISSIONS.bookingCancelSelf]: {
@@ -354,6 +382,9 @@ export const PERMISSION_POLICIES: Readonly<
   },
   [PERMISSIONS.complaintsCreate]: {
     roles: ['customer', 'verified_provider'],
+    // Self-scoped: a complaint may only ever concern a booking the caller is a
+    // party to, which ComplaintsService now proves before writing.
+    relationship: 'self',
   },
   [PERMISSIONS.aiRecommendationCreate]: {
     roles: ['customer'],
@@ -381,6 +412,11 @@ export const PERMISSION_POLICIES: Readonly<
   },
   [PERMISSIONS.pushTokenManageSelf]: {
     roles: allHumanRoles,
+    relationship: 'self',
+  },
+  [PERMISSIONS.notificationInboxReadSelf]: {
+    roles: allHumanRoles,
+    audience: 'mobile',
     relationship: 'self',
   },
   [PERMISSIONS.trustAcceptTimeReadSelf]: {
@@ -422,5 +458,26 @@ export const PERMISSION_POLICIES: Readonly<
       'operations_administrator',
     ],
     audience: 'admin',
+  },
+  [PERMISSIONS.adminGuaranteesRead]: {
+    roles: [
+      'support_agent',
+      'trust_safety_reviewer',
+      'operations_administrator',
+      'auditor',
+    ],
+    audience: 'admin',
+  },
+  [PERMISSIONS.adminGuaranteesUpdate]: {
+    roles: [
+      'support_agent',
+      'trust_safety_reviewer',
+      'operations_administrator',
+    ],
+    audience: 'admin',
+  },
+  [PERMISSIONS.guaranteeClaimCreateSelf]: {
+    roles: ['customer', 'verified_provider'],
+    relationship: 'self',
   },
 };

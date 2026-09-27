@@ -163,8 +163,8 @@ class AuthController extends ChangeNotifier {
       final next = await action();
       await _store.write(next);
       _session = next;
-      verificationEmail = next.verificationEmail ?? email;
-      
+      verificationEmail = next.verificationEmail;
+
       if (next.verificationEmail != null) {
         try {
           await _api.requestOtp(verificationEmail!);
@@ -223,27 +223,19 @@ class AuthController extends ChangeNotifier {
   }
 
   Future<AuthSession> _performRefresh(String refreshToken) async {
-    final refreshed = await _api.refresh(refreshToken);
-    final next =
-        verificationEmail == null && _session?.verificationEmail == null
-        ? refreshed
-        : AuthSession(
-            userId: refreshed.userId,
-            accessToken: refreshed.accessToken,
-            refreshToken: refreshed.refreshToken,
-            expiresAt: refreshed.expiresAt,
-            role: refreshed.role,
-            verificationEmail: verificationEmail ?? _session?.verificationEmail,
-          );
-    await _store.write(next);
-    _session = next;
-    verificationEmail = next.verificationEmail;
+    final refreshed = await _api.refresh(
+      refreshToken,
+      verificationEmail: verificationEmail ?? _session?.verificationEmail,
+    );
+    await _store.write(refreshed);
+    _session = refreshed;
+    verificationEmail = refreshed.verificationEmail;
     _setStatus(
-      next.verificationEmail == null
+      refreshed.verificationEmail == null
           ? AuthStatus.authenticated
           : AuthStatus.verificationRequired,
     );
-    return next;
+    return refreshed;
   }
 
   Future<void> _handleApiFailure(ApiException error) async {

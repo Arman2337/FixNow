@@ -19,6 +19,7 @@ import {
 import { Type } from 'class-transformer';
 import {
   BookingStatus,
+  BookingItemRequestContract,
   CreateBookingRequest,
   CreateBookingLineItemRequest,
   UpdateBookingItemsRequest,
@@ -34,30 +35,26 @@ export class CreateBookingLineItemDto implements CreateBookingLineItemRequest {
   quantity: number;
 }
 
-export class BookingItemDto {
-  @IsString()
+/**
+ * One itemized task line as a CLIENT may send it.
+ *
+ * SECURITY (SEC-001): this shape deliberately has no `unitPriceMinor` and no
+ * `name`. The client chooses a catalogue entry and a quantity; the backend
+ * resolves the name, unit price and duration from `sub_services`. The priced
+ * snapshot (`BookingItemContract`) is an output-only shape.
+ *
+ * `forbidNonWhitelisted: true` is set globally, so a client that still posts
+ * `unitPriceMinor` receives a 400 rather than having it silently ignored.
+ */
+export class BookingItemRequestDto implements BookingItemRequestContract {
+  @IsUUID()
   @IsNotEmpty()
-  @MaxLength(120)
-  id: string;
-
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(200)
-  name: string;
+  subServiceId: string;
 
   @IsInt()
   @Min(1)
   @Max(99)
   quantity: number;
-
-  @IsInt()
-  @Min(0)
-  unitPriceMinor: number;
-
-  @IsOptional()
-  @IsInt()
-  @Min(0)
-  durationMinutes?: number | null;
 }
 
 export class CreateBookingDto implements CreateBookingRequest {
@@ -88,8 +85,8 @@ export class CreateBookingDto implements CreateBookingRequest {
   @IsArray()
   @ArrayMaxSize(30)
   @ValidateNested({ each: true })
-  @Type(() => BookingItemDto)
-  items?: BookingItemDto[] | null;
+  @Type(() => BookingItemRequestDto)
+  items?: BookingItemRequestDto[] | null;
 
   @IsOptional()
   @IsArray()
@@ -123,12 +120,19 @@ export class UpdateBookingItemsDto implements UpdateBookingItemsRequest {
   @ArrayMinSize(1)
   @ArrayMaxSize(30)
   @ValidateNested({ each: true })
-  @Type(() => BookingItemDto)
-  items: BookingItemDto[];
+  @Type(() => BookingItemRequestDto)
+  items: BookingItemRequestDto[];
 
   @IsInt()
   @Min(1)
   expectedVersion: number;
+
+  /** Recorded on the audit trail so a price change is never silent. */
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(500)
+  reason?: string;
 }
 
 export class CancelBookingDto {

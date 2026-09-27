@@ -55,15 +55,17 @@ Only these statuses are valid. A task cannot be completed while required validat
 # Project Progress
 
 Total Tasks: 136
-Completed: 120
+Completed: 121
 In Progress: 0
 Blocked: 0
-Pending: 1 (FN-137: 54 pre-existing mobile widget-test failures documented)
+Pending: 0
 Deferred: 14
 Cancelled: 2
-Current Task: None (FN-136 completed)
-Current Phase: Phase 18 — Cockpit Navigation Reliability (Completed)
-Next Recommended Task: FN-137 (repair 54 stale mobile widget-test expectations)
+Current Task: None (FN-137 completed)
+Current Phase: Phase 19 — Mobile Widget-Test Reconciliation (Completed)
+Next Recommended Task: None; all tracked tasks are completed, deferred, or cancelled
+
+2026-09-25 FN-137 completed. Reconciled the remaining mobile widget-test drift without restoring fabricated production notifications: provider notification tests now inject an explicit API fixture, auth role-selection/small-screen expectations are covered, realtime subscription teardown and short acknowledgement handling are stable, payment checkout GST/totals are corrected, PDF download succeeds in the test/desktop environment, and the full mobile suite passes. Validation: `flutter test` 363/363; `flutter analyze` reports 0 errors (existing warnings/info remain); admin type-check, lint, and 20 tests pass; backend build passes. No commit was created.
 
 2026-08-27 (session 2) FN-113 advisory price/signal surfacing verified complete and closed. Evidence in the working tree: the mobile advisory price estimate (`mobile/lib/features/ai/price_estimate_repository.dart` — repository + controller + honest states) is surfaced on the service-request screen (`service_request_screen.dart` `_buildPriceContent`: ESTIMATE range + explanation + "Advisory only — the final charge is confirmed..." disclaimer, honest static fallback, PRICE_ON_REQUEST abstention) and wired at both `app.dart` construction sites (category-select and Book-again) via `PriceEstimateRepository(_api, accessToken: _auth.validAccessToken)`; the admin trust queue (`admin/src/app/trust/page.tsx`) already renders the FN-060 rule codes; the provider accept-time signal is surfaced on provider home (`provider_home_screen.dart` via `GET trust/my-accept-time`, FN-111). Payments set to local-only per ADR-0016: `PAYMENT_PROVIDER` defaults to the deterministic `fake` gateway (now made explicit in `backend/.env`), which is prohibited in production by `env.validation.ts` startup validation, needs no live gateway credentials, and offers no payouts. The mobile client has no interactive checkout surface yet (only the read-only invoice screen; `JobCompletedDialog` is unwired), so a dev-gated local payment flow is recorded as FN-118 rather than scaffolded. FN-058/FN-059 remain Deferred (live vision/voice still gated on malware scan + signed DPA + vendor/model approval, ADR-0014; AI stays advisory-only, disabled by default). Validated 2026-08-27: flutter analyze 0 errors, flutter test 164/164; backend jest payments 35/35.
 
@@ -3451,9 +3453,59 @@ Branch: fix/e2e-calling-chat-provider-fixes
 
 ---
 
-## Task FN-137 (Pending): Repair 54 Stale Mobile Widget-Test Expectations
+## FN-137 — Repair Mobile Widget-Test Drift
+Status: ✅ Completed
+Priority: P1 — High
+Area: Mobile QA and Reliability
+Depends On: FN-136
+Branch: payment-total-bugs-and-notification-ui
 
-Full Flutter test on ui-update HEAD fails 54 assertions across ~20 files (e.g. cockpit tests expect 'Job Execution Cockpit' / title-case pill text while the screen renders 'Active Job Cockpit' and uppercase pills; booking_tracking expects 'Provider is on the way' / 'Live location available'). Counts verified identical before/after FN-136 via git stash A/B. Scope: reconcile test expectations with the current Stitch-redesigned screens; no production behavior change expected. 3 test files (book_again, customer_profile_screen, price_estimate_card) do not even compile (80 analyzer errors) and should be fixed first.
+### Objective
+Reconcile stale mobile widget-test expectations with the current Stitch-redesigned screens and remove genuine regressions exposed by the test run.
+
+### Changes Delivered
+- Corrected provider cockpit status labels, working-schedule copy, cancellation/reschedule action labels, and auth role-selection copy without restoring unsupported recovery or social controls.
+- Added truthful provider verification/privacy copy and retained the current KYC completion rules.
+- Corrected payment checkout GST, base-service, and grand-total calculations.
+- Made realtime subscription acknowledgement handling bounded and safe during teardown.
+- Made PDF download use synchronous writes after platform directory selection, with a system-temp fallback for desktop/test environments.
+- Replaced the provider notification tests' implicit demo-data dependency with an explicit test API fixture; production notification data remains API-backed.
+
+### Acceptance Criteria
+- [x] Auth, booking, cancellation, provider, payment, invoice, realtime, and responsive regressions pass.
+- [x] No unsupported recovery, social login, or fabricated notification data is restored.
+- [x] Full mobile test suite passes.
+- [x] Mobile analyzer reports no errors.
+
+### Validation
+- `flutter test` → 363/363 passed.
+- `flutter analyze` → 0 errors; existing warnings/info remain outside this task.
+- `admin/npm run type-check` → passed.
+- `admin/npm run lint` → passed.
+- `admin/npm test -- --reporter=dot` → 11 files, 20 tests passed.
+- `backend/npm run build` → passed.
+- `backend` non-mutating ESLint remains blocked by 205 pre-existing errors and 9 warnings; no auto-fix was run.
+
+### Files / Areas
+```text
+mobile/lib/auth/
+mobile/lib/design_system/fix_payment_checkout_sheet.dart
+mobile/lib/features/bookings/
+mobile/lib/features/payments/
+mobile/lib/features/provider/
+mobile/lib/features/realtime/
+mobile/test/provider_core_test.dart
+PROJECT_TASKS.md
+```
+
+### Notes
+The original 54-failure baseline included stale expectations plus genuine compile, calculation, async, responsive, and PDF issues. Those were resolved without adding fake production data or changing the working branch policy.
+
+### Completion Record
+Completed By: Arman2337
+Completed Date: 2026-09-25
+Commit: Not committed; pre-existing and task changes remain in the working tree
+PR: Pending
 
 ---
 

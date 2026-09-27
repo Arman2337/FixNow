@@ -1,11 +1,9 @@
 import { ConfigService } from '@nestjs/config';
-import type { IncomingMessage } from 'node:http';
 import { WebSocket } from 'ws';
 import type { Cache } from 'cache-manager';
-import { DataSource, In } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { AuthorizationService } from '../common/authorization/authorization.service';
 import { Booking } from '../bookings/domain/booking.entity';
-import { ProviderAvailabilityEntity } from '../providers/availability/provider-availability.entity';
 import { BookingStatus } from '../../../shared/booking-lifecycle.types';
 import { LocationService } from '../location/location.service';
 import { EtaAdapter } from './eta-adapter';
@@ -36,6 +34,9 @@ describe('Realtime live-journey pipeline', () => {
   let providerClient: WebSocket;
   let customerClient: WebSocket;
 
+  const sendFor = (client: WebSocket): jest.Mock =>
+    client === providerClient ? providerSend : customerSend;
+
   const connect = async (
     client: WebSocket,
     token: string,
@@ -48,7 +49,7 @@ describe('Realtime live-journey pipeline', () => {
       Buffer.from(JSON.stringify({ type: 'authenticate', accessToken: token })),
       false,
     );
-    expect(lastFrame(client['send'] as jest.Mock, 'ready')).toBeDefined();
+    expect(lastFrame(sendFor(client), 'ready')).toBeDefined();
     void userId;
     void roles;
   };
@@ -69,7 +70,7 @@ describe('Realtime live-journey pipeline', () => {
       ),
       false,
     );
-    expect(lastFrame(client['send'] as jest.Mock, 'subscribed')).toBeDefined();
+    expect(lastFrame(sendFor(client), 'subscribed')).toBeDefined();
   };
 
   const publishProviderLocation = async (): Promise<void> => {
@@ -105,9 +106,7 @@ describe('Realtime live-journey pipeline', () => {
       ),
       false,
     );
-    expect(
-      lastFrame(providerSend, 'location-ack'),
-    ).toBeDefined();
+    expect(lastFrame(providerSend, 'location-ack')).toBeDefined();
   };
 
   beforeEach(() => {
@@ -120,28 +119,32 @@ describe('Realtime live-journey pipeline', () => {
       locationLat: 23.02,
       locationLng: 72.57,
       version: 7,
-    }) as Booking;
+    });
 
     const cacheValues = new Map<string, unknown>();
     const cache = {
-      get: async (key: string) => cacheValues.get(key),
-      set: async (key: string, value: unknown) => {
+      get: (key: string) => Promise.resolve(cacheValues.get(key)),
+      set: (key: string, value: unknown) => {
         cacheValues.set(key, value);
+        return Promise.resolve();
       },
-      del: async (key: string) => {
+      del: (key: string) => {
         cacheValues.delete(key);
+        return Promise.resolve();
       },
     } as unknown as Cache;
 
     const bookingRepository = {
-      findOne: jest.fn(async () => bookingRow),
-      find: jest.fn(async () => []),
+      findOne: jest.fn(() => Promise.resolve(bookingRow)),
+      find: jest.fn(() => Promise.resolve([])),
     };
     const availabilityRepository = {
-      findOne: jest.fn(async () => ({
-        status: 'online',
-        statusExpiresAt: new Date(Date.now() + 3_600_000),
-      })),
+      findOne: jest.fn(() =>
+        Promise.resolve({
+          status: 'online',
+          statusExpiresAt: new Date(Date.now() + 3_600_000),
+        }),
+      ),
     };
     const dataSource = {
       getRepository: jest.fn((entity: unknown) =>
@@ -154,36 +157,42 @@ describe('Realtime live-journey pipeline', () => {
     } as unknown as ConfigService;
 
     const authorization = {
-      authorizeAccessToken: jest.fn(async (token: string) =>
-        token === 'provider-token'
-          ? {
-              userId: PROVIDER_ID,
-              sessionId: 'provider-session',
-              roles: ['verified_provider'],
-            }
-          : {
-              userId: CUSTOMER_ID,
-              sessionId: 'customer-session',
-              roles: ['customer'],
-            },
+      authorizeAccessToken: jest.fn((token: string) =>
+        Promise.resolve(
+          token === 'provider-token'
+            ? {
+                userId: PROVIDER_ID,
+                sessionId: 'provider-session',
+                roles: ['verified_provider'],
+              }
+            : {
+                userId: CUSTOMER_ID,
+                sessionId: 'customer-session',
+                roles: ['customer'],
+              },
+        ),
       ),
     } as unknown as AuthorizationService;
 
     const routes = {
-      route: jest.fn(async () => ({
-        distanceMeters: 4200,
-        durationSeconds: 600,
-        coordinates: [
-          [72.5714, 23.0225],
-          [72.5791, 23.0276],
-        ],
-      })),
+      route: jest.fn(() =>
+        Promise.resolve({
+          distanceMeters: 4200,
+          durationSeconds: 600,
+          coordinates: [
+            [72.5714, 23.0225],
+            [72.5791, 23.0276],
+          ],
+        }),
+      ),
     } as unknown as RouteAdapter;
     const eta = {
-      estimate: jest.fn(async () => ({
-        estimatedMinutes: 10,
-        source: 'test',
-      })),
+      estimate: jest.fn(() =>
+        Promise.resolve({
+          estimatedMinutes: 10,
+          source: 'test',
+        }),
+      ),
     } as unknown as EtaAdapter;
 
     registry = new RealtimeConnectionRegistry();
@@ -245,6 +254,60 @@ describe('Realtime live-journey pipeline', () => {
     const route = data['route'] as Frame;
     expect((route['coordinates'] as unknown[]).length).toBe(2);
     expect((data['eta'] as Frame)['estimatedMinutes']).toBe(10);
+  });
+
+  // Regression: the projection frame carried the adjusted line items but not
+  // the total, so a customer watching a provider raise the price saw the new
+  // list beside the old "Total" until the next poll.
+  it('publishes the recomputed total alongside the adjusted line items', async () => {
+    Object.assign(bookingRow, {
+      items: [
+        {
+          id: 'plumb-3',
+          name: 'Shower & Water Pipe Leakage',
+          quantity: 2,
+          unitPriceMinor: 24900,
+          durationMinutes: 45,
+        },
+      ],
+      totalAmountMinor: 58764,
+    });
+
+    await connect(providerClient, 'provider-token', PROVIDER_ID, [
+      'verified_provider',
+    ]);
+    await connect(customerClient, 'customer-token', CUSTOMER_ID, ['customer']);
+    await subscribe(providerClient, 'p1');
+    await subscribe(customerClient, 'c1');
+
+    await publishProviderLocation();
+
+    const projection = lastFrame(customerSend, 'booking.projection-updated.v1');
+    expect(projection).toBeDefined();
+    const data = projection!['data'] as Frame;
+    expect(data['items']).toHaveLength(1);
+    // 24900 x 2 = 49800 subtotal, +18% GST = 58764 total.
+    expect(data['pricing']).toEqual({
+      subtotalMinor: 49800,
+      gstMinor: 8964,
+      totalMinor: 58764,
+      currency: 'INR',
+    });
+  });
+
+  it('omits pricing for a booking with no line items', async () => {
+    await connect(providerClient, 'provider-token', PROVIDER_ID, [
+      'verified_provider',
+    ]);
+    await connect(customerClient, 'customer-token', CUSTOMER_ID, ['customer']);
+    await subscribe(providerClient, 'p1');
+    await subscribe(customerClient, 'c1');
+
+    await publishProviderLocation();
+
+    const projection = lastFrame(customerSend, 'booking.projection-updated.v1');
+    const data = projection!['data'] as Frame;
+    expect(data['pricing']).toBeNull();
   });
 
   it('snapshots the cached journey to a customer who opens tracking mid-route', async () => {

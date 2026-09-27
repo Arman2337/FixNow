@@ -33,7 +33,7 @@ describe('PriceEstimateService', () => {
     take: () => queryBuilder,
     select: () => queryBuilder,
     addSelect: () => queryBuilder,
-    getRawMany: (args?: unknown) => getRawMany(args),
+    getRawMany: () => getRawMany(),
   };
   const dataSource = {
     getRepository: () => ({ createQueryBuilder: () => queryBuilder }),

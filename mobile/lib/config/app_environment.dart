@@ -8,6 +8,8 @@ enum AppEnvironment {
     defaultValue: 'development',
   );
 
+  static const emergencyHotline = String.fromEnvironment('EMERGENCY_HOTLINE');
+
   static AppEnvironment get current => fromName(_configuredName);
 
   static AppEnvironment fromName(String name) {

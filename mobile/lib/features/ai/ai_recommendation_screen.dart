@@ -1,3 +1,4 @@
+import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
 import 'package:fixnow_mobile/features/ai/ai_recommendation_repository.dart';
@@ -121,7 +122,24 @@ class _AiRecommendationScreenState extends State<AiRecommendationScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Ask FixNow AI')),
+    appBar: AppBar(
+      backgroundColor: AppColors.surfaceContainerLowest,
+      elevation: 0,
+      scrolledUnderElevation: 1,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+        onPressed: () => Navigator.of(context).maybePop(),
+      ),
+      title: const Text(
+        'Ask FixNow AI',
+        style: TextStyle(
+          color: AppColors.textPrimary,
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      centerTitle: false,
+    ),
     body: SafeArea(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(16),

@@ -6,6 +6,7 @@ import { ProviderApplicationEntity } from '../providers/provider-application.ent
 import { ProviderProfileEntity } from '../providers/provider-profile.entity';
 import { ProviderVerificationEventEntity } from '../providers/verification/provider-verification-event.entity';
 import { AdminManagementService } from './admin-management.service';
+import type { ComplaintsService } from '../support/complaints/complaints.service';
 
 describe('AdminManagementService', () => {
   const users = { findOneBy: jest.fn() } as unknown as Repository<UserEntity>;
@@ -19,12 +20,16 @@ describe('AdminManagementService', () => {
   const events = {
     find: jest.fn(),
   } as unknown as Repository<ProviderVerificationEventEntity>;
+  const complaints = {
+    getComplaints: jest.fn(),
+  } as unknown as ComplaintsService;
   const service = new AdminManagementService(
     users,
     roles,
     applications,
     profiles,
     events,
+    complaints,
   );
 
   beforeEach(() => jest.clearAllMocks());

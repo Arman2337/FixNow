@@ -5,6 +5,7 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
+  type Relation,
   UpdateDateColumn,
 } from 'typeorm';
 import { Booking } from './booking.entity';
@@ -20,7 +21,7 @@ export class BookingLineItem {
 
   @ManyToOne(() => Booking, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'booking_id' })
-  booking!: Booking;
+  booking!: Relation<Booking>;
 
   @Column('uuid', { name: 'sub_service_id' })
   subServiceId!: string;

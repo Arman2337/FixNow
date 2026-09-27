@@ -25,20 +25,23 @@ class EmergencyStatusResult {
     required this.status,
     required this.currentWave,
     required this.fallbackRequired,
-    required this.guidance,
+    this.guidance,
+    this.eligibleCount = 0,
   });
 
   final String status;
   final int currentWave;
   final bool fallbackRequired;
   final String? guidance;
+  final int eligibleCount;
 
   static EmergencyStatusResult fromJson(Map<String, Object?> json) =>
       EmergencyStatusResult(
-        status: json['status']! as String,
-        currentWave: (json['currentWave'] ?? 0) as int,
-        fallbackRequired: json['fallbackRequired'] == true,
-        guidance: json['guidance'] as String?,
+      status: json['status']! as String,
+      currentWave: (json['currentWave'] ?? 0) as int,
+      fallbackRequired: json['fallbackRequired'] == true,
+      guidance: json['guidance'] as String?,
+      eligibleCount: (json['eligibleCount'] ?? 0) as int,
       );
 }
 

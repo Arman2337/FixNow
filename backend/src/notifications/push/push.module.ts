@@ -4,12 +4,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { PushDeviceTokenEntity } from './push-device-token.entity';
 import {
   PUSH_DELIVERY,
+  DisabledPushDelivery,
   FakePushDelivery,
   FcmPushDelivery,
 } from './push-delivery';
 import { PushDeviceController } from './push.controller';
 import { PushDeviceService } from './push.service';
-import { NotificationInboxController } from '../inbox.controller';
 
 export enum PushProviderName {
   Disabled = 'disabled',
@@ -19,9 +19,10 @@ export enum PushProviderName {
 
 @Module({
   imports: [TypeOrmModule.forFeature([PushDeviceTokenEntity])],
-  controllers: [PushDeviceController, NotificationInboxController],
+  controllers: [PushDeviceController],
   providers: [
     PushDeviceService,
+    DisabledPushDelivery,
     FakePushDelivery,
     FcmPushDelivery,
     {
@@ -29,12 +30,27 @@ export enum PushProviderName {
       useFactory: (
         fcm: FcmPushDelivery,
         fake: FakePushDelivery,
+        disabled: DisabledPushDelivery,
         config: ConfigService,
       ) => {
-        const provider = config.get<string>('PUSH_PROVIDER');
-        return provider === PushProviderName.Fcm ? fcm : fake;
+        // `disabled` must map to the honest no-op. Falling back to the fake
+        // provider here made every notification look SENT in a default or
+        // misconfigured environment while nothing was delivered.
+        switch (config.get<string>('PUSH_PROVIDER')) {
+          case PushProviderName.Fcm:
+            return fcm;
+          case PushProviderName.Fake:
+            return fake;
+          default:
+            return disabled;
+        }
       },
-      inject: [FcmPushDelivery, FakePushDelivery, ConfigService],
+      inject: [
+        FcmPushDelivery,
+        FakePushDelivery,
+        DisabledPushDelivery,
+        ConfigService,
+      ],
     },
   ],
   exports: [PUSH_DELIVERY],

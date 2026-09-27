@@ -154,7 +154,24 @@ class _ProviderSetupScreenState extends State<ProviderSetupScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Professional setup')),
+    appBar: AppBar(
+      backgroundColor: AppColors.surfaceContainerLowest,
+      elevation: 0,
+      scrolledUnderElevation: 1,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+        onPressed: () => Navigator.of(context).maybePop(),
+      ),
+      title: const Text(
+        'Professional Setup',
+        style: TextStyle(
+          color: AppColors.textPrimary,
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      centerTitle: false,
+    ),
     body: SafeArea(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.pagePadding),

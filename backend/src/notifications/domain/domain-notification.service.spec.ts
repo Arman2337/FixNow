@@ -62,7 +62,10 @@ describe('DomainNotificationService', () => {
   });
 
   it('deduplicates replays through the delivery record', async () => {
-    deliveries.findOneBy.mockResolvedValue({ id: 'existing' });
+    deliveries.findOneBy.mockResolvedValue({
+      id: 'existing',
+      status: NotificationDeliveryStatus.SENT,
+    });
     await service.notifyBookingEvent(
       booking,
       'customer',
@@ -70,6 +73,38 @@ describe('DomainNotificationService', () => {
     );
     expect(delivery.sendToToken).not.toHaveBeenCalled();
     expect(deliveries.insert).not.toHaveBeenCalled();
+  });
+
+  // Regression: a NO_DEVICES row used to consume the dedupe slot for good, so a
+  // user who enrolled their phone moments later never got the notification.
+  it('retries a previously undeliverable notification', async () => {
+    devices.find.mockResolvedValueOnce([]);
+    await service.notifyBookingEvent(
+      booking,
+      'customer',
+      BookingStatus.ASSIGNED,
+    );
+    expect(delivery.sendToToken).not.toHaveBeenCalled();
+    expect(deliveries.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: NotificationDeliveryStatus.NO_DEVICES,
+      }),
+    );
+
+    // The phone is enrolled now, and the same dedupe key is replayed.
+    deliveries.findOneBy.mockResolvedValue({
+      id: 'prior',
+      status: NotificationDeliveryStatus.NO_DEVICES,
+    });
+    await service.notifyBookingEvent(
+      booking,
+      'customer',
+      BookingStatus.ASSIGNED,
+    );
+    expect(delivery.sendToToken).toHaveBeenCalledWith(
+      'device-token-1',
+      expect.anything(),
+    );
   });
 
   it('records NO_DEVICES without sending when nothing is enrolled', async () => {

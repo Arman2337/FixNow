@@ -1,7 +1,6 @@
 import 'package:fixnow_mobile/features/location/booking_location.dart';
 import 'package:fixnow_mobile/features/location/service_location_picker_sheet.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geolocator_platform_interface/geolocator_platform_interface.dart';
@@ -57,8 +56,10 @@ void main() {
         home: Scaffold(
           body: Builder(
             builder: (context) => ElevatedButton(
-              onPressed: () =>
-                  ServiceLocationPickerSheet.show(context, initialLocation: null),
+              onPressed: () => ServiceLocationPickerSheet.show(
+                context,
+                initialLocation: null,
+              ),
               child: const Text('open'),
             ),
           ),

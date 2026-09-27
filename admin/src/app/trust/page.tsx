@@ -54,13 +54,13 @@ export default async function TrustPage({
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-space-md bg-surface-container-lowest p-space-lg rounded-xl shadow-sm">
             <div className="flex flex-col gap-space-xs max-w-3xl">
               <div className="flex items-center gap-space-sm">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-error-container text-on-error-container font-label-sm text-label-sm tracking-wide">
-                  <span className="w-2 h-2 rounded-full bg-error animate-pulse"></span>
-                  <span className="font-data-mono text-data-mono text-error">BUILD 4.19-SEC</span>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-error-container px-2.5 py-1 font-label-sm text-label-sm tracking-wide text-on-error-container">
+                  <span className="h-2 w-2 rounded-full bg-error" aria-hidden="true" />
+                  <span className="font-data-mono text-data-mono text-error">Rule-based review queue</span>
                 </span>
               </div>
               <h1 className="font-headline-lg text-headline-lg text-on-surface tracking-tight mt-2">Trust & Safety Moderation</h1>
-              <p className="font-body-md text-body-md text-on-surface-variant">Real-time review sentiment analysis, proof photo compliance, and fraud pattern detection.</p>
+              <p className="font-body-md text-body-md text-on-surface-variant">Review rule-based trust signals with the evidence and status returned by the management API.</p>
             </div>
             {result && (
               <div className="px-4 py-2 rounded-lg bg-surface-container-highest text-on-surface font-label-sm font-bold">
@@ -96,7 +96,7 @@ export default async function TrustPage({
             </div>
           </div>
 
-          <form role="search" className="flex items-center gap-3">
+          <form role="search" aria-label="Trust signal filters" className="flex items-center gap-3">
             <label className="sr-only" htmlFor="trust-status">Signal status</label>
             <select
               id="trust-status"
@@ -119,7 +119,7 @@ export default async function TrustPage({
               <div className="rounded-xl border border-outline-variant/30 bg-surface-container-lowest p-8 text-center flex flex-col items-center gap-4">
                 <span className="material-symbols-outlined text-outline text-5xl">shield</span>
                 <div>
-                  <h2 className="m-0 font-headline-sm text-headline-sm font-bold text-on-surface">No active trust signals</h2>
+                    <h2 className="m-0 font-headline-sm text-headline-sm font-bold text-on-surface">No trust signals</h2>
                   <p className="mt-2 mb-0 font-body-md text-on-surface-variant">
                     Nothing has crossed an advisory threshold{params.status === "OPEN" ? " among open signals" : ""}. This queue fills only when rules observe a pattern.
                   </p>

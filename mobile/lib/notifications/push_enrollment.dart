@@ -7,10 +7,22 @@ import 'package:fixnow_mobile/notifications/push_api.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-/// Compile-time gate. Push stays fully inert (no Firebase calls, no native
-/// configuration requirement) unless the build explicitly enables it.
+/// Build-time switch for push.
+///
+/// Defaults to ON. Push used to be opt-in via `--dart-define=PUSH_NOTIFICATIONS_ENABLED=true`,
+/// but no run script, IDE run configuration, or documented command ever passed
+/// that flag, so the compiled app never initialised Firebase, never obtained a
+/// token, and never registered a device. The backend then recorded NO_DEVICES
+/// and no tray notification could ever arrive, while the websocket/in-app path
+/// kept the app looking healthy whenever it was open.
+///
+/// Firebase still fails gracefully when a platform has no configuration
+/// (see [FirebasePushGateway.ensureInitialized]), so this is safe on web and on
+/// any build without google-services.json. Pass
+/// `--dart-define=PUSH_NOTIFICATIONS_ENABLED=false` to compile it out.
 const bool pushNotificationsEnabled = bool.fromEnvironment(
   'PUSH_NOTIFICATIONS_ENABLED',
+  defaultValue: true,
 );
 
 /// Platform boundary so enrollment logic is deterministic in tests.
@@ -42,7 +54,15 @@ abstract interface class PushInteractionSource {
   Future<ForegroundPushMessage?> initialInteraction();
 }
 
-class FirebasePushGateway implements PushGateway, PushInteractionSource {
+/// Tokens rotate (reinstall, restore, FCM refresh). Without re-registering, a
+/// device that was working silently stops receiving pushes and the stored row
+/// points at a dead token.
+abstract interface class PushTokenRefresher {
+  Stream<String?> tokenRefreshes();
+}
+
+class FirebasePushGateway
+    implements PushGateway, PushInteractionSource, PushTokenRefresher {
   bool _initialized = false;
 
   @override
@@ -89,21 +109,73 @@ class FirebasePushGateway implements PushGateway, PushInteractionSource {
   }
 
   @override
-  Future<String?> currentToken() => FirebaseMessaging.instance.getToken();
+  Future<String?> currentToken() async {
+    try {
+      return await FirebaseMessaging.instance.getToken();
+    } catch (_) {
+      return null;
+    }
+  }
 
   @override
+  Stream<String?> tokenRefreshes() {
+    try {
+      return FirebaseMessaging.instance.onTokenRefresh;
+    } catch (_) {
+      return const Stream.empty();
+    }
+  }
+
+  /// Both interaction streams used to be built eagerly inside a try/catch.
+  /// `FirebaseMessaging.onMessage` throws before `Firebase.initializeApp()` has
+  /// run, so the catch returned a permanently empty stream and the foreground
+  /// push banner silently never worked. Initialise first, then attach.
+  @override
   Stream<ForegroundPushMessage> foregroundMessages() =>
-      FirebaseMessaging.onMessage.map(_convert);
+      _afterInit(() => FirebaseMessaging.onMessage);
 
   @override
   Stream<ForegroundPushMessage> backgroundInteractions() =>
-      FirebaseMessaging.onMessageOpenedApp.map(_convert);
+      _afterInit(() => FirebaseMessaging.onMessageOpenedApp);
+
+  Stream<ForegroundPushMessage> _afterInit(
+    Stream<RemoteMessage> Function() source,
+  ) {
+    late final StreamController<ForegroundPushMessage> controller;
+    StreamSubscription<RemoteMessage>? subscription;
+    controller = StreamController<ForegroundPushMessage>(
+      onListen: () async {
+        if (!await ensureInitialized()) {
+          await controller.close();
+          return;
+        }
+        try {
+          subscription = source().listen(
+            (message) => controller.add(_convert(message)),
+            onError: controller.addError,
+          );
+        } on Exception catch (error) {
+          controller.addError(error);
+          await controller.close();
+        }
+      },
+      onCancel: () async {
+        await subscription?.cancel();
+        subscription = null;
+      },
+    );
+    return controller.stream;
+  }
 
   @override
   Future<ForegroundPushMessage?> initialInteraction() async {
-    final msg = await FirebaseMessaging.instance.getInitialMessage();
-    if (msg == null) return null;
-    return _convert(msg);
+    try {
+      final msg = await FirebaseMessaging.instance.getInitialMessage();
+      if (msg == null) return null;
+      return _convert(msg);
+    } catch (_) {
+      return null;
+    }
   }
 
   ForegroundPushMessage _convert(RemoteMessage message) {
@@ -167,6 +239,7 @@ class PushEnrollmentController extends ChangeNotifier {
   final PushApi _api;
   final PushGateway _gateway;
   final bool _featureEnabled;
+  StreamSubscription<String?>? _tokenRefreshSubscription;
 
   PushEnrollmentStatus _status = PushEnrollmentStatus.ready;
   List<PushDeviceSummary> _devices = const [];
@@ -238,6 +311,7 @@ class PushEnrollmentController extends ChangeNotifier {
         await _api.register(token: token, platform: detectPushPlatform());
         _devices = await _api.list();
         _update(PushEnrollmentStatus.ready);
+        _watchTokenRefresh();
       } on ApiException {
         _update(PushEnrollmentStatus.error);
       }
@@ -245,6 +319,33 @@ class PushEnrollmentController extends ChangeNotifier {
       _busy = false;
       notifyListeners();
     }
+  }
+
+  /// Re-register when FCM rotates the token. Without this a reinstall or a
+  /// token refresh leaves the backend holding a dead token and delivery stops
+  /// with no error anywhere.
+  void _watchTokenRefresh() {
+    if (_tokenRefreshSubscription != null) return;
+    if (_gateway is! PushTokenRefresher) return;
+    _tokenRefreshSubscription = (_gateway as PushTokenRefresher)
+        .tokenRefreshes()
+        .listen((token) async {
+          if (token == null || token.length < 32) return;
+          try {
+            await _api.register(token: token, platform: detectPushPlatform());
+            _devices = await _api.list();
+            _update(PushEnrollmentStatus.ready);
+          } on ApiException {
+            _update(PushEnrollmentStatus.error);
+          }
+        });
+  }
+
+  @override
+  void dispose() {
+    unawaited(_tokenRefreshSubscription?.cancel());
+    _tokenRefreshSubscription = null;
+    super.dispose();
   }
 
   Future<void> disable(PushDeviceSummary device) async {

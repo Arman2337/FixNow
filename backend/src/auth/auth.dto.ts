@@ -1,5 +1,11 @@
 import { Transform } from 'class-transformer';
-import { IsEmail, IsString, MaxLength, MinLength, IsOptional } from 'class-validator';
+import {
+  IsEmail,
+  IsString,
+  MaxLength,
+  MinLength,
+  IsOptional,
+} from 'class-validator';
 import type { RoleCode } from '../common/authorization/permission-policies';
 
 export class EmailPasswordDto {

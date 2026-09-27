@@ -17,8 +17,19 @@ import 'package:fixnow_mobile/features/provider/provider_controller.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking.dart';
 import 'package:fixnow_mobile/features/tracking/provider_live_map.dart';
 import 'package:fixnow_mobile/features/provider/provider_home_screen.dart';
+import 'package:fixnow_mobile/features/provider/provider_navigation_map_screen.dart';
+import 'package:fixnow_mobile/features/services/sub_service_item.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+String providerStatusLabel(String status) => switch (status) {
+  'ASSIGNED' => 'Assigned',
+  'EN_ROUTE' => 'En route',
+  'ARRIVED' => 'Arrived',
+  'IN_PROGRESS' => 'In progress',
+  'COMPLETED' => 'Completed',
+  _ => 'Status unavailable',
+};
 
 class ProviderActiveJobCockpitScreen extends StatefulWidget {
   const ProviderActiveJobCockpitScreen({
@@ -82,8 +93,6 @@ class _ProviderActiveJobCockpitScreenState
     _locationTimer?.cancel();
     _locationTimer = null;
   }
-
-
 
   @override
   void dispose() {
@@ -202,9 +211,9 @@ class _ProviderActiveJobCockpitScreenState
     if (job.customerPhone != null) {
       const CallController().launchCall(job.customerPhone!);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Phone number unavailable')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Phone number unavailable')));
     }
   }
 
@@ -213,10 +222,8 @@ class _ProviderActiveJobCockpitScreenState
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => _ServiceAdjustmentSheet(
-        job: job,
-        controller: widget.controller,
-      ),
+      builder: (ctx) =>
+          _ServiceAdjustmentSheet(job: job, controller: widget.controller),
     );
     if (updated != null && mounted) {
       showFixBanner(
@@ -378,19 +385,15 @@ class _ProviderActiveJobCockpitScreenState
 
   Widget _buildPriorityCockpit(CustomerBooking job) {
     final shortId = job.id.replaceAll('-', '').substring(0, 8).toUpperCase();
-    String pillText = 'WAITING FOR START';
+    final pillText = switch (job.status) {
+      'IN_PROGRESS' => 'SERVICE IN PROGRESS',
+      'COMPLETED' => 'JOB COMPLETED',
+      _ => providerStatusLabel(job.status).toUpperCase(),
+    };
     Color pillColor = AppColors.textSecondary;
-    if (job.status == 'EN_ROUTE') {
-      pillText = 'Arrived At Location';
+    if (job.status == 'EN_ROUTE' || job.status == 'COMPLETED') {
       pillColor = AppColors.primary;
-    } else if (job.status == 'IN_PROGRESS') {
-      pillText = 'Service In Progress';
-      pillColor = const Color(0xFFa36700); // tertiary
-    } else if (job.status == 'COMPLETED') {
-      pillText = 'Job Completed';
-      pillColor = AppColors.primary;
-    } else if (job.status == 'ASSIGNED') {
-      pillText = 'Assigned Job';
+    } else if (job.status == 'IN_PROGRESS' || job.status == 'ASSIGNED') {
       pillColor = const Color(0xFFa36700);
     }
 
@@ -605,88 +608,137 @@ class _ProviderActiveJobCockpitScreenState
                     onTap: () => _openMaps(job),
                     child: Container(
                       height: 110,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceContainer,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Stack(
-                      children: [
-                        Positioned.fill(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: AppColors.surfaceContainerHighest,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: IgnorePointer(
-                                child: ProviderLiveMap(
-                                  showOverlay: false,
-                                  route: widget.controller.currentRoute,
-                                  providerLocation:
-                                      widget.controller.currentLocation,
-                                  customerLocation:
-                                      job.locationLatitude != null &&
-                                              job.locationLongitude != null
-                                          ? CustomerMapLocation(
-                                              latitude: job.locationLatitude!,
-                                              longitude: job.locationLongitude!,
-                                            )
-                                          : null,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceContainer,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Stack(
+                        children: [
+                          Positioned.fill(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: AppColors.surfaceContainerHighest,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: IgnorePointer(
+                                  child: ProviderLiveMap(
+                                    showOverlay: false,
+                                    height: 110,
+                                    route: widget.controller.currentRoute,
+                                    providerLocation:
+                                        widget.controller.currentLocation,
+                                    customerLocation:
+                                        job.locationLatitude != null &&
+                                            job.locationLongitude != null
+                                        ? CustomerMapLocation(
+                                            latitude: job.locationLatitude!,
+                                            longitude: job.locationLongitude!,
+                                          )
+                                        : null,
+                                  ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                        Positioned.fill(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
-                              color: Colors.black.withValues(alpha: 0.1),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          bottom: 8,
-                          left: 8,
-                          child: GestureDetector(
-                            onTap: () => _openMaps(job),
+                          Positioned.fill(
                             child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
                               decoration: BoxDecoration(
-                                color: AppColors.surfaceContainerLowest
-                                    .withValues(alpha: 0.9),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Row(
-                                children: const [
-                                  Icon(
-                                    Icons.navigation_rounded,
-                                    color: AppColors.primary,
-                                    size: 14,
-                                  ),
-                                  SizedBox(width: 4),
-                                  Text(
-                                    'Navigate',
-                                    style: TextStyle(
-                                      color: AppColors.textPrimary,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
+                                borderRadius: BorderRadius.circular(8),
+                                color: Colors.black.withValues(alpha: 0.1),
                               ),
                             ),
                           ),
-                        ),
-                      ],
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: Material(
+                              color: AppColors.surfaceContainerLowest
+                                  .withValues(alpha: 0.92),
+                              borderRadius: BorderRadius.circular(8),
+                              child: InkWell(
+                                onTap: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          ProviderNavigationMapScreen(
+                                            job: job,
+                                            controller: widget.controller,
+                                          ),
+                                    ),
+                                  );
+                                },
+                                borderRadius: BorderRadius.circular(8),
+                                child: const Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 6,
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.map_outlined,
+                                        size: 16,
+                                        color: AppColors.textPrimary,
+                                      ),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        'Route Map',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.textPrimary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 8,
+                            left: 8,
+                            child: GestureDetector(
+                              onTap: () => _openMaps(job),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.surfaceContainerLowest
+                                      .withValues(alpha: 0.9),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Row(
+                                  children: const [
+                                    Icon(
+                                      Icons.navigation_rounded,
+                                      color: AppColors.primary,
+                                      size: 14,
+                                    ),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      'Navigate',
+                                      style: TextStyle(
+                                        color: AppColors.textPrimary,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
               ],
             ),
           ),
@@ -880,8 +932,8 @@ class _ProviderActiveJobCockpitScreenState
                     child: Text(
                       isSharing
                           ? (currentLoc != null
-                              ? 'Live GPS shared with customer (${currentLoc.latitude.toStringAsFixed(4)}, ${currentLoc.longitude.toStringAsFixed(4)})'
-                              : 'Broadcasting live GPS to customer')
+                                ? 'Live GPS shared with customer (${currentLoc.latitude.toStringAsFixed(4)}, ${currentLoc.longitude.toStringAsFixed(4)})'
+                                : 'Broadcasting live GPS to customer')
                           : 'Location sharing is paused',
                       style: TextStyle(
                         color: isSharing
@@ -1020,7 +1072,9 @@ class _ProviderActiveJobCockpitScreenState
                   ],
                 ),
                 const SizedBox(height: 8),
-                if (job.lineItems.where((item) => item.type == 'EXTRA_CHARGE').isEmpty)
+                if (job.lineItems
+                    .where((item) => item.type == 'EXTRA_CHARGE')
+                    .isEmpty)
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 8),
                     child: Center(
@@ -1034,29 +1088,33 @@ class _ProviderActiveJobCockpitScreenState
                     ),
                   )
                 else
-                  ...job.lineItems.where((item) => item.type == 'EXTRA_CHARGE').map((item) => Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              item.description,
-                              style: const TextStyle(
-                                color: AppColors.textPrimary,
-                                fontSize: 13,
+                  ...job.lineItems
+                      .where((item) => item.type == 'EXTRA_CHARGE')
+                      .map(
+                        (item) => Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                item.description,
+                                style: const TextStyle(
+                                  color: AppColors.textPrimary,
+                                  fontSize: 13,
+                                ),
                               ),
-                            ),
-                            Text(
-                              '₹${(item.amount / 100).toStringAsFixed(2)}',
-                              style: const TextStyle(
-                                color: AppColors.textPrimary,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
+                              Text(
+                                '₹${(item.amount / 100).toStringAsFixed(2)}',
+                                style: const TextStyle(
+                                  color: AppColors.textPrimary,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      )),
+                      ),
               ],
             ),
           ),
@@ -1225,7 +1283,7 @@ class _ProviderActiveJobCockpitScreenState
   Future<void> _handleAddExtraCharge(CustomerBooking job) async {
     final descriptionController = TextEditingController();
     final amountController = TextEditingController();
-    
+
     final result = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
       isScrollControlled: true,
@@ -1274,7 +1332,8 @@ class _ProviderActiveJobCockpitScreenState
                     Navigator.pop(context, {
                       'type': 'EXTRA_CHARGE',
                       'description': desc,
-                      'amount': (amount * 100).toInt(), // assuming backend wants minor units, wait, DTO says positive number, backend expects minor units usually? Yes, amount is typically in paise.
+                      'amount': (amount * 100)
+                          .toInt(), // assuming backend wants minor units, wait, DTO says positive number, backend expects minor units usually? Yes, amount is typically in paise.
                     });
                   }
                 },
@@ -1408,15 +1467,15 @@ Future<bool> openCustomerNavigation(CustomerBooking job) async {
   if (!hasNavigationDestination(job)) return false;
   try {
     return await _navigationChannel.invokeMethod<bool>('openNavigation', {
-      'latitude': job.locationLatitude,
-      'longitude': job.locationLongitude,
-      'label': 'Customer Location',
-    }) ?? false;
+          'latitude': job.locationLatitude,
+          'longitude': job.locationLongitude,
+          'label': 'Customer Location',
+        }) ??
+        false;
   } catch (_) {
     return false;
   }
 }
-
 
 class _ServiceAdjustmentSheet extends StatefulWidget {
   const _ServiceAdjustmentSheet({required this.job, required this.controller});
@@ -1431,38 +1490,54 @@ class _ServiceAdjustmentSheet extends StatefulWidget {
 
 class _ServiceAdjustmentSheetState extends State<_ServiceAdjustmentSheet> {
   late List<BookingItemDraft> _lines;
-  final _nameCtrl = TextEditingController();
-  final _priceCtrl = TextEditingController();
+  List<SubServiceItem> _catalogue = const [];
+  bool _loadingCatalogue = true;
+  String? _selectedId;
   bool _saving = false;
   String? _error;
 
   @override
   void initState() {
     super.initState();
-    if (widget.job.items != null && widget.job.items!.isNotEmpty) {
-      _lines = widget.job.items!.map((item) => item.toDraft()).toList();
-    } else if (widget.job.pricing != null &&
-        widget.job.pricing!.subtotalMinor > 0) {
-      _lines = [
-        BookingItemDraft(
-          id: 'initial-service',
-          name: widget.job.description.isNotEmpty
-              ? widget.job.description
-              : 'Base Service',
-          quantity: 1,
-          unitPriceMinor: widget.job.pricing!.subtotalMinor,
-          durationMinutes: widget.job.estimatedDurationMinutes,
-        ),
-      ];
-    } else {
-      _lines = [];
+    _lines = widget.job.items != null && widget.job.items!.isNotEmpty
+        ? widget.job.items!.map((item) => item.toDraft()).toList()
+        : <BookingItemDraft>[];
+    _loadCatalogue();
+  }
+
+  /// Loads the category's sub-services so the provider can only ever select a
+  /// catalogue entry. Prices shown here are the ones the server will charge.
+  Future<void> _loadCatalogue() async {
+    try {
+      final items = await SubServiceRepository(
+        widget.controller.repository.api,
+      ).getAllSubServices();
+      if (!mounted) return;
+      setState(() {
+        _catalogue = items.where((i) => i.priceMinor > 0).toList(growable: false);
+        _loadingCatalogue = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _loadingCatalogue = false);
     }
   }
 
+  SubServiceItem? _entryFor(String subServiceId) {
+    for (final item in _catalogue) {
+      if (item.id == subServiceId) return item;
+    }
+    return null;
+  }
+
+  int _unitPriceOf(String subServiceId) =>
+      _entryFor(subServiceId)?.priceMinor ?? 0;
+
+  String _nameOf(String subServiceId) =>
+      _entryFor(subServiceId)?.name ?? 'Service';
+
   @override
   void dispose() {
-    _nameCtrl.dispose();
-    _priceCtrl.dispose();
     super.dispose();
   }
 
@@ -1471,18 +1546,15 @@ class _ServiceAdjustmentSheetState extends State<_ServiceAdjustmentSheet> {
 
   int get _subtotalMinor => _lines.fold(
         0,
-        (sum, item) => sum + item.unitPriceMinor * item.quantity,
+        (sum, line) => sum + _unitPriceOf(line.subServiceId) * line.quantity,
       );
 
   void _increment(int index) {
     final line = _lines[index];
     setState(() {
       _lines[index] = BookingItemDraft(
-        id: line.id,
-        name: line.name,
+        subServiceId: line.subServiceId,
         quantity: line.quantity + 1,
-        unitPriceMinor: line.unitPriceMinor,
-        durationMinutes: line.durationMinutes,
       );
     });
   }
@@ -1490,37 +1562,35 @@ class _ServiceAdjustmentSheetState extends State<_ServiceAdjustmentSheet> {
   void _decrement(int index) {
     final line = _lines[index];
     setState(() {
-      if (line.quantity > 1) {
-        _lines[index] = BookingItemDraft(
-          id: line.id,
-          name: line.name,
-          quantity: line.quantity - 1,
-          unitPriceMinor: line.unitPriceMinor,
-          durationMinutes: line.durationMinutes,
-        );
-      } else {
+      if (line.quantity <= 1) {
         _lines.removeAt(index);
+      } else {
+        _lines[index] = BookingItemDraft(
+          subServiceId: line.subServiceId,
+          quantity: line.quantity - 1,
+        );
       }
     });
   }
 
-  void _addCustomItem() {
-    final name = _nameCtrl.text.trim();
-    final rupees = double.tryParse(_priceCtrl.text.trim());
-    if (name.isEmpty || rupees == null || rupees < 0) return;
+  void _addSelected(String? subServiceId) {
+    if (subServiceId == null) return;
+    final existing =
+        _lines.indexWhere((l) => l.subServiceId == subServiceId);
     setState(() {
-      _lines = [
-        ..._lines,
-        BookingItemDraft(
-          id: 'on-site-${DateTime.now().millisecondsSinceEpoch}',
-          name: name,
-          quantity: 1,
-          unitPriceMinor: (rupees * 100).round(),
-        ),
-      ];
+      if (existing >= 0) {
+        final line = _lines[existing];
+        _lines[existing] = BookingItemDraft(
+          subServiceId: line.subServiceId,
+          quantity: line.quantity + 1,
+        );
+      } else {
+        _lines = [
+          ..._lines,
+          BookingItemDraft(subServiceId: subServiceId, quantity: 1),
+        ];
+      }
     });
-    _nameCtrl.clear();
-    _priceCtrl.clear();
   }
 
   Future<void> _submit() async {
@@ -1529,8 +1599,7 @@ class _ServiceAdjustmentSheetState extends State<_ServiceAdjustmentSheet> {
       _saving = true;
       _error = null;
     });
-    final updated =
-        await widget.controller.updateJobItems(widget.job, _lines);
+    final updated = await widget.controller.updateJobItems(widget.job, _lines);
     if (!mounted) return;
     if (updated == null) {
       setState(() {
@@ -1546,14 +1615,15 @@ class _ServiceAdjustmentSheetState extends State<_ServiceAdjustmentSheet> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding:
-          EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.lg),
         decoration: const BoxDecoration(
-          color: AppColors.backgroundPrimary,
+          color: AppColors.surfaceContainerLowest,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          border: Border(top: BorderSide(color: Colors.white12)),
+          border: Border(top: BorderSide(color: AppColors.border)),
         ),
         child: SafeArea(
           top: false,
@@ -1568,20 +1638,26 @@ class _ServiceAdjustmentSheetState extends State<_ServiceAdjustmentSheet> {
                     Text(
                       'Adjust Services',
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: AppColors.textPrimary,
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.close_rounded, color: Colors.white70),
+                      icon: const Icon(
+                        Icons.close_rounded,
+                        color: AppColors.textSecondary,
+                      ),
                       onPressed: () => Navigator.of(context).pop(),
                     ),
                   ],
                 ),
                 const Text(
                   'Update the work actually done. The customer sees the revised list and total.',
-                  style: TextStyle(color: Colors.white54, fontSize: 12),
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.md),
 
@@ -1590,7 +1666,10 @@ class _ServiceAdjustmentSheetState extends State<_ServiceAdjustmentSheet> {
                     padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
                     child: Text(
                       'No services on this booking yet. Add the work you are doing.',
-                      style: TextStyle(color: Colors.white54, fontSize: 13),
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 13,
+                      ),
                     ),
                   )
                 else
@@ -1600,18 +1679,21 @@ class _ServiceAdjustmentSheetState extends State<_ServiceAdjustmentSheet> {
                   ],
 
                 const SizedBox(height: AppSpacing.md),
-                const Divider(color: Colors.white12),
+                const Divider(color: AppColors.border),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
                       'Customer pays (incl. 18% GST)',
-                      style: TextStyle(color: Colors.white70, fontSize: 12),
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                      ),
                     ),
                     Text(
                       _money((_subtotalMinor * 1.18).round()),
                       style: const TextStyle(
-                        color: AppColors.focus,
+                        color: AppColors.primary,
                         fontWeight: FontWeight.w800,
                         fontSize: 16,
                       ),
@@ -1623,55 +1705,138 @@ class _ServiceAdjustmentSheetState extends State<_ServiceAdjustmentSheet> {
                 const Text(
                   'Add work found on site',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: AppColors.textPrimary,
                     fontWeight: FontWeight.w700,
                     fontSize: 13,
                   ),
                 ),
-                const SizedBox(height: AppSpacing.sm),
-                Row(
-                  children: [
-                    Expanded(
-                      flex: 3,
-                      child: TextField(
-                        controller: _nameCtrl,
-                        style: const TextStyle(color: Colors.white, fontSize: 13),
-                        decoration: _sheetInput('e.g. New tap cartridge'),
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      flex: 2,
-                      child: TextField(
-                        controller: _priceCtrl,
-                        keyboardType:
-                            const TextInputType.numberWithOptions(decimal: true),
-                        style: const TextStyle(color: Colors.white, fontSize: 13),
-                        decoration: _sheetInput('₹ price'),
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    InkWell(
-                      onTap: _addCustomItem,
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                      child: Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                        ),
-                        child: const Icon(Icons.add_rounded,
-                            color: Colors.white, size: 20),
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: 4),
+                const Text(
+                  'Pick a service from the catalogue. Prices are set by FixNow '
+                  'and cannot be edited here.',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 11,
+                  ),
                 ),
+                const SizedBox(height: AppSpacing.sm),
+                if (_loadingCatalogue)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                    child: Text(
+                      'Loading services…',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                      ),
+                    ),
+                  )
+                else if (_catalogue.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                    child: Text(
+                      'No priced services are available for this category.',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                      ),
+                    ),
+                  )
+                else
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceContainerLowest,
+                            borderRadius: BorderRadius.circular(AppRadius.small),
+                            // borderDefault (#E2E8F0) on white is only ~1.23:1
+                            // and reads as an invisible edge, so the picker
+                            // uses the strong border token.
+                            border: Border.all(color: AppColors.borderStrong),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              isExpanded: true,
+                              value: _selectedId,
+                              hint: const Text(
+                                'Select a service',
+                                style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 13,
+                                ),
+                              ),
+                              dropdownColor: AppColors.surfaceContainerLowest,
+                              style: const TextStyle(
+                                color: AppColors.inputText,
+                                fontSize: 13,
+                              ),
+                              items: [
+                                for (final item in _catalogue)
+                                  DropdownMenuItem<String>(
+                                    value: item.id,
+                                    child: Text(
+                                      item.name,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                              ],
+                              onChanged: _saving
+                                  ? null
+                                  : (value) => setState(
+                                        () => _selectedId = value,
+                                      ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Semantics(
+                        button: true,
+                        label: 'Add selected service',
+                        child: InkWell(
+                          onTap: _selectedId == null || _saving
+                              ? null
+                              : () {
+                                  _addSelected(_selectedId);
+                                  setState(() => _selectedId = null);
+                                },
+                          borderRadius:
+                              BorderRadius.circular(AppRadius.pill),
+                          child: Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: _selectedId == null
+                                  ? AppColors.textDisabled
+                                  : AppColors.primary,
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.pill,
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.add_rounded,
+                              color: AppColors.onPrimary,
+                              size: 20,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
 
                 if (_error != null) ...[
                   const SizedBox(height: AppSpacing.md),
                   Text(
                     _error!,
-                    style: const TextStyle(color: AppColors.danger, fontSize: 12),
+                    style: const TextStyle(
+                      color: AppColors.danger,
+                      fontSize: 12,
+                    ),
                   ),
                 ],
                 const SizedBox(height: AppSpacing.lg),
@@ -1694,9 +1859,9 @@ class _ServiceAdjustmentSheetState extends State<_ServiceAdjustmentSheet> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.surfaceElevated,
+        color: AppColors.surfaceContainerLow,
         borderRadius: BorderRadius.circular(AppRadius.small),
-        border: Border.all(color: Colors.white10),
+        border: Border.all(color: AppColors.border),
       ),
       child: Row(
         children: [
@@ -1705,60 +1870,58 @@ class _ServiceAdjustmentSheetState extends State<_ServiceAdjustmentSheet> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  line.name,
+                  _nameOf(line.subServiceId),
                   style: const TextStyle(
-                    color: Colors.white,
+                    color: AppColors.textPrimary,
                     fontWeight: FontWeight.w600,
                     fontSize: 13,
                   ),
                 ),
                 Text(
-                  '${_money(line.unitPriceMinor)} × ${line.quantity} = '
-                  '${_money(line.unitPriceMinor * line.quantity)}',
-                  style: const TextStyle(color: Colors.white54, fontSize: 11),
+                  '${_money(_unitPriceOf(line.subServiceId))} × ${line.quantity} = '
+                  '${_money(_unitPriceOf(line.subServiceId) * line.quantity)}',
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 11,
+                  ),
                 ),
               ],
             ),
           ),
-          InkWell(
-            onTap: () => _decrement(index),
-            borderRadius: BorderRadius.circular(AppRadius.pill),
-            child: const Padding(
-              padding: EdgeInsets.all(6),
-              child: Icon(Icons.remove_rounded, color: Colors.white, size: 18),
+          Semantics(
+            button: true,
+            label: 'Decrease quantity of ${_nameOf(line.subServiceId)}',
+            child: InkWell(
+              onTap: () => _decrement(index),
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+              child: const Padding(
+                padding: EdgeInsets.all(6),
+                child: Icon(
+                  Icons.remove_rounded,
+                  color: AppColors.textSecondary,
+                  size: 18,
+                ),
+              ),
             ),
           ),
-          InkWell(
-            onTap: () => _increment(index),
-            borderRadius: BorderRadius.circular(AppRadius.pill),
-            child: const Padding(
-              padding: EdgeInsets.all(6),
-              child: Icon(Icons.add_rounded, color: Colors.white, size: 18),
+          Semantics(
+            button: true,
+            label: 'Increase quantity of ${_nameOf(line.subServiceId)}',
+            child: InkWell(
+              onTap: () => _increment(index),
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+              child: const Padding(
+                padding: EdgeInsets.all(6),
+                child: Icon(
+                  Icons.add_rounded,
+                  color: AppColors.textSecondary,
+                  size: 18,
+                ),
+              ),
             ),
           ),
         ],
       ),
     );
   }
-
-  InputDecoration _sheetInput(String hint) => InputDecoration(
-        hintText: hint,
-        hintStyle: const TextStyle(color: Colors.white38, fontSize: 12),
-        filled: true,
-        fillColor: AppColors.surfaceElevated,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.small),
-          borderSide: const BorderSide(color: Colors.white12),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.small),
-          borderSide: const BorderSide(color: Colors.white12),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.small),
-          borderSide: const BorderSide(color: AppColors.primary),
-        ),
-      );
 }

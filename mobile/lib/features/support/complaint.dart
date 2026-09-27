@@ -14,6 +14,7 @@ class Complaint {
     required this.description,
     required this.status,
     this.resolutionNotes,
+    this.evidence = const [],
     required this.createdAt,
     required this.updatedAt,
   });
@@ -28,6 +29,7 @@ class Complaint {
   final String description;
   final String status;
   final String? resolutionNotes;
+  final List<ComplaintEvidence> evidence;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -42,6 +44,9 @@ class Complaint {
     description: json['description'] as String,
     status: json['status'] as String,
     resolutionNotes: json['resolutionNotes'] as String?,
+    evidence: (json['evidence'] as List<dynamic>? ?? const [])
+        .map((item) => ComplaintEvidence.fromJson(item as Map<String, dynamic>))
+        .toList(growable: false),
     createdAt: DateTime.parse(json['createdAt'] as String),
     updatedAt: DateTime.parse(json['updatedAt'] as String),
   );

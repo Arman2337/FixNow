@@ -20,7 +20,8 @@ function razorpayWith(
   overrides: Record<string, string> = {},
 ): RazorpayPaymentGateway {
   const config = {
-    get: (name: string) => overrides[name] ?? CREDENTIALS[name],
+    get: (name: string) =>
+      overrides[name] ?? CREDENTIALS[name as keyof typeof CREDENTIALS],
   } as unknown as ConfigService;
   return new RazorpayPaymentGateway(config);
 }
@@ -147,7 +148,7 @@ describe('RazorpayPaymentGateway signature verification', () => {
           `${CREDENTIALS.RAZORPAY_KEY_ID}:${CREDENTIALS.RAZORPAY_KEY_SECRET}`,
         ).toString('base64')}`,
       );
-      expect(JSON.parse(init.body)).toEqual({
+      expect(JSON.parse(init.body as string)).toEqual({
         amount: 49900,
         currency: 'INR',
         receipt: 'booking-1',

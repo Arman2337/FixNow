@@ -3,18 +3,20 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ProviderSkillsController } from './provider-skills.controller';
 import { ProviderSkillsService } from './provider-skills.service';
+import type { ProviderSkillEntity } from './provider-skill.entity';
 import {
   CreateProviderSkillDto,
   UpdateProviderSkillDto,
   VerifyProviderSkillDto,
 } from './provider-skills.dto';
 import type { AuthorizedRequest } from '../common/authorization/authorization.guard';
+import type { RoleCode } from '../common/authorization/permission-policies';
 
-describe('ProviderSkillsController', () => {
-  let controller: ProviderSkillsController;
-  let service: jest.Mocked<ProviderSkillsService>;
-
-  const mockSkill = {
+/** A complete skill row: the entity carries `user` and `serviceCategory`. */
+function skillFixture(
+  overrides: Partial<ProviderSkillEntity> = {},
+): ProviderSkillEntity {
+  return {
     id: 'skill-id',
     userId: 'user-id',
     serviceCategoryId: 'category-id',
@@ -26,20 +28,32 @@ describe('ProviderSkillsController', () => {
     verificationNotes: null,
     createdAt: new Date(),
     updatedAt: new Date(),
-  };
+    user: undefined,
+    serviceCategory: undefined,
+    ...overrides,
+  } as ProviderSkillEntity;
+}
 
-  const mockRequest = {
-    authorizationPrincipal: {
-      userId: 'user-id',
-      sessionId: 'session-id',
-      roles: ['provider_applicant'],
-    },
-  } as AuthorizedRequest;
+/** The controller only reads `authorizationPrincipal` off the request. */
+function requestWith(userId: string, roles: RoleCode[]): AuthorizedRequest {
+  return {
+    authorizationPrincipal: { userId, sessionId: 'session-id', roles },
+  } as unknown as AuthorizedRequest;
+}
+
+describe('ProviderSkillsController', () => {
+  let controller: ProviderSkillsController;
+  let service: jest.Mocked<ProviderSkillsService>;
+
+  const mockSkill = skillFixture();
+
+  const mockRequest = requestWith('user-id', ['provider_applicant']);
 
   beforeEach(async () => {
     const mockService = {
       findByUserId: jest.fn(),
       findById: jest.fn(),
+      findOwnedById: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
@@ -117,12 +131,14 @@ describe('ProviderSkillsController', () => {
   });
 
   describe('findById', () => {
-    it('should return skill by ID', async () => {
-      service.findById.mockResolvedValue(mockSkill);
+    it('scopes the lookup to the calling provider (SEC-002)', async () => {
+      service.findOwnedById.mockResolvedValue(mockSkill);
 
-      const result = await controller.findById('skill-id');
+      const result = await controller.findById('skill-id', mockRequest);
 
-      expect(service.findById).toHaveBeenCalledWith('skill-id');
+      // The caller's id must be part of the lookup, otherwise any provider can
+      // read another provider's skill (and the user relation behind it).
+      expect(service.findOwnedById).toHaveBeenCalledWith('skill-id', 'user-id');
       expect(result).toEqual(mockSkill);
     });
   });
@@ -167,13 +183,9 @@ describe('ProviderSkillsController', () => {
     });
 
     it('does not elevate an owner endpoint from request role claims', async () => {
-      const adminRequest = {
-        authorizationPrincipal: {
-          userId: 'admin-id',
-          sessionId: 'session-id',
-          roles: ['operations_administrator'],
-        },
-      } as AuthorizedRequest;
+      const adminRequest = requestWith('admin-id', [
+        'operations_administrator',
+      ]);
 
       const updateDto: UpdateProviderSkillDto = { isVerified: true };
       service.update.mockResolvedValue({ ...mockSkill, ...updateDto });
@@ -218,13 +230,9 @@ describe('ProviderSkillsController', () => {
     });
 
     it('does not elevate delete from request role claims', async () => {
-      const adminRequest = {
-        authorizationPrincipal: {
-          userId: 'admin-id',
-          sessionId: 'session-id',
-          roles: ['operations_administrator'],
-        },
-      } as AuthorizedRequest;
+      const adminRequest = requestWith('admin-id', [
+        'operations_administrator',
+      ]);
 
       service.delete.mockResolvedValue(undefined);
 

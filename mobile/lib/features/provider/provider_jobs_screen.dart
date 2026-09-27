@@ -15,6 +15,7 @@ import 'package:fixnow_mobile/features/provider/provider_controller.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking.dart';
 import 'package:fixnow_mobile/features/tracking/provider_live_map.dart';
 import 'package:fixnow_mobile/features/provider/provider_home_screen.dart';
+import 'package:fixnow_mobile/features/provider/provider_navigation_map_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -260,53 +261,67 @@ class _ProviderJobsScreenState extends State<ProviderJobsScreen> {
             ),
           ),
           const SizedBox(width: 8),
-          InkWell(
-            onTap: () async {
-              final newStatus = online ? 'offline' : 'online';
-              await widget.controller.updateStatus(newStatus);
-            },
-            borderRadius: BorderRadius.circular(999),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: online
-                    ? AppColors.primaryFixed
-                    : AppColors.surfaceContainerHigh,
+          Flexible(
+            child: Material(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(999),
+              child: InkWell(
+                onTap: () async {
+                  final newStatus = online ? 'offline' : 'online';
+                  await widget.controller.updateStatus(newStatus);
+                },
                 borderRadius: BorderRadius.circular(999),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 4,
-                    offset: const Offset(0, 1),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
                   ),
-                ],
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (online) ...[
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: const BoxDecoration(
-                        color: AppColors.primary,
-                        shape: BoxShape.circle,
+                  decoration: BoxDecoration(
+                    color: online
+                        ? AppColors.primaryFixed
+                        : AppColors.surfaceContainerHigh,
+                    borderRadius: BorderRadius.circular(999),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 4,
+                        offset: const Offset(0, 1),
                       ),
-                    ),
-                    const SizedBox(width: 6),
-                  ],
-                  Text(
-                    online ? 'ON DUTY' : 'STANDBY',
-                    style: TextStyle(
-                      color: online
-                          ? AppColors.onPrimaryFixed
-                          : AppColors.textSecondary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                    ),
+                    ],
                   ),
-                ],
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (online) ...[
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            color: AppColors.primary,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                      ],
+                      Flexible(
+                        child: Text(
+                          online ? 'ON DUTY' : 'STANDBY',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: online
+                                ? AppColors.onPrimaryFixed
+                                : AppColors.textSecondary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
@@ -326,35 +341,45 @@ class _ProviderJobsScreenState extends State<ProviderJobsScreen> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.border),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            children: const [
-              Icon(Icons.bolt_rounded, color: AppColors.accentGold, size: 20),
-              SizedBox(width: 8),
-              Text(
-                'Emergency On-Call Active',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+            children: [
+              const Icon(
+                Icons.bolt_rounded,
+                color: AppColors.accentGold,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              const Flexible(
+                child: Text(
+                  'Emergency On-Call Active',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
               ),
             ],
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(
-              color: AppColors.accentGold.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Text(
-              '1.5x Pay Rate',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-                color: AppColors.accentGold,
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: AppColors.accentGold.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Text(
+                '1.5x Pay Rate',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.accentGold,
+                ),
               ),
             ),
           ),
@@ -382,65 +407,54 @@ class _ProviderJobsScreenState extends State<ProviderJobsScreen> {
 
           return Padding(
             padding: EdgeInsets.only(right: index < days.length - 1 ? 8 : 0),
-            child: InkWell(
-              onTap: () => setState(() => _selectedDayIndex = index),
+            child: Material(
+              color: Colors.transparent,
               borderRadius: BorderRadius.circular(12),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                width: 60,
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? AppColors.primary
-                      : AppColors.surfaceContainerLow,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: isSelected ? AppColors.primary : AppColors.border,
+              child: InkWell(
+                onTap: () => setState(() => _selectedDayIndex = index),
+                borderRadius: BorderRadius.circular(12),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  width: 60,
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? AppColors.primary
+                        : AppColors.surfaceContainerLow,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isSelected ? AppColors.primary : AppColors.border,
+                    ),
                   ),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      label,
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: isSelected
-                            ? AppColors.onPrimary
-                            : AppColors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${date.day}',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        color: isSelected
-                            ? AppColors.onPrimary
-                            : AppColors.textPrimary,
-                        height: 1.1,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 4,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: isSelected
-                                ? AppColors.primaryFixed
-                                : (index == 0 && activeJobCount > 0)
-                                ? AppColors.primary
-                                : AppColors.borderStrong,
-                          ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        label,
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: isSelected
+                              ? AppColors.onPrimary
+                              : AppColors.textSecondary,
                         ),
-                        if (index == 0 && activeJobCount > 1) ...[
-                          const SizedBox(width: 3),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${date.day}',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: isSelected
+                              ? AppColors.onPrimary
+                              : AppColors.textPrimary,
+                          height: 1.1,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
                           Container(
                             width: 4,
                             height: 4,
@@ -448,13 +462,28 @@ class _ProviderJobsScreenState extends State<ProviderJobsScreen> {
                               shape: BoxShape.circle,
                               color: isSelected
                                   ? AppColors.primaryFixed
-                                  : AppColors.primary,
+                                  : (index == 0 && activeJobCount > 0)
+                                  ? AppColors.primary
+                                  : AppColors.borderStrong,
                             ),
                           ),
+                          if (index == 0 && activeJobCount > 1) ...[
+                            const SizedBox(width: 3),
+                            Container(
+                              width: 4,
+                              height: 4,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: isSelected
+                                    ? AppColors.primaryFixed
+                                    : AppColors.primary,
+                              ),
+                            ),
+                          ],
                         ],
-                      ],
-                    ),
-                  ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -474,76 +503,84 @@ class _ProviderJobsScreenState extends State<ProviderJobsScreen> {
       child: Row(
         children: [
           Expanded(
-            child: InkWell(
-              onTap: () => setState(() => _showHistory = false),
+            child: Material(
+              color: Colors.transparent,
               borderRadius: BorderRadius.circular(8),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                decoration: BoxDecoration(
-                  color: !_showHistory
-                      ? AppColors.surfaceContainerLowest
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: !_showHistory
-                      ? [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
-                            blurRadius: 4,
-                            offset: const Offset(0, 1),
-                          ),
-                        ]
-                      : null,
-                ),
-                child: Text(
-                  'Assigned Jobs ($assignedCount)',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: !_showHistory
-                        ? FontWeight.w800
-                        : FontWeight.w600,
+              child: InkWell(
+                onTap: () => setState(() => _showHistory = false),
+                borderRadius: BorderRadius.circular(8),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  decoration: BoxDecoration(
                     color: !_showHistory
-                        ? AppColors.textPrimary
-                        : AppColors.textSecondary,
+                        ? AppColors.surfaceContainerLowest
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: !_showHistory
+                        ? [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.05),
+                              blurRadius: 4,
+                              offset: const Offset(0, 1),
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: Text(
+                    'Assigned Jobs ($assignedCount)',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: !_showHistory
+                          ? FontWeight.w800
+                          : FontWeight.w600,
+                      color: !_showHistory
+                          ? AppColors.textPrimary
+                          : AppColors.textSecondary,
+                    ),
                   ),
                 ),
               ),
             ),
           ),
           Expanded(
-            child: InkWell(
-              onTap: () => setState(() => _showHistory = true),
+            child: Material(
+              color: Colors.transparent,
               borderRadius: BorderRadius.circular(8),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                decoration: BoxDecoration(
-                  color: _showHistory
-                      ? AppColors.surfaceContainerLowest
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: _showHistory
-                      ? [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
-                            blurRadius: 4,
-                            offset: const Offset(0, 1),
-                          ),
-                        ]
-                      : null,
-                ),
-                child: Text(
-                  'Completed History ($historyCount)',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: _showHistory
-                        ? FontWeight.w800
-                        : FontWeight.w600,
+              child: InkWell(
+                onTap: () => setState(() => _showHistory = true),
+                borderRadius: BorderRadius.circular(8),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  decoration: BoxDecoration(
                     color: _showHistory
-                        ? AppColors.textPrimary
-                        : AppColors.textSecondary,
+                        ? AppColors.surfaceContainerLowest
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: _showHistory
+                        ? [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.05),
+                              blurRadius: 4,
+                              offset: const Offset(0, 1),
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: Text(
+                    'Completed History ($historyCount)',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: _showHistory
+                          ? FontWeight.w800
+                          : FontWeight.w600,
+                      color: _showHistory
+                          ? AppColors.textPrimary
+                          : AppColors.textSecondary,
+                    ),
                   ),
                 ),
               ),
@@ -555,6 +592,14 @@ class _ProviderJobsScreenState extends State<ProviderJobsScreen> {
   }
 
   Widget _buildWorkingRadiusShortcut() {
+    // Was a fully const card reading "Working Hours & 8 km Radius" and
+    // "09:00 - 19:30" regardless of the provider's real schedule or radius.
+    // Both values now come from the controller.
+    final availability = widget.controller.availability;
+    final radiusKm = widget.controller.profile?.serviceRadiusKm;
+    final schedule = availability?.scheduleSummary ?? 'No schedule set';
+    final isOnline = availability?.status == 'online';
+
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.md,
@@ -565,40 +610,68 @@ class _ProviderJobsScreenState extends State<ProviderJobsScreen> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.border),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            children: const [
-              Icon(Icons.tune_rounded, color: AppColors.primary, size: 18),
-              SizedBox(width: 8),
-              Text(
-                'Working Hours & 8 km Radius',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+            children: [
+              const Icon(
+                Icons.tune_rounded,
+                color: AppColors.primary,
+                size: 18,
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  radiusKm == null
+                      ? 'Working Hours & Service Radius'
+                      : 'Working Hours & ${_formatRadius(radiusKm)} Radius',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
               ),
             ],
           ),
-          Row(
-            children: const [
-              Text(
-                '09:00 - 19:30',
-                style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
-              ),
-              SizedBox(width: 4),
-              Icon(
-                Icons.chevron_right_rounded,
-                color: AppColors.textSecondary,
-                size: 16,
-              ),
-            ],
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: Text(
+                    schedule,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: isOnline
+                          ? AppColors.successOnLight
+                          : AppColors.textSecondary,
+                      fontWeight: isOnline ? FontWeight.w700 : FontWeight.w400,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  color: AppColors.textSecondary,
+                  size: 16,
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
+  }
+
+  static String _formatRadius(double km) {
+    final rounded = km.round();
+    return '$rounded km';
   }
 
   Widget _buildHistorySummaryPill(List<CustomerBooking> history) {
@@ -717,8 +790,8 @@ class _TopUrgentJobCard extends StatelessWidget {
             color: isEnRoute
                 ? AppColors.errorContainer
                 : AppColors.surfaceContainerHigh,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Row(
                   children: [
@@ -731,31 +804,39 @@ class _TopUrgentJobCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 6),
-                    Text(
-                      isEnRoute
-                          ? 'Priority Dispatch • En Route'
-                          : isInProgress
-                          ? 'In Progress • Service Active'
-                          : 'Assigned • Ready for Dispatch',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.5,
-                        color: isEnRoute
-                            ? AppColors.dangerOnLight
-                            : AppColors.textPrimary,
+                    Expanded(
+                      child: Text(
+                        isEnRoute
+                            ? 'Priority Dispatch • En Route'
+                            : isInProgress
+                            ? 'In Progress • Service Active'
+                            : 'Assigned • Ready for Dispatch',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.5,
+                          color: isEnRoute
+                              ? AppColors.dangerOnLight
+                              : AppColors.textPrimary,
+                        ),
                       ),
                     ),
                   ],
                 ),
-                Text(
-                  isEnRoute ? 'ETA 7 MINS' : job.status.replaceAll('_', ' '),
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    color: isEnRoute
-                        ? AppColors.dangerOnLight
-                        : AppColors.textSecondary,
+                const SizedBox(height: 4),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    isEnRoute ? 'ETA 7 MINS' : job.status.replaceAll('_', ' '),
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      color: isEnRoute
+                          ? AppColors.dangerOnLight
+                          : AppColors.textSecondary,
+                    ),
                   ),
                 ),
               ],
@@ -777,13 +858,17 @@ class _TopUrgentJobCard extends StatelessWidget {
                         children: [
                           Row(
                             children: [
-                              Text(
-                                'JOB #${_shortId(job.id)}',
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.textSecondary,
-                                  letterSpacing: 0.5,
+                              Flexible(
+                                child: Text(
+                                  'JOB #${_shortId(job.id)}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.textSecondary,
+                                    letterSpacing: 0.5,
+                                  ),
                                 ),
                               ),
                             ],
@@ -857,86 +942,106 @@ class _TopUrgentJobCard extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 34,
-                            height: 34,
-                            decoration: BoxDecoration(
-                              color: AppColors.primarySoft,
-                              borderRadius: BorderRadius.circular(17),
-                            ),
-                            child: const Center(
-                              child: Text(
-                                'CU',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.primary,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Customer details',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                              const Text(
-                                'Available upon arrival',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      InkWell(
-                        onTap: () async {
-                          final opened = await openCustomerNavigation(job);
-                          if (!opened && context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Could not open maps. Check that a maps app is installed and the booking has a service address.',
-                                ),
-                              ),
-                            );
-                          }
-                        },
-                        borderRadius: BorderRadius.circular(10),
+                      Expanded(
                         child: Row(
-                          children: const [
-                            Icon(
-                              Icons.near_me_rounded,
-                              size: 14,
-                              color: AppColors.textPrimary,
-                            ),
-                            SizedBox(width: 3),
-                            Text(
-                              'Navigate',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.textPrimary,
+                          children: [
+                            Container(
+                              width: 34,
+                              height: 34,
+                              decoration: BoxDecoration(
+                                color: AppColors.primarySoft,
+                                borderRadius: BorderRadius.circular(17),
+                              ),
+                              child: const Center(
+                                child: Text(
+                                  'CU',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
                               ),
                             ),
-                            SizedBox(width: 4),
-                            Icon(
-                              Icons.chevron_right_rounded,
-                              size: 18,
-                              color: AppColors.textPrimary,
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Customer details',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  const Text(
+                                    'Available upon arrival',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Material(
+                          color: Colors.transparent,
+                          borderRadius: BorderRadius.circular(10),
+                          child: InkWell(
+                            onTap: () async {
+                              final opened = await openCustomerNavigation(job);
+                              if (!opened && context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Could not open maps. Check that a maps app is installed and the booking has a service address.',
+                                    ),
+                                  ),
+                                );
+                              }
+                            },
+                            borderRadius: BorderRadius.circular(10),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: const [
+                                Icon(
+                                  Icons.near_me_rounded,
+                                  size: 14,
+                                  color: AppColors.textPrimary,
+                                ),
+                                SizedBox(width: 3),
+                                Flexible(
+                                  child: Text(
+                                    'Navigate',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 4),
+                                Icon(
+                                  Icons.chevron_right_rounded,
+                                  size: 18,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -985,8 +1090,10 @@ class _TopUrgentJobCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(10),
                         child: ProviderLiveMap(
                           showOverlay: false,
+                          height: 120,
                           route: controller.currentRoute,
-                          customerLocation: (job.locationLatitude != null &&
+                          customerLocation:
+                              (job.locationLatitude != null &&
                                   job.locationLongitude != null)
                               ? CustomerMapLocation(
                                   latitude: job.locationLatitude!,
@@ -994,6 +1101,52 @@ class _TopUrgentJobCard extends StatelessWidget {
                                 )
                               : null,
                           providerLocation: controller.currentLocation,
+                        ),
+                      ),
+                      Positioned(
+                        top: 8,
+                        left: 8,
+                        child: Material(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          child: InkWell(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => ProviderNavigationMapScreen(
+                                    job: job,
+                                    controller: controller,
+                                  ),
+                                ),
+                              );
+                            },
+                            borderRadius: BorderRadius.circular(8),
+                            child: const Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 6,
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.map_outlined,
+                                    size: 16,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'Route Map',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                       Positioned(
@@ -1095,10 +1248,14 @@ class _TopUrgentJobCard extends StatelessWidget {
                           variant: FixButtonVariant.secondary,
                           onPressed: () {
                             if (job.customerPhone != null) {
-                              const CallController().launchCall(job.customerPhone!);
+                              const CallController().launchCall(
+                                job.customerPhone!,
+                              );
                             } else {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Phone number unavailable')),
+                                const SnackBar(
+                                  content: Text('Phone number unavailable'),
+                                ),
                               );
                             }
                           },
@@ -1400,7 +1557,11 @@ class _HistoryJobCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '${_category(job.serviceCategoryId)} • Rating ★ 5.0',
+                      // Was a hardcoded "Rating ★ 5.0" on every history card,
+                      // implying customers had rated a job they never reviewed.
+                      // The provider's own aggregate now comes from the API, and
+                      // an unrated provider says so instead of inventing a score.
+                      _historyMetaLine(job, controller),
                       style: const TextStyle(
                         fontSize: 11,
                         color: AppColors.textSecondary,
@@ -1422,7 +1583,6 @@ class _HistoryJobCard extends StatelessWidget {
   }
 }
 
-
 String _weekdayShort(int weekday) => switch (weekday) {
   1 => 'MON',
   2 => 'TUE',
@@ -1439,6 +1599,21 @@ String _category(String value) => value
     .where((word) => word.isNotEmpty)
     .map((word) => '${word[0].toUpperCase()}${word.substring(1)}')
     .join(' ');
+
+/// Category plus the provider's real review standing.
+///
+/// The booking's own `providerRating` is the customer-facing aggregate the API
+/// stamps on the list; when it is absent there is nothing to show, and an
+/// invented "★ 5.0" is worse than an honest "Not yet rated".
+String _historyMetaLine(CustomerBooking job, ProviderController controller) {
+  final category = _category(job.serviceCategoryId);
+  final stats = controller.profile?.stats;
+  final rating = job.providerRating ?? stats?.rating;
+  if (rating == null || rating <= 0 || (stats != null && !stats.hasRating)) {
+    return '$category • Not yet rated';
+  }
+  return '$category • Rating ★ ${rating.toStringAsFixed(1)}';
+}
 
 String _shortId(String value) {
   final compact = value.replaceAll('-', '');
@@ -1470,8 +1645,8 @@ class _LiveTrackingBlock extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
                 'LIVE TRACKING',
@@ -1481,7 +1656,8 @@ class _LiveTrackingBlock extends StatelessWidget {
                   letterSpacing: 1,
                 ),
               ),
-              if (sharing)
+              if (sharing) ...[
+                const SizedBox(height: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 8,
@@ -1491,18 +1667,21 @@ class _LiveTrackingBlock extends StatelessWidget {
                     color: AppColors.success,
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: Row(
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Container(
+                      SizedBox(
                         width: 6,
                         height: 6,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
-                      const SizedBox(width: 4),
-                      const Text(
+                      SizedBox(width: 4),
+                      Text(
                         'Sharing',
                         style: TextStyle(
                           color: Colors.white,
@@ -1513,6 +1692,7 @@ class _LiveTrackingBlock extends StatelessWidget {
                     ],
                   ),
                 ),
+              ],
             ],
           ),
           const SizedBox(height: AppSpacing.sm),

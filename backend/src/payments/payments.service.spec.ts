@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   NotFoundException,
@@ -14,6 +15,7 @@ import {
 } from './domain/payment-order.entity';
 import { Invoice } from './domain/invoice.entity';
 import { Refund } from './domain/refund.entity';
+import { PaymentEvent } from './domain/payment-event.entity';
 import { PaymentsService } from './payments.service';
 
 const uniqueError = () =>
@@ -41,13 +43,35 @@ describe('PaymentsService', () => {
     insert: jest.fn().mockResolvedValue(undefined),
     create: jest.fn(<T extends object>(value: T): T => value),
   };
+  let refundStore: Record<string, unknown> | null = null;
   const refundRepo = {
     findOneBy: jest.fn().mockResolvedValue(null),
     findOneByOrFail: jest.fn(),
     save: jest.fn((value) =>
       Promise.resolve({ id: 'refund-1', status: 'PROCESSED', ...value }),
     ),
+    update: jest.fn().mockResolvedValue({ affected: 1 }),
     create: jest.fn(<T extends object>(value: T): T => value),
+  };
+  type QueryArgs = [query: string, parameters?: unknown[]];
+  const query = jest.fn<Promise<unknown>, QueryArgs>();
+  const transactionManager = {
+    getRepository: jest.fn((entity: unknown) =>
+      entity === PaymentOrder
+        ? orders
+        : entity === Refund
+          ? refundRepo
+          : entity === PaymentEvent
+            ? eventRepo
+            : entity === Booking
+              ? bookingRepo
+              : entity === ServiceCategoryEntity
+                ? categoryRepo
+                : entity === Invoice
+                  ? invoiceRepo
+                  : eventRepo,
+    ),
+    query: jest.fn((...args: QueryArgs) => query(...args)),
   };
   const dataSource = {
     getRepository: jest.fn((entity: unknown) =>
@@ -61,9 +85,16 @@ describe('PaymentsService', () => {
               ? refundRepo
               : eventRepo,
     ),
-    query: jest.fn(),
+    query,
+    transaction: jest.fn(
+      (
+        _isolation: string,
+        callback: (manager: typeof transactionManager) => unknown,
+      ) => Promise.resolve(callback(transactionManager)),
+    ),
   };
   const orders = {
+    findOne: jest.fn(),
     findOneBy: jest.fn().mockResolvedValue(null),
     findOneByOrFail: jest.fn(),
     save: jest.fn((value) =>
@@ -123,8 +154,27 @@ describe('PaymentsService', () => {
     eventRepo.findOneBy.mockResolvedValue(null);
     eventRepo.insert.mockResolvedValue(undefined);
     invoiceRepo.findOneBy.mockResolvedValue(null);
-    refundRepo.findOneBy.mockResolvedValue(null);
+    refundStore = null;
+    refundRepo.findOneBy.mockImplementation(
+      (criteria: { requestKey?: string }) => {
+        if (!refundStore || refundStore.requestKey !== criteria.requestKey) {
+          return Promise.resolve(null);
+        }
+        return Promise.resolve(refundStore);
+      },
+    );
+    refundRepo.save.mockReset();
+    refundRepo.save.mockImplementation((value: Record<string, unknown>) => {
+      refundStore = { id: 'refund-1', ...value };
+      return Promise.resolve(refundStore);
+    });
     orders.update.mockResolvedValue({ affected: 1 });
+    orders.findOne.mockResolvedValue(
+      savedOrder({
+        status: PaymentOrderStatus.PAID,
+        gatewayPaymentId: 'pay_5',
+      }),
+    );
     bookingRepo.findOneBy.mockResolvedValue(ownedBooking());
     categoryRepo.findOneBy.mockResolvedValue(pricedCategory());
     orders.findOneBy.mockResolvedValue(null);
@@ -181,6 +231,26 @@ describe('PaymentsService', () => {
       expect(order.amountMinor).toBe(49900);
       expect(gateway.orders).toHaveLength(1);
       expect(eventRepo.insert).toHaveBeenCalled();
+    });
+
+    it('uses the line-item total without adding the category price again', async () => {
+      const booking = ownedBooking();
+      categoryRepo.findOneBy.mockResolvedValue({
+        id: categoryId,
+        priceAmount: 14900,
+        priceCurrency: 'INR',
+      });
+      booking.lineItems = [
+        { priceMinor: 14900, quantity: 1 },
+        { priceMinor: 10000, quantity: 1 },
+      ] as never;
+      booking.totalAmountMinor = 24900;
+      bookingRepo.findOneBy.mockResolvedValue(booking);
+
+      const order = await service.createForBooking(customerId, bookingId);
+
+      expect(order.amountMinor).toBe(24900);
+      expect(gateway.orders[0]?.amountMinor).toBe(24900);
     });
 
     it('returns the existing order on replay without touching the gateway', async () => {
@@ -385,10 +455,50 @@ describe('PaymentsService', () => {
         gatewayPaymentId: 'pay_5',
       });
 
+    it('requires an idempotency key before contacting the gateway', async () => {
+      orders.findOneByOrFail.mockResolvedValue(paidOrder());
+
+      await expect(
+        service.refundOrder('staff-1', savedOrder().id, {
+          reason: 'missing idempotency key',
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(dataSource.transaction).not.toHaveBeenCalled();
+      expect(gateway.refunds).toHaveLength(0);
+    });
+
+    it('reserves a refund under a serializable order lock before calling the gateway', async () => {
+      orders.findOneByOrFail.mockResolvedValue(paidOrder());
+
+      await service.refundOrder('staff-1', savedOrder().id, {
+        amountMinor: 10000,
+        reason: 'locked partial refund',
+        requestKey: 'refund-lock-001',
+      });
+
+      expect(dataSource.transaction).toHaveBeenCalledWith(
+        'SERIALIZABLE',
+        expect.any(Function),
+      );
+      expect(orders.findOneByOrFail).not.toHaveBeenCalled();
+      expect(refundRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          paymentOrderId: savedOrder().id,
+          status: 'PENDING',
+          requestKey: 'refund-lock-001',
+        }),
+      );
+      expect(refundRepo.update).toHaveBeenCalledWith(
+        expect.objectContaining({ requestKey: 'refund-lock-001' }),
+        expect.objectContaining({ status: 'PROCESSED' }),
+      );
+    });
+
     it('issues a full refund against a paid order', async () => {
       orders.findOneByOrFail.mockResolvedValue(paidOrder());
       const refund = await service.refundOrder('staff-1', savedOrder().id, {
         reason: 'Service cancelled by support',
+        requestKey: 'refund-key-001',
       });
       expect(refund.amountMinor).toBe(49900);
       expect(refund.gatewayRefundId).toMatch(/^rfnd_fake_/);
@@ -401,6 +511,7 @@ describe('PaymentsService', () => {
       const partial = await service.refundOrder('staff-1', savedOrder().id, {
         amountMinor: 10000,
         reason: 'Goodwill partial refund',
+        requestKey: 'refund-key-002',
       });
       expect(partial.amountMinor).toBe(10000);
 
@@ -409,6 +520,7 @@ describe('PaymentsService', () => {
         service.refundOrder('staff-1', savedOrder().id, {
           amountMinor: 1,
           reason: 'over the balance',
+          requestKey: 'refund-key-003',
         }),
       ).rejects.toBeInstanceOf(ConflictException);
     });
@@ -425,14 +537,19 @@ describe('PaymentsService', () => {
         requestKey: 'idem-key-001',
       });
       expect(refund.gatewayRefundId).toBe('rfnd_fake_existing');
+      expect(refundRepo.findOneBy).toHaveBeenCalledWith({
+        paymentOrderId: savedOrder().id,
+        requestKey: 'idem-key-001',
+      });
       expect(gateway.refunds).toHaveLength(0);
     });
 
     it('refuses refunds on unpaid orders', async () => {
-      orders.findOneByOrFail.mockResolvedValue(savedOrder()); // CREATED
+      orders.findOne.mockResolvedValue(savedOrder()); // CREATED
       await expect(
         service.refundOrder('staff-1', savedOrder().id, {
           reason: 'too early',
+          requestKey: 'refund-key-004',
         }),
       ).rejects.toBeInstanceOf(ConflictException);
     });

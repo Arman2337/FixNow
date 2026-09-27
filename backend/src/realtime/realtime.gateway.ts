@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { IncomingMessage } from 'node:http';
-import { Injectable, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, OnModuleDestroy, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   OnGatewayConnection,
@@ -31,7 +31,9 @@ import type { RealtimeClientMessage } from './realtime.types';
 import { LocationService } from '../location/location.service';
 import { DataSource } from 'typeorm';
 import { Booking } from '../bookings/domain/booking.entity';
+import { BookingCall } from '../bookings/domain/booking-call.entity';
 import { BookingProjectionService } from './booking-projection.service';
+import { RealtimeNotificationPublisher } from './realtime-notification-publisher.service';
 
 @Injectable()
 @WebSocketGateway({
@@ -57,6 +59,8 @@ export class RealtimeGateway
     private readonly location: LocationService,
     private readonly dataSource: DataSource,
     private readonly projections: BookingProjectionService,
+    @Optional()
+    private readonly events?: RealtimeNotificationPublisher,
   ) {}
 
   afterInit(): void {
@@ -114,7 +118,14 @@ export class RealtimeGateway
     }
   }
 
-  private async onMessage(
+  /**
+   * Entry point for every inbound socket frame.
+   *
+   * Public so the gateway specs can drive real frames through the real handler
+   * instead of asserting on internals. Nest only wires up methods carrying
+   * `@SubscribeMessage`, so widening this does not expose it on the network.
+   */
+  async onMessage(
     client: WebSocket,
     data: RawData,
     isBinary: boolean,
@@ -173,7 +184,7 @@ export class RealtimeGateway
       return;
     }
     if (message.type === 'call.voice-frame.v1') {
-      this.relayVoiceFrame(client, message);
+      await this.relayVoiceFrame(client, message);
       return;
     }
     this.telemetry.increment('messages.invalid');
@@ -184,32 +195,60 @@ export class RealtimeGateway
     });
   }
 
-  private relayVoiceFrame(
+  private async relayVoiceFrame(
     senderClient: WebSocket,
     message: RealtimeClientMessage,
-  ): void {
+  ): Promise<void> {
     const bookingId = message.bookingId;
+    const callId = message.callId;
     const data = message.data;
-    if (!bookingId || !data) return;
-
+    const senderState = this.registry.get(senderClient);
+    const senderId = senderState?.principal?.userId;
+    if (!bookingId || !callId || !data || !senderId) return;
+    const senderSubscribed = [...senderState.subscriptions.values()].some(
+      (subscription) =>
+        subscription.channel === 'booking' &&
+        subscription.resourceId?.toLowerCase() === bookingId.toLowerCase(),
+    );
+    if (!senderSubscribed) return;
+    const call = await this.dataSource.getRepository(BookingCall).findOneBy({
+      id: callId,
+      bookingId,
+    });
+    if (
+      !call ||
+      call.status !== 'CONNECTED' ||
+      ![call.callerUserId, call.calleeUserId].includes(senderId)
+    ) {
+      return;
+    }
+    const participants = new Set([call.callerUserId, call.calleeUserId]);
+    const frame = {
+      type: 'call.voice-frame.v1',
+      bookingId,
+      callId,
+      data,
+    };
+    if (this.events) {
+      await this.events.publishParticipantFrame(
+        bookingId,
+        [...participants],
+        frame,
+      );
+      return;
+    }
     for (const [client, state] of this.registry.entries()) {
       if (client === senderClient || client.readyState !== WebSocket.OPEN)
         continue;
-      for (const subscription of state.subscriptions.values()) {
-        if (
+      if (!state.principal?.userId || !participants.has(state.principal.userId))
+        continue;
+      const subscribed = [...state.subscriptions.values()].some(
+        (subscription) =>
           subscription.channel === 'booking' &&
-          subscription.resourceId?.toLowerCase() === bookingId.toLowerCase()
-        ) {
-          client.send(
-            JSON.stringify({
-              type: 'call.voice-frame.v1',
-              bookingId,
-              callId: message.callId,
-              data,
-            }),
-          );
-        }
-      }
+          subscription.resourceId?.toLowerCase() === bookingId.toLowerCase(),
+      );
+      if (!subscribed) continue;
+      client.send(JSON.stringify(frame));
     }
   }
 

@@ -1,4 +1,5 @@
 import { ConfigService } from '@nestjs/config';
+import type { EnvironmentVariables } from '../config/env.validation';
 import { Logger } from 'nestjs-pino';
 import { AiService } from './ai.service';
 import {
@@ -40,7 +41,7 @@ describe('AiService', () => {
       get: jest.fn((key: string, fallback?: unknown) =>
         key in values ? values[key] : fallback,
       ),
-    } as unknown as ConfigService;
+    } as unknown as ConfigService<EnvironmentVariables>;
     const logger = { info: loggerInfo } as unknown as Logger;
     return new AiService(config, provider, logger);
   }

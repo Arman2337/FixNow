@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -118,9 +117,7 @@ void main() {
   );
 }
 
-Future<void> projectionReceived(
-  List<RealtimeProjection> projections,
-) async {
+Future<void> projectionReceived(List<RealtimeProjection> projections) async {
   final deadline = DateTime.now().add(const Duration(seconds: 5));
   while (projections.isEmpty) {
     if (DateTime.now().isAfter(deadline)) {

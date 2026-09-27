@@ -8,11 +8,21 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ProviderSkillEntity } from './provider-skill.entity';
 import { ServiceCategoryEntity } from '../services/service-category.entity';
+import { UserEntity } from '../users/user.entity';
+import { AccountStatus } from '../users/account-status';
 import {
   CreateProviderSkillDto,
   UpdateProviderSkillDto,
   ProviderSkillQueryDto,
 } from './provider-skills.dto';
+
+/**
+ * Recorded on skills that were trusted because the provider's own account was
+ * already verified, so an auditor can tell "a person checked this" apart from
+ * "this followed the account's verification".
+ */
+export const AUTO_VERIFIED_NOTE =
+  'auto-verified: provider account passed identity verification';
 
 @Injectable()
 export class ProviderSkillsService {
@@ -21,6 +31,8 @@ export class ProviderSkillsService {
     private readonly providerSkillRepository: Repository<ProviderSkillEntity>,
     @InjectRepository(ServiceCategoryEntity)
     private readonly serviceCategoryRepository: Repository<ServiceCategoryEntity>,
+    @InjectRepository(UserEntity)
+    private readonly userRepository: Repository<UserEntity>,
   ) {}
 
   async findByUserId(
@@ -49,6 +61,34 @@ export class ProviderSkillsService {
       .addOrderBy('category.name', 'ASC');
 
     return queryBuilder.getMany();
+  }
+
+  /**
+   * Loads a single skill for its owner.
+   *
+   * SEC-002: this used to be a bare `findOne({ where: { id } })` that also
+   * eagerly loaded the owning `UserEntity`, and the controller returned that
+   * entity straight to the client. Any provider could read another provider's
+   * phone number, account status and status-reason text by enumerating skill
+   * ids. Ownership is now part of the query, and the owning user relation is
+   * no longer loaded at all.
+   */
+  async findOwnedById(
+    id: string,
+    userId: string,
+  ): Promise<ProviderSkillEntity> {
+    const skill = await this.providerSkillRepository.findOne({
+      where: { id, userId },
+      relations: { serviceCategory: true },
+    });
+
+    // Scoping by owner means a foreign id is simply absent, so this is a 404
+    // rather than a 403: a 403 would confirm the id exists.
+    if (!skill) {
+      throw new NotFoundException(`Provider skill with ID ${id} not found`);
+    }
+
+    return skill;
   }
 
   async findById(id: string): Promise<ProviderSkillEntity> {
@@ -88,13 +128,39 @@ export class ProviderSkillsService {
       );
     }
 
+    // A skill is not self-certified. It inherits the provider's own account
+    // verification: the authorization guard already refuses any account that is
+    // not Active, and matching requires Active too, so reaching this point means
+    // the identity behind the skill has been checked.
+    //
+    // This used to hardcode `isVerified: true` with no reference to the
+    // account, which meant the flag carried no information and the admin
+    // verification route could never be the thing that granted it. `update()`
+    // already refuses to let a provider set this field, so the create path was
+    // the one place a provider could assert it. Deciding it from the account
+    // keeps onboarding fast while making the flag mean something.
+    const accountVerified = await this.isAccountVerified(userId);
+
     const skill = this.providerSkillRepository.create({
       ...createDto,
       userId,
-      isVerified: true, // Skills are auto-verified for now so providers get jobs immediately
+      isVerified: accountVerified,
+      verificationNotes: accountVerified ? AUTO_VERIFIED_NOTE : null,
     });
 
     return this.providerSkillRepository.save(skill);
+  }
+
+  /**
+   * A provider whose own account has not passed identity verification must not
+   * produce a verified skill, no matter who calls this.
+   */
+  private async isAccountVerified(userId: string): Promise<boolean> {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      select: { id: true, status: true },
+    });
+    return user?.status === AccountStatus.Active;
   }
 
   async update(

@@ -171,7 +171,7 @@ class _EarningsView extends StatelessWidget {
                       ),
                       SizedBox(width: 3),
                       Text(
-                        'Instant Payout',
+                         'Paid orders',
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
@@ -211,53 +211,54 @@ class _EarningsView extends StatelessWidget {
                 color: Colors.white.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text(
-                        'Settlement Schedule',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: AppColors.textOnDarkSecondary,
-                        ),
-                      ),
-                      SizedBox(height: 1),
-                      Text(
-                        'Daily Auto-Credit',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.primaryFixed,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: const [
-                      Text(
-                        'Liquidity Status',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: AppColors.textOnDarkSecondary,
-                        ),
-                      ),
-                      SizedBox(height: 1),
-                      Text(
-                        'Direct to Bank',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white70,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+             child: Column(
+               crossAxisAlignment: CrossAxisAlignment.start,
+               children: [
+                 const Column(
+                   crossAxisAlignment: CrossAxisAlignment.start,
+                   children: [
+                     Text(
+                       'Settlement status',
+                       style: TextStyle(
+                         fontSize: 10,
+                         color: AppColors.textOnDarkSecondary,
+                       ),
+                     ),
+                     SizedBox(height: 1),
+                     Text(
+                       'Payouts unavailable',
+                       style: TextStyle(
+                         fontSize: 13,
+                         fontWeight: FontWeight.w800,
+                         color: AppColors.primaryFixed,
+                       ),
+                     ),
+                   ],
+                 ),
+                 const SizedBox(height: AppSpacing.sm),
+                 const Column(
+                   crossAxisAlignment: CrossAxisAlignment.start,
+                   children: [
+                     Text(
+                       'Ledger status',
+                       style: TextStyle(
+                         fontSize: 10,
+                         color: AppColors.textOnDarkSecondary,
+                       ),
+                     ),
+                     SizedBox(height: 1),
+                     Text(
+                       'Recorded payments',
+                       style: TextStyle(
+                         fontSize: 13,
+                         fontWeight: FontWeight.w700,
+                         color: Colors.white70,
+                       ),
+                     ),
+                   ],
+                 ),
+               ],
+             ),
             ),
           ],
         ),
@@ -303,7 +304,7 @@ class _EarningsView extends StatelessWidget {
               icon: Icons.account_balance_wallet_rounded,
               iconColor: AppColors.primary,
               title: earnings.netLabel,
-              subtitle: 'Net Settled',
+              subtitle: 'Net recorded',
             ),
           ),
         ],
@@ -384,7 +385,7 @@ class _EarningsView extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        'Guaranteed',
+                        'Policy note',
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w700,

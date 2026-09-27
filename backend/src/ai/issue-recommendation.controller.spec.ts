@@ -52,8 +52,6 @@ describe('IssueRecommendationController authorization boundary', () => {
     ).toHaveBeenCalledWith(
       'customer-token',
       PERMISSIONS.aiRecommendationCreate,
-      undefined,
-      true,
     );
     expect(recommendations.recommend as jest.Mock).toHaveBeenCalledWith({
       userId: 'customer-1',

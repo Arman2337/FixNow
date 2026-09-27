@@ -193,7 +193,7 @@ class ProblemAnalysisRepository {
       );
     }
     final fields = <String, String>{
-      if (languageHint != null) 'languageHint': languageHint,
+      'languageHint': ?languageHint,
       if (textDescription != null && textDescription.trim().isNotEmpty)
         'textDescription': textDescription,
     };

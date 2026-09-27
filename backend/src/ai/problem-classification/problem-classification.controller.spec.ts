@@ -60,8 +60,6 @@ describe('ProblemClassificationController authorization boundary', () => {
     ).toHaveBeenCalledWith(
       'customer-token',
       PERMISSIONS.aiProblemAnalysisCreate,
-      undefined,
-      true,
     );
     expect(analysis.analyzeImage as jest.Mock).toHaveBeenCalledWith({
       userId: 'customer-1',

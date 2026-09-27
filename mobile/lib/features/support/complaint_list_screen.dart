@@ -47,145 +47,197 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
     return '$month ${localDt.day}, $hour:$minute $ampm';
   }
 
-  void _openProofModal(BuildContext context, String caseId) {
-    showModalBottomSheet<void>(
+  Future<void> _openProofModal(BuildContext context, String caseId) async {
+    final urlController = TextEditingController();
+    final remarksController = TextEditingController();
+    var fileType = 'image';
+    String? errorText;
+
+    await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
-        child: Container(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          decoration: const BoxDecoration(
-            color: AppColors.surfaceContainerLowest,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (context, setSheetState) => Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Attach Additional Proof',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
+          child: Container(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: const BoxDecoration(
+              color: AppColors.surfaceContainerLowest,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Add Evidence Link',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close_rounded, size: 20),
-                    onPressed: () => Navigator.of(ctx).pop(),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                'Upload clear photos of serial tags, digital bill meters, or write additional context for your assigned case officer.',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppColors.textSecondary,
-                  height: 1.35,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              OutlinedButton.icon(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Photo attached!'),
-                      backgroundColor: AppColors.primary,
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded, size: 20),
+                      onPressed: () => Navigator.of(sheetContext).pop(),
                     ),
-                  );
-                },
-                icon: const Icon(Icons.add_a_photo_rounded, size: 18),
-                label: const Text('Upload Photo Proof'),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  foregroundColor: AppColors.primary,
-                  side: BorderSide(
-                    color: AppColors.primary.withValues(alpha: 0.5),
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              TextField(
-                maxLines: 3,
-                decoration: InputDecoration(
-                  hintText: 'Write remarks here...',
-                  hintStyle: const TextStyle(
+                const SizedBox(height: 4),
+                const Text(
+                  'Attach a secure link to a photo or document, then add context for the case officer. Direct photo uploads are not enabled in this version.',
+                  style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.textTertiary,
-                  ),
-                  filled: true,
-                  fillColor: AppColors.surfaceContainerLow,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide.none,
+                    color: AppColors.textSecondary,
+                    height: 1.35,
                   ),
                 ),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.of(ctx).pop(),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: const Text('Cancel'),
-                    ),
+                const SizedBox(height: AppSpacing.md),
+                DropdownButtonFormField<String>(
+                  initialValue: fileType,
+                  decoration: const InputDecoration(
+                    labelText: 'Evidence type',
+                    filled: true,
+                    fillColor: AppColors.surfaceContainerLow,
+                    border: OutlineInputBorder(),
                   ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.of(ctx).pop();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            backgroundColor: AppColors.primary,
-                            content: Text(
-                              'Additional proof submitted to Case Officer.',
-                            ),
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: AppColors.onPrimary,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: const Text('Submit'),
+                  items: const [
+                    DropdownMenuItem(value: 'image', child: Text('Image')),
+                    DropdownMenuItem(
+                      value: 'document',
+                      child: Text('Document'),
                     ),
+                  ],
+                  onChanged: (value) =>
+                      setSheetState(() => fileType = value ?? 'image'),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                TextField(
+                  controller: urlController,
+                  keyboardType: TextInputType.url,
+                  decoration: const InputDecoration(
+                    labelText: 'Secure evidence URL',
+                    hintText: 'https://...',
+                    filled: true,
+                    fillColor: AppColors.surfaceContainerLow,
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                TextField(
+                  controller: remarksController,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    labelText: 'Remarks',
+                    hintText: 'Describe what this evidence shows',
+                    filled: true,
+                    fillColor: AppColors.surfaceContainerLow,
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                if (errorText != null) ...[
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    errorText!,
+                    style: const TextStyle(color: AppColors.error),
                   ),
                 ],
-              ),
-              const SizedBox(height: AppSpacing.sm),
-            ],
+                const SizedBox(height: AppSpacing.md),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: widget.controller.proofSubmitting
+                            ? null
+                            : () => Navigator.of(sheetContext).pop(),
+                        child: const Text('Cancel'),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: widget.controller.proofSubmitting
+                            ? null
+                            : () async {
+                                final fileUrl = urlController.text.trim();
+                                final uri = Uri.tryParse(fileUrl);
+                                if (fileUrl.isEmpty ||
+                                    uri == null ||
+                                    !uri.hasScheme ||
+                                    !uri.hasAuthority) {
+                                  setSheetState(
+                                    () => errorText =
+                                        'Enter a valid absolute evidence URL.',
+                                  );
+                                  return;
+                                }
+                                final success = await widget.controller
+                                    .addEvidence(
+                                      caseId,
+                                      fileUrl: fileUrl,
+                                      fileType: fileType,
+                                      description: remarksController.text
+                                          .trim(),
+                                    );
+                                if (!sheetContext.mounted) return;
+                                if (success) {
+                                  Navigator.of(sheetContext).pop();
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      backgroundColor: AppColors.primary,
+                                      content: Text(
+                                        'Evidence added to your case.',
+                                      ),
+                                    ),
+                                  );
+                                } else {
+                                  setSheetState(
+                                    () => errorText =
+                                        widget.controller.actionError ??
+                                        'Evidence could not be added.',
+                                  );
+                                }
+                              },
+                        child: widget.controller.proofSubmitting
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text('Submit'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
+    urlController.dispose();
+    remarksController.dispose();
   }
 
-  void _requestCallback(BuildContext context, String caseId) {
+  Future<void> _requestCallback(BuildContext context, String caseId) async {
+    final success = await widget.controller.requestCallback(caseId);
+    if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        backgroundColor: AppColors.primary,
+      SnackBar(
+        backgroundColor: success ? AppColors.primary : AppColors.error,
         content: Text(
-          'Instant callback requested! A Trust & Safety officer will review your case with high priority.',
+          success
+              ? 'Callback request recorded for your case.'
+              : widget.controller.actionError ??
+                    'Callback request could not be recorded.',
         ),
       ),
     );
@@ -475,7 +527,7 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
                 ),
                 SizedBox(height: 2),
                 Text(
-                  'Escrow funds locked. 100% resolution guarantee or instant reversal to original source.',
+                  'Support review is required. Resolution is shown only after the case is confirmed by FixNow.',
                   style: TextStyle(
                     fontSize: 11,
                     color: AppColors.onPrimaryContainer,
@@ -497,6 +549,10 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
     final caseShort = complaint.id.length >= 8
         ? complaint.id.substring(0, 8).toUpperCase()
         : complaint.id.toUpperCase();
+    final hasEvidence = complaint.evidence.isNotEmpty;
+    final isResolved =
+        complaint.status == 'RESOLVED' || complaint.status == 'CLOSED';
+    final isInReview = complaint.status == 'IN_REVIEW';
 
     return Container(
       decoration: BoxDecoration(
@@ -622,20 +678,24 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
                           ),
                         ),
                         const SizedBox(width: AppSpacing.sm),
-                        const Column(
+                        Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Trust & Safety Officer',
-                              style: TextStyle(
+                              complaint.assigneeId == null
+                                  ? 'Awaiting assignment'
+                                  : 'Assigned support officer',
+                              style: const TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
                                 color: AppColors.textPrimary,
                               ),
                             ),
                             Text(
-                              'FixNow Customer Trust Team',
-                              style: TextStyle(
+                              complaint.assigneeId == null
+                                  ? 'Officer assignment is not available yet.'
+                                  : 'FixNow support team',
+                              style: const TextStyle(
                                 fontSize: 10,
                                 color: AppColors.textSecondary,
                               ),
@@ -653,9 +713,11 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
                         color: AppColors.primaryFixed.withValues(alpha: 0.4),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Text(
-                        'Live Lead',
-                        style: TextStyle(
+                      child: Text(
+                        complaint.assigneeId == null
+                            ? 'Assignment pending'
+                            : 'Assigned',
+                        style: const TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
                           color: AppColors.primary,
@@ -704,7 +766,7 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
                     ? 1
                     : complaint.status == 'IN_PROGRESS'
                     ? 2
-                    : complaint.status == 'PENDING'
+                    : complaint.status == 'PENDING' || complaint.status == 'IN_REVIEW' || complaint.status == 'ESCALATED'
                     ? 3
                     : 4} of 4',
                 style: const TextStyle(
@@ -724,49 +786,45 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
               children: [
                 _buildMilestoneRow(
                   isDone: true,
-                  isActive: complaint.status == 'OPEN',
+                  isActive: false,
                   title: 'Complaint Filed',
                   meta: 'Dispute packet created from customer challenge.',
                   time: _formatDateTime(complaint.createdAt),
                 ),
                 _buildMilestoneRow(
-                  isDone:
-                      complaint.status != 'OPEN' &&
-                      complaint.status != 'IN_PROGRESS',
-                  isActive: complaint.status == 'IN_PROGRESS',
-                  title: 'Evidence & Bill Audited',
-                  meta: 'Unit rates matched with technician checklist logs.',
-                  time: complaint.status == 'OPEN'
-                      ? 'Pending'
-                      : _formatDateTime(complaint.updatedAt),
+                  isDone: hasEvidence,
+                  isActive: !hasEvidence && !isResolved,
+                  title: hasEvidence
+                      ? 'Evidence submitted'
+                      : 'Evidence pending',
+                  meta: hasEvidence
+                      ? '${complaint.evidence.length} evidence item${complaint.evidence.length == 1 ? '' : 's'} recorded.'
+                      : 'No evidence recorded yet.',
+                  time: hasEvidence
+                      ? _formatDateTime(complaint.updatedAt)
+                      : 'Pending',
                 ),
                 _buildMilestoneRow(
-                  isDone:
-                      complaint.status == 'RESOLVED' ||
-                      complaint.status == 'CLOSED',
-                  isActive: complaint.status == 'PENDING',
-                  title: 'Provider Clarification & Audit',
-                  meta: 'Technician response window open. IoT logs verified.',
-                  time:
-                      (complaint.status == 'OPEN' ||
-                          complaint.status == 'IN_PROGRESS')
-                      ? 'Pending'
-                      : _formatDateTime(complaint.updatedAt),
+                  isDone: isResolved,
+                  isActive: isInReview,
+                  title: 'Provider clarification',
+                  meta: isInReview
+                      ? 'Awaiting provider or reviewer update.'
+                      : 'No provider response recorded yet.',
+                  time: isResolved
+                      ? _formatDateTime(complaint.updatedAt)
+                      : 'Pending',
                 ),
                 _buildMilestoneRow(
-                  isDone:
-                      complaint.status == 'RESOLVED' ||
-                      complaint.status == 'CLOSED',
-                  isActive:
-                      complaint.status == 'RESOLVED' ||
-                      complaint.status == 'CLOSED',
+                  isDone: isResolved,
+                  isActive: false,
                   isLast: true,
-                  title: 'Resolution & Escrow Adjustment / Refund',
-                  meta:
-                      'Immediate wallet refund or warranty service re-dispatch.',
-                  time:
-                      (complaint.status == 'RESOLVED' ||
-                          complaint.status == 'CLOSED')
+                  title: 'Resolution',
+                  meta: isResolved
+                      ? (complaint.resolutionNotes ??
+                            'Resolution recorded by FixNow.')
+                      : 'No resolution recorded yet.',
+                  time: isResolved
                       ? _formatDateTime(complaint.updatedAt)
                       : 'Pending',
                 ),
@@ -865,9 +923,11 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: ElevatedButton.icon(
-                  onPressed: () => _requestCallback(context, complaint.id),
+                  onPressed: widget.controller.callbackSubmitting
+                      ? null
+                      : () => _requestCallback(context, complaint.id),
                   icon: const Icon(Icons.support_agent_rounded, size: 16),
-                  label: const Text('Instant Callback'),
+                  label: const Text('Request Callback'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: AppColors.onPrimary,

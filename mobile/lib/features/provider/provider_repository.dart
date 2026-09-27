@@ -6,10 +6,14 @@ class ProviderRepository {
   ProviderRepository({
     required ApiTransport api,
     required Future<String?> Function() accessToken,
-  }) : _api = api,
-       _accessToken = accessToken;
+  }) : _api = api, _accessToken = accessToken;
   final ApiTransport _api;
   final Future<String?> Function() _accessToken;
+
+  /// Exposed so screens that need a read-only catalogue lookup (e.g. the
+  /// on-site service adjustment sheet) can reuse the authenticated transport
+  /// instead of constructing a second one.
+  ApiTransport get api => _api;
 
   Future<String> _token() async =>
       (await _accessToken()) ??

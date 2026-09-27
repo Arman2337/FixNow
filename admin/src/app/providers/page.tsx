@@ -23,10 +23,8 @@ export default async function ProvidersPage({ searchParams }: { searchParams: Pr
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-space-md">
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-data-mono text-data-mono uppercase tracking-widest text-primary font-bold">Identity Engine v4</span>
-                <span className="w-1 h-1 rounded-full bg-outline"></span>
-                <span className="font-label-sm text-label-sm text-on-surface-variant font-medium">Synced with DigiLocker</span>
-                <span className="px-2 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed font-data-mono text-[10px] font-bold uppercase tracking-wider">ADR-0016 Active</span>
+                <span className="font-data-mono text-data-mono uppercase tracking-widest text-primary font-bold">Provider verification queue</span>
+                <span className="font-label-sm text-label-sm text-on-surface-variant font-medium">Management API records</span>
               </div>
               <h1 className="font-headline-lg text-headline-lg text-on-surface tracking-tight mt-1">Provider KYC Verification</h1>
             </div>
@@ -36,8 +34,8 @@ export default async function ProvidersPage({ searchParams }: { searchParams: Pr
             {/* LEFT PANE: Verification Queue */}
             <div className="xl:col-span-4 flex flex-col gap-space-md">
               <div className="flex items-center justify-between">
-                <h2 className="font-headline-sm text-headline-sm font-bold text-on-surface tracking-tight">Active Queue</h2>
-                <span className="font-data-mono text-data-mono text-primary font-bold">{page.items.length} Pending</span>
+                 <h2 className="font-headline-sm text-headline-sm font-bold text-on-surface tracking-tight">Verification queue</h2>
+                 <span className="font-data-mono text-data-mono text-primary font-bold">{page.items.length} record{page.items.length === 1 ? "" : "s"}</span>
               </div>
 
               <form role="search" className="flex flex-col gap-3">

@@ -33,7 +33,7 @@ class GuaranteeRepository {
         body: {
           'bookingId': bookingId,
           'description': description,
-          if (evidenceUrls != null) 'evidenceUrls': evidenceUrls,
+          'evidenceUrls': ?evidenceUrls,
         },
       ),
     );

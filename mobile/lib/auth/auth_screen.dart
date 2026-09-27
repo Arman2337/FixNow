@@ -24,8 +24,7 @@ class AuthScreen extends StatefulWidget {
   State<AuthScreen> createState() => _AuthScreenState();
 }
 
-class _AuthScreenState extends State<AuthScreen>
-    with SingleTickerProviderStateMixin {
+class _AuthScreenState extends State<AuthScreen> {
   final _formKey = GlobalKey<FormState>();
   final _email = TextEditingController();
   final _password = TextEditingController();
@@ -34,8 +33,6 @@ class _AuthScreenState extends State<AuthScreen>
   final _referral = TextEditingController();
   late bool _register;
   bool _obscure = true;
-
-  late final AnimationController _pulseController;
 
   @override
   void initState() {
@@ -49,11 +46,6 @@ class _AuthScreenState extends State<AuthScreen>
     _fullName.addListener(_onInputChanged);
     _mobile.addListener(_onInputChanged);
     _referral.addListener(_onInputChanged);
-
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    )..repeat(reverse: true);
   }
 
   void _onInputChanged() {
@@ -64,10 +56,10 @@ class _AuthScreenState extends State<AuthScreen>
 
   @override
   void dispose() {
-    _pulseController.dispose();
     _email.removeListener(_onInputChanged);
     _password.removeListener(_onInputChanged);
     _fullName.removeListener(_onInputChanged);
+    _mobile.removeListener(_onInputChanged);
     _referral.removeListener(_onInputChanged);
     _email.dispose();
     _password.dispose();
@@ -198,26 +190,18 @@ class _AuthScreenState extends State<AuthScreen>
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            AnimatedBuilder(
-                              animation: _pulseController,
-                              builder: (context, child) {
-                                return Opacity(
-                                  opacity: 0.5 + (_pulseController.value * 0.5),
-                                  child: Container(
-                                    width: 8,
-                                    height: 8,
-                                    decoration: const BoxDecoration(
-                                      color: AppColors.primary,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                );
-                              },
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: const BoxDecoration(
+                                color: AppColors.primary,
+                                shape: BoxShape.circle,
+                              ),
                             ),
                             const SizedBox(width: 6),
                             Flexible(
                               child: Text(
-                                'DIRECT DISPATCH ACTIVE',
+                                'SERVICE REQUESTS',
                                 overflow: TextOverflow.ellipsis,
                                 style: FixNowTypography.labelSmall.copyWith(
                                   color: AppColors.primary,
@@ -255,6 +239,43 @@ class _AuthScreenState extends State<AuthScreen>
                     ),
                   ),
                   const SizedBox(height: AppSpacing.md),
+
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _register ? 'Create your account' : 'Welcome back',
+                          style: FixNowTypography.headlineMd.copyWith(
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          widget.role == AccountRole.providerApplicant
+                              ? 'SERVICE PROVIDER'
+                              : 'CUSTOMER',
+                          style: FixNowTypography.dataMono.copyWith(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                        if (_register &&
+                            widget.role == AccountRole.providerApplicant) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            'Verification is required before accepting service requests.',
+                            style: FixNowTypography.bodySmall.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
 
                   // Segmented Toggle Control
                   Container(
@@ -523,7 +544,9 @@ class _AuthScreenState extends State<AuthScreen>
                               color: AppColors.surfaceContainerLowest,
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
-                                color: AppColors.outlineVariant.withValues(alpha: 0.3),
+                                color: AppColors.outlineVariant.withValues(
+                                  alpha: 0.3,
+                                ),
                               ),
                             ),
                             child: Row(
@@ -531,18 +554,27 @@ class _AuthScreenState extends State<AuthScreen>
                                 const SizedBox(width: 12),
                                 Icon(
                                   Icons.smartphone_outlined,
-                                  color: AppColors.textSecondary.withValues(alpha: 0.7),
+                                  color: AppColors.textSecondary.withValues(
+                                    alpha: 0.7,
+                                  ),
                                   size: 20,
                                 ),
                                 Container(
                                   height: 24,
                                   width: 1,
-                                  color: AppColors.outlineVariant.withValues(alpha: 0.3),
-                                  margin: const EdgeInsets.symmetric(horizontal: 12),
+                                  color: AppColors.outlineVariant.withValues(
+                                    alpha: 0.3,
+                                  ),
+                                  margin: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                  ),
                                 ),
                                 // +91 Prefix Pill
                                 Container(
-                                  margin: const EdgeInsets.only(top: 6, bottom: 6),
+                                  margin: const EdgeInsets.only(
+                                    top: 6,
+                                    bottom: 6,
+                                  ),
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 10,
                                     vertical: 6,
@@ -553,15 +585,19 @@ class _AuthScreenState extends State<AuthScreen>
                                   ),
                                   child: Row(
                                     children: [
-                                      const Text('🇮🇳', style: TextStyle(fontSize: 16)),
+                                      const Text(
+                                        '🇮🇳',
+                                        style: TextStyle(fontSize: 16),
+                                      ),
                                       const SizedBox(width: 6),
                                       Text(
                                         '+91',
-                                        style: FixNowTypography.dataMono.copyWith(
-                                          color: AppColors.textPrimary,
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 13,
-                                        ),
+                                        style: FixNowTypography.dataMono
+                                            .copyWith(
+                                              color: AppColors.textPrimary,
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 13,
+                                            ),
                                       ),
                                     ],
                                   ),
@@ -579,20 +615,20 @@ class _AuthScreenState extends State<AuthScreen>
                                     decoration: InputDecoration(
                                       hintText: 'Enter your mobile number',
                                       hintStyle: TextStyle(
-                                        color: AppColors.textSecondary.withValues(
-                                          alpha: 0.5,
-                                        ),
+                                        color: AppColors.textSecondary
+                                            .withValues(alpha: 0.5),
                                       ),
                                       border: InputBorder.none,
-                                      contentPadding: const EdgeInsets.symmetric(
-                                        horizontal: 0,
-                                        vertical: 14,
-                                      ),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            horizontal: 0,
+                                            vertical: 14,
+                                          ),
                                     ),
                                     validator: (value) =>
                                         (value == null || value.trim().isEmpty)
-                                            ? 'Enter your mobile number.'
-                                            : null,
+                                        ? 'Enter your mobile number.'
+                                        : null,
                                   ),
                                 ),
                               ],
@@ -665,29 +701,13 @@ class _AuthScreenState extends State<AuthScreen>
                         const SizedBox(height: AppSpacing.md),
 
                         // Password Field
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              'Security Password',
-                              style: TextStyle(
-                                color: AppColors.textPrimary,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13,
-                              ),
-                            ),
-                            if (!_register)
-                              GestureDetector(
-                                onTap: () {},
-                                child: Text(
-                                  'Forgot Password?',
-                                  style: FixNowTypography.labelSmall.copyWith(
-                                    color: AppColors.primary,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                          ],
+                        const Text(
+                          'Security Password',
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
                         ),
                         const SizedBox(height: 6),
                         TextFormField(
@@ -873,7 +893,7 @@ class _AuthScreenState extends State<AuthScreen>
                                       Text(
                                         _register
                                             ? 'Create Account & Continue'
-                                            : 'Sign In to FixNow',
+                                            : 'Continue',
                                         style: FixNowTypography.headlineMd
                                             .copyWith(
                                               fontWeight: FontWeight.w600,
@@ -891,64 +911,6 @@ class _AuthScreenState extends State<AuthScreen>
                           ),
                         ),
                       ],
-                    ),
-                  ),
-
-                  // Social Divider
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: AppSpacing.md,
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Container(
-                            height: 1,
-                            color: AppColors.surfaceContainerHigh,
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          child: Text(
-                            'OR CONNECT WITH',
-                            style: FixNowTypography.labelSmall.copyWith(
-                              color: AppColors.textSecondary,
-                              letterSpacing: 1.2,
-                              fontSize: 10,
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          child: Container(
-                            height: 1,
-                            color: AppColors.surfaceContainerHigh,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Social Tray
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _SocialButton(
-                          icon: Icons.g_mobiledata_rounded,
-                          iconSize: 36,
-                          iconColor: Colors.red,
-                          onTap: () {},
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Center(
-                    child: Text(
-                      'Coming soon',
-                      style: FixNowTypography.labelSmall.copyWith(
-                        color: AppColors.outline,
-                        fontSize: 10,
-                      ),
                     ),
                   ),
 
@@ -981,7 +943,7 @@ class _AuthScreenState extends State<AuthScreen>
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
-                                  '30-Day FixNow Warranty',
+                                  'Account security',
                                   style: FixNowTypography.label.copyWith(
                                     color: AppColors.textPrimary,
                                     fontWeight: FontWeight.w600,
@@ -1001,7 +963,7 @@ class _AuthScreenState extends State<AuthScreen>
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
-                                '₹0 Deductible',
+                                'Sign-in protected',
                                 style: FixNowTypography.dataMono.copyWith(
                                   color: AppColors.primary,
                                   fontSize: 10,
@@ -1066,9 +1028,9 @@ class _AuthScreenState extends State<AuthScreen>
                                     fontSize: 12,
                                   ),
                                   children: const [
-                                    TextSpan(text: 'Joined by '),
+                                    TextSpan(text: 'Explore '),
                                     TextSpan(
-                                      text: '14,200+',
+                                      text: 'local ',
                                       style: TextStyle(
                                         color: AppColors.textPrimary,
                                         fontWeight: FontWeight.w600,
@@ -1076,7 +1038,7 @@ class _AuthScreenState extends State<AuthScreen>
                                     ),
                                     TextSpan(
                                       text:
-                                          ' verified pros ready across your city.',
+                                          ' available service professionals in your area.',
                                     ),
                                   ],
                                 ),
@@ -1102,7 +1064,7 @@ class _AuthScreenState extends State<AuthScreen>
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            '256-Bit SSL Bank Grade Encryption',
+                            'Secure app session',
                             style: FixNowTypography.labelSmall.copyWith(
                               color: AppColors.primary,
                               fontSize: 11,
@@ -1112,7 +1074,7 @@ class _AuthScreenState extends State<AuthScreen>
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Your data is encrypted under IT Act 2000 & ISO 27001 standards.',
+                        'Sign-in details stay in this app session.',
                         textAlign: TextAlign.center,
                         style: FixNowTypography.bodySmall.copyWith(
                           color: AppColors.outline,
@@ -1129,43 +1091,4 @@ class _AuthScreenState extends State<AuthScreen>
       );
     },
   );
-}
-
-class _SocialButton extends StatelessWidget {
-  const _SocialButton({
-    required this.icon,
-    required this.iconSize,
-    required this.iconColor,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final double iconSize;
-  final Color iconColor;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        height: 48,
-        decoration: BoxDecoration(
-          color: AppColors.surfaceContainerLowest,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x05000000),
-              blurRadius: 4,
-              offset: Offset(0, 1),
-            ),
-          ],
-        ),
-        child: Center(
-          child: Icon(icon, size: iconSize, color: iconColor),
-        ),
-      ),
-    );
-  }
 }

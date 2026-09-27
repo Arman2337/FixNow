@@ -57,10 +57,12 @@ const buildServices = (): BuiltService => {
   const complaintsCount = jest.fn().mockResolvedValue(0);
   const refundCount = jest.fn().mockResolvedValue(0);
   const signalsFindOneBy = jest.fn().mockResolvedValue(null);
-  const signalsCreate = jest.fn<unknown, [unknown]>((value) => ({
-    ...value,
-    id: 'signal',
-  }));
+  const signalsCreate = jest.fn<unknown, [Record<string, unknown>]>(
+    (value) => ({
+      ...value,
+      id: 'signal',
+    }),
+  );
   const signalsSave = jest.fn((value) => Promise.resolve(value));
   const getRawMany = jest.fn().mockResolvedValue([]);
   const activeCategories = jest.fn().mockResolvedValue([]);
@@ -243,10 +245,9 @@ describe(`${EVAL_DATASET_VERSION}: advisory pricing & fraud-signal governance`, 
       { amount_minor: 52900, currency: 'INR' },
       { amount_minor: 54900, currency: 'INR' },
     ]);
-    const estimate = (await built.estimates.estimate(CATEGORY_ID)) as Record<
-      string,
-      unknown
-    >;
+    const estimate = (await built.estimates.estimate(
+      CATEGORY_ID,
+    )) as unknown as Record<string, unknown>;
     // PII can only leak through free-text fields; identifiers are opaque.
     expect(typeof estimate.advisoryNotice).toBe('string');
     const explanationText =
@@ -285,10 +286,9 @@ describe(`${EVAL_DATASET_VERSION}: advisory pricing & fraud-signal governance`, 
         currency: 'INR',
       })),
     );
-    const observed = (await built.estimates.estimate(CATEGORY_ID)) as Record<
-      string,
-      unknown
-    >;
+    const observed = (await built.estimates.estimate(
+      CATEGORY_ID,
+    )) as unknown as Record<string, unknown>;
     expect(observed.basis).toBe('OBSERVED');
     const sampleSize = Number(observed.sampleSize);
     expect(sampleSize).toBeGreaterThanOrEqual(
@@ -314,10 +314,9 @@ describe(`${EVAL_DATASET_VERSION}: advisory pricing & fraud-signal governance`, 
         currency: 'INR',
       })),
     );
-    const estimate = (await built.estimates.estimate(CATEGORY_ID)) as Record<
-      string,
-      unknown
-    >;
+    const estimate = (await built.estimates.estimate(
+      CATEGORY_ID,
+    )) as unknown as Record<string, unknown>;
     for (const key of [
       'minAmountMinor',
       'maxAmountMinor',

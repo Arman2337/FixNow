@@ -209,14 +209,26 @@ void main() {
         expect(find.text('Download PDF Invoice'), findsOneWidget);
         expect(find.text('Share Invoice'), findsOneWidget);
 
-        // Tap Download PDF Invoice
+        // Tap Download PDF Invoice. Only pump briefly: the confirmation is a
+        // timed SnackBar, and pumpAndSettle would run past its dismissal.
         await tester.tap(find.text('Download PDF Invoice'));
-        await tester.pumpAndSettle();
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
 
+        // Reports the file honestly and hands it to a destination the customer
+        // can actually reach. The old copy claimed "Downloaded <name>" while
+        // writing into app-private Android/data storage nobody can open.
         expect(
-          find.textContaining('Downloaded Invoice-INV-2026-0101.pdf'),
+          find.textContaining('PDF ready: Invoice-INV-2026-0101.pdf'),
           findsOneWidget,
         );
+        expect(find.textContaining('Downloaded '), findsNothing);
+
+        // The share sheet is presented so the PDF is not stranded.
+        await tester.pumpAndSettle();
+        expect(find.text('Share or Export Invoice'), findsOneWidget);
+        await tester.tapAt(const Offset(20, 20));
+        await tester.pumpAndSettle();
 
         // Tap Share Invoice opens bottom sheet
         await tester.tap(find.text('Share Invoice'));

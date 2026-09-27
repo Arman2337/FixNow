@@ -1,7 +1,10 @@
 import 'package:fixnow_mobile/api/api_client.dart';
+import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/features/bookings/booking.dart';
+import 'package:fixnow_mobile/features/provider/provider_incoming_request_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_controller.dart';
 import 'package:fixnow_mobile/features/provider/provider_home_screen.dart';
+import 'package:fixnow_mobile/features/provider/provider_jobs_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_onboarding_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_models.dart';
 import 'package:fixnow_mobile/features/provider/provider_repository.dart';
@@ -35,6 +38,93 @@ void main() {
       expect(find.textContaining('never shown publicly'), findsOneWidget);
     },
   );
+
+  testWidgets('KYC progress counts only approved required documents', (
+    tester,
+  ) async {
+    final controller = ProviderController(
+      ProviderRepository(
+        api: _ProviderTransport(verified: false),
+        accessToken: () async => 'token',
+      ),
+    );
+    await controller.load(verified: false);
+    controller.documents = [
+      const ProviderDocument(
+        id: 'aadhaar-1',
+        type: 'aadhaar',
+        status: 'APPROVED',
+        sizeBytes: 1,
+      ),
+    ];
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData.dark(),
+        home: ProviderOnboardingScreen(
+          controller: controller,
+          onSignOut: () {},
+        ),
+      ),
+    );
+
+    expect(find.text('1 of 4 Verified'), findsOneWidget);
+    expect(find.text('25% Complete'), findsOneWidget);
+    expect(find.text('Step 2 of 4'), findsOneWidget);
+  });
+  testWidgets('under-review KYC does not claim complete documents', (
+    tester,
+  ) async {
+    final controller = ProviderController(
+      ProviderRepository(
+        api: _ProviderTransport(verified: false),
+        accessToken: () async => 'token',
+      ),
+    );
+    await controller.load(verified: false);
+    controller.application = const ProviderApplication(
+      status: ProviderApplicationStatus.underReview,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData.dark(),
+        home: ProviderOnboardingScreen(
+          controller: controller,
+          onSignOut: () {},
+        ),
+      ),
+    );
+
+    expect(find.text('4 of 4 Verified'), findsNothing);
+    expect(find.text('100% Complete'), findsNothing);
+  });
+
+  testWidgets('approved KYC does not fabricate missing approved documents', (
+    tester,
+  ) async {
+    final controller = ProviderController(
+      ProviderRepository(
+        api: _ProviderTransport(verified: false),
+        accessToken: () async => 'token',
+      ),
+    );
+    await controller.load(verified: false);
+    controller.application = const ProviderApplication(
+      status: ProviderApplicationStatus.approved,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData.dark(),
+        home: ProviderOnboardingScreen(
+          controller: controller,
+          onSignOut: () {},
+        ),
+      ),
+    );
+
+    expect(find.text('4 of 4 Verified'), findsNothing);
+  });
 
   testWidgets('verified provider sees availability without fake work', (
     tester,
@@ -114,6 +204,237 @@ void main() {
     expect(find.text('Accept request'), findsOneWidget);
   });
 
+  // Regression: every history card rendered a hardcoded "Rating ★ 5.0" and the
+  // working-hours card rendered hardcoded "8 km Radius" / "09:00 - 19:30", so
+  // the provider saw a perfect score and a schedule nobody had set.
+  group('history tab shows real data, never invented values', () {
+    Future<void> openHistory(WidgetTester tester) async {
+      final controller = ProviderController(
+        ProviderRepository(
+          api: _ProviderTransport(verified: true),
+          accessToken: () async => 'token',
+        ),
+      );
+      await controller.load(verified: true);
+      controller.jobs = [
+        CustomerBooking(
+          id: 'job-history-1',
+          serviceCategoryId: 'ac_repair',
+          status: 'COMPLETED',
+          description: 'AC servicing',
+          createdAt: DateTime.utc(2026, 8, 14),
+          version: 4,
+        ),
+      ];
+      controller.profile = ProviderProfile(
+        displayName: 'Test Tech',
+        bio: '',
+        serviceRadiusKm: 12,
+        baseLatitude: 23.02,
+        baseLongitude: 72.57,
+        stats: const ProviderStats(
+          rating: 0,
+          reviewCount: 0,
+          completedJobs: 3,
+          earningsMinor: 0,
+          acceptanceRate: 0,
+        ),
+      );
+      controller.availability = const ProviderAvailability(
+        status: 'online',
+        version: 1,
+        timeZone: 'Asia/Kolkata',
+        weeklyRules: [],
+      );
+      addTearDown(controller.dispose);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData.dark(),
+          home: Scaffold(
+            body: ProviderJobsScreen(controller: controller, showHistory: true),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('an unrated provider is not shown a 5.0 score', (tester) async {
+      await openHistory(tester);
+
+      expect(find.textContaining('Not yet rated'), findsWidgets);
+      expect(find.textContaining('Rating ★ 5.0'), findsNothing);
+      expect(find.textContaining('Rating ★'), findsNothing);
+    });
+
+    testWidgets('working hours and radius come from the profile', (
+      tester,
+    ) async {
+      await openHistory(tester);
+
+      expect(find.textContaining('12 km Radius'), findsOneWidget);
+      expect(find.textContaining('8 km Radius'), findsNothing);
+      // weeklyRules is empty, so the honest summary is the model's own
+      // "no recurring hours set" wording rather than an invented time range.
+      expect(find.text('No recurring hours set.'), findsOneWidget);
+      expect(find.text('09:00 - 19:30'), findsNothing);
+    });
+  });
+
+  // Regression: the incoming request banner title was AppColors.cream
+  // (#FFFFFF) on a surfaceElevated (#FFFFFF) card, i.e. 1.0:1 - the
+  // "New Request Available!" headline was invisible while the sub-line
+  // underneath it read fine, which made the card look like it had lost its
+  // heading.
+
+  testWidgets('incoming request banner text is legible on its white card', (
+    tester,
+  ) async {
+    final controller = ProviderController(
+      ProviderRepository(
+        api: _ProviderTransport(verified: true),
+        accessToken: () async => 'token',
+      ),
+    );
+    await controller.load(verified: true);
+    controller.requests = [
+      ProviderRequest(
+        id: 'request-1',
+        serviceCategoryId: 'category-1',
+        description: 'Kitchen sink leak',
+        createdAt: DateTime.utc(2026, 8, 14),
+        version: 1,
+        distanceKm: 0.0,
+      ),
+    ];
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData.dark(),
+        home: Scaffold(body: ProviderHomeScreen(controller: controller)),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    Color styleOf(String label) {
+      final finder = find.text(label);
+      expect(finder, findsOneWidget, reason: 'missing label: $label');
+      final text = tester.widget<Text>(finder);
+      return text.style?.color ??
+          DefaultTextStyle.of(tester.element(finder)).style.color!;
+    }
+
+    // Both sit on the white card, so both must clear AA against white.
+    for (final label in const [
+      'New Request Available!',
+      '0.0 km away · Tap to review and accept',
+    ]) {
+      expect(
+        _contrastRatio(styleOf(label), AppColors.surfaceElevated),
+        greaterThanOrEqualTo(4.5),
+        reason: '"$label" must meet AA on the white request card',
+      );
+    }
+
+    // The gold badge keeps dark ink on gold; the gold accents must not rely on
+    // raw #F59E0B against white.
+    expect(
+      _contrastRatio(styleOf('ACTION NEEDED'), AppColors.accentGold),
+      greaterThanOrEqualTo(4.5),
+    );
+    final radar = tester.widget<Icon>(find.byIcon(Icons.radar_rounded).first);
+    expect(
+      _contrastRatio(
+        radar.color!,
+        Color.alphaBlend(
+          AppColors.accentGold.withValues(alpha: 0.18),
+          AppColors.surfaceElevated,
+        ),
+      ),
+      greaterThanOrEqualTo(4.5),
+      reason: 'radar icon must read against its own gold-tinted disc',
+    );
+  });
+
+  testWidgets('incoming request acceptance sends the current booking version', (
+    tester,
+  ) async {
+    final transport = _ProviderTransport(verified: true);
+    final controller = ProviderController(
+      ProviderRepository(api: transport, accessToken: () async => 'token'),
+    );
+    await controller.load(verified: true);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData.dark(),
+        home: ProviderIncomingRequestScreen(
+          providerController: controller,
+          requestData: {
+            'bookingId': 'request-1',
+            'serviceCategoryId': 'plumbing',
+            'description': 'Kitchen sink leak',
+            'version': 4,
+            'createdAt': '2026-08-14T10:00:00.000Z',
+            'distanceKm': 1.2,
+            'priceMinor': '45000',
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Accept'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    final acceptRequest = transport.requests.last;
+    expect(acceptRequest.path, 'bookings/request-1/accept');
+    expect(acceptRequest.body?['expectedVersion'], 4);
+  });
+  testWidgets(
+    'provider home does not report success after an acceptance conflict',
+    (tester) async {
+      final transport = _ProviderTransport(
+        verified: true,
+        acceptConflict: true,
+      );
+      final controller = ProviderController(
+        ProviderRepository(api: transport, accessToken: () async => 'token'),
+      );
+      await controller.load(verified: true);
+      controller.requests = [
+        ProviderRequest(
+          id: 'request-conflict',
+          serviceCategoryId: 'category-1',
+          description: 'Already assigned request',
+          createdAt: DateTime.utc(2026, 8, 14),
+          version: 1,
+          distanceKm: 1.2,
+        ),
+      ];
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData.dark(),
+          home: Scaffold(body: ProviderHomeScreen(controller: controller)),
+        ),
+      );
+      await tester.ensureVisible(find.text('Accept request'));
+      await tester.tap(find.text('Accept request'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(
+        transport.requests.any(
+          (request) => request.path == 'bookings/request-conflict/accept',
+        ),
+        isTrue,
+      );
+      expect(find.text('Request accepted!'), findsNothing);
+      expect(find.textContaining('no longer available'), findsOneWidget);
+      expect(controller.requests, hasLength(1));
+    },
+  );
+
   testWidgets('shows the usual accept-time signal when data is sufficient', (
     tester,
   ) async {
@@ -173,7 +494,10 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
 
       final controller = _loadedVerifiedController();
-      final notifRepo = NotificationRepository();
+      final notifRepo = NotificationRepository(
+        api: _ProviderNotificationTransport(),
+        accessToken: () async => 'token',
+      );
       final notifController = NotificationController(notifRepo);
       await notifController.load();
 
@@ -206,6 +530,37 @@ void main() {
     },
   );
 
+  testWidgets('provider notification banner keeps readable title text', (
+    tester,
+  ) async {
+    final controller = _loadedVerifiedController();
+    final notifRepo = NotificationRepository(
+      api: _ProviderNotificationTransport(),
+      accessToken: () async => 'token',
+    );
+    final notifController = NotificationController(notifRepo);
+    await notifController.load();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData.dark(),
+        home: Scaffold(
+          body: ProviderHomeScreen(
+            controller: controller,
+            notificationController: notifController,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final title = tester.widget<Text>(
+      find.text('Booking Confirmed & Assigned'),
+    );
+    expect(title.style?.color, AppColors.textPrimary);
+    notifController.dispose();
+  });
+
   testWidgets('verified provider can dismiss notification banner', (
     tester,
   ) async {
@@ -214,7 +569,10 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
 
     final controller = _loadedVerifiedController();
-    final notifRepo = NotificationRepository();
+    final notifRepo = NotificationRepository(
+      api: _ProviderNotificationTransport(),
+      accessToken: () async => 'token',
+    );
     final notifController = NotificationController(notifRepo);
     await notifController.load();
 
@@ -242,79 +600,71 @@ void main() {
     expect(find.text('Seasonal Home Checkup'), findsOneWidget);
   });
 
-  test('on-site adjustment sends drafts and refreshes the job totals', () async {
-    final transport = _ProviderTransport(verified: true);
-    final controller = ProviderController(
-      ProviderRepository(
-        api: transport,
-        accessToken: () async => 'token',
-      ),
-    );
-    final job = CustomerBooking(
-      id: 'job-1',
-      serviceCategoryId: 'plumbing',
-      status: 'IN_PROGRESS',
-      description: 'Kitchen sink pipe is leaking heavily.',
-      createdAt: DateTime.parse('2026-09-08T09:00:00.000Z'),
-      version: 2,
-    );
-    controller.jobs = [job];
+  test(
+    'on-site adjustment sends drafts and refreshes the job totals',
+    () async {
+      final transport = _ProviderTransport(verified: true);
+      final controller = ProviderController(
+        ProviderRepository(api: transport, accessToken: () async => 'token'),
+      );
+      final job = CustomerBooking(
+        id: 'job-1',
+        serviceCategoryId: 'plumbing',
+        status: 'IN_PROGRESS',
+        description: 'Kitchen sink pipe is leaking heavily.',
+        createdAt: DateTime.parse('2026-09-08T09:00:00.000Z'),
+        version: 2,
+      );
+      controller.jobs = [job];
 
-    final updated = await controller.updateJobItems(job, const [
-      BookingItemDraft(
-        id: 'on-site-1',
-        name: 'New tap cartridge',
-        quantity: 2,
-        unitPriceMinor: 24900,
-      ),
-    ]);
+      final updated = await controller.updateJobItems(job, const [
+        // Only the catalogue entry and quantity travel to the server (SEC-001).
+        BookingItemDraft(subServiceId: 'on-site-1', quantity: 2),
+      ]);
 
-    expect(updated, isNotNull);
-    expect(updated!.items?.single.name, 'New tap cartridge');
-    expect(updated.pricing?.totalMinor, 58764);
-    expect(updated.estimatedDurationMinutes, 90);
-    expect(controller.jobs.single.version, 3);
+      expect(updated, isNotNull);
+      expect(updated!.items?.single.name, 'New tap cartridge');
+      expect(updated.pricing?.totalMinor, 58764);
+      expect(updated.estimatedDurationMinutes, 90);
+      expect(controller.jobs.single.version, 3);
 
-    final body = transport.requests.last.body!;
-    expect(body['expectedVersion'], 2);
-    expect((body['items'] as List).single, {
-      'id': 'on-site-1',
-      'name': 'New tap cartridge',
-      'quantity': 2,
-      'unitPriceMinor': 24900,
-    });
-  });
+      final body = transport.requests.last.body!;
+      expect(body['expectedVersion'], 2);
+      expect((body['items'] as List).single, {
+        'subServiceId': 'on-site-1',
+        'quantity': 2,
+      });
+    },
+  );
 
-  test('on-site adjustment surfaces a conflict without losing the job', () async {
-    final controller = ProviderController(
-      ProviderRepository(
-        api: _ProviderTransport(verified: true, itemsConflict: true),
-        accessToken: () async => 'token',
-      ),
-    );
-    final job = CustomerBooking(
-      id: 'job-1',
-      serviceCategoryId: 'plumbing',
-      status: 'IN_PROGRESS',
-      description: 'Kitchen sink pipe is leaking heavily.',
-      createdAt: DateTime.parse('2026-09-08T09:00:00.000Z'),
-      version: 2,
-    );
-    controller.jobs = [job];
+  test(
+    'on-site adjustment surfaces a conflict without losing the job',
+    () async {
+      final controller = ProviderController(
+        ProviderRepository(
+          api: _ProviderTransport(verified: true, itemsConflict: true),
+          accessToken: () async => 'token',
+        ),
+      );
+      final job = CustomerBooking(
+        id: 'job-1',
+        serviceCategoryId: 'plumbing',
+        status: 'IN_PROGRESS',
+        description: 'Kitchen sink pipe is leaking heavily.',
+        createdAt: DateTime.parse('2026-09-08T09:00:00.000Z'),
+        version: 2,
+      );
+      controller.jobs = [job];
 
-    final updated = await controller.updateJobItems(job, const [
-      BookingItemDraft(
-        id: 'on-site-1',
-        name: 'New tap cartridge',
-        quantity: 1,
-        unitPriceMinor: 24900,
-      ),
-    ]);
+      final updated = await controller.updateJobItems(job, const [
+        BookingItemDraft(subServiceId: 'on-site-1', quantity: 1),
+      ]);
 
-    expect(updated, isNull);
-    expect(controller.actionError, isNotNull);
-    expect(controller.jobs.single.version, 2);
-  });
+      expect(updated, isNull);
+      expect(controller.actionError, isNotNull);
+      expect(controller.jobs.single.version, 2);
+    },
+  );
 }
 
 ProviderController _loadedVerifiedController() {
@@ -328,10 +678,46 @@ ProviderController _loadedVerifiedController() {
   return controller;
 }
 
+class _ProviderNotificationTransport implements ApiTransport {
+  @override
+  Future<ApiResponse> send(ApiRequest request) async {
+    final now = DateTime.now().toUtc();
+    return ApiResponse(
+      statusCode: 200,
+      body: [
+        {
+          'id': 'booking-seed-1',
+          'title': 'Booking Confirmed & Assigned',
+          'body': 'Your booking is confirmed.',
+          'category': 'bookings',
+          'timestamp': now
+              .subtract(const Duration(minutes: 18))
+              .toIso8601String(),
+          'bookingId': 'booking-seed-1',
+          'isRead': false,
+        },
+        {
+          'id': 'offer-seed-1',
+          'title': 'Seasonal Home Checkup',
+          'body': 'Book a seasonal home checkup.',
+          'category': 'offers',
+          'timestamp': now.subtract(const Duration(hours: 2)).toIso8601String(),
+          'isRead': false,
+        },
+      ],
+    );
+  }
+}
+
 class _ProviderTransport implements ApiTransport {
-  _ProviderTransport({required this.verified, this.itemsConflict = false});
+  _ProviderTransport({
+    required this.verified,
+    this.itemsConflict = false,
+    this.acceptConflict = false,
+  });
   final bool verified;
   final bool itemsConflict;
+  final bool acceptConflict;
   final List<ApiRequest> requests = [];
   @override
   Future<ApiResponse> send(ApiRequest request) async {
@@ -370,6 +756,28 @@ class _ProviderTransport implements ApiTransport {
               'currency': 'INR',
             },
             'estimatedDurationMinutes': 90,
+          },
+        },
+      );
+    }
+    if (request.path.endsWith('/accept')) {
+      if (acceptConflict) {
+        throw const ApiException(
+          ApiFailureKind.server,
+          'Booking version is stale',
+          statusCode: 409,
+        );
+      }
+      return const ApiResponse(
+        statusCode: 200,
+        body: {
+          'booking': {
+            'id': 'request-1',
+            'serviceCategoryId': 'plumbing',
+            'status': 'ASSIGNED',
+            'description': 'Kitchen sink leak',
+            'createdAt': '2026-08-14T10:00:00.000Z',
+            'version': 5,
           },
         },
       );
@@ -428,4 +836,16 @@ class _ProviderTransport implements ApiTransport {
       'Unexpected request',
     );
   }
+}
+
+double _contrastRatio(Color foreground, Color background) {
+  final foregroundLuminance = foreground.computeLuminance();
+  final backgroundLuminance = background.computeLuminance();
+  final lighter = foregroundLuminance > backgroundLuminance
+      ? foregroundLuminance
+      : backgroundLuminance;
+  final darker = foregroundLuminance > backgroundLuminance
+      ? backgroundLuminance
+      : foregroundLuminance;
+  return (lighter + 0.05) / (darker + 0.05);
 }

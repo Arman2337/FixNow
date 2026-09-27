@@ -36,7 +36,7 @@ export default async function SupportPage({ searchParams }: { searchParams: Prom
               <div className="flex items-center gap-2">
                 <span className="font-data-mono text-data-mono uppercase tracking-widest text-primary font-bold">Trust & Safety Core</span>
                 <span className="w-1 h-1 rounded-full bg-outline"></span>
-                <span className="font-label-sm text-label-sm text-on-surface-variant font-medium">Escrow Ledger Linked</span>
+                <span className="font-label-sm text-label-sm text-on-surface-variant font-medium">Case records from management API</span>
               </div>
               <h1 className="font-headline-lg text-headline-lg text-on-surface tracking-tight mt-1">Complaints & Escrow Management</h1>
             </div>
@@ -52,7 +52,7 @@ export default async function SupportPage({ searchParams }: { searchParams: Prom
                 <span className="font-data-mono text-data-mono text-error font-bold">{escalatedCount} Escalated</span>
               </div>
               
-              <form role="search" className="flex flex-col gap-3">
+              <form role="search" aria-label="Support results" className="flex flex-col gap-3">
                 <div className="flex items-center bg-surface-container-low rounded-xl px-3 border border-outline-variant/50 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all">
                   <span className="material-symbols-outlined text-on-surface-variant text-[18px]">search</span>
                   <input
@@ -76,7 +76,7 @@ export default async function SupportPage({ searchParams }: { searchParams: Prom
                       </option>
                     ))}
                   </select>
-                  <button className="px-4 py-2.5 rounded-xl bg-primary text-on-primary font-label-md text-label-md font-semibold hover:bg-primary-container transition-colors shadow-sm">
+                   <button type="submit" className="px-4 py-2.5 rounded-xl bg-primary text-on-primary font-label-md text-label-md font-semibold hover:bg-primary-container transition-colors shadow-sm">
                     Filter
                   </button>
                 </div>
@@ -85,7 +85,7 @@ export default async function SupportPage({ searchParams }: { searchParams: Prom
               <div className="flex flex-col gap-space-sm mt-2">
                 {complaints.length === 0 ? (
                   <div className="p-4 rounded-xl border border-outline-variant/30 text-center font-label-sm text-on-surface-variant">
-                    No cases match the filters.
+                    No open support cases.
                   </div>
                 ) : (
                   complaints.map((complaint) => (

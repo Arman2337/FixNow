@@ -19,6 +19,7 @@
 const EVAL_DATASET_VERSION = 'problem-classification-eval-v1';
 
 import { ConfigService } from '@nestjs/config';
+import type { EnvironmentVariables } from '../../config/env.validation';
 import { Logger } from 'nestjs-pino';
 import { ProblemAnalysis } from '../../../../shared/problem-analysis.types';
 import { ServiceCategoriesService } from '../../services/service-categories.service';
@@ -92,7 +93,7 @@ function buildService(rawOutput?: string): ProblemClassificationService {
     get: jest.fn((key: string, fallback?: unknown) =>
       key in CFG ? (CFG as Record<string, unknown>)[key] : fallback,
     ),
-  } as unknown as ConfigService;
+  } as unknown as ConfigService<EnvironmentVariables>;
   const logger = { info: jest.fn() } as unknown as Logger;
   const provider =
     rawOutput === undefined

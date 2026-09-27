@@ -42,7 +42,6 @@ export class AuthorizationService {
     token: string,
     permission: Permission,
     context?: AuthorizationContext,
-    ownResource = false,
   ): Promise<AuthorizationPrincipal> {
     let claims: AccessTokenClaims;
     try {
@@ -102,11 +101,23 @@ export class AuthorizationService {
       sessionId: session.id,
       roles: grants.map((grant) => grant.role.code as RoleCode),
     };
-    const resolvedContext = ownResource
-      ? { ...context, ownerId: user.id }
-      : context;
+    // SEC-002: the guard is only asked to answer "is this caller allowed to
+    // invoke this operation at all" (authentication, account state, role,
+    // audience). It is deliberately NOT asked to answer "does this caller own
+    // the resource", because the guard cannot see the resource.
+    //
+    // This method used to fabricate `ownerId: user.id` whenever the route was
+    // marked `@RequireOwnPermission`, which made the policy's
+    // `relationship === 'self'` comparison (`ownerId !== userId`) compare a
+    // value with itself. Every self-scoped route therefore "passed" an
+    // ownership check that never happened, so a service that forgot to verify
+    // ownership shipped with no safety net at all.
+    //
+    // Ownership is now proven explicitly by the layer that has actually loaded
+    // the resource, via `assertOwnedResource`. When a caller does supply a
+    // real context, it is still honoured, so the websocket path keeps working.
     const allowed = this.policy.isAllowed(
-      { principal, permission, context: resolvedContext },
+      { principal, permission, context },
       user.status,
     );
     await this.audit(

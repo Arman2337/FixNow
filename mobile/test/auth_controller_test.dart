@@ -49,6 +49,31 @@ void main() {
     expect(transport.requests.single.body?['refreshToken'], 'refresh');
   });
 
+  test('does not restore stale verification state after a successful refresh', () async {
+    final store = MemorySessionStore(
+      session: _session(
+        now.subtract(const Duration(minutes: 1)),
+        verificationEmail: 'person@example.com',
+      ),
+    );
+    final transport = FakeTransport(
+      responses: [
+        _tokenResponse(access: 'next-access', refresh: 'next-refresh'),
+      ],
+    );
+    final controller = AuthController(
+      api: AuthApi(transport),
+      store: store,
+      now: () => now,
+    );
+
+    await controller.restore();
+
+    expect(controller.status, AuthStatus.authenticated);
+    expect(controller.verificationEmail, isNull);
+    expect(store.session?.verificationEmail, isNull);
+  });
+
   test(
     'reports offline state while retaining a stored session for retry',
     () async {
@@ -249,11 +274,12 @@ void main() {
   });
 }
 
-AuthSession _session(DateTime expiresAt) => AuthSession(
+AuthSession _session(DateTime expiresAt, {String? verificationEmail}) => AuthSession(
   userId: 'user-1',
   accessToken: 'access',
   refreshToken: 'refresh',
   expiresAt: expiresAt,
+  verificationEmail: verificationEmail,
 );
 
 ApiResponse _tokenResponse({

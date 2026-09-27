@@ -5,7 +5,6 @@ import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_motion.dart';
 import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
-import 'package:fixnow_mobile/design_system/fix_3d_spatial_beacon.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -678,7 +677,7 @@ class FixFxBrandHero extends StatelessWidget {
                         : Theme.of(context).textTheme.headlineMedium)
                     ?.copyWith(
                       fontWeight: FontWeight.w800,
-                      color: AppColors.cream,
+                      color: AppColors.textPrimary,
                       letterSpacing: -0.5,
                     ),
           ),

@@ -32,7 +32,11 @@ class BookingController extends ChangeNotifier {
         if (prev.status == 'REQUESTED') {
           final now = latest.where((b) => b.id == prev.id).firstOrNull;
           if (now != null &&
-              const {'ASSIGNED', 'EN_ROUTE', 'IN_PROGRESS'}.contains(now.status)) {
+              const {
+                'ASSIGNED',
+                'EN_ROUTE',
+                'IN_PROGRESS',
+              }.contains(now.status)) {
             acceptedBooking.value = now.id;
           }
         }
@@ -82,7 +86,11 @@ class BookingController extends ChangeNotifier {
         if (prev.status == 'REQUESTED') {
           final now = latest.where((b) => b.id == prev.id).firstOrNull;
           if (now != null &&
-              const {'ASSIGNED', 'EN_ROUTE', 'IN_PROGRESS'}.contains(now.status)) {
+              const {
+                'ASSIGNED',
+                'EN_ROUTE',
+                'IN_PROGRESS',
+              }.contains(now.status)) {
             acceptedBooking.value = now.id;
           }
         }
@@ -148,19 +156,24 @@ class BookingController extends ChangeNotifier {
     final rawItems = projection.data['items'];
     final items = rawItems is List && rawItems.isNotEmpty
         ? rawItems
-            .map(
-              (item) => BookingLineItem.fromJson(
-                Map<String, Object?>.from(item as Map),
-              ),
-            )
-            .toList(growable: false)
+              .map(
+                (item) => BookingLineItem.fromJson(
+                  Map<String, Object?>.from(item as Map),
+                ),
+              )
+              .toList(growable: false)
         : null;
+    // The total ships on the same frame as the items. Applying it here is what
+    // stops the customer seeing a revised line list next to the old total until
+    // the next poll; leaving it out silently showed the pre-adjustment figure.
+    final pricing = _parsePricing(projection.data['pricing']);
     final duration = projection.data['estimatedDurationMinutes'];
     final updated = current.copyWith(
       status: statusValue,
       version: version,
       // null keeps the current values (copyWith semantics).
       items: items,
+      pricing: pricing,
       estimatedDurationMinutes: duration is int ? duration : null,
     );
     bookings = [...bookings]..[index] = updated;
@@ -172,6 +185,17 @@ class BookingController extends ChangeNotifier {
     unawaited(_subscribeToActiveBooking());
   }
 
+  /// A malformed payload must not tear down the projection stream, so an
+  /// unparseable total is treated as "no update" and left to the next poll.
+  static BookingPricing? _parsePricing(Object? raw) {
+    if (raw is! Map || raw.isEmpty) return null;
+    try {
+      return BookingPricing.fromJson(Map<String, Object?>.from(raw));
+    } on FormatException {
+      return null;
+    }
+  }
+
   Future<CustomerBooking> create({
     required String serviceCategoryId,
     required String description,
@@ -179,6 +203,7 @@ class BookingController extends ChangeNotifier {
     required double longitude,
     DateTime? scheduledAt,
     List<BookingItemDraft>? items,
+    String? idempotencyKey,
   }) async {
     final booking = await _repository.create(
       serviceCategoryId: serviceCategoryId,
@@ -187,6 +212,7 @@ class BookingController extends ChangeNotifier {
       longitude: longitude,
       scheduledAt: scheduledAt,
       items: items,
+      idempotencyKey: idempotencyKey,
     );
     bookings = [booking, ...bookings.where((item) => item.id != booking.id)];
     status = BookingListStatus.ready;

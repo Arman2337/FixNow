@@ -56,7 +56,7 @@ describe('BookingMessagesService', () => {
     messagesRepo = {
       find: jest.fn(),
       findOne: jest.fn(),
-      create: jest.fn((dto) =>
+      create: jest.fn((dto: Partial<BookingMessage>) =>
         Object.assign(new BookingMessage(), dto, {
           id: 'new-msg-id',
           createdAt: new Date(),
@@ -95,7 +95,7 @@ describe('BookingMessagesService', () => {
       expect(result.canSend).toBe(true);
       expect(result.messages).toHaveLength(1);
       expect(result.messages[0].messageText).toBe('Buzz code is #402');
-      expect(messagesRepo.update).toHaveBeenCalled();
+      expect(messagesRepo.update.mock.calls).toHaveLength(1);
     });
 
     it('returns canSend=false for completed booking', async () => {
@@ -143,16 +143,21 @@ describe('BookingMessagesService', () => {
 
       expect(result.messageText).toBe('I am by the gate');
       expect(result.senderRole).toBe('CUSTOMER');
-      expect(projections.publishChatMessage).toHaveBeenCalledWith(
-        bookingId,
-        expect.objectContaining({ messageText: 'I am by the gate' }),
-      );
-      expect(notifications.notifyChatMessage).toHaveBeenCalledWith(
-        expect.anything(),
-        providerId,
-        'provider',
-        'new-msg-id',
-      );
+      const [, broadcastMessage] =
+        projections.publishChatMessage.mock.calls[0] ?? [];
+      expect(broadcastMessage).toMatchObject({
+        messageText: 'I am by the gate',
+      });
+      const [
+        notifiedBooking,
+        notifiedRecipient,
+        notifiedAudience,
+        notifiedMessageId,
+      ] = notifications.notifyChatMessage.mock.calls[0] ?? [];
+      expect(notifiedBooking?.id).toBe(bookingId);
+      expect(notifiedRecipient).toBe(providerId);
+      expect(notifiedAudience).toBe('provider');
+      expect(notifiedMessageId).toBe('new-msg-id');
     });
 
     it('returns existing message if clientMessageId already exists (idempotent)', async () => {
@@ -171,7 +176,7 @@ describe('BookingMessagesService', () => {
       });
 
       expect(result.id).toBe(existing.id);
-      expect(messagesRepo.save).not.toHaveBeenCalled();
+      expect(messagesRepo.save.mock.calls).toHaveLength(0);
     });
 
     it('rejects sending when booking is COMPLETED with ConflictException', async () => {

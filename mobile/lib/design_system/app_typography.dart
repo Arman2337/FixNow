@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:fixnow_mobile/design_system/app_colors.dart';
 
 abstract final class FixNowTypography {
   static TextStyle _manrope(
@@ -7,12 +8,14 @@ abstract final class FixNowTypography {
     FontWeight weight,
     double height, [
     double letterSpacing = 0.0,
+    Color color = AppColors.textPrimary,
   ]) {
     return GoogleFonts.manrope(
       fontSize: size,
       fontWeight: weight,
       height: height,
       letterSpacing: letterSpacing,
+      color: color,
     );
   }
 

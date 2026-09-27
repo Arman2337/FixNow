@@ -10,6 +10,9 @@ import {
 /** A gateway refund against a paid order. Amounts are integer paise. */
 @Entity('refunds')
 @Index('IX_refunds_order', ['paymentOrderId'])
+@Index('UQ_refunds_order_request_key', ['paymentOrderId', 'requestKey'], {
+  unique: true,
+})
 @Check('CHK_refunds_status', "status IN ('PENDING', 'PROCESSED')")
 export class Refund {
   @PrimaryGeneratedColumn('uuid')

@@ -31,6 +31,30 @@ When the backend's explicit local OTP bypass is enabled, add
 hint. This hint is suppressed outside `APP_ENV=development`; the backend remains
 the authoritative enforcement boundary.
 
+## Push notifications
+
+Push is **on by default** so a normal build registers an FCM token and tray
+notifications arrive while the app is closed. It needs
+`android/app/google-services.json` (gitignored) and a backend with
+`PUSH_PROVIDER=fcm` plus `FCM_CREDENTIALS_FILE` pointing at a service-account
+JSON for the same Firebase project.
+
+Compile it out with `--dart-define=PUSH_NOTIFICATIONS_ENABLED=false`. Firebase
+initialisation fails gracefully where no platform config exists (web, or an
+Android build without `google-services.json`), and the Profile → Push
+Notifications card then honestly reports the device as unavailable instead of
+claiming to be active.
+
+Check that a token actually registered:
+
+```sql
+select platform, enabled, created_at from push_device_tokens;
+```
+
+iOS additionally needs an iOS app registered in the Firebase project, a
+`GoogleService-Info.plist`, the Push Notifications capability, and an APNs key
+uploaded to the Firebase console.
+
 ### Local Google Maps development key
 
 Live provider tracking uses Google Maps only after the backend has authorized a

@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:path_provider/path_provider.dart';
 import 'package:fixnow_mobile/api/api_client.dart';
 import 'package:fixnow_mobile/config/app_environment.dart';
 import 'package:fixnow_mobile/design_system/app_colors.dart';
@@ -25,6 +24,7 @@ class InvoiceScreen extends StatefulWidget {
     required this.repository,
     required this.bookingId,
     this.initialInvoice,
+    this.paymentId,
     this.localPaymentRepository,
     bool? localPaymentBypassEnabled,
     super.key,
@@ -35,6 +35,7 @@ class InvoiceScreen extends StatefulWidget {
 
   final InvoiceRepository repository;
   final String bookingId;
+  final String? paymentId;
   final Invoice? initialInvoice;
 
   /// FN-118: dev-only local checkout. When null the pay affordance never
@@ -52,6 +53,7 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
   late final InvoiceController _controller = InvoiceController(
     widget.repository,
     widget.bookingId,
+    paymentId: widget.paymentId,
     initialInvoice: widget.initialInvoice,
   )..load();
 
@@ -63,7 +65,27 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Invoice')),
+    appBar: AppBar(
+      backgroundColor: AppColors.surfaceContainerLowest,
+      elevation: 0,
+      scrolledUnderElevation: 1,
+      leading: IconButton(
+        icon: const Icon(
+          Icons.arrow_back_rounded,
+          color: AppColors.textPrimary,
+        ),
+        onPressed: () => Navigator.of(context).maybePop(),
+      ),
+      title: const Text(
+        'Invoice',
+        style: TextStyle(
+          color: AppColors.textPrimary,
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      centerTitle: false,
+    ),
     body: SafeArea(
       top: false,
       child: FixPageFrame(
@@ -162,6 +184,23 @@ class _PendingViewState extends State<_PendingView> {
               label: 'Pay Now (Interactive Checkout)',
               icon: Icons.payments_rounded,
               onPressed: () => _openCheckoutSheet(context),
+            ),
+          ],
+          if (_canPayLocally) ...[
+            const SizedBox(height: AppSpacing.sm),
+            FixButton(
+              label: 'Complete payment (local)',
+              icon: Icons.build_circle_outlined,
+              variant: FixButtonVariant.secondary,
+              isLoading: _paying,
+              onPressed: _paying ? null : _payLocally,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            const Text(
+              'Local testing only — drives the fake gateway to a paid '
+              'invoice. Not available in production.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.textSecondary),
             ),
           ],
         ],
@@ -464,52 +503,79 @@ class _InvoiceView extends StatelessWidget {
   );
 
   Future<void> _downloadPdf(BuildContext context) async {
-    final bytes = FixPdfInvoiceBuilder.build(invoice);
-    final fileName = FixPdfInvoiceBuilder.getFileName(invoice);
-    final sizeKb = (bytes.length / 1024).toStringAsFixed(1);
-    
+    // The whole job is inside the try: the PDF builder used to run before it, so
+    // any failure escaped as an unhandled async error with no message at all.
     try {
-      final dir = await getApplicationDocumentsDirectory();
-      final file = File('${dir.path}/$fileName');
-      await file.writeAsBytes(bytes);
-      
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            backgroundColor: AppColors.surfaceElevated,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-              side: BorderSide(
-                color: AppColors.borderDefault.withValues(alpha: 0.2),
-              ),
-            ),
-            content: Row(
-              children: [
-                const Icon(
-                  Icons.file_download_done_rounded,
-                  color: AppColors.success,
-                  size: 18,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Downloaded $fileName ($sizeKb KB)',
-                    style: const TextStyle(color: AppColors.cream, fontSize: 13),
-                  ),
-                ),
-              ],
+      final bytes = FixPdfInvoiceBuilder.build(invoice);
+      final fileName = FixPdfInvoiceBuilder.getFileName(invoice);
+      final size = (bytes.length / 1024).toStringAsFixed(1);
+
+      // Written to the system temp directory, not app-private documents.
+      // getApplicationDocumentsDirectory() lands in Android/data/<pkg>/, which
+      // no file manager and no user can open, so the previous "Downloaded ..."
+      // confirmation pointed at a file that was unreachable.
+      final file = File('${Directory.systemTemp.path}/$fileName');
+      // Synchronous on purpose: the payload is a few KB, and an await here
+      // would let the success confirmation land a frame late.
+      file.writeAsBytesSync(bytes);
+
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: AppColors.surfaceElevated,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+            side: BorderSide(
+              color: AppColors.borderDefault.withValues(alpha: 0.2),
             ),
           ),
-        );
-      }
+          content: Row(
+            children: [
+              const Icon(
+                Icons.file_download_done_rounded,
+                color: AppColors.successOnLight,
+                size: 18,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                // cream (#FFFFFF) on surfaceElevated (#FFFFFF) was invisible.
+                child: Text(
+                  'PDF ready: $fileName ($size KB)',
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          duration: const Duration(seconds: 4),
+        ),
+      );
+      // Hand the file to a destination the customer can actually reach.
+      // Without a storage permission or SAF plugin there is no other in-app
+      // route to the public Downloads folder.
+      await FixShareInvoiceSheet.show(context, invoice: invoice);
     } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to download: $e')),
-        );
-      }
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Could not create the PDF: ${_readableError(e)}'),
+        ),
+      );
     }
+  }
+
+  /// Never surface a raw exception object to a customer.
+  static String _readableError(Object error) {
+    if (error is FileSystemException) {
+      return 'the file could not be written on this device';
+    }
+    if (error is FormatException) {
+      return 'the invoice data is incomplete';
+    }
+    return 'please try again';
   }
 
   static String _date(DateTime value) {

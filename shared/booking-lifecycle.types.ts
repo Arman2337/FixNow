@@ -30,10 +30,22 @@ export interface CreateBookingLineItemRequest {
 }
 
 /**
- * One itemized task line on a booking (e.g. "Tap & Mixer Repair" x2).
- * `unitPriceMinor` and `durationMinutes` are per-unit. Amounts are paise.
- * The backend recomputes all totals from these lines; client-computed
- * totals are never trusted.
+ * What a client is allowed to send for one itemized task line.
+ *
+ * SECURITY: a client may select a catalogue entry and a quantity. It may NOT
+ * send a price. `unitPriceMinor` and `name` are resolved server-side from
+ * `sub_services`, so the amount charged can never be chosen by the buyer.
+ */
+export interface BookingItemRequestContract {
+  subServiceId: string;
+  quantity: number;
+}
+
+/**
+ * The persisted, server-priced snapshot of one itemized task line
+ * (e.g. "Tap & Mixer Repair" x2). `unitPriceMinor` and `durationMinutes` are
+ * per-unit. Amounts are paise. This is an OUTPUT shape — the backend is the
+ * only writer. `computeBookingTotals` derives every total from these lines.
  */
 export interface BookingItemContract {
   id: string;
@@ -57,17 +69,19 @@ export interface CreateBookingRequest {
   locationLat: number;
   locationLng: number;
   scheduledAt?: string | null;
-  items?: BookingItemContract[] | null;
+  items?: BookingItemRequestContract[] | null;
   lineItems?: CreateBookingLineItemRequest[];
 }
 
 /**
- * Provider command to replace the booking's line items after finding more
- * (or less) work on site. Totals are recomputed server-side.
+ * Provider command to replace the booking's itemized lines after finding more
+ * (or less) work on site. The provider selects catalogue entries and
+ * quantities only; every price is re-resolved from `sub_services`.
  */
 export interface UpdateBookingItemsRequest {
-  items: BookingItemContract[];
+  items: BookingItemRequestContract[];
   expectedVersion: number;
+  reason?: string;
 }
 
 export interface BookingContract {
@@ -94,6 +108,9 @@ export interface BookingContract {
   version: number;
   customerPhone?: string | null;
   providerPhone?: string | null;
+  providerName?: string | null;
+  providerRating?: number | null;
+  providerJobsCount?: number | null;
   lineItems?: Array<{
     id: string;
     subServiceId: string;

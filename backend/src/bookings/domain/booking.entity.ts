@@ -8,6 +8,7 @@ import {
   VersionColumn,
   Unique,
   OneToMany,
+  type Relation,
 } from 'typeorm';
 import {
   BookingStatus,
@@ -30,6 +31,9 @@ export class Booking {
 
   customerPhone?: string | null;
   providerPhone?: string | null;
+  providerName?: string | null;
+  providerRating?: number | null;
+  providerJobsCount?: number | null;
 
   @Column('uuid', { name: 'service_category_id' })
   serviceCategoryId: string;
@@ -107,7 +111,7 @@ export class Booking {
     cascade: true,
     eager: true,
   })
-  lineItems?: BookingLineItem[];
+  lineItems?: Relation<BookingLineItem>[];
 
   @Column('varchar', {
     name: 'cancellation_reason',

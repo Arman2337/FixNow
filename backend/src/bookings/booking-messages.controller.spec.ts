@@ -27,7 +27,7 @@ describe('BookingMessagesController', () => {
 
     const result = await controller.list(req, bookingId);
 
-    expect(service.listMessages).toHaveBeenCalledWith(bookingId, userId);
+    expect(service.listMessages.mock.calls).toEqual([[bookingId, userId]]);
     expect(result.canSend).toBe(true);
   });
 
@@ -49,10 +49,16 @@ describe('BookingMessagesController', () => {
       clientMessageId: 'c-1',
     });
 
-    expect(service.sendMessage).toHaveBeenCalledWith(bookingId, userId, {
-      messageText: 'Hello',
-      clientMessageId: 'c-1',
-    });
+    expect(service.sendMessage.mock.calls).toEqual([
+      [
+        bookingId,
+        userId,
+        {
+          messageText: 'Hello',
+          clientMessageId: 'c-1',
+        },
+      ],
+    ]);
     expect(result.messageText).toBe('Hello');
   });
 });

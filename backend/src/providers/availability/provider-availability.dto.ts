@@ -14,10 +14,10 @@ import {
   ValidateNested,
 } from 'class-validator';
 import {
-  AvailabilityException,
-  AvailabilityInterval,
+  type AvailabilityException,
+  type AvailabilityInterval,
   ProviderAvailabilityStatus,
-  WeeklyAvailabilityRule,
+  type WeeklyAvailabilityRule,
 } from '../../../../shared/provider-availability.types';
 
 export class AvailabilityIntervalDto implements AvailabilityInterval {

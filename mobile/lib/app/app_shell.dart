@@ -8,6 +8,23 @@ import 'package:fixnow_mobile/design_system/fix_page_frame.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+class AppShellScope extends InheritedWidget {
+  const AppShellScope({
+    required this.controller,
+    required super.child,
+    super.key,
+  });
+
+  final AppShellController controller;
+
+  static AppShellController? of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<AppShellScope>()?.controller;
+
+  @override
+  bool updateShouldNotify(AppShellScope oldWidget) =>
+      controller != oldWidget.controller;
+}
+
 class AppShell extends StatefulWidget {
   const AppShell({
     this.role = AppShellRole.customer,
@@ -124,35 +141,38 @@ class _AppShellState extends State<AppShell> {
         // Direction of the tab morph: higher index = forward.
         final forward = selectedIndex >= _lastIndex;
         _lastIndex = selectedIndex;
-        return Scaffold(
-          body: SafeArea(
-            bottom: false,
-            child: FixPageFrame(
-              child: IndexedStack(
-                index: selectedIndex,
-                children: [
-                  for (var index = 0; index < destinations.length; index += 1)
-                    _TabReveal(
-                      active: index == selectedIndex,
-                      forward: forward,
-                      child: _destinationFor(index),
-                    ),
-                ],
+        return AppShellScope(
+          controller: _controller,
+          child: Scaffold(
+            body: SafeArea(
+              bottom: false,
+              child: FixPageFrame(
+                child: IndexedStack(
+                  index: selectedIndex,
+                  children: [
+                    for (var index = 0; index < destinations.length; index += 1)
+                      _TabReveal(
+                        active: index == selectedIndex,
+                        forward: forward,
+                        child: _destinationFor(index),
+                      ),
+                  ],
+                ),
               ),
             ),
-          ),
-          bottomNavigationBar: SafeArea(
-            top: false,
-            child: FixBottomNavigation(
-              destinations: destinations,
-              selectedIndex: selectedIndex,
-              onDestinationSelected: (index) {
-                _controller.selectDestination(
-                  index,
-                  destinationCount: destinations.length,
-                );
-                _saveSelectedDestination(index);
-              },
+            bottomNavigationBar: SafeArea(
+              top: false,
+              child: FixBottomNavigation(
+                destinations: destinations,
+                selectedIndex: selectedIndex,
+                onDestinationSelected: (index) {
+                  _controller.selectDestination(
+                    index,
+                    destinationCount: destinations.length,
+                  );
+                  _saveSelectedDestination(index);
+                },
+              ),
             ),
           ),
         );

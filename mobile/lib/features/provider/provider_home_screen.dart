@@ -122,6 +122,9 @@ class ProviderHomeScreen extends StatelessWidget {
                       onTap: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
+                            settings: const RouteSettings(
+                              name: 'notifications',
+                            ),
                             builder: (_) => NotificationCenterScreen(
                               controller: notificationController!,
                               onOpenBooking: onOpenBooking,
@@ -321,8 +324,18 @@ class ProviderHomeScreen extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(height: AppSpacing.sm),
+                              const Text(
+                                'Working schedule',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.xs),
                               Text(
-                                availability?.timingSummary ?? 'No schedule set',
+                                availability?.timingSummary ??
+                                    'No schedule set',
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
@@ -338,7 +351,7 @@ class ProviderHomeScreen extends StatelessWidget {
                                     MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
-                                    'Edit\nSchedule',
+                                    'Edit schedule',
                                     style: Theme.of(context)
                                         .textTheme
                                         .titleMedium
@@ -402,7 +415,12 @@ class ProviderHomeScreen extends StatelessWidget {
                                 const SizedBox(height: AppSpacing.sm),
                                 Builder(
                                   builder: (context) {
-                                    final earnings = controller.profile?.stats?.earningsMinor ?? 0;
+                                    final earnings =
+                                        controller
+                                            .profile
+                                            ?.stats
+                                            ?.earningsMinor ??
+                                        0;
                                     final amount = (earnings ~/ 100).toString();
                                     return Text(
                                       '₹$amount',
@@ -568,8 +586,10 @@ class ProviderHomeScreen extends StatelessWidget {
                             label: 'Accept request',
                             icon: Icons.check_circle_outline_rounded,
                             onPressed: () async {
-                              await controller.acceptRequest(request);
-                              if (context.mounted) {
+                              final accepted = await controller.acceptRequest(
+                                request,
+                              );
+                              if (context.mounted && accepted) {
                                 showFixBanner(
                                   ScaffoldMessenger.of(context),
                                   message:
@@ -598,7 +618,7 @@ class ProviderHomeScreen extends StatelessWidget {
                     children: [
                       Icon(
                         Icons.work_history_rounded,
-                        color: AppColors.textMuted,
+                        color: AppColors.textSecondary,
                       ),
                       SizedBox(width: AppSpacing.md),
                       Expanded(
@@ -646,7 +666,8 @@ class ProviderHomeScreen extends StatelessWidget {
                                     Text(
                                       'Open Cockpit',
                                       style: TextStyle(
-                                        color: AppColors.accentGold,
+                                        // accentGold on white is 2.15:1.
+                                        color: AppColors.tertiary,
                                         fontSize: 12,
                                         fontWeight: FontWeight.w600,
                                       ),
@@ -655,7 +676,7 @@ class ProviderHomeScreen extends StatelessWidget {
                                     Icon(
                                       Icons.arrow_forward_rounded,
                                       size: 16,
-                                      color: AppColors.accentGold,
+                                      color: AppColors.tertiary,
                                     ),
                                   ],
                                 ),
@@ -731,7 +752,8 @@ class ProviderHomeScreen extends StatelessWidget {
                                   'Tap to update status / OTP',
                                   style: TextStyle(
                                     fontSize: 11,
-                                    color: AppColors.textMuted,
+                                    // textMuted on white is 4.49:1, just under AA.
+                                    color: AppColors.textSecondary,
                                   ),
                                 ),
                               ],
@@ -865,7 +887,7 @@ class _ProviderNotificationBanner extends StatelessWidget {
                             child: Text(
                               notification.title,
                               style: const TextStyle(
-                                color: AppColors.cream,
+                                color: AppColors.textPrimary,
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -942,7 +964,7 @@ class _ProviderNotificationBanner extends StatelessWidget {
                   icon: const Icon(
                     Icons.close_rounded,
                     size: 16,
-                    color: AppColors.textMuted,
+                    color: AppColors.textSecondary,
                   ),
                   tooltip: 'Dismiss notification',
                   onPressed: onDismiss,
@@ -975,7 +997,9 @@ class _IncomingRequestBanner extends StatelessWidget {
         color: AppColors.surfaceElevated,
         borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(
-          color: AppColors.accentGold.withValues(alpha: 0.45),
+          // The card is white on a near-white page, so the gold edge is the
+          // only thing separating them: keep it strong enough to be seen.
+          color: AppColors.accentGold.withValues(alpha: 0.7),
           width: 1.2,
         ),
         boxShadow: [
@@ -1005,13 +1029,15 @@ class _IncomingRequestBanner extends StatelessWidget {
                     color: AppColors.accentGold.withValues(alpha: 0.18),
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: AppColors.accentGold.withValues(alpha: 0.3),
+                      color: AppColors.accentGold.withValues(alpha: 0.55),
                     ),
                   ),
                   child: const Icon(
                     Icons.radar_rounded,
                     size: 18,
-                    color: AppColors.accentGold,
+                    // ratingOnLight, not accentGold: raw gold on the 18% gold
+                    // disc measured 1.9:1.
+                    color: AppColors.ratingOnLight,
                   ),
                 ),
                 const SizedBox(width: AppSpacing.md),
@@ -1026,8 +1052,10 @@ class _IncomingRequestBanner extends StatelessWidget {
                               count == 1
                                   ? 'New Request Available!'
                                   : '$count New Requests Available!',
+                              // Was AppColors.cream (#FFFFFF) on a #FFFFFF card:
+                              // 1.0:1, i.e. an invisible title.
                               style: const TextStyle(
-                                color: AppColors.cream,
+                                color: AppColors.textPrimary,
                                 fontWeight: FontWeight.w700,
                                 fontSize: 13,
                               ),
@@ -1047,7 +1075,7 @@ class _IncomingRequestBanner extends StatelessWidget {
                             child: const Text(
                               'ACTION NEEDED',
                               style: TextStyle(
-                                color: Colors.black,
+                                color: AppColors.onAccentGold,
                                 fontSize: 8.5,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: 0.4,
@@ -1073,7 +1101,7 @@ class _IncomingRequestBanner extends StatelessWidget {
                 const Icon(
                   Icons.arrow_forward_ios_rounded,
                   size: 13,
-                  color: AppColors.accentGold,
+                  color: AppColors.tertiary,
                 ),
               ],
             ),

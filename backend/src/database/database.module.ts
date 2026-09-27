@@ -13,6 +13,11 @@ export function createDatabaseOptions(
     // application mutate a database schema automatically.
     synchronize: false,
     migrationsRun: false,
+    // Point the application at the same migration history `typeorm.config.ts`
+    // uses, so `migration:show` reflects reality instead of an empty list.
+    // Kept as a glob rather than imported, because typeorm.config.ts calls
+    // dotenv.config() as a side effect and the app is configured by Nest.
+    migrations: [`${__dirname}/../../migrations/*{.ts,.js}`],
   };
 }
 

@@ -630,18 +630,21 @@ class ProviderController extends ChangeNotifier {
     _ => 'Your current location could not be sent. Try again.',
   };
 
-  Future<void> acceptRequest(ProviderRequest request) async {
+  Future<bool> acceptRequest(ProviderRequest request) async {
     actionError = null;
     notifyListeners();
     try {
       final accepted = await repository.acceptRequest(request);
       requests = requests.where((item) => item.id != request.id).toList();
       jobs = [accepted, ...jobs.where((item) => item.id != accepted.id)];
+      notifyListeners();
+      return true;
     } on ApiException {
       actionError =
           'That request is no longer available. Refresh to try another.';
+      notifyListeners();
+      return false;
     }
-    notifyListeners();
   }
 
   @override

@@ -106,22 +106,20 @@ void main() async {
         'import \'package:fixnow_mobile/api/api_client.dart\';',
       )) {
         content =
-            'import \'package:fixnow_mobile/api/api_client.dart\';\n' + content;
+            'import \'package:fixnow_mobile/api/api_client.dart\';\n$content';
       }
       if (!content.contains(
         'import \'package:fixnow_mobile/features/services/sub_service_item.dart\';',
       )) {
         content =
-            'import \'package:fixnow_mobile/features/services/sub_service_item.dart\';\n' +
-            content;
+            'import \'package:fixnow_mobile/features/services/sub_service_item.dart\';\n$content';
       }
       if (!content.contains('class MockClient')) {
         content =
-            content +
-            '\n\nclass MockClient implements HttpClient {\n  @override\n  Future<HttpResponse> send(HttpRequest request) async => HttpResponse(200, {});\n}\n';
+            '$content\n\nclass MockClient implements HttpClient {\n  @override\n  Future<HttpResponse> send(HttpRequest request) async => HttpResponse(200, {});\n}\n';
       }
       await file.writeAsString(content);
-      print('Updated \${file.path}');
+      stdout.writeln('Updated ${file.path}');
     }
   }
 }

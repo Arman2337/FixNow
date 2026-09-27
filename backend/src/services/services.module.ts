@@ -9,7 +9,10 @@ import { SubServiceEntity } from './sub-service.entity';
 import { SubServicesController } from './sub-services.controller';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ServiceCategoryEntity, SubServiceEntity]), AuthModule],
+  imports: [
+    TypeOrmModule.forFeature([ServiceCategoryEntity, SubServiceEntity]),
+    AuthModule,
+  ],
   controllers: [ServiceCategoriesController, SubServicesController],
   providers: [ServiceCategoriesService],
   exports: [ServiceCategoriesService],

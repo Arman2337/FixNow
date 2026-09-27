@@ -79,6 +79,15 @@ export class EnvironmentVariables {
   @IsOptional()
   WEB_ALLOWED_ORIGINS?: string;
 
+  /**
+   * Origins a customer-supplied evidence link may point at. Defaults to
+   * WEB_ALLOWED_ORIGINS when unset, so a deployment only has to set this if
+   * evidence is hosted somewhere the web app is not.
+   */
+  @IsString()
+  @IsOptional()
+  EVIDENCE_ALLOWED_ORIGINS?: string;
+
   @IsInt()
   @Min(10_000)
   @Max(15_000)
@@ -139,6 +148,24 @@ export class EnvironmentVariables {
   @IsString()
   @IsOptional()
   OPENROUTESERVICE_API_KEY?: string;
+
+  // The free OpenRouteService plan allows 200 requests/day, so a live route is
+  // refreshed only after the technician has moved this far (or the interval
+  // below has elapsed). GPS jitter must not spend the daily quota.
+  @IsNumber()
+  @Min(1)
+  @IsOptional()
+  ROUTE_REFRESH_MIN_METERS: number = 50;
+
+  @IsInt()
+  @Min(1_000)
+  @IsOptional()
+  ROUTE_REFRESH_MIN_INTERVAL_MS: number = 60_000;
+
+  @IsInt()
+  @Min(1_000)
+  @IsOptional()
+  ROUTE_MAX_CACHE_AGE_MS: number = 600_000;
 
   @IsEnum(BooleanString)
   @IsOptional()
@@ -373,6 +400,11 @@ function validateLocalOtpBypass(config: EnvironmentVariables): void {
 
 function validateWebOrigins(config: EnvironmentVariables): void {
   validateOriginList(config, config.WEB_ALLOWED_ORIGINS, 'WEB_ALLOWED_ORIGINS');
+  validateOriginList(
+    config,
+    config.EVIDENCE_ALLOWED_ORIGINS,
+    'EVIDENCE_ALLOWED_ORIGINS',
+  );
 }
 
 function validateRealtimeOrigins(config: EnvironmentVariables): void {

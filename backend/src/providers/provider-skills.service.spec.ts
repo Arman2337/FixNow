@@ -8,8 +8,13 @@ import {
   ForbiddenException,
   BadRequestException,
 } from '@nestjs/common';
-import { ProviderSkillsService } from './provider-skills.service';
+import {
+  ProviderSkillsService,
+  AUTO_VERIFIED_NOTE,
+} from './provider-skills.service';
 import { ProviderSkillEntity } from './provider-skill.entity';
+import { UserEntity } from '../users/user.entity';
+import { AccountStatus } from '../users/account-status';
 import { ServiceCategoryEntity } from '../services/service-category.entity';
 import {
   CreateProviderSkillDto,
@@ -20,6 +25,7 @@ describe('ProviderSkillsService', () => {
   let service: ProviderSkillsService;
   let skillRepository: jest.Mocked<Repository<ProviderSkillEntity>>;
   let categoryRepository: jest.Mocked<Repository<ServiceCategoryEntity>>;
+  let userRepository: jest.Mocked<Repository<UserEntity>>;
 
   const mockSkill: ProviderSkillEntity = {
     id: 'skill-id',
@@ -47,9 +53,11 @@ describe('ProviderSkillsService', () => {
     isActive: true,
     isEmergency: false,
     providerSkills: [],
+    priceAmount: null,
+    priceCurrency: null,
     createdAt: new Date(),
     updatedAt: new Date(),
-  };
+  } as unknown as ServiceCategoryEntity;
 
   const mockQueryBuilder = {
     leftJoinAndSelect: jest.fn().mockReturnThis(),
@@ -75,6 +83,10 @@ describe('ProviderSkillsService', () => {
       findOne: jest.fn(),
     };
 
+    const mockUserRepository = {
+      findOne: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ProviderSkillsService,
@@ -86,12 +98,17 @@ describe('ProviderSkillsService', () => {
           provide: getRepositoryToken(ServiceCategoryEntity),
           useValue: mockCategoryRepository,
         },
+        {
+          provide: getRepositoryToken(UserEntity),
+          useValue: mockUserRepository,
+        },
       ],
     }).compile();
 
     service = module.get<ProviderSkillsService>(ProviderSkillsService);
     skillRepository = module.get(getRepositoryToken(ProviderSkillEntity));
     categoryRepository = module.get(getRepositoryToken(ServiceCategoryEntity));
+    userRepository = module.get(getRepositoryToken(UserEntity));
   });
 
   afterEach(() => {
@@ -157,6 +174,10 @@ describe('ProviderSkillsService', () => {
     it('should create skill successfully', async () => {
       categoryRepository.findOne.mockResolvedValue(mockCategory);
       skillRepository.findOne.mockResolvedValue(null); // No existing skill
+      userRepository.findOne.mockResolvedValue({
+        id: 'user-id',
+        status: AccountStatus.Active,
+      } as UserEntity);
       skillRepository.create.mockReturnValue(mockSkill);
       skillRepository.save.mockResolvedValue(mockSkill);
 
@@ -168,12 +189,71 @@ describe('ProviderSkillsService', () => {
       expect(skillRepository.findOne).toHaveBeenCalledWith({
         where: { userId: 'user-id', serviceCategoryId: 'category-id' },
       });
+      // Verification is inherited from the provider's own account, never
+      // asserted by the request.
       expect(skillRepository.create).toHaveBeenCalledWith({
         ...createDto,
         userId: 'user-id',
-        isVerified: true, // Skills are auto-verified for now so providers get jobs immediately
+        isVerified: true,
+        verificationNotes: AUTO_VERIFIED_NOTE,
       });
       expect(result).toEqual(mockSkill);
+    });
+
+    it('never lets the request body set the verified flag', async () => {
+      categoryRepository.findOne.mockResolvedValue(mockCategory);
+      skillRepository.findOne.mockResolvedValue(null);
+      userRepository.findOne.mockResolvedValue({
+        id: 'user-id',
+        status: AccountStatus.Active,
+      } as UserEntity);
+      skillRepository.create.mockReturnValue(mockSkill);
+      skillRepository.save.mockResolvedValue(mockSkill);
+
+      // A provider claiming to be pre-verified gets nothing: the flag is
+      // recomputed from the account, so a spoofed body value is overwritten.
+      await service.create('user-id', {
+        ...createDto,
+        isVerified: true,
+      } as CreateProviderSkillDto);
+
+      expect(skillRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({ isVerified: true }),
+      );
+    });
+
+    it('leaves the skill unverified when the account is not verified', async () => {
+      categoryRepository.findOne.mockResolvedValue(mockCategory);
+      skillRepository.findOne.mockResolvedValue(null);
+      userRepository.findOne.mockResolvedValue({
+        id: 'user-id',
+        status: AccountStatus.PendingVerification,
+      } as UserEntity);
+      skillRepository.create.mockReturnValue(mockSkill);
+      skillRepository.save.mockResolvedValue(mockSkill);
+
+      await service.create('user-id', createDto);
+
+      expect(skillRepository.create).toHaveBeenCalledWith({
+        ...createDto,
+        userId: 'user-id',
+        isVerified: false,
+        verificationNotes: null,
+      });
+    });
+
+    it('leaves the skill unverified when the account cannot be found', async () => {
+      categoryRepository.findOne.mockResolvedValue(mockCategory);
+      skillRepository.findOne.mockResolvedValue(null);
+      userRepository.findOne.mockResolvedValue(null);
+      skillRepository.create.mockReturnValue(mockSkill);
+      skillRepository.save.mockResolvedValue(mockSkill);
+
+      await service.create('user-id', createDto);
+
+      expect(skillRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({ isVerified: false }),
+      );
     });
 
     it('should throw BadRequestException for inactive category', async () => {

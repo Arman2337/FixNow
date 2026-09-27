@@ -1,4 +1,5 @@
 import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
+import { runBounded } from '../../common/run-bounded';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Booking } from '../../bookings/domain/booking.entity';
@@ -126,6 +127,15 @@ function describePushError(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
+/**
+ * How many provider notifications may be in flight during a fan-out.
+ *
+ * An implementation bound, not a policy number. Booking creation awaits this
+ * fan-out, so an unbounded pool would open as many connections as there are
+ * eligible providers.
+ */
+const FANOUT_CONCURRENCY = 10;
+
 @Injectable()
 export class DomainNotificationService {
   constructor(
@@ -205,16 +215,26 @@ export class DomainNotificationService {
       },
     };
 
-    for (const providerId of eligibleProviderIds.slice(0, cap)) {
-      await this.send(
-        providerId,
-        'booking:provider:REQUESTED',
-        `booking:${booking.id}:provider:REQUESTED`,
-        enrichedTemplate,
-        booking.id,
-        { bypassQuietHours: true },
-      );
-    }
+    // BUG-005: these were awaited one provider at a time, so booking creation
+    // blocked on up to 20 sequential sends and one slow push stalled the rest.
+    // Bounded concurrency keeps the delivery guarantee (the caller still awaits
+    // completion) while removing the head-of-line blocking.
+    await runBounded(
+      eligibleProviderIds
+        .slice(0, cap)
+        .map(
+          (providerId) => () =>
+            this.send(
+              providerId,
+              'booking:provider:REQUESTED',
+              `booking:${booking.id}:provider:REQUESTED`,
+              enrichedTemplate,
+              booking.id,
+              { bypassQuietHours: true },
+            ),
+        ),
+      FANOUT_CONCURRENCY,
+    );
   }
 
   /** Notify inactive party of an incoming in-app chat message. */

@@ -19,6 +19,7 @@ import {
   EMERGENCY_NOTIFICATION_TEMPLATES,
 } from '../notifications/domain/domain-notification.service';
 import { TrustService } from '../trust/trust.service';
+import { runBounded } from '../common/run-bounded';
 import { EmergencyDispatch } from './emergency-dispatch.entity';
 import {
   EMERGENCY_FALLBACK_GUIDANCE,
@@ -78,7 +79,7 @@ export class EmergencyService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
-   * Two-step deliberate creation (policy §3): the client collects details on
+   * Two-step deliberate creation (policy Â§3): the client collects details on
    * one screen and posts them with an explicit confirm action here. Abuse
    * controls run BEFORE any booking or push exists.
    */
@@ -110,7 +111,7 @@ export class EmergencyService implements OnModuleInit, OnModuleDestroy {
       dispatch = await dispatches.save(
         dispatches.create({ bookingId: booking.id, currentWave: 0 }),
       );
-      // Self-healing note (policy §4 atomicity): a crash between booking
+      // Self-healing note (policy Â§4 atomicity): a crash between booking
       // commit and this insert is covered because the wave scanner only
       // escalates dispatches that exist, and the status endpoint treats a
       // missing row as wave 0 for any emergency-category booking.
@@ -118,7 +119,7 @@ export class EmergencyService implements OnModuleInit, OnModuleDestroy {
 
     await this.audit(booking, customerId, 'emergency: request created');
 
-    // Best-effort: repeat-use patterns surface for human review (policy §6).
+    // Best-effort: repeat-use patterns surface for human review (policy Â§6).
     try {
       const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60_000);
       const used = await this.dataSource
@@ -176,7 +177,7 @@ export class EmergencyService implements OnModuleInit, OnModuleDestroy {
     };
   }
 
-  /** Ops oversight listing (policy §9): every live dispatch with its wave. */
+  /** Ops oversight listing (policy Â§9): every live dispatch with its wave. */
   async listActiveDispatches(): Promise<
     Array<{
       bookingId: string;
@@ -234,8 +235,8 @@ export class EmergencyService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
-   * Escalation tick (policy §5). Public + injectable clock for tests. Waves
-   * never touch non-emergency bookings, terminal states, or assigned jobs —
+   * Escalation tick (policy Â§5). Public + injectable clock for tests. Waves
+   * never touch non-emergency bookings, terminal states, or assigned jobs â€”
    * the moment acceptance wins, status leaves REQUESTED and waves no-op.
    */
   async scanOnce(now = new Date()): Promise<number> {
@@ -312,47 +313,13 @@ export class EmergencyService implements OnModuleInit, OnModuleDestroy {
       waves.push(() => this.runWave(booking, dispatch, nextWave));
     }
 
-    await this.runBounded(waves);
+    await runBounded(waves, WAVE_CONCURRENCY);
     return waves.length;
   }
 
   /**
-   * Runs thunks with at most `WAVE_CONCURRENCY` in flight.
-   *
-   * Bounded rather than unlimited: 50 concurrent fan-outs would open 2,500
-   * sockets at the push provider at once, which is its own outage. Ten keeps the
-   * 30-second tick comfortably achievable while removing the head-of-line
-   * blocking that made a single slow provider stall the batch.
-   *
-   * Takes thunks rather than promises on purpose. An array of already-started
-   * promises is already `WAVE_CONCURRENCY`-times-too-many in flight by the time
-   * this is called, so awaiting them in a bounded pool would bound nothing.
-   */
-  private async runBounded(
-    work: ReadonlyArray<() => Promise<unknown>>,
-  ): Promise<void> {
-    if (work.length === 0) return;
-    let next = 0;
-    const worker = async (): Promise<void> => {
-      while (next < work.length) {
-        const index = next;
-        next += 1;
-        try {
-          await work[index]();
-        } catch {
-          // Per-send failures are already swallowed; this is a belt-and-braces
-          // guard so one broken item cannot abandon the rest of the batch.
-        }
-      }
-    };
-    await Promise.all(
-      Array.from({ length: Math.min(WAVE_CONCURRENCY, work.length) }, worker),
-    );
-  }
-
-  /**
-   * One fan-out wave: radius widening on wave 2 (policy §5), quiet-hour
-   * override always (policy §8), permanent dedupe keys per wave+provider so
+   * One fan-out wave: radius widening on wave 2 (policy Â§5), quiet-hour
+   * override always (policy Â§8), permanent dedupe keys per wave+provider so
    * repeated ticks never double-push.
    */
   private async runWave(
@@ -370,7 +337,7 @@ export class EmergencyService implements OnModuleInit, OnModuleDestroy {
 
     // Sends within a wave are also bounded: 50 providers awaited one at a time
     // meant one slow push stalled the rest of the wave.
-    await this.runBounded(
+    await runBounded(
       eligible.map(
         ({ providerId }) =>
           () =>
@@ -386,6 +353,7 @@ export class EmergencyService implements OnModuleInit, OnModuleDestroy {
               // Single-attempt per send; delivery records capture failures.
               .catch(() => undefined),
       ),
+      WAVE_CONCURRENCY,
     );
 
     const dispatches = this.dataSource.getRepository(EmergencyDispatch);
@@ -408,9 +376,9 @@ export class EmergencyService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
-   * Policy §6 limits. A cooldown waiver applies when the previous emergency
+   * Policy Â§6 limits. A cooldown waiver applies when the previous emergency
    * ended CANCELLED with a provider attached (the provider walked away), so
-   * a stranded customer can immediately re-dispatch (policy §7 row 4).
+   * a stranded customer can immediately re-dispatch (policy Â§7 row 4).
    */
   private async assertWithinAbuseLimits(customerId: string): Promise<void> {
     const dispatches = this.dataSource.getRepository(EmergencyDispatch);
@@ -469,7 +437,7 @@ export class EmergencyService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  /** Coarse, coordinate-free audit trail (policy §6.4). */
+  /** Coarse, coordinate-free audit trail (policy Â§6.4). */
   private async audit(
     booking: Booking,
     actorUserId: string,

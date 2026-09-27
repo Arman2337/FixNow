@@ -12,6 +12,7 @@ import { CreateComplaintDto, EvidenceDto } from './dto/create-complaint.dto';
 import { AppealStatus } from '../../../../shared/trust.types';
 import { ComplaintTargetRole } from './domain/complaint.entity';
 import { TrustService } from '../../trust/trust.service';
+import { Booking } from '../../bookings/domain/booking.entity';
 
 @Injectable()
 export class ComplaintsService {
@@ -22,13 +23,25 @@ export class ComplaintsService {
     private readonly evidenceRepository: Repository<ComplaintEvidence>,
     @InjectRepository(ComplaintAudit)
     private readonly auditRepository: Repository<ComplaintAudit>,
+    @InjectRepository(Booking)
+    private readonly bookingRepository: Repository<Booking>,
     private readonly trust?: TrustService,
   ) {}
 
+  /**
+   * SEC-002: `bookingId` and `targetId` used to be written straight from the
+   * request body. Because the trust engine counts stored complaints per target,
+   * a single account could replay this endpoint to manufacture a MEDIUM
+   * trust-and-safety signal against any user, and could attach an uninvolved
+   * customer's booking to its own case. Both ids are now proved against the
+   * caller before anything is written.
+   */
   async createComplaint(
     submitterId: string,
     dto: CreateComplaintDto,
   ): Promise<Complaint> {
+    await this.assertTargetIsRelatedToCaller(submitterId, dto);
+
     const complaint = this.complaintsRepository.create({
       submitterId,
       bookingId: dto.bookingId,
@@ -42,7 +55,8 @@ export class ComplaintsService {
     const savedComplaint = await this.complaintsRepository.save(complaint);
 
     // FN-060: review signal recording is best-effort; it can never fail a
-    // complaint submission.
+    // complaint submission. The target has been proved related to the caller
+    // by this point, so the signal reflects a real service interaction.
     if (dto.targetRole === ComplaintTargetRole.PROVIDER && dto.targetId) {
       try {
         await this.trust?.evaluateComplaintSignal(dto.targetId);
@@ -65,6 +79,54 @@ export class ComplaintsService {
     }
 
     return this.getComplaintById(savedComplaint.id, submitterId);
+  }
+
+  /**
+   * A complaint may only be raised about a booking the caller is a party to,
+   * and the complained-about party must be the counterparty on that booking.
+   *
+   * Rejections are deliberately indistinguishable from "not found" so this
+   * cannot be used to probe whether an arbitrary booking or user id exists.
+   */
+  private async assertTargetIsRelatedToCaller(
+    submitterId: string,
+    dto: CreateComplaintDto,
+  ): Promise<void> {
+    if (!dto.bookingId) {
+      // Without a booking there is no relationship to prove, so there is
+      // nothing to complain about. Previously this path let a caller name any
+      // `targetId` at all.
+      throw new ForbiddenException(
+        'A bookingId is required so the complaint can be validated against your booking',
+      );
+    }
+
+    const booking = await this.bookingRepository.findOne({
+      where: { id: dto.bookingId },
+    });
+
+    // A booking the caller is not a party to, or that does not exist, is
+    // reported identically so this cannot probe for valid ids.
+    const isCustomer = booking?.customerId === submitterId;
+    const isProvider = booking?.providerId === submitterId;
+    if (!booking || (!isCustomer && !isProvider)) {
+      throw new NotFoundException('Booking not found for this complaint');
+    }
+
+    if (dto.targetId) {
+      // The target must be the counterparty on the booking. A caller can never
+      // be the target of their own complaint, and can never aim one at a
+      // third party.
+      const counterparty = isCustomer ? booking.providerId : booking.customerId;
+      if (dto.targetId !== counterparty) {
+        throw new NotFoundException('Booking not found for this complaint');
+      }
+    }
+
+    if (dto.targetRole === ComplaintTargetRole.PROVIDER && !isCustomer) {
+      // Only the customer can raise a complaint against the provider.
+      throw new NotFoundException('Booking not found for this complaint');
+    }
   }
 
   async getComplaintById(

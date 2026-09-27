@@ -8,8 +8,9 @@ import {
 } from './domain/complaint.entity';
 import { ComplaintEvidence } from './domain/complaint-evidence.entity';
 import { ComplaintAudit } from './domain/complaint-audit.entity';
-import { ForbiddenException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { TrustService } from '../../trust/trust.service';
+import { Booking } from '../../bookings/domain/booking.entity';
 
 describe('ComplaintsService', () => {
   let service: ComplaintsService;
@@ -33,6 +34,10 @@ describe('ComplaintsService', () => {
     save: jest.fn(),
   };
 
+  const mockBookingRepository = {
+    findOne: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -50,6 +55,10 @@ describe('ComplaintsService', () => {
           useValue: mockAuditRepository,
         },
         {
+          provide: getRepositoryToken(Booking),
+          useValue: mockBookingRepository,
+        },
+        {
           provide: TrustService,
           useValue: { evaluateComplaintSignal: mockEvaluateComplaintSignal },
         },
@@ -58,12 +67,20 @@ describe('ComplaintsService', () => {
 
     service = module.get<ComplaintsService>(ComplaintsService);
     jest.clearAllMocks();
+    // Default: the caller is the customer on the booking they complain about.
+    mockBookingRepository.findOne.mockResolvedValue({
+      id: 'booking-1',
+      customerId: 'user-1',
+      providerId: 'provider-1',
+    });
   });
 
   it('should create a complaint and save evidence', async () => {
     const submitterId = 'user-1';
     const dto = {
+      bookingId: 'booking-1',
       targetRole: ComplaintTargetRole.PROVIDER,
+      targetId: 'provider-1',
       category: 'Unprofessional Behavior',
       description: 'The provider was rude.',
       evidence: [{ fileUrl: 'http://test.com/img.png', fileType: 'image/png' }],
@@ -90,6 +107,70 @@ describe('ComplaintsService', () => {
     expect(mockComplaintRepository.save).toHaveBeenCalled();
     expect(mockEvidenceRepository.save).toHaveBeenCalled();
     expect(result.id).toBe('comp-1');
+  });
+
+  // SEC-002 regression: bookingId/targetId used to be written straight from
+  // the request body, so one account could replay this endpoint to manufacture
+  // a trust-and-safety signal against an arbitrary user.
+  describe('complaint target validation (SEC-002)', () => {
+    const baseDto = {
+      targetRole: ComplaintTargetRole.PROVIDER,
+      category: 'Unprofessional Behavior',
+      description: 'The provider was rude.',
+    };
+
+    it('refuses a complaint with no bookingId, so no target can be named freely', async () => {
+      await expect(
+        service.createComplaint('user-1', { ...baseDto, targetId: 'victim' }),
+      ).rejects.toThrow(ForbiddenException);
+
+      expect(mockComplaintRepository.save).not.toHaveBeenCalled();
+      expect(mockEvaluateComplaintSignal).not.toHaveBeenCalled();
+    });
+
+    it('refuses a booking the caller is not a party to', async () => {
+      mockBookingRepository.findOne.mockResolvedValue({
+        id: 'booking-1',
+        customerId: 'someone-else',
+        providerId: 'provider-1',
+      });
+
+      await expect(
+        service.createComplaint('attacker', {
+          ...baseDto,
+          bookingId: 'booking-1',
+          targetId: 'provider-1',
+        }),
+      ).rejects.toThrow(NotFoundException);
+
+      expect(mockComplaintRepository.save).not.toHaveBeenCalled();
+      expect(mockEvaluateComplaintSignal).not.toHaveBeenCalled();
+    });
+
+    it('refuses a target that is not the counterparty on the booking', async () => {
+      await expect(
+        service.createComplaint('user-1', {
+          ...baseDto,
+          bookingId: 'booking-1',
+          targetId: 'unrelated-victim',
+        }),
+      ).rejects.toThrow(NotFoundException);
+
+      expect(mockComplaintRepository.save).not.toHaveBeenCalled();
+      expect(mockEvaluateComplaintSignal).not.toHaveBeenCalled();
+    });
+
+    it('refuses a provider complaint raised by the provider themselves', async () => {
+      await expect(
+        service.createComplaint('provider-1', {
+          ...baseDto,
+          bookingId: 'booking-1',
+          targetId: 'provider-1',
+        }),
+      ).rejects.toThrow(NotFoundException);
+
+      expect(mockEvaluateComplaintSignal).not.toHaveBeenCalled();
+    });
   });
 
   it('should restrict access to complaint by non-submitter/target if not admin', async () => {

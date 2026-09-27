@@ -618,12 +618,8 @@ void main() {
       controller.jobs = [job];
 
       final updated = await controller.updateJobItems(job, const [
-        BookingItemDraft(
-          id: 'on-site-1',
-          name: 'New tap cartridge',
-          quantity: 2,
-          unitPriceMinor: 24900,
-        ),
+        // Only the catalogue entry and quantity travel to the server (SEC-001).
+        BookingItemDraft(subServiceId: 'on-site-1', quantity: 2),
       ]);
 
       expect(updated, isNotNull);
@@ -635,10 +631,8 @@ void main() {
       final body = transport.requests.last.body!;
       expect(body['expectedVersion'], 2);
       expect((body['items'] as List).single, {
-        'id': 'on-site-1',
-        'name': 'New tap cartridge',
+        'subServiceId': 'on-site-1',
         'quantity': 2,
-        'unitPriceMinor': 24900,
       });
     },
   );
@@ -663,12 +657,7 @@ void main() {
       controller.jobs = [job];
 
       final updated = await controller.updateJobItems(job, const [
-        BookingItemDraft(
-          id: 'on-site-1',
-          name: 'New tap cartridge',
-          quantity: 1,
-          unitPriceMinor: 24900,
-        ),
+        BookingItemDraft(subServiceId: 'on-site-1', quantity: 1),
       ]);
 
       expect(updated, isNull);

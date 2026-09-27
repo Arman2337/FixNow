@@ -81,16 +81,18 @@ void main() {
         String? proceededDescription;
         int? proceededPrice;
         List<BookingItemDraft>? proceededItems;
+    List<BookingLineItem>? proceededPricedItems;
 
         await tester.pumpWidget(
           host(
             SubServiceCatalogScreen(
               api: MockApiTransport(),
               category: testCategory,
-              onProceedToBooking: (cat, desc, price, loc, items) {
+              onProceedToBooking: (cat, desc, price, loc, items, priced) {
                 proceededDescription = desc;
                 proceededPrice = price;
                 proceededItems = items;
+                proceededPricedItems = priced;
               },
             ),
           ),
@@ -128,8 +130,13 @@ void main() {
         expect(proceededPrice, 35164); // 29800 subtotal + 5364 GST
         expect(proceededItems, hasLength(1));
         expect(proceededItems!.single.quantity, 2);
-        expect(proceededItems!.single.unitPriceMinor, 14900);
-        expect(proceededItems!.single.durationMinutes, 30);
+        // SEC-001: the request carries only a catalogue id and a quantity.
+        expect(proceededItems!.single.subServiceId, isNotEmpty);
+        // The priced mirror is display-only and holds the real catalogue data.
+        expect(proceededPricedItems, hasLength(1));
+        expect(proceededPricedItems!.single.quantity, 2);
+        expect(proceededPricedItems!.single.unitPriceMinor, 14900);
+        expect(proceededPricedItems!.single.durationMinutes, 30);
       },
     );
 

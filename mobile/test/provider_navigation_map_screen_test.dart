@@ -1,3 +1,4 @@
+import 'package:fixnow_mobile/api/api_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -15,7 +16,17 @@ import 'package:fixnow_mobile/features/tracking/provider_live_map.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
+/// Minimal transport so screens that read the catalogue resolve without I/O.
+class _MockTransport implements ApiTransport {
+  @override
+  Future<ApiResponse> send(ApiRequest request) async =>
+      const ApiResponse(statusCode: 200, body: <Object?>[]);
+}
+
 class _MockProviderRepository implements ProviderRepository {
+  @override
+  ApiTransport get api => _MockTransport();
+
   @override
   Future<List<CustomerBooking>> jobs() async => [];
 

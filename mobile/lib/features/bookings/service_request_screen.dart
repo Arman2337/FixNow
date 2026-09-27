@@ -26,6 +26,7 @@ class ServiceRequestScreen extends StatefulWidget {
     this.initialLocation,
     this.initialDescription,
     this.initialItems,
+    this.pricedItems,
     this.estimateRepository,
     super.key,
   });
@@ -34,9 +35,13 @@ class ServiceRequestScreen extends StatefulWidget {
   final BookingLocationProvider? locationProvider;
   final BookingLocationFix? initialLocation;
 
-  /// Itemized services carried over from the catalog cart; sent with the
-  /// booking so the backend can recompute totals and visit duration.
+  /// Itemized services carried over from the catalog cart. Carries only
+  /// catalogue ids and quantities — the backend prices them (SEC-001).
   final List<BookingItemDraft>? initialItems;
+
+  /// Display-only priced mirror of [initialItems], used to render the recap.
+  /// Never submitted.
+  final List<BookingLineItem>? pricedItems;
 
   /// Prefill from a previous booking ("Book again"); always reviewable and
   /// editable before submission.
@@ -183,19 +188,30 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
     super.dispose();
   }
 
-  /// Itemized recap of the cart the customer built, mirroring what the
-  /// backend will store and recompute (GST included in the shown total).
+  /// Itemized recap of the cart the customer built.
+  ///
+  /// Renders from `widget.pricedItems` (the catalogue-priced mirror). Falls
+  /// back to quantity-only rows if the mirror is unavailable, rather than
+  /// inventing a price. The authoritative total is always the server's.
   Widget _buildItemsSummaryCard(List<BookingItemDraft> items) {
-    final subtotalMinor = items.fold<int>(
+    final priced = widget.pricedItems ?? const <BookingLineItem>[];
+    BookingLineItem? pricedFor(BookingItemDraft draft) {
+      for (final p in priced) {
+        if (p.id == draft.subServiceId) return p;
+      }
+      return null;
+    }
+
+    final subtotalMinor = priced.fold<int>(
       0,
-      (sum, item) => sum + item.unitPriceMinor * item.quantity,
+      (sum, line) => sum + line.unitPriceMinor * line.quantity,
     );
     final gstMinor = (subtotalMinor * 0.18).round();
     String money(int minor) =>
         '₹${(minor / 100).toStringAsFixed(minor % 100 == 0 ? 0 : 2)}';
-    final totalMinutes = items.fold<int>(
+    final totalMinutes = priced.fold<int>(
       0,
-      (sum, item) => sum + (item.durationMinutes ?? 0) * item.quantity,
+      (sum, line) => sum + (line.durationMinutes ?? 0) * line.quantity,
     );
     final durationLabel = totalMinutes == 0
         ? null
@@ -226,22 +242,32 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
           for (final item in items)
             Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Text(
-                      item.quantity == 1
-                          ? item.name
-                          : '${item.name}  ×${item.quantity}',
-                      style: const TextStyle(color: AppColors.textOnSurface),
-                    ),
-                  ),
-                  Text(
-                    money(item.unitPriceMinor * item.quantity),
-                    style: const TextStyle(color: AppColors.textOnSurface),
-                  ),
-                ],
+              child: Builder(
+                builder: (context) {
+                  final line = pricedFor(item);
+                  final label = line?.name ?? 'Selected service';
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          item.quantity == 1
+                              ? label
+                              : '$label  ×${item.quantity}',
+                          style: const TextStyle(
+                            color: AppColors.textOnSurface,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        line == null ? '—' : money(line.lineTotalMinor),
+                        style: const TextStyle(
+                          color: AppColors.textOnSurface,
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
           const SizedBox(height: AppSpacing.xs),

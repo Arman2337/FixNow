@@ -41,23 +41,16 @@ void main() {
       latitude: 17.385,
       longitude: 78.4867,
       items: const [
-        BookingItemDraft(
-          id: 'plumb-3',
-          name: 'Shower & Water Pipe Leakage',
-          quantity: 2,
-          unitPriceMinor: 24900,
-          durationMinutes: 45,
-        ),
+        // Only the catalogue entry and quantity are sent; the server prices it
+        // (SEC-001).
+        BookingItemDraft(subServiceId: 'plumb-3', quantity: 2),
       ],
     );
 
     expect(transport.requests.single.body?['items'], [
       {
-        'id': 'plumb-3',
-        'name': 'Shower & Water Pipe Leakage',
+        'subServiceId': 'plumb-3',
         'quantity': 2,
-        'unitPriceMinor': 24900,
-        'durationMinutes': 45,
       },
     ]);
     final booking = controller.bookings.single;

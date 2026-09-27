@@ -40,30 +40,30 @@ enum BookingStatusValue {
 }
 
 /// A line item sent when creating a booking (from the service cart).
+///
+/// SECURITY: this is the REQUEST shape. It carries only a catalogue entry and
+/// a quantity. `name`, `unitPriceMinor` and `durationMinutes` are resolved by
+/// the backend from `sub_services`, so the amount charged can never be chosen
+/// by the client. The backend rejects any body that still contains
+/// `unitPriceMinor` (global `forbidNonWhitelisted: true`).
 class BookingItemDraft {
   const BookingItemDraft({
-    required this.id,
-    required this.name,
+    required this.subServiceId,
     required this.quantity,
-    required this.unitPriceMinor,
-    this.durationMinutes,
   });
-  final String id;
-  final String name;
+
+  final String subServiceId;
   final int quantity;
-  final int unitPriceMinor;
-  final int? durationMinutes;
 
   Map<String, Object?> toJson() => {
-        'id': id,
-        'name': name,
+        'subServiceId': subServiceId,
         'quantity': quantity,
-        'unitPriceMinor': unitPriceMinor,
-        if (durationMinutes != null) 'durationMinutes': durationMinutes,
       };
 }
 
 /// An itemized line stored on a booking by the backend.
+///
+/// This is the priced OUTPUT shape. The backend is the only writer.
 class BookingLineItem {
   const BookingLineItem({
     required this.id,
@@ -80,12 +80,11 @@ class BookingLineItem {
 
   int get lineTotalMinor => unitPriceMinor * quantity;
 
+  /// `id` is the sub-service id on a server-priced snapshot, so a stored line
+  /// round-trips back into a valid request shape.
   BookingItemDraft toDraft() => BookingItemDraft(
-        id: id,
-        name: name,
+        subServiceId: id,
         quantity: quantity,
-        unitPriceMinor: unitPriceMinor,
-        durationMinutes: durationMinutes,
       );
 
   factory BookingLineItem.fromJson(Map<String, Object?> json) {

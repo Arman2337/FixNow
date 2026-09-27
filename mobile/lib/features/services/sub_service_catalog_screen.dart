@@ -26,12 +26,18 @@ class SubServiceCatalogScreen extends StatefulWidget {
   final ApiTransport api;
 
   /// Callback when user confirms cart items to proceed to booking.
+  ///
+  /// `items` carries only catalogue ids and quantities — the server prices them
+  /// (SEC-001). `pricedItems` carries the same lines with their catalogue names
+  /// and prices purely so the request screen can render a recap; it is
+  /// display-only and is never submitted.
   final void Function(
     ServiceCategory updatedCategory,
     String itemizedDescription,
     int calculatedPriceMinor,
     BookingLocationFix? location,
     List<BookingItemDraft> items,
+    List<BookingLineItem> pricedItems,
   )? onProceedToBooking;
 
   @override
@@ -122,6 +128,17 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
         _cart.items
             .map(
               (item) => BookingItemDraft(
+                // Only the catalogue entry and quantity travel to the server.
+                // The backend resolves the name and price (SEC-001).
+                subServiceId: item.subService.id,
+                quantity: item.quantity,
+              ),
+            )
+            .toList(growable: false),
+        // Display-only mirror of the same lines, priced from the catalogue.
+        _cart.items
+            .map(
+              (item) => BookingLineItem(
                 id: item.subService.id,
                 name: item.subService.name,
                 quantity: item.quantity,

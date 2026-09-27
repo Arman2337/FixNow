@@ -1,3 +1,4 @@
+import 'package:fixnow_mobile/api/api_client.dart';
 import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_theme.dart';
 import 'package:fixnow_mobile/design_system/fix_otp_input_sheet.dart';
@@ -11,11 +12,42 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+/// Serves the pricing catalogue the adjustment sheet reads. Prices here are
+/// the catalogue prices, which is what the server will charge (SEC-001).
+class _FakeCatalogueTransport implements ApiTransport {
+  @override
+  Future<ApiResponse> send(ApiRequest request) async => const ApiResponse(
+    statusCode: 200,
+    body: [
+      {
+        'id': 'plumb-3',
+        'categoryId': 'plumbing',
+        'name': 'Pipe Replacement',
+        'description': 'Replace a burst pipe section',
+        'priceMinor': 49900,
+        'estimatedDurationMinutes': 45,
+      },
+      {
+        'id': 'on-site-1',
+        'categoryId': 'plumbing',
+        'name': 'New tap cartridge',
+        'description': 'Fit a replacement cartridge',
+        'priceMinor': 25000,
+        'estimatedDurationMinutes': 20,
+      },
+    ],
+  );
+}
+
 class _FakeProviderRepository implements ProviderRepository {
   CustomerBooking? lastUpdatedJob;
   String? lastUpdatedStatus;
   String? lastVerifiedOtp;
   List<BookingItemDraft>? lastSubmittedItems;
+
+  /// The service-adjustment sheet reads the catalogue through this transport.
+  @override
+  ApiTransport get api => _FakeCatalogueTransport();
 
   @override
   Future<List<CustomerBooking>> jobs() async => [];
@@ -93,15 +125,24 @@ class _FakeProviderRepository implements ProviderRepository {
   ) async {
     lastUpdatedJob = job;
     lastSubmittedItems = items;
+    // The server re-prices from the catalogue, so the fake resolves names and
+    // prices from a small lookup rather than echoing what the client sent.
+    final catalogue = <String, ({String name, int priceMinor})>{
+      'plumb-3': (name: 'Pipe Replacement', priceMinor: 25000),
+      'on-site-1': (name: 'New tap cartridge', priceMinor: 25000),
+    };
     final updated = job.copyWith(
       items: items
           .map(
-            (draft) => BookingLineItem(
-              id: draft.id,
-              name: draft.name,
-              quantity: draft.quantity,
-              unitPriceMinor: draft.unitPriceMinor,
-            ),
+            (draft) {
+              final entry = catalogue[draft.subServiceId];
+              return BookingLineItem(
+                id: draft.subServiceId,
+                name: entry?.name ?? 'Service',
+                quantity: draft.quantity,
+                unitPriceMinor: entry?.priceMinor ?? 0,
+              );
+            },
           )
           .toList(growable: false),
       version: job.version + 1,
@@ -440,7 +481,9 @@ void main() {
         locationLongitude: 72.8347,
         items: const [
           BookingLineItem(
-            id: 'item-1',
+            // A priced snapshot's id is the sub-service id, which is what lets
+            // the sheet re-resolve the name and price from the catalogue.
+            id: 'plumb-3',
             name: 'Pipe Replacement',
             quantity: 1,
             unitPriceMinor: 49900,
@@ -481,7 +524,7 @@ void main() {
       locationLongitude: 72.8347,
       items: const [
         BookingLineItem(
-          id: 'item-1',
+          id: 'plumb-3',
           name: 'Pipe Replacement',
           quantity: 1,
           unitPriceMinor: 49900,
@@ -499,6 +542,18 @@ void main() {
       );
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('cockpit_adjust_services_button')));
+      await tester.pumpAndSettle();
+    }
+
+    /// A provider can only add work that already exists in the catalogue, so
+    /// the flow is: open the picker, choose an entry, press add. There is no
+    /// free-text name or price anywhere in this sheet.
+    Future<void> addCatalogueEntry(WidgetTester tester, String label) async {
+      await tester.tap(find.byType(DropdownButton<String>));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(label).last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.bySemanticsLabel('Add selected service'));
       await tester.pumpAndSettle();
     }
 
@@ -541,33 +596,41 @@ void main() {
       }
     });
 
-    testWidgets('input hints and the close control stay readable', (
+    testWidgets('picker affordances and the close control stay readable', (
       tester,
     ) async {
       await openSheet(tester);
 
-      final fields = tester
-          .widgetList<TextField>(find.byType(TextField))
-          .map((field) => field.decoration)
-          .where((decoration) => decoration?.hintText != null)
-          .cast<InputDecoration>()
-          .toList();
-      expect(fields, hasLength(2));
+      // The picker replaced the old free-text name and price inputs, so the
+      // contrast bar is now on the dropdown hint, its border and the controls.
+      const fill = AppColors.surfaceContainerLowest;
 
-      for (final decoration in fields) {
-        // Judged against the field's own fill, which is what the user sees.
-        const fill = AppColors.surfaceContainerLowest;
-        expect(
-          _contrastRatio(decoration.hintStyle!.color!, fill),
-          greaterThanOrEqualTo(4.5),
-          reason: 'field hint must meet AA on its own fill',
-        );
-        expect(
-          _contrastRatio(decoration.enabledBorder!.borderSide.color, fill),
-          greaterThanOrEqualTo(1.4),
-          reason: 'field border must be clearly perceptible on its own fill',
-        );
-      }
+      final hint = find.text('Select a service');
+      expect(hint, findsOneWidget);
+      final hintStyle = tester.widget<Text>(hint).style!;
+      expect(
+        _contrastRatio(hintStyle.color!, fill),
+        greaterThanOrEqualTo(4.5),
+        reason: 'picker hint must meet AA on its own fill',
+      );
+
+      final dropdownBox = tester.widget<Container>(
+        find
+            .ancestor(
+              of: find.byType(DropdownButton<String>),
+              matching: find.byType(Container),
+            )
+            .first,
+      );
+      final dropdownDecoration = dropdownBox.decoration! as BoxDecoration;
+      expect(
+        _contrastRatio(
+          dropdownDecoration.border!.top.color,
+          dropdownDecoration.color!,
+        ),
+        greaterThanOrEqualTo(1.4),
+        reason: 'picker border must be clearly perceptible on its own fill',
+      );
 
       final close = tester.widget<Icon>(find.byIcon(Icons.close_rounded));
       expect(
@@ -576,21 +639,15 @@ void main() {
       );
     });
 
-    testWidgets('adds on-site work and charges 18% GST on the new subtotal', (
+    testWidgets('adds catalogue work and charges 18% GST on the new subtotal', (
       tester,
     ) async {
       await openSheet(tester);
 
-      // 499.00 base + 250.00 on-site = 749.00 subtotal, +18% GST = 883.82.
+      // 499.00 catalogue price, +18% GST.
       expect(find.text('₹588.82'), findsOneWidget);
 
-      await tester.enterText(
-        find.widgetWithText(TextField, 'e.g. New tap cartridge'),
-        'New tap cartridge',
-      );
-      await tester.enterText(find.widgetWithText(TextField, '₹ price'), '250');
-      await tester.tap(find.bySemanticsLabel('Add custom service line'));
-      await tester.pumpAndSettle();
+      await addCatalogueEntry(tester, 'New tap cartridge');
 
       expect(find.text('New tap cartridge'), findsOneWidget);
       expect(find.text('₹250 × 1 = ₹250'), findsOneWidget);
@@ -603,13 +660,7 @@ void main() {
     ) async {
       await openSheet(tester);
 
-      await tester.enterText(
-        find.widgetWithText(TextField, 'e.g. New tap cartridge'),
-        'New tap cartridge',
-      );
-      await tester.enterText(find.widgetWithText(TextField, '₹ price'), '250');
-      await tester.tap(find.bySemanticsLabel('Add custom service line'));
-      await tester.pumpAndSettle();
+      await addCatalogueEntry(tester, 'New tap cartridge');
 
       await tester.tap(find.text('Update Booking'));
       await tester.pumpAndSettle();
@@ -617,9 +668,10 @@ void main() {
       final submitted = repository.lastSubmittedItems;
       expect(submitted, isNotNull);
       expect(submitted, hasLength(2));
-      expect(submitted!.first.name, 'Pipe Replacement');
-      expect(submitted.last.name, 'New tap cartridge');
-      expect(submitted.last.unitPriceMinor, 25000);
+      // The request carries catalogue ids and quantities only (SEC-001).
+      expect(submitted!.first.subServiceId, 'plumb-3');
+      expect(submitted.last.subServiceId, 'on-site-1');
+      expect(submitted.last.quantity, 1);
       expect(find.text('Adjust Services'), findsNothing);
     });
 

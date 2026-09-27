@@ -18,6 +18,7 @@ import 'package:fixnow_mobile/features/tracking/booking_tracking.dart';
 import 'package:fixnow_mobile/features/tracking/provider_live_map.dart';
 import 'package:fixnow_mobile/features/provider/provider_home_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_navigation_map_screen.dart';
+import 'package:fixnow_mobile/features/services/sub_service_item.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -1489,56 +1490,71 @@ class _ServiceAdjustmentSheet extends StatefulWidget {
 
 class _ServiceAdjustmentSheetState extends State<_ServiceAdjustmentSheet> {
   late List<BookingItemDraft> _lines;
-  final _nameCtrl = TextEditingController();
-  final _priceCtrl = TextEditingController();
+  List<SubServiceItem> _catalogue = const [];
+  bool _loadingCatalogue = true;
+  String? _selectedId;
   bool _saving = false;
   String? _error;
 
   @override
   void initState() {
     super.initState();
-    if (widget.job.items != null && widget.job.items!.isNotEmpty) {
-      _lines = widget.job.items!.map((item) => item.toDraft()).toList();
-    } else if (widget.job.pricing != null &&
-        widget.job.pricing!.subtotalMinor > 0) {
-      _lines = [
-        BookingItemDraft(
-          id: 'initial-service',
-          name: widget.job.description.isNotEmpty
-              ? widget.job.description
-              : 'Base Service',
-          quantity: 1,
-          unitPriceMinor: widget.job.pricing!.subtotalMinor,
-          durationMinutes: widget.job.estimatedDurationMinutes,
-        ),
-      ];
-    } else {
-      _lines = [];
+    _lines = widget.job.items != null && widget.job.items!.isNotEmpty
+        ? widget.job.items!.map((item) => item.toDraft()).toList()
+        : <BookingItemDraft>[];
+    _loadCatalogue();
+  }
+
+  /// Loads the category's sub-services so the provider can only ever select a
+  /// catalogue entry. Prices shown here are the ones the server will charge.
+  Future<void> _loadCatalogue() async {
+    try {
+      final items = await SubServiceRepository(
+        widget.controller.repository.api,
+      ).getAllSubServices();
+      if (!mounted) return;
+      setState(() {
+        _catalogue = items.where((i) => i.priceMinor > 0).toList(growable: false);
+        _loadingCatalogue = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _loadingCatalogue = false);
     }
   }
 
+  SubServiceItem? _entryFor(String subServiceId) {
+    for (final item in _catalogue) {
+      if (item.id == subServiceId) return item;
+    }
+    return null;
+  }
+
+  int _unitPriceOf(String subServiceId) =>
+      _entryFor(subServiceId)?.priceMinor ?? 0;
+
+  String _nameOf(String subServiceId) =>
+      _entryFor(subServiceId)?.name ?? 'Service';
+
   @override
   void dispose() {
-    _nameCtrl.dispose();
-    _priceCtrl.dispose();
     super.dispose();
   }
 
   String _money(int minor) =>
       '₹${(minor / 100).toStringAsFixed(minor % 100 == 0 ? 0 : 2)}';
 
-  int get _subtotalMinor =>
-      _lines.fold(0, (sum, item) => sum + item.unitPriceMinor * item.quantity);
+  int get _subtotalMinor => _lines.fold(
+        0,
+        (sum, line) => sum + _unitPriceOf(line.subServiceId) * line.quantity,
+      );
 
   void _increment(int index) {
     final line = _lines[index];
     setState(() {
       _lines[index] = BookingItemDraft(
-        id: line.id,
-        name: line.name,
+        subServiceId: line.subServiceId,
         quantity: line.quantity + 1,
-        unitPriceMinor: line.unitPriceMinor,
-        durationMinutes: line.durationMinutes,
       );
     });
   }
@@ -1546,37 +1562,35 @@ class _ServiceAdjustmentSheetState extends State<_ServiceAdjustmentSheet> {
   void _decrement(int index) {
     final line = _lines[index];
     setState(() {
-      if (line.quantity > 1) {
-        _lines[index] = BookingItemDraft(
-          id: line.id,
-          name: line.name,
-          quantity: line.quantity - 1,
-          unitPriceMinor: line.unitPriceMinor,
-          durationMinutes: line.durationMinutes,
-        );
-      } else {
+      if (line.quantity <= 1) {
         _lines.removeAt(index);
+      } else {
+        _lines[index] = BookingItemDraft(
+          subServiceId: line.subServiceId,
+          quantity: line.quantity - 1,
+        );
       }
     });
   }
 
-  void _addCustomItem() {
-    final name = _nameCtrl.text.trim();
-    final rupees = double.tryParse(_priceCtrl.text.trim());
-    if (name.isEmpty || rupees == null || rupees < 0) return;
+  void _addSelected(String? subServiceId) {
+    if (subServiceId == null) return;
+    final existing =
+        _lines.indexWhere((l) => l.subServiceId == subServiceId);
     setState(() {
-      _lines = [
-        ..._lines,
-        BookingItemDraft(
-          id: 'on-site-${DateTime.now().millisecondsSinceEpoch}',
-          name: name,
-          quantity: 1,
-          unitPriceMinor: (rupees * 100).round(),
-        ),
-      ];
+      if (existing >= 0) {
+        final line = _lines[existing];
+        _lines[existing] = BookingItemDraft(
+          subServiceId: line.subServiceId,
+          quantity: line.quantity + 1,
+        );
+      } else {
+        _lines = [
+          ..._lines,
+          BookingItemDraft(subServiceId: subServiceId, quantity: 1),
+        ];
+      }
     });
-    _nameCtrl.clear();
-    _priceCtrl.clear();
   }
 
   Future<void> _submit() async {
@@ -1696,58 +1710,124 @@ class _ServiceAdjustmentSheetState extends State<_ServiceAdjustmentSheet> {
                     fontSize: 13,
                   ),
                 ),
-                const SizedBox(height: AppSpacing.sm),
-                Row(
-                  children: [
-                    Expanded(
-                      flex: 3,
-                      child: TextField(
-                        controller: _nameCtrl,
-                        style: const TextStyle(
-                          color: AppColors.inputText,
-                          fontSize: 13,
-                        ),
-                        decoration: _sheetInput('e.g. New tap cartridge'),
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      flex: 2,
-                      child: TextField(
-                        controller: _priceCtrl,
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        style: const TextStyle(
-                          color: AppColors.inputText,
-                          fontSize: 13,
-                        ),
-                        decoration: _sheetInput('₹ price'),
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Semantics(
-                      button: true,
-                      label: 'Add custom service line',
-                      child: InkWell(
-                        onTap: _addCustomItem,
-                        borderRadius: BorderRadius.circular(AppRadius.pill),
-                        child: Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary,
-                            borderRadius: BorderRadius.circular(AppRadius.pill),
-                          ),
-                          child: const Icon(
-                            Icons.add_rounded,
-                            color: AppColors.onPrimary,
-                            size: 20,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: 4),
+                const Text(
+                  'Pick a service from the catalogue. Prices are set by FixNow '
+                  'and cannot be edited here.',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 11,
+                  ),
                 ),
+                const SizedBox(height: AppSpacing.sm),
+                if (_loadingCatalogue)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                    child: Text(
+                      'Loading services…',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                      ),
+                    ),
+                  )
+                else if (_catalogue.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                    child: Text(
+                      'No priced services are available for this category.',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                      ),
+                    ),
+                  )
+                else
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceContainerLowest,
+                            borderRadius: BorderRadius.circular(AppRadius.small),
+                            // borderDefault (#E2E8F0) on white is only ~1.23:1
+                            // and reads as an invisible edge, so the picker
+                            // uses the strong border token.
+                            border: Border.all(color: AppColors.borderStrong),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              isExpanded: true,
+                              value: _selectedId,
+                              hint: const Text(
+                                'Select a service',
+                                style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 13,
+                                ),
+                              ),
+                              dropdownColor: AppColors.surfaceContainerLowest,
+                              style: const TextStyle(
+                                color: AppColors.inputText,
+                                fontSize: 13,
+                              ),
+                              items: [
+                                for (final item in _catalogue)
+                                  DropdownMenuItem<String>(
+                                    value: item.id,
+                                    child: Text(
+                                      item.name,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                              ],
+                              onChanged: _saving
+                                  ? null
+                                  : (value) => setState(
+                                        () => _selectedId = value,
+                                      ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Semantics(
+                        button: true,
+                        label: 'Add selected service',
+                        child: InkWell(
+                          onTap: _selectedId == null || _saving
+                              ? null
+                              : () {
+                                  _addSelected(_selectedId);
+                                  setState(() => _selectedId = null);
+                                },
+                          borderRadius:
+                              BorderRadius.circular(AppRadius.pill),
+                          child: Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: _selectedId == null
+                                  ? AppColors.textDisabled
+                                  : AppColors.primary,
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.pill,
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.add_rounded,
+                              color: AppColors.onPrimary,
+                              size: 20,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
 
                 if (_error != null) ...[
                   const SizedBox(height: AppSpacing.md),
@@ -1790,7 +1870,7 @@ class _ServiceAdjustmentSheetState extends State<_ServiceAdjustmentSheet> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  line.name,
+                  _nameOf(line.subServiceId),
                   style: const TextStyle(
                     color: AppColors.textPrimary,
                     fontWeight: FontWeight.w600,
@@ -1798,8 +1878,8 @@ class _ServiceAdjustmentSheetState extends State<_ServiceAdjustmentSheet> {
                   ),
                 ),
                 Text(
-                  '${_money(line.unitPriceMinor)} × ${line.quantity} = '
-                  '${_money(line.unitPriceMinor * line.quantity)}',
+                  '${_money(_unitPriceOf(line.subServiceId))} × ${line.quantity} = '
+                  '${_money(_unitPriceOf(line.subServiceId) * line.quantity)}',
                   style: const TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 11,
@@ -1810,7 +1890,7 @@ class _ServiceAdjustmentSheetState extends State<_ServiceAdjustmentSheet> {
           ),
           Semantics(
             button: true,
-            label: 'Decrease quantity of ${line.name}',
+            label: 'Decrease quantity of ${_nameOf(line.subServiceId)}',
             child: InkWell(
               onTap: () => _decrement(index),
               borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -1826,7 +1906,7 @@ class _ServiceAdjustmentSheetState extends State<_ServiceAdjustmentSheet> {
           ),
           Semantics(
             button: true,
-            label: 'Increase quantity of ${line.name}',
+            label: 'Increase quantity of ${_nameOf(line.subServiceId)}',
             child: InkWell(
               onTap: () => _increment(index),
               borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -1844,26 +1924,4 @@ class _ServiceAdjustmentSheetState extends State<_ServiceAdjustmentSheet> {
       ),
     );
   }
-
-  InputDecoration _sheetInput(String hint) => InputDecoration(
-    hintText: hint,
-    // inputHint (#94A3B8) only reaches ~2.6:1 on a white field, so the
-    // placeholder uses the readable secondary tone instead.
-    hintStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
-    filled: true,
-    fillColor: AppColors.surfaceContainerLowest,
-    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(AppRadius.small),
-      borderSide: const BorderSide(color: AppColors.borderStrong),
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(AppRadius.small),
-      borderSide: const BorderSide(color: AppColors.borderStrong),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(AppRadius.small),
-      borderSide: const BorderSide(color: AppColors.primary),
-    ),
-  );
 }

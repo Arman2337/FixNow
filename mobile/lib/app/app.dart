@@ -752,6 +752,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
                             priceMinor,
                             loc,
                             items,
+                            pricedItems,
                           ) async {
                             final reqResult = await Navigator.of(context)
                                 .push<dynamic>(
@@ -762,6 +763,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
                                       initialLocation: loc,
                                       initialDescription: description,
                                       initialItems: items,
+                                      pricedItems: pricedItems,
                                       estimateRepository:
                                           PriceEstimateRepository(
                                             _api,

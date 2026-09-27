@@ -20,7 +20,25 @@ export async function runBounded(
   work: ReadonlyArray<() => Promise<unknown>>,
   concurrency: number,
 ): Promise<void> {
-  if (work.length === 0) return;
+  await mapBounded(work, concurrency);
+}
+
+/**
+ * Like {@link runBounded}, but collects the results **in input order**.
+ *
+ * A bounded pool finishes out of order, so a caller that needs its results
+ * positionally must not read completion order. A failed item yields `undefined`
+ * rather than rejecting, so one failure cannot abandon the batch.
+ */
+export async function mapBounded<T>(
+  work: ReadonlyArray<() => Promise<T>>,
+  concurrency: number,
+): Promise<Array<T | undefined>> {
+  // `new Array(n)` is `any[]`; the fill below is what actually types it.
+  const results: Array<T | undefined> = Array.from<T | undefined>({
+    length: work.length,
+  });
+  if (work.length === 0) return results;
   const limit = Math.max(1, Math.min(Math.trunc(concurrency), work.length));
   let next = 0;
 
@@ -29,12 +47,13 @@ export async function runBounded(
       const index = next;
       next += 1;
       try {
-        await work[index]();
+        results[index] = await work[index]();
       } catch {
-        // Best-effort by contract; see the note above.
+        results[index] = undefined;
       }
     }
   };
 
   await Promise.all(Array.from({ length: limit }, worker));
+  return results;
 }

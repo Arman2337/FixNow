@@ -187,4 +187,51 @@ describe('MatchingService', () => {
       ).toBe(true);
     });
   });
+
+  // BUG-004: the old code looked for the asking provider inside a top-50
+  // fan-out, so an eligible provider outside the nearest 50 was dropped from
+  // their own list of available work.
+  describe('findProviderDistance', () => {
+    it('returns the distance for an eligible provider', async () => {
+      mockQueryBuilder.getRawMany.mockResolvedValue([{ distanceKm: '3.25' }]);
+
+      const distance = await service.findProviderDistance(
+        'provider-1',
+        17.385,
+        78.4867,
+        'category-1',
+      );
+
+      expect(distance).toBe(3.25);
+    });
+
+    it('returns null when the provider has no matching row', async () => {
+      mockQueryBuilder.getRawMany.mockResolvedValue([]);
+
+      const distance = await service.findProviderDistance(
+        'provider-9',
+        17.385,
+        78.4867,
+        'category-1',
+      );
+
+      expect(distance).toBeNull();
+    });
+
+    it('never orders by, so the answer cannot depend on rank', async () => {
+      mockQueryBuilder.getRawMany.mockResolvedValue([]);
+
+      await service.findProviderDistance(
+        'provider-1',
+        17.385,
+        78.4867,
+        'category-1',
+      );
+
+      expect(orderByMock).not.toHaveBeenCalled();
+      expect(addOrderByMock).not.toHaveBeenCalled();
+      // LIMIT 1 caps duplicate skill rows, not competing candidates.
+      expect(limitMock).toHaveBeenCalledWith(1);
+    });
+  });
 });

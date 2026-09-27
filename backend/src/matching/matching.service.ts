@@ -172,4 +172,76 @@ export class MatchingService {
 
     return count > 0;
   }
+
+  /**
+   * The distance from a provider to a job, or null when they are not eligible.
+   *
+   * BUG-004. `getAvailableRequests` used to call `findEligibleProviders` once
+   * per candidate booking and then look for the asking provider in the result.
+   * That was wrong twice over: up to 200 sequential haversine queries per
+   * request, and the same rank limit as BUG-007, so a provider who was eligible
+   * for a job but ranked 51st-or-better-nearest was silently omitted from their
+   * own list of available work.
+   *
+   * Scoped to one provider with no LIMIT, so the answer cannot depend on rank,
+   * and it returns the distance the caller needs to display.
+   */
+  async findProviderDistance(
+    providerId: string,
+    locationLat: number,
+    locationLng: number,
+    serviceCategoryId: string,
+    radiusMultiplier = 1,
+  ): Promise<number | null> {
+    const boundedMultiplier = Math.min(Math.max(radiusMultiplier, 1), 4);
+    const haversineSql = `
+      (6371 * acos(LEAST(1, GREATEST(-1,
+        cos(radians(:lat)) *
+        cos(radians(profile.baseLatitude)) *
+        cos(radians(profile.baseLongitude) - radians(:lng)) +
+        sin(radians(:lat)) *
+        sin(radians(profile.baseLatitude))
+      ))))
+    `;
+
+    const raw = await this.profileRepository
+      .createQueryBuilder('profile')
+      .innerJoin('profile.user', 'user')
+      .innerJoin(
+        'provider_availability',
+        'availability',
+        'availability.user_id = profile.user_id',
+      )
+      .innerJoin('provider_skills', 'skill', 'skill.user_id = profile.user_id')
+      .innerJoin(
+        'service_categories',
+        'category',
+        'category.id = skill.service_category_id',
+      )
+      .where('profile.user_id = :providerId', { providerId })
+      .andWhere('user.status = :accountStatus', {
+        accountStatus: AccountStatus.Active,
+      })
+      .andWhere('availability.status = :availStatus', {
+        availStatus: ProviderAvailabilityStatus.Online,
+      })
+      .andWhere('availability.status_expires_at > CURRENT_TIMESTAMP')
+      .andWhere('skill.service_category_id = :categoryId', {
+        categoryId: serviceCategoryId,
+      })
+      .andWhere('skill.is_verified = :isVerified', { isVerified: true })
+      .andWhere('category.is_active = :categoryActive', {
+        categoryActive: true,
+      })
+      .andWhere(
+        `${haversineSql} <= profile.serviceRadiusKm * ${boundedMultiplier}`,
+        { lat: locationLat, lng: locationLng },
+      )
+      .select(haversineSql, 'distanceKm')
+      .limit(1)
+      .getRawMany<{ distanceKm: string }>();
+
+    if (raw.length === 0) return null;
+    return parseFloat(raw[0].distanceKm);
+  }
 }

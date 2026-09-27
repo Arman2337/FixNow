@@ -41,6 +41,13 @@ import { ProviderProfileEntity } from '../providers/provider-profile.entity';
 import { BookingReview } from '../ratings/domain/review.entity';
 import { ReviewModerationStatus } from '../../../shared/ratings.types';
 import { ProviderCapacityService } from '../providers/availability/provider-capacity.service';
+import { mapBounded } from '../common/run-bounded';
+
+/**
+ * How many candidate lookups run at once when listing available work. An
+ * implementation bound, not a policy number.
+ */
+const MATCH_LOOKUP_CONCURRENCY = 10;
 
 export interface BookingHistoryPage {
   bookings: Booking[];
@@ -784,18 +791,32 @@ export class BookingsService {
     });
     const bookings: Array<{ booking: Booking; distanceKm: number }> = [];
 
-    for (const booking of candidates) {
-      const match = await this.matchingService.findEligibleProviders(
-        Number(booking.locationLat),
-        Number(booking.locationLng),
-        booking.serviceCategoryId,
-        50,
-      );
-      const providerMatch = match.find(
-        ({ providerId: id }) => id === providerId,
-      );
-      if (!providerMatch) continue;
-      bookings.push({ booking, distanceKm: providerMatch.distanceKm });
+    // BUG-004: this used to call findEligibleProviders once per candidate and
+    // search the top-50 result for the asking provider - up to 200 sequential
+    // haversine queries, and a provider who was eligible but not in the nearest
+    // 50 was silently dropped from their own available list.
+    //
+    // One scoped query per candidate, run under a bounded pool. Still a query
+    // per candidate; batching them into a single VALUES join would be the next
+    // step, and is noted rather than silently left implied.
+    //
+    // The pool preserves input order, and this list is presented newest-first.
+    const matched = await mapBounded(
+      candidates.map((booking) => async () => {
+        const distanceKm = await this.matchingService.findProviderDistance(
+          providerId,
+          Number(booking.locationLat),
+          Number(booking.locationLng),
+          booking.serviceCategoryId,
+        );
+        return { booking, distanceKm };
+      }),
+      MATCH_LOOKUP_CONCURRENCY,
+    );
+
+    for (const entry of matched) {
+      if (!entry || entry.distanceKm === null) continue;
+      bookings.push({ booking: entry.booking, distanceKm: entry.distanceKm });
       if (bookings.length === boundedLimit) break;
     }
 

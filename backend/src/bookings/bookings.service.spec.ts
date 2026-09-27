@@ -144,6 +144,7 @@ describe('BookingsService', () => {
     matchingService = {
       findEligibleProviders: jest.fn(),
       isProviderEligible: jest.fn(),
+      findProviderDistance: jest.fn(),
     } as unknown as jest.Mocked<MatchingService>;
     capacity = {
       assertCanAccept: capacityAssert,
@@ -371,15 +372,39 @@ describe('BookingsService', () => {
     const first = booking({ id: '00000000-0000-4000-8000-000000000201' });
     const second = booking({ id: '00000000-0000-4000-8000-000000000202' });
     bookingFind.mockResolvedValue([first, second]);
-    matchingService.findEligibleProviders
-      .mockResolvedValueOnce([{ providerId: 'provider-id', distanceKm: 2.4 }])
-      .mockResolvedValueOnce([]);
+    // BUG-004: eligibility is now one scoped lookup per candidate rather than
+    // a 50-entry fan-out searched for the asking provider.
+    matchingService.findProviderDistance
+      .mockResolvedValueOnce(2.4)
+      .mockResolvedValueOnce(null);
 
     await expect(
       service.getAvailableRequests('provider-id', 20),
     ).resolves.toEqual({
       bookings: [{ booking: first, distanceKm: 2.4 }],
     });
+    // The rank-limited fan-out must not be consulted here either.
+    expect(matchingService.findEligibleProviders).not.toHaveBeenCalled();
+  });
+
+  it('presents available work newest-first regardless of lookup completion order', async () => {
+    const first = booking({ id: '00000000-0000-4000-8000-000000000201' });
+    const second = booking({ id: '00000000-0000-4000-8000-000000000202' });
+    bookingFind.mockResolvedValue([first, second]);
+    // The second candidate resolves first; the list must still lead with the
+    // first, because a bounded pool finishes out of order.
+    matchingService.findProviderDistance
+      .mockImplementationOnce(
+        () => new Promise((resolve) => setTimeout(() => resolve(2.4), 5)),
+      )
+      .mockImplementationOnce(() => Promise.resolve(1.1));
+
+    const page = await service.getAvailableRequests('provider-id', 20);
+
+    expect(page.bookings.map((entry) => entry.booking.id)).toEqual([
+      first.id,
+      second.id,
+    ]);
   });
 
   it('prevents an admin intervention from rewriting completed history', async () => {

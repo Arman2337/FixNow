@@ -36,7 +36,7 @@ describe('InboxController', () => {
     );
     if (!descriptor)
       throw new Error(`Missing controller method: ${methodName}`);
-    const handler: unknown = descriptor.value;
+    const handler = descriptor.value as (...args: unknown[]) => unknown;
     return handler;
   };
 

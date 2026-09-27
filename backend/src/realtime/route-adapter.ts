@@ -139,7 +139,11 @@ export class OpenRouteServiceAdapter implements RouteAdapter {
         },
       );
       if (!response.ok) {
-        if (response.status === 429 || response.status === 401 || response.status === 403) {
+        if (
+          response.status === 429 ||
+          response.status === 401 ||
+          response.status === 403
+        ) {
           this.logger.warn(
             `OpenRouteService rejected the request (${response.status}); the daily quota is 200 and the cached route is being reused until it expires.`,
           );

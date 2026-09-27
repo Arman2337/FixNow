@@ -130,7 +130,9 @@ describe('ProviderProfileService', () => {
   it('updates only the profile selected by authenticated user ID', async () => {
     applications.findOne.mockResolvedValue({} as ProviderApplicationEntity);
     profiles.findOne.mockResolvedValue({ ...profile });
-    profiles.save.mockImplementation((value) => Promise.resolve(value));
+    profiles.save.mockImplementation(
+      async (value) => value as ProviderProfileEntity,
+    );
 
     await service.upsertOwnProfile('provider-id', {
       displayName: 'Updated Name',

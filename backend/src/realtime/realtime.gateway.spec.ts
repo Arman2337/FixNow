@@ -1,11 +1,64 @@
 import { ConfigService } from '@nestjs/config';
 import type { IncomingMessage } from 'node:http';
+import type { DataSource } from 'typeorm';
 import { WebSocket } from 'ws';
 import { AuthorizationService } from '../common/authorization/authorization.service';
 import { RealtimeConnectionRegistry } from './realtime-connection-registry.service';
 import { RealtimeGateway } from './realtime.gateway';
 import { RealtimeTelemetryService } from './realtime-telemetry.service';
 import { LocationService } from '../location/location.service';
+import { BookingProjectionService } from './booking-projection.service';
+
+/**
+ * The gateway's constructor grew dependencies over time. Building it through
+ * one factory keeps these specs compiling when it changes again, and keeps each
+ * test focused on the collaborator it actually cares about.
+ */
+function makeGateway(options?: {
+  registry?: RealtimeConnectionRegistry;
+  telemetry?: RealtimeTelemetryService;
+  config?: ConfigService;
+  dataSource?: DataSource;
+  projections?: BookingProjectionService;
+}): RealtimeGateway {
+  return new RealtimeGateway(
+    {} as AuthorizationService,
+    options?.registry ?? new RealtimeConnectionRegistry(),
+    options?.telemetry ?? new RealtimeTelemetryService(),
+    options?.config ?? ({ get: jest.fn() } as unknown as ConfigService),
+    {} as LocationService,
+    options?.dataSource ?? ({} as DataSource),
+    options?.projections ?? ({} as BookingProjectionService),
+  );
+}
+
+/** Minimal DataSource stub: the voice-frame path only reads a call row. */
+function voiceFrameDataSource() {
+  return {
+    getRepository: jest.fn().mockReturnValue({
+      findOneBy: jest.fn().mockResolvedValue({
+        id: 'call-xyz',
+        bookingId: 'booking-123',
+        callerUserId: 'user-1',
+        calleeUserId: 'user-2',
+        status: 'CONNECTED',
+      }),
+    }),
+  };
+}
+
+/**
+ * AuthorizationPrincipal is { userId, sessionId, roles }. Earlier versions of
+ * these specs also passed scopes/type/permissions, which no longer exist on
+ * the type, so they are built here instead of inline at each call site.
+ */
+function principal(
+  userId: string,
+  role: 'customer' | 'verified_provider',
+  sessionId: string,
+) {
+  return { userId, sessionId, roles: [role] };
+}
 
 describe('RealtimeGateway heartbeat', () => {
   it('pings a healthy connection and terminates it when the next heartbeat is missed', () => {
@@ -19,13 +72,7 @@ describe('RealtimeGateway heartbeat', () => {
       terminate,
     } as unknown as WebSocket;
     registry.registerPending(client, '127.0.0.1');
-    const gateway = new RealtimeGateway(
-      {} as AuthorizationService,
-      registry,
-      telemetry,
-      { get: jest.fn() } as unknown as ConfigService,
-      {} as LocationService,
-    );
+    const gateway = makeGateway({ registry, telemetry });
 
     gateway.checkHeartbeats();
     expect(ping).toHaveBeenCalledTimes(1);
@@ -40,25 +87,11 @@ describe('RealtimeGateway heartbeat', () => {
   it('relays call.voice-frame.v1 between clients subscribed to the same booking', async () => {
     const registry = new RealtimeConnectionRegistry();
     const telemetry = new RealtimeTelemetryService();
-    const gateway = new RealtimeGateway(
-      {} as AuthorizationService,
+    const gateway = makeGateway({
       registry,
       telemetry,
-      { get: jest.fn() } as unknown as ConfigService,
-      {} as LocationService,
-      {
-        getRepository: jest.fn().mockReturnValue({
-          findOneBy: jest.fn().mockResolvedValue({
-            id: 'call-xyz',
-            bookingId: 'booking-123',
-            callerUserId: 'user-1',
-            calleeUserId: 'user-2',
-            status: 'CONNECTED',
-          }),
-        }),
-      } as never,
-      {} as never,
-    );
+      dataSource: voiceFrameDataSource() as unknown as DataSource,
+    });
 
     const client1Send = jest.fn();
     const client2Send = jest.fn<void, [data: string]>();
@@ -77,24 +110,12 @@ describe('RealtimeGateway heartbeat', () => {
     registry.registerPending(client2, '127.0.0.1');
     registry.authenticate(
       client1,
-      {
-        userId: 'user-1',
-        roles: ['CUSTOMER'],
-        scopes: [],
-        type: 'CUSTOMER',
-        permissions: [],
-      },
+      principal('user-1', 'customer', 'session-1'),
       'token-1',
     );
     registry.authenticate(
       client2,
-      {
-        userId: 'user-2',
-        roles: ['PROVIDER'],
-        scopes: [],
-        type: 'PROVIDER',
-        permissions: [],
-      },
+      principal('user-2', 'verified_provider', 'session-2'),
       'token-2',
     );
 
@@ -142,25 +163,11 @@ describe('RealtimeGateway heartbeat', () => {
   it('rejects voice frames from users who are not call participants', async () => {
     const registry = new RealtimeConnectionRegistry();
     const telemetry = new RealtimeTelemetryService();
-    const gateway = new RealtimeGateway(
-      {} as AuthorizationService,
+    const gateway = makeGateway({
       registry,
       telemetry,
-      { get: jest.fn() } as unknown as ConfigService,
-      {} as LocationService,
-      {
-        getRepository: jest.fn().mockReturnValue({
-          findOneBy: jest.fn().mockResolvedValue({
-            id: 'call-xyz',
-            bookingId: 'booking-123',
-            callerUserId: 'user-1',
-            calleeUserId: 'user-2',
-            status: 'CONNECTED',
-          }),
-        }),
-      } as never,
-      {} as never,
-    );
+      dataSource: voiceFrameDataSource() as unknown as DataSource,
+    });
     const client1Send = jest.fn();
     const client2Send = jest.fn<void, [data: string]>();
     const client1 = {
@@ -175,24 +182,12 @@ describe('RealtimeGateway heartbeat', () => {
     registry.registerPending(client2, '127.0.0.1');
     registry.authenticate(
       client1,
-      {
-        userId: 'user-3',
-        roles: ['CUSTOMER'],
-        scopes: [],
-        type: 'CUSTOMER',
-        permissions: [],
-      },
+      principal('user-3', 'customer', 'session-3'),
       'token-3',
     );
     registry.authenticate(
       client2,
-      {
-        userId: 'user-2',
-        roles: ['PROVIDER'],
-        scopes: [],
-        type: 'PROVIDER',
-        permissions: [],
-      },
+      principal('user-2', 'verified_provider', 'session-2'),
       'token-2',
     );
     for (const [client, id] of [
@@ -226,17 +221,15 @@ describe('RealtimeGateway heartbeat', () => {
   it('accepts localhost browser origins during development', () => {
     const registry = new RealtimeConnectionRegistry();
     const telemetry = new RealtimeTelemetryService();
-    const gateway = new RealtimeGateway(
-      {} as AuthorizationService,
+    const gateway = makeGateway({
       registry,
       telemetry,
-      {
+      config: {
         get: jest.fn((key: string) =>
           key === 'NODE_ENV' ? 'development' : undefined,
         ),
       } as unknown as ConfigService,
-      {} as LocationService,
-    );
+    });
     const close = jest.fn();
     const client = {
       readyState: WebSocket.OPEN,
@@ -256,17 +249,15 @@ describe('RealtimeGateway heartbeat', () => {
   it('closes browser origins that are not allowlisted outside development', () => {
     const registry = new RealtimeConnectionRegistry();
     const telemetry = new RealtimeTelemetryService();
-    const gateway = new RealtimeGateway(
-      {} as AuthorizationService,
+    const gateway = makeGateway({
       registry,
       telemetry,
-      {
+      config: {
         get: jest.fn((key: string) =>
           key === 'NODE_ENV' ? 'production' : undefined,
         ),
       } as unknown as ConfigService,
-      {} as LocationService,
-    );
+    });
     const close = jest.fn();
     const client = {
       readyState: WebSocket.OPEN,

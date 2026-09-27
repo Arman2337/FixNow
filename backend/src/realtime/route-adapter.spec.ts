@@ -1,5 +1,9 @@
 import { ConfigService } from '@nestjs/config';
-import { parseOpenRouteServiceRoute, OpenRouteServiceAdapter, haversineMeters } from './route-adapter';
+import {
+  parseOpenRouteServiceRoute,
+  OpenRouteServiceAdapter,
+  haversineMeters,
+} from './route-adapter';
 import type { EtaInput } from './eta-adapter';
 
 function geoJson(distance: number): unknown {
@@ -25,7 +29,9 @@ const ORIGIN: EtaInput = {
   destinationLongitude: 73.08,
 };
 
-function config(env: Record<string, string> = { OPENROUTESERVICE_API_KEY: 'test-key' }) {
+function config(
+  env: Record<string, string> = { OPENROUTESERVICE_API_KEY: 'test-key' },
+) {
   return { get: (key: string) => env[key] } as unknown as ConfigService;
 }
 
@@ -79,7 +85,7 @@ describe('OpenRouteServiceAdapter', () => {
 
   it('does not call the external service without a key', async () => {
     const fetchMock = jest.fn();
-    global.fetch = fetchMock as unknown as typeof fetch;
+    global.fetch = fetchMock;
 
     const adapter = new OpenRouteServiceAdapter(config({}));
 
@@ -104,7 +110,7 @@ describe('OpenRouteServiceAdapter', () => {
     // A few metres of GPS drift, then a second publish 11s later.
     const second = await adapter.route({
       ...ORIGIN,
-      providerLatitude: 23.0270,
+      providerLatitude: 23.027,
       providerLongitude: 73.07015,
     });
 
@@ -157,7 +163,7 @@ describe('OpenRouteServiceAdapter', () => {
         text: async () => JSON.stringify(geoJson(1527.6)),
       })
       .mockResolvedValue({ ok: false, status: 429, text: async () => '' });
-    global.fetch = fetchMock as unknown as typeof fetch;
+    global.fetch = fetchMock;
 
     const adapter = new OpenRouteServiceAdapter(config());
 

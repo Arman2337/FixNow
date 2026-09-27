@@ -118,7 +118,14 @@ export class RealtimeGateway
     }
   }
 
-  private async onMessage(
+  /**
+   * Entry point for every inbound socket frame.
+   *
+   * Public so the gateway specs can drive real frames through the real handler
+   * instead of asserting on internals. Nest only wires up methods carrying
+   * `@SubscribeMessage`, so widening this does not expose it on the network.
+   */
+  async onMessage(
     client: WebSocket,
     data: RawData,
     isBinary: boolean,

@@ -107,14 +107,20 @@ export const EMERGENCY_NOTIFICATION_TEMPLATES: Readonly<
  * or the provider may recover.
  */
 const RETRYABLE_DELIVERY_STATUSES: ReadonlySet<NotificationDeliveryStatus> =
-  new Set([NotificationDeliveryStatus.NO_DEVICES, NotificationDeliveryStatus.FAILED]);
+  new Set([
+    NotificationDeliveryStatus.NO_DEVICES,
+    NotificationDeliveryStatus.FAILED,
+  ]);
 
 /** Surfaces the provider's own error code so a log line is actionable. */
 function describePushError(error: unknown): string {
   if (typeof error === 'object' && error !== null) {
-    const code = 'code' in error ? String((error as { code?: unknown }).code) : '';
+    const code =
+      'code' in error ? String((error as { code?: unknown }).code) : '';
     const message =
-      'message' in error ? String((error as { message?: unknown }).message) : '';
+      'message' in error
+        ? String((error as { message?: unknown }).message)
+        : '';
     if (code || message) return [code, message].filter(Boolean).join(': ');
   }
   return error instanceof Error ? error.message : String(error);

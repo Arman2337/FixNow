@@ -1,4 +1,5 @@
 import { ServiceUnavailableException } from '@nestjs/common';
+import type { ConfigService } from '@nestjs/config';
 import {
   DisabledPushDelivery,
   FakePushDelivery,
@@ -53,7 +54,7 @@ describe('push provider selection', () => {
 });
 
 describe('FcmPushDelivery configuration boundary', () => {
-  const config = { get: jest.fn() } as never;
+  const config = { get: jest.fn() } as unknown as ConfigService;
 
   it('refuses to send when no credential file is configured', async () => {
     config.get = jest.fn().mockReturnValue(undefined);

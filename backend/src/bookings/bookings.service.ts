@@ -17,6 +17,7 @@ import {
 } from 'typeorm';
 import { BookingStatus } from '../../../shared/booking-lifecycle.types';
 import {
+  BookingItemRequestDto,
   CreateBookingDto,
   CreateBookingLineItemDto,
   UpdateBookingItemsDto,
@@ -94,6 +95,17 @@ export class BookingsService {
 
     try {
       const created = await this.dataSource.transaction(async (manager) => {
+        // Prices are resolved inside the transaction from the catalogue, so a
+        // booking can never persist an amount chosen by the client.
+        const items = normalizedInput.requestedItems?.length
+          ? await this.resolveItemSnapshots(
+              manager,
+              normalizedInput.requestedItems,
+              normalizedInput.serviceCategoryId,
+            )
+          : null;
+        const totals = computeBookingTotals(items);
+
         const bookingRepository = manager.getRepository(Booking);
         const booking = bookingRepository.create({
           customerId: userId,
@@ -103,10 +115,9 @@ export class BookingsService {
           requestFingerprint: fingerprint,
           status: BookingStatus.REQUESTED,
           description: normalizedInput.description,
-          items: normalizedInput.items,
-          totalAmountMinor: normalizedInput.totals.totalMinor || null,
-          estimatedDurationMinutes:
-            normalizedInput.totals.estimatedDurationMinutes,
+          items,
+          totalAmountMinor: totals.totalMinor || null,
+          estimatedDurationMinutes: totals.estimatedDurationMinutes,
           locationLat: normalizedInput.locationLat,
           locationLng: normalizedInput.locationLng,
           scheduledAt: normalizedInput.scheduledAt
@@ -491,30 +502,27 @@ export class BookingsService {
   }
 
   /**
-   * Replaces the booking's line items after the assigned provider finds
-   * more (or less) work on site. Totals and duration are recomputed
-   * server-side. ponytail: no customer-confirmation gate yet — the customer
-   * sees the revised items/pricing on their booking; add an approval step
-   * if disputes show up.
+   * Replaces the booking's itemized lines after the assigned provider finds
+   * more (or less) work on site.
+   *
+   * SECURITY (SEC-001): the provider selects catalogue entries and quantities
+   * only. Every price is re-resolved from `sub_services` inside the same
+   * transaction, so a provider cannot set a price — including a price of 0,
+   * which previously made the booking permanently unpayable.
+   *
+   * A price change is recorded as a booking event with the provider's reason,
+   * so the customer always has an auditable record of what changed and why.
    */
   async updateBookingItems(
     bookingId: string,
     providerId: string,
     input: UpdateBookingItemsDto,
   ): Promise<Booking> {
-    const paymentOrder = await this.dataSource
-      .getRepository(PaymentOrder)
-      .exists({ where: { bookingId } });
-    if (paymentOrder) {
-      throw new ConflictException(
-        'A payment has already been initiated for this booking',
-      );
-    }
     const booking = await this.transition(
       bookingId,
       providerId,
       input.expectedVersion,
-      (candidate) => {
+      async (candidate, manager) => {
         if (candidate.providerId !== providerId) {
           throw new ForbiddenException('You are not assigned to this booking');
         }
@@ -528,21 +536,29 @@ export class BookingsService {
             'Services can only be adjusted while the job is active',
           );
         }
-        const items: BookingItemSnapshot[] = input.items.map((item) => ({
-          id: item.id.trim(),
-          name: item.name.trim(),
-          quantity: item.quantity,
-          unitPriceMinor: item.unitPriceMinor,
-          ...(typeof item.durationMinutes === 'number'
-            ? { durationMinutes: item.durationMinutes }
-            : {}),
-        }));
+        // Guarded inside the transaction that performs the write, so a payment
+        // order cannot be created in the gap between the check and the update.
+        const paid = await manager.getRepository(PaymentOrder).exists({
+          where: { bookingId },
+        });
+        if (paid) {
+          throw new ConflictException(
+            'A payment has already been initiated for this booking',
+          );
+        }
+        const items = await this.resolveItemSnapshots(
+          manager,
+          input.items,
+          candidate.serviceCategoryId,
+        );
         const totals = computeBookingTotals(items);
         candidate.items = items;
         candidate.totalAmountMinor = totals.totalMinor;
         candidate.estimatedDurationMinutes = totals.estimatedDurationMinutes;
       },
-      'Provider adjusted on-site services',
+      input.reason?.trim()
+        ? `Provider adjusted on-site services: ${input.reason.trim()}`
+        : 'Provider adjusted on-site services',
     );
     await this.bookingProjections?.publishBooking(booking);
     await this.notifySafely(() =>
@@ -882,29 +898,82 @@ export class BookingsService {
     if (scheduledAt && new Date(scheduledAt).getTime() <= Date.now()) {
       throw new BadRequestException('Scheduled time must be in the future');
     }
-    // Snapshots only the whitelisted fields; totals and duration are
-    // recomputed server-side and never taken from the client.
-    const items: BookingItemSnapshot[] | null = input.items?.length
-      ? input.items.map((item) => ({
-          id: item.id.trim(),
-          name: item.name.trim(),
-          quantity: item.quantity,
-          unitPriceMinor: item.unitPriceMinor,
-          ...(typeof item.durationMinutes === 'number'
-            ? { durationMinutes: item.durationMinutes }
-            : {}),
-        }))
-      : null;
     return {
       serviceCategoryId: input.serviceCategoryId,
       description,
-      items,
-      totals: computeBookingTotals(items),
+      // Fingerprint material: the REQUEST, not the resolved snapshot. If the
+      // catalogue price changes between two retries of the same request, the
+      // fingerprint must not change, or a legitimate retry would be rejected
+      // as a conflicting replay.
+      requestedItems:
+        input.items?.map((item) => ({
+          subServiceId: item.subServiceId,
+          quantity: item.quantity,
+        })) ?? null,
       locationLat: Number(input.locationLat.toFixed(7)),
       locationLng: Number(input.locationLng.toFixed(7)),
       scheduledAt,
       lineItems: input.lineItems,
     };
+  }
+
+  /**
+   * SECURITY (SEC-001): turns client-selected catalogue entries into a priced
+   * snapshot. `name`, `unitPriceMinor` and `durationMinutes` are read from
+   * `sub_services` and are NEVER taken from the request body, so the amount
+   * charged cannot be chosen by the customer or the provider.
+   *
+   * An entry is rejected when it does not exist, is inactive, belongs to a
+   * different category than the booking, has no catalogue price, or is not
+   * denominated in INR.
+   */
+  private async resolveItemSnapshots(
+    manager: EntityManager,
+    requested: BookingItemRequestDto[],
+    serviceCategoryId: string,
+  ): Promise<BookingItemSnapshot[]> {
+    const subServiceRepo = manager.getRepository(SubServiceEntity);
+    const ids = [...new Set(requested.map((item) => item.subServiceId))];
+    const catalogue = await subServiceRepo.findBy({ id: In(ids) });
+    const byId = new Map(catalogue.map((s) => [s.id, s]));
+
+    return requested.map((item, index) => {
+      const sub = byId.get(item.subServiceId);
+      if (!sub) {
+        throw new NotFoundException(
+          `Service option ${index + 1} no longer exists`,
+        );
+      }
+      if (!sub.isActive) {
+        throw new BadRequestException(
+          `Service option ${index + 1} is no longer available`,
+        );
+      }
+      if (sub.categoryId !== serviceCategoryId) {
+        throw new BadRequestException(
+          `Service option ${index + 1} does not belong to the selected category`,
+        );
+      }
+      if (sub.currency && sub.currency.toUpperCase() !== 'INR') {
+        throw new BadRequestException(
+          `Service option ${index + 1} is not priced in INR`,
+        );
+      }
+      if (sub.priceMinor === null || sub.priceMinor === undefined) {
+        throw new BadRequestException(
+          `Service option ${index + 1} is priced on request`,
+        );
+      }
+      return {
+        id: sub.id,
+        name: sub.name,
+        quantity: item.quantity,
+        unitPriceMinor: sub.priceMinor,
+        ...(typeof sub.estimatedDurationMinutes === 'number'
+          ? { durationMinutes: sub.estimatedDurationMinutes }
+          : {}),
+      };
+    });
   }
 
   private validateIdempotencyKey(value: string): string {

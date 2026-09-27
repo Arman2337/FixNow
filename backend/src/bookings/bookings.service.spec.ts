@@ -1,4 +1,9 @@
-import { ConflictException, ForbiddenException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import type { DataSource, EntityManager, Repository } from 'typeorm';
 import { BookingStatus } from '../../../shared/booking-lifecycle.types';
 import type { MatchingService } from '../matching/matching.service';
@@ -6,6 +11,40 @@ import { BookingsService } from './bookings.service';
 import { BookingEvent } from './domain/booking-event.entity';
 import { Booking } from './domain/booking.entity';
 import { PaymentOrder } from '../payments/domain/payment-order.entity';
+import { SubServiceEntity } from '../services/sub-service.entity';
+
+/**
+ * The server-side price catalogue. Tests select entries by `subServiceId`;
+ * every `unitPriceMinor` in a booking MUST come from here, never from the
+ * request body. See SEC-001.
+ */
+const CATEGORY_ID = '00000000-0000-4000-8000-000000000010';
+const sub = (
+  id: string,
+  name: string,
+  priceMinor: number | null,
+  minutes: number | null = null,
+  categoryId = CATEGORY_ID,
+  isActive = true,
+): SubServiceEntity =>
+  Object.assign(new SubServiceEntity(), {
+    id,
+    name,
+    categoryId,
+    priceMinor,
+    currency: 'INR',
+    estimatedDurationMinutes: minutes,
+    isActive,
+  });
+
+const CATALOGUE: SubServiceEntity[] = [
+  sub('plumb-3', 'Shower & Water Pipe Leakage', 24900, 45),
+  sub('plumb-1', 'Tap & Mixer Repair', 14900, 30),
+  sub('ac-1', 'AC Servicing', 89900, 60),
+  sub('no-price', 'Custom Diagnosis', null),
+  sub('inactive-1', 'Retired Service', 99900, 20, CATEGORY_ID, false),
+  sub('other-cat', 'Other Category Service', 5000, 10, 'other-category'),
+];
 
 describe('BookingsService', () => {
   let service: BookingsService;
@@ -19,6 +58,7 @@ describe('BookingsService', () => {
   let bookingSave: jest.Mock;
   let eventSave: jest.Mock;
   let orderExist: jest.Mock;
+  let subServiceFindBy: jest.Mock;
 
   const booking = (overrides: Partial<Booking> = {}): Booking =>
     Object.assign(new Booking(), {
@@ -51,6 +91,7 @@ describe('BookingsService', () => {
     bookingFind = jest.fn();
     bookingSave = jest.fn();
     eventSave = jest.fn().mockResolvedValue(new BookingEvent());
+    subServiceFindBy = jest.fn().mockResolvedValue(CATALOGUE);
     bookingRepository = {
       findOneBy: bookingFindOneBy,
       find: bookingFind,
@@ -72,6 +113,19 @@ describe('BookingsService', () => {
     } as unknown as jest.Mocked<EntityManager>;
     orderExist = jest.fn().mockResolvedValue(false);
     const orderRepository = { exists: orderExist };
+    subServiceFindBy = jest.fn().mockResolvedValue(CATALOGUE);
+    const subServiceRepository = {
+      findBy: subServiceFindBy,
+    } as unknown as jest.Mocked<Repository<SubServiceEntity>>;
+    manager = {
+      getRepository: jest.fn((entity: unknown) => {
+        if (entity === Booking) return bookingRepository;
+        if (entity === BookingEvent) return eventRepository;
+        if (entity === PaymentOrder) return orderRepository;
+        if (entity === SubServiceEntity) return subServiceRepository;
+        return eventRepository;
+      }),
+    } as unknown as jest.Mocked<EntityManager>;
     dataSource = {
       getRepository: jest.fn((entity: unknown) =>
         entity === PaymentOrder ? orderRepository : bookingRepository,
@@ -86,7 +140,6 @@ describe('BookingsService', () => {
     } as unknown as jest.Mocked<MatchingService>;
     service = new BookingsService(dataSource, matchingService);
   });
-
   it('creates a booking and an initial immutable lifecycle event', async () => {
     bookingFindOneBy.mockResolvedValue(null);
     bookingSave.mockImplementation((value: Booking) => {
@@ -109,38 +162,28 @@ describe('BookingsService', () => {
     expect(eventSave).toHaveBeenCalledTimes(1);
   });
 
-  it('snapshots line items and recomputes totals and duration server-side', async () => {
+  it('prices items from the catalogue and recomputes totals server-side', async () => {
     bookingFindOneBy.mockResolvedValue(null);
     bookingSave.mockImplementation((value: Booking) => Promise.resolve(value));
 
     const result = await service.create(
       '00000000-0000-4000-8000-000000000001',
       {
-        serviceCategoryId: '00000000-0000-4000-8000-000000000010',
+        serviceCategoryId: CATEGORY_ID,
         description: 'Repair a leaking pipe',
         locationLat: 22.3,
         locationLng: 73.2,
+        // The client selects catalogue entries and quantities ONLY.
         items: [
-          {
-            id: 'plumb-3',
-            name: 'Shower & Water Pipe Leakage',
-            quantity: 2,
-            unitPriceMinor: 24900,
-            durationMinutes: 45,
-          },
-          {
-            id: 'plumb-1',
-            name: 'Tap & Mixer Repair',
-            quantity: 1,
-            unitPriceMinor: 14900,
-            durationMinutes: 30,
-          },
+          { subServiceId: 'plumb-3', quantity: 2 },
+          { subServiceId: 'plumb-1', quantity: 1 },
         ],
       },
       'request-key-123',
     );
 
-    // 2×24900 + 1×14900 = 64700; GST 18% = 11646; duration 2×45 + 30 = 120.
+    // 2 x 24900 + 1 x 14900 = 64700; GST 18% = 11646; duration 2x45 + 30 = 120.
+    // Every price came from CATALOGUE, not from the request.
     expect(result.items).toEqual([
       {
         id: 'plumb-3',
@@ -344,7 +387,7 @@ describe('BookingsService', () => {
         version: 2,
       });
 
-    it('replaces items and recomputes totals for the assigned provider', async () => {
+    it('re-prices provider-supplied items from the catalogue', async () => {
       const original = activeJob();
       bookingFindOneBy.mockResolvedValue(original);
       const updated = activeJob();
@@ -356,19 +399,13 @@ describe('BookingsService', () => {
         'provider-1',
         {
           expectedVersion: 2,
-          items: [
-            {
-              id: 'plumb-3',
-              name: 'Shower & Water Pipe Leakage',
-              quantity: 2,
-              unitPriceMinor: 24900,
-              durationMinutes: 45,
-            },
-          ],
+          reason: 'Found a second leak while on site',
+          // The provider selects a catalogue entry and a quantity only.
+          items: [{ subServiceId: 'plumb-3', quantity: 2 }],
         },
       );
 
-      // 2×24900 = 49800 subtotal; GST 8964; duration 90.
+      // 2×24900 = 49800 subtotal; GST 8964; duration 90. Price from CATALOGUE.
       expect(builder.set).toHaveBeenCalledWith(
         expect.objectContaining({
           items: [
@@ -402,6 +439,7 @@ describe('BookingsService', () => {
 
     it('rejects adjustment once a payment order exists', async () => {
       orderExist.mockResolvedValue(true);
+      bookingFindOneBy.mockResolvedValue(activeJob());
 
       await expect(
         service.updateBookingItems(
@@ -428,6 +466,148 @@ describe('BookingsService', () => {
           { expectedVersion: 1, items: [] },
         ),
       ).rejects.toBeInstanceOf(ConflictException);
+    });
+
+    // ---- SEC-001: a provider must not be able to choose the price ----
+    it('ignores any price smuggled through the item payload', async () => {
+      bookingFindOneBy.mockResolvedValue(activeJob());
+      const updated = activeJob();
+      updated.version = 3;
+      const builder = stubTransition(updated);
+
+      // A caller reaching past the DTO (e.g. a hand-rolled HTTP client) tries
+      // to force a price of 1 paise. The catalogue price must still win.
+      await service.updateBookingItems(
+        '00000000-0000-4000-8000-000000000101',
+        'provider-1',
+        {
+          expectedVersion: 2,
+          items: [
+            {
+              subServiceId: 'plumb-3',
+              quantity: 2,
+              ...({ unitPriceMinor: 1, name: 'anything' } as object),
+            },
+          ],
+        },
+      );
+
+      const calls = builder.set.mock.calls as unknown as [
+        { items: { unitPriceMinor: number }[]; totalAmountMinor: number },
+      ][];
+      const payload = calls[0][0];
+      expect(payload.items[0].unitPriceMinor).toBe(24900);
+      expect(payload.totalAmountMinor).toBe(58764);
+    });
+
+    it('refuses a catalogue entry that belongs to another category', async () => {
+      bookingFindOneBy.mockResolvedValue(activeJob());
+      stubTransition(activeJob());
+
+      await expect(
+        service.updateBookingItems(
+          '00000000-0000-4000-8000-000000000101',
+          'provider-1',
+          {
+            expectedVersion: 2,
+            items: [{ subServiceId: 'other-cat', quantity: 1 }],
+          },
+        ),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('refuses a catalogue entry that is inactive or unpriced', async () => {
+      bookingFindOneBy.mockResolvedValue(activeJob());
+      stubTransition(activeJob());
+
+      await expect(
+        service.updateBookingItems(
+          '00000000-0000-4000-8000-000000000101',
+          'provider-1',
+          {
+            expectedVersion: 2,
+            items: [{ subServiceId: 'inactive-1', quantity: 1 }],
+          },
+        ),
+      ).rejects.toBeInstanceOf(BadRequestException);
+
+      await expect(
+        service.updateBookingItems(
+          '00000000-0000-4000-8000-000000000101',
+          'provider-1',
+          {
+            expectedVersion: 2,
+            items: [{ subServiceId: 'no-price', quantity: 1 }],
+          },
+        ),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    });
+  });
+
+  // ---- SEC-001 at creation time ----
+  describe('server-side pricing on create', () => {
+    beforeEach(() => {
+      bookingFindOneBy.mockResolvedValue(null);
+      bookingSave.mockImplementation((value: Booking) =>
+        Promise.resolve(value),
+      );
+    });
+
+    it('never persists a client-supplied unit price', async () => {
+      const result = await service.create(
+        '00000000-0000-4000-8000-000000000001',
+        {
+          serviceCategoryId: CATEGORY_ID,
+          description: 'Tampered request',
+          locationLat: 22.3,
+          locationLng: 73.2,
+          items: [
+            {
+              subServiceId: 'ac-1',
+              quantity: 1,
+              // Rs 0.01 for a Rs 899 service
+              ...({ unitPriceMinor: 1, name: 'free', id: 'x' } as object),
+            },
+          ],
+        },
+        'tamper-key-01',
+      );
+
+      // 89900 + 18% GST (16182) = 106082. The tampered value of 1 paise is ignored.
+      expect(result.items?.[0].unitPriceMinor).toBe(89900);
+      expect(result.totalAmountMinor).toBe(106082);
+    });
+
+    it('rejects a sub-service from another category', async () => {
+      await expect(
+        service.create(
+          '00000000-0000-4000-8000-000000000001',
+          {
+            serviceCategoryId: CATEGORY_ID,
+            description: 'Wrong category',
+            locationLat: 22.3,
+            locationLng: 73.2,
+            items: [{ subServiceId: 'other-cat', quantity: 1 }],
+          },
+          'wrong-cat-key-01',
+        ),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('rejects a sub-service that does not exist', async () => {
+      await expect(
+        service.create(
+          '00000000-0000-4000-8000-000000000001',
+          {
+            serviceCategoryId: CATEGORY_ID,
+            description: 'Ghost service',
+            locationLat: 22.3,
+            locationLng: 73.2,
+            items: [{ subServiceId: 'does-not-exist', quantity: 1 }],
+          },
+          'ghost-key-000001',
+        ),
+      ).rejects.toBeInstanceOf(NotFoundException);
     });
   });
 });

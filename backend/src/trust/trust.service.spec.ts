@@ -4,7 +4,38 @@ import { BookingStatus } from '../../../shared/booking-lifecycle.types';
 describe('TrustService', () => {
   const providerId = '00000000-0000-4000-8000-000000000002';
   const now = new Date('2026-08-21T00:00:00.000Z');
-  const bookings = { find: jest.fn(), count: jest.fn() };
+  // providerMetrics aggregates in SQL rather than loading every booking row and
+  // filtering in JS, so the booking mock is a query builder now.
+  type StatusQuery = {
+    select: jest.Mock;
+    addSelect: jest.Mock;
+    where: jest.Mock;
+    andWhere: jest.Mock;
+    groupBy: jest.Mock;
+    getRawMany: jest.Mock;
+  };
+  const statusQuery: StatusQuery = {
+    select: jest.fn(),
+    addSelect: jest.fn(),
+    where: jest.fn(),
+    andWhere: jest.fn(),
+    groupBy: jest.fn(),
+    getRawMany: jest.fn().mockResolvedValue([]),
+  };
+  for (const method of [
+    statusQuery.select,
+    statusQuery.addSelect,
+    statusQuery.where,
+    statusQuery.andWhere,
+    statusQuery.groupBy,
+  ]) {
+    method.mockReturnValue(statusQuery);
+  }
+  const bookings = {
+    find: jest.fn(),
+    count: jest.fn(),
+    createQueryBuilder: jest.fn(() => statusQuery),
+  };
   const reviews = { find: jest.fn() };
   const complaints = { count: jest.fn() };
   const signals = {
@@ -34,9 +65,9 @@ describe('TrustService', () => {
   beforeEach(() => jest.clearAllMocks());
 
   it('calculates transparent metrics without fabricating zero-data rates', async () => {
-    bookings.find.mockResolvedValue([
-      { status: BookingStatus.COMPLETED },
-      { status: BookingStatus.CANCELLED },
+    statusQuery.getRawMany.mockResolvedValue([
+      { status: BookingStatus.COMPLETED, count: '1' },
+      { status: BookingStatus.CANCELLED, count: '1' },
     ]);
     reviews.find.mockResolvedValue([{ rating: 5 }, { rating: 4 }]);
     complaints.count.mockResolvedValue(2);
@@ -48,6 +79,32 @@ describe('TrustService', () => {
       reviewCount: 2,
       complaintCount: 2,
     });
+  });
+
+  // The audit found soft-deleted bookings being counted towards a provider's
+  // completion rate, because the query had no deleted_at filter.
+  it('excludes soft-deleted bookings from provider metrics', async () => {
+    statusQuery.getRawMany.mockResolvedValue([
+      { status: BookingStatus.COMPLETED, count: '1' },
+    ]);
+    reviews.find.mockResolvedValue([]);
+    complaints.count.mockResolvedValue(0);
+
+    await service.providerMetrics(providerId);
+
+    expect(statusQuery.andWhere).toHaveBeenCalledWith(
+      'booking.deleted_at IS NULL',
+    );
+  });
+
+  it('does not load booking rows to count them', async () => {
+    statusQuery.getRawMany.mockResolvedValue([]);
+    reviews.find.mockResolvedValue([]);
+    complaints.count.mockResolvedValue(0);
+
+    await service.providerMetrics(providerId);
+
+    expect(bookings.find).not.toHaveBeenCalled();
   });
 
   it('emits one low-severity advisory signal at the exact cancellation threshold and deduplicates it', async () => {

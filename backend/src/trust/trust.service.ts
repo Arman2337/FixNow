@@ -123,8 +123,19 @@ export class TrustService {
   async providerMetrics(
     providerId: string,
   ): Promise<ProviderQualityMetricsContract> {
-    const [bookings, reviews, complaintCount] = await Promise.all([
-      this.bookings.find({ where: { providerId }, select: { status: true } }),
+    // Counted in SQL rather than by loading the rows and filtering in JS: a
+    // provider with a long history was materialising every booking row on each
+    // call. Soft-deleted rows are excluded, which the previous version did not
+    // do - a deleted booking was still counted towards the completion rate.
+    const [statusCounts, reviews, complaintCount] = await Promise.all([
+      this.bookings
+        .createQueryBuilder('booking')
+        .select('booking.status', 'status')
+        .addSelect('COUNT(*)', 'count')
+        .where('booking.provider_id = :providerId', { providerId })
+        .andWhere('booking.deleted_at IS NULL')
+        .groupBy('booking.status')
+        .getRawMany<{ status: BookingStatus; count: string }>(),
       this.reviews.find({
         where: {
           providerId,
@@ -134,12 +145,11 @@ export class TrustService {
       }),
       this.complaints.count({ where: { targetId: providerId } }),
     ]);
-    const completed = bookings.filter(
-      (booking) => booking.status === BookingStatus.COMPLETED,
-    ).length;
-    const cancelled = bookings.filter(
-      (booking) => booking.status === BookingStatus.CANCELLED,
-    ).length;
+
+    const countOf = (status: BookingStatus): number =>
+      Number(statusCounts.find((row) => row.status === status)?.count ?? '0');
+    const completed = countOf(BookingStatus.COMPLETED);
+    const cancelled = countOf(BookingStatus.CANCELLED);
     const terminal = completed + cancelled;
     const total = reviews.reduce((sum, review) => sum + review.rating, 0);
     return {
@@ -206,6 +216,9 @@ export class TrustService {
         providerId,
         status: BookingStatus.CANCELLED,
         cancelledAt: MoreThan(windowStart),
+        // Soft-deleted bookings must not count against a provider or a
+        // customer in the trust window.
+        deletedAt: IsNull(),
       },
     });
     if (cancellations < TRUST_RULES.cancellationThreshold) return null;
@@ -237,6 +250,9 @@ export class TrustService {
         customerId,
         status: BookingStatus.CANCELLED,
         cancelledAt: MoreThan(windowStart),
+        // Soft-deleted bookings must not count against a provider or a
+        // customer in the trust window.
+        deletedAt: IsNull(),
       },
     });
     if (cancellations < TRUST_RULES.customerCancellationThreshold) return null;

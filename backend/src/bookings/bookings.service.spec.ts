@@ -6,13 +6,19 @@ import {
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
-import type { DataSource, EntityManager, Repository } from 'typeorm';
+import type {
+  DataSource,
+  EntityManager,
+  ObjectLiteral,
+  Repository,
+} from 'typeorm';
 import { BookingStatus } from '../../../shared/booking-lifecycle.types';
 import type { MatchingService } from '../matching/matching.service';
 import type { ProviderCapacityService } from '../providers/availability/provider-capacity.service';
 import { BookingsService } from './bookings.service';
 import { BookingEvent } from './domain/booking-event.entity';
 import { Booking } from './domain/booking.entity';
+import { BookingReview } from '../ratings/domain/review.entity';
 import { PaymentOrder } from '../payments/domain/payment-order.entity';
 import { SubServiceEntity } from '../services/sub-service.entity';
 
@@ -22,6 +28,31 @@ import { SubServiceEntity } from '../services/sub-service.entity';
  * request body. See SEC-001.
  */
 const CATEGORY_ID = '00000000-0000-4000-8000-000000000010';
+const CUSTOMER_ID = '00000000-0000-4000-8000-000000000001';
+const OTHER_USER_ID = '00000000-0000-4000-8000-000000000002';
+
+/**
+ * The aggregate query builders `populatePhones` uses: one SELECT per entity,
+ * all terminal on `getRawMany`/`getRawOne`. Deliberately shared by every test
+ * that reaches `populatePhones`, so a fourth aggregate does not need a fifth
+ * bespoke mock.
+ */
+const queryAggregate = () => ({
+  select: jest.fn().mockReturnThis(),
+  innerJoin: jest.fn().mockReturnThis(),
+  addSelect: jest.fn().mockReturnThis(),
+  where: jest.fn().mockReturnThis(),
+  andWhere: jest.fn().mockReturnThis(),
+  groupBy: jest.fn().mockReturnThis(),
+  getRawMany: jest.fn().mockResolvedValue([]),
+  getRawOne: jest.fn().mockResolvedValue(null),
+});
+
+const aggregateRepository = () =>
+  ({
+    find: jest.fn().mockResolvedValue([]),
+    createQueryBuilder: jest.fn(() => queryAggregate()),
+  }) as unknown as jest.Mocked<Repository<ObjectLiteral>>;
 const sub = (
   id: string,
   name: string,
@@ -316,6 +347,93 @@ describe('BookingsService', () => {
     await expect(
       service.getBookingHistory('customer-id', 20, 'not-json'),
     ).rejects.toThrow('Invalid booking history cursor');
+  });
+
+  // Found by the integration suite: `getBookingHistory` over-fetches by one to
+  // detect `hasMore` but never dropped the extra row, so a caller asking for 2
+  // bookings received 3. The admin list services slice; this one did not.
+  it('returns exactly the requested number of history rows, never the hasMore probe', async () => {
+    const query = {
+      where: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      orderBy: jest.fn().mockReturnThis(),
+      addOrderBy: jest.fn().mockReturnThis(),
+      take: jest.fn().mockReturnThis(),
+      getMany: jest
+        .fn()
+        .mockResolvedValue([
+          booking({ id: 'b3', providerId: OTHER_USER_ID }),
+          booking({ id: 'b2', providerId: OTHER_USER_ID }),
+          booking({ id: 'b1', providerId: OTHER_USER_ID }),
+        ]),
+    };
+    bookingRepository.createQueryBuilder.mockImplementation(
+      (alias?: string) =>
+        (alias === 'booking' ? query : queryAggregate()) as never,
+    );
+    dataSource.getRepository.mockImplementation((entity: unknown) =>
+      entity === Booking ? bookingRepository : aggregateRepository(),
+    );
+
+    const page = await service.getBookingHistory(CUSTOMER_ID, 2);
+
+    // The probe row proves there is a next page, and is not itself returned.
+    expect(query.take).toHaveBeenCalledWith(3);
+    expect(page.bookings.map(({ id }) => id)).toEqual(['b3', 'b2']);
+    expect(page.nextCursor).not.toBeNull();
+  });
+
+  // Found by the integration suite. `populatePhones` averaged provider ratings
+  // through `.innerJoin('r.booking', 'b')`, but `BookingReview` declares no
+  // `booking` relation - only a `booking_id` column - so TypeORM threw while
+  // building the query and the whole booking list 500'd. Every unit test mocked
+  // the repository, so nothing here could have seen it.
+  it('joins the review aggregate to Booking by column, not by a relation that does not exist', async () => {
+    const joins: unknown[][] = [];
+    const reviewBuilder: Record<string, jest.Mock> = {};
+    const chain = ['select', 'addSelect', 'where', 'andWhere', 'groupBy'];
+    for (const method of chain)
+      reviewBuilder[method] = jest.fn().mockReturnThis();
+    reviewBuilder.innerJoin = jest.fn((...args: unknown[]) => {
+      joins.push(args);
+      return reviewBuilder;
+    });
+    reviewBuilder.getRawMany = jest.fn().mockResolvedValue([]);
+
+    const historyQuery = {
+      where: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      orderBy: jest.fn().mockReturnThis(),
+      addOrderBy: jest.fn().mockReturnThis(),
+      take: jest.fn().mockReturnThis(),
+      getMany: jest
+        .fn()
+        .mockResolvedValue([booking({ providerId: OTHER_USER_ID })]),
+    };
+    bookingRepository.createQueryBuilder.mockImplementation(
+      (alias?: string) =>
+        (alias === 'booking' ? historyQuery : queryAggregate()) as never,
+    );
+    dataSource.getRepository.mockImplementation((entity: unknown) => {
+      if (entity === Booking) {
+        return bookingRepository;
+      }
+      if (entity === BookingReview) {
+        return {
+          createQueryBuilder: jest.fn(() => reviewBuilder),
+        } as unknown as jest.Mocked<Repository<ObjectLiteral>>;
+      }
+      return aggregateRepository();
+    });
+
+    await service.getBookingHistory(CUSTOMER_ID, 10);
+
+    expect(joins).toHaveLength(1);
+    // The entity class plus an explicit ON clause. A string relation path like
+    // 'r.booking' is what made this throw.
+    expect(joins[0][0]).toBe(Booking);
+    expect(joins[0][1]).toBe('b');
+    expect(String(joins[0][2])).toContain('booking_id');
   });
 
   describe('getBookingForUser', () => {

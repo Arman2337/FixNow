@@ -124,6 +124,65 @@ jobs:
       - name: Test
         run: npx jest --ci
 
+  integration:
+    name: Backend integration (real PostgreSQL)
+    runs-on: ubuntu-latest
+
+    # The suite these specs live in had never been executed by anyone. It needs a
+    # dedicated, disposable database: the specs TRUNCATE. Every spec refuses to
+    # run unless the target is loopback, port 55432, role `fixnow_test`, database
+    # `fixnow_test` - which is why the service below is published on 55432 rather
+    # than the 5432 the other jobs use.
+    #
+    # The first run found three things no other gate could see: a query joining
+    # a TypeORM relation that does not exist (every booking list 500'd), a
+    # pagination off-by-one, and harnesses whose hand-copied entity lists had
+    # rotted. Unit tests mock all three away.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: fixnow_test
+          POSTGRES_PASSWORD: fixnow_test
+          POSTGRES_DB: fixnow_test
+        ports:
+          - 55432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    defaults:
+      run:
+        working-directory: backend
+
+    env:
+      TEST_DATABASE_URL: postgresql://fixnow_test:fixnow_test@localhost:55432/fixnow_test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build the schema from every migration
+        # The specs assert against constraints and triggers that only exist if
+        # migrations built them. `synchronize` is never enabled, so an empty
+        # database here means the migrations, not the entity metadata.
+        env:
+          DATABASE_URL: postgresql://fixnow_test:fixnow_test@localhost:55432/fixnow_test
+        run: npm run migration:run
+
+      - name: Integration test
+        run: npm run test:integration
+
   mobile:
     name: Mobile (analyze, test)
     runs-on: ubuntu-latest

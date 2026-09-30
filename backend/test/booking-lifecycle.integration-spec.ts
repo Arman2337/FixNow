@@ -3,55 +3,48 @@ import {
   ConflictException,
   ForbiddenException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { createHmac } from 'crypto';
 import { DataSource } from 'typeorm';
 import { BookingStatus } from '../../shared/booking-lifecycle.types';
 import { ProviderAvailabilityStatus } from '../../shared/provider-availability.types';
 import { BookingsService } from '../src/bookings/bookings.service';
-import { BookingEvent } from '../src/bookings/domain/booking-event.entity';
 import { Booking } from '../src/bookings/domain/booking.entity';
+import { BookingEvent } from '../src/bookings/domain/booking-event.entity';
 import { MatchingService } from '../src/matching/matching.service';
 import { ProviderCapacityService } from '../src/providers/availability/provider-capacity.service';
 import { ProviderAvailabilityEntity } from '../src/providers/availability/provider-availability.entity';
 import { ProviderProfileEntity } from '../src/providers/provider-profile.entity';
-import { ProviderSkillEntity } from '../src/providers/provider-skill.entity';
-import { ServiceCategoryEntity } from '../src/services/service-category.entity';
-import { UserEntity } from '../src/users/user.entity';
+import { createTestDataSource } from './support/test-data-source';
+
+const TEST_OTP_SECRET = 'test-only-otp-secret-at-least-32-characters';
+
+/**
+ * A second, independent implementation of the service-start OTP.
+ *
+ * Deliberately not a call into the service's own helper: a test that derives its
+ * expectation with the same code it is checking proves nothing. The derivation
+ * is HMAC-SHA256 over the booking id and the moment the provider went en route,
+ * truncated to four digits.
+ */
+const serviceStartOtp = (bookingId: string, enRouteAt: Date): string => {
+  const digest = createHmac('sha256', TEST_OTP_SECRET)
+    .update(`service-start:${bookingId}:${enRouteAt.toISOString()}`)
+    .digest()
+    .readUInt32BE(0);
+  return (digest % 10000).toString().padStart(4, '0');
+};
 
 describe('booking lifecycle PostgreSQL boundaries', () => {
-  const rawUrl = process.env.TEST_DATABASE_URL;
-  if (!rawUrl)
-    throw new Error('TEST_DATABASE_URL must target an isolated test database');
-  const url = new URL(rawUrl);
-  const isExpectedTestDatabase =
-    url.protocol === 'postgresql:' &&
-    ['127.0.0.1', 'localhost'].includes(url.hostname) &&
-    url.port === '55432' &&
-    url.username === 'fixnow_test' &&
-    url.pathname === '/fixnow_test';
-  if (!isExpectedTestDatabase) {
-    throw new Error(
-      'Refusing destructive integration tests: TEST_DATABASE_URL must be the documented loopback fixnow_test database on port 55432',
-    );
-  }
-
   const customerId = '00000000-0000-4000-8000-000000000101';
   const providerOneId = '00000000-0000-4000-8000-000000000201';
   const providerTwoId = '00000000-0000-4000-8000-000000000202';
   const categoryId = '00000000-0000-4000-8000-000000000301';
-  const dataSource = new DataSource({
-    type: 'postgres',
-    url: rawUrl,
-    entities: [
-      Booking,
-      BookingEvent,
-      UserEntity,
-      ProviderProfileEntity,
-      ProviderSkillEntity,
-      ProviderAvailabilityEntity,
-      ServiceCategoryEntity,
-    ],
-    synchronize: false,
-  });
+  // `booking_events.actor_user_id` is a foreign key, so the admin who schedules a
+  // re-service has to be a real row. This is also why the audit trail can be
+  // trusted to name a person rather than a dangling uuid.
+  const adminId = '00000000-0000-4000-8000-000000000401';
+  const dataSource: DataSource = createTestDataSource();
   let matchingService: MatchingService;
   let service: BookingsService;
 
@@ -66,6 +59,13 @@ describe('booking lifecycle PostgreSQL boundaries', () => {
       new ProviderCapacityService(
         dataSource.getRepository(ProviderAvailabilityEntity),
       ),
+      undefined,
+      undefined,
+      // IN_PROGRESS is OTP-gated, so reaching it needs a real OTP_SECRET. The
+      // previous harness passed none and the lifecycle test asserted the
+      // transition with `updateStatus`, which correctly refuses IN_PROGRESS -
+      // the test was written against a service that could not have worked.
+      new ConfigService({ OTP_SECRET: TEST_OTP_SECRET }),
     );
   });
 
@@ -74,8 +74,8 @@ describe('booking lifecycle PostgreSQL boundaries', () => {
       'TRUNCATE TABLE "booking_events", "bookings", "provider_availability", "provider_skills", "provider_profiles", "service_categories", "users" CASCADE',
     );
     await dataSource.query(
-      `INSERT INTO "users" ("id", "status") VALUES ($1, 'active'), ($2, 'active'), ($3, 'active')`,
-      [customerId, providerOneId, providerTwoId],
+      `INSERT INTO "users" ("id", "status") VALUES ($1, 'active'), ($2, 'active'), ($3, 'active'), ($4, 'active')`,
+      [customerId, providerOneId, providerTwoId, adminId],
     );
     await dataSource.query(
       `INSERT INTO "service_categories" ("id", "name", "slug", "is_active") VALUES ($1, 'Plumbing', 'plumbing', true)`,
@@ -230,20 +230,34 @@ describe('booking lifecycle PostgreSQL boundaries', () => {
       BookingStatus.EN_ROUTE,
       assigned.version,
     );
+    // IN_PROGRESS is deliberately not reachable through `updateStatus`: the
+    // provider must present the service-start OTP, so a client cannot skip the
+    // proof-of-arrival step.
     await expect(
       service.updateStatus(
         enRoute.id,
         providerOneId,
         BookingStatus.IN_PROGRESS,
-        assigned.version,
+        enRoute.version,
       ),
-    ).rejects.toBeInstanceOf(ConflictException);
-    const inProgress = await service.updateStatus(
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    const inProgress = await service.verifyOtpAndStartService(
       enRoute.id,
       providerOneId,
-      BookingStatus.IN_PROGRESS,
+      serviceStartOtp(enRoute.id, enRoute.enRouteAt!),
       enRoute.version,
     );
+    expect(inProgress.status).toBe(BookingStatus.IN_PROGRESS);
+
+    await expect(
+      service.verifyOtpAndStartService(
+        inProgress.id,
+        providerOneId,
+        serviceStartOtp(inProgress.id, enRoute.enRouteAt!),
+        inProgress.version,
+      ),
+    ).rejects.toBeInstanceOf(ConflictException);
     await expect(
       service.cancelBooking(
         inProgress.id,
@@ -330,7 +344,7 @@ describe('booking lifecycle PostgreSQL boundaries', () => {
       ],
       idempotencyKey: 'guarantee-claim-0001',
       requestFingerprint: 'guarantee-claim-0001',
-      actorUserId: '00000000-0000-4000-8000-000000000401',
+      actorUserId: adminId,
       reason: 'Guarantee re-service for claim 0001',
       isGuaranteeClaim: true,
       parentBookingId: null,
@@ -381,7 +395,7 @@ describe('booking lifecycle PostgreSQL boundaries', () => {
       items: null,
       idempotencyKey: 'guarantee-claim-0002',
       requestFingerprint: 'guarantee-claim-0002',
-      actorUserId: '00000000-0000-4000-8000-000000000401',
+      actorUserId: adminId,
       reason: 'Guarantee re-service for claim 0002',
     });
 
@@ -409,7 +423,7 @@ describe('booking lifecycle PostgreSQL boundaries', () => {
         items: null,
         idempotencyKey: 'guarantee-claim-0003',
         requestFingerprint: 'guarantee-claim-0003',
-        actorUserId: '00000000-0000-4000-8000-000000000401',
+        actorUserId: adminId,
         reason: 'Guarantee re-service for claim 0003',
       }),
     ).rejects.toBeInstanceOf(BadRequestException);

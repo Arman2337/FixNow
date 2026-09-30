@@ -3,8 +3,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { ServiceCategoriesService } from './service-categories.service';
 import { ServiceCategoryEntity } from './service-category.entity';
-import { ProviderSkillEntity } from '../providers/provider-skill.entity';
-import { UserEntity } from '../users/user.entity';
+import {
+  ALL_ENTITIES,
+  assertIsolatedTestDatabase,
+} from '../../test/support/test-data-source';
 
 describe('ServiceCategoriesService (Integration)', () => {
   let service: ServiceCategoriesService;
@@ -12,29 +14,16 @@ describe('ServiceCategoriesService (Integration)', () => {
   let module: TestingModule;
 
   beforeAll(async () => {
-    const databaseUrl = process.env.TEST_DATABASE_URL;
-    if (!databaseUrl) {
-      throw new Error(
-        'TEST_DATABASE_URL must target an isolated test database',
-      );
-    }
-    const parsedUrl = new URL(databaseUrl);
-    if (
-      !['127.0.0.1', 'localhost'].includes(parsedUrl.hostname) ||
-      parsedUrl.port !== '55432' ||
-      parsedUrl.pathname !== '/fixnow_test'
-    ) {
-      throw new Error(
-        'Refusing destructive integration tests: TEST_DATABASE_URL must be the documented loopback fixnow_test database on port 55432',
-      );
-    }
+    const databaseUrl = assertIsolatedTestDatabase(
+      process.env.TEST_DATABASE_URL,
+    );
 
     module = await Test.createTestingModule({
       imports: [
         TypeOrmModule.forRoot({
           type: 'postgres',
           url: databaseUrl,
-          entities: [ServiceCategoryEntity, ProviderSkillEntity, UserEntity],
+          entities: ALL_ENTITIES,
           synchronize: false,
           retryAttempts: 0,
         }),

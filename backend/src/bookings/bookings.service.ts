@@ -913,9 +913,13 @@ export class BookingsService {
 
     const rows = await query.getMany();
     const hasMore = rows.length > boundedLimit;
-    const page = rows.map((booking) =>
-      this.redactDestinationFor(booking, userId),
-    );
+    // `take(limit + 1)` over-fetches by one purely to detect `hasMore`. That
+    // extra row must not be returned: the customer asked for `limit` bookings.
+    // The admin list services slice here; this one did not, so every page of
+    // booking history carried one booking too many.
+    const page = rows
+      .slice(0, boundedLimit)
+      .map((booking) => this.redactDestinationFor(booking, userId));
     await this.populatePhones(page);
     const last = page.at(-1);
     return {
@@ -1368,12 +1372,26 @@ export class BookingsService {
     // Real published-review aggregate per provider. Previously this stamped
     // providerRating = 4.9 and fell back to 48 completed jobs on every booking
     // in every list, so customers were shown a score nobody had given.
+    //
+    // Found by the integration suite, which is the first time this query has
+    // ever executed. It joined `r.booking`, but `BookingReview` declares no
+    // `booking` relation - only a `booking_id` column - so TypeORM threw
+    // `Relation with property path booking in entity was not found` and the
+    // whole request 500'd. Every unit test mocks the repository, so nothing
+    // could see it.
+    //
+    // The join is expressed against the entity rather than a relation path,
+    // which keeps the original `b.status = COMPLETED` filter (only a completed
+    // booking may be reviewed) without inventing a relation that does not
+    // exist. `provider_id` is denormalised on the review row, so the group-by
+    // could also have been done without the join; keeping it means the rating
+    // still cannot count a review left against a cancelled booking.
     const ratingCounts =
       providerIds.size > 0
         ? await this.dataSource
             .getRepository(BookingReview)
             .createQueryBuilder('r')
-            .innerJoin('r.booking', 'b')
+            .innerJoin(Booking, 'b', 'b.id = r.booking_id')
             .select('b.provider_id', 'providerId')
             .addSelect('AVG(r.rating)', 'avgRating')
             .addSelect('COUNT(r.id)', 'reviewCount')

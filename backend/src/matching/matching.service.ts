@@ -174,6 +174,51 @@ export class MatchingService {
   }
 
   /**
+   * Can this account take this category's work at all?
+   *
+   * The narrower sibling of `isProviderEligible`, for privileged flows that
+   * name the provider themselves rather than letting matching choose
+   * (BUG-011/SEC-007: the guarantee re-service). It answers "is this a real,
+   * active provider qualified for this work", and deliberately does NOT ask
+   * whether they are currently Online or within radius: an administrator
+   * scheduling a remedy for a customer the platform failed is entitled to pick
+   * a provider who has gone offline, and refusing would leave the guarantee
+   * un-actionable.
+   *
+   * Before this existed, the endpoint took `providerId` straight from the
+   * request body and wrote it onto a live booking, so any account id -
+   * including a customer's - could be attached to real work.
+   */
+  async isProviderQualifiedForCategory(
+    providerId: string,
+    serviceCategoryId: string,
+  ): Promise<boolean> {
+    const count = await this.profileRepository
+      .createQueryBuilder('profile')
+      .innerJoin('profile.user', 'user')
+      .innerJoin('provider_skills', 'skill', 'skill.user_id = profile.user_id')
+      .innerJoin(
+        'service_categories',
+        'category',
+        'category.id = skill.service_category_id',
+      )
+      .where('profile.user_id = :providerId', { providerId })
+      .andWhere('user.status = :accountStatus', {
+        accountStatus: AccountStatus.Active,
+      })
+      .andWhere('skill.service_category_id = :categoryId', {
+        categoryId: serviceCategoryId,
+      })
+      .andWhere('skill.is_verified = :isVerified', { isVerified: true })
+      .andWhere('category.is_active = :categoryActive', {
+        categoryActive: true,
+      })
+      .getCount();
+
+    return count > 0;
+  }
+
+  /**
    * The distance from a provider to a job, or null when they are not eligible.
    *
    * BUG-004. `getAvailableRequests` used to call `findEligibleProviders` once

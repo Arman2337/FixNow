@@ -58,6 +58,39 @@ export interface ProviderBookingRequestPage {
   bookings: Array<{ booking: Booking; distanceKm: number }>;
 }
 
+/**
+ * A booking that is created already assigned to a provider, in one transaction.
+ *
+ * Used by privileged flows that name the provider up front (BUG-011: the
+ * guarantee re-service). Nothing here is derived from a client-supplied amount,
+ * and nothing bypasses the state machine.
+ */
+export interface AssignedBookingInput {
+  customerId: string;
+  providerId: string;
+  serviceCategoryId: string;
+  description: string;
+  locationLat: number;
+  locationLng: number;
+  /**
+   * The already-resolved, server-priced snapshot carried from the original
+   * booking. Deliberately NOT `BookingItemRequestDto[]`: re-running
+   * `resolveItemSnapshots` here would re-price the re-service at today's
+   * catalogue rates, and would refuse to schedule one at all if an original
+   * line had since been deactivated. The customer's remedy is the work they
+   * were denied, priced as it was quoted.
+   */
+  items: BookingItemSnapshot[] | null;
+  idempotencyKey: string;
+  requestFingerprint: string;
+  /** Recorded as the actor on both audit events. */
+  actorUserId: string;
+  /** Recorded on the ASSIGNMENT event so the audit trail explains itself. */
+  reason: string;
+  isGuaranteeClaim?: boolean;
+  parentBookingId?: string | null;
+}
+
 interface HistoryCursor {
   createdAt: string;
   id: string;
@@ -137,14 +170,12 @@ export class BookingsService {
           : null;
         const totals = computeBookingTotals(items);
 
-        const bookingRepository = manager.getRepository(Booking);
-        const booking = bookingRepository.create({
+        const saved = await this.insertRequestedBooking(manager, {
           customerId: userId,
-          providerId: null,
           serviceCategoryId: normalizedInput.serviceCategoryId,
           idempotencyKey: normalizedKey,
           requestFingerprint: fingerprint,
-          status: BookingStatus.REQUESTED,
+          actorUserId: userId,
           description: normalizedInput.description,
           items,
           totalAmountMinor: totals.totalMinor || null,
@@ -154,49 +185,8 @@ export class BookingsService {
           scheduledAt: normalizedInput.scheduledAt
             ? new Date(normalizedInput.scheduledAt)
             : null,
-          assignedAt: null,
-          enRouteAt: null,
-          startedAt: null,
-          completedAt: null,
-          cancelledAt: null,
-          cancellationReason: null,
-          deletedAt: null,
+          lineItems: normalizedInput.lineItems,
         });
-        const saved = await bookingRepository.save(booking);
-
-        if (normalizedInput.lineItems?.length) {
-          const lineItemRepo = manager.getRepository(BookingLineItem);
-          const subServiceRepo = manager.getRepository(SubServiceEntity);
-
-          const lineItemsToSave = await Promise.all(
-            normalizedInput.lineItems.map(async (item) => {
-              const subService = await subServiceRepo.findOneBy({
-                id: item.subServiceId,
-              });
-              if (!subService)
-                throw new NotFoundException(
-                  `SubService ${item.subServiceId} not found`,
-                );
-              return lineItemRepo.create({
-                bookingId: saved.id,
-                subServiceId: item.subServiceId,
-                quantity: item.quantity,
-                priceMinor: subService.priceMinor ?? 0,
-              });
-            }),
-          );
-          await lineItemRepo.save(lineItemsToSave);
-          saved.lineItems = lineItemsToSave;
-        }
-
-        await this.appendEvent(
-          manager,
-          saved,
-          userId,
-          null,
-          BookingStatus.REQUESTED,
-          null,
-        );
         return saved;
       });
       await this.notifySafely(async () => {
@@ -257,6 +247,203 @@ export class BookingsService {
           idempotencyKey: normalizedKey,
         });
       return this.resolveIdempotentReplay(concurrent, fingerprint);
+    }
+  }
+
+  /**
+   * The single definition of "a booking comes into existence". Both the
+   * customer path (`create`) and the privileged already-assigned path
+   * (`createAssignedBooking`) go through here, so there is exactly one INSERT,
+   * one default shape, and one REQUESTED audit event.
+   */
+  private async insertRequestedBooking(
+    manager: EntityManager,
+    params: {
+      customerId: string;
+      serviceCategoryId: string;
+      idempotencyKey: string;
+      requestFingerprint: string;
+      actorUserId: string;
+      description: string;
+      items: BookingItemSnapshot[] | null;
+      totalAmountMinor: number | null;
+      estimatedDurationMinutes: number | null;
+      locationLat: number;
+      locationLng: number;
+      scheduledAt: Date | null;
+      lineItems?: CreateBookingLineItemDto[];
+      isGuaranteeClaim?: boolean;
+      parentBookingId?: string | null;
+    },
+  ): Promise<Booking> {
+    const bookingRepository = manager.getRepository(Booking);
+    const booking = bookingRepository.create({
+      customerId: params.customerId,
+      providerId: null,
+      serviceCategoryId: params.serviceCategoryId,
+      idempotencyKey: params.idempotencyKey,
+      requestFingerprint: params.requestFingerprint,
+      status: BookingStatus.REQUESTED,
+      description: params.description,
+      items: params.items,
+      totalAmountMinor: params.totalAmountMinor,
+      estimatedDurationMinutes: params.estimatedDurationMinutes,
+      locationLat: params.locationLat,
+      locationLng: params.locationLng,
+      scheduledAt: params.scheduledAt,
+      assignedAt: null,
+      enRouteAt: null,
+      startedAt: null,
+      completedAt: null,
+      cancelledAt: null,
+      cancellationReason: null,
+      deletedAt: null,
+      isGuaranteeClaim: params.isGuaranteeClaim ?? false,
+      parentBookingId: params.parentBookingId ?? null,
+    });
+    const saved = await bookingRepository.save(booking);
+
+    if (params.lineItems?.length) {
+      const lineItemRepo = manager.getRepository(BookingLineItem);
+      const subServiceRepo = manager.getRepository(SubServiceEntity);
+
+      const lineItemsToSave = await Promise.all(
+        params.lineItems.map(async (item) => {
+          const subService = await subServiceRepo.findOneBy({
+            id: item.subServiceId,
+          });
+          if (!subService)
+            throw new NotFoundException(
+              `SubService ${item.subServiceId} not found`,
+            );
+          return lineItemRepo.create({
+            bookingId: saved.id,
+            subServiceId: item.subServiceId,
+            quantity: item.quantity,
+            priceMinor: subService.priceMinor ?? 0,
+          });
+        }),
+      );
+      await lineItemRepo.save(lineItemsToSave);
+      saved.lineItems = lineItemsToSave;
+    }
+
+    await this.appendEvent(
+      manager,
+      saved,
+      params.actorUserId,
+      null,
+      BookingStatus.REQUESTED,
+      null,
+    );
+    return saved;
+  }
+
+  /**
+   * BUG-011. Creates a booking that is already assigned to a named provider, in
+   * ONE transaction, through the state machine.
+   *
+   * The guarantee re-service used to INSERT straight into ASSIGNED with
+   * `bookingsRepository.create(...)`. That single line skipped four things the
+   * rest of the codebase treats as non-negotiable:
+   *
+   *   1. `transitionTo()`, so the state machine never saw the edge;
+   *   2. the version CAS, so no concurrency control at all;
+   *   3. `appendEvent()`, so the booking had NO audit trail - and the admin
+   *      booking detail view reads `booking_events`, so the re-service was
+   *      invisible to the people who have to investigate it;
+   *   4. the idempotency machinery, so a retried request could create a second
+   *      live job and charge the customer twice for the remedy.
+   *
+   * It also produced a booking with `total_amount_minor` NULL, which
+   * `payments.service.ts` treats as unpayable - the customer's remedy could not
+   * be charged for. The snapshot from the original booking is carried forward,
+   * so the re-service is priced exactly as it was quoted.
+   *
+   * Matching is deliberately not run: the provider is already known, so there is
+   * nobody to fan out to.
+   */
+  async createAssignedBooking(input: AssignedBookingInput): Promise<Booking> {
+    const normalizedKey = this.validateIdempotencyKey(input.idempotencyKey);
+    const existing = await this.dataSource.getRepository(Booking).findOneBy({
+      customerId: input.customerId,
+      idempotencyKey: normalizedKey,
+    });
+    if (existing) return existing;
+
+    if (input.customerId === input.providerId) {
+      throw new BadRequestException(
+        'A re-service cannot be assigned to the customer it belongs to',
+      );
+    }
+
+    const totals = computeBookingTotals(input.items);
+
+    try {
+      const booking = await this.dataSource.transaction(async (manager) => {
+        const created = await this.insertRequestedBooking(manager, {
+          customerId: input.customerId,
+          serviceCategoryId: input.serviceCategoryId,
+          idempotencyKey: normalizedKey,
+          requestFingerprint: input.requestFingerprint,
+          actorUserId: input.actorUserId,
+          description: input.description,
+          items: input.items,
+          totalAmountMinor: totals.totalMinor || null,
+          estimatedDurationMinutes: totals.estimatedDurationMinutes,
+          locationLat: input.locationLat,
+          locationLng: input.locationLng,
+          scheduledAt: null,
+          isGuaranteeClaim: input.isGuaranteeClaim,
+          parentBookingId: input.parentBookingId,
+        });
+
+        // Same edge, same guards and same CAS as a provider accepting. The
+        // version is the one the INSERT just produced, so the compare-and-set
+        // below is against a real observed version rather than a guess.
+        return this.transitionIn(
+          manager,
+          created.id,
+          input.actorUserId,
+          created.version,
+          async (candidate, txManager) => {
+            if (candidate.status !== BookingStatus.REQUESTED) {
+              throw new ConflictException('Booking is no longer assignable');
+            }
+            await this.capacity.assertCanAccept(txManager, input.providerId);
+            candidate.providerId = input.providerId;
+            candidate.transitionTo(BookingStatus.ASSIGNED);
+            await this.capacity.syncAvailabilityForWorkload(
+              txManager,
+              input.providerId,
+            );
+          },
+          input.reason,
+        );
+      });
+
+      await this.bookingProjections?.publishBooking(booking);
+      await this.notifySafely(async () => {
+        await this.domainNotifications!.notifyBookingEvent(
+          booking,
+          'customer',
+          BookingStatus.ASSIGNED,
+        );
+        await this.domainNotifications!.notifyBookingEvent(
+          booking,
+          'provider',
+          BookingStatus.ASSIGNED,
+        );
+      });
+      return booking;
+    } catch (error: unknown) {
+      // Two admins pressing the button at once: the loser replays the winner's
+      // booking rather than creating a second live job.
+      if (!this.isUniqueViolation(error)) throw error;
+      return this.dataSource.getRepository(Booking).findOneByOrFail({
+        customerId: input.customerId,
+        idempotencyKey: normalizedKey,
+      });
     }
   }
 
@@ -870,54 +1057,82 @@ export class BookingsService {
         'Expected version must be a positive integer',
       );
     }
-    return this.dataSource.transaction(async (manager) => {
-      const repository = manager.getRepository(Booking);
-      const booking = await repository.findOneBy({ id: bookingId });
-      if (!booking) throw new NotFoundException('Booking not found');
-      if (booking.version !== expectedVersion) {
-        throw new ConflictException('Booking version is stale');
-      }
-
-      const fromStatus = booking.status;
-      await mutate(booking, manager);
-      const result = await repository
-        .createQueryBuilder()
-        .update(Booking)
-        .set({
-          providerId: booking.providerId,
-          status: booking.status,
-          scheduledAt: booking.scheduledAt,
-          items: booking.items,
-          totalAmountMinor: booking.totalAmountMinor,
-          estimatedDurationMinutes: booking.estimatedDurationMinutes,
-          assignedAt: booking.assignedAt,
-          enRouteAt: booking.enRouteAt,
-          startedAt: booking.startedAt,
-          completedAt: booking.completedAt,
-          cancelledAt: booking.cancelledAt,
-          cancellationReason: booking.cancellationReason,
-          version: () => '"version" + 1',
-        })
-        .where('id = :id AND version = :expectedVersion', {
-          id: bookingId,
-          expectedVersion,
-        })
-        .execute();
-      if (result.affected !== 1) {
-        throw new ConflictException('Booking was modified concurrently');
-      }
-
-      booking.version = expectedVersion + 1;
-      await this.appendEvent(
+    return this.dataSource.transaction((manager) =>
+      this.transitionIn(
         manager,
-        booking,
+        bookingId,
         actorUserId,
-        fromStatus,
-        booking.status,
+        expectedVersion,
+        mutate,
         reason,
+      ),
+    );
+  }
+
+  /**
+   * The state machine write, scoped to a caller's transaction so a caller that
+   * must make the transition atomic with something else (the INSERT in
+   * `createAssignedBooking`) can compose the two without a nested transaction.
+   */
+  private async transitionIn(
+    manager: EntityManager,
+    bookingId: string,
+    actorUserId: string,
+    expectedVersion: number,
+    mutate: (booking: Booking, manager: EntityManager) => void | Promise<void>,
+    reason: string | null = null,
+  ): Promise<Booking> {
+    if (!Number.isInteger(expectedVersion) || expectedVersion < 1) {
+      throw new BadRequestException(
+        'Expected version must be a positive integer',
       );
-      return repository.findOneByOrFail({ id: bookingId });
-    });
+    }
+    const repository = manager.getRepository(Booking);
+    const booking = await repository.findOneBy({ id: bookingId });
+    if (!booking) throw new NotFoundException('Booking not found');
+    if (booking.version !== expectedVersion) {
+      throw new ConflictException('Booking version is stale');
+    }
+
+    const fromStatus = booking.status;
+    await mutate(booking, manager);
+    const result = await repository
+      .createQueryBuilder()
+      .update(Booking)
+      .set({
+        providerId: booking.providerId,
+        status: booking.status,
+        scheduledAt: booking.scheduledAt,
+        items: booking.items,
+        totalAmountMinor: booking.totalAmountMinor,
+        estimatedDurationMinutes: booking.estimatedDurationMinutes,
+        assignedAt: booking.assignedAt,
+        enRouteAt: booking.enRouteAt,
+        startedAt: booking.startedAt,
+        completedAt: booking.completedAt,
+        cancelledAt: booking.cancelledAt,
+        cancellationReason: booking.cancellationReason,
+        version: () => '"version" + 1',
+      })
+      .where('id = :id AND version = :expectedVersion', {
+        id: bookingId,
+        expectedVersion,
+      })
+      .execute();
+    if (result.affected !== 1) {
+      throw new ConflictException('Booking was modified concurrently');
+    }
+
+    booking.version = expectedVersion + 1;
+    await this.appendEvent(
+      manager,
+      booking,
+      actorUserId,
+      fromStatus,
+      booking.status,
+      reason,
+    );
+    return repository.findOneByOrFail({ id: bookingId });
   }
 
   private async appendEvent(

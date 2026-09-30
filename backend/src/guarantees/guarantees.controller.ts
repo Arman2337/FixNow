@@ -12,6 +12,7 @@ import {
 import { GuaranteesService } from './guarantees.service';
 import { CreateGuaranteeClaimDto } from './dto/create-guarantee-claim.dto';
 import { UpdateGuaranteeClaimDto } from './dto/update-guarantee-claim.dto';
+import { ReServiceBookingDto } from './dto/re-service-booking.dto';
 import { AuthorizationGuard } from '../common/authorization/authorization.guard';
 import {
   RequireOwnPermission,
@@ -61,8 +62,13 @@ export class GuaranteesController {
   @Post(':id/re-service')
   createReServiceBooking(
     @Param('id') id: string,
-    @Body('providerId') providerId: string,
+    @Body() body: ReServiceBookingDto,
+    @Req() req: AuthorizedRequest,
   ) {
-    return this.guaranteesService.createReServiceBooking(id, providerId);
+    return this.guaranteesService.createReServiceBooking(
+      id,
+      body.providerId,
+      req.authorizationPrincipal!.userId,
+    );
   }
 }

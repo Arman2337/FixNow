@@ -1,4 +1,8 @@
-import { ConflictException, ForbiddenException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { BookingStatus } from '../../shared/booking-lifecycle.types';
 import { ProviderAvailabilityStatus } from '../../shared/provider-availability.types';
@@ -301,5 +305,131 @@ describe('booking lifecycle PostgreSQL boundaries', () => {
     const providerHistory = await service.getBookingHistory(providerOneId, 20);
     expect(providerHistory.bookings[0].locationLat).toBeNull();
     expect(providerHistory.bookings[0].locationLng).toBeNull();
+  });
+
+  // BUG-011: the guarantee re-service used to INSERT straight into ASSIGNED,
+  // producing a live booking with no state-machine edge, no version bump and no
+  // audit event - invisible in the admin booking detail, which reads
+  // booking_events.
+  it('creates an already-assigned booking through the state machine with a full audit trail', async () => {
+    const assigned = await service.createAssignedBooking({
+      customerId,
+      providerId: providerOneId,
+      serviceCategoryId: categoryId,
+      description: '[RE-SERVICE] Guarantee Claim: tap still leaking',
+      locationLat: 22.3072,
+      locationLng: 73.1812,
+      items: [
+        {
+          id: 'sub-1',
+          name: 'Tap & Mixer Repair',
+          quantity: 1,
+          unitPriceMinor: 49900,
+          durationMinutes: 60,
+        },
+      ],
+      idempotencyKey: 'guarantee-claim-0001',
+      requestFingerprint: 'guarantee-claim-0001',
+      actorUserId: '00000000-0000-4000-8000-000000000401',
+      reason: 'Guarantee re-service for claim 0001',
+      isGuaranteeClaim: true,
+      parentBookingId: null,
+    });
+
+    expect(assigned.status).toBe(BookingStatus.ASSIGNED);
+    expect(assigned.providerId).toBe(providerOneId);
+    expect(assigned.version).toBe(2);
+    expect(assigned.assignedAt).toBeInstanceOf(Date);
+    expect(assigned.isGuaranteeClaim).toBe(true);
+    // Priced from the snapshot, so the remedy is actually chargeable. A NULL
+    // total is what payments.service.ts treats as unpayable.
+    expect(assigned.totalAmountMinor).toBe(58882);
+
+    const events = await dataSource
+      .getRepository(BookingEvent)
+      .findBy({ bookingId: assigned.id });
+    expect(events).toHaveLength(2);
+    const trail = events
+      .sort((a, b) => a.bookingVersion - b.bookingVersion)
+      .map(({ fromStatus, toStatus, bookingVersion }) => ({
+        fromStatus,
+        toStatus,
+        bookingVersion,
+      }));
+    expect(trail).toEqual([
+      {
+        fromStatus: null,
+        toStatus: BookingStatus.REQUESTED,
+        bookingVersion: 1,
+      },
+      {
+        fromStatus: BookingStatus.REQUESTED,
+        toStatus: BookingStatus.ASSIGNED,
+        bookingVersion: 2,
+      },
+    ]);
+  });
+
+  it('never creates a second re-service booking for the same claim', async () => {
+    const build = () => ({
+      customerId,
+      providerId: providerTwoId,
+      serviceCategoryId: categoryId,
+      description: '[RE-SERVICE] Guarantee Claim: duplicate submit',
+      locationLat: 22.3072,
+      locationLng: 73.1812,
+      items: null,
+      idempotencyKey: 'guarantee-claim-0002',
+      requestFingerprint: 'guarantee-claim-0002',
+      actorUserId: '00000000-0000-4000-8000-000000000401',
+      reason: 'Guarantee re-service for claim 0002',
+    });
+
+    const [first, second] = await Promise.all([
+      service.createAssignedBooking(build()),
+      service.createAssignedBooking(build()),
+    ]);
+    expect(second.id).toBe(first.id);
+
+    const counts = await dataSource.query<Array<{ bookings: string }>>(
+      'SELECT count(*) AS bookings FROM "bookings"',
+    );
+    expect(counts[0].bookings).toBe('1');
+  });
+
+  it('refuses to assign a re-service to the customer it belongs to', async () => {
+    await expect(
+      service.createAssignedBooking({
+        customerId,
+        providerId: customerId,
+        serviceCategoryId: categoryId,
+        description: '[RE-SERVICE] self assignment',
+        locationLat: 22.3072,
+        locationLng: 73.1812,
+        items: null,
+        idempotencyKey: 'guarantee-claim-0003',
+        requestFingerprint: 'guarantee-claim-0003',
+        actorUserId: '00000000-0000-4000-8000-000000000401',
+        reason: 'Guarantee re-service for claim 0003',
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    const counts = await dataSource.query<Array<{ bookings: string }>>(
+      'SELECT count(*) AS bookings FROM "bookings"',
+    );
+    expect(counts[0].bookings).toBe('0');
+  });
+
+  it('rejects an unqualified provider and never creates the booking', async () => {
+    const customerUserId = customerId;
+    await expect(
+      matchingService.isProviderQualifiedForCategory(
+        customerUserId,
+        categoryId,
+      ),
+    ).resolves.toBe(false);
+    await expect(
+      matchingService.isProviderQualifiedForCategory(providerOneId, categoryId),
+    ).resolves.toBe(true);
   });
 });

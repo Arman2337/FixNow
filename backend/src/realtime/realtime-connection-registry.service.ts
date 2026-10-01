@@ -3,6 +3,7 @@ import type WebSocket from 'ws';
 import {
   REALTIME_MAX_CONNECTIONS_PER_PRINCIPAL,
   REALTIME_MAX_PENDING_CONNECTIONS_PER_ADDRESS,
+  REALTIME_SESSION_REVALIDATION_MS,
 } from './realtime.constants';
 import type { RealtimeConnectionState } from './realtime.types';
 
@@ -70,7 +71,54 @@ export class RealtimeConnectionRegistry {
     state.principal = principal;
     state.accessToken = accessToken;
     state.authenticatedAt = now;
+    // BUG-026. A fresh authentication is also a fresh session check, so the
+    // revalidation window restarts here rather than inheriting whatever the
+    // previous principal left behind.
+    state.sessionVerifiedAt = now;
     return true;
+  }
+
+  /**
+   * BUG-026. Connections whose session has not been confirmed within the
+   * revalidation window.
+   *
+   * The token was verified once, at `authenticate`. `auth_sessions.expires_at`
+   * and `revoked_at` were never re-read, so a revoked session kept receiving
+   * frames for the life of the process - on a provider's always-on socket, days.
+   * Every HTTP request re-reads the session per request; this restores the same
+   * property to the channel that carries the same data.
+   *
+   * Bounded so a burst of connections cannot turn into a burst of database
+   * queries: the cheapest correct answer is "is it time to look again", and a
+   * socket that reconnects every few seconds is not worth a query per heartbeat.
+   */
+  dueForSessionRevalidation(
+    now = Date.now(),
+    windowMs = REALTIME_SESSION_REVALIDATION_MS,
+  ): Array<{ client: WebSocket; state: RealtimeConnectionState }> {
+    const due: Array<{
+      client: WebSocket;
+      state: RealtimeConnectionState;
+    }> = [];
+    for (const [client, state] of this.states) {
+      if (!state.principal) continue;
+      if (now - (state.sessionVerifiedAt ?? 0) < windowMs) continue;
+      due.push({ client, state });
+    }
+    return due;
+  }
+
+  /**
+   * Records a successful re-check.
+   *
+   * Only a stamp, deliberately. Removal is the caller's decision, because the
+   * caller is the only thing that knows *why* the check passed - a socket whose
+   * identity changed is not the same event as one whose session was revoked, and
+   * both need a different close reason for the client.
+   */
+  markSessionVerified(client: WebSocket, now = Date.now()): void {
+    const state = this.states.get(client);
+    if (state) state.sessionVerifiedAt = now;
   }
 
   get(client: WebSocket): RealtimeConnectionState | undefined {

@@ -183,6 +183,78 @@ jobs:
       - name: Integration test
         run: npm run test:integration
 
+  admin:
+    name: Admin (lint, token contract, test, build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: admin
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: admin/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      # ADMIN-002. Roughly twenty design tokens were referenced but never defined,
+      # so the guarantees page's primary action rendered as unstyled text and
+      # every section heading on ten pages rendered at browser-default size.
+      # Nothing caught it: a missing custom property is not a build error, and
+      # there was no `next build` in CI and no visual test. The token contract in
+      # `src/design-tokens.test.ts` is the gate, and it has to run before the
+      # build - a build would happily emit a page whose colours resolve to
+      # nothing.
+      - name: Design token contract
+        run: npm test
+
+      # `next build` runs TypeScript over every page and Server Action, so it
+      # catches a broken import or a prop mismatch that the unit tests mock away.
+      - name: Build
+        run: npm run build
+
+  secrets:
+    name: Secrets (deterministic scan + self-test)
+    runs-on: ubuntu-latest
+
+    # SEC-005. A live Hugging Face token, a live OpenRouteService key and the
+    # Postgres superuser password sat in plaintext in the working tree. `.env` is
+    # correctly git-ignored and the history is clean, so the exposure was
+    # on-disk rather than committed - but the repository also carries committed
+    # debug artefacts, and any whole-tree archive a developer sends for
+    # debugging would carry the files with it.
+    #
+    # `scripts/scan-secrets.mjs` rather than gitleaks. The reason is written into
+    # that script: neither gitleaks nor trufflehog is installed here, so a gate
+    # built on one could not be executed against this repository before being
+    # merged - and a gate that has never been run is exactly the failure this
+    # whole branch exists to close. That script is deterministic, has no
+    # dependencies, and has been run.
+    #
+    # The self-test runs first and is the important half. A scanner that reports
+    # "clean" is indistinguishable from one that stopped looking, so each rule is
+    # fed a synthetic secret and asserted to fire before the real scan is trusted.
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Prove the secret scanner still detects what it claims to
+        run: node scripts/scan-secrets.mjs --self-test
+
+      - name: Scan the working tree and history
+        run: node scripts/scan-secrets.mjs
+
   mobile:
     name: Mobile (analyze, test)
     runs-on: ubuntu-latest

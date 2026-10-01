@@ -9,6 +9,7 @@ import 'package:fixnow_mobile/features/location/booking_location.dart';
 import 'package:fixnow_mobile/features/services/service_category.dart';
 import 'package:fixnow_mobile/features/services/sub_service_item.dart';
 import 'package:fixnow_mobile/design_system/fix_components.dart';
+import 'package:fixnow_mobile/design_system/fix_state_views.dart';
 import 'package:flutter/material.dart';
 
 /// Screen allowing the customer to select specific tasks, adjust quantities,
@@ -223,7 +224,7 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.symmetric(horizontal: 4),
                     child: Icon(
                       Icons.chevron_right_rounded,
@@ -264,10 +265,14 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
               const SizedBox(height: AppSpacing.md),
 
               if (_isLoading)
-                const Padding(
+                Padding(
                   padding: EdgeInsets.all(32.0),
-                  child: Center(
-                    child: CircularProgressIndicator(color: AppColors.primary),
+                  // MOB-005: service rows rather than a spinner in the middle of
+                  // an empty page.
+                  child: Semantics(
+                    liveRegion: true,
+                    label: 'Loading services',
+                    child: FixSkeletonList(count: 5),
                   ),
                 )
               else ...[

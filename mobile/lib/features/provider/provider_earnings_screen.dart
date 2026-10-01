@@ -72,10 +72,14 @@ class _ProviderEarningsScreenState extends State<ProviderEarningsScreen> {
         child: ListenableBuilder(
           listenable: _controller,
           builder: (context, _) => switch (_controller.state) {
-            ProviderEarningsState.loading => const Center(
-              child: CircularProgressIndicator(
-                color: AppColors.primary,
-                semanticsLabel: 'Loading earnings',
+            ProviderEarningsState.loading => Semantics(
+              liveRegion: true,
+              label: 'Loading earnings',
+              // MOB-005: earnings are a list of figures, so it loads as a list of
+              // rows instead of a spinner on an otherwise blank page.
+              child: Padding(
+                padding: EdgeInsets.all(AppSpacing.md),
+                child: FixSkeletonList(count: 3),
               ),
             ),
             ProviderEarningsState.unavailable => Center(
@@ -171,7 +175,7 @@ class _EarningsView extends StatelessWidget {
                       ),
                       SizedBox(width: 3),
                       Text(
-                         'Paid orders',
+                        'Paid orders',
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
@@ -211,54 +215,54 @@ class _EarningsView extends StatelessWidget {
                 color: Colors.white.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(10),
               ),
-             child: Column(
-               crossAxisAlignment: CrossAxisAlignment.start,
-               children: [
-                 const Column(
-                   crossAxisAlignment: CrossAxisAlignment.start,
-                   children: [
-                     Text(
-                       'Settlement status',
-                       style: TextStyle(
-                         fontSize: 10,
-                         color: AppColors.textOnDarkSecondary,
-                       ),
-                     ),
-                     SizedBox(height: 1),
-                     Text(
-                       'Payouts unavailable',
-                       style: TextStyle(
-                         fontSize: 13,
-                         fontWeight: FontWeight.w800,
-                         color: AppColors.primaryFixed,
-                       ),
-                     ),
-                   ],
-                 ),
-                 const SizedBox(height: AppSpacing.sm),
-                 const Column(
-                   crossAxisAlignment: CrossAxisAlignment.start,
-                   children: [
-                     Text(
-                       'Ledger status',
-                       style: TextStyle(
-                         fontSize: 10,
-                         color: AppColors.textOnDarkSecondary,
-                       ),
-                     ),
-                     SizedBox(height: 1),
-                     Text(
-                       'Recorded payments',
-                       style: TextStyle(
-                         fontSize: 13,
-                         fontWeight: FontWeight.w700,
-                         color: Colors.white70,
-                       ),
-                     ),
-                   ],
-                 ),
-               ],
-             ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Settlement status',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: AppColors.textOnDarkSecondary,
+                        ),
+                      ),
+                      SizedBox(height: 1),
+                      Text(
+                        'Payouts unavailable',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.primaryFixed,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Ledger status',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: AppColors.textOnDarkSecondary,
+                        ),
+                      ),
+                      SizedBox(height: 1),
+                      Text(
+                        'Recorded payments',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white70,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -332,7 +336,7 @@ class _EarningsView extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.sm),
             _breakdownRow(label: 'Gross received', value: earnings.grossLabel),
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(vertical: 8),
               child: Divider(height: 1, color: AppColors.border),
             ),

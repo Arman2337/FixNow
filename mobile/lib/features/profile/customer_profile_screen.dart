@@ -9,6 +9,7 @@ import 'package:fixnow_mobile/features/location/saved_address.dart';
 import 'package:fixnow_mobile/features/profile/customer_profile_controller.dart';
 import 'package:fixnow_mobile/notifications/push_enrollment.dart';
 import 'package:fixnow_mobile/notifications/push_settings_card.dart';
+import 'package:fixnow_mobile/design_system/fix_state_views.dart';
 import 'package:flutter/material.dart';
 
 class CustomerProfileScreen extends StatefulWidget {
@@ -32,7 +33,6 @@ class CustomerProfileScreen extends StatefulWidget {
 class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
-
 
   @override
   void initState() {
@@ -284,12 +284,14 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
 
           // Profile editing / Status
           if (widget.controller.status == ProfileViewStatus.loading)
-            const Center(
+            // MOB-005: the profile is an identity block over a form, so it loads as
+            // one. Announced, keeping the spinner's semanticsLabel.
+            Semantics(
+              liveRegion: true,
+              label: 'Loading profile',
               child: Padding(
                 padding: EdgeInsets.all(AppSpacing.xl),
-                child: CircularProgressIndicator(
-                  semanticsLabel: 'Loading profile',
-                ),
+                child: FixSkeletonCard(),
               ),
             )
           else if (_failed)
@@ -464,7 +466,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
           const SizedBox(height: AppSpacing.md),
 
           // Section 2: Support & Warranty
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
             child: Text(
               'SUPPORT & WARRANTY',
@@ -741,9 +743,6 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
       ),
     );
   }
-
-
-
 
   bool get _failed => const {
     ProfileViewStatus.offline,

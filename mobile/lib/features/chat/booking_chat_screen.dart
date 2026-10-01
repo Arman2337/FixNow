@@ -1,4 +1,5 @@
 import 'package:fixnow_mobile/design_system/fix_components.dart';
+import 'package:fixnow_mobile/design_system/fix_state_views.dart';
 import 'package:flutter/material.dart';
 import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_motion.dart';
@@ -290,9 +291,16 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
             // Message History Area
             Expanded(
               child: controller.isLoading && controller.messages.isEmpty
-                  ? const Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.primary,
+                  // MOB-005: bubbles on alternating sides, so the thread does
+                  // not reflow sideways when the real messages arrive. Announced,
+                  // because without it a screen-reader user meets an empty
+                  // conversation.
+                  ? Semantics(
+                      liveRegion: true,
+                      label: 'Loading messages',
+                      child: Padding(
+                        padding: EdgeInsets.all(AppSpacing.md),
+                        child: FixSkeletonThread(),
                       ),
                     )
                   : controller.errorMessage != null &&

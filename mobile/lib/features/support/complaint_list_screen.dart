@@ -324,8 +324,16 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
           switch (widget.controller.listStatus) {
             case ComplaintsListStatus.initial:
             case ComplaintsListStatus.loading:
-              return const Center(
-                child: CircularProgressIndicator(color: AppColors.primary),
+              // MOB-005: the case list, shaped like the cases. Announced, because
+              // the spinner's semanticsLabel was the only thing telling a screen
+              // reader that the list was coming.
+              return Semantics(
+                liveRegion: true,
+                label: 'Loading cases',
+                child: Padding(
+                  padding: EdgeInsets.all(AppSpacing.md),
+                  child: FixSkeletonList(),
+                ),
               );
             case ComplaintsListStatus.error:
             case ComplaintsListStatus.offline:
@@ -384,7 +392,7 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
                               ),
                             ),
                             const SizedBox(height: 4),
-                            const Padding(
+                            Padding(
                               padding: EdgeInsets.symmetric(horizontal: 32),
                               child: Text(
                                 'All your bookings are running smoothly under the FixNow 30-Day Guarantee. If you ever need to challenge an invoice or report a defect, file a case below.',

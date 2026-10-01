@@ -623,6 +623,10 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
                 ),
               ),
             );
+            // MOB-005: deliberately still a spinner. This is not content - it is
+            // the app deciding whether it has a session at all, and there is no
+            // shape to reserve because nothing has been decided yet. A skeleton
+            // here would imply a bookings list that may never be shown.
           }
           if (_auth.status == AuthStatus.verificationRequired) {
             return VerificationScreen(controller: _auth);

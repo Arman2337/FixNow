@@ -134,10 +134,14 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
             }
           }
           if (widget.controller.state == ProviderLoadState.loading) {
-            return const Center(
-              child: CircularProgressIndicator(
-                color: AppColors.primary,
-                semanticsLabel: 'Loading provider setup',
+            return Semantics(
+              liveRegion: true,
+              label: 'Loading provider setup',
+              // MOB-005: the setup form loads as cards, so the sections do not
+              // jump into place underneath the user's thumb.
+              child: Padding(
+                padding: EdgeInsets.all(AppSpacing.md),
+                child: FixSkeletonList(count: 2),
               ),
             );
           }
@@ -259,9 +263,11 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
                       controller: widget.notificationController!,
                       onTap: () {
                         Navigator.of(context).push(
-MaterialPageRoute(
-                             settings: const RouteSettings(name: 'notifications'),
-                             builder: (_) => NotificationCenterScreen(
+                          MaterialPageRoute(
+                            settings: const RouteSettings(
+                              name: 'notifications',
+                            ),
+                            builder: (_) => NotificationCenterScreen(
                               controller: widget.notificationController!,
                             ),
                           ),

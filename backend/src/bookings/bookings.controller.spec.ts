@@ -101,7 +101,11 @@ describe('BookingsController', () => {
       mockBooking.locationLng = dto.locationLng;
       mockBooking.status = BookingStatus.REQUESTED;
 
-      createMock.mockResolvedValue(mockBooking);
+      createMock.mockResolvedValue({
+        booking: mockBooking,
+        eligibleProviderCount: 3,
+        noProviderAvailable: false,
+      });
       const req = requestFor('user-id');
 
       const result = await controller.create(req, dto, 'request-key-123');
@@ -112,6 +116,10 @@ describe('BookingsController', () => {
         'request-key-123',
       );
       expect(result.booking).toMatchObject({ id: mockBooking.id });
+      // BUG-014: the creation response carries supply, so a client can tell
+      // "searching" from "nobody is available".
+      expect(result.eligibleProviderCount).toBe(3);
+      expect(result.noProviderAvailable).toBe(false);
     });
   });
 
@@ -176,8 +184,32 @@ describe('BookingsController', () => {
         'user-id',
         'reason',
         1,
+        // BUG-020: a customer cancelling has no abandonment code to give.
+        undefined,
       );
       expect(result.booking).toMatchObject({ id: mockBooking.id });
+    });
+
+    // BUG-020: a provider abandoning a job they started sends a code, and the
+    // controller passes it through rather than dropping it.
+    it('passes an abandonment reason code through to the service', async () => {
+      const mockBooking = completeBooking(new Booking());
+      mockBooking.id = 'booking-id';
+      cancelMock.mockResolvedValue(mockBooking);
+
+      await controller.cancel('booking-id', requestFor('provider-id'), {
+        reason: 'The work is not what was described',
+        expectedVersion: 4,
+        abandonmentReason: 'JOB_MISDESCRIBED',
+      });
+
+      expect(cancelMock).toHaveBeenCalledWith(
+        'booking-id',
+        'provider-id',
+        'The work is not what was described',
+        4,
+        'JOB_MISDESCRIBED',
+      );
     });
   });
 

@@ -9,6 +9,7 @@ import type { Cache } from 'cache-manager';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, MoreThan, Not, Repository } from 'typeorm';
 import { BookingStatus } from '../../../shared/booking-lifecycle.types';
+import type { ProviderAbandonmentReason } from '../../../shared/booking-lifecycle.types';
 import { ReviewModerationStatus } from '../../../shared/ratings.types';
 import {
   ProviderAcceptTimeContract,
@@ -37,6 +38,18 @@ export const TRUST_RULES = {
   /** FN-063 policy §6.5: repeat emergency use routes to review. */
   emergencyWindowDays: 7,
   emergencyThreshold: 3,
+  /**
+   * BUG-020: a provider abandoning a job they had already started.
+   *
+   * A tighter threshold than the generic cancellation rule, and deliberately so.
+   * The exit from `IN_PROGRESS` did not exist before this, so any recorded
+   * abandonment is a provider using a new capability - and a provider who does
+   * it repeatedly is telling us something about their reliability, or about how
+   * work is being offered to them. Either way it is for a human to look at, not
+   * something the platform punishes automatically.
+   */
+  abandonmentWindowDays: 30,
+  abandonmentThreshold: 2,
   /** FN-111: bounded rolling accept-time aggregate. */
   acceptTimeWindowDays: 90,
   acceptTimeMinSamples: 3,
@@ -359,6 +372,55 @@ export class TrustService {
       severity: TrustSignalSeverity.MEDIUM,
       windowDays: TRUST_RULES.refundWindowDays,
       observedCount: refundCount,
+    });
+  }
+
+  /**
+   * BUG-020. A provider who abandoned a job they had started.
+   *
+   * This rule exists because the exit did not. Until `IN_PROGRESS` was
+   * cancellable, a provider who found the work misdescribed or unsafe had only
+   * two options: falsely mark it complete, or leave the customer stranded. Both
+   * are worse for the platform than a recorded abandonment, and the pressure to
+   * choose the first is exactly what a trust signal is meant to detect - so
+   * abandonment counts are now evidence in their own right rather than being
+   * folded into the generic cancellation count.
+   *
+   * Kept separate from `evaluateCancellationSignal` on purpose. An abandonment
+   * is a provider declining work they had already accepted, which is a different
+   * fact from failing to turn up; merging them would let a provider's honest
+   * use of the new exit read as a reliability problem.
+   */
+  async evaluateProviderAbandonment(
+    providerId: string,
+    reason: ProviderAbandonmentReason,
+    now = new Date(),
+  ): Promise<TrustSignal | null> {
+    const windowStart = new Date(now);
+    windowStart.setUTCDate(
+      windowStart.getUTCDate() - TRUST_RULES.abandonmentWindowDays,
+    );
+    const abandonments = await this.bookings
+      .createQueryBuilder('booking')
+      .where('booking.provider_id = :providerId', { providerId })
+      .andWhere('booking.status = :status', { status: BookingStatus.CANCELLED })
+      .andWhere('booking.cancelled_at > :windowStart', { windowStart })
+      .andWhere('booking.deleted_at IS NULL')
+      // `cancelBooking` records the code ahead of the free text, so this counts
+      // abandonments for this specific reason and not every cancellation the
+      // provider was party to.
+      .andWhere('booking.cancellation_reason LIKE :prefix', {
+        prefix: `${reason}:%`,
+      })
+      .getCount();
+    if (abandonments < TRUST_RULES.abandonmentThreshold) return null;
+    return this.recordWindowedSignal({
+      subjectType: 'PROVIDER',
+      subjectId: providerId,
+      ruleCode: `provider-abandonment-${reason.toLowerCase()}-v1`,
+      severity: TrustSignalSeverity.MEDIUM,
+      windowDays: TRUST_RULES.abandonmentWindowDays,
+      observedCount: abandonments,
     });
   }
 

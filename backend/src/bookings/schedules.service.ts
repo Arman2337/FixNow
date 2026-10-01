@@ -165,7 +165,7 @@ export class SchedulesService {
         'That visit time has passed. Refresh to see the next available slot.',
       );
     }
-    const booking = await this.bookings.create(
+    const { booking } = await this.bookings.create(
       customerId,
       {
         serviceCategoryId: schedule.serviceCategoryId,

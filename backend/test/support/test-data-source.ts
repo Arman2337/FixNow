@@ -27,6 +27,7 @@ import { BookingLineItem } from '../../src/bookings/domain/booking-line-item.ent
 import { BookingMessage } from '../../src/bookings/domain/booking-message.entity';
 import { RecurringSchedule } from '../../src/bookings/domain/recurring-schedule.entity';
 import { EmergencyDispatch } from '../../src/emergency/emergency-dispatch.entity';
+import { OutboxMessage } from '../../src/outbox/outbox-message.entity';
 import { GuaranteeClaim } from '../../src/guarantees/domain/guarantee-claim.entity';
 import { InAppNotification } from '../../src/notifications/domain/in-app-notification.entity';
 import { NotificationDelivery } from '../../src/notifications/domain/notification-delivery.entity';
@@ -73,6 +74,7 @@ export const ALL_ENTITIES: (new () => object)[] = [
   BookingMessage,
   RecurringSchedule,
   EmergencyDispatch,
+  OutboxMessage,
   GuaranteeClaim,
   InAppNotification,
   NotificationDelivery,

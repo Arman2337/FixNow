@@ -25,6 +25,7 @@ import { PushModule } from './notifications/push/push.module';
 import { PaymentsModule } from './payments/payments.module';
 import { EmergencyModule } from './emergency/emergency.module';
 import { GuaranteesModule } from './guarantees/guarantees.module';
+import { OutboxModule } from './outbox/outbox.module';
 
 @Module({
   imports: [
@@ -50,6 +51,10 @@ import { GuaranteesModule } from './guarantees/guarantees.module';
     PaymentsModule,
     EmergencyModule,
     GuaranteesModule,
+    // FN-082. Registered last so its providers are resolved after everything
+    // that enqueues to it, and so the drain worker only starts once the whole
+    // application graph exists.
+    OutboxModule,
   ],
   controllers: [AppController],
   providers: [

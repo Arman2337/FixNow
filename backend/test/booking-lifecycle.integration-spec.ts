@@ -7,8 +7,13 @@ import { ConfigService } from '@nestjs/config';
 import { createHmac } from 'crypto';
 import { DataSource } from 'typeorm';
 import { BookingStatus } from '../../shared/booking-lifecycle.types';
+import { VALID_BOOKING_TRANSITIONS } from '../../shared/booking-lifecycle.types';
 import { ProviderAvailabilityStatus } from '../../shared/provider-availability.types';
 import { BookingsService } from '../src/bookings/bookings.service';
+import {
+  CUSTOMER_CANCELLABLE,
+  PROVIDER_CANCELLABLE,
+} from '../src/bookings/bookings.service';
 import { Booking } from '../src/bookings/domain/booking.entity';
 import { BookingEvent } from '../src/bookings/domain/booking-event.entity';
 import { MatchingService } from '../src/matching/matching.service';
@@ -59,6 +64,10 @@ describe('booking lifecycle PostgreSQL boundaries', () => {
       new ProviderCapacityService(
         dataSource.getRepository(ProviderAvailabilityEntity),
       ),
+      // FN-082: the booking transaction records dispatch intent here. The
+      // lifecycle test asserts the state machine, not the fan-out, so this is a
+      // recording stub rather than the real outbox.
+      { enqueue: () => Promise.resolve(true) } as never,
       undefined,
       undefined,
       // IN_PROGRESS is OTP-gated, so reaching it needs a real OTP_SECRET. The
@@ -104,17 +113,21 @@ describe('booking lifecycle PostgreSQL boundaries', () => {
     await dataSource.destroy();
   });
 
-  const createBooking = (key: string, description = 'Repair pipe') =>
-    service.create(
-      customerId,
-      {
-        serviceCategoryId: categoryId,
-        description,
-        locationLat: 22.3072,
-        locationLng: 73.1812,
-      },
-      key,
-    );
+  // BUG-014: `create()` reports supply alongside the booking, so the lifecycle
+  // tests can assert the count a client would see without a second query.
+  const createBooking = async (key: string, description = 'Repair pipe') =>
+    (
+      await service.create(
+        customerId,
+        {
+          serviceCategoryId: categoryId,
+          description,
+          locationLat: 22.3072,
+          locationLng: 73.1812,
+        },
+        key,
+      )
+    ).booking;
 
   it('enforces durable idempotency for sequential and concurrent retries', async () => {
     const [first, concurrent] = await Promise.all([
@@ -364,7 +377,7 @@ describe('booking lifecycle PostgreSQL boundaries', () => {
       .findBy({ bookingId: assigned.id });
     expect(events).toHaveLength(2);
     const trail = events
-      .sort((a, b) => a.bookingVersion - b.bookingVersion)
+      .sort((a, b) => (a.bookingVersion ?? 0) - (b.bookingVersion ?? 0))
       .map(({ fromStatus, toStatus, bookingVersion }) => ({
         fromStatus,
         toStatus,
@@ -445,5 +458,85 @@ describe('booking lifecycle PostgreSQL boundaries', () => {
     await expect(
       matchingService.isProviderQualifiedForCategory(providerOneId, categoryId),
     ).resolves.toBe(true);
+  });
+});
+
+/**
+ * BUG-020, TC-SM-003: the declared state table and the enforced per-party
+ * allow-lists must agree.
+ *
+ * `VALID_BOOKING_TRANSITIONS` has always permitted `IN_PROGRESS → CANCELLED`,
+ * while `cancelBooking` only allowed a provider to cancel from
+ * `[ASSIGNED, EN_ROUTE]`. The two disagreed, so a provider who started a job
+ * could not stop it, and the only route to a terminal state was to falsely mark
+ * the work complete - which starts the payment clock and records a completion
+ * against them.
+ *
+ * This is a pure function of two exported tables, needs no database, and would
+ * have failed the build the day the omission was introduced. That is the whole
+ * point: the defect was not subtle, it was a disagreement between two constants
+ * that nobody had ever compared.
+ */
+describe('the declared state machine and the enforced allow-lists agree', () => {
+  const nonTerminal = Object.values(BookingStatus).filter(
+    (status) =>
+      status !== BookingStatus.COMPLETED && status !== BookingStatus.CANCELLED,
+  );
+
+  it.each(nonTerminal)(
+    'every non-terminal state can reach a terminal state',
+    (from) => {
+      const reachable = VALID_BOOKING_TRANSITIONS[from].filter((to) =>
+        [BookingStatus.COMPLETED, BookingStatus.CANCELLED].includes(to),
+      );
+      expect(reachable.length).toBeGreaterThan(0);
+    },
+  );
+
+  it('a provider may cancel from every state the table says they may', () => {
+    for (const from of Object.values(BookingStatus)) {
+      if (!VALID_BOOKING_TRANSITIONS[from].includes(BookingStatus.CANCELLED)) {
+        continue;
+      }
+      // ASSIGNED/EN_ROUTE/IN_PROGRESS are exactly what a provider is assigned
+      // for. Anything in that set that the allow-list omits is a dead end.
+      const providerCouldBeWorking = [
+        BookingStatus.ASSIGNED,
+        BookingStatus.EN_ROUTE,
+        BookingStatus.IN_PROGRESS,
+      ].includes(from);
+      if (providerCouldBeWorking) {
+        expect(PROVIDER_CANCELLABLE).toContain(from);
+      }
+    }
+  });
+
+  it('a customer cannot cancel a job that is already under way', () => {
+    // The customer's remedy for work in progress is a complaint or a refund, not
+    // a cancellation: the provider is already travelling, and letting the
+    // customer cancel mid-job would strand them.
+    expect(CUSTOMER_CANCELLABLE).not.toContain(BookingStatus.IN_PROGRESS);
+    expect(CUSTOMER_CANCELLABLE).not.toContain(BookingStatus.EN_ROUTE);
+  });
+
+  it('neither party can cancel a booking that has finished', () => {
+    for (const list of [CUSTOMER_CANCELLABLE, PROVIDER_CANCELLABLE]) {
+      expect(list).not.toContain(BookingStatus.COMPLETED);
+      expect(list).not.toContain(BookingStatus.CANCELLED);
+    }
+  });
+
+  it('the state table itself is well formed', () => {
+    for (const from of Object.values(BookingStatus)) {
+      // A state that can reach itself would make a transition a no-op, which is
+      // how a status change ends up "succeeding" without changing anything.
+      expect(VALID_BOOKING_TRANSITIONS[from]).not.toContain(from);
+      for (const to of VALID_BOOKING_TRANSITIONS[from]) {
+        expect(Object.values(BookingStatus)).toContain(to);
+      }
+    }
+    // Terminal really is terminal.
+    expect(VALID_BOOKING_TRANSITIONS[BookingStatus.COMPLETED]).toEqual([]);
+    expect(VALID_BOOKING_TRANSITIONS[BookingStatus.CANCELLED]).toEqual([]);
   });
 });

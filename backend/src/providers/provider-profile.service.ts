@@ -55,10 +55,46 @@ export class ProviderProfileService {
     const profile = existing
       ? Object.assign(existing, dto)
       : this.profileRepository.create({ userId, ...dto });
+
+    // BUG-016: registration also sets coordinates, from the same request body,
+    // so the freshness stamp has to be written here too. A profile created
+    // through this path and then never touched would otherwise carry the column
+    // default, which is correct only by accident - and a stale base location
+    // silently drops a provider out of matching after seven days.
+    if (
+      profile.baseLatitude !== existing?.baseLatitude ||
+      profile.baseLongitude !== existing?.baseLongitude
+    ) {
+      profile.baseLocationUpdatedAt = new Date();
+    }
+
     const saved = await this.profileRepository.save(profile);
     return this.toOwnerResponse(saved);
   }
 
+  /**
+   * BUG-016. A provider's dispatch base location.
+   *
+   * These coordinates are the only input to dispatch distance, so this is not a
+   * cosmetic profile field - it decides which jobs a provider is offered. Three
+   * controls make it trustworthy:
+   *
+   *   1. `base_location_updated_at` is stamped here, which is what
+   *      `MatchingService`'s staleness bound reads. Before this the table had no
+   *      record of *when* a location was set, so a profile pinned eight months
+   *      ago ranked identically to one set a second ago.
+   *   2. The endpoint is rate-limited in the controller, because at the global
+   *      60/min a provider could re-centre on a dense area as fast as the API
+   *      would answer.
+   *   3. The range CHECK constraints (restored by BUG-001) bound the value at
+   *      the database, so a coordinate outside +/-90/180 cannot persist even if
+   *      validation is bypassed.
+   *
+   * A base location is a home base, not a live position: a provider legitimately
+   * sets it about once a week. The fix is a staleness bound, not continuous
+   * tracking - live per-booking GPS is a separate, already-implemented path in
+   * `LocationService`.
+   */
   async updateLocation(
     userId: string,
     dto: UpdateProviderLocationDto,
@@ -66,6 +102,7 @@ export class ProviderProfileService {
     const profile = await this.findByUserId(userId);
     profile.baseLatitude = dto.latitude;
     profile.baseLongitude = dto.longitude;
+    profile.baseLocationUpdatedAt = new Date();
     const saved = await this.profileRepository.save(profile);
     return this.toOwnerResponse(saved);
   }

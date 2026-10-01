@@ -15,6 +15,7 @@ import type {
 import { BookingStatus } from '../../../shared/booking-lifecycle.types';
 import type { MatchingService } from '../matching/matching.service';
 import type { ProviderCapacityService } from '../providers/availability/provider-capacity.service';
+import type { OutboxService } from '../outbox/outbox.service';
 import { BookingsService } from './bookings.service';
 import { BookingEvent } from './domain/booking-event.entity';
 import { Booking } from './domain/booking.entity';
@@ -96,6 +97,11 @@ describe('BookingsService', () => {
   const capacityAssert = jest.fn().mockResolvedValue(undefined);
   const capacitySync = jest.fn().mockResolvedValue(undefined);
   let subServiceFindBy: jest.Mock;
+  // FN-082: `create()` records the fan-out intent in the booking's transaction
+  // rather than performing it. Asserted on in the outbox tests, stubbed here so
+  // the booking specs are about the booking.
+  let outboxEnqueue: jest.Mock;
+  let outbox: jest.Mocked<OutboxService>;
 
   const booking = (overrides: Partial<Booking> = {}): Booking =>
     Object.assign(new Booking(), {
@@ -181,7 +187,16 @@ describe('BookingsService', () => {
       assertCanAccept: capacityAssert,
       syncAvailabilityForWorkload: capacitySync,
     } as unknown as jest.Mocked<ProviderCapacityService>;
-    service = new BookingsService(dataSource, matchingService, capacity);
+    outboxEnqueue = jest.fn().mockResolvedValue(true);
+    outbox = {
+      enqueue: outboxEnqueue,
+    } as unknown as jest.Mocked<OutboxService>;
+    service = new BookingsService(
+      dataSource,
+      matchingService,
+      capacity,
+      outbox,
+    );
   });
   it('creates a booking and an initial immutable lifecycle event', async () => {
     bookingFindOneBy.mockResolvedValue(null);
@@ -201,7 +216,7 @@ describe('BookingsService', () => {
       'request-key-123',
     );
 
-    expect(result.description).toBe('Repair a leaking pipe');
+    expect(result.booking.description).toBe('Repair a leaking pipe');
     expect(eventSave).toHaveBeenCalledTimes(1);
   });
 
@@ -227,7 +242,7 @@ describe('BookingsService', () => {
 
     // 2 x 24900 + 1 x 14900 = 64700; GST 18% = 11646; duration 2x45 + 30 = 120.
     // Every price came from CATALOGUE, not from the request.
-    expect(result.items).toEqual([
+    expect(result.booking.items).toEqual([
       {
         id: 'plumb-3',
         name: 'Shower & Water Pipe Leakage',
@@ -243,8 +258,8 @@ describe('BookingsService', () => {
         durationMinutes: 30,
       },
     ]);
-    expect(result.totalAmountMinor).toBe(76346);
-    expect(result.estimatedDurationMinutes).toBe(120);
+    expect(result.booking.totalAmountMinor).toBe(76346);
+    expect(result.booking.estimatedDurationMinutes).toBe(120);
   });
 
   it('leaves items and totals empty when no line items are sent', async () => {
@@ -262,9 +277,9 @@ describe('BookingsService', () => {
       'request-key-123',
     );
 
-    expect(result.items).toBeNull();
-    expect(result.totalAmountMinor).toBeNull();
-    expect(result.estimatedDurationMinutes).toBeNull();
+    expect(result.booking.items).toBeNull();
+    expect(result.booking.totalAmountMinor).toBeNull();
+    expect(result.booking.estimatedDurationMinutes).toBeNull();
   });
 
   it('returns an existing booking for an identical idempotent replay', async () => {
@@ -281,11 +296,11 @@ describe('BookingsService', () => {
       input,
       'request-key-123',
     );
-    bookingFindOneBy.mockResolvedValue(created);
+    bookingFindOneBy.mockResolvedValue(created.booking);
 
     await expect(
       service.create('customer-id', input, 'request-key-123'),
-    ).resolves.toBe(created);
+    ).resolves.toMatchObject({ booking: created.booking });
   });
 
   it('rejects reuse of an idempotency key with a different payload', async () => {
@@ -779,8 +794,8 @@ describe('BookingsService', () => {
       );
 
       // 89900 + 18% GST (16182) = 106082. The tampered value of 1 paise is ignored.
-      expect(result.items?.[0].unitPriceMinor).toBe(89900);
-      expect(result.totalAmountMinor).toBe(106082);
+      expect(result.booking.items?.[0].unitPriceMinor).toBe(89900);
+      expect(result.booking.totalAmountMinor).toBe(106082);
     });
 
     it('rejects a sub-service from another category', async () => {

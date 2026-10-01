@@ -23,6 +23,8 @@ import {
   CreateBookingRequest,
   CreateBookingLineItemRequest,
   UpdateBookingItemsRequest,
+  PROVIDER_ABANDONMENT_REASONS,
+  type ProviderAbandonmentReason,
 } from '../../../shared/booking-lifecycle.types';
 
 export class CreateBookingLineItemDto implements CreateBookingLineItemRequest {
@@ -144,6 +146,22 @@ export class CancelBookingDto {
   @IsInt()
   @Min(1)
   expectedVersion: number;
+
+  /**
+   * BUG-020. Required when a provider abandons a job they have started.
+   *
+   * Optional for everyone else: a customer cancelling a request has no reason
+   * code to give, and an admin cancelling has their own vocabulary. Making it
+   * universally required would push a meaningless value into every cancellation
+   * just to satisfy a rule that only applies to one path.
+   *
+   * The service enforces "required when `IN_PROGRESS` and the caller is the
+   * provider" - a DTO cannot see either of those, and a validation rule that
+   * could not express its own condition would be enforced in the wrong place.
+   */
+  @IsOptional()
+  @IsEnum(PROVIDER_ABANDONMENT_REASONS)
+  abandonmentReason?: ProviderAbandonmentReason;
 }
 
 export class RescheduleBookingDto {

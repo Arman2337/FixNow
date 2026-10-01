@@ -16,6 +16,7 @@ import {
   In,
 } from 'typeorm';
 import { BookingStatus } from '../../../shared/booking-lifecycle.types';
+import type { ProviderAbandonmentReason } from '../../../shared/booking-lifecycle.types';
 import {
   BookingItemRequestDto,
   CreateBookingDto,
@@ -42,6 +43,7 @@ import { BookingReview } from '../ratings/domain/review.entity';
 import { ReviewModerationStatus } from '../../../shared/ratings.types';
 import { ProviderCapacityService } from '../providers/availability/provider-capacity.service';
 import { mapBounded } from '../common/run-bounded';
+import { OutboxService } from '../outbox/outbox.service';
 
 /**
  * How many candidate lookups run at once when listing available work. An
@@ -49,9 +51,115 @@ import { mapBounded } from '../common/run-bounded';
  */
 const MATCH_LOOKUP_CONCURRENCY = 10;
 
+/**
+ * FN-082 (BUG-014). A REQUESTED booking that nobody ever accepted had no exit.
+ *
+ * The whole backend had three timers - emergency escalation, booking reminders,
+ * location cache warming - and none of them expired a REQUESTED booking. So a
+ * request created in a city with no online providers returned 201, entered
+ * `REQUESTED`, and stayed there. The client showed "searching for providers"
+ * forever, because the client had no way to learn the truth: the response
+ * carried no eligible count, and the booking never left the state that implies
+ * "a search is running".
+ *
+ * This is the default failure mode on day one of a city launch, which is exactly
+ * when nobody is online yet.
+ *
+ * Two changes close it, and both are needed:
+ *   1. `create()` records the eligible count, so the client can branch on a real
+ *      number rather than on a spinner that never resolves.
+ *   2. The sweeper expires a booking that has had no provider for the grace
+ *      period, with a reason the customer can act on.
+ */
+export const REQUESTED_EXPIRY_SECONDS = positiveEnv(
+  'REQUESTED_BOOKING_EXPIRY_SECONDS',
+  300,
+);
+
+/** Below this, "nobody nearby" is the answer rather than "we are still looking". */
+export const NO_PROVIDER_ELIGIBLE_THRESHOLD = 1;
+
+/**
+ * How many providers one request is offered to. A shortlist bound, not a policy
+ * number - the escalation ladder widens it, it does not start higher.
+ */
+export const PROVIDER_FANOUT_CAP = 20;
+
+/**
+ * BUG-014. Why a request was ended without anybody taking it.
+ *
+ * The customer's explanation, so it states the fact and the consequence rather
+ * than reporting a failure. Written for someone standing on a doorstep who
+ * cannot tell the difference between "we are still looking" and "there is
+ * nobody" - and it says nothing was charged, because the fear that a closed
+ * request will still be billed is the one that stops someone rebooking.
+ *
+ * Also the `booking_events.reason` on that transition, so the audit trail
+ * explains itself to whoever reads it later.
+ */
+export const NO_PROVIDER_REASON =
+  'No provider was available in this area when the request expired. The request was closed automatically and nothing was charged.';
+
+/**
+ * BUG-020. From which states each party may cancel.
+ *
+ * These were inline literals in `cancelBooking`, and the provider list omitted
+ * `IN_PROGRESS` while `VALID_BOOKING_TRANSITIONS` permitted it. The two
+ * disagreed, so a provider who started a job could not stop it, and the only
+ * remaining route to a terminal state was to falsely mark the work complete.
+ *
+ * Named and exported because the consistency between these lists and
+ * `VALID_BOOKING_TRANSITIONS` is exactly the kind of invariant that silently
+ * rots - there is a test asserting they agree.
+ */
+export const CUSTOMER_CANCELLABLE: readonly BookingStatus[] = [
+  BookingStatus.REQUESTED,
+  BookingStatus.ASSIGNED,
+];
+
+export const PROVIDER_CANCELLABLE: readonly BookingStatus[] = [
+  BookingStatus.ASSIGNED,
+  BookingStatus.EN_ROUTE,
+  // Declared legal by the state machine, and now honoured. A provider who
+  // started work they cannot finish needs an honest exit; see
+  // `PROVIDER_ABANDONMENT_REASONS` for why a bare reason is not enough.
+  BookingStatus.IN_PROGRESS,
+];
+
+function positiveEnv(key: string, fallback: number): number {
+  const raw = process.env[key]?.trim();
+  if (!raw) return fallback;
+  const value = Number(raw);
+  return Number.isFinite(value) && value > 0 ? value : fallback;
+}
+
 export interface BookingHistoryPage {
   bookings: Booking[];
   nextCursor: string | null;
+}
+
+/**
+ * FN-082. What `create()` actually produced, so the caller can branch on the
+ * number of providers rather than on a state that implies a search is running.
+ *
+ * Before this existed the endpoint returned the bare `Booking`, which is
+ * structurally incapable of expressing "there is nobody available" - the client
+ * saw `status: REQUESTED` and had no basis for any other reading.
+ */
+export interface BookingCreationResult {
+  booking: Booking;
+  /**
+   * Providers matching this request when it was created, before fan-out. Zero
+   * is a real, common answer on day one in a new city, and it is the single
+   * fact a customer needs in order to decide whether to wait, widen, or leave.
+   */
+  eligibleProviderCount: number;
+  /**
+   * True when the request is not worth waiting on: nobody was eligible at
+   * creation and nobody is expected to become eligible. The client should offer
+   * alternatives rather than show an indefinite search.
+   */
+  noProviderAvailable: boolean;
 }
 
 export interface ProviderBookingRequestPage {
@@ -106,6 +214,7 @@ export class BookingsService {
     // wiring was wrong, which is the same fail-open shape as the ownership bug
     // this branch closed. A missing provider now fails at boot instead.
     private readonly capacity: ProviderCapacityService,
+    private readonly outbox: OutboxService,
     private readonly locationService?: LocationService,
     private readonly bookingProjections?: BookingProjectionService,
     private readonly config?: ConfigService,
@@ -144,7 +253,7 @@ export class BookingsService {
     userId: string,
     input: CreateBookingDto,
     idempotencyKey: string,
-  ): Promise<Booking> {
+  ): Promise<BookingCreationResult> {
     const normalizedKey = this.validateIdempotencyKey(idempotencyKey);
     const normalizedInput = this.normalizeCreateInput(input);
     const fingerprint = createHash('sha256')
@@ -155,7 +264,11 @@ export class BookingsService {
       customerId: userId,
       idempotencyKey: normalizedKey,
     });
-    if (existing) return this.resolveIdempotentReplay(existing, fingerprint);
+    if (existing) {
+      return this.withCreationResult(
+        this.resolveIdempotentReplay(existing, fingerprint),
+      );
+    }
 
     try {
       const created = await this.dataSource.transaction(async (manager) => {
@@ -187,57 +300,25 @@ export class BookingsService {
             : null,
           lineItems: normalizedInput.lineItems,
         });
+
+        // FN-082 (BUG-005). The fan-out used to run here, after the commit, on
+        // this request thread: matching, then up to 20 providers each costing
+        // three database round-trips plus one external FCM HTTPS call per
+        // device. A booking could add six seconds of third-party latency to the
+        // HTTP response, and at the 60-req/min/IP limit one IP could generate
+        // 1,200 outbound calls a minute against a shared Firebase quota - when
+        // it ran out, dispatch degraded for every customer, not just the one
+        // flooding.
+        //
+        // Now the intent is recorded in the same transaction as the booking, and
+        // a worker performs it. Durability comes free: a pod recycled before the
+        // drain still has the row. So does BUG-014's second half - the
+        // expiry-sweeper message is written here too, so a request that nobody
+        // accepts has a scheduled exit rather than an indefinite search.
+        await this.enqueueDispatchWork(manager, saved);
         return saved;
       });
-      await this.notifySafely(async () => {
-        if (!this.domainNotifications && !this.bookingProjections) return;
-        const eligible = await this.matchingService.findEligibleProviders(
-          created.locationLat!,
-          created.locationLng!,
-          created.serviceCategoryId,
-          50,
-        );
-        const providerIds = eligible.map(({ providerId }) => providerId);
-
-        if (this.domainNotifications) {
-          await this.domainNotifications.notifyProvidersOfAvailableRequest(
-            created,
-            providerIds,
-          );
-        }
-
-        if (this.bookingProjections) {
-          let totalMinor = 0;
-          if (created.lineItems) {
-            totalMinor = created.lineItems.reduce(
-              (sum, item) => sum + item.priceMinor * item.quantity,
-              0,
-            );
-          }
-          const data = {
-            bookingId: created.id,
-            serviceCategoryId: created.serviceCategoryId,
-            locationLat: created.locationLat
-              ? created.locationLat.toString()
-              : '',
-            locationLng: created.locationLng
-              ? created.locationLng.toString()
-              : '',
-            description: created.description ?? '',
-            priceMinor: totalMinor.toString(),
-            version: created.version,
-            type: 'booking:provider:REQUESTED',
-          };
-          for (const providerId of providerIds.slice(0, 20)) {
-            void this.bookingProjections.publishAccountSignal(
-              providerId,
-              'provider.request.v1',
-              data,
-            );
-          }
-        }
-      });
-      return created;
+      return this.withCreationResult(created);
     } catch (error: unknown) {
       if (!this.isUniqueViolation(error)) throw error;
       const concurrent = await this.dataSource
@@ -246,8 +327,157 @@ export class BookingsService {
           customerId: userId,
           idempotencyKey: normalizedKey,
         });
-      return this.resolveIdempotentReplay(concurrent, fingerprint);
+      return this.withCreationResult(
+        this.resolveIdempotentReplay(concurrent, fingerprint),
+      );
     }
+  }
+
+  /**
+   * FN-082. Records everything that must happen after a new request exists.
+   *
+   * All three messages share the booking's transaction, so a booking can never
+   * exist without the intent to dispatch it - which is the failure BUG-005's
+   * `void promise()` fix would have introduced on a pod restart.
+   */
+  private async enqueueDispatchWork(
+    manager: EntityManager,
+    booking: Booking,
+  ): Promise<void> {
+    await this.outbox.enqueue(manager, {
+      kind: 'booking.provider-fanout',
+      // The offer, not the caller. A retried request and the emergency path
+      // addressing the same booking derive the same key, so BUG-022's duplicate
+      // push becomes a unique violation instead of a race.
+      dedupeKey: `booking:${booking.id}:provider-fanout`,
+      payload: { bookingId: booking.id },
+    });
+
+    await this.outbox.enqueue(manager, {
+      kind: 'booking.project',
+      dedupeKey: `booking:${booking.id}:project`,
+      payload: { bookingId: booking.id },
+    });
+
+    // BUG-014. Not conditional: a request that *is* matched may still go
+    // unaccepted, and it is the most common way a customer is left waiting. The
+    // handler re-checks eligibility before acting, so an accepted booking is a
+    // no-op here.
+    await this.outbox.enqueue(manager, {
+      kind: 'booking.requested-expiry',
+      dedupeKey: `booking:${booking.id}:requested-expiry`,
+      payload: { bookingId: booking.id },
+      availableAt: new Date(Date.now() + REQUESTED_EXPIRY_SECONDS * 1_000),
+    });
+  }
+
+  /**
+   * BUG-014. The number a client needs in order to stop showing a spinner.
+   *
+   * Read from the same matching predicate the fan-out uses, so the number
+   * reported is the number that was actually offered to - not a separate
+   * query that could disagree with it.
+   */
+  private async withCreationResult(
+    booking: Booking,
+  ): Promise<BookingCreationResult> {
+    if (!this.domainNotifications && !this.bookingProjections) {
+      return {
+        booking,
+        eligibleProviderCount: 0,
+        noProviderAvailable: false,
+      };
+    }
+    let eligibleProviderCount = 0;
+    try {
+      const eligible = await this.matchingService.findEligibleProviders(
+        booking.locationLat!,
+        booking.locationLng!,
+        booking.serviceCategoryId,
+        PROVIDER_FANOUT_CAP,
+      );
+      eligibleProviderCount = eligible.length;
+    } catch {
+      // A failed count must not fail a booking that is already committed. The
+      // fan-out worker will retry, and the sweeper is the backstop.
+      eligibleProviderCount = 0;
+    }
+    return {
+      booking,
+      eligibleProviderCount,
+      noProviderAvailable:
+        eligibleProviderCount < NO_PROVIDER_ELIGIBLE_THRESHOLD,
+    };
+  }
+
+  /**
+   * BUG-014. Ends a request that no provider can serve.
+   *
+   * Called by the outbox handler once the grace period has passed and matching
+   * still reports no supply. It is a real transition, not a direct `UPDATE`:
+   * the version CAS means a provider who accepted in the same window wins and
+   * this becomes a no-op rather than a cancellation of live work, and
+   * `appendEvent` means the reason is in the audit trail that support and
+   * trust-and-safety read.
+   *
+   * The reason string is the customer's explanation, so it has to say what
+   * happened and what they can do. "No provider available" alone reads as a
+   * system error; the customer needs to know nobody was nearby, because that is
+   * a different situation from the request failing.
+   */
+  async expireUnmatchedRequest(
+    bookingId: string,
+    expectedVersion: number,
+  ): Promise<Booking | null> {
+    let expired: Booking | null = null;
+    try {
+      expired = await this.transition(
+        bookingId,
+        null,
+        expectedVersion,
+        async (booking, manager) => {
+          // The CAS in `transitionIn` already rejects a booking that has moved
+          // on. This is the belt-and-braces check: a provider accepted, so
+          // there is nothing to expire, and saying so is more useful than a
+          // version conflict.
+          if (booking.status !== BookingStatus.REQUESTED) return;
+          this.applyDomainTransition(
+            booking,
+            BookingStatus.CANCELLED,
+            NO_PROVIDER_REASON,
+          );
+          if (booking.providerId) {
+            await this.releaseCapacity(manager, booking.providerId);
+          }
+        },
+        NO_PROVIDER_REASON,
+      );
+    } catch (error) {
+      // A stale version means someone else moved the booking, which is the
+      // outcome this method wanted. A genuinely unexpected failure is logged by
+      // the outbox worker's release path and retried, so it is not swallowed
+      // here - only the expected conflict is.
+      if (!(error instanceof ConflictException)) throw error;
+      return null;
+    }
+
+    await this.locationService?.invalidateBooking(bookingId);
+    await this.bookingProjections?.publishUnavailable(expired);
+    await this.notifySafely(async () => {
+      await this.domainNotifications?.notifyBookingEvent(
+        expired,
+        'customer',
+        BookingStatus.CANCELLED,
+      );
+      if (expired.providerId) {
+        await this.domainNotifications?.notifyBookingEvent(
+          expired,
+          'provider',
+          BookingStatus.CANCELLED,
+        );
+      }
+    });
+    return expired;
   }
 
   /**
@@ -628,13 +858,44 @@ export class BookingsService {
     return booking;
   }
 
+  /**
+   * BUG-020. Cancels a booking, and gives a provider an honest way out of a job
+   * they have started.
+   *
+   * The per-party allow-list used to be:
+   *
+   *   customer: [REQUESTED, ASSIGNED]
+   *   provider: [ASSIGNED, EN_ROUTE]
+   *
+   * So `IN_PROGRESS` was a dead end for a provider. The state machine has always
+   * allowed `IN_PROGRESS → CANCELLED`, and `VALID_BOOKING_TRANSITIONS` says so -
+   * the two disagreed, and a fifteen-line consistency test would have caught it
+   * on day one. The consequence was worse than a bug: a provider who started a
+   * job and found it misdescribed, unsafe, or impossible had only two options,
+   * finish it anyway (which starts the payment clock and records a completion
+   * against them) or leave the customer stranded forever. Rules with no honest
+   * exit get routed around, and this one was being routed around by providers
+   * falsely marking work complete.
+   *
+   * The exit now exists, and it is structured. A bare free-text reason is not
+   * enough: "the customer is not answering" wants a re-dispatch, while "this is
+   * not the job I agreed to" is a dispute. The code is recorded in the
+   * cancellation reason alongside the human explanation, so support can tell
+   * them apart from the cancellation record rather than guessing from prose.
+   *
+   * Trust is evaluated on the resulting cancellation exactly as before, so an
+   * abandonment is visible to the reliability model rather than invisible.
+   */
   async cancelBooking(
     bookingId: string,
     userId: string,
     reason: string,
     expectedVersion: number,
+    abandonmentReason?: ProviderAbandonmentReason,
   ): Promise<Booking> {
     const normalizedReason = reason.trim();
+    let abandoned = false;
+
     const booking = await this.transition(
       bookingId,
       userId,
@@ -648,50 +909,90 @@ export class BookingsService {
           );
         }
         const allowed = isCustomer
-          ? [BookingStatus.REQUESTED, BookingStatus.ASSIGNED]
-          : [BookingStatus.ASSIGNED, BookingStatus.EN_ROUTE];
+          ? CUSTOMER_CANCELLABLE
+          : PROVIDER_CANCELLABLE;
         if (!allowed.includes(booking.status)) {
           throw new ConflictException(
             'Booking cannot be cancelled in its current state',
           );
         }
+        if (
+          isProvider &&
+          booking.status === BookingStatus.IN_PROGRESS &&
+          !abandonmentReason
+        ) {
+          throw new BadRequestException(
+            'Abandoning a job you have started requires a reason code. ' +
+              'Mark it complete only if the work was actually done.',
+          );
+        }
+        abandoned = isProvider && booking.status === BookingStatus.IN_PROGRESS;
+
         this.applyDomainTransition(
           booking,
           BookingStatus.CANCELLED,
-          normalizedReason,
+          abandonmentReason
+            ? `${abandonmentReason}: ${normalizedReason}`
+            : normalizedReason,
         );
         // A cancellation frees a slot, so the provider may be available again.
         if (booking.providerId) {
           await this.releaseCapacity(manager, booking.providerId);
         }
       },
-      normalizedReason,
+      abandonmentReason
+        ? `${abandonmentReason}: ${normalizedReason}`
+        : normalizedReason,
     );
     await this.locationService?.invalidateBooking(bookingId);
     await this.bookingProjections?.publishUnavailable(booking);
     await this.notifySafely(async () => {
-      await this.domainNotifications!.notifyBookingEvent(
+      await this.domainNotifications?.notifyBookingEvent(
         booking,
         'customer',
         BookingStatus.CANCELLED,
       );
       if (booking.providerId) {
-        await this.domainNotifications!.notifyBookingEvent(
+        await this.domainNotifications?.notifyBookingEvent(
           booking,
           'provider',
           BookingStatus.CANCELLED,
         );
       }
     });
-    // FN-060: trust signal recording is best-effort, like notifications.
-    await this.notifySafely(async () => {
-      await this.trust?.evaluateCustomerCancellationSignal(booking.customerId);
-    });
-    const assignedProviderId = booking.providerId;
-    if (assignedProviderId) {
+
+    if (abandoned) {
+      // An abandoned job is the platform's problem, not the customer's: a
+      // provider did not do the work, so the customer is owed a re-dispatch or a
+      // refund, and the reason code tells the client which copy to show. A
+      // customer cancellation is a different event and keeps its existing trust
+      // meaning.
+      //
+      // Deliberately NOT re-dispatched here. The booking is CANCELLED, and
+      // terminal is terminal - re-listing it would put a job in front of
+      // providers that no provider can accept, which is the same
+      // never-resolving-search failure BUG-014 exists to remove. The remedy is a
+      // new booking the customer makes, which keeps the original record, its
+      // audit trail and its conversation intact.
       await this.notifySafely(async () => {
-        await this.trust?.evaluateCancellationSignal(assignedProviderId);
+        await this.trust?.evaluateProviderAbandonment(
+          booking.providerId!,
+          abandonmentReason!,
+        );
       });
+    } else {
+      // FN-060: trust signal recording is best-effort, like notifications.
+      await this.notifySafely(async () => {
+        await this.trust?.evaluateCustomerCancellationSignal(
+          booking.customerId,
+        );
+      });
+      const assignedProviderId = booking.providerId;
+      if (assignedProviderId) {
+        await this.notifySafely(async () => {
+          await this.trust?.evaluateCancellationSignal(assignedProviderId);
+        });
+      }
     }
     return booking;
   }
@@ -1051,7 +1352,7 @@ export class BookingsService {
 
   private async transition(
     bookingId: string,
-    actorUserId: string,
+    actorUserId: string | null,
     expectedVersion: number,
     mutate: (booking: Booking, manager: EntityManager) => void | Promise<void>,
     reason: string | null = null,
@@ -1081,7 +1382,7 @@ export class BookingsService {
   private async transitionIn(
     manager: EntityManager,
     bookingId: string,
-    actorUserId: string,
+    actorUserId: string | null,
     expectedVersion: number,
     mutate: (booking: Booking, manager: EntityManager) => void | Promise<void>,
     reason: string | null = null,
@@ -1142,7 +1443,7 @@ export class BookingsService {
   private async appendEvent(
     manager: EntityManager,
     booking: Booking,
-    actorUserId: string,
+    actorUserId: string | null,
     fromStatus: BookingStatus | null,
     toStatus: BookingStatus,
     reason: string | null,

@@ -23,6 +23,7 @@ describe('ProviderProfileService', () => {
     serviceRadiusKm: 10,
     baseLatitude: 12.9716,
     baseLongitude: 77.5946,
+    baseLocationUpdatedAt: new Date(),
     createdAt: new Date('2026-08-11T00:00:00Z'),
     updatedAt: new Date('2026-08-11T00:00:00Z'),
   };
@@ -158,6 +159,7 @@ describe('ProviderProfileService', () => {
       ...profile,
       baseLatitude: 0,
       baseLongitude: 0,
+      baseLocationUpdatedAt: new Date(),
       serviceRadiusKm: ProviderProfileService.distanceKm(0, 0, 0, 1),
     });
 
@@ -171,6 +173,7 @@ describe('ProviderProfileService', () => {
       ...profile,
       baseLatitude: 0,
       baseLongitude: 0,
+      baseLocationUpdatedAt: new Date(),
       serviceRadiusKm: 100,
     });
 

@@ -24,6 +24,58 @@ export const VALID_BOOKING_TRANSITIONS: Readonly<
   [BookingStatus.CANCELLED]: [],
 };
 
+/**
+ * Why a booking was abandoned rather than finished.
+ *
+ * BUG-020. The state machine has always allowed `IN_PROGRESS → CANCELLED`, but
+ * `cancelBooking` only permitted a provider to cancel from `[ASSIGNED,
+ * EN_ROUTE]`. So a provider who started a job and then found it misdescribed -
+ * wrong job, unsafe, customer absent, no parts - had exactly two options:
+ *
+ *   1. finish it anyway, which starts the payment clock and generates a
+ *      completion signal against them, or
+ *   2. leave the booking IN_PROGRESS forever, stranding the customer's money and
+ *      the platform's dispatch record.
+ *
+ * There is no third option, so providers lie to the platform. The report called
+ * this the mechanism by which providers falsely complete work, and it is: a
+ * rule with no honest exit is a rule people route around.
+ *
+ * A free-text `reason` was never enough on its own, because "the customer is not
+ * answering" and "this is not the job I agreed to" need different responses -
+ * one re-dispatches, the other opens a dispute. These codes are the minimum
+ * vocabulary for a support team to tell them apart from the cancellation record.
+ */
+export const PROVIDER_ABANDONMENT_REASONS = [
+  /** The customer is not present, or will not answer. */
+  'CUSTOMER_UNAVAILABLE',
+  /** What was found is not the work that was described or quoted. */
+  'JOB_MISDESCRIBED',
+  /** The provider judges it unsafe to proceed. */
+  'UNSAFE_CONDITIONS',
+  /** Parts, tools or materials needed are unavailable. */
+  'RESOURCES_UNAVAILABLE',
+  /** Any other reason, spelled out in the free-text field. */
+  'OTHER',
+] as const;
+
+export type ProviderAbandonmentReason =
+  (typeof PROVIDER_ABANDONMENT_REASONS)[number];
+
+export const PROVIDER_ABANDONMENT_COPY: Readonly<
+  Record<ProviderAbandonmentReason, string>
+> = {
+  CUSTOMER_UNAVAILABLE:
+    'The provider could not reach the customer. The request is open again so another provider can be matched.',
+  JOB_MISDESCRIBED:
+    'The provider reported that the work did not match the request. Support will review this booking.',
+  UNSAFE_CONDITIONS:
+    'The provider judged the conditions unsafe to proceed. Support will review this booking.',
+  RESOURCES_UNAVAILABLE:
+    'The provider could not obtain what the job required. Support will review this booking.',
+  OTHER: 'The provider ended this job. Support will review this booking.',
+};
+
 export interface CreateBookingLineItemRequest {
   subServiceId: string;
   quantity: number;
@@ -121,6 +173,32 @@ export interface BookingContract {
 
 export interface BookingResponse {
   booking: BookingContract;
+}
+
+/**
+ * FN-082 / BUG-014. The response to booking *creation*, which carries two facts
+ * `BookingResponse` cannot.
+ *
+ * `status: REQUESTED` on its own is indistinguishable between "a search is
+ * running" and "a search that will never resolve". On day one in a new city,
+ * zero eligible providers is the *common* answer, and the customer had no way to
+ * learn it - no count, no elapsed time, and a booking that stayed in REQUESTED
+ * forever because nothing in the backend expired it.
+ *
+ * Separate from `BookingResponse` rather than an addition to it, because the
+ * other eleven endpoints that return a booking have no eligible count to
+ * report: by the time a provider accepts, supply is no longer the question.
+ */
+export interface BookingCreationResponse {
+  booking: BookingContract;
+  /** Providers who could take this request at the moment it was created. */
+  eligibleProviderCount: number;
+  /**
+   * True when that count was zero. The client should offer alternatives -
+   * widen the time, try another category, get notified - rather than enter a
+   * search that is not going to resolve.
+   */
+  noProviderAvailable: boolean;
 }
 
 export interface BookingHistoryResponse {

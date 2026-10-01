@@ -30,6 +30,7 @@ import { PERMISSIONS } from '../common/authorization/permission-policies';
 import type { AuthorizedRequest } from '../common/authorization/authorization.guard';
 import {
   BookingHistoryResponse,
+  BookingCreationResponse,
   BookingResponse,
   ProviderBookingRequestResponse,
 } from '../../../shared/booking-lifecycle.types';
@@ -49,16 +50,22 @@ export class BookingsController {
     @Req() req: AuthorizedRequest,
     @Body() dto: CreateBookingDto,
     @Headers('idempotency-key') idempotencyKey: string,
-  ): Promise<BookingResponse> {
+  ): Promise<BookingCreationResponse> {
     const userId = req.authorizationPrincipal!.userId;
-    const booking = await this.bookingsService.create(
+    // BUG-014: the eligible count travels with the booking. `status: REQUESTED`
+    // on its own cannot be distinguished from a search that will never resolve,
+    // and "nobody is available" is the most common answer on day one in a new
+    // city.
+    const result = await this.bookingsService.create(
       userId,
       dto,
       idempotencyKey,
     );
 
     return {
-      booking: presentBooking(booking),
+      booking: presentBooking(result.booking),
+      eligibleProviderCount: result.eligibleProviderCount,
+      noProviderAvailable: result.noProviderAvailable,
     };
   }
 
@@ -183,6 +190,10 @@ export class BookingsController {
       userId,
       dto.reason,
       dto.expectedVersion,
+      // BUG-020. A provider abandoning a job they have started sends a reason
+      // code; the service requires one and records it with the free text, so
+      // support can tell a re-dispatch from a dispute without parsing prose.
+      dto.abandonmentReason,
     );
 
     return {

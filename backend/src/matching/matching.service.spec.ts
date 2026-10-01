@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { ConfigService } from '@nestjs/config';
 import { MatchingService } from './matching.service';
 import { ProviderProfileEntity } from '../providers/provider-profile.entity';
 import { AccountStatus } from '../users/account-status';
@@ -16,7 +17,7 @@ describe('MatchingService', () => {
   let addOrderByMock: jest.Mock;
   let limitMock: jest.Mock;
 
-  beforeEach(async () => {
+  const build = async (config: Record<string, string> = {}) => {
     innerJoinMock = jest.fn().mockReturnThis();
     whereMock = jest.fn().mockReturnThis();
     andWhereMock = jest.fn().mockReturnThis();
@@ -47,10 +48,20 @@ describe('MatchingService', () => {
           provide: getRepositoryToken(ProviderProfileEntity),
           useValue: mockRepository,
         },
+        {
+          // BUG-016: the staleness bound is configurable, so the test can pin
+          // it rather than depending on the wall clock.
+          provide: ConfigService,
+          useValue: { get: (key: string) => config[key] },
+        },
       ],
     }).compile();
 
     service = module.get<MatchingService>(MatchingService);
+  };
+
+  beforeEach(async () => {
+    await build();
   });
 
   it('should be defined', () => {
@@ -160,15 +171,28 @@ describe('MatchingService', () => {
         'category-1',
       );
 
+      // The provider filter is an additional predicate on the shared builder, not
+      // a replacement for it - which is the point: the four public methods differ
+      // only in what they add, so they cannot drift apart.
       const whereCalls = whereMock.mock.calls as [
         string,
         Record<string, unknown>,
       ][];
-      expect(whereCalls[0][0]).toBe('profile.user_id = :providerId');
-      expect(whereCalls[0][1]).toEqual({ providerId: 'provider-7' });
+      expect(whereCalls[0][0]).toBe('user.status = :accountStatus');
 
-      const andWhereCalls = andWhereMock.mock.calls as [string][];
-      const predicates = andWhereCalls.map((call) => String(call[0]).trim());
+      const andWhereCalls = andWhereMock.mock.calls as [
+        string,
+        Record<string, unknown>,
+      ][];
+      expect(
+        andWhereCalls.some(
+          ([sql, params]) =>
+            sql === 'profile.user_id = :providerId' &&
+            (params as { providerId: string }).providerId === 'provider-7',
+        ),
+      ).toBe(true);
+
+      const predicates = andWhereCalls.map(([sql]) => String(sql).trim());
       expect(
         predicates.some((p) => p.includes('skill.is_verified = :isVerified')),
       ).toBe(true);
@@ -176,9 +200,6 @@ describe('MatchingService', () => {
         predicates.some((p) =>
           p.includes('availability.status = :availStatus'),
         ),
-      ).toBe(true);
-      expect(
-        predicates.some((p) => p.includes('user.status = :accountStatus')),
       ).toBe(true);
       expect(
         predicates.some((p) =>
@@ -232,6 +253,110 @@ describe('MatchingService', () => {
       expect(addOrderByMock).not.toHaveBeenCalled();
       // LIMIT 1 caps duplicate skill rows, not competing candidates.
       expect(limitMock).toHaveBeenCalledWith(1);
+    });
+  });
+
+  // BUG-014: the zero-provider case is the most common failure mode in a
+  // marketplace launch, and it was unexpressible - nothing could answer "is
+  // there any supply here", so a booking in an empty city sat in REQUESTED
+  // forever behind a spinner.
+  describe('countEligibleProviders', () => {
+    it('counts supply without ordering or limiting it', async () => {
+      mockQueryBuilder.getCount.mockResolvedValue(7);
+
+      const supply = await service.countEligibleProviders(
+        17.385,
+        78.4867,
+        'category-1',
+      );
+
+      expect(supply).toBe(7);
+      // A LIMIT here would answer "is the shortlist non-empty" rather than
+      // "is anyone available", which is a different and much weaker question.
+      expect(limitMock).not.toHaveBeenCalled();
+      expect(orderByMock).not.toHaveBeenCalled();
+    });
+
+    it('reports zero rather than throwing when nobody is available', async () => {
+      mockQueryBuilder.getCount.mockResolvedValue(0);
+      await expect(
+        service.countEligibleProviders(17.385, 78.4867, 'category-1'),
+      ).resolves.toBe(0);
+    });
+
+    it('applies the same eligibility predicate as the shortlist', async () => {
+      mockQueryBuilder.getCount.mockResolvedValue(1);
+      await service.countEligibleProviders(17.385, 78.4867, 'category-1');
+
+      // Account status is the anchor predicate; everything else narrows it.
+      const whereCalls = whereMock.mock.calls as [string][];
+      expect(
+        whereCalls.some(([sql]) =>
+          sql.includes('user.status = :accountStatus'),
+        ),
+      ).toBe(true);
+
+      const predicates = (andWhereMock.mock.calls as [string][]).map((call) =>
+        String(call[0]).trim(),
+      );
+      for (const expected of [
+        'availability.status = :availStatus',
+        'skill.is_verified = :isVerified',
+        'skill.service_category_id = :categoryId',
+        'category.is_active = :categoryActive',
+      ]) {
+        expect(predicates.some((p) => p.includes(expected))).toBe(true);
+      }
+    });
+  });
+
+  // BUG-016: a base location is a home base set weekly, not a live position, so
+  // the fix is a staleness bound rather than mandatory live GPS. Without the
+  // bound, a profile pinned eight months ago ranked identically to one set a
+  // second ago.
+  describe('base location freshness (BUG-016)', () => {
+    const freshnessPredicate = () =>
+      (andWhereMock.mock.calls as [string, Record<string, unknown>][]).find(
+        ([sql]) => String(sql).includes('baseLocationUpdatedAt'),
+      );
+
+    it('excludes a profile whose base location is older than the bound', async () => {
+      await build({ PROVIDER_MAX_LOCATION_AGE_DAYS: '7' });
+      mockQueryBuilder.getCount.mockResolvedValue(0);
+
+      await service.countEligibleProviders(17.385, 78.4867, 'category-1');
+
+      const predicate = freshnessPredicate();
+      expect(predicate).toBeDefined();
+      const floor = predicate![1].freshnessFloor as Date;
+      const ageDays = (Date.now() - floor.getTime()) / 86_400_000;
+      expect(ageDays).toBeGreaterThan(6.9);
+      expect(ageDays).toBeLessThan(7.1);
+    });
+
+    it('applies the same freshness bound to every public predicate', async () => {
+      mockQueryBuilder.getCount.mockResolvedValue(1);
+      await service.isProviderEligible('p1', 17.385, 78.4867, 'category-1');
+      expect(freshnessPredicate()).toBeDefined();
+
+      andWhereMock.mockClear();
+      mockQueryBuilder.getRawMany.mockResolvedValue([]);
+      await service.findProviderDistance('p1', 17.385, 78.4867, 'category-1');
+      expect(freshnessPredicate()).toBeDefined();
+
+      andWhereMock.mockClear();
+      mockQueryBuilder.getRawMany.mockResolvedValue([]);
+      await service.findEligibleProviders(17.385, 78.4867, 'category-1');
+      expect(freshnessPredicate()).toBeDefined();
+    });
+
+    it('defaults to seven days when the bound is not configured', () => {
+      expect(service.maxLocationAgeDays).toBe(7);
+    });
+
+    it('rejects a nonsensical bound rather than trusting it', async () => {
+      await build({ PROVIDER_MAX_LOCATION_AGE_DAYS: '0' });
+      expect(service.maxLocationAgeDays).toBe(7);
     });
   });
 });

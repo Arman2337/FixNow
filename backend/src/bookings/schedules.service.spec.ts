@@ -178,7 +178,13 @@ describe('SchedulesService', () => {
                 }),
               ),
       );
-      bookings.create.mockResolvedValue(booking);
+      // BUG-014: `create()` reports supply alongside the booking, so a scheduled
+      // occurrence can say "nobody available" rather than only "REQUESTED".
+      bookings.create.mockResolvedValue({
+        booking,
+        eligibleProviderCount: 2,
+        noProviderAvailable: false,
+      });
 
       const result = await service.confirmOccurrence(customerId, 's1', now);
 
@@ -201,7 +207,13 @@ describe('SchedulesService', () => {
 
     it('survives a concurrent advance without double-booking the slot', async () => {
       schedules.findOneBy.mockResolvedValueOnce(owned());
-      bookings.create.mockResolvedValue(booking);
+      // BUG-014: `create()` reports supply alongside the booking, so a scheduled
+      // occurrence can say "nobody available" rather than only "REQUESTED".
+      bookings.create.mockResolvedValue({
+        booking,
+        eligibleProviderCount: 2,
+        noProviderAvailable: false,
+      });
       // The compare-and-advance loses the race.
       schedules.update.mockResolvedValue({ affected: 0 });
       schedules.findOneByOrFail.mockResolvedValue(

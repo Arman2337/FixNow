@@ -221,6 +221,73 @@ jobs:
       - name: Build
         run: npm run build
 
+  e2e:
+    name: E2E (admin journeys)
+    runs-on: ubuntu-latest
+
+    # TEST-001. There was no e2e job at all, which is why the three specs in
+    # `e2e/tests` - each of which navigated to `about:blank`, wrote its own
+    # `<h1>`, and asserted it - had never been executed by anything. They would
+    # have passed with the entire application deleted.
+    #
+    # These journeys drive the real admin app (`webServer` in playwright.config.ts
+    # starts `next dev`) against a stub of the API it depends on. The stub is
+    # needed because the session is read in a React Server Component, so the
+    # request never passes through the browser and cannot be intercepted per-page.
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: e2e/package-lock.json
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('e2e/package-lock.json') }}
+
+      - name: Install e2e dependencies
+        working-directory: e2e
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: e2e
+        run: npx playwright install --with-deps chromium
+
+      - name: Install admin dependencies
+        working-directory: admin
+        run: npm ci
+
+      - name: Typecheck the journeys
+        working-directory: e2e
+        run: npm run typecheck
+
+      # The guard that stops the old failure coming back: a spec that asserts
+      # against markup it wrote itself is not a test, and this is the only place
+      # that can be checked mechanically.
+      - name: Spec guard
+        working-directory: e2e
+        run: npm run check:specs
+
+      - name: Run journeys
+        working-directory: e2e
+        run: npm test
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-traces
+          path: reports/screenshots
+          retention-days: 7
+
   secrets:
     name: Secrets (deterministic scan + self-test)
     runs-on: ubuntu-latest

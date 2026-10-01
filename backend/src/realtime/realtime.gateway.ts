@@ -185,6 +185,15 @@ export class RealtimeGateway
       this.unsubscribe(client, message);
       return;
     }
+    // PERF-005. A liveness probe with no side effects, so a client waking from
+    // suspension can tell a live session from a socket the server already
+    // terminated while the client was frozen. Deliberately not piggybacked on
+    // presence or location: those change state, and a probe that mutates state
+    // is a probe that can be wrong in a way nobody can undo.
+    if (message.type === 'ping') {
+      this.pong(client, message);
+      return;
+    }
     if (message.type === 'presence-update') {
       await this.updatePresence(client, message);
       return;
@@ -413,6 +422,24 @@ export class RealtimeGateway
       type: 'unsubscribed',
       requestId: message.requestId,
       removed: removed ?? false,
+    });
+  }
+
+  /**
+   * PERF-005. Answers a liveness probe.
+   *
+   * Reaching this handler already proves the session is authenticated and the
+   * server is serving it, which is the whole point - a socket the gateway
+   * terminated for missed pongs will never get here. The `serverTime` is sent
+   * back so the client can measure the round trip rather than only infer
+   * liveness from the fact that something arrived.
+   */
+  private pong(client: WebSocket, message: RealtimeClientMessage): void {
+    this.telemetry.increment('messages.ping');
+    this.send(client, {
+      type: 'pong',
+      requestId: message.requestId,
+      serverTime: Date.now(),
     });
   }
 

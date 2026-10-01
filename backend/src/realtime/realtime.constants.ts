@@ -30,6 +30,30 @@ export const REALTIME_MAX_VOICE_FRAMES_PER_WINDOW = 3600;
  */
 export const REALTIME_SESSION_REVALIDATION_MS = 60_000;
 
+/**
+ * PERF-005. How long a client waits for a `pong` before treating its socket as
+ * dead and reconnecting.
+ *
+ * A suspended mobile app cannot answer the protocol-level ping this gateway
+ * sends every {@link REALTIME_HEARTBEAT_INTERVAL_MS}, because the Dart isolate
+ * is frozen. The gateway therefore terminates the socket after two missed
+ * heartbeats - correctly - but the client is asleep and does not observe the
+ * close until it wakes up, by which point it believes it is still connected and
+ * renders whatever it last received. On resume it has no signal at all: no frame
+ * arrives, no error fires, and `isConnected` stays true.
+ *
+ * That is why this needs an application-level probe rather than a shorter
+ * timeout. The protocol ping answers "is the network path alive", which is
+ * exactly the question that cannot distinguish a frozen client from a healthy
+ * one. A `ping` the client sends after waking answers "is the server still
+ * serving this session", which is the question that matters.
+ *
+ * Five seconds is generous for a round trip that involves no database work, and
+ * short enough that a provider opening the app does not stare at a stale
+ * dashboard wondering whether to pull to refresh.
+ */
+export const REALTIME_PONG_TIMEOUT_MS = 5_000;
+
 export const REALTIME_CLOSE = {
   authenticationRequired: 4401,
   accessDenied: 4403,

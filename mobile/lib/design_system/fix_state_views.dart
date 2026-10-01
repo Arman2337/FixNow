@@ -95,6 +95,70 @@ class FixOfflineBanner extends StatelessWidget {
   );
 }
 
+/// PERF-005. Says the screen may be showing an old state, and offers a retry.
+///
+/// Separate from [FixOfflineBanner] rather than a parameter of it, because the
+/// two mean different things and the app is in only one of them at a time. The
+/// offline banner tells the user their device has no network, which they can act
+/// on by walking out of a lift. This one says the *server* stopped updating us,
+/// which happens on a perfectly good connection - most often because the app was
+/// suspended and the socket was terminated while it slept. Telling someone they
+/// are offline when their signal is full bars is the kind of small lie that makes
+/// people turn off the one indicator they needed.
+class FixStaleDataBanner extends StatelessWidget {
+  const FixStaleDataBanner({
+    this.message =
+        'Live updates paused. This may not be the latest - pull to refresh.',
+    this.onRetry,
+    this.retryLabel = 'Reconnect',
+    super.key,
+  });
+
+  final String message;
+  final VoidCallback? onRetry;
+  final String retryLabel;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    liveRegion: true,
+    label: message,
+    child: ExcludeSemantics(
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.sm,
+        ),
+        decoration: const BoxDecoration(
+          color: AppColors.warningSoft,
+          border: Border(bottom: BorderSide(color: AppColors.warning)),
+        ),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.sync_problem_rounded,
+              color: AppColors.warning,
+              size: 18,
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textOnSurface,
+                ),
+              ),
+            ),
+            if (onRetry != null)
+              TextButton(onPressed: onRetry, child: Text(retryLabel)),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
 class FixSkeleton extends StatelessWidget {
   const FixSkeleton({required this.height, this.width, super.key});
 

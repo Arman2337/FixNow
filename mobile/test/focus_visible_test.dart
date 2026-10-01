@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_theme.dart';
 import 'package:fixnow_mobile/design_system/fix_components.dart';
+import 'package:fixnow_mobile/design_system/fix_state_views.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -88,6 +89,47 @@ void main() {
       final focused = restingBorder();
       expect(focused.color, AppColors.focus);
       expect(focused.width, 2.0);
+    });
+  });
+
+  group('stale-data banner', () {
+    testWidgets('announces itself as a live region and offers a retry', (
+      tester,
+    ) async {
+      var retried = 0;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.dark,
+          home: Scaffold(body: FixStaleDataBanner(onRetry: () => retried++)),
+        ),
+      );
+
+      // A banner that appears without being announced is invisible to the people
+      // who most need to know the screen is lying to them. Checked as "some
+      // Semantics node is a live region" rather than "the first one is", because
+      // MaterialApp contributes Semantics of its own and the first is not ours.
+      final liveRegions = tester
+          .widgetList<Semantics>(find.byType(Semantics))
+          .where((node) => node.properties.liveRegion == true);
+      expect(liveRegions, isNotEmpty);
+      expect(find.textContaining('may not be the latest'), findsOneWidget);
+
+      await tester.tap(find.text('Reconnect'));
+      expect(retried, 1);
+    });
+
+    testWidgets('does not claim the device is offline', (tester) async {
+      // It is not offline. The socket was terminated by the server while the app
+      // was suspended, on a full signal. Telling someone they are offline when
+      // they are not is how a user ends up ignoring the indicator that mattered.
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.dark,
+          home: Scaffold(body: FixStaleDataBanner()),
+        ),
+      );
+      expect(find.textContaining('offline'), findsNothing);
+      expect(find.textContaining('You are offline'), findsNothing);
     });
   });
 

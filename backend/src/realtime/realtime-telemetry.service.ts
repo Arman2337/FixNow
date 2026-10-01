@@ -9,6 +9,15 @@ export type RealtimeMetric =
   | 'subscriptions.allowed'
   | 'subscriptions.denied'
   | 'messages.invalid'
+  /**
+   * PERF-005. Liveness probes answered.
+   *
+   * Worth counting because the expected steady-state rate is one per client per
+   * resume, and it is the only evidence that the resume path is running at all.
+   * A client stuck showing stale data with no probes in this counter is exactly
+   * the bug PERF-005 was reported as, still happening on a device we cannot see.
+   */
+  | 'messages.ping'
   | 'limits.exceeded'
   | 'heartbeat.timeout'
   | 'location.denied'

@@ -37,6 +37,7 @@ class AppShell extends StatefulWidget {
     this.providerJobs,
     this.providerHistory,
     this.providerProfile,
+    this.statusBanner,
     super.key,
   });
 
@@ -50,6 +51,14 @@ class AppShell extends StatefulWidget {
   final Widget? providerJobs;
   final Widget? providerHistory;
   final Widget? providerProfile;
+
+  /// PERF-005. Rendered above the page, below nothing.
+  ///
+  /// A slot rather than a hard-coded banner because the shell is also used by
+  /// screens with no realtime at all - onboarding, the verification wait - and a
+  /// shell that assumed a connection would have to be told to hide itself in
+  /// each of them.
+  final Widget? statusBanner;
 
   @override
   State<AppShell> createState() => _AppShellState();
@@ -146,18 +155,29 @@ class _AppShellState extends State<AppShell> {
           child: Scaffold(
             body: SafeArea(
               bottom: false,
-              child: FixPageFrame(
-                child: IndexedStack(
-                  index: selectedIndex,
-                  children: [
-                    for (var index = 0; index < destinations.length; index += 1)
-                      _TabReveal(
-                        active: index == selectedIndex,
-                        forward: forward,
-                        child: _destinationFor(index),
+              child: Column(
+                children: [
+                  if (widget.statusBanner != null) widget.statusBanner!,
+                  Expanded(
+                    child: FixPageFrame(
+                      child: IndexedStack(
+                        index: selectedIndex,
+                        children: [
+                          for (
+                            var index = 0;
+                            index < destinations.length;
+                            index += 1
+                          )
+                            _TabReveal(
+                              active: index == selectedIndex,
+                              forward: forward,
+                              child: _destinationFor(index),
+                            ),
+                        ],
                       ),
-                  ],
-                ),
+                    ),
+                  ),
+                ],
               ),
             ),
             bottomNavigationBar: SafeArea(

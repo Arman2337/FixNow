@@ -267,6 +267,73 @@ describe('authenticated WebSocket infrastructure', () => {
     });
   });
 
+  it('answers a liveness probe on an authenticated socket and correlates it', async () => {
+    // PERF-005. A client waking from suspension needs to distinguish "the server
+    // is still serving this session" from "I still have a socket object". Only an
+    // application-level probe can, because the protocol ping the gateway sends
+    // cannot distinguish a frozen client from a healthy one - and the frozen
+    // client is the one that gets terminated.
+    const client = await authenticatedClient();
+    client.send(JSON.stringify({ type: 'ping', requestId: 'probe-1' }));
+    await expect(nextFrame(client)).resolves.toMatchObject({
+      type: 'pong',
+      requestId: 'probe-1',
+    });
+  });
+
+  it('answers a probe without echoing the credential or mutating state', async () => {
+    // The probe is only trustworthy as a probe if it has no side effects. If it
+    // could change presence or location, a client probing on resume would be
+    // writing state it never meant to.
+    const client = await authenticatedClient();
+    client.send(
+      JSON.stringify({
+        type: 'ping',
+        requestId: 'probe-2',
+        accessToken: 'valid-access-token',
+      }),
+    );
+    const frame = await nextFrame(client);
+    expect(frame).toMatchObject({ type: 'pong', requestId: 'probe-2' });
+    expect(frame).not.toHaveProperty('accessToken');
+  });
+
+  it('requires authentication before answering a probe', async () => {
+    // An unauthenticated socket is not evidence of anything, so it gets the same
+    // treatment as any other pre-authentication message rather than a pong. A
+    // pong here would let a client conclude it was live while the server had
+    // never looked at its session.
+    const client = await connect();
+    client.send(JSON.stringify({ type: 'ping', requestId: 'probe-3' }));
+    await expect(nextClose(client)).resolves.toMatchObject({
+      code: REALTIME_CLOSE.authenticationRequired,
+      reason: 'authentication-required',
+    });
+  });
+
+  it('still rejects an unknown message type so the probe cannot become a catch-all', async () => {
+    // Adding `ping` to the dispatcher must not have made the dispatcher
+    // permissive. `unsupported-message` is what a typo or an unauthenticated
+    // probe for the wrong channel relies on.
+    const client = await authenticatedClient();
+    client.send(
+      JSON.stringify({ type: 'not-a-real-type', requestId: 'probe-4' }),
+    );
+    await expect(nextFrame(client)).resolves.toMatchObject({
+      type: 'error',
+      code: 'unsupported-message',
+      requestId: 'probe-4',
+    });
+  });
+
+  it('counts probes so a client stuck showing stale data is visible', async () => {
+    const client = await authenticatedClient();
+    client.send(JSON.stringify({ type: 'ping', requestId: 'probe-5' }));
+    await nextFrame(client);
+    const telemetry = app.get(RealtimeTelemetryService);
+    expect(telemetry.snapshot()['messages.ping']).toBe(1);
+  });
+
   async function connect(): Promise<WebSocket> {
     const client = new WebSocket(url, { origin: 'https://app.fixnow.test' });
     clients.add(client);

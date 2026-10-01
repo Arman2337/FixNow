@@ -12,6 +12,9 @@ class BookingController extends ChangeNotifier {
   BookingController(this._repository, {this.realtime});
   final BookingRepository _repository;
   BookingRepository get repository => _repository;
+
+  /// Borrowed, not owned. The app creates the socket and disposes it; see the
+  /// note in [dispose].
   final RealtimeClient? realtime;
   StreamSubscription<RealtimeProjection>? _projectionSubscription;
   Timer? _reconciliationTimer;
@@ -251,7 +254,11 @@ class BookingController extends ChangeNotifier {
   void dispose() {
     _reconciliationTimer?.cancel();
     unawaited(_projectionSubscription?.cancel());
-    realtime?.dispose();
+    // Does NOT dispose `realtime`. The socket is shared with the provider and
+    // notification controllers, and the app owns it. Disposing it here would
+    // have been invisible while each feature had its own socket and would have
+    // silently killed the other two the moment they shared one - which is
+    // exactly the change that makes this a real hazard rather than a latent one.
     acceptedBooking.dispose();
     super.dispose();
   }

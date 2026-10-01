@@ -123,7 +123,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
   late final ChatRepository _chatRepository;
   late final SavedAddressRepository _savedAddresses;
   final Map<String, BookingTrackingController> _trackingControllers = {};
-  RealtimeClient? _notificationRealtime;
+  RealtimeClient? _sharedRealtime;
 
   /// PERF-005. Every live socket, so resume can revalidate all of them.
   final Set<RealtimeClient> _liveRealtimeClients = <RealtimeClient>{};
@@ -343,14 +343,22 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
     _location = LocationConsentController(
       widget.locationGateway ?? const PlatformLocationPermissionGateway(),
     );
+    // One socket for the three long-lived consumers. The gateway allows three
+    // connections per principal, and the app was building four - one each for
+    // bookings, provider and notifications, plus one per booking-tracking
+    // screen - so the fourth was refused with `limit-exceeded` and a tracking
+    // screen's live location silently never updated. Booking-tracking screens
+    // keep their own, because a subscription has to be released when the screen
+    // is popped and the shared socket outlives it.
+    _sharedRealtime = _createRealtimeClient();
     _bookings = BookingController(
       BookingRepository(api: api, accessToken: _auth.validAccessToken),
-      realtime: _createRealtimeClient(),
+      realtime: _sharedRealtime,
     );
     _schedules = SchedulesController(_bookings.repository);
     _provider = ProviderController(
       ProviderRepository(api: api, accessToken: _auth.validAccessToken),
-      realtime: _createRealtimeClient(),
+      realtime: _sharedRealtime,
       currentUserId: () => _auth.session?.userId,
     );
     _complaints = ComplaintsController(
@@ -360,10 +368,9 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
       api: PushApi(api, accessToken: _auth.validAccessToken),
       gateway: _pushGateway,
     );
-    _notificationRealtime = _createRealtimeClient();
     _notifications = NotificationController(
       NotificationRepository(api: api, accessToken: _auth.validAccessToken),
-      realtime: _notificationRealtime,
+      realtime: _sharedRealtime,
     );
     _chatRepository = HttpChatRepository(
       api: api,
@@ -385,9 +392,12 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
       unawaited(_requestNotificationPermission());
       final userId = _auth.session?.userId;
       if (userId != null) {
+        // One account subscription on the shared socket. Previously each feature
+        // asked for its own, so the same account channel was subscribed three
+        // times over three connections - three handshakes to learn the same
+        // thing, and one connection slot each.
         unawaited(
-          _notificationRealtime?.subscribeAccount(userId) ??
-              Future<void>.value(),
+          _sharedRealtime?.subscribeAccount(userId) ?? Future<void>.value(),
         );
       }
       _scheduleRouteRestore();
@@ -415,9 +425,10 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
     unawaited(_foregroundPushSub?.cancel());
     unawaited(_backgroundPushSub?.cancel());
     _bookings.acceptedBooking.removeListener(_showAcceptCelebration);
-    // PERF-005. The controllers above dispose the clients they own, which
-    // unregisters them; this catches anything still holding one - a tracking
-    // screen mid-pop, for instance - so no socket outlives the app.
+    // The app owns the shared socket; the controllers above only borrow it and
+    // deliberately do not dispose it. Tracking screens own their own, and
+    // dispose them on pop; this catches any still registered - one mid-pop,
+    // for instance - so no socket outlives the app.
     for (final client in List<RealtimeClient>.of(_liveRealtimeClients)) {
       client.dispose();
     }

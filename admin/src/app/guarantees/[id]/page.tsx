@@ -64,7 +64,7 @@ export default async function GuaranteeClaimDetailsPage(props: {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-space-lg">
             <div className="lg:col-span-2 flex flex-col gap-space-lg">
               <section className="bg-surface border border-outline rounded-lg p-space-lg flex flex-col gap-space-md">
-                <h2 className="text-heading-sm font-bold">Customer Description</h2>
+                <h2 className="text-headline-sm font-bold">Customer Description</h2>
                 <p className="text-body-md whitespace-pre-wrap">{claim.description}</p>
                 
                 {claim.evidenceUrls && claim.evidenceUrls.length > 0 && (
@@ -82,7 +82,7 @@ export default async function GuaranteeClaimDetailsPage(props: {
               </section>
 
               <section className="bg-surface border border-outline rounded-lg p-space-lg flex flex-col gap-space-md">
-                <h2 className="text-heading-sm font-bold">Admin Actions</h2>
+                <h2 className="text-headline-sm font-bold">Admin Actions</h2>
                 <div className="flex items-center gap-space-sm">
                   <form action={updateStatusAction} className="flex items-center gap-space-sm">
                     <select name="status" defaultValue={claim.status} className="bg-surface-elevated border border-outline rounded-md px-3 py-2 text-body-md focus:outline-none focus:border-primary">
@@ -101,7 +101,7 @@ export default async function GuaranteeClaimDetailsPage(props: {
 
                 {claim.status === "APPROVED" && !claim.reServiceBookingId && (
                   <div className="mt-space-lg pt-space-lg border-t border-outline flex flex-col gap-space-md">
-                    <h3 className="text-heading-sm font-bold text-accent">Schedule Re-Service</h3>
+                    <h3 className="text-headline-sm font-bold text-accent">Schedule Re-Service</h3>
                     <p className="text-body-sm text-outline">Assign a provider to perform the guarantee work. A zero-cost booking will be created automatically.</p>
                     <form action={scheduleReServiceAction} className="flex items-center gap-space-sm max-w-md">
                       <select name="providerId" className="flex-1 bg-surface-elevated border border-outline rounded-md px-3 py-2 text-body-md focus:outline-none focus:border-primary" required>
@@ -121,7 +121,7 @@ export default async function GuaranteeClaimDetailsPage(props: {
                 
                 {claim.reServiceBookingId && (
                   <div className="mt-space-lg pt-space-lg border-t border-outline flex flex-col gap-space-sm">
-                    <h3 className="text-body-md font-bold text-green-500">Re-Service Scheduled</h3>
+                    <h3 className="text-body-md font-bold text-primary">Re-Service Scheduled</h3>
                     <p className="text-body-md">
                       Booking ID: <Link href={`/bookings/${claim.reServiceBookingId}`} className="text-primary hover:underline font-data-mono">{shortId(claim.reServiceBookingId)}</Link>
                     </p>
@@ -135,7 +135,7 @@ export default async function GuaranteeClaimDetailsPage(props: {
 
             <div className="flex flex-col gap-space-lg">
               <section className="bg-surface border border-outline rounded-lg p-space-lg flex flex-col gap-space-md">
-                <h2 className="text-heading-sm font-bold">Details</h2>
+                <h2 className="text-headline-sm font-bold">Details</h2>
                 <div className="flex flex-col gap-space-sm text-body-sm">
                   <div className="flex justify-between py-2 border-b border-outline">
                     <span className="text-outline">Booking</span>

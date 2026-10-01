@@ -1,3 +1,4 @@
+import 'package:fixnow_mobile/design_system/fix_components.dart';
 import 'package:flutter/material.dart';
 import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_motion.dart';
@@ -428,14 +429,17 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
               child: Row(
                 children: [
                   Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceContainerLow,
-                        borderRadius: BorderRadius.circular(AppRadius.pill),
-                        border: Border.all(color: AppColors.borderDefault),
-                      ),
-                      child: TextField(
+                    // MOB-006: the pill drew the border and the TextField was
+                    // borderless inside it, so the message box - the most
+                    // focused element in the app - had no focus indicator.
+                    // `enabled: controller.canSend` means a read-only chat never
+                    // takes focus, so it correctly never shows a ring.
+                    child: FixFocusBorder(
+                      radius: BorderRadius.circular(AppRadius.pill),
+                      fillColor: AppColors.surfaceContainerLow,
+                      builder: (focusNode) => TextField(
                         controller: _textController,
+                        focusNode: focusNode,
                         enabled: controller.canSend,
                         style: const TextStyle(
                           color: AppColors.textPrimary,

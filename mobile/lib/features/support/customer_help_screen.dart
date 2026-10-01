@@ -1,3 +1,4 @@
+import 'package:fixnow_mobile/design_system/fix_components.dart';
 import 'package:flutter/material.dart';
 import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
@@ -244,23 +245,22 @@ class _CustomerHelpScreenState extends State<CustomerHelpScreen> {
             const SizedBox(height: AppSpacing.md),
 
             // Search Bar
-            Container(
-              decoration: BoxDecoration(
-                color: AppColors.surfaceContainerLowest,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: AppColors.outline.withValues(alpha: 0.15),
+            // MOB-006: borderless field in a bordered container, so no focus
+            // indicator. The container now owns the focus node.
+            FixFocusBorder(
+              radius: BorderRadius.circular(14),
+              fillColor: AppColors.surfaceContainerLowest,
+              borderColor: AppColors.outline.withValues(alpha: 0.15),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: TextField(
+              ],
+              builder: (focusNode) => TextField(
                 controller: _searchController,
+                focusNode: focusNode,
                 onChanged: (val) {
                   setState(() {
                     _searchQuery = val.trim();

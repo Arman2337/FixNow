@@ -9,6 +9,133 @@ import 'package:fixnow_mobile/design_system/fix_motion.dart';
 import 'package:fixnow_mobile/design_system/fix_status_chip.dart';
 import 'package:flutter/material.dart';
 
+/// A bordered container whose border reacts to the focus of the field inside it.
+///
+/// MOB-006. This exists because seven widgets had independently solved "put a
+/// borderless [TextField] inside a [Container] that draws the border" - correct in
+/// one respect and wrong in another. The [Container] has no way to know when its
+/// child gained focus, so its border never changed and the field had no visible
+/// focus indicator at all. Two of them added `focusedBorder: InputBorder.none`
+/// next to it, which is what made the mistake look deliberate.
+///
+/// The pattern lives here so the fix is one implementation rather than seven, and
+/// so the ring is the theme's `focus` colour at the theme's 2px everywhere. The
+/// focus node is created here and handed to [builder], because the node that
+/// paints the border and the node the field listens to have to be the same one.
+///
+/// Usage:
+/// ```dart
+/// FixFocusBorder(
+///   radius: BorderRadius.circular(AppRadius.medium),
+///   builder: (node) => TextField(focusNode: node, ...),
+/// )
+/// ```
+class FixFocusBorder extends StatefulWidget {
+  const FixFocusBorder({
+    required this.builder,
+    this.active = false,
+    this.radius,
+    this.fillColor,
+    this.borderColor,
+    this.focusedBorderColor,
+    this.activeBorderColor,
+    this.focusBorderWidth = 2,
+    this.activeBorderWidth = 1.5,
+    this.restingBorderWidth = 1,
+    this.boxShadow,
+    this.padding,
+    super.key,
+  });
+
+  final Widget Function(FocusNode focusNode) builder;
+
+  /// Whether the field holds content.
+  ///
+  /// [active] exists because one call site was already keying its border to
+  /// `hasText` and calling it a focus ring. It is not one: a user who focused an
+  /// empty field saw nothing, and a user who typed and then left the field kept a
+  /// highlighted border that looked like focus but was not. Content and focus are
+  /// different states and the border has to mean one of them, so focus wins when
+  /// both are true.
+  final bool active;
+
+  final BorderRadius? radius;
+  final Color? fillColor;
+  final Color? borderColor;
+  final Color? focusedBorderColor;
+  final Color? activeBorderColor;
+  final double focusBorderWidth;
+  final double activeBorderWidth;
+  final double restingBorderWidth;
+  final List<BoxShadow>? boxShadow;
+  final EdgeInsetsGeometry? padding;
+
+  @override
+  State<FixFocusBorder> createState() => _FixFocusBorderState();
+}
+
+class _FixFocusBorderState extends State<FixFocusBorder> {
+  final FocusNode _focusNode = FocusNode();
+  bool _focused = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode.addListener(_onFocusChanged);
+  }
+
+  @override
+  void dispose() {
+    _focusNode
+      ..removeListener(_onFocusChanged)
+      ..dispose();
+    super.dispose();
+  }
+
+  void _onFocusChanged() {
+    if (_focused == _focusNode.hasFocus) return;
+    setState(() => _focused = _focusNode.hasFocus);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final focused = _focused;
+    final active = widget.active;
+    final (color, width) = focused
+        ? (
+            widget.focusedBorderColor ?? AppColors.focus,
+            widget.focusBorderWidth,
+          )
+        : active
+        ? (
+            widget.activeBorderColor ?? AppColors.primary,
+            widget.activeBorderWidth,
+          )
+        : (
+            widget.borderColor ?? AppColors.borderDefault,
+            widget.restingBorderWidth,
+          );
+
+    // MOB-007: the border transition is decoration, not information, but it is
+    // still motion, and a user who has asked the platform for less of it should
+    // get the ring without the animation.
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    return AnimatedContainer(
+      duration: reduceMotion ? Duration.zero : AppMotion.fast,
+      curve: AppMotion.standardCurve,
+      decoration: BoxDecoration(
+        color: widget.fillColor,
+        borderRadius: widget.radius,
+        boxShadow: widget.boxShadow,
+        border: Border.all(color: color, width: width),
+      ),
+      padding: widget.padding,
+      child: widget.builder(_focusNode),
+    );
+  }
+}
+
 /// Standard FixNow Form Input Field
 class FixTextField extends StatelessWidget {
   const FixTextField({
@@ -81,18 +208,15 @@ class FixTextField extends StatelessWidget {
             suffixIcon: suffixIcon,
             filled: true,
             fillColor: AppColors.surfacePrimary,
-            border: OutlineInputBorder(
-              borderRadius: AppRadius.inputBorder,
-              borderSide: const BorderSide(color: AppColors.borderDefault),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: AppRadius.inputBorder,
-              borderSide: const BorderSide(color: AppColors.borderDefault),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: AppRadius.inputBorder,
-              borderSide: const BorderSide(color: AppColors.focus, width: 1.5),
-            ),
+            // MOB-006. The three borders are declared by the theme, with a 2px
+            // `focus` ring, and were restated here at 1.5px. The restatement is
+            // the problem, not the value: the next person to change the focus
+            // ring changes the theme and this silently keeps the old one, and a
+            // field 0.5px off every other field is one nobody notices until
+            // they turn on a screen reader.
+            //
+            // So the borders are not restated. `fillColor` and the label stay,
+            // because those are deliberate choices of this component.
           ),
         ),
       ],
@@ -101,7 +225,9 @@ class FixTextField extends StatelessWidget {
 }
 
 /// Search Input Bar
-class FixSearchField extends StatelessWidget {
+///
+/// MOB-006. Delegates its border to [FixFocusBorder] so it reacts to focus.
+class FixSearchField extends StatefulWidget {
   const FixSearchField({
     this.controller,
     this.hintText = 'Search services, problems, or tools...',
@@ -118,15 +244,17 @@ class FixSearchField extends StatelessWidget {
   final VoidCallback? onMicPressed;
 
   @override
+  State<FixSearchField> createState() => _FixSearchFieldState();
+}
+
+class _FixSearchFieldState extends State<FixSearchField> {
+  @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surfacePrimary,
-        borderRadius: BorderRadius.circular(AppRadius.large),
-        border: Border.all(color: AppColors.borderDefault),
-      ),
+    return FixFocusBorder(
+      radius: BorderRadius.circular(AppRadius.large),
+      fillColor: AppColors.surfacePrimary,
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-      child: Row(
+      builder: (focusNode) => Row(
         children: [
           const Icon(
             Icons.search_rounded,
@@ -136,19 +264,22 @@ class FixSearchField extends StatelessWidget {
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: TextField(
-              controller: controller,
-              onChanged: onChanged,
-              onSubmitted: onSubmitted,
+              controller: widget.controller,
+              focusNode: focusNode,
+              onChanged: widget.onChanged,
+              onSubmitted: widget.onSubmitted,
               style: const TextStyle(
                 color: AppColors.textOnSurface,
                 fontSize: 14,
               ),
               decoration: InputDecoration(
-                hintText: hintText,
+                hintText: widget.hintText,
                 hintStyle: const TextStyle(
                   color: AppColors.textMuted,
                   fontSize: 14,
                 ),
+                // Borderless because [FixFocusBorder] owns the border - and that
+                // border now responds to focus.
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,
@@ -159,14 +290,14 @@ class FixSearchField extends StatelessWidget {
               ),
             ),
           ),
-          if (onMicPressed != null) ...[
+          if (widget.onMicPressed != null) ...[
             IconButton(
               icon: const Icon(
                 Icons.mic_rounded,
                 color: AppColors.accentGold,
                 size: 20,
               ),
-              onPressed: onMicPressed,
+              onPressed: widget.onMicPressed,
               splashRadius: 20,
             ),
           ],

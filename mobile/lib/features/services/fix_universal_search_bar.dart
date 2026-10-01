@@ -2,6 +2,7 @@ import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/app_typography.dart';
+import 'package:fixnow_mobile/design_system/fix_components.dart';
 import 'package:flutter/material.dart';
 
 enum SearchSortOption {
@@ -47,99 +48,101 @@ class FixUniversalSearchBar extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // Search Input Box (Stitch: surface-container-lowest, rounded-xl, 48px height)
-        Container(
-          height: 48,
-          decoration: BoxDecoration(
-            color: AppColors.surfaceContainerLowest,
-            borderRadius: BorderRadius.circular(100),
-            border: Border.all(
-              color: hasText ? AppColors.primary : AppColors.borderDefault,
-              width: hasText ? 1.5 : 1,
+        // MOB-006. This keyed its border to `hasText`, which is not focus: an
+        // empty field that was focused showed nothing, and a field that was
+        // typed into and then left kept a highlighted border that read as focus.
+        // `active` carries the hasText half; the ring carries the rest.
+        FixFocusBorder(
+          active: hasText,
+          radius: BorderRadius.circular(100),
+          fillColor: AppColors.surfaceContainerLowest,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 4,
+              offset: const Offset(0, 1),
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
-                blurRadius: 4,
-                offset: const Offset(0, 1),
+          ],
+          builder: (focusNode) => SizedBox(
+            height: 48,
+            child: TextField(
+              key: const Key('universal_search_input'),
+              controller: searchController,
+              focusNode: focusNode,
+              onChanged: onSearchChanged,
+              style: FixNowTypography.body.copyWith(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w500,
               ),
-            ],
-          ),
-          child: TextField(
-            key: const Key('universal_search_input'),
-            controller: searchController,
-            onChanged: onSearchChanged,
-            style: FixNowTypography.body.copyWith(
-              color: AppColors.textPrimary,
-              fontWeight: FontWeight.w500,
-            ),
-            decoration: InputDecoration(
-              hintText: hintText,
-              hintStyle: FixNowTypography.body.copyWith(
-                color: AppColors.textMuted,
-              ),
-              prefixIcon: const Icon(
-                Icons.search_rounded,
-                color: AppColors.textSecondary,
-                size: 20,
-              ),
-              suffixIcon: hasText
-                  ? IconButton(
-                      key: const Key('universal_search_clear_button'),
-                      icon: const Icon(
-                        Icons.close_rounded,
-                        color: AppColors.textSecondary,
-                        size: 18,
-                      ),
-                      onPressed: onClear,
-                    )
-                  : (onAiDiagnose != null
-                        ? Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 6,
-                            ),
-                            child: InkWell(
-                              onTap: onAiDiagnose,
-                              borderRadius: BorderRadius.circular(100),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primary.withValues(
-                                    alpha: 0.1,
+              decoration: InputDecoration(
+                hintText: hintText,
+                hintStyle: FixNowTypography.body.copyWith(
+                  color: AppColors.textMuted,
+                ),
+                prefixIcon: const Icon(
+                  Icons.search_rounded,
+                  color: AppColors.textSecondary,
+                  size: 20,
+                ),
+                suffixIcon: hasText
+                    ? IconButton(
+                        key: const Key('universal_search_clear_button'),
+                        icon: const Icon(
+                          Icons.close_rounded,
+                          color: AppColors.textSecondary,
+                          size: 18,
+                        ),
+                        onPressed: onClear,
+                      )
+                    : (onAiDiagnose != null
+                          ? Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 6,
+                              ),
+                              child: InkWell(
+                                onTap: onAiDiagnose,
+                                borderRadius: BorderRadius.circular(100),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
                                   ),
-                                  borderRadius: BorderRadius.circular(100),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: const [
-                                    Text(
-                                      'Ask AI',
-                                      style: TextStyle(
-                                        color: AppColors.primary,
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 13,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary.withValues(
+                                      alpha: 0.1,
+                                    ),
+                                    borderRadius: BorderRadius.circular(100),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: const [
+                                      Text(
+                                        'Ask AI',
+                                        style: TextStyle(
+                                          color: AppColors.primary,
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 13,
+                                        ),
                                       ),
-                                    ),
-                                    SizedBox(width: 4),
-                                    Icon(
-                                      Icons.auto_awesome_rounded,
-                                      color: AppColors.primary,
-                                      size: 16,
-                                    ),
-                                  ],
+                                      SizedBox(width: 4),
+                                      Icon(
+                                        Icons.auto_awesome_rounded,
+                                        color: AppColors.primary,
+                                        size: 16,
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-                          )
-                        : null),
-              border: InputBorder.none,
-              enabledBorder: InputBorder.none,
-              focusedBorder: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.sm,
-                vertical: 12,
+                            )
+                          : null),
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.sm,
+                  vertical: 12,
+                ),
               ),
             ),
           ),
@@ -226,29 +229,46 @@ class FixUniversalSearchBar extends StatelessWidget {
       itemBuilder: (context) => [
         const PopupMenuItem(
           value: SearchSortOption.relevance,
-          child: Text('Default Relevance', style: TextStyle(color: AppColors.textPrimary)),
+          child: Text(
+            'Default Relevance',
+            style: TextStyle(color: AppColors.textPrimary),
+          ),
         ),
         const PopupMenuItem(
           value: SearchSortOption.priceLowHigh,
-          child: Text('Price: Low to High', style: TextStyle(color: AppColors.textPrimary)),
+          child: Text(
+            'Price: Low to High',
+            style: TextStyle(color: AppColors.textPrimary),
+          ),
         ),
         const PopupMenuItem(
           value: SearchSortOption.priceHighLow,
-          child: Text('Price: High to Low', style: TextStyle(color: AppColors.textPrimary)),
+          child: Text(
+            'Price: High to Low',
+            style: TextStyle(color: AppColors.textPrimary),
+          ),
         ),
         const PopupMenuItem(
           value: SearchSortOption.fastest,
-          child: Text('Fastest (<45 min)', style: TextStyle(color: AppColors.textPrimary)),
+          child: Text(
+            'Fastest (<45 min)',
+            style: TextStyle(color: AppColors.textPrimary),
+          ),
         ),
         const PopupMenuItem(
           value: SearchSortOption.popular,
-          child: Text('Most Popular', style: TextStyle(color: AppColors.textPrimary)),
+          child: Text(
+            'Most Popular',
+            style: TextStyle(color: AppColors.textPrimary),
+          ),
         ),
       ],
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: isCustom ? AppColors.primarySoft.withValues(alpha: 0.2) : AppColors.backgroundSecondary,
+          color: isCustom
+              ? AppColors.primarySoft.withValues(alpha: 0.2)
+              : AppColors.backgroundSecondary,
           borderRadius: BorderRadius.circular(AppRadius.pill),
           border: Border.all(
             color: isCustom ? AppColors.primary : AppColors.borderDefault,

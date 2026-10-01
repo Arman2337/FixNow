@@ -8,6 +8,7 @@ import 'package:fixnow_mobile/features/bookings/booking.dart';
 import 'package:fixnow_mobile/features/location/booking_location.dart';
 import 'package:fixnow_mobile/features/services/service_category.dart';
 import 'package:fixnow_mobile/features/services/sub_service_item.dart';
+import 'package:fixnow_mobile/design_system/fix_components.dart';
 import 'package:flutter/material.dart';
 
 /// Screen allowing the customer to select specific tasks, adjust quantities,
@@ -38,7 +39,8 @@ class SubServiceCatalogScreen extends StatefulWidget {
     BookingLocationFix? location,
     List<BookingItemDraft> items,
     List<BookingLineItem> pricedItems,
-  )? onProceedToBooking;
+  )?
+  onProceedToBooking;
 
   @override
   State<SubServiceCatalogScreen> createState() =>
@@ -437,20 +439,21 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
   }
 
   Widget _buildSearchField() {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(AppRadius.medium),
-        border: Border.all(color: AppColors.borderDefault),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 4,
-            offset: const Offset(0, 1),
-          ),
-        ],
-      ),
-      child: TextField(
+    // MOB-006: the container drew the border and the TextField was borderless
+    // inside it, so tabbing into the search box showed nothing.
+    return FixFocusBorder(
+      radius: BorderRadius.circular(AppRadius.medium),
+      fillColor: AppColors.surfaceContainerLowest,
+      borderColor: AppColors.borderDefault,
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.02),
+          blurRadius: 4,
+          offset: const Offset(0, 1),
+        ),
+      ],
+      builder: (focusNode) => TextField(
+        focusNode: focusNode,
         onChanged: (val) => setState(() => _searchQuery = val),
         style: const TextStyle(color: AppColors.textPrimary, fontSize: 13),
         decoration: InputDecoration(

@@ -3,6 +3,7 @@ import 'package:fixnow_mobile/auth/auth_session.dart';
 import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/app_typography.dart';
+import 'package:fixnow_mobile/design_system/fix_components.dart';
 import 'package:fixnow_mobile/design_system/fix_page_frame.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -509,10 +510,6 @@ class _AuthScreenState extends State<AuthScreen> {
                                 horizontal: 14,
                                 vertical: 14,
                               ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide: BorderSide.none,
-                              ),
                             ),
                             validator: (value) =>
                                 _register &&
@@ -539,17 +536,17 @@ class _AuthScreenState extends State<AuthScreen> {
                             ],
                           ),
                           const SizedBox(height: 6),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: AppColors.surfaceContainerLowest,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: AppColors.outlineVariant.withValues(
-                                  alpha: 0.3,
-                                ),
-                              ),
+                          // MOB-006. The container drew the border and the
+                          // TextFormField was borderless inside it, which left
+                          // the sign-in number field with no visible focus at
+                          // all. FixFocusBorder owns the border and the node.
+                          FixFocusBorder(
+                            radius: BorderRadius.circular(8),
+                            fillColor: AppColors.surfaceContainerLowest,
+                            borderColor: AppColors.outlineVariant.withValues(
+                              alpha: 0.3,
                             ),
-                            child: Row(
+                            builder: (focusNode) => Row(
                               children: [
                                 const SizedBox(width: 12),
                                 Icon(
@@ -606,6 +603,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                 Expanded(
                                   child: TextFormField(
                                     controller: _mobile,
+                                    focusNode: focusNode,
                                     enabled: !loading,
                                     keyboardType: TextInputType.phone,
                                     textInputAction: TextInputAction.next,
@@ -686,10 +684,6 @@ class _AuthScreenState extends State<AuthScreen> {
                               horizontal: 14,
                               vertical: 14,
                             ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide.none,
-                            ),
                           ),
                           validator: (value) =>
                               RegExp(
@@ -741,10 +735,6 @@ class _AuthScreenState extends State<AuthScreen> {
                             contentPadding: const EdgeInsets.symmetric(
                               horizontal: 14,
                               vertical: 14,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide.none,
                             ),
                             suffixIcon: IconButton(
                               tooltip: _obscure
@@ -818,10 +808,6 @@ class _AuthScreenState extends State<AuthScreen> {
                               contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 14,
                                 vertical: 14,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide: BorderSide.none,
                               ),
                             ),
                           ),

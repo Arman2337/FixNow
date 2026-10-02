@@ -19,11 +19,41 @@ services:
         generateValue: true
       - key: OTP_SECRET
         generateValue: true
-      - key: AI_PROVIDER_API_KEY
+      # The backend reads HF_TOKEN (ai.module.ts, env.validation.ts). The
+      # previous AI_PROVIDER_API_KEY here matched no variable in the codebase, so
+      # the secret was collected with no effect and the AI provider never
+      # received a credential. `npm run deploy:verify-env` now fails on any key
+      # the code does not read.
+      - key: HF_TOKEN
         sync: false
+      # Private document storage. Read by storage/s3-private-object-storage.ts.
       - key: PROVIDER_DOCUMENT_S3_ACCESS_KEY
         sync: false
       - key: PROVIDER_DOCUMENT_S3_SECRET_KEY
         sync: false
+      - key: PROVIDER_DOCUMENT_S3_ENDPOINT
+        sync: false
+      - key: PROVIDER_DOCUMENT_S3_REGION
+        sync: false
+      - key: PROVIDER_DOCUMENT_BUCKET
+        sync: false
       - key: OPENROUTESERVICE_API_KEY
         sync: false
+      # OPS-003 / SEC-006. Render terminates TLS and forwards to this service
+      # over one hop, so the app must trust exactly one proxy to read a
+      # client-accurate req.ip. Trusting more than the real hop count would let
+      # a client forge X-Forwarded-For and escape the rate limit.
+      - key: TRUST_PROXY_HOPS
+        value: 1
+      # One year. HSTS is only emitted in production, so this is safe here.
+      - key: HSTS_MAX_AGE_SECONDS
+        value: 31536000
+      # Leave unset to use the default deny-all CSP; the API serves JSON.
+      # - key: CSP_DIRECTIVES
+      #   value: "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"
+      # Required in production: env.validation.ts refuses to boot with
+      # PAYMENT_PROVIDER=fake. This is the one variable still standing between
+      # the repository and a bootable production deploy, and it is intentionally
+      # left unset rather than defaulted to a fake provider.
+      # - key: PAYMENT_PROVIDER
+      #   value: razorpay

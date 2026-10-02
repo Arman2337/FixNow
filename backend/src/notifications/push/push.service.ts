@@ -54,12 +54,23 @@ export class PushDeviceService {
     return rows.map(toResponse);
   }
 
-  /** Revokes only when the device belongs to the requesting user. */
-  async revoke(userId: string, deviceId: string): Promise<void> {
-    const result = await this.tokens.delete({ id: deviceId, userId });
-    if (!result.affected) {
+  /**
+   * Revokes only when the device belongs to the requesting user.
+   *
+   * Returns the revoked row so the caller can prove ownership of it: the
+   * delete resolves to `affected`, which says whether a row went but not whose
+   * it was, and `PushDeviceResponse` deliberately omits the owner.
+   */
+  async revoke(
+    userId: string,
+    deviceId: string,
+  ): Promise<PushDeviceTokenEntity> {
+    const token = await this.tokens.findOneBy({ id: deviceId, userId });
+    if (!token) {
       throw new NotFoundException('Device not found');
     }
+    await this.tokens.delete({ id: deviceId });
+    return token;
   }
 
   /** Removes a token reported as no longer registered by the provider. */

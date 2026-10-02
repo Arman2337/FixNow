@@ -706,7 +706,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                                   child: Text(
                                     cat.name.toUpperCase(),
                                     style: const TextStyle(
-                                      fontSize: 10,
+                                      fontSize: 11,
                                       fontWeight: FontWeight.w700,
                                       color: AppColors.textSecondary,
                                     ),
@@ -728,7 +728,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                                     child: Text(
                                       item.badge!,
                                       style: const TextStyle(
-                                        fontSize: 9,
+                                        fontSize: 11,
                                         fontWeight: FontWeight.w800,
                                         color: AppColors.accentGold,
                                       ),
@@ -1019,7 +1019,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                                   '#${active.id.length > 6 ? active.id.substring(0, 6).toUpperCase() : active.id.toUpperCase()}',
                                   style: const TextStyle(
                                     color: Colors.white70,
-                                    fontSize: 9,
+                                    fontSize: 11,
                                     fontWeight: FontWeight.bold,
                                     letterSpacing: 0.5,
                                   ),
@@ -1050,7 +1050,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                           'SECURITY',
                           style: TextStyle(
                             color: Colors.white70,
-                            fontSize: 9,
+                            fontSize: 11,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 0.5,
                           ),
@@ -1159,7 +1159,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                 style: TextStyle(
                   color: AppColors.primary,
                   fontWeight: FontWeight.bold,
-                  fontSize: 10,
+                  fontSize: 11,
                 ),
               ),
             ),
@@ -1239,7 +1239,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                                           Text(
                                             item.$5,
                                             style: const TextStyle(
-                                              fontSize: 10,
+                                              fontSize: 11,
                                               fontWeight: FontWeight.bold,
                                               color: Color(0xFF92400E),
                                             ),
@@ -1270,7 +1270,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                                           Text(
                                             '30-Day',
                                             style: TextStyle(
-                                              fontSize: 9,
+                                              fontSize: 11,
                                               fontWeight: FontWeight.w700,
                                               color: AppColors.primary,
                                             ),
@@ -1341,7 +1341,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                                   child: const Text(
                                     'Book Express',
                                     style: TextStyle(
-                                      fontSize: 10,
+                                      fontSize: 11,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
@@ -1418,7 +1418,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                 child: const Text(
                   '100% Insured',
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: AppColors.primary,
                   ),
@@ -1487,7 +1487,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
           Text(
             subtitle,
             style: const TextStyle(
-              fontSize: 9,
+              fontSize: 11,
               color: AppColors.textSecondary,
               height: 1.2,
             ),
@@ -1504,12 +1504,16 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
     return ListenableBuilder(
       listenable: widget.locationController,
       builder: (context, _) {
-        final isGranted =
-            widget.locationController.state == LocationPermissionState.granted;
+        final locationState = widget.locationController.state;
+        final isGranted = locationState == LocationPermissionState.granted;
+        final isPermanentlyDenied =
+            locationState == LocationPermissionState.permanentlyDenied;
         final locationText = isGranted
             ? (_isLoadingLocation && _locationName == null
                   ? 'Detecting live location...'
                   : (_locationName ?? 'Current Location'))
+            : isPermanentlyDenied
+            ? 'Location blocked \u2014 open settings'
             : 'Enable Location';
         final onlineCount = widget.controller.categories.fold<int>(
           0,
@@ -1607,7 +1611,9 @@ MaterialPageRoute(
             // Stitch Location Selector Card & Live Online Micro-Counter
             InkWell(
               onTap: () {
-                if (!isGranted) {
+                if (isPermanentlyDenied) {
+                  widget.locationController.openSettings();
+                } else if (!isGranted) {
                   widget.locationController.request();
                 } else {
                   _showLocationOptionsSheet();
@@ -1761,7 +1767,7 @@ MaterialPageRoute(
                                     '$onlineCount Pros Online',
                                     style: const TextStyle(
                                       color: AppColors.onPrimaryFixed,
-                                      fontSize: 10,
+                                      fontSize: 11,
                                       fontWeight: FontWeight.w700,
                                     ),
                                   ),
@@ -2697,7 +2703,7 @@ class _CustomerLocationOptionsSheet extends StatelessWidget {
                                     'Default',
                                     style: TextStyle(
                                       color: AppColors.primaryEmerald,
-                                      fontSize: 10,
+                                      fontSize: 11,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),

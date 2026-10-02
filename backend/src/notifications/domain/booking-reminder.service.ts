@@ -82,6 +82,13 @@ export class BookingReminderService implements OnModuleInit, OnModuleDestroy {
         status: In(REMINDER_ELIGIBLE_STATUSES),
         scheduledAt: And(MoreThan(now), LessThanOrEqual(horizon)),
       },
+      // Soonest first, and deterministic. With take: SCAN_CAP and no ordering
+      // Postgres may return the same arbitrary 50 rows on every tick, so a
+      // booking entering the window behind that cut can be starved - and the
+      // 60s scanner is what guarantees a reminder is ever sent. Ordering by
+      // scheduled_at also lets IDX_bookings_reminders supply the order, so the
+      // partial index is used for ordering as well as the range scan.
+      order: { scheduledAt: 'ASC', id: 'ASC' },
       select: { id: true, customerId: true, providerId: true },
       take: SCAN_CAP,
     });

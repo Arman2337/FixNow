@@ -1,3 +1,4 @@
+import { ForbiddenException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { BookingsController } from './bookings.controller';
 import { BookingsService } from './bookings.service';
@@ -101,7 +102,11 @@ describe('BookingsController', () => {
       mockBooking.locationLng = dto.locationLng;
       mockBooking.status = BookingStatus.REQUESTED;
 
-      createMock.mockResolvedValue(mockBooking);
+      createMock.mockResolvedValue({
+        booking: mockBooking,
+        eligibleProviderCount: 3,
+        noProviderAvailable: false,
+      });
       const req = requestFor('user-id');
 
       const result = await controller.create(req, dto, 'request-key-123');
@@ -112,6 +117,10 @@ describe('BookingsController', () => {
         'request-key-123',
       );
       expect(result.booking).toMatchObject({ id: mockBooking.id });
+      // BUG-014: the creation response carries supply, so a client can tell
+      // "searching" from "nobody is available".
+      expect(result.eligibleProviderCount).toBe(3);
+      expect(result.noProviderAvailable).toBe(false);
     });
   });
 
@@ -119,6 +128,8 @@ describe('BookingsController', () => {
     it('should call acceptBooking on service', async () => {
       const mockBooking = completeBooking(new Booking());
       mockBooking.id = 'booking-id';
+      mockBooking.customerId = 'customer-id';
+      mockBooking.providerId = 'provider-id';
       mockBooking.status = BookingStatus.ASSIGNED;
 
       acceptMock.mockResolvedValue(mockBooking);
@@ -137,6 +148,8 @@ describe('BookingsController', () => {
     it('should call updateStatus on service', async () => {
       const mockBooking = completeBooking(new Booking());
       mockBooking.id = 'booking-id';
+      mockBooking.customerId = 'customer-id';
+      mockBooking.providerId = 'provider-id';
       mockBooking.status = BookingStatus.EN_ROUTE;
 
       updateStatusMock.mockResolvedValue(mockBooking);
@@ -161,6 +174,8 @@ describe('BookingsController', () => {
     it('should call cancelBooking on service', async () => {
       const mockBooking = completeBooking(new Booking());
       mockBooking.id = 'booking-id';
+      mockBooking.customerId = 'user-id';
+      mockBooking.providerId = 'provider-id';
       mockBooking.status = BookingStatus.CANCELLED;
 
       cancelMock.mockResolvedValue(mockBooking);
@@ -176,8 +191,34 @@ describe('BookingsController', () => {
         'user-id',
         'reason',
         1,
+        // BUG-020: a customer cancelling has no abandonment code to give.
+        undefined,
       );
       expect(result.booking).toMatchObject({ id: mockBooking.id });
+    });
+
+    // BUG-020: a provider abandoning a job they started sends a code, and the
+    // controller passes it through rather than dropping it.
+    it('passes an abandonment reason code through to the service', async () => {
+      const mockBooking = completeBooking(new Booking());
+      mockBooking.id = 'booking-id';
+      mockBooking.customerId = 'customer-id';
+      mockBooking.providerId = 'provider-id';
+      cancelMock.mockResolvedValue(mockBooking);
+
+      await controller.cancel('booking-id', requestFor('provider-id'), {
+        reason: 'The work is not what was described',
+        expectedVersion: 4,
+        abandonmentReason: 'JOB_MISDESCRIBED',
+      });
+
+      expect(cancelMock).toHaveBeenCalledWith(
+        'booking-id',
+        'provider-id',
+        'The work is not what was described',
+        4,
+        'JOB_MISDESCRIBED',
+      );
     });
   });
 
@@ -185,6 +226,8 @@ describe('BookingsController', () => {
     it('should call rescheduleBooking on service', async () => {
       const mockBooking = completeBooking(new Booking());
       mockBooking.id = 'booking-id';
+      mockBooking.customerId = 'user-id';
+      mockBooking.providerId = 'provider-id';
       mockBooking.scheduledAt = new Date('2026-08-30T10:00:00.000Z');
 
       rescheduleMock.mockResolvedValue(mockBooking);
@@ -273,6 +316,75 @@ describe('BookingsController', () => {
   // A price-affecting mutation authorised by a permission named "update status"
   // reads as harmless during review, and an OTP was gated on a read permission.
   // These assert the wiring so the names cannot drift back.
+  // SEC-002: every self-scoped booking route now has to prove, against the
+  // booking's real party columns, that the caller is one of its parties. These
+  // assert the proof bites — a handler that compared nothing would still
+  // return the booking and `OwnershipProofInterceptor` would 403 it.
+  describe('SEC-002 ownership discharge', () => {
+    const foreignBooking = (overrides: Partial<Booking> = {}): Booking =>
+      Object.assign(completeBooking(new Booking()), {
+        id: 'booking-id',
+        customerId: 'someone-else',
+        providerId: 'another-provider',
+        status: BookingStatus.ASSIGNED,
+        ...overrides,
+      });
+
+    it('refuses to accept a booking the caller is not the assignee of', async () => {
+      acceptMock.mockResolvedValue(foreignBooking());
+      await expect(
+        controller.accept('booking-id', requestFor('provider-id'), {
+          expectedVersion: 1,
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+    });
+
+    it('refuses a status update on a booking assigned to someone else', async () => {
+      updateStatusMock.mockResolvedValue(foreignBooking());
+      await expect(
+        controller.updateStatus('booking-id', requestFor('provider-id'), {
+          status: BookingStatus.EN_ROUTE,
+          expectedVersion: 1,
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+    });
+
+    it('refuses a cancel on a booking the caller is not a party to', async () => {
+      cancelMock.mockResolvedValue(foreignBooking());
+      await expect(
+        controller.cancel('booking-id', requestFor('user-id'), {
+          reason: 'reason',
+          expectedVersion: 1,
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+    });
+
+    it('refuses to read a booking the caller is not a party to', async () => {
+      getBookingMock.mockResolvedValue(foreignBooking());
+      await expect(
+        controller.getBooking(requestFor('user-id'), 'booking-id'),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+    });
+
+    it('lets the assigned provider, but not the customer, drive a status update', async () => {
+      const booking = foreignBooking({ providerId: 'provider-id' });
+      updateStatusMock.mockResolvedValue(booking);
+      await expect(
+        controller.updateStatus('booking-id', requestFor('provider-id'), {
+          status: BookingStatus.EN_ROUTE,
+          expectedVersion: 1,
+        }),
+      ).resolves.toMatchObject({ booking: { id: 'booking-id' } });
+
+      await expect(
+        controller.updateStatus('booking-id', requestFor('customer-id'), {
+          status: BookingStatus.EN_ROUTE,
+          expectedVersion: 1,
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+    });
+  });
+
   describe('authorization metadata', () => {
     const permissionFor = (methodName: string): unknown => {
       const descriptor = Object.getOwnPropertyDescriptor(

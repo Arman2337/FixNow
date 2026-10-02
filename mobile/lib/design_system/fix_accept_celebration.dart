@@ -142,7 +142,7 @@ class _FixAcceptCelebrationState extends State<FixAcceptCelebration>
                     'Match Confirmed',
                     style: TextStyle(
                       color: AppColors.primary,
-                      fontSize: 10,
+                      fontSize: 11,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
@@ -153,7 +153,7 @@ class _FixAcceptCelebrationState extends State<FixAcceptCelebration>
               'FIXNOW LIVE',
               style: TextStyle(
                 color: AppColors.textTertiary,
-                fontSize: 10,
+                fontSize: 11,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.5,
               ),

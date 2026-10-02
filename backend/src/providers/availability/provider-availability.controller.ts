@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Put, Request } from '@nestjs/common';
 import { RequireOwnPermission } from '../../common/authorization/authorization.decorators';
 import type { AuthorizedRequest } from '../../common/authorization/authorization.guard';
+import { assertOwnedResource } from '../../common/authorization/resource-ownership';
 import {
   ProviderAvailabilityResponseDto,
   UpdateProviderScheduleDto,
@@ -14,33 +15,54 @@ export class ProviderAvailabilityController {
 
   @Get('me')
   @RequireOwnPermission('provider.availability.read')
-  getOwn(
+  async getOwn(
     @Request() request: AuthorizedRequest,
   ): Promise<ProviderAvailabilityResponseDto> {
-    return this.service.getOwn(request.authorizationPrincipal!.userId);
+    const principal = request.authorizationPrincipal!;
+    const availability = await this.service.getOwn(principal.userId);
+    // SEC-002: every /me availability route reads or writes the caller's own
+    // row, keyed by the principal. The response carries that row's real
+    // `userId`, so compare rather than assume.
+    assertOwnedResource(
+      principal,
+      availability.userId,
+      'providerAvailability.userId',
+    );
+    return availability;
   }
 
   @Put('me/schedule')
   @RequireOwnPermission('provider.availability.update')
-  updateSchedule(
+  async updateSchedule(
     @Request() request: AuthorizedRequest,
     @Body() dto: UpdateProviderScheduleDto,
   ): Promise<ProviderAvailabilityResponseDto> {
-    return this.service.updateSchedule(
-      request.authorizationPrincipal!.userId,
+    const principal = request.authorizationPrincipal!;
+    const availability = await this.service.updateSchedule(
+      principal.userId,
       dto,
     );
+    assertOwnedResource(
+      principal,
+      availability.userId,
+      'providerAvailability.userId',
+    );
+    return availability;
   }
 
   @Put('me/status')
   @RequireOwnPermission('provider.availability.update')
-  updateStatus(
+  async updateStatus(
     @Request() request: AuthorizedRequest,
     @Body() dto: UpdateProviderStatusDto,
   ): Promise<ProviderAvailabilityResponseDto> {
-    return this.service.updateStatus(
-      request.authorizationPrincipal!.userId,
-      dto,
+    const principal = request.authorizationPrincipal!;
+    const availability = await this.service.updateStatus(principal.userId, dto);
+    assertOwnedResource(
+      principal,
+      availability.userId,
+      'providerAvailability.userId',
     );
+    return availability;
   }
 }

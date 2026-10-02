@@ -104,7 +104,7 @@ export class AuthorizationService {
     // SEC-002: the guard is only asked to answer "is this caller allowed to
     // invoke this operation at all" (authentication, account state, role,
     // audience). It is deliberately NOT asked to answer "does this caller own
-    // the resource", because the guard cannot see the resource.
+    // the resource", because the guard never loads the resource.
     //
     // This method used to fabricate `ownerId: user.id` whenever the route was
     // marked `@RequireOwnPermission`, which made the policy's
@@ -114,18 +114,31 @@ export class AuthorizationService {
     // ownership shipped with no safety net at all.
     //
     // Ownership is now proven explicitly by the layer that has actually loaded
-    // the resource, via `assertOwnedResource`. When a caller does supply a
-    // real context, it is still honoured, so the websocket path keeps working.
-    const allowed = this.policy.isAllowed(
+    // the resource, via `assertOwnedResource`. When the guard cannot evaluate a
+    // resource-dependent rule it returns `deferred`, which marks the principal
+    // as owing an ownership proof; `OwnershipProofInterceptor` then rejects the
+    // response if the handler returns without discharging it. When a caller
+    // does supply a real context it is honoured immediately, so the websocket
+    // subscribe path keeps working unchanged.
+    const outcome = this.policy.evaluate(
       { principal, permission, context },
       user.status,
     );
+    if (outcome.outcome === 'denied') {
+      await this.audit(user.id, 'authorization.denied', 'denied');
+      throw new ForbiddenException('Access denied');
+    }
+    if (outcome.outcome === 'deferred') {
+      // `ownershipProven: false` is what `OwnershipProofInterceptor` looks for.
+      principal.ownershipProven = false;
+    }
     await this.audit(
       user.id,
-      allowed ? 'authorization.allowed' : 'authorization.denied',
-      allowed ? 'success' : 'denied',
+      outcome.outcome === 'allowed'
+        ? 'authorization.allowed'
+        : 'authorization.deferred',
+      'success',
     );
-    if (!allowed) throw new ForbiddenException('Access denied');
     return principal;
   }
 

@@ -9,6 +9,7 @@ import { DatabaseModule } from './database/database.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { RedisCacheModule } from './cache/cache.module';
 import { HealthModule } from './health/health.module';
+import { ObservabilityModule } from './observability/observability.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { ProvidersModule } from './providers/providers.module';
@@ -25,6 +26,7 @@ import { PushModule } from './notifications/push/push.module';
 import { PaymentsModule } from './payments/payments.module';
 import { EmergencyModule } from './emergency/emergency.module';
 import { GuaranteesModule } from './guarantees/guarantees.module';
+import { OutboxModule } from './outbox/outbox.module';
 
 @Module({
   imports: [
@@ -33,6 +35,9 @@ import { GuaranteesModule } from './guarantees/guarantees.module';
     DatabaseModule,
     RedisCacheModule,
     HealthModule,
+    // Top-level rather than nested under `HealthModule`, which is where it used
+    // to be imported from. See the note in `health.module.ts`.
+    ObservabilityModule,
     UsersModule,
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 60 }]),
     AuthModule,
@@ -50,6 +55,10 @@ import { GuaranteesModule } from './guarantees/guarantees.module';
     PaymentsModule,
     EmergencyModule,
     GuaranteesModule,
+    // FN-082. Registered last so its providers are resolved after everything
+    // that enqueues to it, and so the drain worker only starts once the whole
+    // application graph exists.
+    OutboxModule,
   ],
   controllers: [AppController],
   providers: [

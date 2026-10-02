@@ -737,7 +737,7 @@ class _StatTile extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: FixNowTypography.caption.copyWith(
               color: AppColors.textOnSurfaceMuted,
-              fontSize: 10,
+              fontSize: 11,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.3,
               height: 1.2,

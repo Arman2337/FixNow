@@ -158,7 +158,7 @@ class _FixSosVortexButtonState extends State<FixSosVortexButton>
                         _isHolding ? 'HOLDING...' : 'HOLD 1.5s',
                         style: TextStyle(
                           color: Colors.white.withValues(alpha: 0.8),
-                          fontSize: 9,
+                          fontSize: 11,
                           fontWeight: FontWeight.w700,
                         ),
                       ),

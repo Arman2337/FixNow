@@ -5,6 +5,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import * as argon2 from 'argon2';
+import { createHash, randomBytes } from 'node:crypto';
 import { DataSource } from 'typeorm';
 import { IsNull, MoreThan } from 'typeorm';
 import type { RoleCode } from '../common/authorization/permission-policies';
@@ -23,9 +24,31 @@ import {
 } from './auth.constants';
 import { AuthenticationResponse, EmailPasswordDto } from './auth.dto';
 import { TokenLifecycleService } from './token-lifecycle.service';
+import { PasswordResetTokenEntity } from '../users/password-reset-token.entity';
 
 @Injectable()
 export class AuthService {
+  /**
+   * Consecutive failures before an account is locked.
+   *
+   * Five is chosen against argon2's cost: at the configured parameters a single
+   * verify is expensive enough that this threshold caps an attacker's CPU spend
+   * as a side effect of capping their guesses.
+   */
+  static readonly MAX_FAILED_LOGINS = 5;
+
+  /**
+   * How long a lockout lasts.
+   *
+   * Deliberately time-boxed rather than requiring an administrator. A lockout
+   * is a real availability cost, and a support-desk dependency as the only way
+   * back into your own account is its own outage.
+   */
+  static readonly LOGIN_LOCKOUT_MS = 15 * 60_000;
+
+  /** How long a reset link stays usable. */
+  static readonly PASSWORD_RESET_TTL_MS = 30 * 60_000;
+
   constructor(
     private readonly dataSource: DataSource,
     private readonly tokenLifecycle: TokenLifecycleService,
@@ -64,9 +87,7 @@ export class AuthService {
       );
     }
 
-    const passwordHash = await argon2.hash(input.password, {
-      type: argon2.argon2id,
-    });
+    const passwordHash = await this.hashPassword(input.password);
 
     let user: UserEntity;
     try {
@@ -189,10 +210,19 @@ export class AuthService {
         })
       : null;
 
+    // A07. Checked before the (deliberately slow) argon2 verify, so a locked
+    // account cannot be used to burn CPU either. Every rejection below returns
+    // the same message: distinguishing "locked" from "wrong password" would
+    // tell an attacker which emails have accounts.
+    if (credential?.lockedUntil && credential.lockedUntil > new Date()) {
+      throw new UnauthorizedException('Invalid email or password');
+    }
+
     const valid = credential
       ? await argon2.verify(credential.passwordHash, input.password)
       : false;
     if (!identity || !credential || !valid) {
+      if (credential) await this.recordFailedLogin(credential);
       throw new UnauthorizedException('Invalid email or password');
     }
     if (
@@ -202,7 +232,51 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
+    // Success clears the counter, so a user who mistypes twice and then
+    // succeeds does not carry the failures toward a later lockout.
+    if (credential.failedLoginCount !== 0 || credential.lockedUntil !== null) {
+      await this.dataSource
+        .getRepository(CredentialEntity)
+        .update(
+          { id: credential.id },
+          { failedLoginCount: 0, lockedUntil: null },
+        );
+      credential.failedLoginCount = 0;
+      credential.lockedUntil = null;
+    }
+
     return { identity, credential };
+  }
+
+  /**
+   * Counts a failed verification and locks the credential at the threshold.
+   *
+   * The counter lives on the credential row rather than in Redis or memory
+   * because it must survive a restart and be shared across replicas, and
+   * because a lockout that resets on deploy is not a lockout.
+   *
+   * The lock is applied with a conditional update so two concurrent failures
+   * for the same account cannot both read the pre-increment value and leave
+   * the counter one short of the threshold.
+   */
+  private async recordFailedLogin(credential: CredentialEntity): Promise<void> {
+    const repository = this.dataSource.getRepository(CredentialEntity);
+    const next = credential.failedLoginCount + 1;
+    if (next < AuthService.MAX_FAILED_LOGINS) {
+      await repository.update(
+        { id: credential.id },
+        { failedLoginCount: next },
+      );
+      credential.failedLoginCount = next;
+      return;
+    }
+    const lockedUntil = new Date(Date.now() + AuthService.LOGIN_LOCKOUT_MS);
+    await repository.update(
+      { id: credential.id, failedLoginCount: credential.failedLoginCount },
+      { failedLoginCount: next, lockedUntil },
+    );
+    credential.failedLoginCount = next;
+    credential.lockedUntil = lockedUntil;
   }
 
   private async activeRoles(userId: string): Promise<RoleCode[]> {
@@ -216,5 +290,113 @@ export class AuthService {
         relations: { role: true },
       });
     return assignments.map((assignment) => assignment.role.code as RoleCode);
+  }
+
+  /**
+   * Issues a password-reset link for a local-email identity.
+   *
+   * Returns the plaintext token to the caller only when the address has an
+   * account. That is unavoidable - the link has to be emailed - and the caller
+   * sends an identical response either way, so the endpoint is not an account
+   * oracle.
+   *
+   * The stored value is a SHA-256 hash, matching refresh-token handling: a
+   * database disclosure must not yield usable reset links, which would hand an
+   * attacker who can read the database every account.
+   */
+  async requestPasswordReset(email: string): Promise<string | null> {
+    const identity = await this.dataSource
+      .getRepository(IdentityEntity)
+      .findOne({
+        where: { provider: LOCAL_EMAIL_PROVIDER, subject: email },
+      });
+    if (!identity) return null;
+
+    const token = randomBytes(32).toString('hex');
+    const repository = this.dataSource.getRepository(PasswordResetTokenEntity);
+    // Invalidate outstanding links so a second request supersedes the first,
+    // rather than leaving two live credentials for one account.
+    await repository.update(
+      { identityId: identity.id, consumedAt: IsNull() },
+      { consumedAt: new Date() },
+    );
+    await repository.insert(
+      repository.create({
+        identityId: identity.id,
+        tokenHash: this.hashResetToken(token),
+        expiresAt: new Date(Date.now() + AuthService.PASSWORD_RESET_TTL_MS),
+        consumedAt: null,
+      }),
+    );
+    return token;
+  }
+
+  /**
+   * Consumes a reset token and sets a new password.
+   *
+   * Single-use, enforced by a conditional update on `consumed_at` rather than
+   * by a read-then-write, so two concurrent redemptions of the same link cannot
+   * both succeed.
+   *
+   * Clearing the lockout is deliberate: someone who has just proven control of
+   * the mailbox should not be locked out by the failed attempts that led them
+   * to reset in the first place.
+   */
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    const repository = this.dataSource.getRepository(PasswordResetTokenEntity);
+    const claim = await repository.findOne({
+      where: { tokenHash: this.hashResetToken(token), consumedAt: IsNull() },
+    });
+    if (!claim || claim.expiresAt <= new Date()) {
+      throw new BadRequestException(
+        'This reset link is invalid or has expired',
+      );
+    }
+
+    const { affected } = await repository.update(
+      { id: claim.id, consumedAt: IsNull() },
+      { consumedAt: new Date() },
+    );
+    if (affected !== 1) {
+      throw new BadRequestException(
+        'This reset link is invalid or has expired',
+      );
+    }
+
+    const identity = await this.dataSource
+      .getRepository(IdentityEntity)
+      .findOneBy({ id: claim.identityId });
+    if (!identity) {
+      throw new BadRequestException(
+        'This reset link is invalid or has expired',
+      );
+    }
+
+    await this.dataSource.getRepository(CredentialEntity).update(
+      { identityId: identity.id },
+      {
+        passwordHash: await this.hashPassword(newPassword),
+        failedLoginCount: 0,
+        lockedUntil: null,
+      },
+    );
+
+    // Outstanding sessions were authenticated with the old password; a reset
+    // is the standard signal that they should not survive it.
+    await this.tokenLifecycle.revokeAllForUser(identity.userId);
+  }
+
+  private hashResetToken(token: string): string {
+    return createHash('sha256').update(token).digest('hex');
+  }
+
+  /**
+   * The one place a password hash is produced.
+   *
+   * Argon2id at default parameters, shared by registration and reset so a
+   * reset cannot silently produce a weaker hash than a sign-up did.
+   */
+  private hashPassword(password: string): Promise<string> {
+    return argon2.hash(password, { type: argon2.argon2id });
   }
 }

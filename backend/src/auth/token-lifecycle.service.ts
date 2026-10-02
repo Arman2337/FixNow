@@ -157,6 +157,24 @@ export class TokenLifecycleService {
     );
   }
 
+  /**
+   * Revokes every live session for a user, without needing a refresh token.
+   *
+   * Used after a password reset: the sessions were authenticated with the old
+   * password, and a reset is the standard signal that whoever prompted it did
+   * not mean for them to survive. `logout(all)` cannot serve this because it
+   * needs one of the caller's own tokens to find their sessions.
+   */
+  async revokeAllForUser(userId: string): Promise<void> {
+    await this.dataSource
+      .getRepository(AuthSessionEntity)
+      .update(
+        { userId, revokedAt: IsNull() },
+        { revokedAt: new Date(), revokeReason: 'password_reset' },
+      );
+    await this.audit(userId, 'session.password_reset', 'success');
+  }
+
   async requestOtp(email: string): Promise<void> {
     const identity = await this.dataSource
       .getRepository(IdentityEntity)

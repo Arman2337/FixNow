@@ -1,3 +1,5 @@
+import 'package:fixnow_mobile/design_system/fix_components.dart';
+import 'package:fixnow_mobile/design_system/fix_state_views.dart';
 import 'package:flutter/material.dart';
 import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_motion.dart';
@@ -289,9 +291,16 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
             // Message History Area
             Expanded(
               child: controller.isLoading && controller.messages.isEmpty
-                  ? const Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.primary,
+                  // MOB-005: bubbles on alternating sides, so the thread does
+                  // not reflow sideways when the real messages arrive. Announced,
+                  // because without it a screen-reader user meets an empty
+                  // conversation.
+                  ? Semantics(
+                      liveRegion: true,
+                      label: 'Loading messages',
+                      child: Padding(
+                        padding: EdgeInsets.all(AppSpacing.md),
+                        child: FixSkeletonThread(),
                       ),
                     )
                   : controller.errorMessage != null &&
@@ -428,14 +437,17 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
               child: Row(
                 children: [
                   Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceContainerLow,
-                        borderRadius: BorderRadius.circular(AppRadius.pill),
-                        border: Border.all(color: AppColors.borderDefault),
-                      ),
-                      child: TextField(
+                    // MOB-006: the pill drew the border and the TextField was
+                    // borderless inside it, so the message box - the most
+                    // focused element in the app - had no focus indicator.
+                    // `enabled: controller.canSend` means a read-only chat never
+                    // takes focus, so it correctly never shows a ring.
+                    child: FixFocusBorder(
+                      radius: BorderRadius.circular(AppRadius.pill),
+                      fillColor: AppColors.surfaceContainerLow,
+                      builder: (focusNode) => TextField(
                         controller: _textController,
+                        focusNode: focusNode,
                         enabled: controller.canSend,
                         style: const TextStyle(
                           color: AppColors.textPrimary,
@@ -543,7 +555,7 @@ class _ChatBubble extends StatelessWidget {
                 _formatTime(message.createdAt.toLocal()),
                 style: const TextStyle(
                   color: AppColors.textMuted,
-                  fontSize: 10,
+                  fontSize: 11,
                 ),
               ),
             ],
@@ -655,7 +667,7 @@ class _ChatBubble extends StatelessWidget {
                               message.senderRole,
                               style: const TextStyle(
                                 color: AppColors.primary,
-                                fontSize: 10,
+                                fontSize: 11,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),

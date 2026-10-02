@@ -16,6 +16,10 @@ class ProviderController extends ChangeNotifier {
     _initRealtime();
   }
   final ProviderRepository repository;
+
+  /// Borrowed, not owned - the app creates the socket and disposes it. Sharing
+  /// it with the bookings and notification controllers is why this is not
+  /// disposed in [dispose].
   final RealtimeClient? realtime;
   final String? Function()? currentUserId;
   StreamSubscription<RealtimeProjection>? _realtimeSub;
@@ -45,8 +49,10 @@ class ProviderController extends ChangeNotifier {
 
   static const Duration _gpsTimeout = Duration(seconds: 8);
 
-  final _incomingRequestsController = StreamController<Map<String, Object?>>.broadcast();
-  Stream<Map<String, Object?>> get incomingRequests => _incomingRequestsController.stream;
+  final _incomingRequestsController =
+      StreamController<Map<String, Object?>>.broadcast();
+  Stream<Map<String, Object?>> get incomingRequests =>
+      _incomingRequestsController.stream;
 
   void _initRealtime() {
     _realtimeSub = realtime?.projections.listen((projection) {
@@ -83,14 +89,19 @@ class ProviderController extends ChangeNotifier {
     final distance = route['distanceMeters'];
     final duration = route['durationSeconds'];
     final rawCoordinates = route['coordinates'];
-    if (distance is! num || duration is! num || rawCoordinates is! List) return null;
+    if (distance is! num || duration is! num || rawCoordinates is! List) {
+      return null;
+    }
     final coordinates = rawCoordinates
         .map((p) {
           if (p is! List || p.length < 2) return null;
           final lng = p[0];
           final lat = p[1];
           if (lng is! num || lat is! num) return null;
-          return CustomerMapLocation(latitude: lat.toDouble(), longitude: lng.toDouble());
+          return CustomerMapLocation(
+            latitude: lat.toDouble(),
+            longitude: lng.toDouble(),
+          );
         })
         .whereType<CustomerMapLocation>()
         .toList();
@@ -109,9 +120,19 @@ class ProviderController extends ChangeNotifier {
     final latitude = location['latitude'];
     final longitude = location['longitude'];
     final accuracy = location['accuracyMeters'];
-    final capturedAt = DateTime.tryParse(location['capturedAt']?.toString() ?? '');
-    final receivedAt = DateTime.tryParse(location['receivedAt']?.toString() ?? '');
-    if (latitude is! num || longitude is! num || accuracy is! num || capturedAt == null || receivedAt == null) return null;
+    final capturedAt = DateTime.tryParse(
+      location['capturedAt']?.toString() ?? '',
+    );
+    final receivedAt = DateTime.tryParse(
+      location['receivedAt']?.toString() ?? '',
+    );
+    if (latitude is! num ||
+        longitude is! num ||
+        accuracy is! num ||
+        capturedAt == null ||
+        receivedAt == null) {
+      return null;
+    }
     return ProviderMapLocation(
       latitude: latitude.toDouble(),
       longitude: longitude.toDouble(),
@@ -154,7 +175,9 @@ class ProviderController extends ChangeNotifier {
 
   void _startRequestPolling() {
     _requestPollingTimer?.cancel();
-    _requestPollingTimer = Timer.periodic(const Duration(seconds: 4), (_) async {
+    _requestPollingTimer = Timer.periodic(const Duration(seconds: 4), (
+      _,
+    ) async {
       if (availability?.status != 'online') return;
       try {
         final newRequests = await repository.availableRequests();
@@ -164,7 +187,9 @@ class ProviderController extends ChangeNotifier {
         }
         final newJobs = await repository.jobs();
         if (newJobs.length != jobs.length ||
-            newJobs.any((nj) => !jobs.any((j) => j.id == nj.id && j.status == nj.status))) {
+            newJobs.any(
+              (nj) => !jobs.any((j) => j.id == nj.id && j.status == nj.status),
+            )) {
           jobs = newJobs;
           notifyListeners();
         }
@@ -221,9 +246,9 @@ class ProviderController extends ChangeNotifier {
   }
 
   void _checkEnRouteBroadcasting() {
-    final activeEnRouteJobs = jobs.where(
-      (j) => j.status == 'EN_ROUTE' && (locationSharing[j.id] ?? true),
-    ).toList();
+    final activeEnRouteJobs = jobs
+        .where((j) => j.status == 'EN_ROUTE' && (locationSharing[j.id] ?? true))
+        .toList();
 
     if (activeEnRouteJobs.isEmpty) {
       _stopEnRouteBroadcasting();
@@ -238,10 +263,14 @@ class ProviderController extends ChangeNotifier {
       unawaited(publishCurrentLocation(job));
     }
 
-    _enRouteBroadcastTimer = Timer.periodic(const Duration(seconds: 11), (_) async {
-      final currentEnRoute = jobs.where(
-        (j) => j.status == 'EN_ROUTE' && (locationSharing[j.id] ?? true),
-      ).toList();
+    _enRouteBroadcastTimer = Timer.periodic(const Duration(seconds: 11), (
+      _,
+    ) async {
+      final currentEnRoute = jobs
+          .where(
+            (j) => j.status == 'EN_ROUTE' && (locationSharing[j.id] ?? true),
+          )
+          .toList();
       if (currentEnRoute.isEmpty) {
         _stopEnRouteBroadcasting();
         return;
@@ -412,7 +441,9 @@ class ProviderController extends ChangeNotifier {
   ) async {
     try {
       final updated = await repository.updateJobItems(job, items);
-      jobs = jobs.map((item) => item.id == updated.id ? updated : item).toList();
+      jobs = jobs
+          .map((item) => item.id == updated.id ? updated : item)
+          .toList();
       notifyListeners();
       return updated;
     } on ApiException catch (error) {
@@ -625,8 +656,7 @@ class ProviderController extends ChangeNotifier {
       'Location sharing needs an online provider and an active EN ROUTE job.',
     'invalid-location' =>
       'The browser location was not accurate enough. Try again after updating location.',
-    'offline' =>
-      'Realtime connection is offline. Reconnecting...',
+    'offline' => 'Realtime connection is offline. Reconnecting...',
     _ => 'Your current location could not be sent. Try again.',
   };
 
@@ -653,7 +683,8 @@ class ProviderController extends ChangeNotifier {
     _stopLocationTracking();
     _stopEnRouteBroadcasting();
     _stopRequestPolling();
-    realtime?.dispose();
+    // `realtime` is borrowed from the app, which shares one socket across the
+    // bookings, provider and notification controllers and disposes it once.
     super.dispose();
   }
 

@@ -18,6 +18,8 @@ import type {
 } from '../../../shared/booking-chat.types';
 import { BookingProjectionService } from '../realtime/booking-projection.service';
 import { DomainNotificationService } from '../notifications/domain/domain-notification.service';
+import type { AuthorizationPrincipal } from '../common/authorization/authorization.types';
+import { assertOwnedByParty } from '../common/authorization/resource-ownership';
 
 export function presentBookingMessage(
   entity: BookingMessage,
@@ -48,6 +50,7 @@ export class BookingMessagesService {
   async listMessages(
     bookingId: string,
     userId: string,
+    principal?: AuthorizationPrincipal,
   ): Promise<BookingMessagesListResponse> {
     const booking = await this.bookingsRepo.findOne({
       where: { id: bookingId },
@@ -59,6 +62,11 @@ export class BookingMessagesService {
       throw new ForbiddenException(
         'Not authorized to access messages for this booking',
       );
+    }
+    // SEC-002: the response carries message rows but no booking party columns,
+    // so the obligation is discharged here against the booking just proved.
+    if (principal) {
+      assertOwnedByParty(principal, booking.customerId, booking.providerId);
     }
 
     const messages = await this.messagesRepo.find({
@@ -92,6 +100,7 @@ export class BookingMessagesService {
     bookingId: string,
     userId: string,
     dto: SendBookingMessageDto,
+    principal?: AuthorizationPrincipal,
   ): Promise<BookingMessageDto> {
     const text = (dto.messageText ?? '').trim();
     if (!text) {
@@ -111,6 +120,11 @@ export class BookingMessagesService {
     }
     if (booking.customerId !== userId && booking.providerId !== userId) {
       throw new ForbiddenException('Not authorized to message on this booking');
+    }
+    // SEC-002: the returned DTO identifies only the sender, so ownership of the
+    // booking channel is discharged here, before anything is written.
+    if (principal) {
+      assertOwnedByParty(principal, booking.customerId, booking.providerId);
     }
 
     const canSend = [

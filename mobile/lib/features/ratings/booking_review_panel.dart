@@ -9,6 +9,7 @@ import 'package:fixnow_mobile/features/bookings/booking_repository.dart';
 import 'package:fixnow_mobile/features/ratings/booking_review.dart';
 import 'package:fixnow_mobile/features/ratings/review_photo.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:fixnow_mobile/design_system/fix_state_views.dart';
 import 'package:flutter/material.dart';
 
 class BookingReviewPanel extends StatefulWidget {
@@ -180,9 +181,17 @@ class _BookingReviewPanelState extends State<BookingReviewPanel> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const FixCard(
-        child: Center(
-          child: CircularProgressIndicator(semanticsLabel: 'Loading review'),
+      // MOB-005: the review's own shape - a few lines of text - rather than a
+      // spinner filling the card. The card is already sized, so this does not
+      // change the layout, it just stops the contents jumping when they land.
+      return FixCard(
+        child: Semantics(
+          liveRegion: true,
+          label: 'Loading review',
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            child: FixSkeletonLines(count: 3),
+          ),
         ),
       );
     }

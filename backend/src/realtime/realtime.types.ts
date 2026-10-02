@@ -35,6 +35,22 @@ export interface RealtimeConnectionState {
   voiceMessageCount?: number;
   subscriptions: Map<string, RealtimeSubscription>;
   authTimer?: NodeJS.Timeout;
+  /**
+   * BUG-026. When this connection's session was last confirmed live against the
+   * database.
+   *
+   * The access token was verified once, at `authenticate`. `auth_sessions` also
+   * carries `expires_at` and `revoked_at`, and neither was ever re-read, so a
+   * socket authenticated with a 15-minute token stayed open and kept receiving
+   * booking frames, chat, and voice signalling for the life of the process -
+   * which on a long-lived provider socket is days.
+   *
+   * Revoking a session, or a user being suspended, had no effect on a connection
+   * that already existed. Every other request in the system re-reads the user
+   * row and the full role set per request, so the realtime channel was the one
+   * place a revocation did not apply.
+   */
+  sessionVerifiedAt?: number;
 }
 
 export interface RealtimeSubscription {

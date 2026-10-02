@@ -25,6 +25,7 @@ import { ProviderVerificationService } from './verification/provider-verificatio
 import { ProviderAvailabilityEntity } from './availability/provider-availability.entity';
 import { ProviderAvailabilityController } from './availability/provider-availability.controller';
 import { ProviderAvailabilityService } from './availability/provider-availability.service';
+import { ProviderCapacityService } from './availability/provider-capacity.service';
 import { ProviderApplicationController } from './provider-application.controller';
 
 @Module({
@@ -59,6 +60,7 @@ import { ProviderApplicationController } from './provider-application.controller
     ClamAvMalwareScanner,
     ProviderVerificationService,
     ProviderAvailabilityService,
+    ProviderCapacityService,
     { provide: PRIVATE_OBJECT_STORAGE, useExisting: S3PrivateObjectStorage },
     { provide: MALWARE_SCANNER, useExisting: ClamAvMalwareScanner },
   ],
@@ -69,6 +71,7 @@ import { ProviderApplicationController } from './provider-application.controller
     ProviderProfileService,
     ProviderDocumentService,
     ProviderVerificationService,
+    ProviderCapacityService,
   ],
 })
 export class ProvidersModule {}

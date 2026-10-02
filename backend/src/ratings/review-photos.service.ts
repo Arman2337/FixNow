@@ -22,6 +22,11 @@ import {
 import { BookingReview } from './domain/review.entity';
 import { ReviewPhoto, ReviewPhotoStatus } from './domain/review-photo.entity';
 import { ReviewPhotoModerationEvent } from './domain/review-photo-moderation-event.entity';
+import type { AuthorizationPrincipal } from '../common/authorization/authorization.types';
+import {
+  assertOwnedByParty,
+  assertOwnedResource,
+} from '../common/authorization/resource-ownership';
 
 export const REVIEW_PHOTO_LIMITS = {
   maxPhotosPerReview: 3,
@@ -74,6 +79,7 @@ export class ReviewPhotosService {
     customerId: string,
     contentType: string,
     content: Buffer,
+    principal?: AuthorizationPrincipal,
   ): Promise<ReviewPhoto> {
     if (
       !MIME_MAGIC.has(contentType) ||
@@ -88,6 +94,15 @@ export class ReviewPhotosService {
     const review = await this.reviews.findOneBy({ bookingId });
     if (!review || review.customerId !== customerId) {
       throw new NotFoundException('Review not found for this booking');
+    }
+    // SEC-002: `present()` projects away the uploader, so prove ownership on the
+    // review's own `customerId` before anything is stored.
+    if (principal) {
+      assertOwnedResource(
+        principal,
+        review.customerId,
+        'bookingReview.customerId',
+      );
     }
     const existing = await this.photos.countBy({ reviewId: review.id });
     if (existing >= REVIEW_PHOTO_LIMITS.maxPhotosPerReview) {
@@ -123,6 +138,7 @@ export class ReviewPhotosService {
   async listForParticipants(
     bookingId: string,
     actorId: string,
+    principal?: AuthorizationPrincipal,
   ): Promise<ReviewPhoto[]> {
     const booking = await this.dataSource
       .getRepository(Booking)
@@ -130,6 +146,11 @@ export class ReviewPhotosService {
     if (!booking) throw new NotFoundException('Booking not found');
     if (booking.customerId !== actorId && booking.providerId !== actorId) {
       throw new ForbiddenException('You are not a participant of this booking');
+    }
+    // SEC-002: photo rows carry no party column, and the result may be empty —
+    // discharge against the booking that was just proved to be the caller's.
+    if (principal) {
+      assertOwnedByParty(principal, booking.customerId, booking.providerId);
     }
     const review = await this.reviews.findOneBy({ bookingId });
     if (!review) return [];

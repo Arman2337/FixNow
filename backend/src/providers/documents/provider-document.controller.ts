@@ -15,6 +15,10 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
 import type { AuthorizedRequest } from '../../common/authorization/authorization.guard';
 import { RequireOwnPermission } from '../../common/authorization/authorization.decorators';
+import {
+  assertOwnedCollection,
+  assertOwnedResource,
+} from '../../common/authorization/resource-ownership';
 import { ProviderDocumentService } from './provider-document.service';
 
 interface UploadedDocument {
@@ -28,9 +32,10 @@ export class ProviderDocumentController {
   @Get()
   @RequireOwnPermission('provider.documents.read')
   async list(@Request() request: AuthorizedRequest) {
-    const documents = await this.service.listOwn(
-      request.authorizationPrincipal!.userId,
-    );
+    const principal = request.authorizationPrincipal!;
+    const documents = await this.service.listOwn(principal.userId);
+    // SEC-002: scoped by `where: { userId }`; prove it against the rows read.
+    assertOwnedCollection(principal, documents, 'userId');
     return {
       documents: documents.map((document) => ({
         id: document.id,
@@ -51,18 +56,21 @@ export class ProviderDocumentController {
       limits: { files: 1, fileSize: 10 * 1024 * 1024 },
     }),
   )
-  upload(
+  async upload(
     @Request() request: AuthorizedRequest,
     @Param('documentType') type: string,
     @UploadedFile() file?: UploadedDocument,
   ) {
     if (!file) return this.service.rejectMissingFile();
-    return this.service.upload(
-      request.authorizationPrincipal!.userId,
+    const principal = request.authorizationPrincipal!;
+    const document = await this.service.upload(
+      principal.userId,
       type,
       file.mimetype,
       file.buffer,
     );
+    assertOwnedResource(principal, document.userId, 'providerDocument.userId');
+    return document;
   }
   @Get(':id')
   @RequireOwnPermission('provider.documents.read')
@@ -71,9 +79,14 @@ export class ProviderDocumentController {
     @Param('id') id: string,
     @Res() response: Response,
   ): Promise<void> {
-    const result = await this.service.read(
-      request.authorizationPrincipal!.userId,
-      id,
+    const principal = request.authorizationPrincipal!;
+    const result = await this.service.read(principal.userId, id);
+    // `read` already refuses a foreign document; this compares the stored
+    // document's real owner against the principal before any bytes are served.
+    assertOwnedResource(
+      principal,
+      result.metadata.userId,
+      'providerDocument.userId',
     );
     response.setHeader('Content-Type', result.metadata.contentType);
     response.setHeader(
@@ -90,6 +103,12 @@ export class ProviderDocumentController {
     @Request() request: AuthorizedRequest,
     @Param('id') id: string,
   ): Promise<void> {
-    return this.service.delete(request.authorizationPrincipal!.userId, id);
+    // `delete` returns nothing, so the obligation is discharged inside the
+    // service, next to the ownership check that already guards the write.
+    return this.service.delete(
+      request.authorizationPrincipal!.userId,
+      id,
+      request.authorizationPrincipal,
+    );
   }
 }

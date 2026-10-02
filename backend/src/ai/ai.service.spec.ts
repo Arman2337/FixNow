@@ -1,4 +1,4 @@
-import { ConfigService } from '@nestjs/config';
+﻿import { ConfigService } from '@nestjs/config';
 import type { EnvironmentVariables } from '../config/env.validation';
 import { Logger } from 'nestjs-pino';
 import { AiService } from './ai.service';
@@ -9,6 +9,90 @@ import {
 } from './contracts/ai-provider.contract';
 import { DeterministicAiProvider } from './providers/deterministic-ai.provider';
 import { StructuredOutputSchema } from './validation/structured-output.validator';
+import { wavBytes } from './policy/audio-fixtures';
+
+describe('AiService media concurrency', () => {
+  function service(
+    provider: AiProvider,
+    values: Record<string, unknown>,
+  ): AiService {
+    const config = {
+      get: jest.fn((key: string, fallback?: unknown) =>
+        key in values ? values[key] : fallback,
+      ),
+    } as unknown as ConfigService<EnvironmentVariables>;
+    return new AiService(config, provider, { info: jest.fn() } as never);
+  }
+
+  // SEC-014: this was `Buffer.from('RIFF    WAVEfmt ')`, which is not a
+  // RIFF/WAVE file at all — the container is length-prefixed, so those bytes
+  // describe a header of the wrong size with a chunk type in the wrong
+  // position. It passed only because the mime type was trusted, so the fixture
+  // was itself the disguised-payload case the media gate exists to catch.
+  // Replaced with a real header so it is audio, which is what the test claims
+  // to be about.
+  const wav = (): Buffer => wavBytes();
+
+  const enabled = {
+    AI_ENABLED: 'true',
+    AI_VOICE_ENABLED: 'true',
+    AI_MAX_CONCURRENT_MEDIA: 1,
+  };
+
+  const transcript = { transcription: 'hello' };
+
+  it('sheds load past the in-flight cap instead of buffering more', async () => {
+    let inFlight = 0;
+    let peak = 0;
+    const provider = {
+      transcribeAudio: async () => {
+        inFlight += 1;
+        peak = Math.max(peak, inFlight);
+        await new Promise((resolve) => setTimeout(resolve, 20));
+        inFlight -= 1;
+        return transcript;
+      },
+    } as unknown as AiProvider;
+    // One service shared by all four calls: the limiter is per-instance, which
+    // is the whole point - it is a process-wide bound, not a per-user one.
+    const subject = service(provider, enabled);
+
+    const results = await Promise.all(
+      Array.from({ length: 4 }, (_, i) =>
+        subject.transcribe({
+          userId: `user-${i}`,
+          audio: { bytes: wav(), mimeType: 'audio/wav' },
+        }),
+      ),
+    );
+
+    expect(peak).toBeLessThanOrEqual(1);
+    // Over-cap requests take the same clean fallback shape as any other AI
+    // failure, so the client falls back to manual selection rather than 500ing.
+    const shed = results.filter((r) => r.kind === 'fallback');
+    expect(shed).toHaveLength(3);
+    expect((shed[0] as { errorCode: string }).errorCode).toBe('RATE_LIMITED');
+  });
+
+  it('frees the slot once the provider call settles', async () => {
+    const provider = {
+      transcribeAudio: async () => transcript,
+    } as unknown as AiProvider;
+    const subject = service(provider, enabled);
+
+    const first = await subject.transcribe({
+      userId: 'user-a',
+      audio: { bytes: wav(), mimeType: 'audio/wav' },
+    });
+    const second = await subject.transcribe({
+      userId: 'user-a',
+      audio: { bytes: wav(), mimeType: 'audio/wav' },
+    });
+
+    expect(first.kind).toBe('success');
+    expect(second.kind).toBe('success');
+  });
+});
 
 interface FixtureOutput {
   value: string;

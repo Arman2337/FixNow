@@ -1,34 +1,12 @@
 import { DataSource, QueryFailedError } from 'typeorm';
 import { AccountStatus } from '../src/users/account-status';
 import { IdentityEntity } from '../src/users/identity.entity';
-import { RoleEntity } from '../src/users/role.entity';
-import { UserRoleEntity } from '../src/users/user-role.entity';
 import { UserEntity } from '../src/users/user.entity';
 import { UsersRepository } from '../src/users/users.repository';
+import { createTestDataSource } from './support/test-data-source';
 
 describe('user identity PostgreSQL boundaries', () => {
-  const rawUrl = process.env.TEST_DATABASE_URL;
-  if (!rawUrl)
-    throw new Error('TEST_DATABASE_URL must target an isolated test database');
-  const url = new URL(rawUrl);
-  const isExpectedTestDatabase =
-    url.protocol === 'postgresql:' &&
-    ['127.0.0.1', 'localhost'].includes(url.hostname) &&
-    url.port === '55432' &&
-    url.username === 'fixnow_test' &&
-    url.pathname === '/fixnow_test';
-  if (!isExpectedTestDatabase) {
-    throw new Error(
-      'Refusing destructive integration tests: TEST_DATABASE_URL must be the documented loopback fixnow_test database on port 55432',
-    );
-  }
-
-  const dataSource = new DataSource({
-    type: 'postgres',
-    url: rawUrl,
-    entities: [UserEntity, IdentityEntity, RoleEntity, UserRoleEntity],
-    synchronize: false,
-  });
+  const dataSource: DataSource = createTestDataSource();
 
   beforeAll(() => dataSource.initialize());
   beforeEach(() =>

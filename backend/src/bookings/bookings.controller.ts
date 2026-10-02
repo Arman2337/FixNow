@@ -29,7 +29,14 @@ import { RequireOwnPermission } from '../common/authorization/authorization.deco
 import { PERMISSIONS } from '../common/authorization/permission-policies';
 import type { AuthorizedRequest } from '../common/authorization/authorization.guard';
 import {
+  assertAssignedResource,
+  assertNoResourceToProve,
+  assertOwnedByParty,
+  assertOwnedResource,
+} from '../common/authorization/resource-ownership';
+import {
   BookingHistoryResponse,
+  BookingCreationResponse,
   BookingResponse,
   ProviderBookingRequestResponse,
 } from '../../../shared/booking-lifecycle.types';
@@ -49,16 +56,31 @@ export class BookingsController {
     @Req() req: AuthorizedRequest,
     @Body() dto: CreateBookingDto,
     @Headers('idempotency-key') idempotencyKey: string,
-  ): Promise<BookingResponse> {
-    const userId = req.authorizationPrincipal!.userId;
-    const booking = await this.bookingsService.create(
+  ): Promise<BookingCreationResponse> {
+    const principal = req.authorizationPrincipal!;
+    const userId = principal.userId;
+    // BUG-014: the eligible count travels with the booking. `status: REQUESTED`
+    // on its own cannot be distinguished from a search that will never resolve,
+    // and "nobody is available" is the most common answer on day one in a new
+    // city.
+    const result = await this.bookingsService.create(
       userId,
       dto,
       idempotencyKey,
     );
 
+    // SEC-002: the persisted booking's own `customerId` proves the caller is
+    // the customer the booking was raised for.
+    assertOwnedResource(
+      principal,
+      result.booking.customerId,
+      'booking.customerId',
+    );
+
     return {
-      booking: presentBooking(booking),
+      booking: presentBooking(result.booking),
+      eligibleProviderCount: result.eligibleProviderCount,
+      noProviderAvailable: result.noProviderAvailable,
     };
   }
 
@@ -70,12 +92,17 @@ export class BookingsController {
     @Req() req: AuthorizedRequest,
     @Body() dto: AcceptBookingDto,
   ): Promise<BookingResponse> {
-    const providerId = req.authorizationPrincipal!.userId;
+    const principal = req.authorizationPrincipal!;
+    const providerId = principal.userId;
     const booking = await this.bookingsService.acceptBooking(
       bookingId,
       providerId,
       dto.expectedVersion,
     );
+
+    // SEC-002: only the provider the booking is now assigned to may accept, so
+    // this is the assignment column rather than "either party".
+    assertAssignedResource(principal, booking.providerId, 'booking.providerId');
 
     return {
       booking: presentBooking(booking),
@@ -90,13 +117,16 @@ export class BookingsController {
     @Req() req: AuthorizedRequest,
     @Body() dto: UpdateBookingStatusDto,
   ): Promise<BookingResponse> {
-    const providerId = req.authorizationPrincipal!.userId;
+    const principal = req.authorizationPrincipal!;
+    const providerId = principal.userId;
     const booking = await this.bookingsService.updateStatus(
       bookingId,
       providerId,
       dto.status,
       dto.expectedVersion,
     );
+
+    assertAssignedResource(principal, booking.providerId, 'booking.providerId');
 
     return {
       booking: presentBooking(booking),
@@ -111,12 +141,14 @@ export class BookingsController {
     @Req() req: AuthorizedRequest,
     @Body() dto: UpdateBookingItemsDto,
   ): Promise<BookingResponse> {
-    const providerId = req.authorizationPrincipal!.userId;
+    const principal = req.authorizationPrincipal!;
+    const providerId = principal.userId;
     const booking = await this.bookingsService.updateBookingItems(
       bookingId,
       providerId,
       dto,
     );
+    assertAssignedResource(principal, booking.providerId, 'booking.providerId');
     return { booking: presentBooking(booking) };
   }
 
@@ -128,13 +160,16 @@ export class BookingsController {
     @Req() req: AuthorizedRequest,
     @Body() dto: UpdateBookingLineItemsDto,
   ): Promise<BookingResponse> {
-    const providerId = req.authorizationPrincipal!.userId;
+    const principal = req.authorizationPrincipal!;
+    const providerId = principal.userId;
     const booking = await this.bookingsService.updateBookingLineItems(
       bookingId,
       providerId,
       dto.lineItems,
       dto.expectedVersion,
     );
+
+    assertAssignedResource(principal, booking.providerId, 'booking.providerId');
 
     return {
       booking: presentBooking(booking),
@@ -147,9 +182,12 @@ export class BookingsController {
     @Param('id') bookingId: string,
     @Req() req: AuthorizedRequest,
   ): Promise<{ otp: string }> {
+    // The service discloses a one-time code, so the caller must be the
+    // booking's customer. It returns only the code, so the obligation is
+    // discharged inside the service where the booking is loaded.
     return this.bookingsService.getServiceStartOtp(
       bookingId,
-      req.authorizationPrincipal!.userId,
+      req.authorizationPrincipal!,
     );
   }
 
@@ -160,12 +198,14 @@ export class BookingsController {
     @Req() req: AuthorizedRequest,
     @Body() dto: VerifyServiceStartOtpDto,
   ): Promise<BookingResponse> {
+    const principal = req.authorizationPrincipal!;
     const booking = await this.bookingsService.verifyOtpAndStartService(
       bookingId,
-      req.authorizationPrincipal!.userId,
+      principal.userId,
       dto.otp,
       dto.expectedVersion,
     );
+    assertAssignedResource(principal, booking.providerId, 'booking.providerId');
     return { booking: presentBooking(booking) };
   }
 
@@ -177,13 +217,21 @@ export class BookingsController {
     @Req() req: AuthorizedRequest,
     @Body() dto: CancelBookingDto,
   ): Promise<BookingResponse> {
-    const userId = req.authorizationPrincipal!.userId;
+    const principal = req.authorizationPrincipal!;
+    const userId = principal.userId;
     const booking = await this.bookingsService.cancelBooking(
       bookingId,
       userId,
       dto.reason,
       dto.expectedVersion,
+      // BUG-020. A provider abandoning a job they have started sends a reason
+      // code; the service requires one and records it with the free text, so
+      // support can tell a re-dispatch from a dispute without parsing prose.
+      dto.abandonmentReason,
     );
+
+    // Either the customer or the assigned provider may cancel their own job.
+    assertOwnedByParty(principal, booking.customerId, booking.providerId);
 
     return {
       booking: presentBooking(booking),
@@ -198,7 +246,8 @@ export class BookingsController {
     @Req() req: AuthorizedRequest,
     @Body() dto: RescheduleBookingDto,
   ): Promise<BookingResponse> {
-    const userId = req.authorizationPrincipal!.userId;
+    const principal = req.authorizationPrincipal!;
+    const userId = principal.userId;
     const booking = await this.bookingsService.rescheduleBooking(
       bookingId,
       userId,
@@ -206,6 +255,8 @@ export class BookingsController {
       dto.expectedVersion,
       dto.reason,
     );
+
+    assertOwnedByParty(principal, booking.customerId, booking.providerId);
 
     return {
       booking: presentBooking(booking),
@@ -218,7 +269,11 @@ export class BookingsController {
     @Req() req: AuthorizedRequest,
     @Query() query: BookingHistoryQueryDto,
   ): Promise<BookingHistoryResponse> {
-    const userId = req.authorizationPrincipal!.userId;
+    const principal = req.authorizationPrincipal!;
+    const userId = principal.userId;
+    // SEC-002: the caller reads their own history, selected by the principal's
+    // own id inside the query. No caller-named resource is involved.
+    assertNoResourceToProve(principal);
     const limit = query.limit ?? 10;
 
     const page = await this.bookingsService.getBookingHistory(
@@ -238,7 +293,12 @@ export class BookingsController {
     @Req() req: AuthorizedRequest,
     @Query() query: AvailableBookingQueryDto,
   ): Promise<ProviderBookingRequestResponse> {
-    const providerId = req.authorizationPrincipal!.userId;
+    const principal = req.authorizationPrincipal!;
+    // SEC-002: an open job board, deliberately not caller-owned. What is
+    // caller-scoped is the *offer*, which the service derives from the
+    // principal's own id; no offered resource belongs to the caller.
+    assertNoResourceToProve(principal);
+    const providerId = principal.userId;
     const page = await this.bookingsService.getAvailableRequests(
       providerId,
       query.limit,
@@ -257,11 +317,13 @@ export class BookingsController {
     @Req() req: AuthorizedRequest,
     @Param('id') bookingId: string,
   ): Promise<BookingResponse> {
-    const userId = req.authorizationPrincipal!.userId;
+    const principal = req.authorizationPrincipal!;
+    const userId = principal.userId;
     const booking = await this.bookingsService.getBookingForUser(
       bookingId,
       userId,
     );
+    assertOwnedByParty(principal, booking.customerId, booking.providerId);
     return {
       booking: presentBooking(booking),
     };

@@ -14,6 +14,7 @@ import { PERMISSIONS } from '../common/authorization/permission-policies';
 import { ProviderApplicationEntity } from './provider-application.entity';
 import { ProviderOnboardingStatus } from './provider-onboarding-status';
 import { ProviderVerificationEventEntity } from './verification/provider-verification-event.entity';
+import { assertOwnedResource } from '../common/authorization/resource-ownership';
 
 @Controller('provider-applications')
 export class ProviderApplicationController {
@@ -28,11 +29,19 @@ export class ProviderApplicationController {
   async getOwn(
     @Request() request: AuthorizedRequest,
   ): Promise<ProviderApplicationEntity> {
+    const principal = request.authorizationPrincipal!;
     const application = await this.applications.findOneBy({
-      userId: request.authorizationPrincipal!.userId,
+      userId: principal.userId,
     });
     if (!application)
       throw new NotFoundException('Provider application not found');
+    // SEC-002: the row carries its real owning column, so compare it rather
+    // than relying on the lookup having been keyed correctly.
+    assertOwnedResource(
+      principal,
+      application.userId,
+      'providerApplication.userId',
+    );
     return application;
   }
   @Post('me/submit')
@@ -40,9 +49,10 @@ export class ProviderApplicationController {
   async submitOwn(
     @Request() request: AuthorizedRequest,
   ): Promise<ProviderApplicationEntity> {
-    const userId = request.authorizationPrincipal!.userId;
+    const principal = request.authorizationPrincipal!;
+    const userId = principal.userId;
 
-    return this.dataSource.transaction(async (manager) => {
+    const saved = await this.dataSource.transaction(async (manager) => {
       const application = await manager.findOneBy(ProviderApplicationEntity, {
         userId,
       });
@@ -62,21 +72,29 @@ export class ProviderApplicationController {
       const from = application.status;
       application.status = ProviderOnboardingStatus.UnderReview;
       application.version += 1;
-      const saved = await manager.save(ProviderApplicationEntity, application);
+      const persisted = await manager.save(
+        ProviderApplicationEntity,
+        application,
+      );
 
       await manager.save(
         ProviderVerificationEventEntity,
         manager.create(ProviderVerificationEventEntity, {
-          applicationId: saved.id,
+          applicationId: persisted.id,
           actorUserId: userId,
           fromStatus: from,
           toStatus: ProviderOnboardingStatus.UnderReview,
           reason: 'provider-submitted',
-          applicationVersion: saved.version,
+          applicationVersion: persisted.version,
         }),
       );
 
-      return saved;
+      return persisted;
     });
+
+    // SEC-002: the submission is the caller's own application, keyed by the
+    // principal throughout; nothing names a resource owned by anyone else.
+    assertOwnedResource(principal, saved.userId, 'providerApplication.userId');
+    return saved;
   }
 }

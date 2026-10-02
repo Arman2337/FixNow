@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { AiError } from '../contracts/ai-errors';
 import {
+  AUDIO_CONTAINER_HEADER_BYTES,
+  sniffAudioContainer,
+} from '../policy/ai-media-policy';
+import {
   AiMultimodalRequest,
   AiProvider,
   AiRequest,
@@ -77,7 +81,7 @@ export class DeterministicAiProvider extends AiProvider {
     const transcription =
       this.scenario === 'malformed_output'
         ? '' // empty transcript -> caller maps to INVALID_MODEL_OUTPUT
-        : request.audio.bytes.toString('utf8').trim();
+        : syntheticTranscript(request.audio.bytes);
     return Promise.resolve({
       transcription,
       detectedLanguage: request.languageHint ?? 'en',
@@ -246,6 +250,36 @@ function matchCategory(text: string): CategoryMatch | null {
   if (has('microwave', 'television', 'chimney', 'mixer', 'dishwasher'))
     return match('Home Appliance', 'Microwave', 'medium', 0.82);
   return null;
+}
+
+/**
+ * The synthetic transcript carried in an audio payload.
+ *
+ * SEC-014. This used to be `bytes.toString('utf8').trim()`, which decoded the
+ * whole buffer including its container header — so as soon as the media policy
+ * started requiring a real audio signature rather than trusting the declared
+ * mime, every transcript assertion broke on a leading `\uFFFD...d`.
+ *
+ * The fix belongs here rather than in the fixtures, because the contract is
+ * wrong in this provider and not in its callers: a real transcription engine
+ * decodes audio frames and returns words. It never returns container bytes. A
+ * fake that emits them is not a faithful stand-in, and any test asserting on a
+ * transcript would be asserting on an artefact of the fake.
+ *
+ * So the container signature is skipped by length rather than by scanning for
+ * printable characters. The scan approach was tried first and is subtly wrong:
+ * some header bytes are valid ASCII (`0x64` in the MPEG frame header is the
+ * letter `d`), so "skip until valid UTF-8" leaves a stray character in front of
+ * every transcript. Length is unambiguous, so the offset comes from the same
+ * signature table the media policy uses.
+ *
+ * A payload with no recognisable header — the plain-UTF-8 shape older fixtures
+ * used — is returned unchanged, so the simplest case keeps working.
+ */
+function syntheticTranscript(bytes: Buffer): string {
+  const container = sniffAudioContainer(bytes);
+  const offset = container ? AUDIO_CONTAINER_HEADER_BYTES[container] : 0;
+  return bytes.subarray(offset).toString('utf8').trim();
 }
 
 function match(

@@ -8,6 +8,8 @@ import 'package:fixnow_mobile/features/bookings/booking.dart';
 import 'package:fixnow_mobile/features/location/booking_location.dart';
 import 'package:fixnow_mobile/features/services/service_category.dart';
 import 'package:fixnow_mobile/features/services/sub_service_item.dart';
+import 'package:fixnow_mobile/design_system/fix_components.dart';
+import 'package:fixnow_mobile/design_system/fix_state_views.dart';
 import 'package:flutter/material.dart';
 
 /// Screen allowing the customer to select specific tasks, adjust quantities,
@@ -38,7 +40,8 @@ class SubServiceCatalogScreen extends StatefulWidget {
     BookingLocationFix? location,
     List<BookingItemDraft> items,
     List<BookingLineItem> pricedItems,
-  )? onProceedToBooking;
+  )?
+  onProceedToBooking;
 
   @override
   State<SubServiceCatalogScreen> createState() =>
@@ -221,7 +224,7 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.symmetric(horizontal: 4),
                     child: Icon(
                       Icons.chevron_right_rounded,
@@ -262,10 +265,14 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
               const SizedBox(height: AppSpacing.md),
 
               if (_isLoading)
-                const Padding(
+                Padding(
                   padding: EdgeInsets.all(32.0),
-                  child: Center(
-                    child: CircularProgressIndicator(color: AppColors.primary),
+                  // MOB-005: service rows rather than a spinner in the middle of
+                  // an empty page.
+                  child: Semantics(
+                    liveRegion: true,
+                    label: 'Loading services',
+                    child: FixSkeletonList(count: 5),
                   ),
                 )
               else ...[
@@ -437,20 +444,21 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
   }
 
   Widget _buildSearchField() {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(AppRadius.medium),
-        border: Border.all(color: AppColors.borderDefault),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 4,
-            offset: const Offset(0, 1),
-          ),
-        ],
-      ),
-      child: TextField(
+    // MOB-006: the container drew the border and the TextField was borderless
+    // inside it, so tabbing into the search box showed nothing.
+    return FixFocusBorder(
+      radius: BorderRadius.circular(AppRadius.medium),
+      fillColor: AppColors.surfaceContainerLowest,
+      borderColor: AppColors.borderDefault,
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.02),
+          blurRadius: 4,
+          offset: const Offset(0, 1),
+        ),
+      ],
+      builder: (focusNode) => TextField(
+        focusNode: focusNode,
         onChanged: (val) => setState(() => _searchQuery = val),
         style: const TextStyle(color: AppColors.textPrimary, fontSize: 13),
         decoration: InputDecoration(
@@ -770,7 +778,7 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
                         item.formattedDuration,
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 9,
+                          fontSize: 11,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -806,7 +814,7 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
                           '(1.2k)',
                           style: TextStyle(
                             color: AppColors.textSecondary,
-                            fontSize: 10,
+                            fontSize: 11,
                           ),
                         ),
                         if (item.badge != null) ...[
@@ -831,7 +839,7 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
                               item.badge!,
                               style: const TextStyle(
                                 color: Color(0xFF825100),
-                                fontSize: 9,
+                                fontSize: 11,
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
@@ -897,7 +905,7 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
                             '30-Day Warranty',
                             style: TextStyle(
                               color: AppColors.primary,
-                              fontSize: 10,
+                              fontSize: 11,
                               fontWeight: FontWeight.w700,
                             ),
                             maxLines: 1,

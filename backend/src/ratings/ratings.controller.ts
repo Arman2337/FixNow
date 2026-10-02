@@ -41,10 +41,14 @@ export class RatingsController {
     @Req() request: AuthorizedRequest,
     @Body() dto: CreateReviewDto,
   ): Promise<BookingReviewResponse> {
+    const principal = request.authorizationPrincipal!;
+    // SEC-002: `presentReview` strips both party columns, so the service
+    // discharges against the booking it proved the caller owns.
     const review = await this.ratings.createForCompletedBooking(
       bookingId,
-      request.authorizationPrincipal!.userId,
+      principal.userId,
       dto,
+      principal,
     );
     return { review: presentReview(review), providerRating: null };
   }
@@ -55,8 +59,15 @@ export class RatingsController {
     @Param('id') bookingId: string,
     @Req() request: AuthorizedRequest,
   ): Promise<BookingReviewResponse> {
-    const actorId = request.authorizationPrincipal!.userId;
-    const review = await this.ratings.getForBooking(bookingId, actorId);
+    const principal = request.authorizationPrincipal!;
+    const actorId = principal.userId;
+    // SEC-002: either party to the booking may read the review; the answer may
+    // be `null`, so the service discharges on the booking.
+    const review = await this.ratings.getForBooking(
+      bookingId,
+      actorId,
+      principal,
+    );
     return {
       review: review ? presentReview(review) : null,
       providerRating:
@@ -87,6 +98,9 @@ export class RatingsController {
       request.authorizationPrincipal!.userId,
       file.mimetype,
       file.buffer,
+      // SEC-002: the projected photo carries no owner, so the service compares
+      // the review's `customerId` against the principal.
+      request.authorizationPrincipal,
     );
     return { photo: this.photos.present(photo) };
   }
@@ -101,6 +115,8 @@ export class RatingsController {
     const rows = await this.photos.listForParticipants(
       bookingId,
       request.authorizationPrincipal!.userId,
+      // SEC-002: party membership is proved and discharged in the service.
+      request.authorizationPrincipal,
     );
     return { photos: rows.map((photo) => this.photos.present(photo)) };
   }

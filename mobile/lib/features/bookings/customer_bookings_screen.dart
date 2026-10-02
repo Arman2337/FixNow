@@ -14,6 +14,7 @@ import 'package:fixnow_mobile/features/bookings/recurring_schedule.dart';
 import 'package:fixnow_mobile/features/notifications/notification_controller.dart';
 import 'package:fixnow_mobile/features/notifications/notification_model.dart';
 import 'package:fixnow_mobile/features/notifications/notification_center_screen.dart';
+import 'package:fixnow_mobile/design_system/fix_state_views.dart';
 import 'package:flutter/material.dart';
 
 enum _BookingFilter { all, active, completed, cancelled }
@@ -92,7 +93,7 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
                   letterSpacing: -0.5,
                 ),
               ),
-              const Padding(
+              Padding(
                 padding: EdgeInsets.symmetric(horizontal: 6),
                 child: Text(
                   '/',
@@ -119,9 +120,11 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
                       controller: widget.notificationController!,
                       onTap: () {
                         Navigator.of(context).push(
-MaterialPageRoute(
-                             settings: const RouteSettings(name: 'notifications'),
-                             builder: (_) => NotificationCenterScreen(
+                          MaterialPageRoute(
+                            settings: const RouteSettings(
+                              name: 'notifications',
+                            ),
+                            builder: (_) => NotificationCenterScreen(
                               controller: widget.notificationController!,
                               onOpenBooking: (bookingId) {
                                 final match = widget.controller.bookings
@@ -252,16 +255,25 @@ MaterialPageRoute(
             const SizedBox(height: AppSpacing.lg),
           ],
           ...switch (widget.controller.status) {
-            BookingListStatus.initial || BookingListStatus.loading => const [
-              Center(
-                child: CircularProgressIndicator(
-                  semanticsLabel: 'Loading bookings',
+            BookingListStatus.initial || BookingListStatus.loading =>
+              // MOB-005. A spinner in the middle of an empty page, replaced by a
+              // list of the shape that is arriving - so the rows do not jump
+              // when they land. The `Semantics` label the spinner carried is
+              // preserved: without it a screen-reader user meets an empty
+              // document, which is worse than a spinner.
+              [
+                Padding(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  child: Semantics(
+                    liveRegion: true,
+                    label: 'Loading bookings',
+                    child: FixSkeletonList(),
+                  ),
                 ),
-              ),
+              ],
+            BookingListStatus.empty => [
+              _EmptyBookings(onStartService: widget.onStartService),
             ],
-             BookingListStatus.empty => [
-               _EmptyBookings(onStartService: widget.onStartService),
-             ],
             BookingListStatus.offline => [
               _Failure(
                 title: 'You are offline',
@@ -279,15 +291,15 @@ MaterialPageRoute(
             BookingListStatus.ready =>
               _filteredBookings().isEmpty
                   ? [
-                       _EmptyBookings(
-                         filter: _filter,
-                         onReset: () {
-                           setState(() {
-                             _filter = _BookingFilter.active;
-                           });
-                         },
-                         onStartService: widget.onStartService,
-                       ),
+                      _EmptyBookings(
+                        filter: _filter,
+                        onReset: () {
+                          setState(() {
+                            _filter = _BookingFilter.active;
+                          });
+                        },
+                        onStartService: widget.onStartService,
+                      ),
                     ]
                   : [
                       ..._filteredBookings().map(
@@ -720,7 +732,7 @@ class _BookingCard extends StatelessWidget {
                 ),
 
                 // Security Note
-                const Padding(
+                Padding(
                   padding: EdgeInsets.symmetric(vertical: 4),
                   child: Row(
                     children: [
@@ -1276,11 +1288,7 @@ class _BookingCard extends StatelessWidget {
 }
 
 class _EmptyBookings extends StatelessWidget {
-  const _EmptyBookings({
-    this.filter,
-    this.onReset,
-    this.onStartService,
-  });
+  const _EmptyBookings({this.filter, this.onReset, this.onStartService});
   final _BookingFilter? filter;
   final VoidCallback? onReset;
   final VoidCallback? onStartService;
@@ -1364,10 +1372,7 @@ class _EmptyBookings extends StatelessWidget {
               icon: const Icon(Icons.add_circle_outline_rounded, size: 20),
               label: const Text(
                 'Schedule New Service',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
               ),
             ),
           ),
@@ -1411,7 +1416,10 @@ class _BookingSummary extends StatelessWidget {
                   color: AppColors.primarySoft,
                   borderRadius: BorderRadius.all(Radius.circular(12)),
                 ),
-                child: const Icon(Icons.route_rounded, color: AppColors.primary),
+                child: const Icon(
+                  Icons.route_rounded,
+                  color: AppColors.primary,
+                ),
               ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
@@ -1494,12 +1502,13 @@ class _SchedulesSectionState extends State<_SchedulesSection> {
     builder: (context, _) {
       final controller = widget.controller;
       return switch (controller.status) {
-        SchedulesStatus.initial || SchedulesStatus.loading => const Padding(
-          padding: EdgeInsets.only(bottom: AppSpacing.lg),
-          child: Center(
-            child: CircularProgressIndicator(
-              semanticsLabel: 'Loading repeating services',
-            ),
+        SchedulesStatus.initial || SchedulesStatus.loading => Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+          // MOB-005: two repeating-service rows rather than a centred spinner.
+          child: Semantics(
+            liveRegion: true,
+            label: 'Loading repeating services',
+            child: FixSkeletonList(count: 2),
           ),
         ),
         SchedulesStatus.empty => const SizedBox.shrink(),

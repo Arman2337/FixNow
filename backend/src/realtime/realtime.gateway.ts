@@ -34,6 +34,16 @@ import { Booking } from '../bookings/domain/booking.entity';
 import { BookingCall } from '../bookings/domain/booking-call.entity';
 import { BookingProjectionService } from './booking-projection.service';
 import { RealtimeNotificationPublisher } from './realtime-notification-publisher.service';
+import { mapBounded } from '../common/run-bounded';
+
+/**
+ * BUG-026. Concurrent session re-checks.
+ *
+ * An implementation bound: enough that a fleet of connections does not serialise
+ * into a visible delay, low enough that a re-check burst cannot become the
+ * query load it was added to avoid.
+ */
+const SESSION_REVALIDATION_CONCURRENCY = 10;
 
 @Injectable()
 @WebSocketGateway({
@@ -64,10 +74,14 @@ export class RealtimeGateway
   ) {}
 
   afterInit(): void {
-    this.heartbeatTimer = setInterval(
-      () => this.checkHeartbeats(),
-      REALTIME_HEARTBEAT_INTERVAL_MS,
-    );
+    this.heartbeatTimer = setInterval(() => {
+      this.checkHeartbeats();
+      // BUG-026. On the same cadence as the heartbeat, because that is already
+      // the moment the gateway walks every connection - so the re-check costs a
+      // second loop over a list the loop is building anyway, and a socket that
+      // is not sending pings is not one that needs watching.
+      void this.revalidateSessions().catch(() => undefined);
+    }, REALTIME_HEARTBEAT_INTERVAL_MS);
     this.heartbeatTimer.unref();
   }
 
@@ -169,6 +183,15 @@ export class RealtimeGateway
     }
     if (message.type === 'unsubscribe') {
       this.unsubscribe(client, message);
+      return;
+    }
+    // PERF-005. A liveness probe with no side effects, so a client waking from
+    // suspension can tell a live session from a socket the server already
+    // terminated while the client was frozen. Deliberately not piggybacked on
+    // presence or location: those change state, and a probe that mutates state
+    // is a probe that can be wrong in a way nobody can undo.
+    if (message.type === 'ping') {
+      this.pong(client, message);
       return;
     }
     if (message.type === 'presence-update') {
@@ -402,6 +425,24 @@ export class RealtimeGateway
     });
   }
 
+  /**
+   * PERF-005. Answers a liveness probe.
+   *
+   * Reaching this handler already proves the session is authenticated and the
+   * server is serving it, which is the whole point - a socket the gateway
+   * terminated for missed pongs will never get here. The `serverTime` is sent
+   * back so the client can measure the round trip rather than only infer
+   * liveness from the fact that something arrived.
+   */
+  private pong(client: WebSocket, message: RealtimeClientMessage): void {
+    this.telemetry.increment('messages.ping');
+    this.send(client, {
+      type: 'pong',
+      requestId: message.requestId,
+      serverTime: Date.now(),
+    });
+  }
+
   private async updatePresence(
     client: WebSocket,
     message: RealtimeClientMessage,
@@ -507,6 +548,95 @@ export class RealtimeGateway
       state.alive = false;
       client.ping();
     }
+  }
+
+  /**
+   * BUG-026. Re-checks sessions that have gone unconfirmed.
+   *
+   * The access token was verified once, at `authenticate`, and
+   * `auth_sessions.expires_at` / `revoked_at` were never read again. So a
+   * revoked session - or a suspended user - kept an open socket receiving
+   * booking state, chat and voice signalling for the life of the process, which
+   * on a provider's always-on socket is days. Every HTTP request in this system
+   * re-reads the user row and the role set per request, and the realtime channel
+   * was the one place a revocation did not apply.
+   *
+   * The re-check goes through the same `authorizeAccessToken` the connect path
+   * uses, so it also catches a suspended account and an expired token, not only
+   * an explicit revocation - one code path, one set of rules.
+   *
+   * Driven from the heartbeat rather than from every broadcast on purpose: the
+   * cost is one query per connection per `REALTIME_SESSION_REVALIDATION_MS`,
+   * bounded and predictable, instead of one per frame.
+   *
+   * A dependency failure closes nothing. If the database is briefly unavailable,
+   * dropping every live connection would turn a blip into a total outage of
+   * tracking - so an inconclusive check is left inconclusive and retried, and
+   * only a definite denial closes the socket.
+   */
+  async revalidateSessions(now = Date.now()): Promise<number> {
+    const due = this.registry.dueForSessionRevalidation(now);
+    if (due.length === 0) return 0;
+
+    const results = await mapBounded(
+      due.map(({ client, state }) => async () => {
+        const token = state.accessToken;
+        const principal = state.principal;
+        if (!token || !principal) return 'unauthenticated' as const;
+        try {
+          const refreshed = await this.authorization.authorizeAccessToken(
+            token,
+            PERMISSIONS.realtimeConnect,
+          );
+          // A token that now resolves to a different user is not a refresh, it
+          // is a substitution. Treated as a denial: the subscriptions on this
+          // socket were granted to the previous identity.
+          if (refreshed.userId !== principal.userId)
+            return 'identity-changed' as const;
+          this.registry.markSessionVerified(client, now);
+          return 'ok' as const;
+        } catch (error) {
+          return this.classifyRevalidationFailure(error);
+        }
+      }),
+      SESSION_REVALIDATION_CONCURRENCY,
+    );
+
+    let closed = 0;
+    for (const [index, outcome] of results.entries()) {
+      if (outcome === 'ok') continue;
+      const { client } = due[index];
+      const knownDenial =
+        outcome === 'revoked' ||
+        outcome === 'identity-changed' ||
+        outcome === 'unauthenticated';
+      if (knownDenial) {
+        this.telemetry.increment('session.revoked');
+        client.close(REALTIME_CLOSE.sessionRevoked, 'session-no-longer-valid');
+        this.registry.remove(client);
+        closed += 1;
+        continue;
+      }
+      // Inconclusive. The connection stays, and the next heartbeat tries again.
+      this.telemetry.increment('session.revalidation.deferred');
+    }
+    return closed;
+  }
+
+  /**
+   * Separates "this session is not valid" from "we could not find out".
+   *
+   * Conflating them is the dangerous mistake: treating a database timeout as a
+   * revocation disconnects every provider on the platform during a blip, and
+   * treating a revocation as inconclusive means a revoked session never gets
+   * closed at all - which is the bug this whole mechanism exists to fix.
+   */
+  private classifyRevalidationFailure(error: unknown): 'revoked' | 'deferred' {
+    const name = error instanceof Error ? error.constructor.name : '';
+    if (name === 'UnauthorizedException' || name === 'ForbiddenException') {
+      return 'revoked';
+    }
+    return 'deferred';
   }
 
   private withinMessageLimit(

@@ -14,6 +14,7 @@ import {
 import type { AuthorizedRequest } from '../../common/authorization/authorization.guard';
 import { RequireOwnPermission } from '../../common/authorization/authorization.decorators';
 import { PERMISSIONS } from '../../common/authorization/permission-policies';
+import { assertNoResourceToProve } from '../../common/authorization/resource-ownership';
 import {
   ProblemAnalysisResult,
   ProblemAnalysisSource,
@@ -58,6 +59,10 @@ export class ProblemClassificationController {
     @Req() request: AuthorizedRequest,
     @UploadedFile() image?: UploadedMedia,
   ): Promise<ProblemAnalysisResult> {
+    // SEC-002: the upload is analysed for the caller and nothing is persisted
+    // against a caller-named resource. Both the real and the rejected branch
+    // therefore have no owner to prove — including the early return below.
+    assertNoResourceToProve(request.authorizationPrincipal);
     if (!image) return rejected('image');
     return this.analysis.analyzeImage({
       userId: request.authorizationPrincipal!.userId,
@@ -77,6 +82,9 @@ export class ProblemClassificationController {
     @Body() dto: ProblemAnalysisMediaDto,
     @UploadedFile() audio?: UploadedMedia,
   ): Promise<ProblemAnalysisResult> {
+    // SEC-002: as above — the caller's own upload, nothing caller-owned is
+    // named, and the missing-file branch discharges for the same reason.
+    assertNoResourceToProve(request.authorizationPrincipal);
     if (!audio) return rejected('voice');
     return this.analysis.analyzeVoice({
       userId: request.authorizationPrincipal!.userId,
@@ -102,6 +110,7 @@ export class ProblemClassificationController {
     @UploadedFiles()
     files?: { image?: UploadedMedia[]; audio?: UploadedMedia[] },
   ): Promise<ProblemAnalysisResult> {
+    assertNoResourceToProve(request.authorizationPrincipal);
     const image = files?.image?.[0];
     const audio = files?.audio?.[0];
     if (!image || !audio) return rejected('image_voice');

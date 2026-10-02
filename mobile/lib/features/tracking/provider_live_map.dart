@@ -543,13 +543,24 @@ class _ProviderLiveMapState extends State<ProviderLiveMap>
                         ),
                       MarkerLayer(
                         markers: [
+                          // `Marker` requires explicit dimensions, so these boxes have
+                          // to be tall enough for the pin's caption at a 2x
+                          // system text scale. They used to be sized for a 9pt
+                          // caption, which is why raising that caption to the
+                          // smallest readable size overflowed the pin by 3px.
+                          //
+                          // The boxes are padded rather than the caption scaled
+                          // back down, because the caption is real information —
+                          // "Service address" is not decoration, and shrinking
+                          // it toward illegible to save three pixels would undo
+                          // the accessibility fix this box exists to support.
                           if (provider != null)
                             Marker(
                               // During the draw-on the marker rides the route
                               // head; afterwards it follows live GPS.
                               point: _drawPos ?? provider,
                               width: 72,
-                              height: 84,
+                              height: 94,
                               child: _VehicleMapPin(
                                 bearing: _drawPos != null
                                     ? _drawBearing
@@ -561,7 +572,7 @@ class _ProviderLiveMapState extends State<ProviderLiveMap>
                             Marker(
                               point: customer,
                               width: 64,
-                              height: 76,
+                              height: 90,
                               child: const _MapPin(
                                 icon: Icons.home_rounded,
                                 color: AppColors.success,
@@ -945,7 +956,7 @@ class _MapPin extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               color: AppColors.textOnDarkPrimary,
-              fontSize: 9,
+              fontSize: 11,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -1053,7 +1064,7 @@ class _VehicleMapPin extends StatelessWidget {
                   'Technician',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 9,
+                    fontSize: 11,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.2,
                   ),

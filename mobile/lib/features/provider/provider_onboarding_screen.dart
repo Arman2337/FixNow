@@ -134,10 +134,14 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
             }
           }
           if (widget.controller.state == ProviderLoadState.loading) {
-            return const Center(
-              child: CircularProgressIndicator(
-                color: AppColors.primary,
-                semanticsLabel: 'Loading provider setup',
+            return Semantics(
+              liveRegion: true,
+              label: 'Loading provider setup',
+              // MOB-005: the setup form loads as cards, so the sections do not
+              // jump into place underneath the user's thumb.
+              child: Padding(
+                padding: EdgeInsets.all(AppSpacing.md),
+                child: FixSkeletonList(count: 2),
               ),
             );
           }
@@ -259,9 +263,11 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
                       controller: widget.notificationController!,
                       onTap: () {
                         Navigator.of(context).push(
-MaterialPageRoute(
-                             settings: const RouteSettings(name: 'notifications'),
-                             builder: (_) => NotificationCenterScreen(
+                          MaterialPageRoute(
+                            settings: const RouteSettings(
+                              name: 'notifications',
+                            ),
+                            builder: (_) => NotificationCenterScreen(
                               controller: widget.notificationController!,
                             ),
                           ),
@@ -1177,21 +1183,21 @@ MaterialPageRoute(
                                 '3 km (Local)',
                                 style: TextStyle(
                                   color: AppColors.textSecondary,
-                                  fontSize: 10,
+                                  fontSize: 11,
                                 ),
                               ),
                               Text(
                                 '15 km',
                                 style: TextStyle(
                                   color: AppColors.textSecondary,
-                                  fontSize: 10,
+                                  fontSize: 11,
                                 ),
                               ),
                               Text(
                                 '30 km (Metropolitan)',
                                 style: TextStyle(
                                   color: AppColors.textSecondary,
-                                  fontSize: 10,
+                                  fontSize: 11,
                                 ),
                               ),
                             ],
@@ -1294,7 +1300,7 @@ MaterialPageRoute(
                                               '1.5x Pay',
                                               style: TextStyle(
                                                 color: Colors.white,
-                                                fontSize: 10,
+                                                fontSize: 11,
                                                 fontWeight: FontWeight.w700,
                                               ),
                                             ),
@@ -1598,7 +1604,7 @@ class _StepIcon extends StatelessWidget {
             label,
             style: TextStyle(
               color: isActive ? AppColors.primary : AppColors.textPrimary,
-              fontSize: 10,
+              fontSize: 11,
               fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
             ),
           ),
@@ -1785,7 +1791,7 @@ class _DocumentCard extends StatelessWidget {
                       color: isVerified
                           ? AppColors.textSecondary
                           : AppColors.primary,
-                      fontSize: 10,
+                      fontSize: 11,
                       fontWeight: isVerified
                           ? FontWeight.w500
                           : FontWeight.w600,
@@ -1880,7 +1886,7 @@ class _ActionDocumentCard extends StatelessWidget {
                             'REQUIRED',
                             style: TextStyle(
                               color: AppColors.danger,
-                              fontSize: 9,
+                              fontSize: 11,
                               fontWeight: FontWeight.w700,
                             ),
                           ),

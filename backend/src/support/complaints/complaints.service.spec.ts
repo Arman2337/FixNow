@@ -10,9 +10,16 @@ import { ComplaintEvidence } from './domain/complaint-evidence.entity';
 import { ComplaintAudit } from './domain/complaint-audit.entity';
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
+import {
+  COMPLAINT_STATUSES_REQUIRING_NOTES,
+  VALID_COMPLAINT_TRANSITIONS,
+  isTerminalComplaintStatus,
+  isValidComplaintTransition,
+} from '../../../../shared/complaint-lifecycle.types';
 import { TrustService } from '../../trust/trust.service';
 import { Booking } from '../../bookings/domain/booking.entity';
 import { TrustedEvidenceUrl } from './trusted-evidence-url';
@@ -364,5 +371,159 @@ describe('ComplaintsService', () => {
       'Resolved the issue by talking to the provider',
     );
     expect(result.assigneeId).toBe('admin-1');
+  });
+
+  /**
+   * SEC-011. The complaint status transition table.
+   *
+   * These are the assertions the audit said would have caught the gap on day one:
+   * the declared table and the enforced table must agree, a terminal state must
+   * be terminal, and every non-terminal state must be able to reach a terminal
+   * one. They are pure functions of the transition table, which is why they cost
+   * almost nothing and why they belong beside the service that enforces it.
+   */
+  describe('complaint lifecycle transitions (SEC-011)', () => {
+    const ALL_STATUSES = Object.values(ComplaintStatus);
+    const TERMINAL = ALL_STATUSES.filter((s) => isTerminalComplaintStatus(s));
+
+    it('declares every status in the enum', () => {
+      expect(Object.keys(VALID_COMPLAINT_TRANSITIONS).sort()).toEqual(
+        [...ALL_STATUSES].sort(),
+      );
+    });
+
+    it('treats CLOSED as the only terminal state', () => {
+      expect(TERMINAL).toEqual([ComplaintStatus.CLOSED]);
+    });
+
+    it('refuses to move a terminal complaint to anything', () => {
+      for (const target of ALL_STATUSES) {
+        expect(isValidComplaintTransition(ComplaintStatus.CLOSED, target)).toBe(
+          false,
+        );
+      }
+    });
+
+    it('refuses to move a complaint to itself', () => {
+      for (const status of ALL_STATUSES) {
+        expect(isValidComplaintTransition(status, status)).toBe(false);
+      }
+    });
+
+    it('never reopens a resolved complaint', () => {
+      expect(
+        isValidComplaintTransition(
+          ComplaintStatus.RESOLVED,
+          ComplaintStatus.OPEN,
+        ),
+      ).toBe(false);
+      expect(
+        isValidComplaintTransition(
+          ComplaintStatus.RESOLVED,
+          ComplaintStatus.IN_REVIEW,
+        ),
+      ).toBe(false);
+    });
+
+    it('lets every non-terminal status reach a terminal one', () => {
+      for (const from of ALL_STATUSES.filter(
+        (s) => !isTerminalComplaintStatus(s),
+      )) {
+        expect(VALID_COMPLAINT_TRANSITIONS[from].length).toBeGreaterThan(0);
+        const reachesTerminal = VALID_COMPLAINT_TRANSITIONS[from].some((to) =>
+          isTerminalComplaintStatus(to),
+        );
+        expect(reachesTerminal).toBe(true);
+      }
+    });
+
+    it('requires notes for the two outcomes a customer will be told about', () => {
+      expect(
+        COMPLAINT_STATUSES_REQUIRING_NOTES.has(ComplaintStatus.RESOLVED),
+      ).toBe(true);
+      expect(
+        COMPLAINT_STATUSES_REQUIRING_NOTES.has(ComplaintStatus.CLOSED),
+      ).toBe(true);
+    });
+  });
+
+  describe('updateComplaintStatus enforces the table (SEC-011)', () => {
+    it('rejects an illegal transition and writes no audit row', async () => {
+      mockComplaintRepository.findOne.mockResolvedValue({
+        id: 'comp-1',
+        status: ComplaintStatus.CLOSED,
+      });
+
+      await expect(
+        service.updateComplaintStatus(
+          'comp-1',
+          ComplaintStatus.OPEN,
+          'admin-1',
+          'reopening for no stated reason',
+        ),
+      ).rejects.toBeInstanceOf(ConflictException);
+
+      expect(mockComplaintRepository.save).not.toHaveBeenCalled();
+      expect(mockAuditRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('rejects replaying the current status', async () => {
+      mockComplaintRepository.findOne.mockResolvedValue({
+        id: 'comp-1',
+        status: ComplaintStatus.IN_REVIEW,
+      });
+
+      await expect(
+        service.updateComplaintStatus(
+          'comp-1',
+          ComplaintStatus.IN_REVIEW,
+          'admin-1',
+        ),
+      ).rejects.toBeInstanceOf(ConflictException);
+
+      expect(mockAuditRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('requires resolution notes when resolving', async () => {
+      mockComplaintRepository.findOne.mockResolvedValue({
+        id: 'comp-1',
+        status: ComplaintStatus.IN_REVIEW,
+      });
+
+      await expect(
+        service.updateComplaintStatus(
+          'comp-1',
+          ComplaintStatus.RESOLVED,
+          'admin-1',
+        ),
+      ).rejects.toBeInstanceOf(BadRequestException);
+
+      expect(mockAuditRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('accepts a legal transition and audits the previous status', async () => {
+      mockComplaintRepository.findOne.mockResolvedValue({
+        id: 'comp-1',
+        status: ComplaintStatus.OPEN,
+      });
+      mockComplaintRepository.save.mockImplementation((c) =>
+        Promise.resolve(c),
+      );
+      mockAuditRepository.save.mockResolvedValue({ id: 'audit-1' });
+
+      await service.updateComplaintStatus(
+        'comp-1',
+        ComplaintStatus.IN_REVIEW,
+        'admin-1',
+      );
+
+      expect(mockAuditRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          complaintId: 'comp-1',
+          previousStatus: ComplaintStatus.OPEN,
+          newStatus: ComplaintStatus.IN_REVIEW,
+        }),
+      );
+    });
   });
 });

@@ -83,6 +83,82 @@
   --text-label-sm: 11px;
   --text-headline-lg-mobile: 24px;
   --text-headline-xl-mobile: 30px;
+
+  /* Scale steps that were used but never declared, so `text-headline-sm` and
+     friends compiled to nothing and every section heading on ten pages rendered
+     at the browser default size. ADMIN-002.
+
+     `headline-sm` and `heading-sm` were the same intent spelled two ways. The
+     `heading-` spelling is not declared here: duplicating a scale step under a
+     second name is how the two drift apart, so the four usages of `heading-sm`
+     were renamed to `headline-sm` instead. The same reasoning applies to
+     `display-sm`, which is the same step as `price-display` at a smaller size
+     and is declared once, under its own name because a display size that shares
+     a name with a price size would be misleading. */
+  --text-headline-sm: 18px;
+  --text-display-sm: 22px;
+  --text-label-lg: 15px;
+  --font-headline-sm: var(--font-plus-jakarta-sans), sans-serif;
+  --font-label-lg: var(--font-inter), sans-serif;
+
+  /* ---------------------------------------------------------------------
+     Semantic aliases. ADMIN-002.
+
+     The palette above is a complete Material 3 set, and the pages that were
+     built against it use Tailwind utilities (`bg-primary`, `text-on-surface`).
+     Nine other pages instead reach for `var(--color-...)` through arbitrary
+     values, and every one of those nine names was undefined - so each of those
+     declarations silently resolved to nothing at runtime.
+
+     That is the defect ADMIN-002 described, and it was still present: the
+     booking detail page, the audit trail, the status badge and the cancellation
+     panel were all rendering with no border, no background and browser-default
+     heading sizes. Nothing in any build caught it, because a missing custom
+     property is not a build error.
+
+     These are aliases, not new colours. Every value points at a token already
+     above, so the palette stays single-sourced and a future change to
+     `--color-error` propagates here rather than needing to be applied twice.
+     `src/design-tokens.test.ts` fails the build if a page uses a `--color-*`
+     name that is not defined here or above.
+
+     `--color-text-muted` is the one value that is not a plain alias. The
+     tertiary text step measured 4.3:1 on the surface colour, below the 4.5:1
+     WCAG AA threshold for body-sized text; #6B7684 is 4.6:1 and still reads as
+     clearly secondary next to #3D4A42.
+     --------------------------------------------------------------------- */
+
+  /* Surfaces: a card, and a panel nested inside one. */
+  --color-surface-primary: var(--color-surface-container-lowest);
+  --color-surface-secondary: var(--color-surface-container);
+
+  /* Borders: the default hairline, and the emphasised one for inputs. */
+  --color-border-default: var(--color-outline-variant);
+  --color-border-strong: var(--color-outline);
+
+  /* Text: body, secondary, and the tertiary step with the AA fix. */
+  --color-text-secondary: var(--color-on-surface-variant);
+  --color-text-muted: #6b7684;
+
+  /* Status. Danger is the error ramp; warning is the palette's amber. */
+  --color-danger: var(--color-error);
+  --color-danger-soft: var(--color-error-container);
+  --color-warning: var(--color-tertiary);
+  --color-warning-soft: var(--color-tertiary-container);
+
+  /* The identity accent, and the text that sits on a filled accent.
+     `--color-accent` is the name the audit reported as undefined, and it was
+     still undefined when this file was written - referenced only through
+     Tailwind utilities (`bg-accent`, `text-accent`, `text-on-accent`), which is
+     why a grep for `--color-accent` in the components found nothing and the
+     defect looked already fixed. Aliased to primary rather than given its own
+     value, because the admin's accent and its primary are the same emerald. */
+  --color-accent: var(--color-primary);
+  --color-on-accent: var(--color-on-primary);
+
+  /* A surface one step above the page background, for inputs and raised panels
+     sitting on a card. */
+  --color-surface-elevated: var(--color-surface-container-low);
 }
 
 

@@ -152,10 +152,9 @@ Future<String?> showCancellationDialog(BuildContext context) async {
                   ),
                   filled: true,
                   fillColor: AppColors.surfaceContainerLow,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
+                  // MOB-006: this restated the border with no side at all,
+                  // which deleted the theme's 2px focus ring. The theme already
+                  // draws all three states, so there is nothing to add here.
                 ),
               ),
             ],

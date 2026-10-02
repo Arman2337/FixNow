@@ -27,7 +27,11 @@ describe('BookingMessagesController', () => {
 
     const result = await controller.list(req, bookingId);
 
-    expect(service.listMessages.mock.calls).toEqual([[bookingId, userId]]);
+    // SEC-002: the principal rides along so the service can discharge the
+    // booking-party obligation against the booking it loads.
+    expect(service.listMessages.mock.calls).toEqual([
+      [bookingId, userId, req.authorizationPrincipal],
+    ]);
     expect(result.canSend).toBe(true);
   });
 
@@ -57,6 +61,7 @@ describe('BookingMessagesController', () => {
           messageText: 'Hello',
           clientMessageId: 'c-1',
         },
+        req.authorizationPrincipal,
       ],
     ]);
     expect(result.messageText).toBe('Hello');

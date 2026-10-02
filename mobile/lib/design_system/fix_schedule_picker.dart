@@ -225,7 +225,7 @@ class _FixSchedulePickerCardState extends State<FixSchedulePickerCard> {
                           color: _schedule.isNow
                               ? Colors.white.withValues(alpha: 0.8)
                               : AppColors.textSecondary.withValues(alpha: 0.8),
-                          fontSize: 10,
+                          fontSize: 11,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -250,7 +250,7 @@ class _FixSchedulePickerCardState extends State<FixSchedulePickerCard> {
                       color: !_schedule.isNow
                           ? Colors.white.withValues(alpha: 0.8)
                           : AppColors.textSecondary.withValues(alpha: 0.8),
-                      fontSize: 10,
+                      fontSize: 11,
                       fontWeight: FontWeight.w600,
                     ),
                     maxLines: 1,
@@ -626,7 +626,7 @@ class _FixSchedulePickerCardState extends State<FixSchedulePickerCard> {
                           'Passed',
                           style: TextStyle(
                             color: AppColors.warning,
-                            fontSize: 10,
+                            fontSize: 11,
                             fontWeight: FontWeight.w600,
                           ),
                         ),

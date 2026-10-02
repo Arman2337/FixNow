@@ -7,6 +7,7 @@ import {
 } from '../../../../shared/problem-analysis.types';
 import { ServiceCategoriesService } from '../../services/service-categories.service';
 import { ServiceCategoryEntity } from '../../services/service-category.entity';
+import { mpegAudioWithTranscript } from '../policy/audio-fixtures';
 import { AiService } from '../ai.service';
 import {
   DeterministicAiProvider,
@@ -70,11 +71,22 @@ function jpeg(hint: string): { bytes: Buffer; mimeType: string } {
   };
 }
 
+/**
+ * SEC-014. This was `Buffer.from(transcript)` labelled `audio/mpeg` — a text
+ * file carrying a lie about its type. It passed only because the media gate
+ * trusted the declared mime, which is the disguise that gate exists to reject.
+ *
+ * `mimeType` stays a parameter so tests asserting a rejection can name a type
+ * that genuinely does not match the bytes. The transcript is still carried in
+ * the payload because `DeterministicAiProvider` synthesises its transcription by
+ * decoding the audio as UTF-8; an MPEG frame header in front of it satisfies
+ * the container sniff without changing that behaviour.
+ */
 function audio(
   transcript: string,
   mimeType = 'audio/mpeg',
 ): { bytes: Buffer; mimeType: string } {
-  return { bytes: Buffer.from(transcript), mimeType };
+  return { bytes: mpegAudioWithTranscript(transcript), mimeType };
 }
 
 function build(

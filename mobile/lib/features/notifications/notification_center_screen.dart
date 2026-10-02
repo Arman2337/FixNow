@@ -212,7 +212,7 @@ class NotificationCenterScreen extends StatelessWidget {
                             '$count',
                             style: TextStyle(
                               color: chipFg,
-                              fontSize: 10,
+                              fontSize: 11,
                               fontWeight: FontWeight.w800,
                             ),
                           ),
@@ -376,7 +376,7 @@ class NotificationCenterScreen extends StatelessWidget {
                                                maxLines: 1,
                                                overflow: TextOverflow.ellipsis,
                                                style: TextStyle(
-                                                 fontSize: 10,
+                                                 fontSize: 11,
                                                  fontWeight: FontWeight.w800,
                                                  color: isUnread
                                                      ? AppColors.primary
@@ -735,7 +735,7 @@ class NotificationCenterScreen extends StatelessWidget {
           const Text(
             'High-priority safety & emergency alerts remain accessible in your Order History.',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 10, color: AppColors.textSecondary),
+            style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
           ),
         ],
       ),

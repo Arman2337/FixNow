@@ -176,7 +176,7 @@ class _SavedAddressSelectorCardState extends State<SavedAddressSelectorCard> {
                             'GPS ±3m',
                             style: TextStyle(
                               color: AppColors.primary,
-                              fontSize: 9,
+                              fontSize: 11,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
@@ -351,7 +351,7 @@ class _SavedAddressSelectorCardState extends State<SavedAddressSelectorCard> {
                                 'DEFAULT',
                                 style: TextStyle(
                                   color: AppColors.primary,
-                                  fontSize: 8,
+                                  fontSize: 11,
                                   fontWeight: FontWeight.w800,
                                 ),
                               ),

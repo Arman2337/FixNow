@@ -1,3 +1,4 @@
+import { ForbiddenException } from '@nestjs/common';
 import { PushDeviceController } from './push.controller';
 import { PushDeviceService } from './push.service';
 import type { AuthorizedRequest } from '../../common/authorization/authorization.guard';
@@ -38,11 +39,24 @@ describe('PushDeviceController', () => {
   });
 
   it('revokes through the principal-scoped service call', async () => {
-    devices.revoke.mockResolvedValue(undefined);
+    devices.revoke.mockResolvedValue({
+      id: 'device-9',
+      userId: 'authenticated-user',
+    });
     await controller.revoke(request, 'device-9');
     expect(devices.revoke).toHaveBeenCalledWith(
       'authenticated-user',
       'device-9',
+    );
+  });
+
+  it('refuses to complete a revoke of a device owned by someone else', async () => {
+    devices.revoke.mockResolvedValue({
+      id: 'device-9',
+      userId: 'someone-else',
+    });
+    await expect(controller.revoke(request, 'device-9')).rejects.toBeInstanceOf(
+      ForbiddenException,
     );
   });
 });

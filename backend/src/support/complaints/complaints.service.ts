@@ -2,10 +2,17 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  ConflictException,
+  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Complaint, ComplaintStatus } from './domain/complaint.entity';
+import {
+  COMPLAINT_STATUSES_REQUIRING_NOTES,
+  VALID_COMPLAINT_TRANSITIONS,
+  isValidComplaintTransition,
+} from '../../../../shared/complaint-lifecycle.types';
 import { ComplaintEvidence } from './domain/complaint-evidence.entity';
 import { ComplaintAudit } from './domain/complaint-audit.entity';
 import { CreateComplaintDto, EvidenceDto } from './dto/create-complaint.dto';
@@ -257,6 +264,14 @@ export class ComplaintsService {
     return complaints;
   }
 
+  /**
+   * SEC-011. This method used to assign `complaint.status = status`
+   * unconditionally, so any status could move to any other. That made
+   * `complaint_audit` a record of sequences the product does not permit rather
+   * than evidence that they were not permitted — including a `CLOSED` complaint
+   * being silently reopened, which is the one transition a customer who was
+   * already told "resolved" can detect and cannot act on.
+   */
   async updateComplaintStatus(
     id: string,
     status: ComplaintStatus,
@@ -272,6 +287,31 @@ export class ComplaintsService {
     }
 
     const previousStatus = complaint.status;
+    if (previousStatus === status) {
+      // A no-op write would still append an audit row claiming a transition
+      // happened. Replaying the current status is what a double-clicking admin,
+      // or a retried request after a network timeout, actually does.
+      throw new ConflictException(`Complaint is already ${status}`);
+    }
+    if (!isValidComplaintTransition(previousStatus, status)) {
+      const allowed = VALID_COMPLAINT_TRANSITIONS[previousStatus];
+      throw new ConflictException(
+        allowed.length === 0
+          ? `Complaint is ${previousStatus} and cannot change status`
+          : `Complaint cannot move from ${previousStatus} to ${status}. ` +
+              `Allowed: ${allowed.join(', ')}`,
+      );
+    }
+    if (
+      COMPLAINT_STATUSES_REQUIRING_NOTES.has(status) &&
+      !resolutionNotes?.trim()
+    ) {
+      // "Resolved" with no explanation is the state a customer escalates over.
+      throw new BadRequestException(
+        `resolutionNotes is required when moving a complaint to ${status}`,
+      );
+    }
+
     complaint.status = status;
     complaint.assigneeId = adminId;
     if (resolutionNotes) {

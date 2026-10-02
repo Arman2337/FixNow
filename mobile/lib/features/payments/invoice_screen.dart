@@ -92,9 +92,14 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
         child: ListenableBuilder(
           listenable: _controller,
           builder: (context, _) => switch (_controller.state) {
-            InvoiceState.loading => const Center(
-              child: CircularProgressIndicator(
-                semanticsLabel: 'Loading invoice',
+            InvoiceState.loading => Semantics(
+              liveRegion: true,
+              label: 'Loading invoice',
+              // MOB-005: an invoice is a document of rows, so it loads as one
+              // rather than as a spinner centred in a large empty page.
+              child: Padding(
+                padding: EdgeInsets.all(AppSpacing.md),
+                child: FixSkeletonList(count: 2),
               ),
             ),
             InvoiceState.pending => _PendingView(
@@ -417,7 +422,7 @@ class _InvoiceView extends StatelessWidget {
                   child: const Text(
                     'SAC 9987 • 18% GST',
                     style: TextStyle(
-                      fontSize: 10,
+                      fontSize: 11,
                       fontWeight: FontWeight.w700,
                       color: AppColors.primary,
                     ),

@@ -14,6 +14,7 @@ import {
 } from '../common/authorization/authorization.decorators';
 import { PERMISSIONS } from '../common/authorization/permission-policies';
 import type { AuthorizedRequest } from '../common/authorization/authorization.guard';
+import { assertNoResourceToProve } from '../common/authorization/resource-ownership';
 import { CreateBookingDto } from '../bookings/bookings.dto';
 import { EmergencyService } from './emergency.service';
 
@@ -40,6 +41,9 @@ export class EmergencyController {
     @Body() body: EmergencyRequestDto,
     @Headers('idempotency-key') idempotencyKey?: string,
   ) {
+    // SEC-002: this *creates* the caller's own emergency; nothing named in the
+    // request is owned by anybody else, and the result carries no owner column.
+    assertNoResourceToProve(request.authorizationPrincipal);
     return this.emergency.createEmergency(
       request.authorizationPrincipal!.userId,
       body,
@@ -50,9 +54,11 @@ export class EmergencyController {
   @Get('requests/:bookingId')
   @RequireOwnPermission(PERMISSIONS.emergencyCreateSelf)
   status(@Req() request: AuthorizedRequest, @Param() params: EmergencyIdParam) {
+    // SEC-002: the status payload identifies the booking but not its parties,
+    // so the service discharges the obligation against the booking it loads.
     return this.emergency.getStatus(
       params.bookingId,
-      request.authorizationPrincipal!.userId,
+      request.authorizationPrincipal!,
     );
   }
 }

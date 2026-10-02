@@ -1,4 +1,4 @@
-import { ForbiddenException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { REQUIRED_PERMISSION_KEY } from '../common/authorization/authorization.decorators';
 import { PERMISSIONS } from '../common/authorization/permission-policies';
 import { InboxController } from './domain/inbox.controller';
@@ -12,6 +12,7 @@ describe('InboxController', () => {
       .mockResolvedValue([
         {
           id: 'notification-1',
+          userId,
           title: 'Booking update',
           body: 'Your booking changed.',
           kind: 'booking',
@@ -21,6 +22,9 @@ describe('InboxController', () => {
           readAt: null,
         },
       ]),
+    findOneBy: jest
+      .fn<Promise<Partial<InAppNotification> | null>, [unknown]>()
+      .mockResolvedValue({ id: 'notification-1', userId }),
     update: jest
       .fn<Promise<{ affected: number }>, [unknown, { readAt: Date }]>()
       .mockResolvedValue({ affected: 1 }),
@@ -39,6 +43,13 @@ describe('InboxController', () => {
     const handler = descriptor.value as (...args: unknown[]) => unknown;
     return handler;
   };
+
+  beforeEach(() => {
+    repository.update.mockClear();
+    repository.find.mockClear();
+    repository.findOneBy.mockClear();
+    repository.findOneBy.mockResolvedValue({ id: 'notification-1', userId });
+  });
 
   it('requires the authenticated user inbox permission', () => {
     expect(
@@ -79,10 +90,35 @@ describe('InboxController', () => {
     await expect(
       controller.markRead('me', 'notification-1', request),
     ).resolves.toEqual({ success: true });
+    // The row is loaded scoped to the caller before the write, so a foreign id
+    // cannot silently "succeed".
+    expect(repository.findOneBy).toHaveBeenCalledWith({
+      id: 'notification-1',
+      userId,
+    });
     const [updateCriteria, updateValues] =
       repository.update.mock.calls[0] ?? [];
     expect(updateCriteria).toEqual({ id: 'notification-1', userId });
     expect(updateValues.readAt).toBeInstanceOf(Date);
+  });
+
+  it('does not mark a notification the caller does not own', async () => {
+    repository.findOneBy.mockResolvedValue(null);
+    await expect(
+      controller.markRead('me', 'notification-1', request),
+    ).rejects.toBeInstanceOf(NotFoundException);
+    expect(repository.update).not.toHaveBeenCalled();
+  });
+
+  it('refuses to complete a mark-read against a foreign notification row', async () => {
+    repository.findOneBy.mockResolvedValue({
+      id: 'notification-1',
+      userId: '00000000-0000-4000-8000-000000000002',
+    });
+    await expect(
+      controller.markRead('me', 'notification-1', request),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+    expect(repository.update).not.toHaveBeenCalled();
   });
 
   it('does not allow a user to mark another user notification as read', async () => {

@@ -72,9 +72,13 @@ class ProviderHomeScreen extends StatelessWidget {
     builder: (context, _) {
       final requestsSectionKey = GlobalKey();
       if (controller.state == ProviderLoadState.loading) {
-        return const Center(
-          child: CircularProgressIndicator(
-            semanticsLabel: 'Loading provider workspace',
+        return Semantics(
+          liveRegion: true,
+          label: 'Loading provider workspace',
+          // MOB-005: the workspace is a list of jobs and requests.
+          child: Padding(
+            padding: EdgeInsets.all(AppSpacing.md),
+            child: FixSkeletonList(count: 4),
           ),
         );
       }
@@ -908,7 +912,7 @@ class _ProviderNotificationBanner extends StatelessWidget {
                               'NEW',
                               style: TextStyle(
                                 color: color,
-                                fontSize: 9,
+                                fontSize: 11,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: 0.5,
                               ),
@@ -1076,7 +1080,7 @@ class _IncomingRequestBanner extends StatelessWidget {
                               'ACTION NEEDED',
                               style: TextStyle(
                                 color: AppColors.onAccentGold,
-                                fontSize: 8.5,
+                                fontSize: 11,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: 0.4,
                               ),

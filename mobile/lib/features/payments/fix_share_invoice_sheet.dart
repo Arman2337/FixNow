@@ -127,7 +127,7 @@ class FixShareInvoiceSheet extends StatelessWidget {
                             'GST PAID',
                             style: TextStyle(
                               color: AppColors.success,
-                              fontSize: 10,
+                              fontSize: 11,
                               fontWeight: FontWeight.w800,
                             ),
                           ),

@@ -6,8 +6,18 @@ import { env } from "@/config/env";
 import { requireManagementResult } from "@/features/management-api";
 import { updateComplaintStatusAction } from "@/features/operations/actions";
 import { getComplaint, getUser, listComplaints } from "@/features/operations/api";
+import {
+  COMPLAINT_STATUSES_REQUIRING_NOTES,
+  isTerminalComplaintStatus,
+  nextComplaintStatuses,
+  type ComplaintStatus,
+} from "@/features/operations/complaint-lifecycle";
 
-const selectableStatuses = ["OPEN", "IN_REVIEW", "ESCALATED", "RESOLVED", "CLOSED"];
+// SEC-011: this was every status, always. The backend had no transition table,
+// so the full list was honest — and it meant an agent could silently reopen a
+// complaint the customer had already been told was resolved. Offering only the
+// legal next states makes the constraint visible instead of something you learn
+// from a 409.
 const statuses = ["", "OPEN", "IN_REVIEW", "ESCALATED", "RESOLVED", "CLOSED"];
 const shortId = (id: string) => id.replaceAll("-", "").slice(0, 8).toUpperCase();
 
@@ -35,6 +45,12 @@ export default async function ComplaintDetailPage({ params, searchParams }: { pa
   const submitter = submitterRes?.ok ? submitterRes.value : null;
   const target = targetRes?.ok ? targetRes.value : null;
   const canIntervene = session.session.roles.some((role) => role === "support_agent" || role === "trust_safety_reviewer" || role === "operations_administrator");
+  // SEC-011: the option list is the backend's transition table, so this page
+  // cannot offer a move the server will refuse, and a terminal case offers
+  // nothing at all.
+  const selectableStatuses = nextComplaintStatuses(complaint.status as ComplaintStatus);
+  const complaintTerminal = isTerminalComplaintStatus(complaint.status as ComplaintStatus);
+  const notesRequired = selectableStatuses.some((s) => COMPLAINT_STATUSES_REQUIRING_NOTES.has(s));
   
   let complaints = await requireManagementResult(await listComplaints());
   if (sParams.search) {
@@ -259,39 +275,55 @@ export default async function ComplaintDetailPage({ params, searchParams }: { pa
                     
                     <form action={updateComplaintStatusAction} className="flex flex-col gap-space-md">
                       <input type="hidden" name="id" value={complaint.id} />
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-space-md">
-                        <div className="md:col-span-2 flex flex-col gap-space-xs">
-                          <label htmlFor="resolutionNotes" className="font-label-sm text-label-sm font-bold uppercase text-on-surface-variant">Resolution / Audit Notes</label>
-                          <textarea 
-                            id="resolutionNotes" 
-                            name="resolutionNotes" 
-                            defaultValue={complaint.resolutionNotes ?? ""}
-                            placeholder="Enter detailed notes for case resolution or escalation..."
-                            className="w-full px-space-md py-3 rounded-xl bg-surface-container-low font-body-sm text-body-sm text-on-surface focus:outline-none focus:bg-surface-container-lowest border border-outline-variant/50 focus:border-primary transition-all min-h-[100px]"
-                          />
-                        </div>
-                        <div className="flex flex-col gap-space-xs">
-                          <label htmlFor="status" className="font-label-sm text-label-sm font-bold uppercase text-on-surface-variant">Update Status</label>
-                          <select 
-                            id="status" 
-                            name="status" 
-                            defaultValue={complaint.status} 
-                            className="w-full px-space-md py-3 rounded-xl bg-surface-container-low font-body-sm text-body-sm text-on-surface focus:outline-none focus:bg-surface-container-lowest border border-outline-variant/50 focus:border-primary transition-all"
-                          >
-                            {selectableStatuses.map(status => (
-                              <option key={status} value={status}>{status.replaceAll("_", " ")}</option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
 
-                      <div className="flex justify-end mt-2">
-                        <button className="px-space-xl py-3 rounded-xl bg-primary text-on-primary font-label-md text-label-md font-bold shadow-md hover:bg-primary-container transition-all flex items-center justify-center gap-2">
-                          <span className="material-symbols-outlined text-[20px]" style={{fontVariationSettings: "'FILL' 1"}}>gavel</span>
-                          Execute Adjudication
-                        </button>
-                      </div>
+                      {complaintTerminal ? (
+                        <div className="rounded-xl bg-surface-container-low border border-outline-variant/40 px-space-md py-3 text-body-sm text-on-surface-variant">
+                          This complaint is <strong>{complaint.status.replaceAll("_", " ")}</strong>, which is a final state. A closed case cannot be reopened — file a new complaint, or escalate through the trust-and-safety queue.
+                        </div>
+                      ) : (
+                        <>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-space-md">
+                            <div className="md:col-span-2 flex flex-col gap-space-xs">
+                              <label htmlFor="resolutionNotes" className="font-label-sm text-label-sm font-bold uppercase text-on-surface-variant">
+                                Resolution / Audit Notes{notesRequired ? " (required)" : ""}
+                              </label>
+                              <textarea
+                                id="resolutionNotes"
+                                name="resolutionNotes"
+                                required={notesRequired}
+                                defaultValue={complaint.resolutionNotes ?? ""}
+                                placeholder="Enter detailed notes for case resolution or escalation..."
+                                className="w-full px-space-md py-3 rounded-xl bg-surface-container-low font-body-sm text-body-sm text-on-surface focus:outline-none focus:bg-surface-container-lowest border border-outline-variant/50 focus:border-primary transition-all min-h-[100px]"
+                              />
+                              {notesRequired && (
+                                <p className="font-label-sm text-label-sm text-on-surface-variant">
+                                  Notes are required when a case is resolved or closed — the outcome has to be explainable to the customer who filed it.
+                                </p>
+                              )}
+                            </div>
+                            <div className="flex flex-col gap-space-xs">
+                              <label htmlFor="status" className="font-label-sm text-label-sm font-bold uppercase text-on-surface-variant">Update Status</label>
+                              <select
+                                id="status"
+                                name="status"
+                                defaultValue={complaint.status}
+                                className="w-full px-space-md py-3 rounded-xl bg-surface-container-low font-body-sm text-body-sm text-on-surface focus:outline-none focus:bg-surface-container-lowest border border-outline-variant/50 focus:border-primary transition-all"
+                              >
+                                {selectableStatuses.map(status => (
+                                  <option key={status} value={status}>{status.replaceAll("_", " ")}</option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+
+                          <div className="flex justify-end mt-2">
+                            <button className="px-space-xl py-3 rounded-xl bg-primary text-on-primary font-label-md text-label-md font-bold shadow-md hover:bg-primary-container transition-all flex items-center justify-center gap-2">
+                              <span className="material-symbols-outlined text-[20px]" style={{fontVariationSettings: "'FILL' 1"}}>gavel</span>
+                              Execute Adjudication
+                            </button>
+                          </div>
+                        </>
+                      )}
                     </form>
                   </div>
                 )}

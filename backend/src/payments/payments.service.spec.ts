@@ -27,8 +27,37 @@ describe('PaymentsService', () => {
   const bookingId = 'bbbbbbbb-0000-4000-8000-00000000b001';
   const categoryId = 'cccccccc-0000-4000-8000-00000000c003';
 
-  const bookingRepo = { findOneBy: jest.fn() };
+  const bookingRepo: {
+    findOneBy: jest.Mock;
+    createQueryBuilder: jest.Mock;
+  } = { findOneBy: jest.fn(), createQueryBuilder: jest.fn() };
   const categoryRepo = { findOneBy: jest.fn() };
+  // BUG-010. `createForBooking` now serialises against provider price rewrites
+  // by taking `SELECT ... FOR UPDATE` on the booking row inside its transaction,
+  // then re-reading the booking's total from that same locked row. The mock
+  // records the lock so the tests below can assert it is actually requested.
+  const bookingLockTaken = jest.fn();
+  const lockableBooking: {
+    setLock: jest.Mock;
+    where: jest.Mock;
+    getOne: jest.Mock;
+  } = {
+    where: jest.fn().mockReturnThis(),
+    getOne: jest.fn(),
+    setLock: jest.fn(),
+  };
+  // `setLock` returns the query so the chain `.setLock(...).where(...).getOne()`
+  // resolves, while still recording the mode so a test can assert the lock is
+  // actually requested rather than silently omitted.
+  lockableBooking.setLock.mockImplementation((mode: string) => {
+    bookingLockTaken(mode);
+    return lockableBooking;
+  });
+  bookingRepo.createQueryBuilder.mockImplementation(() => lockableBooking);
+  /** Re-reads the booking from inside the lock, as the fixed code does. */
+  const setLockedBooking = (booking: unknown) => {
+    lockableBooking.getOne.mockResolvedValue(booking);
+  };
   const eventRepo = {
     findOneBy: jest.fn().mockResolvedValue(null),
     insert: jest.fn().mockResolvedValue(undefined),
@@ -86,12 +115,21 @@ describe('PaymentsService', () => {
               : eventRepo,
     ),
     query,
-    transaction: jest.fn(
-      (
-        _isolation: string,
-        callback: (manager: typeof transactionManager) => unknown,
-      ) => Promise.resolve(callback(transactionManager)),
-    ),
+    transaction: jest.fn((...args: unknown[]) => {
+      // BUG-010: `createForBooking` now opens a transaction of its own, so
+      // this mock has to handle both call shapes TypeORM supports — the
+      // single-callback form and the `(isolation, callback)` form — and pass
+      // the transaction manager through either way. The previous mock assumed
+      // the second shape only, which made the callback arrive as `undefined`.
+      const callback = args.find(
+        (arg): arg is (manager: typeof transactionManager) => unknown =>
+          typeof arg === 'function',
+      );
+      if (!callback) {
+        throw new Error('dataSource.transaction called without a callback');
+      }
+      return Promise.resolve(callback(transactionManager));
+    }),
   };
   const orders = {
     findOne: jest.fn(),
@@ -177,6 +215,12 @@ describe('PaymentsService', () => {
     );
     bookingRepo.findOneBy.mockResolvedValue(ownedBooking());
     categoryRepo.findOneBy.mockResolvedValue(pricedCategory());
+    // BUG-010: the booking-row lock's `getOne` is the *authoritative* re-read
+    // inside the transaction, so it has to return the same booking the outer
+    // read returned. A test that wants a changed total overrides this via
+    // `setLockedBooking`, which is how the race is reproduced.
+    setLockedBooking(ownedBooking());
+    bookingLockTaken.mockClear();
     orders.findOneBy.mockResolvedValue(null);
     orders.save.mockReset();
     orders.save.mockImplementation((value: Record<string, unknown>) =>
@@ -200,6 +244,10 @@ describe('PaymentsService', () => {
   describe('providerBookingPaymentStatus', () => {
     it('reports paid only for a PAID order on the provider-assigned booking', async () => {
       buildService();
+      bookingRepo.findOneBy.mockResolvedValue({
+        ...ownedBooking(),
+        providerId: otherUserId,
+      });
       dataSource.query.mockResolvedValue([{ status: 'PAID' }]);
       await expect(
         service.providerBookingPaymentStatus(otherUserId, bookingId),
@@ -212,6 +260,10 @@ describe('PaymentsService', () => {
 
     it('reports unpaid when there is no order or it is not PAID', async () => {
       buildService();
+      bookingRepo.findOneBy.mockResolvedValue({
+        ...ownedBooking(),
+        providerId: otherUserId,
+      });
       dataSource.query.mockResolvedValue([]);
       await expect(
         service.providerBookingPaymentStatus(otherUserId, bookingId),
@@ -221,6 +273,17 @@ describe('PaymentsService', () => {
       await expect(
         service.providerBookingPaymentStatus(otherUserId, bookingId),
       ).resolves.toEqual({ bookingId, paid: false });
+    });
+
+    it('does not answer for a booking the caller is not assigned to', async () => {
+      // SEC-002: this used to answer `{ paid: false }` for any booking id,
+      // which confirmed the id existed without saying anything about payment.
+      buildService();
+      bookingRepo.findOneBy.mockResolvedValue(ownedBooking());
+      await expect(
+        service.providerBookingPaymentStatus(otherUserId, bookingId),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(dataSource.query).not.toHaveBeenCalled();
     });
   });
 
@@ -246,6 +309,9 @@ describe('PaymentsService', () => {
       ] as never;
       booking.totalAmountMinor = 24900;
       bookingRepo.findOneBy.mockResolvedValue(booking);
+      // BUG-010: the locked re-read inside the transaction is authoritative, so
+      // the mock's locking `getOne` has to return the same priced booking.
+      setLockedBooking(booking);
 
       const order = await service.createForBooking(customerId, bookingId);
 
@@ -280,6 +346,81 @@ describe('PaymentsService', () => {
       await expect(
         service.createForBooking(customerId, bookingId),
       ).rejects.toBeInstanceOf(ConflictException);
+    });
+
+    /**
+     * BUG-010. The regression this file exists for.
+     *
+     * The provider was re-pricing a booking and the customer was starting
+     * payment at the same time. Before the fix, order creation read the booking
+     * outside any transaction, so a rewrite that committed in between produced
+     * an order whose amount no longer matched the booking. That order captures,
+     * the capture is rejected with `payment.captured.amount_mismatch`, and there
+     * is no reconciliation path — the customer's money is taken and nothing can
+     * be done about it.
+     *
+     * The fix makes both writers contend on the booking row. These assertions
+     * cover the two halves of that: the lock is genuinely requested (so the
+     * ordering exists), and when a rewrite wins the race the order is refused
+     * rather than created against a stale amount.
+     */
+    describe('BUG-010: serialises against a concurrent price rewrite', () => {
+      it('takes a FOR UPDATE lock on the booking row', async () => {
+        await service.createForBooking(customerId, bookingId);
+
+        expect(bookingLockTaken).toHaveBeenCalledWith('pessimistic_write');
+      });
+
+      it('refuses to create an order when the price moved while it waited', async () => {
+        // The outer read sees the original total...
+        bookingRepo.findOneBy.mockResolvedValue(
+          Object.assign(ownedBooking(), { totalAmountMinor: 49900 }),
+        );
+        // ...and the locked re-read sees the rewrite's new one, which is exactly
+        // the state a concurrent `PATCH /bookings/:id/items` leaves behind.
+        setLockedBooking(
+          Object.assign(ownedBooking(), { totalAmountMinor: 58764 }),
+        );
+
+        await expect(
+          service.createForBooking(customerId, bookingId),
+        ).rejects.toBeInstanceOf(ConflictException);
+
+        // Crucially, no order is persisted against the stale amount.
+        expect(orders.save).not.toHaveBeenCalled();
+      });
+
+      it('prices from the locked total when nothing moved', async () => {
+        const booking = Object.assign(ownedBooking(), {
+          totalAmountMinor: 49900,
+        });
+        bookingRepo.findOneBy.mockResolvedValue(booking);
+        setLockedBooking(booking);
+
+        const order = await service.createForBooking(customerId, bookingId);
+
+        expect(order.amountMinor).toBe(49900);
+        expect(orders.save).toHaveBeenCalledTimes(1);
+      });
+
+      it('returns a concurrently created order rather than creating a second', async () => {
+        const booking = Object.assign(ownedBooking(), {
+          totalAmountMinor: 49900,
+        });
+        bookingRepo.findOneBy.mockResolvedValue(booking);
+        setLockedBooking(booking);
+        // The pre-flight read saw nothing; by the time the lock is held, another
+        // request has committed the order. The unique constraint on `receipt`
+        // would also catch this, but returning the winner is better than a 500.
+        orders.findOneBy
+          .mockResolvedValueOnce(null)
+          .mockResolvedValue(savedOrder());
+
+        const order = await service.createForBooking(customerId, bookingId);
+
+        expect(order.gatewayOrderId).toBe(savedOrder().gatewayOrderId);
+        expect(orders.save).not.toHaveBeenCalled();
+      });
     });
 
     it('accepts COMPLETED bookings for post-service payment', async () => {

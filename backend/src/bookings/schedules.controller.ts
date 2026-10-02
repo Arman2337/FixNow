@@ -23,7 +23,8 @@ export class SchedulesController {
     @Req() req: AuthorizedRequest,
     @Body() dto: CreateScheduleDto,
   ): Promise<RecurringScheduleContract> {
-    return this.schedules.create(req.authorizationPrincipal!.userId, dto);
+    const principal = req.authorizationPrincipal!;
+    return this.schedules.create(principal.userId, dto, principal);
   }
 
   @Get()
@@ -31,7 +32,8 @@ export class SchedulesController {
   async listSelf(
     @Req() req: AuthorizedRequest,
   ): Promise<RecurringScheduleContract[]> {
-    return this.schedules.listSelf(req.authorizationPrincipal!.userId);
+    const principal = req.authorizationPrincipal!;
+    return this.schedules.listSelf(principal.userId, principal);
   }
 
   @Patch(':id/status')
@@ -41,10 +43,12 @@ export class SchedulesController {
     @Req() req: AuthorizedRequest,
     @Body() dto: UpdateScheduleStatusDto,
   ): Promise<RecurringScheduleContract> {
+    const principal = req.authorizationPrincipal!;
     return this.schedules.updateStatus(
-      req.authorizationPrincipal!.userId,
+      principal.userId,
       id,
       dto.action,
+      principal,
     );
   }
 
@@ -57,9 +61,12 @@ export class SchedulesController {
     booking: BookingContract;
     schedule: RecurringScheduleContract;
   }> {
+    const principal = req.authorizationPrincipal!;
     const result = await this.schedules.confirmOccurrence(
-      req.authorizationPrincipal!.userId,
+      principal.userId,
       id,
+      new Date(),
+      principal,
     );
     return {
       booking: presentBooking(result.booking),

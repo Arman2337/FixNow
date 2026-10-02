@@ -341,7 +341,7 @@ class _FixPaymentCheckoutSheetState extends State<FixPaymentCheckoutSheet>
                       'TOTAL PAYABLE',
                       style: TextStyle(
                         color: Colors.white60,
-                        fontSize: 10,
+                        fontSize: 11,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 0.8,
                       ),
@@ -664,7 +664,7 @@ class _FixPaymentCheckoutSheetState extends State<FixPaymentCheckoutSheet>
                             badge,
                             style: const TextStyle(
                               color: AppColors.onAccentGold,
-                              fontSize: 9,
+                              fontSize: 11,
                               fontWeight: FontWeight.w800,
                             ),
                           ),

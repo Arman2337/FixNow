@@ -19,6 +19,8 @@ import type {
 import type { ChatSenderRole } from '../../../shared/booking-chat.types';
 import { BookingProjectionService } from '../realtime/booking-projection.service';
 import { presentBookingMessage } from './booking-messages.service';
+import type { AuthorizationPrincipal } from '../common/authorization/authorization.types';
+import { assertOwnedByParty } from '../common/authorization/resource-ownership';
 
 export function presentBookingCall(entity: BookingCall): BookingCallDto {
   return {
@@ -50,6 +52,7 @@ export class BookingCallsService {
   async initiateCall(
     bookingId: string,
     callerUserId: string,
+    principal?: AuthorizationPrincipal,
   ): Promise<InitiateCallResponse> {
     const booking = await this.bookingsRepo.findOne({
       where: { id: bookingId },
@@ -63,6 +66,11 @@ export class BookingCallsService {
       booking.providerId !== callerUserId
     ) {
       throw new ForbiddenException('Not authorized to call on this booking');
+    }
+    // SEC-002: the call's two endpoints are the booking's two parties, so
+    // proving the caller is one of them proves booking ownership too.
+    if (principal) {
+      assertOwnedByParty(principal, booking.customerId, booking.providerId);
     }
 
     // Calling allowed strictly during assigned / en route transit states, and active service
@@ -127,6 +135,7 @@ export class BookingCallsService {
   async getActiveCall(
     bookingId: string,
     userId: string,
+    principal?: AuthorizationPrincipal,
   ): Promise<BookingCallDto | null> {
     const booking = await this.bookingsRepo.findOne({
       where: { id: bookingId },
@@ -139,6 +148,12 @@ export class BookingCallsService {
       throw new ForbiddenException(
         'Not authorized to access calls on this booking',
       );
+    }
+    // SEC-002: this returns `null` when the booking simply has no live call, so
+    // the controller has no row to compare — the obligation is discharged here,
+    // against the booking that was just proved to be the caller's.
+    if (principal) {
+      assertOwnedByParty(principal, booking.customerId, booking.providerId);
     }
 
     const call = await this.callsRepo.findOne({

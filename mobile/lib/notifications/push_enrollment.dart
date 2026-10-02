@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:fixnow_mobile/api/api_client.dart';
@@ -69,10 +70,16 @@ class FirebasePushGateway
   Future<bool> ensureInitialized() async {
     if (_initialized) return true;
     try {
+      if (kIsWeb) {
+        // Web requires FirebaseOptions passed explicitly (no google-services
+        // equivalent). Until web/index.html + DefaultFirebaseOptions are
+        // configured, report unavailable instead of throwing.
+        return false;
+      }
       await Firebase.initializeApp();
       _initialized = true;
       return true;
-    } on Exception {
+    } catch (_) {
       // Missing platform configuration (google-services.json / web options)
       // lands here. The UI reports notifications as honestly unavailable.
       return false;

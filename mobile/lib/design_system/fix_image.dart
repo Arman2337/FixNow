@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_typography.dart';
+import 'package:fixnow_mobile/design_system/fix_state_views.dart';
 import 'package:flutter/material.dart';
 
 /// Reusable Image & Avatar component that obeys FixNow data integrity rules:
@@ -58,16 +59,16 @@ class FixImage extends StatelessWidget {
         errorBuilder: (_, _, _) => _buildPlaceholder(),
         loadingBuilder: (context, child, loadingProgress) {
           if (loadingProgress == null) return child;
-          return Container(
-            width: width,
-            height: height,
-            color: AppColors.surfaceContainerLow,
-            child: const Center(
-              child: SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
+          // MOB-005. A shimmer block, not a spinner: this stands in for an image
+          // of a known size, so the layout is already reserved and the spinner
+          // was the only thing that moved while the user waited.
+          return Semantics(
+            image: true,
+            label: 'Loading image',
+            child: FixSkeleton(
+              height: height ?? double.infinity,
+              width: width ?? double.infinity,
+              radius: effectiveRadius,
             ),
           );
         },

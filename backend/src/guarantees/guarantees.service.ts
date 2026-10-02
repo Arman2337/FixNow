@@ -2,17 +2,25 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ConflictException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { createHash } from 'crypto';
 import {
   GuaranteeClaim,
   GuaranteeClaimStatus,
 } from './domain/guarantee-claim.entity';
 import { Booking } from '../bookings/domain/booking.entity';
 import { BookingStatus } from '../../../shared/booking-lifecycle.types';
+import { BookingsService } from '../bookings/bookings.service';
+import { MatchingService } from '../matching/matching.service';
 import { CreateGuaranteeClaimDto } from './dto/create-guarantee-claim.dto';
 import { UpdateGuaranteeClaimDto } from './dto/update-guarantee-claim.dto';
+import {
+  LIST_ENDPOINT_DEFAULT_LIMIT,
+  LIST_ENDPOINT_MAX_LIMIT,
+} from '../common/list-pagination.dto';
 
 @Injectable()
 export class GuaranteesService {
@@ -21,6 +29,8 @@ export class GuaranteesService {
     private readonly claimsRepository: Repository<GuaranteeClaim>,
     @InjectRepository(Booking)
     private readonly bookingsRepository: Repository<Booking>,
+    private readonly bookingsService: BookingsService,
+    private readonly matchingService: MatchingService,
   ) {}
 
   async createClaim(
@@ -76,16 +86,35 @@ export class GuaranteesService {
     return this.claimsRepository.save(claim);
   }
 
-  async findAll(status?: GuaranteeClaimStatus): Promise<GuaranteeClaim[]> {
+  /**
+   * API-003. Bounded.
+   *
+   * `guarantee_claims` is append-only and grows with every claim a customer
+   * files, and the admin console loaded the entire table to render a list. The
+   * bound is enforced in the query rather than sliced in JavaScript, because
+   * `getMany()` without `take()` has already transferred every row by the time a
+   * slice could discard it — which is the same defect in a different position.
+   *
+   * Ordered by `createdAt DESC, id DESC` so the newest claims lead, with `id` as
+   * the tie-break: without it, rows sharing a timestamp can arrive in a
+   * different order between two identical requests, and a support agent
+   * refreshing the page sees rows move.
+   */
+  async findAll(
+    status?: GuaranteeClaimStatus,
+    limit: number = LIST_ENDPOINT_DEFAULT_LIMIT,
+  ): Promise<GuaranteeClaim[]> {
     const query = this.claimsRepository.createQueryBuilder('claim');
 
     if (status) {
       query.where('claim.status = :status', { status });
     }
 
-    query.orderBy('claim.createdAt', 'DESC');
-
-    return query.getMany();
+    return query
+      .orderBy('claim.createdAt', 'DESC')
+      .addOrderBy('claim.id', 'DESC')
+      .take(Math.min(limit, LIST_ENDPOINT_MAX_LIMIT))
+      .getMany();
   }
 
   async findOne(id: string): Promise<GuaranteeClaim> {
@@ -113,9 +142,34 @@ export class GuaranteesService {
     return this.claimsRepository.save(claim);
   }
 
+  /**
+   * BUG-011 + SEC-007.
+   *
+   * This used to INSERT the re-service booking straight into ASSIGNED:
+   *
+   *   const newBooking = this.bookingsRepository.create({
+   *   ...
+   *   status: BookingStatus.ASSIGNED,
+   *   ...
+   *   });
+   *   await this.bookingsRepository.save(newBooking);
+   *
+   * That skipped the state machine, the version CAS and the audit log, so a
+   * live job existed that `booking_events` knows nothing about - and the admin
+   * booking detail reads `booking_events`, so it was invisible to exactly the
+   * people who investigate it. `providerId` came from the request body
+   * unvalidated, so any account could be attached to real work. And with no
+   * `total_amount_minor`, `payments.service.ts` treated the remedy as
+   * unpayable, so the customer could not be charged for it.
+   *
+   * The booking is now created through `BookingsService.createAssignedBooking`,
+   * which runs INSERT + REQUESTED->ASSIGNED through the state machine in one
+   * transaction with a full audit trail and catalogue-derived pricing.
+   */
   async createReServiceBooking(
     id: string,
     assignedProviderId: string,
+    actorUserId: string,
   ): Promise<Booking> {
     const claim = await this.findOne(id);
     if (claim.status !== GuaranteeClaimStatus.APPROVED) {
@@ -136,28 +190,68 @@ export class GuaranteesService {
     if (!originalBooking)
       throw new NotFoundException('Original booking not found');
 
-    const newBooking = this.bookingsRepository.create({
+    if (
+      originalBooking.locationLat === null ||
+      originalBooking.locationLng === null
+    ) {
+      throw new BadRequestException(
+        'Original booking has no location to re-service at',
+      );
+    }
+
+    const qualified = await this.matchingService.isProviderQualifiedForCategory(
+      assignedProviderId,
+      originalBooking.serviceCategoryId,
+    );
+    if (!qualified) {
+      throw new BadRequestException(
+        'Selected provider is not an active, verified provider for this service',
+      );
+    }
+
+    const idempotencyKey = `guarantee-${claim.id}`;
+    const booking = await this.bookingsService.createAssignedBooking({
       customerId: claim.customerId,
       providerId: assignedProviderId,
       serviceCategoryId: originalBooking.serviceCategoryId,
-      idempotencyKey: `guarantee-${claim.id}`,
-      requestFingerprint: `guarantee-${claim.id}`,
-      status: BookingStatus.ASSIGNED,
       description: `[RE-SERVICE] Guarantee Claim: ${claim.description}`,
-      locationLat: originalBooking.locationLat,
-      locationLng: originalBooking.locationLng,
+      locationLat: Number(originalBooking.locationLat),
+      locationLng: Number(originalBooking.locationLng),
+      // The original booking's own server-resolved snapshot, carried forward.
+      // The remedy is the work that was denied, at the price that was quoted.
+      items: originalBooking.items ?? null,
+      idempotencyKey,
+      // char(64), as every other booking writes it.
+      requestFingerprint: createHash('sha256')
+        .update(`${claim.id}:${originalBooking.id}`)
+        .digest('hex'),
+      actorUserId,
+      reason: `Guarantee re-service for claim ${claim.id}`,
       isGuaranteeClaim: true,
       parentBookingId: originalBooking.id,
-      assignedAt: new Date(),
     });
 
-    const savedBooking = await this.bookingsRepository.save(newBooking);
+    // Conditional so a double submit cannot overwrite the first booking's id.
+    // `createAssignedBooking` is idempotent on the same key, so a retry after a
+    // partial failure reattaches to this booking instead of creating a second.
+    const claimed = await this.claimsRepository
+      .createQueryBuilder()
+      .update(GuaranteeClaim)
+      .set({
+        status: GuaranteeClaimStatus.COMPLETED,
+        assignedProviderId,
+        reServiceBookingId: booking.id,
+      })
+      .where('id = :id AND re_service_booking_id IS NULL', { id: claim.id })
+      .execute();
 
-    claim.status = GuaranteeClaimStatus.COMPLETED;
-    claim.assignedProviderId = assignedProviderId;
-    claim.reServiceBookingId = savedBooking.id;
-    await this.claimsRepository.save(claim);
+    if (claimed.affected !== 1) {
+      const current = await this.findOne(id);
+      throw new ConflictException(
+        `A re-service booking (${current.reServiceBookingId}) was already scheduled for this claim`,
+      );
+    }
 
-    return savedBooking;
+    return booking;
   }
 }

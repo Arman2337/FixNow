@@ -29,6 +29,7 @@ import 'package:fixnow_mobile/design_system/fix_accept_celebration.dart';
 import 'package:fixnow_mobile/features/bookings/booking_detail_screen.dart';
 import 'package:fixnow_mobile/features/bookings/booking_repository.dart';
 import 'package:fixnow_mobile/design_system/fix_reschedule_sheet.dart';
+import 'package:fixnow_mobile/design_system/fix_state_views.dart';
 import 'package:fixnow_mobile/features/bookings/customer_bookings_screen.dart';
 import 'package:fixnow_mobile/features/bookings/recurring_schedule.dart';
 import 'package:fixnow_mobile/features/bookings/service_request_screen.dart';
@@ -122,7 +123,13 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
   late final ChatRepository _chatRepository;
   late final SavedAddressRepository _savedAddresses;
   final Map<String, BookingTrackingController> _trackingControllers = {};
-  RealtimeClient? _notificationRealtime;
+  RealtimeClient? _sharedRealtime;
+
+  /// PERF-005. Every live socket, so resume can revalidate all of them.
+  final Set<RealtimeClient> _liveRealtimeClients = <RealtimeClient>{};
+
+  /// PERF-005. True when any live socket may be serving stale data.
+  bool _realtimeStale = false;
 
   /// Last status seen per booking while its detail/tracking route is open, so
   /// the payment page can be surfaced exactly once on a live completion.
@@ -151,13 +158,13 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
 
   @override
   void initState() {
-     super.initState();
-     WidgetsBinding.instance.addObserver(this);
-     _routeObserver = _AppRouteRestorationObserver(
-       _routeStore,
-       () => _auth.session?.userId,
-     );
-     _initializeData();
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _routeObserver = _AppRouteRestorationObserver(
+      _routeStore,
+      () => _auth.session?.userId,
+    );
+    _initializeData();
 
     // Foreground messages (banner inside app)
     _foregroundPushSub = _pushGateway.foregroundMessages().listen((message) {
@@ -301,13 +308,13 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
               targetBooking = await _bookings.repository.get(bookingId);
             } catch (_) {}
           }
-           final resolvedBooking = targetBooking;
-           final navigator = _navigatorKey.currentState;
-           if (resolvedBooking == null || navigator == null) return;
-           navigator.pushAndRemoveUntil(
-             _bookingRoute(resolvedBooking),
-             (route) => route.isFirst,
-           );
+          final resolvedBooking = targetBooking;
+          final navigator = _navigatorKey.currentState;
+          if (resolvedBooking == null || navigator == null) return;
+          navigator.pushAndRemoveUntil(
+            _bookingRoute(resolvedBooking),
+            (route) => route.isFirst,
+          );
         });
   }
 
@@ -336,14 +343,22 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
     _location = LocationConsentController(
       widget.locationGateway ?? const PlatformLocationPermissionGateway(),
     );
+    // One socket for the three long-lived consumers. The gateway allows three
+    // connections per principal, and the app was building four - one each for
+    // bookings, provider and notifications, plus one per booking-tracking
+    // screen - so the fourth was refused with `limit-exceeded` and a tracking
+    // screen's live location silently never updated. Booking-tracking screens
+    // keep their own, because a subscription has to be released when the screen
+    // is popped and the shared socket outlives it.
+    _sharedRealtime = _createRealtimeClient();
     _bookings = BookingController(
       BookingRepository(api: api, accessToken: _auth.validAccessToken),
-      realtime: _createRealtimeClient(),
+      realtime: _sharedRealtime,
     );
     _schedules = SchedulesController(_bookings.repository);
     _provider = ProviderController(
       ProviderRepository(api: api, accessToken: _auth.validAccessToken),
-      realtime: _createRealtimeClient(),
+      realtime: _sharedRealtime,
       currentUserId: () => _auth.session?.userId,
     );
     _complaints = ComplaintsController(
@@ -353,10 +368,9 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
       api: PushApi(api, accessToken: _auth.validAccessToken),
       gateway: _pushGateway,
     );
-    _notificationRealtime = _createRealtimeClient();
     _notifications = NotificationController(
       NotificationRepository(api: api, accessToken: _auth.validAccessToken),
-      realtime: _notificationRealtime,
+      realtime: _sharedRealtime,
     );
     _chatRepository = HttpChatRepository(
       api: api,
@@ -377,14 +391,17 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
     if (_auth.isAuthenticated) {
       unawaited(_requestNotificationPermission());
       final userId = _auth.session?.userId;
-       if (userId != null) {
-         unawaited(
-           _notificationRealtime?.subscribeAccount(userId) ??
-               Future<void>.value(),
-         );
-       }
-       _scheduleRouteRestore();
-     }
+      if (userId != null) {
+        // One account subscription on the shared socket. Previously each feature
+        // asked for its own, so the same account channel was subscribed three
+        // times over three connections - three handshakes to learn the same
+        // thing, and one connection slot each.
+        unawaited(
+          _sharedRealtime?.subscribeAccount(userId) ?? Future<void>.value(),
+        );
+      }
+      _scheduleRouteRestore();
+    }
   }
 
   Future<void> _requestNotificationPermission() async {
@@ -408,6 +425,13 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
     unawaited(_foregroundPushSub?.cancel());
     unawaited(_backgroundPushSub?.cancel());
     _bookings.acceptedBooking.removeListener(_showAcceptCelebration);
+    // The app owns the shared socket; the controllers above only borrow it and
+    // deliberately do not dispose it. Tracking screens own their own, and
+    // dispose them on pop; this catches any still registered - one mid-pop,
+    // for instance - so no socket outlives the app.
+    for (final client in List<RealtimeClient>.of(_liveRealtimeClients)) {
+      client.dispose();
+    }
     _notifications.dispose();
     _auth.dispose();
     _profile.dispose();
@@ -429,7 +453,41 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       _scheduleRouteRestore();
+      _revalidateRealtime();
     }
+  }
+
+  /// PERF-005. Ask the server whether each socket is still being served.
+  ///
+  /// A suspended app cannot answer the gateway's protocol ping, so the gateway
+  /// terminates the socket while the client is frozen - and the client does not
+  /// observe that close until it wakes. At that point no error has fired, the
+  /// backoff timer has not been scheduled (only [_handleDisconnect] schedules it,
+  /// and that is the code that has not run), and `isConnected` is still true. So
+  /// there is nothing to wake up to except an app that is confidently showing
+  /// stale data, and no timer that will ever correct it.
+  ///
+  /// The probe is per client rather than per screen because the sockets are
+  /// created in four places, and a screen-level fix would leave the notification
+  /// socket silently dead - which is the one whose staleness is least visible.
+  void _revalidateRealtime() {
+    for (final client in List<RealtimeClient>.of(_liveRealtimeClients)) {
+      unawaited(client.revalidateOnResume());
+    }
+  }
+
+  /// PERF-005. The banner's retry: probe again rather than tear down.
+  ///
+  /// Goes through the same probe as resume rather than forcing a reconnect,
+  /// because most of the time the answer is "still fine" - a user who taps
+  /// reconnect on a healthy connection should not pay for a new handshake and a
+  /// replay of every subscription.
+  void _retryRealtime() => _revalidateRealtime();
+
+  /// PERF-005. The status banner for the shell, or null while everything is live.
+  Widget? _realtimeStatusBanner() {
+    if (!_realtimeStale) return null;
+    return FixStaleDataBanner(onRetry: _retryRealtime);
   }
 
   void _scheduleRouteRestore() {
@@ -455,8 +513,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
     try {
       if (savedRoute.name == 'notifications') {
         navigator.push(_notificationRoute());
-      } else if (savedRoute.name == 'tracking' &&
-          savedRoute.argument != null) {
+      } else if (savedRoute.name == 'tracking' && savedRoute.argument != null) {
         final booking = await _findBooking(savedRoute.argument!);
         if (!mounted || booking == null) return;
         navigator.push(_bookingRoute(booking));
@@ -566,6 +623,10 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
                 ),
               ),
             );
+            // MOB-005: deliberately still a spinner. This is not content - it is
+            // the app deciding whether it has a session at all, and there is no
+            // shape to reserve because nothing has been decided yet. A skeleton
+            // here would imply a bookings list that may never be shown.
           }
           if (_auth.status == AuthStatus.verificationRequired) {
             return VerificationScreen(controller: _auth);
@@ -614,6 +675,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
               _provider.load(verified: true);
             }
             return AppShell(
+              statusBanner: _realtimeStatusBanner(),
               role: AppShellRole.provider,
               providerHome: ProviderHomeScreen(
                 controller: _provider,
@@ -656,9 +718,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
                   if (!mounted) return;
                   final nav = _navigatorKey.currentState;
                   if (nav == null) return;
-                  nav.push(
-                    _bookingRoute(match),
-                  );
+                  nav.push(_bookingRoute(match));
                 },
                 onOpenInvoice: (InAppNotification notification) {
                   final nav = _navigatorKey.currentState;
@@ -729,6 +789,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
           }
           unawaited(_bookings.startRealtime());
           return AppShell(
+            statusBanner: _realtimeStatusBanner(),
             controller: _customerShellController,
             customerHome: ServiceDiscoveryScreen(
               controller: _discovery,
@@ -780,9 +841,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
                   ),
                 );
                 if (result is CustomerBooking && context.mounted) {
-                  Navigator.of(context).push(
-_bookingRoute(result),
-                  );
+                  Navigator.of(context).push(_bookingRoute(result));
                 } else if (result == true && context.mounted) {
                   showFixBanner(
                     ScaffoldMessenger.of(context),
@@ -828,9 +887,7 @@ _bookingRoute(result),
                 if (!mounted) return;
                 final nav = _navigatorKey.currentState;
                 if (nav == null) return;
-                nav.push(
-                   _bookingRoute(match),
-                );
+                nav.push(_bookingRoute(match));
               },
               onInvoiceSelected: (InAppNotification notification) {
                 final nav = _navigatorKey.currentState;
@@ -904,9 +961,8 @@ _bookingRoute(result),
                   ),
                 );
               },
-              onBookingSelected: (booking) => Navigator.of(context).push(
-                _bookingRoute(booking),
-              ),
+              onBookingSelected: (booking) =>
+                  Navigator.of(context).push(_bookingRoute(booking)),
               onBookAgain: (booking) => _openRebooking(context, booking),
               schedulesController: _schedules,
               onOccurrenceConfirmed: () {
@@ -1119,10 +1175,34 @@ _bookingRoute(result),
   RealtimeClient? _createRealtimeClient() {
     if (widget.apiTransport != null) return null;
     final uri = ApiConfig.baseUriFor(widget.environment);
-    return RealtimeClient(
+    final client = RealtimeClient(
       uri: realtimeUriFromApi(uri),
       accessToken: _auth.validAccessToken,
+      onDispose: (client) {
+        // Flutter permits removeListener after dispose, which matters because
+        // the client calls this from its own dispose.
+        client.removeListener(_recomputeRealtimeStale);
+        _liveRealtimeClients.remove(client);
+      },
     );
+    // PERF-005. One socket per feature plus one per booking-tracking screen, and
+    // every one of them has to be asked whether it is still being served when the
+    // app comes back. Tracked here rather than held as fields because the
+    // tracking screens own theirs and dispose them on pop.
+    _liveRealtimeClients.add(client);
+    client.addListener(_recomputeRealtimeStale);
+    return client;
+  }
+
+  /// PERF-005. Recomputes the banner from every live socket.
+  ///
+  /// Aggregated rather than read off one client because there are four, and a
+  /// notification socket that went stale while the bookings socket stayed healthy
+  /// is exactly the case a single-client banner would miss.
+  void _recomputeRealtimeStale() {
+    final stale = _liveRealtimeClients.any((client) => client.isStale);
+    if (stale == _realtimeStale || !mounted) return;
+    setState(() => _realtimeStale = stale);
   }
 
   Future<void> _signOut() async {

@@ -15,11 +15,14 @@ import { BookingsService } from './bookings.service';
 import { SchedulesService } from './schedules.service';
 import { BookingMessagesService } from './booking-messages.service';
 import { BookingCallsService } from './booking-calls.service';
+import { BookingDispatchHandlers } from './booking-dispatch.handlers';
 import { MatchingModule } from '../matching/matching.module';
+import { ProvidersModule } from '../providers/providers.module';
 import { LocationModule } from '../location/location.module';
 import { RealtimeModule } from '../realtime/realtime.module';
 import { DomainNotificationsModule } from '../notifications/domain/domain-notifications.module';
 import { TrustModule } from '../trust/trust.module';
+import { OutboxModule } from '../outbox/outbox.module';
 
 @Module({
   imports: [
@@ -33,10 +36,17 @@ import { TrustModule } from '../trust/trust.module';
       ServiceCategoryEntity,
     ]),
     MatchingModule,
+    // Provides ProviderCapacityService, which enforces the BUG-008 concurrent
+    // booking limit. ProvidersModule does not import BookingsModule, so this
+    // introduces no cycle.
+    ProvidersModule,
     LocationModule,
     RealtimeModule,
     DomainNotificationsModule,
     TrustModule,
+    // FN-082. The booking transaction records the fan-out intent here rather
+    // than performing it, and BookingDispatchHandlers drains it.
+    OutboxModule,
   ],
   controllers: [
     BookingsController,
@@ -49,6 +59,7 @@ import { TrustModule } from '../trust/trust.module';
     SchedulesService,
     BookingMessagesService,
     BookingCallsService,
+    BookingDispatchHandlers,
   ],
   exports: [
     TypeOrmModule,

@@ -1,15 +1,25 @@
+/* Jest service mocks are intentionally asserted as detached functions. */
+/* eslint-disable @typescript-eslint/unbound-method */
 import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
-import type { DataSource, EntityManager, Repository } from 'typeorm';
+import type {
+  DataSource,
+  EntityManager,
+  ObjectLiteral,
+  Repository,
+} from 'typeorm';
 import { BookingStatus } from '../../../shared/booking-lifecycle.types';
 import type { MatchingService } from '../matching/matching.service';
+import type { ProviderCapacityService } from '../providers/availability/provider-capacity.service';
+import type { OutboxService } from '../outbox/outbox.service';
 import { BookingsService } from './bookings.service';
 import { BookingEvent } from './domain/booking-event.entity';
 import { Booking } from './domain/booking.entity';
+import { BookingReview } from '../ratings/domain/review.entity';
 import { PaymentOrder } from '../payments/domain/payment-order.entity';
 import { SubServiceEntity } from '../services/sub-service.entity';
 
@@ -19,6 +29,31 @@ import { SubServiceEntity } from '../services/sub-service.entity';
  * request body. See SEC-001.
  */
 const CATEGORY_ID = '00000000-0000-4000-8000-000000000010';
+const CUSTOMER_ID = '00000000-0000-4000-8000-000000000001';
+const OTHER_USER_ID = '00000000-0000-4000-8000-000000000002';
+
+/**
+ * The aggregate query builders `populatePhones` uses: one SELECT per entity,
+ * all terminal on `getRawMany`/`getRawOne`. Deliberately shared by every test
+ * that reaches `populatePhones`, so a fourth aggregate does not need a fifth
+ * bespoke mock.
+ */
+const queryAggregate = () => ({
+  select: jest.fn().mockReturnThis(),
+  innerJoin: jest.fn().mockReturnThis(),
+  addSelect: jest.fn().mockReturnThis(),
+  where: jest.fn().mockReturnThis(),
+  andWhere: jest.fn().mockReturnThis(),
+  groupBy: jest.fn().mockReturnThis(),
+  getRawMany: jest.fn().mockResolvedValue([]),
+  getRawOne: jest.fn().mockResolvedValue(null),
+});
+
+const aggregateRepository = () =>
+  ({
+    find: jest.fn().mockResolvedValue([]),
+    createQueryBuilder: jest.fn(() => queryAggregate()),
+  }) as unknown as jest.Mocked<Repository<ObjectLiteral>>;
 const sub = (
   id: string,
   name: string,
@@ -58,7 +93,17 @@ describe('BookingsService', () => {
   let bookingSave: jest.Mock;
   let eventSave: jest.Mock;
   let orderExist: jest.Mock;
+  /** BUG-010: records the `FOR UPDATE` the pricing paths take on the booking. */
+  let bookingLockTaken: jest.Mock;
+  let capacity: jest.Mocked<ProviderCapacityService>;
+  const capacityAssert = jest.fn().mockResolvedValue(undefined);
+  const capacitySync = jest.fn().mockResolvedValue(undefined);
   let subServiceFindBy: jest.Mock;
+  // FN-082: `create()` records the fan-out intent in the booking's transaction
+  // rather than performing it. Asserted on in the outbox tests, stubbed here so
+  // the booking specs are about the booking.
+  let outboxEnqueue: jest.Mock;
+  let outbox: jest.Mocked<OutboxService>;
 
   const booking = (overrides: Partial<Booking> = {}): Booking =>
     Object.assign(new Booking(), {
@@ -117,6 +162,31 @@ describe('BookingsService', () => {
     const subServiceRepository = {
       findBy: subServiceFindBy,
     } as unknown as jest.Mocked<Repository<SubServiceEntity>>;
+    // BUG-010: the pricing paths now take `SELECT ... FOR UPDATE` on the
+    // booking row before checking for a payment order, so the mock repository
+    // has to answer a locking read. `setLock` is recorded so the tests below
+    // can assert the lock is actually requested.
+    bookingLockTaken = jest.fn();
+    const lockableQuery: {
+      select: jest.Mock;
+      where: jest.Mock;
+      getOne: jest.Mock;
+      setLock: jest.Mock;
+    } = {
+      select: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue({ id: 'locked-booking' }),
+      setLock: jest.fn(),
+    };
+    lockableQuery.setLock.mockImplementation((mode: string) => {
+      bookingLockTaken(mode);
+      return lockableQuery;
+    });
+    (
+      bookingRepository as unknown as { createQueryBuilder: jest.Mock }
+    ).createQueryBuilder.mockImplementation((alias?: string) =>
+      alias === 'booking' ? lockableQuery : (lockableQuery as never),
+    );
     manager = {
       getRepository: jest.fn((entity: unknown) => {
         if (entity === Booking) return bookingRepository;
@@ -137,8 +207,23 @@ describe('BookingsService', () => {
     } as unknown as jest.Mocked<DataSource>;
     matchingService = {
       findEligibleProviders: jest.fn(),
+      isProviderEligible: jest.fn(),
+      findProviderDistance: jest.fn(),
     } as unknown as jest.Mocked<MatchingService>;
-    service = new BookingsService(dataSource, matchingService);
+    capacity = {
+      assertCanAccept: capacityAssert,
+      syncAvailabilityForWorkload: capacitySync,
+    } as unknown as jest.Mocked<ProviderCapacityService>;
+    outboxEnqueue = jest.fn().mockResolvedValue(true);
+    outbox = {
+      enqueue: outboxEnqueue,
+    } as unknown as jest.Mocked<OutboxService>;
+    service = new BookingsService(
+      dataSource,
+      matchingService,
+      capacity,
+      outbox,
+    );
   });
   it('creates a booking and an initial immutable lifecycle event', async () => {
     bookingFindOneBy.mockResolvedValue(null);
@@ -158,7 +243,7 @@ describe('BookingsService', () => {
       'request-key-123',
     );
 
-    expect(result.description).toBe('Repair a leaking pipe');
+    expect(result.booking.description).toBe('Repair a leaking pipe');
     expect(eventSave).toHaveBeenCalledTimes(1);
   });
 
@@ -184,7 +269,7 @@ describe('BookingsService', () => {
 
     // 2 x 24900 + 1 x 14900 = 64700; GST 18% = 11646; duration 2x45 + 30 = 120.
     // Every price came from CATALOGUE, not from the request.
-    expect(result.items).toEqual([
+    expect(result.booking.items).toEqual([
       {
         id: 'plumb-3',
         name: 'Shower & Water Pipe Leakage',
@@ -200,8 +285,8 @@ describe('BookingsService', () => {
         durationMinutes: 30,
       },
     ]);
-    expect(result.totalAmountMinor).toBe(76346);
-    expect(result.estimatedDurationMinutes).toBe(120);
+    expect(result.booking.totalAmountMinor).toBe(76346);
+    expect(result.booking.estimatedDurationMinutes).toBe(120);
   });
 
   it('leaves items and totals empty when no line items are sent', async () => {
@@ -219,9 +304,9 @@ describe('BookingsService', () => {
       'request-key-123',
     );
 
-    expect(result.items).toBeNull();
-    expect(result.totalAmountMinor).toBeNull();
-    expect(result.estimatedDurationMinutes).toBeNull();
+    expect(result.booking.items).toBeNull();
+    expect(result.booking.totalAmountMinor).toBeNull();
+    expect(result.booking.estimatedDurationMinutes).toBeNull();
   });
 
   it('returns an existing booking for an identical idempotent replay', async () => {
@@ -238,11 +323,11 @@ describe('BookingsService', () => {
       input,
       'request-key-123',
     );
-    bookingFindOneBy.mockResolvedValue(created);
+    bookingFindOneBy.mockResolvedValue(created.booking);
 
     await expect(
       service.create('customer-id', input, 'request-key-123'),
-    ).resolves.toBe(created);
+    ).resolves.toMatchObject({ booking: created.booking });
   });
 
   it('rejects reuse of an idempotency key with a different payload', async () => {
@@ -265,7 +350,7 @@ describe('BookingsService', () => {
 
   it('rejects acceptance by an ineligible provider', async () => {
     bookingFindOneBy.mockResolvedValue(booking());
-    matchingService.findEligibleProviders.mockResolvedValue([]);
+    matchingService.isProviderEligible.mockResolvedValue(false);
 
     await expect(
       service.acceptBooking(
@@ -276,10 +361,121 @@ describe('BookingsService', () => {
     ).rejects.toBeInstanceOf(ForbiddenException);
   });
 
+  // BUG-007: eligibility is judged for the provider who is asking, not by
+  // looking for them in a distance-ordered shortlist.
+  it('judges acceptance eligibility for the asking provider, not a shortlist', async () => {
+    const target = booking();
+    bookingFindOneBy.mockResolvedValue(target);
+    stubTransition(target);
+    matchingService.isProviderEligible.mockResolvedValue(true);
+
+    await service.acceptBooking(
+      '00000000-0000-4000-8000-000000000101',
+      '00000000-0000-4000-8000-000000000002',
+      1,
+    );
+
+    expect(matchingService.isProviderEligible).toHaveBeenCalledWith(
+      '00000000-0000-4000-8000-000000000002',
+      target.locationLat,
+      target.locationLng,
+      target.serviceCategoryId,
+    );
+    // The capped fan-out must not be consulted to decide eligibility.
+    expect(matchingService.findEligibleProviders).not.toHaveBeenCalled();
+  });
+
   it('rejects malformed history cursors', async () => {
     await expect(
       service.getBookingHistory('customer-id', 20, 'not-json'),
     ).rejects.toThrow('Invalid booking history cursor');
+  });
+
+  // Found by the integration suite: `getBookingHistory` over-fetches by one to
+  // detect `hasMore` but never dropped the extra row, so a caller asking for 2
+  // bookings received 3. The admin list services slice; this one did not.
+  it('returns exactly the requested number of history rows, never the hasMore probe', async () => {
+    const query = {
+      where: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      orderBy: jest.fn().mockReturnThis(),
+      addOrderBy: jest.fn().mockReturnThis(),
+      take: jest.fn().mockReturnThis(),
+      getMany: jest
+        .fn()
+        .mockResolvedValue([
+          booking({ id: 'b3', providerId: OTHER_USER_ID }),
+          booking({ id: 'b2', providerId: OTHER_USER_ID }),
+          booking({ id: 'b1', providerId: OTHER_USER_ID }),
+        ]),
+    };
+    bookingRepository.createQueryBuilder.mockImplementation(
+      (alias?: string) =>
+        (alias === 'booking' ? query : queryAggregate()) as never,
+    );
+    dataSource.getRepository.mockImplementation((entity: unknown) =>
+      entity === Booking ? bookingRepository : aggregateRepository(),
+    );
+
+    const page = await service.getBookingHistory(CUSTOMER_ID, 2);
+
+    // The probe row proves there is a next page, and is not itself returned.
+    expect(query.take).toHaveBeenCalledWith(3);
+    expect(page.bookings.map(({ id }) => id)).toEqual(['b3', 'b2']);
+    expect(page.nextCursor).not.toBeNull();
+  });
+
+  // Found by the integration suite. `populatePhones` averaged provider ratings
+  // through `.innerJoin('r.booking', 'b')`, but `BookingReview` declares no
+  // `booking` relation - only a `booking_id` column - so TypeORM threw while
+  // building the query and the whole booking list 500'd. Every unit test mocked
+  // the repository, so nothing here could have seen it.
+  it('joins the review aggregate to Booking by column, not by a relation that does not exist', async () => {
+    const joins: unknown[][] = [];
+    const reviewBuilder: Record<string, jest.Mock> = {};
+    const chain = ['select', 'addSelect', 'where', 'andWhere', 'groupBy'];
+    for (const method of chain)
+      reviewBuilder[method] = jest.fn().mockReturnThis();
+    reviewBuilder.innerJoin = jest.fn((...args: unknown[]) => {
+      joins.push(args);
+      return reviewBuilder;
+    });
+    reviewBuilder.getRawMany = jest.fn().mockResolvedValue([]);
+
+    const historyQuery = {
+      where: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      orderBy: jest.fn().mockReturnThis(),
+      addOrderBy: jest.fn().mockReturnThis(),
+      take: jest.fn().mockReturnThis(),
+      getMany: jest
+        .fn()
+        .mockResolvedValue([booking({ providerId: OTHER_USER_ID })]),
+    };
+    bookingRepository.createQueryBuilder.mockImplementation(
+      (alias?: string) =>
+        (alias === 'booking' ? historyQuery : queryAggregate()) as never,
+    );
+    dataSource.getRepository.mockImplementation((entity: unknown) => {
+      if (entity === Booking) {
+        return bookingRepository;
+      }
+      if (entity === BookingReview) {
+        return {
+          createQueryBuilder: jest.fn(() => reviewBuilder),
+        } as unknown as jest.Mocked<Repository<ObjectLiteral>>;
+      }
+      return aggregateRepository();
+    });
+
+    await service.getBookingHistory(CUSTOMER_ID, 10);
+
+    expect(joins).toHaveLength(1);
+    // The entity class plus an explicit ON clause. A string relation path like
+    // 'r.booking' is what made this throw.
+    expect(joins[0][0]).toBe(Booking);
+    expect(joins[0][1]).toBe('b');
+    expect(String(joins[0][2])).toContain('booking_id');
   });
 
   describe('getBookingForUser', () => {
@@ -336,15 +532,39 @@ describe('BookingsService', () => {
     const first = booking({ id: '00000000-0000-4000-8000-000000000201' });
     const second = booking({ id: '00000000-0000-4000-8000-000000000202' });
     bookingFind.mockResolvedValue([first, second]);
-    matchingService.findEligibleProviders
-      .mockResolvedValueOnce([{ providerId: 'provider-id', distanceKm: 2.4 }])
-      .mockResolvedValueOnce([]);
+    // BUG-004: eligibility is now one scoped lookup per candidate rather than
+    // a 50-entry fan-out searched for the asking provider.
+    matchingService.findProviderDistance
+      .mockResolvedValueOnce(2.4)
+      .mockResolvedValueOnce(null);
 
     await expect(
       service.getAvailableRequests('provider-id', 20),
     ).resolves.toEqual({
       bookings: [{ booking: first, distanceKm: 2.4 }],
     });
+    // The rank-limited fan-out must not be consulted here either.
+    expect(matchingService.findEligibleProviders).not.toHaveBeenCalled();
+  });
+
+  it('presents available work newest-first regardless of lookup completion order', async () => {
+    const first = booking({ id: '00000000-0000-4000-8000-000000000201' });
+    const second = booking({ id: '00000000-0000-4000-8000-000000000202' });
+    bookingFind.mockResolvedValue([first, second]);
+    // The second candidate resolves first; the list must still lead with the
+    // first, because a bounded pool finishes out of order.
+    matchingService.findProviderDistance
+      .mockImplementationOnce(
+        () => new Promise((resolve) => setTimeout(() => resolve(2.4), 5)),
+      )
+      .mockImplementationOnce(() => Promise.resolve(1.1));
+
+    const page = await service.getAvailableRequests('provider-id', 20);
+
+    expect(page.bookings.map((entry) => entry.booking.id)).toEqual([
+      first.id,
+      second.id,
+    ]);
   });
 
   it('prevents an admin intervention from rewriting completed history', async () => {
@@ -363,23 +583,51 @@ describe('BookingsService', () => {
     expect(eventSave).not.toHaveBeenCalled();
   });
 
-  describe('updateBookingItems', () => {
-    const stubTransition = (updated: Booking) => {
-      const builder = {
-        update: jest.fn().mockReturnThis(),
-        set: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        execute: jest.fn().mockResolvedValue({ affected: 1 }),
-      };
-      (bookingRepository.createQueryBuilder as jest.Mock).mockReturnValue(
-        builder,
-      );
-      (bookingRepository.findOneByOrFail as jest.Mock).mockResolvedValue(
-        updated,
-      );
-      return builder;
+  /**
+   * `transition()` finishes with a compare-and-set
+   * (`createQueryBuilder().update().set().where().execute()`). Tests that only
+   * care about what happened *before* the write need this to get past it.
+   */
+  const stubTransition = (updated: Booking) => {
+    const builder = {
+      update: jest.fn().mockReturnThis(),
+      set: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      execute: jest.fn().mockResolvedValue({ affected: 1 }),
     };
+    // BUG-010: the same `createQueryBuilder` also serves the pricing path's
+    // `SELECT ... FOR UPDATE` on the booking row, which has to be answerable in
+    // the same mock. Dispatching on the alias keeps both honest — a single
+    // `mockReturnValue` would silently satisfy whichever call happened first and
+    // hide the fact that one of them is unimplemented.
+    (bookingRepository.createQueryBuilder as jest.Mock).mockImplementation(
+      (alias?: string) => {
+        if (alias === 'booking') {
+          const lockQuery: {
+            select: jest.Mock;
+            where: jest.Mock;
+            getOne: jest.Mock;
+            setLock: jest.Mock;
+          } = {
+            select: jest.fn().mockReturnThis(),
+            where: jest.fn().mockReturnThis(),
+            getOne: jest.fn().mockResolvedValue({ id: 'locked-booking' }),
+            setLock: jest.fn(),
+          };
+          lockQuery.setLock.mockImplementation((mode: string) => {
+            bookingLockTaken(mode);
+            return lockQuery;
+          });
+          return lockQuery;
+        }
+        return builder;
+      },
+    );
+    (bookingRepository.findOneByOrFail as jest.Mock).mockResolvedValue(updated);
+    return builder;
+  };
 
+  describe('updateBookingItems', () => {
     const activeJob = () =>
       booking({
         providerId: 'provider-1',
@@ -448,6 +696,30 @@ describe('BookingsService', () => {
           { expectedVersion: 2, items: [] },
         ),
       ).rejects.toBeInstanceOf(ConflictException);
+    });
+
+    // BUG-010: the sibling line-items path re-priced the booking with no payment
+    // guard, so a provider could change the total after a payment order existed
+    // and the capture then failed permanently on an amount mismatch.
+    it('rejects a line-item rewrite once a payment order exists', async () => {
+      orderExist.mockResolvedValue(true);
+      // IN_PROGRESS, so the completed/cancelled status guard cannot be what
+      // rejects this - only the payment guard can.
+      bookingFindOneBy.mockResolvedValue(activeJob());
+
+      await expect(
+        service.updateBookingLineItems(
+          '00000000-0000-4000-8000-000000000101',
+          'provider-1',
+          [
+            {
+              subServiceId: 'plumb-3',
+              quantity: 2,
+            },
+          ],
+          2,
+        ),
+      ).rejects.toThrow(/payment has started/);
     });
 
     it('rejects adjustment after the job is completed', async () => {
@@ -574,8 +846,8 @@ describe('BookingsService', () => {
       );
 
       // 89900 + 18% GST (16182) = 106082. The tampered value of 1 paise is ignored.
-      expect(result.items?.[0].unitPriceMinor).toBe(89900);
-      expect(result.totalAmountMinor).toBe(106082);
+      expect(result.booking.items?.[0].unitPriceMinor).toBe(89900);
+      expect(result.booking.totalAmountMinor).toBe(106082);
     });
 
     it('rejects a sub-service from another category', async () => {

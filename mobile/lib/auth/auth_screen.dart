@@ -3,6 +3,7 @@ import 'package:fixnow_mobile/auth/auth_session.dart';
 import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/app_typography.dart';
+import 'package:fixnow_mobile/design_system/fix_components.dart';
 import 'package:fixnow_mobile/design_system/fix_page_frame.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -509,10 +510,6 @@ class _AuthScreenState extends State<AuthScreen> {
                                 horizontal: 14,
                                 vertical: 14,
                               ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide: BorderSide.none,
-                              ),
                             ),
                             validator: (value) =>
                                 _register &&
@@ -539,17 +536,17 @@ class _AuthScreenState extends State<AuthScreen> {
                             ],
                           ),
                           const SizedBox(height: 6),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: AppColors.surfaceContainerLowest,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: AppColors.outlineVariant.withValues(
-                                  alpha: 0.3,
-                                ),
-                              ),
+                          // MOB-006. The container drew the border and the
+                          // TextFormField was borderless inside it, which left
+                          // the sign-in number field with no visible focus at
+                          // all. FixFocusBorder owns the border and the node.
+                          FixFocusBorder(
+                            radius: BorderRadius.circular(8),
+                            fillColor: AppColors.surfaceContainerLowest,
+                            borderColor: AppColors.outlineVariant.withValues(
+                              alpha: 0.3,
                             ),
-                            child: Row(
+                            builder: (focusNode) => Row(
                               children: [
                                 const SizedBox(width: 12),
                                 Icon(
@@ -606,6 +603,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                 Expanded(
                                   child: TextFormField(
                                     controller: _mobile,
+                                    focusNode: focusNode,
                                     enabled: !loading,
                                     keyboardType: TextInputType.phone,
                                     textInputAction: TextInputAction.next,
@@ -686,10 +684,6 @@ class _AuthScreenState extends State<AuthScreen> {
                               horizontal: 14,
                               vertical: 14,
                             ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide.none,
-                            ),
                           ),
                           validator: (value) =>
                               RegExp(
@@ -741,10 +735,6 @@ class _AuthScreenState extends State<AuthScreen> {
                             contentPadding: const EdgeInsets.symmetric(
                               horizontal: 14,
                               vertical: 14,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide.none,
                             ),
                             suffixIcon: IconButton(
                               tooltip: _obscure
@@ -818,10 +808,6 @@ class _AuthScreenState extends State<AuthScreen> {
                               contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 14,
                                 vertical: 14,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide: BorderSide.none,
                               ),
                             ),
                           ),
@@ -931,42 +917,64 @@ class _AuthScreenState extends State<AuthScreen> {
                     ),
                     child: Column(
                       children: [
+                        // Both sides are `Flexible`.
+                        //
+                        // The pill label was 10pt, and at 10pt it fitted beside
+                        // the heading on a 320px screen at a 2x system text
+                        // scale. At the smallest readable size it did not, and
+                        // the Row overflowed by ~6px. The heading truncates; the
+                        // pill scales down instead of truncating, because
+                        // "Sign-in protected" is a claim rather than a label and
+                        // a half-word there would read as a defect.
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.shield_rounded,
-                                  size: 20,
-                                  color: AppColors.primary,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Account security',
-                                  style: FixNowTypography.label.copyWith(
-                                    color: AppColors.textPrimary,
-                                    fontWeight: FontWeight.w600,
+                            Flexible(
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.shield_rounded,
+                                    size: 20,
+                                    color: AppColors.primary,
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(width: 8),
+                                  Flexible(
+                                    child: Text(
+                                      'Account security',
+                                      overflow: TextOverflow.ellipsis,
+                                      style: FixNowTypography.label.copyWith(
+                                        color: AppColors.textPrimary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.primaryFixed.withValues(
-                                  alpha: 0.3,
-                                ),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                'Sign-in protected',
-                                style: FixNowTypography.dataMono.copyWith(
-                                  color: AppColors.primary,
-                                  fontSize: 10,
+                            const SizedBox(width: AppSpacing.xs),
+                            Flexible(
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primaryFixed.withValues(
+                                      alpha: 0.3,
+                                    ),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    'Sign-in protected',
+                                    maxLines: 1,
+                                    style: FixNowTypography.dataMono.copyWith(
+                                      color: AppColors.primary,
+                                      fontSize: 11,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),

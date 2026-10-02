@@ -478,7 +478,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                   textAlign: TextAlign.center,
                                   style: FixNowTypography.dataMono.copyWith(
                                     color: AppColors.textSecondary,
-                                    fontSize: 10,
+                                    fontSize: 11,
                                     letterSpacing: 1.2,
                                     fontWeight: FontWeight.w600,
                                   ),

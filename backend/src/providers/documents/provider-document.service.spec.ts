@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { ConfigService } from '@nestjs/config';
 import { Repository } from 'typeorm';
 import { MALWARE_SCANNER, MalwareScanner } from '../../storage/malware-scanner';
 import {
@@ -44,6 +45,17 @@ describe('ProviderDocumentService', () => {
     const module = await Test.createTestingModule({
       providers: [
         ProviderDocumentService,
+        // SEC-013: `PROVIDER_DOCUMENT_RETENTION_DAYS` moved off `process.env`
+        // onto `ConfigService` so it is validated at boot. The default of 30
+        // matches the previous hardcoded fallback.
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn((_key: string, opts?: { infer?: boolean }) =>
+              opts?.infer ? 30 : undefined,
+            ),
+          },
+        },
         {
           provide: getRepositoryToken(ProviderDocumentEntity),
           useValue: {

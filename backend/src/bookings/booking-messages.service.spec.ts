@@ -11,6 +11,7 @@ import { BookingMessage } from './domain/booking-message.entity';
 import { BookingMessagesService } from './booking-messages.service';
 import type { BookingProjectionService } from '../realtime/booking-projection.service';
 import type { DomainNotificationService } from '../notifications/domain/domain-notification.service';
+import type { AuthorizationPrincipal } from '../common/authorization/authorization.types';
 
 describe('BookingMessagesService', () => {
   let service: BookingMessagesService;
@@ -96,6 +97,43 @@ describe('BookingMessagesService', () => {
       expect(result.messages).toHaveLength(1);
       expect(result.messages[0].messageText).toBe('Buzz code is #402');
       expect(messagesRepo.update.mock.calls).toHaveLength(1);
+    });
+
+    // SEC-002: the obligation is discharged against the booking's real party
+    // columns. A principal that is neither party must fail even if the string
+    // `userId` argument happened to match — the two must not be conflated.
+    it('discharges the ownership obligation for a booking party', async () => {
+      bookingsRepo.findOne.mockResolvedValue(
+        mockBooking(BookingStatus.ASSIGNED),
+      );
+      messagesRepo.find.mockResolvedValue([]);
+
+      const principal: AuthorizationPrincipal = {
+        userId: providerId,
+        sessionId: 's',
+        roles: [],
+      };
+      await service.listMessages(bookingId, providerId, principal);
+      expect(principal.ownershipProven).toBe(true);
+    });
+
+    it('refuses to discharge the obligation for a non-party', async () => {
+      bookingsRepo.findOne.mockResolvedValue(
+        mockBooking(BookingStatus.ASSIGNED),
+      );
+
+      // The `userId` argument is not what the guard bound the request to; the
+      // principal is. A mismatch must fail closed rather than pass on the
+      // string alone.
+      const principal: AuthorizationPrincipal = {
+        userId: strangerId,
+        sessionId: 's',
+        roles: [],
+      };
+      await expect(
+        service.listMessages(bookingId, customerId, principal),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(principal.ownershipProven).toBeUndefined();
     });
 
     it('returns canSend=false for completed booking', async () => {

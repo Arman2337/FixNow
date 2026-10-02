@@ -8,6 +8,10 @@ import {
   IsUUID,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
+import {
+  LIST_ENDPOINT_MAX_LIMIT,
+  coerceOptionalLimit,
+} from '../common/list-pagination.dto';
 
 export class ProviderSkillQueryDto {
   @IsOptional()
@@ -18,6 +22,20 @@ export class ProviderSkillQueryDto {
   @IsOptional()
   @IsUUID()
   serviceCategoryId?: string;
+
+  /**
+   * API-003. Optional rather than defaulted, so an internal caller can pass
+   * `{ isVerified: true }` and let the service apply the bound. A `= …`
+   * default here would be required in the type but only applied at runtime
+   * through the ValidationPipe, which breaks every literal construction of
+   * this DTO in code and in tests.
+   */
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(LIST_ENDPOINT_MAX_LIMIT)
+  @Transform(coerceOptionalLimit)
+  limit?: number;
 }
 
 export class CreateProviderSkillDto {

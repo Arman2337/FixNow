@@ -17,6 +17,10 @@ import { BookingsService } from '../bookings/bookings.service';
 import { MatchingService } from '../matching/matching.service';
 import { CreateGuaranteeClaimDto } from './dto/create-guarantee-claim.dto';
 import { UpdateGuaranteeClaimDto } from './dto/update-guarantee-claim.dto';
+import {
+  LIST_ENDPOINT_DEFAULT_LIMIT,
+  LIST_ENDPOINT_MAX_LIMIT,
+} from '../common/list-pagination.dto';
 
 @Injectable()
 export class GuaranteesService {
@@ -82,16 +86,35 @@ export class GuaranteesService {
     return this.claimsRepository.save(claim);
   }
 
-  async findAll(status?: GuaranteeClaimStatus): Promise<GuaranteeClaim[]> {
+  /**
+   * API-003. Bounded.
+   *
+   * `guarantee_claims` is append-only and grows with every claim a customer
+   * files, and the admin console loaded the entire table to render a list. The
+   * bound is enforced in the query rather than sliced in JavaScript, because
+   * `getMany()` without `take()` has already transferred every row by the time a
+   * slice could discard it — which is the same defect in a different position.
+   *
+   * Ordered by `createdAt DESC, id DESC` so the newest claims lead, with `id` as
+   * the tie-break: without it, rows sharing a timestamp can arrive in a
+   * different order between two identical requests, and a support agent
+   * refreshing the page sees rows move.
+   */
+  async findAll(
+    status?: GuaranteeClaimStatus,
+    limit: number = LIST_ENDPOINT_DEFAULT_LIMIT,
+  ): Promise<GuaranteeClaim[]> {
     const query = this.claimsRepository.createQueryBuilder('claim');
 
     if (status) {
       query.where('claim.status = :status', { status });
     }
 
-    query.orderBy('claim.createdAt', 'DESC');
-
-    return query.getMany();
+    return query
+      .orderBy('claim.createdAt', 'DESC')
+      .addOrderBy('claim.id', 'DESC')
+      .take(Math.min(limit, LIST_ENDPOINT_MAX_LIMIT))
+      .getMany();
   }
 
   async findOne(id: string): Promise<GuaranteeClaim> {

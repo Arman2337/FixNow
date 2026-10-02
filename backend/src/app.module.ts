@@ -9,6 +9,7 @@ import { DatabaseModule } from './database/database.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { RedisCacheModule } from './cache/cache.module';
 import { HealthModule } from './health/health.module';
+import { ObservabilityModule } from './observability/observability.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { ProvidersModule } from './providers/providers.module';
@@ -34,6 +35,9 @@ import { OutboxModule } from './outbox/outbox.module';
     DatabaseModule,
     RedisCacheModule,
     HealthModule,
+    // Top-level rather than nested under `HealthModule`, which is where it used
+    // to be imported from. See the note in `health.module.ts`.
+    ObservabilityModule,
     UsersModule,
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 60 }]),
     AuthModule,

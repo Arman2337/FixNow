@@ -10,6 +10,12 @@ import { ProviderSkillEntity } from './provider-skill.entity';
 import { ServiceCategoryEntity } from '../services/service-category.entity';
 import { UserEntity } from '../users/user.entity';
 import { AccountStatus } from '../users/account-status';
+import type { AuthorizationPrincipal } from '../common/authorization/authorization.types';
+import { assertOwnedResource } from '../common/authorization/resource-ownership';
+import {
+  LIST_ENDPOINT_DEFAULT_LIMIT,
+  LIST_ENDPOINT_MAX_LIMIT,
+} from '../common/list-pagination.dto';
 import {
   CreateProviderSkillDto,
   UpdateProviderSkillDto,
@@ -58,7 +64,17 @@ export class ProviderSkillsService {
 
     queryBuilder
       .orderBy('category.displayOrder', 'ASC')
-      .addOrderBy('category.name', 'ASC');
+      .addOrderBy('category.name', 'ASC')
+      // API-003: bounded in the query. A provider's skill list is small today,
+      // but it is one row per provider per category, so the count grows with
+      // both the catalogue and the provider's own ambitions — and this route is
+      // reachable by anyone holding a provider credential.
+      .take(
+        Math.min(
+          query?.limit ?? LIST_ENDPOINT_DEFAULT_LIMIT,
+          LIST_ENDPOINT_MAX_LIMIT,
+        ),
+      );
 
     return queryBuilder.getMany();
   }
@@ -215,12 +231,26 @@ export class ProviderSkillsService {
     return this.providerSkillRepository.save(skill);
   }
 
-  async delete(id: string, userId: string, isAdmin = false): Promise<void> {
+  /**
+   * @param principal the authenticated caller. Passed in so the SEC-002
+   *   ownership obligation this route raises is discharged here, at the point
+   *   where the owning column is in hand: delete returns nothing, so the
+   *   controller has no row left to compare.
+   */
+  async delete(
+    id: string,
+    userId: string,
+    isAdmin = false,
+    principal?: AuthorizationPrincipal,
+  ): Promise<void> {
     const skill = await this.findById(id);
 
     // Only skill owner can delete their skills (unless admin)
     if (!isAdmin && skill.userId !== userId) {
       throw new ForbiddenException("Cannot delete another provider's skill");
+    }
+    if (principal) {
+      assertOwnedResource(principal, skill.userId, 'providerSkill.userId');
     }
 
     await this.providerSkillRepository.remove(skill);

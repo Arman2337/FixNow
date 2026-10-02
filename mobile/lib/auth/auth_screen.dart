@@ -917,42 +917,64 @@ class _AuthScreenState extends State<AuthScreen> {
                     ),
                     child: Column(
                       children: [
+                        // Both sides are `Flexible`.
+                        //
+                        // The pill label was 10pt, and at 10pt it fitted beside
+                        // the heading on a 320px screen at a 2x system text
+                        // scale. At the smallest readable size it did not, and
+                        // the Row overflowed by ~6px. The heading truncates; the
+                        // pill scales down instead of truncating, because
+                        // "Sign-in protected" is a claim rather than a label and
+                        // a half-word there would read as a defect.
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.shield_rounded,
-                                  size: 20,
-                                  color: AppColors.primary,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Account security',
-                                  style: FixNowTypography.label.copyWith(
-                                    color: AppColors.textPrimary,
-                                    fontWeight: FontWeight.w600,
+                            Flexible(
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.shield_rounded,
+                                    size: 20,
+                                    color: AppColors.primary,
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(width: 8),
+                                  Flexible(
+                                    child: Text(
+                                      'Account security',
+                                      overflow: TextOverflow.ellipsis,
+                                      style: FixNowTypography.label.copyWith(
+                                        color: AppColors.textPrimary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.primaryFixed.withValues(
-                                  alpha: 0.3,
-                                ),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                'Sign-in protected',
-                                style: FixNowTypography.dataMono.copyWith(
-                                  color: AppColors.primary,
-                                  fontSize: 10,
+                            const SizedBox(width: AppSpacing.xs),
+                            Flexible(
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primaryFixed.withValues(
+                                      alpha: 0.3,
+                                    ),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    'Sign-in protected',
+                                    maxLines: 1,
+                                    style: FixNowTypography.dataMono.copyWith(
+                                      color: AppColors.primary,
+                                      fontSize: 11,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),

@@ -9,6 +9,7 @@ import {
   Post,
   Req,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import type { AuthorizedRequest } from '../common/authorization/authorization.guard';
 import {
   Public,
@@ -33,9 +34,11 @@ export class PaymentsController {
     @Req() request: AuthorizedRequest,
     @Body() dto: CreatePaymentOrderDto,
   ): Promise<PaymentOrderContract> {
+    const principal = request.authorizationPrincipal!;
     return this.payments.createForBooking(
-      request.authorizationPrincipal!.userId,
+      principal.userId,
       dto.bookingId,
+      principal,
     );
   }
 
@@ -45,10 +48,8 @@ export class PaymentsController {
     @Param('bookingId') bookingId: string,
     @Req() request: AuthorizedRequest,
   ): Promise<PaymentOrderContract | null> {
-    return this.payments.getForBooking(
-      request.authorizationPrincipal!.userId,
-      bookingId,
-    );
+    const principal = request.authorizationPrincipal!;
+    return this.payments.getForBooking(principal.userId, bookingId, principal);
   }
 
   /** FN-053: the invoice generated when this payment was paid. */
@@ -58,9 +59,12 @@ export class PaymentsController {
     @Param('orderId') orderId: string,
     @Req() request: AuthorizedRequest,
   ) {
+    // SEC-002: discharged on the stored order — the invoice projection carries
+    // no owner column.
     return await this.payments.getInvoice(
       request.authorizationPrincipal!.userId,
       orderId,
+      request.authorizationPrincipal,
     );
   }
 
@@ -71,24 +75,39 @@ export class PaymentsController {
     @Req() request: AuthorizedRequest,
     @Body() dto: VerifyPaymentDto,
   ): Promise<PaymentOrderContract> {
+    const principal = request.authorizationPrincipal!;
     const params: Omit<VerifyCheckoutParams, 'gatewayOrderId'> = {
       gatewayPaymentId: dto.razorpayPaymentId,
       signature: dto.razorpaySignature,
     };
     return this.payments.verifyCheckout(
-      request.authorizationPrincipal!.userId,
+      principal.userId,
       dto.orderId,
       params,
+      principal,
     );
   }
 
   /**
    * Razorpay webhook. Public by necessity — the HMAC signature over the raw
    * body IS the authentication. Never parse before verification.
+   *
+   * SEC-002: confirmed `@Public()`, so the guard returns before it raises any
+   * deferred obligation and `OwnershipProofInterceptor` has nothing to check
+   * (it also returns early when there is no principal). There is correctly no
+   * discharge call here, and there must not be one: the caller is the gateway,
+   * not a user, and there is no principal to compare.
    */
   @Post('webhook')
   @Public()
   @HttpCode(HttpStatus.OK)
+  // API-002: unauthenticated, so it would otherwise share the global 60/min
+  // bucket. The gateway retries on a non-2xx, and it fans out one webhook per
+  // payment event, so a legitimate burst can be larger than that — hence a
+  // separate, higher limit rather than none. Signatures that fail verification
+  // are rejected inside `processWebhook`, so this bound is about protecting the
+  // process, not about authenticating the caller.
+  @Throttle({ default: { limit: 300, ttl: 60_000 } })
   async webhook(
     @Req() request: AuthorizedRequest & { rawBody?: Buffer },
   ): Promise<{ handled: boolean; duplicate?: boolean }> {

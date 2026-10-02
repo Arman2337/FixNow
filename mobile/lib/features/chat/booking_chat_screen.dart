@@ -555,7 +555,7 @@ class _ChatBubble extends StatelessWidget {
                 _formatTime(message.createdAt.toLocal()),
                 style: const TextStyle(
                   color: AppColors.textMuted,
-                  fontSize: 10,
+                  fontSize: 11,
                 ),
               ),
             ],
@@ -667,7 +667,7 @@ class _ChatBubble extends StatelessWidget {
                               message.senderRole,
                               style: const TextStyle(
                                 color: AppColors.primary,
-                                fontSize: 10,
+                                fontSize: 11,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),

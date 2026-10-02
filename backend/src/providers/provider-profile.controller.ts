@@ -2,6 +2,7 @@ import { Body, Controller, Get, Put, Request } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { RequireOwnPermission } from '../common/authorization/authorization.decorators';
 import type { AuthorizedRequest } from '../common/authorization/authorization.guard';
+import { assertOwnedResource } from '../common/authorization/resource-ownership';
 import {
   CoverageCheckDto,
   CoverageCheckResponseDto,
@@ -17,24 +18,29 @@ export class ProviderProfileController {
 
   @Get('me')
   @RequireOwnPermission('provider.profile.read')
-  getOwnProfile(
+  async getOwnProfile(
     @Request() request: AuthorizedRequest,
   ): Promise<ProviderProfileResponseDto> {
-    return this.profileService.getOwnProfile(
-      request.authorizationPrincipal!.userId,
-    );
+    const principal = request.authorizationPrincipal!;
+    const profile = await this.profileService.getOwnProfile(principal.userId);
+    // SEC-002: the response carries the profile's real `userId`, so compare it.
+    assertOwnedResource(principal, profile.userId, 'providerProfile.userId');
+    return profile;
   }
 
   @Put('me')
   @RequireOwnPermission('provider.profile.update')
-  upsertOwnProfile(
+  async upsertOwnProfile(
     @Request() request: AuthorizedRequest,
     @Body() dto: UpsertProviderProfileDto,
   ): Promise<ProviderProfileResponseDto> {
-    return this.profileService.upsertOwnProfile(
-      request.authorizationPrincipal!.userId,
+    const principal = request.authorizationPrincipal!;
+    const profile = await this.profileService.upsertOwnProfile(
+      principal.userId,
       dto,
     );
+    assertOwnedResource(principal, profile.userId, 'providerProfile.userId');
+    return profile;
   }
 
   /**
@@ -53,14 +59,17 @@ export class ProviderProfileController {
   @Throttle({ default: { limit: 6, ttl: 60 * 60_000 } })
   @Put('me/location')
   @RequireOwnPermission('provider.profile.update')
-  updateOwnLocation(
+  async updateOwnLocation(
     @Request() request: AuthorizedRequest,
     @Body() dto: UpdateProviderLocationDto,
   ): Promise<ProviderProfileResponseDto> {
-    return this.profileService.updateLocation(
-      request.authorizationPrincipal!.userId,
+    const principal = request.authorizationPrincipal!;
+    const profile = await this.profileService.updateLocation(
+      principal.userId,
       dto,
     );
+    assertOwnedResource(principal, profile.userId, 'providerProfile.userId');
+    return profile;
   }
 
   @Put('me/coverage-check')
@@ -69,8 +78,10 @@ export class ProviderProfileController {
     @Request() request: AuthorizedRequest,
     @Body() dto: CoverageCheckDto,
   ): Promise<CoverageCheckResponseDto> {
+    // SEC-002: the answer is a bare boolean with no owner column, so the
+    // comparison has to happen where the profile is loaded.
     return this.profileService.checkCoverage(
-      request.authorizationPrincipal!.userId,
+      request.authorizationPrincipal!,
       dto,
     );
   }

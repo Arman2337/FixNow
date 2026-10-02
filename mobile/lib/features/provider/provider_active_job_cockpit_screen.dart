@@ -451,7 +451,7 @@ class _ProviderActiveJobCockpitScreenState
                                 pillText.toUpperCase(),
                                 style: const TextStyle(
                                   color: Colors.white,
-                                  fontSize: 10,
+                                  fontSize: 11,
                                   fontWeight: FontWeight.w700,
                                   letterSpacing: 0.5,
                                 ),
@@ -760,7 +760,7 @@ class _ProviderActiveJobCockpitScreenState
               SizedBox(width: 4),
               Text(
                 'Encrypted Telematics & On-Duty Insurance Protected',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 10),
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 11),
               ),
             ],
           ),
@@ -875,7 +875,7 @@ class _ProviderActiveJobCockpitScreenState
                     'Mandatory',
                     style: TextStyle(
                       color: AppColors.textSecondary,
-                      fontSize: 10,
+                      fontSize: 11,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -1224,7 +1224,7 @@ class _ProviderActiveJobCockpitScreenState
                         isBefore ? 'BEFORE' : 'AFTER',
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 9,
+                          fontSize: 11,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -1272,7 +1272,7 @@ class _ProviderActiveJobCockpitScreenState
             ),
             const Text(
               'Tap to capture',
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 10),
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 11),
             ),
           ],
         ),

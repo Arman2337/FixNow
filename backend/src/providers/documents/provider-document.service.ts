@@ -7,7 +7,9 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { ConfigService } from '@nestjs/config';
 import { Repository } from 'typeorm';
+import type { EnvironmentVariables } from '../../config/env.validation';
 import { MALWARE_SCANNER } from '../../storage/malware-scanner';
 import type { MalwareScanner } from '../../storage/malware-scanner';
 import { PRIVATE_OBJECT_STORAGE } from '../../storage/private-object-storage';
@@ -15,6 +17,8 @@ import type { PrivateObjectStorage } from '../../storage/private-object-storage'
 import { ProviderDocumentEntity } from './provider-document.entity';
 import { ProviderDocumentAuditEntity } from './provider-document-audit.entity';
 import { ProviderApplicationEntity } from '../provider-application.entity';
+import type { AuthorizationPrincipal } from '../../common/authorization/authorization.types';
+import { assertOwnedResource } from '../../common/authorization/resource-ownership';
 
 const MAX_BYTES = 10 * 1024 * 1024;
 const TYPES = new Set(['identity', 'license', 'certification']);
@@ -32,7 +36,28 @@ export class ProviderDocumentService {
     private readonly audits: Repository<ProviderDocumentAuditEntity>,
     @InjectRepository(ProviderApplicationEntity)
     private readonly applications: Repository<ProviderApplicationEntity>,
+    @Inject(ConfigService)
+    private readonly config: ConfigService<EnvironmentVariables, true>,
   ) {}
+
+  /**
+   * SEC-013. `PROVIDER_DOCUMENT_RETENTION_DAYS` was read from `process.env` and
+   * parsed here, so the bound below was the only thing validating it — and it
+   * lived in the request path, meaning the first upload after a bad deploy was
+   * the thing that discovered the misconfiguration.
+   *
+   * It is now declared on `EnvironmentVariables` with the same bound, so an
+   * invalid value is a boot failure. The re-check is kept rather than removed:
+   * `ConfigService` can be constructed in tests and in tooling without
+   * `validate()` having run, and this method decides a deletion date for
+   * someone's government ID, so it should not trust its input even when that
+   * input is usually right.
+   */
+  private retentionDays(): number {
+    return (
+      this.config.get('PROVIDER_DOCUMENT_RETENTION_DAYS', { infer: true }) ?? 30
+    );
+  }
 
   rejectMissingFile(): never {
     throw new BadRequestException('Document file is required');
@@ -67,9 +92,7 @@ export class ProviderDocumentService {
       await this.storage.delete(objectKey);
       throw new BadRequestException('Document failed security scanning');
     }
-    const retentionDays = Number(
-      process.env.PROVIDER_DOCUMENT_RETENTION_DAYS ?? '30',
-    );
+    const retentionDays = this.retentionDays();
     if (
       !Number.isInteger(retentionDays) ||
       retentionDays < 1 ||
@@ -110,9 +133,19 @@ export class ProviderDocumentService {
     };
   }
 
-  async delete(userId: string, id: string): Promise<void> {
+  /**
+   * @param principal the authenticated caller, so the SEC-002 ownership
+   *   obligation raised by `DELETE /provider-documents/:id` is discharged at
+   *   the point the document's owning column is in hand — this method returns
+   *   nothing, so the controller has no row left to compare.
+   */
+  async delete(
+    userId: string,
+    id: string,
+    principal?: AuthorizationPrincipal,
+  ): Promise<void> {
     const document = await this.find(id);
-    await this.assertOwner(userId, document);
+    await this.assertOwner(userId, document, principal);
     if (document.status === 'deleted') return;
     await this.storage.delete(document.objectKey);
     document.status = 'deleted';
@@ -191,10 +224,18 @@ export class ProviderDocumentService {
   private async assertOwner(
     userId: string,
     document: ProviderDocumentEntity,
+    principal?: AuthorizationPrincipal,
   ): Promise<void> {
     if (document.userId !== userId) {
       await this.audit(document.id, userId, 'access', 'denied');
       throw new ForbiddenException('Provider document access denied');
+    }
+    if (principal) {
+      assertOwnedResource(
+        principal,
+        document.userId,
+        'providerDocument.userId',
+      );
     }
   }
   private matchesMagic(type: string, value: Buffer): boolean {

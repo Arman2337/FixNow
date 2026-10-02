@@ -778,7 +778,7 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
                         item.formattedDuration,
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 9,
+                          fontSize: 11,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -814,7 +814,7 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
                           '(1.2k)',
                           style: TextStyle(
                             color: AppColors.textSecondary,
-                            fontSize: 10,
+                            fontSize: 11,
                           ),
                         ),
                         if (item.badge != null) ...[
@@ -839,7 +839,7 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
                               item.badge!,
                               style: const TextStyle(
                                 color: Color(0xFF825100),
-                                fontSize: 9,
+                                fontSize: 11,
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
@@ -905,7 +905,7 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
                             '30-Day Warranty',
                             style: TextStyle(
                               color: AppColors.primary,
-                              fontSize: 10,
+                              fontSize: 11,
                               fontWeight: FontWeight.w700,
                             ),
                             maxLines: 1,

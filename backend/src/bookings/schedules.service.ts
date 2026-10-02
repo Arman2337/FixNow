@@ -16,6 +16,11 @@ import { Booking } from './domain/booking.entity';
 import { RecurringSchedule } from './domain/recurring-schedule.entity';
 import { BookingsService } from './bookings.service';
 import type { CreateScheduleDto } from './schedules.dto';
+import type { AuthorizationPrincipal } from '../common/authorization/authorization.types';
+import {
+  assertOwnedCollection,
+  assertOwnedResource,
+} from '../common/authorization/resource-ownership';
 
 /** A past-due occurrence may still be confirmed within this grace window. */
 export const OCCURRENCE_CONFIRM_GRACE_MS = 15 * 60_000;
@@ -65,6 +70,7 @@ export class SchedulesService {
   async create(
     customerId: string,
     dto: CreateScheduleDto,
+    principal?: AuthorizationPrincipal,
   ): Promise<RecurringScheduleContract> {
     const firstOccurrence = new Date(dto.firstOccurrenceAt);
     if (
@@ -95,11 +101,23 @@ export class SchedulesService {
         nextOccurrenceAt: firstOccurrence,
       }),
     );
+    // SEC-002: the contract omits the owning column, so prove it on the row
+    // that was just persisted.
+    if (principal) {
+      assertOwnedResource(
+        principal,
+        schedule.customerId,
+        'recurringSchedule.customerId',
+      );
+    }
     return this.present(schedule);
   }
 
   /** Non-terminal schedules for one customer, soonest visit first. */
-  async listSelf(customerId: string): Promise<RecurringScheduleContract[]> {
+  async listSelf(
+    customerId: string,
+    principal?: AuthorizationPrincipal,
+  ): Promise<RecurringScheduleContract[]> {
     const rows = await this.schedules.find({
       where: [
         { customerId, status: 'ACTIVE' },
@@ -107,6 +125,11 @@ export class SchedulesService {
       ],
       order: { nextOccurrenceAt: 'ASC' },
     });
+    // SEC-002: a customer with no schedules gets `[]`, so the collection
+    // assertion (not the strict one) is correct here.
+    if (principal) {
+      assertOwnedCollection(principal, rows, 'customerId');
+    }
     return rows.map((row) => this.present(row));
   }
 
@@ -114,8 +137,9 @@ export class SchedulesService {
     customerId: string,
     id: string,
     action: ScheduleAction,
+    principal?: AuthorizationPrincipal,
   ): Promise<RecurringScheduleContract> {
-    const schedule = await this.ownedSchedule(customerId, id);
+    const schedule = await this.ownedSchedule(customerId, id, principal);
     if (schedule.status === 'CANCELLED') {
       throw new ConflictException('This schedule was cancelled.');
     }
@@ -152,8 +176,9 @@ export class SchedulesService {
     customerId: string,
     id: string,
     now = new Date(),
+    principal?: AuthorizationPrincipal,
   ): Promise<{ booking: Booking; schedule: RecurringScheduleContract }> {
-    const schedule = await this.ownedSchedule(customerId, id);
+    const schedule = await this.ownedSchedule(customerId, id, principal);
     if (schedule.status !== 'ACTIVE') {
       throw new ConflictException(
         'Resume the schedule before confirming a visit.',
@@ -196,10 +221,21 @@ export class SchedulesService {
   private async ownedSchedule(
     customerId: string,
     id: string,
+    principal?: AuthorizationPrincipal,
   ): Promise<RecurringSchedule> {
     const schedule = await this.schedules.findOneBy({ id, customerId });
     if (!schedule) {
       throw new NotFoundException('Repeating schedule not found.');
+    }
+    // SEC-002: `findOneBy({ id, customerId })` already scopes the load, but the
+    // deferred obligation needs the real column compared, and both callers
+    // return a contract that hides it.
+    if (principal) {
+      assertOwnedResource(
+        principal,
+        schedule.customerId,
+        'recurringSchedule.customerId',
+      );
     }
     return schedule;
   }

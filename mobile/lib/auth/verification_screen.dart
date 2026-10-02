@@ -100,7 +100,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                   color: AppColors.primary,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.0,
-                  fontSize: 10,
+                  fontSize: 11,
                 ),
               ),
               Text(
@@ -168,7 +168,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                             color: AppColors.primary,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 1.0,
-                            fontSize: 10,
+                            fontSize: 11,
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -275,7 +275,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                                 'Auto-fill',
                                 style: TextStyle(
                                   color: Colors.white,
-                                  fontSize: 10,
+                                  fontSize: 11,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
@@ -428,7 +428,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                                   overflow: TextOverflow.ellipsis,
                                   style: FixNowTypography.caption.copyWith(
                                     color: AppColors.textSecondary,
-                                    fontSize: 10,
+                                    fontSize: 11,
                                   ),
                                 ),
                               ),
@@ -687,7 +687,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                                   'Enable Face ID / Fingerprint',
                                   style: FixNowTypography.caption.copyWith(
                                     color: AppColors.textSecondary,
-                                    fontSize: 10,
+                                    fontSize: 11,
                                   ),
                                 ),
                               ],
@@ -721,7 +721,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                     textAlign: TextAlign.center,
                     style: FixNowTypography.caption.copyWith(
                       color: AppColors.textSecondary,
-                      fontSize: 10,
+                      fontSize: 11,
                     ),
                   ),
                 ],

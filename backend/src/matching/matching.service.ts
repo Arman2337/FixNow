@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder } from 'typeorm';
 import { ProviderProfileEntity } from '../providers/provider-profile.entity';
 import { AccountStatus } from '../users/account-status';
 import { ProviderAvailabilityStatus } from '../../../shared/provider-availability.types';
+import { ObservabilityService } from '../observability/observability.service';
 
 export interface MatchedProvider {
   providerId: string;
@@ -58,6 +59,11 @@ export class MatchingService {
     @InjectRepository(ProviderProfileEntity)
     private readonly profileRepository: Repository<ProviderProfileEntity>,
     private readonly config?: ConfigService,
+    // `ObservabilityModule` is `@Global()`, so the running application always
+    // injects this; it is optional so a unit test can build the service without
+    // a metrics graph.
+    @Optional()
+    private readonly observability?: ObservabilityService,
   ) {}
 
   /**
@@ -193,16 +199,29 @@ export class MatchingService {
     serviceCategoryId: string,
     radiusMultiplier = 1,
   ): Promise<boolean> {
-    return (
-      (await this.countWhereEligible(
-        locationLat,
-        locationLng,
-        serviceCategoryId,
-        this.boundedRadius(radiusMultiplier),
-        'profile.user_id = :providerId',
-        { providerId },
-      )) > 0
-    );
+    // Observability. This predicate is a haversine evaluation across every
+    // skill-matching provider, so it is the single most expensive query on the
+    // accept path — and BUG-004 was precisely this query being called 200 times
+    // per request. Without a duration there is no way to see that regression
+    // coming back, because a slow query and a fast one both return `true`.
+    const startedAt = process.hrtime.bigint();
+    try {
+      return (
+        (await this.countWhereEligible(
+          locationLat,
+          locationLng,
+          serviceCategoryId,
+          this.boundedRadius(radiusMultiplier),
+          'profile.user_id = :providerId',
+          { providerId },
+        )) > 0
+      );
+    } finally {
+      this.observability?.observeMatching(
+        Number(process.hrtime.bigint() - startedAt) / 1e9,
+        'eligibility',
+      );
+    }
   }
 
   /**

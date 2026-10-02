@@ -197,7 +197,7 @@ class _Fix3DFlipCardState extends State<Fix3DFlipCard>
                   const Text(
                     'CARD HOLDER',
                     style: TextStyle(
-                      fontSize: 9,
+                      fontSize: 11,
                       letterSpacing: 0.8,
                       color: Colors.white60,
                       fontWeight: FontWeight.w700,
@@ -220,7 +220,7 @@ class _Fix3DFlipCardState extends State<Fix3DFlipCard>
                   const Text(
                     'EXPIRES',
                     style: TextStyle(
-                      fontSize: 9,
+                      fontSize: 11,
                       letterSpacing: 0.8,
                       color: Colors.white60,
                       fontWeight: FontWeight.w700,
@@ -279,7 +279,7 @@ class _Fix3DFlipCardState extends State<Fix3DFlipCard>
                 const Text(
                   'CVV / CVC',
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: 11,
                     color: Colors.white60,
                     fontWeight: FontWeight.bold,
                   ),
@@ -319,7 +319,7 @@ class _Fix3DFlipCardState extends State<Fix3DFlipCard>
                 Text(
                   'FixNow 256-Bit Escrow Vault Protected',
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: 11,
                     fontWeight: FontWeight.w600,
                     color: AppColors.success.withValues(alpha: 0.9),
                   ),

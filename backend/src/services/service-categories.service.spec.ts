@@ -38,6 +38,10 @@ describe('ServiceCategoriesService', () => {
     andWhere: jest.fn().mockReturnThis(),
     orderBy: jest.fn().mockReturnThis(),
     addOrderBy: jest.fn().mockReturnThis(),
+    // API-003: `findAll` now bounds the query with `take()`, so the mock has to
+    // answer it. Recording the argument also lets a test assert the bound is
+    // applied rather than merely present on the builder.
+    take: jest.fn().mockReturnThis(),
     getMany: jest.fn(),
   };
 

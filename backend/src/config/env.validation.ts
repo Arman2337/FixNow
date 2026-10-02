@@ -4,7 +4,9 @@ import {
   IsEnum,
   IsNumber,
   IsInt,
+  Matches,
   Max,
+  MaxLength,
   Min,
   IsOptional,
   IsString,
@@ -343,6 +345,138 @@ export class EnvironmentVariables {
   @Min(1)
   @Max(64)
   AI_MAX_CONCURRENT_MEDIA?: number;
+
+  /**
+   * SEC-013. The variables below were read straight from `process.env` in six
+   * places and never appeared in this class, which meant they bypassed every
+   * validator above: no type coercion, no bounds, no production rules. The
+   * scanner in particular read `CLAMAV_PORT` through `Number()` on whatever
+   * string arrived, so a typo produced `NaN` and a silently unreachable scanner
+   * rather than a named configuration error.
+   *
+   * Declaring them here is what makes them real inputs. `validate()` then also
+   * runs `assertNoUndeclaredEnvironment`, which fails the boot when the process
+   * holds a variable this class does not declare — that is what stops the next
+   * `process.env.X ?? 'default'` from reappearing unnoticed.
+   */
+
+  /** ClamAV daemon. Malware scanning fails closed, so a wrong host is fatal. */
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  CLAMAV_HOST?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(65535)
+  CLAMAV_PORT?: number;
+
+  /** Private bucket holding provider identity documents. */
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  PROVIDER_DOCUMENT_BUCKET?: string;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  PROVIDER_DOCUMENT_S3_REGION?: string;
+
+  /** How long a quarantined document is retained before deletion. */
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(3650)
+  PROVIDER_DOCUMENT_RETENTION_DAYS?: number;
+
+  /**
+   * The UTC hour range notifications are held back, as `start-end`
+   * (for example `22-7` for 10pm to 7am). Read as a string and parsed by a
+   * regex because it is a range, not a duration.
+   */
+  @IsOptional()
+  @IsString()
+  @Matches(/^\s*\d{1,2}\s*-\s*\d{1,2}\s*$/, {
+    message: 'NOTIFICATION_QUIET_HOURS_UTC must look like "22-7"',
+  })
+  NOTIFICATION_QUIET_HOURS_UTC?: string;
+
+  /**
+   * Operational intervals.
+   *
+   * These were each read through a `positiveEnv('KEY', fallback)` helper that
+   * indexed `process.env` with a literal, so no validator ever saw them: a typo
+   * in the key silently used the fallback, and a non-numeric value silently used
+   * the fallback too. `scripts/check-env-declarations.ts` now resolves those call
+   * sites against this class, which is what makes a typo in a key name a build
+   * failure rather than a quiet default.
+   *
+   * They stay read from `process.env` at module scope because each backs a
+   * module-level `setInterval` constant that is created during import — before
+   * the DI graph exists and long before `validate()` runs. Declaring them here is
+   * what makes them bounded and documented; the values are still read early.
+   */
+
+  /** How long a REQUESTED booking waits for a provider before expiring. */
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(86_400)
+  REQUESTED_BOOKING_EXPIRY_SECONDS?: number;
+
+  /** How often the emergency/booking sweeper runs. */
+  @IsOptional()
+  @IsInt()
+  @Min(1_000)
+  @Max(600_000)
+  NOTIFICATION_REMINDER_INTERVAL_MS?: number;
+
+  /** How far ahead of the appointment a reminder is sent. */
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(1_440)
+  NOTIFICATION_REMINDER_LEAD_MINUTES?: number;
+
+  /** Outbox drain cadence. */
+  @IsOptional()
+  @IsInt()
+  @Min(100)
+  @Max(60_000)
+  OUTBOX_DRAIN_INTERVAL_MS?: number;
+
+  /** Redis dependency health-probe cadence. */
+  @IsOptional()
+  @IsInt()
+  @Min(1_000)
+  @Max(600_000)
+  REDIS_HEALTH_INTERVAL_MS?: number;
+
+  /**
+   * Where unexpected errors are reported, as a Sentry DSN.
+   *
+   * Optional and off by default, because the structured log is already
+   * authoritative and a third-party default would export data nobody chose to
+   * export. When set, only the fields in `ErrorReport` are sent: no request body,
+   * no headers, no customer object. That restriction is what makes it acceptable
+   * to send anything at all.
+   */
+  @IsOptional()
+  @IsString()
+  @MinLength(8)
+  ERROR_REPORTING_DSN?: string;
+
+  /**
+   * A build identifier attached to every error report, so a spike can be
+   * attributed to a deploy rather than to "recently". Left unset rather than
+   * derived from a timestamp, because a value that changes on every process
+   * start would make every report look like a different release.
+   */
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  APP_RELEASE?: string;
 }
 
 export function validate(config: Record<string, unknown>) {
@@ -374,6 +508,44 @@ export function validate(config: Record<string, unknown>) {
   }
   return validatedConfig;
 }
+
+/**
+ * SEC-013. The list of variables the source is allowed to read outside this
+ * class.
+ *
+ * The six variables this replaced were each read as `process.env.X ?? 'default'`
+ * in one file, which meant they were never type-coerced, never bounded, and never
+ * subject to a production rule. `CLAMAV_PORT` was the sharpest case: it went
+ * through `Number()` on whatever string arrived, so a typo became `NaN` and a
+ * silently unreachable malware scanner on a path that is supposed to fail
+ * closed.
+ *
+ * Two of these still read `process.env` directly rather than going through
+ * `ConfigService`, because they are constructed outside the DI graph:
+ * `S3PrivateObjectStorage` builds its `S3Client` in a field initialiser, and the
+ * storage access keys are deliberately never held on the validated config object
+ * so they cannot leak into a log line or a `/health` payload. Declaring them here
+ * is what makes them reviewed inputs; `scripts/check-env-declarations.ts` fails
+ * the build on any *new* direct read.
+ *
+ * Note this is deliberately not a runtime assertion over `process.env`. That
+ * would reject every ambient variable on the host — a developer's shell, the CI
+ * runner, the container platform — none of which is this service's configuration.
+ * The property worth enforcing is that every variable the *code* reads is
+ * declared, and that is a question about the source, not the environment.
+ */
+export const DIRECT_ENV_READS_ALLOWED: ReadonlySet<string> = new Set([
+  // `S3PrivateObjectStorage` builds its `S3Client` in a field initialiser, which
+  // runs during instantiation — before any method can receive `ConfigService`.
+  // The keys are deliberately never placed on the validated config object, so
+  // they cannot appear in a log line or a `/health` payload.
+  'PROVIDER_DOCUMENT_S3_ACCESS_KEY',
+  'PROVIDER_DOCUMENT_S3_SECRET_KEY',
+  // The integration suite's own database. Not runtime configuration: it exists
+  // only so the specs can point at the disposable database they TRUNCATE, and
+  // `assertIsolatedTestDatabase` refuses anything that is not loopback:55432.
+  'TEST_DATABASE_URL',
+]);
 
 function validateAiConfiguration(config: EnvironmentVariables): void {
   if (

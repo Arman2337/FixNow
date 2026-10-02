@@ -422,7 +422,7 @@ class _InvoiceView extends StatelessWidget {
                   child: const Text(
                     'SAC 9987 • 18% GST',
                     style: TextStyle(
-                      fontSize: 10,
+                      fontSize: 11,
                       fontWeight: FontWeight.w700,
                       color: AppColors.primary,
                     ),

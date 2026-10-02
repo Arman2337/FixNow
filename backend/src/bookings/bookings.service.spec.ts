@@ -93,6 +93,8 @@ describe('BookingsService', () => {
   let bookingSave: jest.Mock;
   let eventSave: jest.Mock;
   let orderExist: jest.Mock;
+  /** BUG-010: records the `FOR UPDATE` the pricing paths take on the booking. */
+  let bookingLockTaken: jest.Mock;
   let capacity: jest.Mocked<ProviderCapacityService>;
   const capacityAssert = jest.fn().mockResolvedValue(undefined);
   const capacitySync = jest.fn().mockResolvedValue(undefined);
@@ -160,6 +162,31 @@ describe('BookingsService', () => {
     const subServiceRepository = {
       findBy: subServiceFindBy,
     } as unknown as jest.Mocked<Repository<SubServiceEntity>>;
+    // BUG-010: the pricing paths now take `SELECT ... FOR UPDATE` on the
+    // booking row before checking for a payment order, so the mock repository
+    // has to answer a locking read. `setLock` is recorded so the tests below
+    // can assert the lock is actually requested.
+    bookingLockTaken = jest.fn();
+    const lockableQuery: {
+      select: jest.Mock;
+      where: jest.Mock;
+      getOne: jest.Mock;
+      setLock: jest.Mock;
+    } = {
+      select: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue({ id: 'locked-booking' }),
+      setLock: jest.fn(),
+    };
+    lockableQuery.setLock.mockImplementation((mode: string) => {
+      bookingLockTaken(mode);
+      return lockableQuery;
+    });
+    (
+      bookingRepository as unknown as { createQueryBuilder: jest.Mock }
+    ).createQueryBuilder.mockImplementation((alias?: string) =>
+      alias === 'booking' ? lockableQuery : (lockableQuery as never),
+    );
     manager = {
       getRepository: jest.fn((entity: unknown) => {
         if (entity === Booking) return bookingRepository;
@@ -568,8 +595,33 @@ describe('BookingsService', () => {
       where: jest.fn().mockReturnThis(),
       execute: jest.fn().mockResolvedValue({ affected: 1 }),
     };
-    (bookingRepository.createQueryBuilder as jest.Mock).mockReturnValue(
-      builder,
+    // BUG-010: the same `createQueryBuilder` also serves the pricing path's
+    // `SELECT ... FOR UPDATE` on the booking row, which has to be answerable in
+    // the same mock. Dispatching on the alias keeps both honest — a single
+    // `mockReturnValue` would silently satisfy whichever call happened first and
+    // hide the fact that one of them is unimplemented.
+    (bookingRepository.createQueryBuilder as jest.Mock).mockImplementation(
+      (alias?: string) => {
+        if (alias === 'booking') {
+          const lockQuery: {
+            select: jest.Mock;
+            where: jest.Mock;
+            getOne: jest.Mock;
+            setLock: jest.Mock;
+          } = {
+            select: jest.fn().mockReturnThis(),
+            where: jest.fn().mockReturnThis(),
+            getOne: jest.fn().mockResolvedValue({ id: 'locked-booking' }),
+            setLock: jest.fn(),
+          };
+          lockQuery.setLock.mockImplementation((mode: string) => {
+            bookingLockTaken(mode);
+            return lockQuery;
+          });
+          return lockQuery;
+        }
+        return builder;
+      },
     );
     (bookingRepository.findOneByOrFail as jest.Mock).mockResolvedValue(updated);
     return builder;

@@ -120,7 +120,7 @@ class _CustomerHelpScreenState extends State<CustomerHelpScreen> {
                       child: const Text(
                         'VERIFIED',
                         style: TextStyle(
-                          fontSize: 9,
+                          fontSize: 11,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 0.5,
                           color: AppColors.onPrimaryFixed,
@@ -938,7 +938,7 @@ class _CustomerHelpScreenState extends State<CustomerHelpScreen> {
                     'ISO 27001 Certified • Escrow protection powered by RBI-regulated banking partners',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 10,
+                      fontSize: 11,
                       color: AppColors.textSecondary.withValues(alpha: 0.7),
                     ),
                   ),
@@ -1061,7 +1061,7 @@ class _QuickActionTile extends StatelessWidget {
                             child: Text(
                               tag,
                               style: TextStyle(
-                                fontSize: 10,
+                                fontSize: 11,
                                 fontWeight: FontWeight.w700,
                                 color: baseColor,
                               ),

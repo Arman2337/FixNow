@@ -40,8 +40,14 @@ export class BookingMessagesController {
     @Req() req: AuthorizedRequest,
     @Param('id') bookingId: string,
   ): Promise<BookingMessagesListResponse> {
-    const userId = req.authorizationPrincipal!.userId;
-    return this.messagesService.listMessages(bookingId, userId);
+    const principal = req.authorizationPrincipal!;
+    // SEC-002: discharged in the service — the response is a message list, not
+    // the booking, so the controller has no party column to compare.
+    return this.messagesService.listMessages(
+      bookingId,
+      principal.userId,
+      principal,
+    );
   }
 
   @Post()
@@ -52,7 +58,12 @@ export class BookingMessagesController {
     @Param('id') bookingId: string,
     @Body() dto: SendBookingMessageBodyDto,
   ): Promise<BookingMessageDto> {
-    const userId = req.authorizationPrincipal!.userId;
-    return this.messagesService.sendMessage(bookingId, userId, dto);
+    const principal = req.authorizationPrincipal!;
+    return this.messagesService.sendMessage(
+      bookingId,
+      principal.userId,
+      dto,
+      principal,
+    );
   }
 }

@@ -22,6 +22,8 @@ import {
 import { TrustService } from '../trust/trust.service';
 import { OutboxService } from '../outbox/outbox.service';
 import { runBounded } from '../common/run-bounded';
+import type { AuthorizationPrincipal } from '../common/authorization/authorization.types';
+import { assertOwnedByParty } from '../common/authorization/resource-ownership';
 import { EmergencyDispatch } from './emergency-dispatch.entity';
 import {
   EMERGENCY_FALLBACK_GUIDANCE,
@@ -241,10 +243,16 @@ export class EmergencyService implements OnModuleInit, OnModuleDestroy {
   }
 
   /** Participant-visible dispatch state (FR-EMG-004 honest outcomes). */
+  /**
+   * @param principal the authenticated caller, so the SEC-002 ownership
+   *   obligation raised by `GET /emergency/requests/:bookingId` is discharged
+   *   here: the result names the booking but not its parties.
+   */
   async getStatus(
     bookingId: string,
-    requesterId: string,
+    principal: AuthorizationPrincipal,
   ): Promise<EmergencyStatusResult> {
+    const requesterId = principal.userId;
     const booking = await this.dataSource
       .getRepository(Booking)
       .findOneBy({ id: bookingId });
@@ -255,6 +263,7 @@ export class EmergencyService implements OnModuleInit, OnModuleDestroy {
     ) {
       throw new NotFoundException('Emergency request not found');
     }
+    assertOwnedByParty(principal, booking.customerId, booking.providerId);
 
     const dispatch = await this.dataSource
       .getRepository(EmergencyDispatch)

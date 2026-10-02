@@ -31,6 +31,11 @@ import type {
   VerifyCheckoutParams,
 } from '../../../shared/payments.types';
 import { TrustService } from '../trust/trust.service';
+import type { AuthorizationPrincipal } from '../common/authorization/authorization.types';
+import {
+  assertAssignedResource,
+  assertOwnedResource,
+} from '../common/authorization/resource-ownership';
 
 /** Booking states for which the customer may open a payment. */
 const PAYABLE_BOOKING_STATUSES: readonly string[] = [BookingStatus.COMPLETED];
@@ -53,6 +58,7 @@ export class PaymentsService {
   async createForBooking(
     customerId: string,
     bookingId: string,
+    principal?: AuthorizationPrincipal,
   ): Promise<PaymentOrderContract> {
     const booking = await this.dataSource
       .getRepository(Booking)
@@ -60,14 +66,23 @@ export class PaymentsService {
     if (!booking || booking.customerId !== customerId) {
       throw new NotFoundException('Booking not found');
     }
+    // SEC-002: the projected contract omits the owner, so discharge here.
+    if (principal) {
+      assertOwnedResource(principal, booking.customerId, 'booking.customerId');
+    }
     if (!PAYABLE_BOOKING_STATUSES.includes(booking.status)) {
       throw new ConflictException(
         'This booking can no longer accept a new payment',
       );
     }
     const receipt = `booking:${booking.id}`;
-    const existing = await this.orders.findOneBy({ receipt });
-    if (existing) return this.present(existing);
+
+    // A replay of an existing order must not call the gateway again, so this
+    // cheap unlocked check runs first purely to short-circuit. It is an
+    // optimisation, not the guarantee — the authoritative check is inside the
+    // transaction below, which also catches a concurrent first request.
+    const replayed = await this.orders.findOneBy({ receipt });
+    if (replayed) return this.present(replayed);
 
     const category = await this.dataSource
       .getRepository(ServiceCategoryEntity)
@@ -95,11 +110,68 @@ export class PaymentsService {
       receipt,
       notes: { bookingId: booking.id },
     };
+
     const gatewayOrder = await this.gateway.createOrder(input);
-    try {
-      const saved = await this.orders.save(
-        this.orders.create({
-          bookingId: booking.id,
+
+    // BUG-010. This decision has to be inside a transaction, because this is
+    // what races a provider price rewrite:
+    //
+    //   lock the booking row FOR UPDATE   (both writers contend here)
+    //   re-read the booking's total       (may have moved while we waited)
+    //   INSERT the order
+    //
+    // The booking row is the lock target rather than the payment orders, because
+    // in the common case there is no order yet and a predicate that matches
+    // nothing locks nothing. `createForBooking` and both pricing paths now take
+    // the same `FOR UPDATE` on the same booking, so the two cannot interleave:
+    // if we go first the rewrite blocks and then sees this order and refuses; if
+    // the rewrite goes first our re-read observes its new total.
+    //
+    // The gateway call is deliberately *outside* this transaction: it is an
+    // external HTTPS round trip and must never be made while holding a row lock.
+    // The cost of that ordering is one orphaned gateway order in the rare case
+    // a rewrite lands in between — harmless, since an order that is never
+    // captured moves no money — versus holding a lock across a network call,
+    // which stalls the pricing path for as long as the gateway takes.
+    //
+    // Getting this wrong is not a recoverable state: a captured payment whose
+    // amount no longer matches the booking fails permanently with
+    // `payment.captured.amount_mismatch`, and no reconciliation path exists.
+    return this.dataSource.transaction(async (manager) => {
+      const lockedBooking = await manager
+        .getRepository(Booking)
+        .createQueryBuilder('booking')
+        .setLock('pessimistic_write')
+        .where('booking.id = :bookingId', { bookingId })
+        .getOne();
+      if (!lockedBooking || lockedBooking.customerId !== customerId) {
+        throw new NotFoundException('Booking not found');
+      }
+      if (!PAYABLE_BOOKING_STATUSES.includes(lockedBooking.status)) {
+        throw new ConflictException(
+          'This booking can no longer accept a new payment',
+        );
+      }
+
+      const existing = await manager
+        .getRepository(PaymentOrder)
+        .findOneBy({ receipt });
+      if (existing) return this.present(existing);
+
+      const lockedTotal =
+        lockedBooking.totalAmountMinor ?? category?.priceAmount ?? 0;
+      if (lockedTotal !== totalMinor) {
+        // A rewrite committed while this transaction waited for the lock, and
+        // the gateway has already been asked for the old amount. Rather than
+        // create an order that could never be captured, say so plainly.
+        throw new ConflictException(
+          'The price of this booking changed. Please start payment again.',
+        );
+      }
+
+      const saved = await manager.getRepository(PaymentOrder).save(
+        manager.getRepository(PaymentOrder).create({
+          bookingId,
           customerId,
           amountMinor: gatewayOrder.amountMinor,
           currency: gatewayOrder.currency,
@@ -115,13 +187,7 @@ export class PaymentsService {
         createHash('sha256').update(receipt).digest('hex'),
       );
       return this.present(saved);
-    } catch (error: unknown) {
-      if (this.isUniqueViolation(error)) {
-        const raced = await this.orders.findOneBy({ receipt });
-        if (raced) return this.present(raced);
-      }
-      throw error;
-    }
+    });
   }
 
   /** Customer-side Checkout handshake verification (webhook stays authoritative). */
@@ -129,8 +195,9 @@ export class PaymentsService {
     customerId: string,
     orderId: string,
     params: Omit<VerifyCheckoutParams, 'gatewayOrderId'>,
+    principal?: AuthorizationPrincipal,
   ): Promise<PaymentOrderContract> {
-    const order = await this.ownedOrder(customerId, orderId);
+    const order = await this.ownedOrder(customerId, orderId, principal);
     if (order.status !== PaymentOrderStatus.CREATED) {
       throw new ConflictException('This payment was already finalised');
     }
@@ -228,12 +295,18 @@ export class PaymentsService {
   async getForBooking(
     customerId: string,
     bookingId: string,
+    principal?: AuthorizationPrincipal,
   ): Promise<PaymentOrderContract | null> {
     const booking = await this.dataSource
       .getRepository(Booking)
       .findOneBy({ id: bookingId });
     if (!booking || booking.customerId !== customerId) {
       throw new NotFoundException('Booking not found');
+    }
+    // SEC-002: may resolve to `null` (nothing ordered yet), so the controller
+    // has no contract row to compare — discharge against the booking instead.
+    if (principal) {
+      assertOwnedResource(principal, booking.customerId, 'booking.customerId');
     }
     const order = await this.orders.findOneBy({
       receipt: `booking:${bookingId}`,
@@ -303,6 +376,7 @@ export class PaymentsService {
   async getInvoice(
     customerId: string,
     orderId: string,
+    principal?: AuthorizationPrincipal,
   ): Promise<{
     invoiceNumber: string;
     issuedAt: string;
@@ -310,7 +384,7 @@ export class PaymentsService {
     currency: string;
     status: string;
   }> {
-    const order = await this.ownedOrder(customerId, orderId);
+    const order = await this.ownedOrder(customerId, orderId, principal);
     if (order.status !== PaymentOrderStatus.PAID) {
       throw new ConflictException('Invoices exist only for paid payments');
     }
@@ -560,14 +634,32 @@ export class PaymentsService {
   }
 
   /**
-   * Whether the caller's booking has a PAID payment order. The join on
-   * provider_id scopes the answer to bookings the caller is assigned to;
-   * anything else reads as unpaid.
+   * Whether the caller's booking has a PAID payment order.
+   *
+   * SEC-002. The join on `provider_id` previously *scoped* the answer but did
+   * not reject a foreign booking id: it answered `{ paid: false }` for a job
+   * the caller was not on, which is a (small) existence oracle for booking ids.
+   * The booking is now loaded and checked outright, and the obligation is
+   * discharged against its assignment column.
    */
   async providerBookingPaymentStatus(
     providerId: string,
     bookingId: string,
+    principal?: AuthorizationPrincipal,
   ): Promise<{ bookingId: string; paid: boolean }> {
+    const booking = await this.dataSource
+      .getRepository(Booking)
+      .findOneBy({ id: bookingId });
+    if (!booking || booking.providerId !== providerId) {
+      throw new NotFoundException('Booking not found');
+    }
+    if (principal) {
+      assertAssignedResource(
+        principal,
+        booking.providerId,
+        'booking.providerId',
+      );
+    }
     const rows = await this.dataSource.query<Array<{ status?: string }>>(
       `SELECT o.status
        FROM payment_orders o
@@ -627,9 +719,19 @@ export class PaymentsService {
   private async ownedOrder(
     customerId: string,
     orderId: string,
+    principal?: AuthorizationPrincipal,
   ): Promise<PaymentOrder> {
     const order = await this.orders.findOneBy({ id: orderId, customerId });
     if (!order) throw new NotFoundException('Payment order not found');
+    // SEC-002: both callers project a contract with no owner column, so the
+    // comparison has to happen on the stored order.
+    if (principal) {
+      assertOwnedResource(
+        principal,
+        order.customerId,
+        'paymentOrder.customerId',
+      );
+    }
     return order;
   }
 

@@ -141,7 +141,7 @@ class FixJourneyProgressLine extends StatelessWidget {
                       Text(
                         stages[i].label,
                         style: TextStyle(
-                          fontSize: 10,
+                          fontSize: 11,
                           fontWeight: i == activeIndex
                               ? FontWeight.w700
                               : FontWeight.w500,

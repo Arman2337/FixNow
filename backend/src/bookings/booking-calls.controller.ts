@@ -11,6 +11,7 @@ import { BookingCallsService } from './booking-calls.service';
 import { RequireOwnPermission } from '../common/authorization/authorization.decorators';
 import { PERMISSIONS } from '../common/authorization/permission-policies';
 import type { AuthorizedRequest } from '../common/authorization/authorization.guard';
+import { assertOwnedByParty } from '../common/authorization/resource-ownership';
 import type {
   BookingCallDto,
   InitiateCallResponse,
@@ -27,8 +28,14 @@ export class BookingCallsController {
     @Req() req: AuthorizedRequest,
     @Param('id') bookingId: string,
   ): Promise<BookingCallDto | null> {
-    const userId = req.authorizationPrincipal!.userId;
-    return this.callsService.getActiveCall(bookingId, userId);
+    const principal = req.authorizationPrincipal!;
+    // SEC-002: may answer `null` (no live call), so the service discharges the
+    // obligation against the booking it just proved is the caller's.
+    return this.callsService.getActiveCall(
+      bookingId,
+      principal.userId,
+      principal,
+    );
   }
 
   @Post('initiate')
@@ -38,8 +45,12 @@ export class BookingCallsController {
     @Req() req: AuthorizedRequest,
     @Param('id') bookingId: string,
   ): Promise<InitiateCallResponse> {
-    const userId = req.authorizationPrincipal!.userId;
-    return this.callsService.initiateCall(bookingId, userId);
+    const principal = req.authorizationPrincipal!;
+    return this.callsService.initiateCall(
+      bookingId,
+      principal.userId,
+      principal,
+    );
   }
 
   @Post(':callId/answer')
@@ -50,8 +61,16 @@ export class BookingCallsController {
     @Param('id') bookingId: string,
     @Param('callId') callId: string,
   ): Promise<BookingCallDto> {
-    const userId = req.authorizationPrincipal!.userId;
-    return this.callsService.answerCall(bookingId, callId, userId);
+    const principal = req.authorizationPrincipal!;
+    const call = await this.callsService.answerCall(
+      bookingId,
+      callId,
+      principal.userId,
+    );
+    // SEC-002: the service loaded the call scoped to this booking and only the
+    // callee may answer it. Its two endpoints are the booking's two parties.
+    assertOwnedByParty(principal, call.calleeUserId, call.callerUserId);
+    return call;
   }
 
   @Post(':callId/reject')
@@ -62,8 +81,14 @@ export class BookingCallsController {
     @Param('id') bookingId: string,
     @Param('callId') callId: string,
   ): Promise<BookingCallDto> {
-    const userId = req.authorizationPrincipal!.userId;
-    return this.callsService.rejectCall(bookingId, callId, userId);
+    const principal = req.authorizationPrincipal!;
+    const call = await this.callsService.rejectCall(
+      bookingId,
+      callId,
+      principal.userId,
+    );
+    assertOwnedByParty(principal, call.calleeUserId, call.callerUserId);
+    return call;
   }
 
   @Post(':callId/hangup')
@@ -74,7 +99,13 @@ export class BookingCallsController {
     @Param('id') bookingId: string,
     @Param('callId') callId: string,
   ): Promise<BookingCallDto> {
-    const userId = req.authorizationPrincipal!.userId;
-    return this.callsService.hangupCall(bookingId, callId, userId);
+    const principal = req.authorizationPrincipal!;
+    const call = await this.callsService.hangupCall(
+      bookingId,
+      callId,
+      principal.userId,
+    );
+    assertOwnedByParty(principal, call.calleeUserId, call.callerUserId);
+    return call;
   }
 }

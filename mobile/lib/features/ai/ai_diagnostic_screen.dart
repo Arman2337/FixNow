@@ -284,7 +284,7 @@ class _AiDiagnosticScreenState extends State<AiDiagnosticScreen> {
                                 child: const Text(
                                   'Defect Node #1',
                                   style: TextStyle(
-                                    fontSize: 10,
+                                    fontSize: 11,
                                     fontWeight: FontWeight.w700,
                                     color: AppColors.onPrimary,
                                   ),
@@ -305,7 +305,7 @@ class _AiDiagnosticScreenState extends State<AiDiagnosticScreen> {
                               child: const Text(
                                 '98.4%',
                                 style: TextStyle(
-                                  fontSize: 10,
+                                  fontSize: 11,
                                   fontWeight: FontWeight.w700,
                                   color: AppColors.primaryFixed,
                                 ),
@@ -328,7 +328,7 @@ class _AiDiagnosticScreenState extends State<AiDiagnosticScreen> {
                               child: const Text(
                                 'High Urgency',
                                 style: TextStyle(
-                                  fontSize: 9,
+                                  fontSize: 11,
                                   fontWeight: FontWeight.w700,
                                   color: AppColors.onError,
                                 ),
@@ -368,7 +368,7 @@ class _AiDiagnosticScreenState extends State<AiDiagnosticScreen> {
                         const Text(
                           'CLASSIFIER v4.2 • 60 FPS',
                           style: TextStyle(
-                            fontSize: 10,
+                            fontSize: 11,
                             fontWeight: FontWeight.w600,
                             color: AppColors.textOnDarkPrimary,
                           ),
@@ -416,7 +416,7 @@ class _AiDiagnosticScreenState extends State<AiDiagnosticScreen> {
                           Text(
                             'Thread Leakage Detected',
                             style: TextStyle(
-                              fontSize: 10,
+                              fontSize: 11,
                               color: Colors.white70,
                             ),
                           ),
@@ -482,7 +482,7 @@ class _AiDiagnosticScreenState extends State<AiDiagnosticScreen> {
                       Text(
                         'Under-sink socket proximity checked. Isolated shut-off recommended.',
                         style: TextStyle(
-                          fontSize: 10,
+                          fontSize: 11,
                           color: AppColors.textSecondary,
                         ),
                       ),
@@ -536,7 +536,7 @@ class _AiDiagnosticScreenState extends State<AiDiagnosticScreen> {
                         const Text(
                           '4.2 kHz',
                           style: TextStyle(
-                            fontSize: 10,
+                            fontSize: 11,
                             color: AppColors.textSecondary,
                           ),
                         ),
@@ -554,7 +554,7 @@ class _AiDiagnosticScreenState extends State<AiDiagnosticScreen> {
                       child: const Text(
                         'Normal Pressure',
                         style: TextStyle(
-                          fontSize: 9,
+                          fontSize: 11,
                           fontWeight: FontWeight.w700,
                           color: AppColors.primary,
                         ),
@@ -620,14 +620,14 @@ class _AiDiagnosticScreenState extends State<AiDiagnosticScreen> {
                     Text(
                       'Continuous drip hiss without pipe hammer',
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 11,
                         color: AppColors.textSecondary,
                       ),
                     ),
                     Text(
                       '00:04 / 00:10',
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 11,
                         fontWeight: FontWeight.w600,
                         color: AppColors.primary,
                       ),
@@ -673,7 +673,7 @@ class _AiDiagnosticScreenState extends State<AiDiagnosticScreen> {
                       child: const Text(
                         'FixNow Escrow Protected',
                         style: TextStyle(
-                          fontSize: 9,
+                          fontSize: 11,
                           fontWeight: FontWeight.w700,
                           color: AppColors.primary,
                         ),
@@ -722,14 +722,14 @@ class _AiDiagnosticScreenState extends State<AiDiagnosticScreen> {
                     Text(
                       'Standard Labor (₹299)',
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 11,
                         color: AppColors.textSecondary,
                       ),
                     ),
                     Text(
                       'Spares Est. (₹50–200)',
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 11,
                         color: AppColors.textSecondary,
                       ),
                     ),
@@ -793,7 +793,7 @@ class _AiDiagnosticScreenState extends State<AiDiagnosticScreen> {
                         ),
                         Text(
                           'Dispatches nearest certified technician',
-                          style: TextStyle(fontSize: 10, color: Colors.white70),
+                          style: TextStyle(fontSize: 11, color: Colors.white70),
                         ),
                       ],
                     ),

@@ -55,13 +55,178 @@ export function assertAllowedImage(
   }
 }
 
+/**
+ * SEC-014. Audio is now sniffed, not just trusted.
+ *
+ * The previous comment was honest that audio containers are "too varied to sniff
+ * reliably" — which is true of *decoding* them and irrelevant to identifying
+ * them. Every container in the allow-list starts with a fixed byte signature,
+ * and checking those is not the same task as parsing an MP3 frame. Declaring
+ * `audio/mpeg` while sending a ZIP, an ELF binary or a PDF is exactly the
+ * disguise the image path already rejects, and it was the one gap left in a
+ * control that otherwise exists: the client controls both the bytes and the
+ * declared type, so mime alone proves nothing.
+ *
+ * Sniffing is deliberately a prefix check rather than a full parse. A
+ * conservative matcher that identifies the common case and refuses the rest is
+ * the right trade here — an unrecognised container is rejected rather than
+ * forwarded, so adding a format later is a one-line allow-list change and never a
+ * security change.
+ */
 export function assertAllowedAudio(
   media: MediaPayload,
   maxBytes: number,
 ): void {
-  // Audio containers are too varied to sniff reliably; mime + size + non-empty
-  // is the bound here. Whisper itself rejects genuinely undecodable audio.
-  assertAllowedMedia(media, ALLOWED_AUDIO_MIME_TYPES, maxBytes);
+  const declared = assertAllowedMedia(
+    media,
+    ALLOWED_AUDIO_MIME_TYPES,
+    maxBytes,
+  );
+  const sniffed = sniffAudioContainer(media.bytes);
+  // `null` means the container was not recognised, which is a rejection, not a
+  // pass: forwarding an unidentifiable payload to a paid provider is how a
+  // binary ends up being billed as a voice transcription.
+  if (sniffed === null || !AUDIBLE_CONTAINERS[declared]?.includes(sniffed)) {
+    throw new AiError('INPUT_REJECTED');
+  }
+}
+
+/**
+ * Container signatures for the audio types in the allow-list.
+ *
+ * Keyed by the *declared* mime so a payload claiming to be one format while
+ * carrying another is rejected, the same way the image path requires the
+ * sniffed type to equal the declared one.
+ */
+const AUDIBLE_CONTAINERS: Readonly<Record<string, readonly AudioContainer[]>> =
+  {
+    'audio/mpeg': ['mp3', 'mp3-id3'],
+    'audio/mp3': ['mp3', 'mp3-id3'],
+    'audio/mp4': ['mp4'],
+    'audio/m4a': ['mp4'],
+    'audio/x-m4a': ['mp4'],
+    'audio/wav': ['wav', 'riff-wave'],
+    'audio/x-wav': ['wav', 'riff-wave'],
+    'audio/webm': ['webm'],
+    'audio/ogg': ['ogg'],
+    'audio/flac': ['flac'],
+    'audio/aac': ['adts-aac', 'mp4'],
+  };
+
+export type AudioContainer =
+  | 'mp3'
+  | 'mp3-id3'
+  | 'mp4'
+  | 'wav'
+  | 'riff-wave'
+  | 'webm'
+  | 'ogg'
+  | 'flac'
+  | 'adts-aac';
+
+/**
+ * How many leading bytes identify each container.
+ *
+ * Exported so the deterministic provider can skip the signature it recognises
+ * without re-deriving it, keeping the two in step.
+ */
+export const AUDIO_CONTAINER_HEADER_BYTES: Readonly<
+  Record<AudioContainer, number>
+> = {
+  // A 4-byte MPEG frame header; the ID3 variant is a 10-byte tag.
+  mp3: 4,
+  'mp3-id3': 10,
+  // `....ftyp` + the brand, i.e. up to and including `ftypM4A `.
+  mp4: 12,
+  // `RIFF` + size + `WAVE` is a complete 12-byte container header.
+  wav: 12,
+  // Recognised only as "some RIFF container"; the size field is not fixed.
+  'riff-wave': 12,
+  // EBML header through the doctype. Short enough to cover `webm`.
+  webm: 14,
+  // `OggS` page header through the codec identifier.
+  ogg: 28,
+  // `fLaC` plus the metadata-block header.
+  flac: 8,
+  // A two-byte ADTS sync word is enough to identify raw AAC frames.
+  'adts-aac': 2,
+};
+
+/**
+ * Identify the audio container from its leading bytes.
+ *
+ * Returns `null` for anything unrecognised, which callers treat as a rejection.
+ */
+export function sniffAudioContainer(bytes: Buffer): AudioContainer | null {
+  if (!Buffer.isBuffer(bytes) || bytes.length < 4) return null;
+
+  // ISO base media (MP4 / M4A): `....ftyp`
+  if (bytes.length >= 12 && bytes.toString('ascii', 4, 8) === 'ftyp') {
+    return 'mp4';
+  }
+  // Matroska / WebM. The DocType is checked rather than just the EBML magic,
+  // because MKV video is not audio and would otherwise satisfy the check.
+  if (
+    bytes.length >= 4 &&
+    bytes[0] === 0x1a &&
+    bytes[1] === 0x45 &&
+    bytes[2] === 0xdf &&
+    bytes[3] === 0xa3
+  ) {
+    const docType = readAscii(bytes, 4, Math.min(bytes.length, 40));
+    if (docType.includes('webm')) return 'webm';
+    return null;
+  }
+  // OggS, then the codec within the first page.
+  if (bytes.length >= 4 && bytes.toString('ascii', 0, 4) === 'OggS') {
+    const head = readAscii(bytes, 0, Math.min(bytes.length, 64));
+    if (head.includes('OpusHead') || head.includes('vorbis')) return 'ogg';
+    return null;
+  }
+  // fLaC
+  if (bytes.length >= 4 && bytes.toString('ascii', 0, 4) === 'fLaC') {
+    return 'flac';
+  }
+  // RIFF container: distinguish WAVE from anything else (AVI, WEBP, ...).
+  if (
+    bytes.length >= 12 &&
+    bytes.toString('ascii', 0, 4) === 'RIFF' &&
+    bytes.toString('ascii', 8, 12) === 'WAVE'
+  ) {
+    return 'wav';
+  }
+  if (bytes.length >= 12 && bytes.toString('ascii', 0, 4) === 'RIFF') {
+    return 'riff-wave';
+  }
+  // ID3 tag precedes MPEG audio frames.
+  if (bytes.toString('ascii', 0, 3) === 'ID3') return 'mp3-id3';
+  // ADTS raw AAC frames: 12 sync bits, layer bits must be zero.
+  if (
+    bytes.length >= 2 &&
+    (bytes[0] & 0xff) === 0xff &&
+    (bytes[1] & 0xf0) === 0xf0
+  ) {
+    const layer = (bytes[1] >> 1) & 0x03;
+    if (layer === 0) return 'adts-aac';
+  }
+  // MPEG audio frame sync: 11 set bits, then a non-reserved layer and bitrate.
+  if (
+    bytes.length >= 2 &&
+    (bytes[0] & 0xff) === 0xff &&
+    (bytes[1] & 0xe0) === 0xe0
+  ) {
+    const layer = (bytes[1] >> 1) & 0x03;
+    const bitrate = (bytes[2] >> 4) & 0x0f;
+    const sampleRate = (bytes[2] >> 2) & 0x03;
+    if (layer !== 0 && bitrate !== 0x0f && bitrate !== 0 && sampleRate !== 3) {
+      return 'mp3';
+    }
+  }
+  return null;
+}
+
+function readAscii(bytes: Buffer, from: number, to: number): string {
+  return bytes.subarray(from, to).toString('latin1');
 }
 
 /**

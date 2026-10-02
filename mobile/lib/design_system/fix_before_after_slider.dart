@@ -173,7 +173,7 @@ class _FixBeforeAfterSliderState extends State<FixBeforeAfterSlider> {
                       'BEFORE',
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 10,
+                        fontSize: 11,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.8,
                       ),
@@ -199,7 +199,7 @@ class _FixBeforeAfterSliderState extends State<FixBeforeAfterSlider> {
                       'AFTER',
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 10,
+                        fontSize: 11,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.8,
                       ),

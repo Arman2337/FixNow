@@ -4,6 +4,7 @@ import { Logger } from 'nestjs-pino';
 import { ConfigService } from '@nestjs/config';
 import { ValidationPipe } from '@nestjs/common';
 import { WsAdapter } from '@nestjs/platform-ws';
+import { SwaggerModule } from '@nestjs/swagger';
 import type { Server } from 'node:http';
 import type { Express } from 'express';
 import { SecurityHeadersMiddleware } from './common/middleware/security-headers.middleware';
@@ -16,6 +17,8 @@ import {
   runGracefulShutdown,
   type ShutdownLogger,
 } from './common/graceful-shutdown';
+import { buildOpenApiDocument } from './openapi/openapi.document';
+import { ObservabilityService } from './observability/observability.service';
 
 async function bootstrap() {
   // rawBody is required for HMAC webhook signature verification (FN-052).
@@ -40,6 +43,7 @@ async function bootstrap() {
   // the class of mistake the shutdown path cannot afford.
   const appLogger = app.get<ShutdownLogger>(Logger);
   const readiness = app.get(ReadinessState);
+  const observability = app.get(ObservabilityService);
 
   // SEC-006. Express reads X-Forwarded-For for req.ip only when a proxy is
   // trusted. Left unset, the rate limiter buckets on the socket address - which
@@ -56,8 +60,24 @@ async function bootstrap() {
 
   // OPS-003. Registered before CORS and the global prefix so no route can opt
   // out by being mounted earlier.
-  app.use(new SecurityHeadersMiddleware(configService));
-  app.use(new RequestCorrelationMiddleware());
+  //
+  // The `.use.bind(...)` is load-bearing, not stylistic. Express 5's
+  // `app.use(fn)` inspects its first argument: anything that is not a *function*
+  // is read as a mount path, and with a path and no handler left it throws
+  // `app.use() requires a middleware function`. A `NestMiddleware` instance is
+  // an object, so passing the instance straight through throws at boot — which
+  // is what this did: the app never reached `listen`, the dev proxy answered
+  // every request with 502, and the only visible symptom was a Flutter client
+  // logging "Unable to connect". Binding `use` hands Express an actual function
+  // and keeps the middleware in its intended order.
+  const securityHeaders = new SecurityHeadersMiddleware(configService);
+  app.use(securityHeaders.use.bind(securityHeaders));
+  const requestCorrelation = new RequestCorrelationMiddleware();
+  app.use(requestCorrelation.use.bind(requestCorrelation));
+  // Registered after the correlation id so a metric and a log line for the same
+  // request can be joined, and before anything that could fail, so a rejected
+  // request is still counted.
+  app.use(observability.instrumentHttp());
 
   const webOrigins = configService
     .get<string>('WEB_ALLOWED_ORIGINS')
@@ -67,6 +87,20 @@ async function bootstrap() {
   if (webOrigins?.length) {
     app.enableCors({ origin: webOrigins, credentials: false });
   }
+  // API-001. Mounted before `listen` so the document reflects every route the
+  // instance actually registered, and served from the API's own origin rather
+  // than the web origin, because it describes the API.
+  //
+  // `JSON` rather than the default `YAML`: the YAML output puts every path on the
+  // same few enormous lines, which makes a diff of a changed route unreadable -
+  // and the point of a committed document is that a reviewer can see what moved.
+  const openApiDocument = buildOpenApiDocument(app);
+  SwaggerModule.setup('api/docs', app, openApiDocument, {
+    jsonDocumentUrl: 'api/docs/openapi.json',
+    yamlDocumentUrl: 'api/docs/openapi.yaml',
+    customSiteTitle: 'FixNow API',
+  });
+
   const port = configService.get<number>('PORT') ?? 3000;
   // Typed as the Node server because the boot-failure handler below needs its
   // `error` event; `INestApplication.listen` returns `any`.
@@ -102,4 +136,15 @@ async function bootstrap() {
 
   appLogger.log(`FixNow API listening on port ${port}.`);
 }
-void bootstrap();
+// Without this handler a boot failure is silent. `NestFactory.create` is called
+// with `bufferLogs: true`, so Nest holds every log line until `useLogger` runs
+// above; a throw before that point discards the whole buffer, and an unhandled
+// rejection terminates the process with nothing on stdout. That is precisely how
+// a middleware-registration bug presented as a Flutter client unable to connect,
+// with no indication that the API had refused to start at all.
+void bootstrap().catch((error: unknown) => {
+  const message = error instanceof Error ? (error.stack ?? error.message) : String(error);
+  // Deliberately not the app logger: it may be exactly what failed to attach.
+  process.stderr.write(`FixNow API failed to start: ${message}\n`);
+  process.exit(1);
+});

@@ -216,7 +216,7 @@ class _EmergencyConfirmScreenState extends State<EmergencyConfirmScreen> {
                 child: const Text(
                   'IMMEDIATE',
                   style: TextStyle(
-                    fontSize: 9,
+                    fontSize: 11,
                     fontWeight: FontWeight.w800,
                     color: AppColors.error,
                   ),
@@ -285,7 +285,7 @@ class _EmergencyConfirmScreenState extends State<EmergencyConfirmScreen> {
         ),
         Text(
           'Tap to swap trigger',
-          style: TextStyle(fontSize: 10, color: AppColors.textSecondary),
+          style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
         ),
       ],
     ),
@@ -430,7 +430,7 @@ class _RadarSweepBox extends StatelessWidget {
               const Text(
                 'YOUR LOCATION',
                 style: TextStyle(
-                  fontSize: 8,
+                  fontSize: 11,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 0.6,
                   color: AppColors.primary,
@@ -488,7 +488,7 @@ class _RadarSweepBox extends StatelessWidget {
           Text(
             text,
             style: const TextStyle(
-              fontSize: 9,
+              fontSize: 11,
               fontWeight: FontWeight.w700,
               color: AppColors.textPrimary,
             ),
@@ -668,7 +668,7 @@ class _DispatchedView extends StatelessWidget {
                             ? 'Availability pending'
                             : 'Wave ${status.currentWave}',
                         style: const TextStyle(
-                          fontSize: 10,
+                          fontSize: 11,
                           fontWeight: FontWeight.w700,
                           color: AppColors.primary,
                         ),
@@ -875,7 +875,10 @@ class _DispatchedView extends StatelessWidget {
           ),
           Text(
             label,
-            style: const TextStyle(fontSize: 9, color: AppColors.textSecondary),
+            style: const TextStyle(
+              fontSize: 11,
+              color: AppColors.textSecondary,
+            ),
           ),
         ],
       ),

@@ -635,7 +635,7 @@ class _JobProofVerificationDialogState
                   label,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 9,
+                    fontSize: 11,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -852,7 +852,7 @@ class JobProofViewerCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             'Verified by ${proof.proName} • Watermarked on ${proof.capturedAt.toLocal().toString().split('.')[0]}',
-            style: const TextStyle(color: Colors.white38, fontSize: 10),
+            style: const TextStyle(color: Colors.white38, fontSize: 11),
           ),
         ],
       ),
@@ -890,7 +890,7 @@ class JobProofViewerCard extends StatelessWidget {
                 badge,
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 8,
+                  fontSize: 11,
                   fontWeight: FontWeight.w800,
                 ),
               ),

@@ -10,6 +10,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SubServiceEntity } from './sub-service.entity';
 import { Public } from '../common/authorization/authorization.decorators';
+import {
+  LIST_ENDPOINT_DEFAULT_LIMIT,
+  LIST_ENDPOINT_MAX_LIMIT,
+  SubServiceListQueryDto,
+} from '../common/list-pagination.dto';
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -35,7 +40,8 @@ export class SubServicesController {
    */
   @Public()
   @Get()
-  async list(@Query('categoryId') categoryId?: string) {
+  async list(@Query() params: SubServiceListQueryDto) {
+    const categoryId = params.categoryId;
     const query = this.subServiceRepo
       .createQueryBuilder('sub_service')
       .leftJoin('sub_service.category', 'category')
@@ -63,7 +69,20 @@ export class SubServicesController {
       }
     }
 
-    return await query.getMany();
+    // API-003: bounded in the query. This is an unauthenticated route over
+    // operator-published catalogue data, so the row count is a data property
+    // rather than a schema guarantee — nothing stops one category carrying
+    // thousands of sub-services, and `getMany()` without `take()` transfers
+    // every row before any caller-side slice could discard it.
+    return await query
+      .orderBy('sub_service.name', 'ASC')
+      .take(
+        Math.min(
+          params.limit ?? LIST_ENDPOINT_DEFAULT_LIMIT,
+          LIST_ENDPOINT_MAX_LIMIT,
+        ),
+      )
+      .getMany();
   }
 
   @Public()

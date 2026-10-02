@@ -250,7 +250,7 @@ class FixServiceCard extends StatelessWidget {
                                   'Price on request',
                                   style: TextStyle(
                                     color: AppColors.textSecondary,
-                                    fontSize: 10,
+                                    fontSize: 11,
                                     fontWeight: FontWeight.w600,
                                   ),
                                   maxLines: 1,
@@ -915,7 +915,7 @@ class _SurgeChip extends StatelessWidget {
         style: FixNowTypography.caption.copyWith(
           color: AppColors.onAccentGold,
           fontWeight: FontWeight.w700,
-          fontSize: 10.5,
+          fontSize: 11,
           letterSpacing: 0.2,
         ),
       ),
@@ -1026,7 +1026,7 @@ class _ProAvatar extends StatelessWidget {
         style: FixNowTypography.caption.copyWith(
           color: AppColors.onPrimary,
           fontWeight: FontWeight.w700,
-          fontSize: 9.5,
+          fontSize: 11,
           height: 1.0,
         ),
       ),
@@ -1057,7 +1057,7 @@ class _MoreBubble extends StatelessWidget {
         style: FixNowTypography.caption.copyWith(
           color: AppColors.onPrimary,
           fontWeight: FontWeight.w700,
-          fontSize: 9,
+          fontSize: 11,
           height: 1.0,
         ),
       ),
@@ -1127,7 +1127,7 @@ class _Foot extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: FixNowTypography.caption.copyWith(
                     color: AppColors.textOnSurfaceMuted,
-                    fontSize: 10.5,
+                    fontSize: 11,
                   ),
                 ),
               ],
@@ -1168,7 +1168,7 @@ class _Foot extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: FixNowTypography.caption.copyWith(
                           color: AppColors.textOnSurfaceMuted,
-                          fontSize: 10.5,
+                          fontSize: 11,
                         ),
                       ),
                     ),

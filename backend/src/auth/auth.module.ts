@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
@@ -14,6 +14,7 @@ import { TokenLifecycleService } from './token-lifecycle.service';
 import { AuthorizationGuard } from '../common/authorization/authorization.guard';
 import { AuthorizationPolicyService } from '../common/authorization/authorization-policy.service';
 import { AuthorizationService } from '../common/authorization/authorization.service';
+import { OwnershipProofInterceptor } from '../common/authorization/ownership-proof.interceptor';
 import { AdminAuthController } from './admin-auth.controller';
 import { PasswordResetTokenEntity } from '../users/password-reset-token.entity';
 
@@ -40,7 +41,10 @@ import { PasswordResetTokenEntity } from '../users/password-reset-token.entity';
     AuthorizationPolicyService,
     AuthorizationService,
     AuthorizationGuard,
+    OwnershipProofInterceptor,
     { provide: APP_GUARD, useExisting: AuthorizationGuard },
+    // SEC-002: global so no self-scoped route can opt out of proving ownership.
+    { provide: APP_INTERCEPTOR, useExisting: OwnershipProofInterceptor },
   ],
   exports: [AuthService, AuthorizationService],
 })

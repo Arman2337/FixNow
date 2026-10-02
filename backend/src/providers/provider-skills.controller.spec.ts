@@ -1,5 +1,6 @@
 /* Jest repository/service mocks are intentionally asserted as detached functions. */
 /* eslint-disable @typescript-eslint/unbound-method */
+import { ForbiddenException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ProviderSkillsController } from './provider-skills.controller';
 import { ProviderSkillsService } from './provider-skills.service';
@@ -10,6 +11,10 @@ import {
   VerifyProviderSkillDto,
 } from './provider-skills.dto';
 import type { AuthorizedRequest } from '../common/authorization/authorization.guard';
+import {
+  PERMISSIONS,
+  PERMISSION_POLICIES,
+} from '../common/authorization/permission-policies';
 import type { RoleCode } from '../common/authorization/permission-policies';
 
 /** A complete skill row: the entity carries `user` and `serviceCategory`. */
@@ -188,7 +193,11 @@ describe('ProviderSkillsController', () => {
       ]);
 
       const updateDto: UpdateProviderSkillDto = { isVerified: true };
-      service.update.mockResolvedValue({ ...mockSkill, ...updateDto });
+      // `isAdmin` stays false, so this call still goes down the owner path and
+      // must resolve a skill the caller actually owns.
+      service.update.mockResolvedValue(
+        skillFixture({ userId: 'admin-id', ...updateDto }),
+      );
 
       await controller.update('skill-id', adminRequest, updateDto);
 
@@ -198,6 +207,18 @@ describe('ProviderSkillsController', () => {
         updateDto,
         false,
       );
+    });
+
+    it('refuses a skill the caller does not own (SEC-002)', async () => {
+      service.update.mockResolvedValue(
+        skillFixture({ userId: 'someone-else' }),
+      );
+
+      await expect(
+        controller.update('skill-id', mockRequest, {
+          yearsExperience: 7,
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenException);
     });
   });
 
@@ -226,7 +247,14 @@ describe('ProviderSkillsController', () => {
 
       await controller.delete('skill-id', mockRequest);
 
-      expect(service.delete).toHaveBeenCalledWith('skill-id', 'user-id', false);
+      // SEC-002: the principal is handed to the service because `delete`
+      // returns nothing, so the owner comparison has to happen inside it.
+      expect(service.delete).toHaveBeenCalledWith(
+        'skill-id',
+        'user-id',
+        false,
+        mockRequest.authorizationPrincipal,
+      );
     });
 
     it('does not elevate delete from request role claims', async () => {
@@ -242,7 +270,33 @@ describe('ProviderSkillsController', () => {
         'skill-id',
         'admin-id',
         false,
+        adminRequest.authorizationPrincipal,
       );
+    });
+  });
+
+  // SEC-002: reading another user's skills is a separate, role-gated route. The
+  // policy has no `relationship` clause, so it raises no deferred obligation —
+  // and the role list must not quietly widen.
+  describe('getProviderSkills cross-user access', () => {
+    it('stays on the read-any permission with reviewer-only roles', () => {
+      expect(PERMISSION_POLICIES[PERMISSIONS.providerSkillsReadAny]).toEqual({
+        roles: [
+          'provider_reviewer',
+          'service_catalog_manager',
+          'operations_administrator',
+          'auditor',
+        ],
+      });
+    });
+
+    it('does not give a plain provider read-any', () => {
+      expect(
+        PERMISSION_POLICIES[PERMISSIONS.providerSkillsReadAny].roles,
+      ).not.toContain('verified_provider');
+      expect(
+        PERMISSION_POLICIES[PERMISSIONS.providerSkillsReadAny].roles,
+      ).not.toContain('provider_applicant');
     });
   });
 });

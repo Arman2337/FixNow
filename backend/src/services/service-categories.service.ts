@@ -11,6 +11,10 @@ import {
 import { AccountStatus } from '../users/account-status';
 import { ProviderAvailabilityStatus } from '../../../shared/provider-availability.types';
 import { ReviewModerationStatus } from '../../../shared/ratings.types';
+import {
+  LIST_ENDPOINT_DEFAULT_LIMIT,
+  LIST_ENDPOINT_MAX_LIMIT,
+} from '../common/list-pagination.dto';
 
 /**
  * Real, honestly-computed per-category signals. Every field reflects rows that
@@ -54,7 +58,16 @@ export class ServiceCategoriesService {
 
     queryBuilder
       .orderBy('category.displayOrder', 'ASC')
-      .addOrderBy('category.name', 'ASC');
+      .addOrderBy('category.name', 'ASC')
+      // API-003: bounded in the query. `getMany()` without `take()` has already
+      // transferred every row by the time a JavaScript slice could discard it,
+      // so the bound has to be here rather than at the caller.
+      .take(
+        Math.min(
+          query.limit ?? LIST_ENDPOINT_DEFAULT_LIMIT,
+          LIST_ENDPOINT_MAX_LIMIT,
+        ),
+      );
 
     return queryBuilder.getMany();
   }

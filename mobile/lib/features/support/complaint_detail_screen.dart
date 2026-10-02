@@ -455,7 +455,7 @@ class ComplaintDetailScreen extends StatelessWidget {
                       Text(
                         date,
                         style: const TextStyle(
-                          fontSize: 10,
+                          fontSize: 11,
                           color: AppColors.textSecondary,
                         ),
                       ),

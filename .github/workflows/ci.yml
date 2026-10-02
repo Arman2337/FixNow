@@ -121,6 +121,25 @@ jobs:
       - name: Verify render.yaml matches the code's configuration
         run: npm run deploy:verify-env
 
+      # SEC-010 / SEC-011. A `@Body()` parameter annotated with a `type` alias
+      # or an interface is erased at runtime, so ValidationPipe skips it and the
+      # body reaches the service unvalidated. That is how
+      # `POST /guarantees/claims` came to answer 400 for every request (a bare
+      # DTO class with no decorators, so `forbidNonWhitelisted` rejected its own
+      # fields) and how customer address coordinates were written unchecked.
+      # Neither fails at boot or at compile time, so it needs its own gate.
+      - name: Verify every @Body() parameter is annotated with a class
+        run: npm run check:body-dtos
+
+      # SEC-013. A `process.env.X ?? 'default'` read is never validated, never
+      # bounded, and never subject to a production rule — and it fails nothing at
+      # boot or at compile time. Six variables were read that way; `CLAMAV_PORT`
+      # went through a bare `Number()`, so a typo became `NaN` and a silently
+      # unreachable malware scanner on a path that is supposed to fail closed.
+      # This makes a new undeclared read a build failure.
+      - name: Verify every environment variable read is declared
+        run: npm run check:env-declarations
+
       - name: Test
         run: npx jest --ci
 

@@ -912,7 +912,7 @@ class _ProviderNotificationBanner extends StatelessWidget {
                               'NEW',
                               style: TextStyle(
                                 color: color,
-                                fontSize: 9,
+                                fontSize: 11,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: 0.5,
                               ),
@@ -1080,7 +1080,7 @@ class _IncomingRequestBanner extends StatelessWidget {
                               'ACTION NEEDED',
                               style: TextStyle(
                                 color: AppColors.onAccentGold,
-                                fontSize: 8.5,
+                                fontSize: 11,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: 0.4,
                               ),

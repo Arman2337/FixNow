@@ -65,6 +65,8 @@ describe('ProviderSkillsService', () => {
     andWhere: jest.fn().mockReturnThis(),
     orderBy: jest.fn().mockReturnThis(),
     addOrderBy: jest.fn().mockReturnThis(),
+    // API-003: `findByUserId` bounds the query with `take()`.
+    take: jest.fn().mockReturnThis(),
     getMany: jest.fn(),
   };
 

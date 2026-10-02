@@ -570,18 +570,36 @@ class FixEmergencyBanner extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: AppSpacing.xs),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: AppColors.onError,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Text(
-                  '15-min ETA',
-                  style: TextStyle(
-                    color: AppColors.error,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
+              // `Flexible` + `FittedBox` rather than `Row` overflow.
+              //
+              // The pill label was 10pt, and at 10pt it fitted beside the text
+              // block on a 320px screen at a 2x system text scale. At the
+              // smallest readable size it does not, and the Row overflowed by
+              // 16px. Letting the pill scale down is the honest degradation: it
+              // only happens at extreme text scale, the string stays whole, and
+              // it is redundant with the heading beside it — so it never carries
+              // meaning alone.
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.onError,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Text(
+                      '15-min ETA',
+                      maxLines: 1,
+                      style: TextStyle(
+                        color: AppColors.error,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -727,7 +745,7 @@ class FixAiPromptCard extends StatelessWidget {
                             'BETA',
                             style: FixNowTypography.labelSmall.copyWith(
                               color: AppColors.onPrimaryFixed,
-                              fontSize: 10,
+                              fontSize: 11,
                               fontWeight: FontWeight.w800,
                             ),
                           ),

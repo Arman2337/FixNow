@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { createHash, createHmac, timingSafeEqual } from 'crypto';
@@ -43,6 +44,9 @@ import { BookingReview } from '../ratings/domain/review.entity';
 import { ReviewModerationStatus } from '../../../shared/ratings.types';
 import { ProviderCapacityService } from '../providers/availability/provider-capacity.service';
 import { mapBounded } from '../common/run-bounded';
+import type { AuthorizationPrincipal } from '../common/authorization/authorization.types';
+import { assertOwnedResource } from '../common/authorization/resource-ownership';
+import { ObservabilityService } from '../observability/observability.service';
 import { OutboxService } from '../outbox/outbox.service';
 
 /**
@@ -220,6 +224,11 @@ export class BookingsService {
     private readonly config?: ConfigService,
     private readonly domainNotifications?: DomainNotificationService,
     private readonly trust?: TrustService,
+    // Optional for the same reason as the others: a unit test that builds this
+    // service with a partial graph should not have to know about metrics.
+    // `ObservabilityModule` is `@Global()`, so in the running application this is
+    // always injected.
+    @Optional() private readonly observability?: ObservabilityService,
   ) {}
 
   /**
@@ -402,11 +411,23 @@ export class BookingsService {
       // fan-out worker will retry, and the sweeper is the backstop.
       eligibleProviderCount = 0;
     }
+    const noProviderAvailable =
+      eligibleProviderCount < NO_PROVIDER_ELIGIBLE_THRESHOLD;
+
+    // Observability. This is the metric the audit said was uncomputable: today
+    // there is no way to ask "what fraction of bookings found nobody", and the
+    // failure it represents is silent — the booking is created, the search never
+    // starts, and the customer sees a spinner. The counter is the only signal
+    // that a launch in a new city is failing.
+    this.observability?.observeBookingCreate(
+      (Date.now() - booking.createdAt.getTime()) / 1000,
+      noProviderAvailable ? 'no_provider' : 'created',
+    );
+
     return {
       booking,
       eligibleProviderCount,
-      noProviderAvailable:
-        eligibleProviderCount < NO_PROVIDER_ELIGIBLE_THRESHOLD,
+      noProviderAvailable,
     };
   }
 
@@ -478,6 +499,55 @@ export class BookingsService {
       }
     });
     return expired;
+  }
+
+  /**
+   * BUG-010: serialise a price rewrite against payment-order creation.
+   *
+   * The rewrite and `PaymentsService.createForBooking` both key off one booking
+   * row, so that row is the thing to lock. Locking the *payment orders* instead
+   * would be the obvious-looking mistake and would not work: in the common case
+   * there is no order yet, and `SELECT ... FOR UPDATE` on a predicate that
+   * matches nothing locks nothing. A concurrent INSERT then proceeds
+   * unimpeded and the race survives the "fix".
+   *
+   * `FOR UPDATE` on the booking conflicts with the same lock in the payment
+   * path, so the two cannot interleave:
+   *
+   *  - rewrite first → payment blocks, then re-reads the new total and refuses
+   *    because the gateway was already asked for the old amount
+   *  - payment first → rewrite blocks, then observes the committed order and
+   *    refuses with a 409
+   *
+   * A booking row is contended only by its own customer and its own provider,
+   * so the lock is narrow in practice. The version CAS in `transitionIn` is
+   * untouched: this adds the ordering the CAS cannot provide, namely that a
+   * read which *precedes* the CAS sees the other writer's committed state.
+   */
+  private async lockBookingForPricing(
+    manager: EntityManager,
+    bookingId: string,
+  ): Promise<void> {
+    await manager
+      .getRepository(Booking)
+      .createQueryBuilder('booking')
+      .select('booking.id')
+      .where('booking.id = :bookingId', { bookingId })
+      .setLock('pessimistic_write')
+      .getOne();
+  }
+
+  /**
+   * BUG-010: has a payment order been created for this booking?
+   *
+   * Called only after {@link lockBookingForPricing}, so the answer cannot go
+   * stale before the write that depends on it.
+   */
+  private async hasPaymentOrder(
+    manager: EntityManager,
+    bookingId: string,
+  ): Promise<boolean> {
+    return manager.getRepository(PaymentOrder).exists({ where: { bookingId } });
   }
 
   /**
@@ -806,15 +876,17 @@ export class BookingsService {
           );
         }
 
-        // BUG-010: this path re-priced the booking with no guard, while the
-        // sibling `updateBookingItems` had one. A payment order created in the
-        // window between a check outside the transaction and this write left a
-        // paid order whose amount no longer matched the booking, and its capture
-        // failed permanently with `payment.captured.amount_mismatch`. The check
-        // runs inside the same transaction as the write, so the window is closed.
-        const alreadyPaid = await manager.getRepository(PaymentOrder).exists({
-          where: { bookingId },
-        });
+        // BUG-010. This path re-priced the booking while its sibling
+        // `updateBookingItems` was guarded, so a payment order created in the
+        // window produced a paid order whose amount no longer matched the
+        // booking, and its capture failed permanently with
+        // `payment.captured.amount_mismatch`.
+        //
+        // Checking inside the transaction was not enough on its own: the check
+        // and the rewrite still had to be atomic with respect to
+        // `createForBooking`, which is what the booking-row lock provides.
+        await this.lockBookingForPricing(manager, bookingId);
+        const alreadyPaid = await this.hasPaymentOrder(manager, bookingId);
         if (alreadyPaid) {
           throw new ConflictException(
             'Line items cannot be changed once payment has started',
@@ -1087,11 +1159,11 @@ export class BookingsService {
             'Services can only be adjusted while the job is active',
           );
         }
-        // Guarded inside the transaction that performs the write, so a payment
-        // order cannot be created in the gap between the check and the update.
-        const paid = await manager.getRepository(PaymentOrder).exists({
-          where: { bookingId },
-        });
+        // BUG-010. Guarded inside the transaction that performs the write,
+        // and atomic against concurrent order creation because both paths
+        // serialise on the booking row first.
+        await this.lockBookingForPricing(manager, bookingId);
+        const paid = await this.hasPaymentOrder(manager, bookingId);
         if (paid) {
           throw new ConflictException(
             'A payment has already been initiated for this booking',
@@ -1122,10 +1194,17 @@ export class BookingsService {
     return booking;
   }
 
+  /**
+   * @param principal the authenticated caller. The SEC-002 ownership
+   *   obligation for `POST /bookings/:id/service-start-otp` is discharged here
+   *   rather than in the controller: this method returns only the one-time
+   *   code, so the booking's `customerId` is never handed back to compare.
+   */
   async getServiceStartOtp(
     bookingId: string,
-    customerId: string,
+    principal: AuthorizationPrincipal,
   ): Promise<{ otp: string }> {
+    const customerId = principal.userId;
     const booking = await this.dataSource
       .getRepository(Booking)
       .findOneBy({ id: bookingId });
@@ -1134,6 +1213,7 @@ export class BookingsService {
       throw new ForbiddenException(
         'Only the customer can view this service OTP',
       );
+    assertOwnedResource(principal, booking.customerId, 'booking.customerId');
     if (booking.status !== BookingStatus.EN_ROUTE)
       throw new ConflictException(
         'The service OTP is available after the provider is en route',

@@ -7,6 +7,14 @@ import { ProviderApplicationEntity } from './provider-application.entity';
 import { ProviderProfileEntity } from './provider-profile.entity';
 import { ProviderProfileService } from './provider-profile.service';
 import { ProviderSkillEntity } from './provider-skill.entity';
+import type { AuthorizationPrincipal } from '../common/authorization/authorization.types';
+
+/** SEC-002: checkCoverage discharges the ownership obligation on the loaded profile. */
+const providerPrincipal: AuthorizationPrincipal = {
+  userId: 'provider-id',
+  sessionId: 'session-id',
+  roles: ['verified_provider'],
+};
 
 describe('ProviderProfileService', () => {
   let service: ProviderProfileService;
@@ -164,7 +172,7 @@ describe('ProviderProfileService', () => {
     });
 
     await expect(
-      service.checkCoverage('provider-id', { latitude: 0, longitude: 1 }),
+      service.checkCoverage(providerPrincipal, { latitude: 0, longitude: 1 }),
     ).resolves.toEqual({ isWithinServiceArea: true });
   });
 
@@ -178,14 +186,14 @@ describe('ProviderProfileService', () => {
     });
 
     await expect(
-      service.checkCoverage('provider-id', { latitude: 0, longitude: 1 }),
+      service.checkCoverage(providerPrincipal, { latitude: 0, longitude: 1 }),
     ).resolves.toEqual({ isWithinServiceArea: false });
   });
 
   it('does not disclose the provider base coordinates in coverage results', async () => {
     profiles.findOne.mockResolvedValue(profile);
 
-    const result = await service.checkCoverage('provider-id', {
+    const result = await service.checkCoverage(providerPrincipal, {
       latitude: 12.98,
       longitude: 77.6,
     });

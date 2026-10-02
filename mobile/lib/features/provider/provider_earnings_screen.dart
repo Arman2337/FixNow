@@ -148,7 +148,7 @@ class _EarningsView extends StatelessWidget {
                     Text(
                       'Net earnings'.toUpperCase(),
                       style: const TextStyle(
-                        fontSize: 10,
+                        fontSize: 11,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.8,
                         color: AppColors.textOnDarkSecondary,
@@ -177,7 +177,7 @@ class _EarningsView extends StatelessWidget {
                       Text(
                         'Paid orders',
                         style: TextStyle(
-                          fontSize: 10,
+                          fontSize: 11,
                           fontWeight: FontWeight.w700,
                           color: AppColors.onPrimary,
                         ),
@@ -224,7 +224,7 @@ class _EarningsView extends StatelessWidget {
                       Text(
                         'Settlement status',
                         style: TextStyle(
-                          fontSize: 10,
+                          fontSize: 11,
                           color: AppColors.textOnDarkSecondary,
                         ),
                       ),
@@ -246,7 +246,7 @@ class _EarningsView extends StatelessWidget {
                       Text(
                         'Ledger status',
                         style: TextStyle(
-                          fontSize: 10,
+                          fontSize: 11,
                           color: AppColors.textOnDarkSecondary,
                         ),
                       ),
@@ -391,7 +391,7 @@ class _EarningsView extends StatelessWidget {
                       Text(
                         'Policy note',
                         style: TextStyle(
-                          fontSize: 10,
+                          fontSize: 11,
                           fontWeight: FontWeight.w700,
                           color: AppColors.primary,
                         ),
@@ -459,7 +459,7 @@ class _EarningsView extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 10,
+                    fontSize: 11,
                     color: AppColors.textSecondary,
                   ),
                 ),

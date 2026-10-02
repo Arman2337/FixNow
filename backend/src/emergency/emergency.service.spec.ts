@@ -6,6 +6,12 @@ import {
   EMERGENCY_FALLBACK_GUIDANCE,
   EMERGENCY_POLICY_V1,
 } from './emergency-policy';
+import type { AuthorizationPrincipal } from '../common/authorization/authorization.types';
+
+/** The authenticated caller, for the SEC-002 obligation `getStatus` discharges. */
+function principalFor(userId: string): AuthorizationPrincipal {
+  return { userId, sessionId: 'session-id', roles: ['customer'] };
+}
 
 describe('EmergencyService (FN-063)', () => {
   const customerId = '00000000-0000-4000-8000-00000000e001';
@@ -318,7 +324,10 @@ describe('EmergencyService (FN-063)', () => {
         lastEscalatedAt: new Date(),
         waveHistory: [],
       });
-      const status = await buildService().getStatus(bookingId, customerId);
+      const status = await buildService().getStatus(
+        bookingId,
+        principalFor(customerId),
+      );
       expect(status.fallbackRequired).toBe(true);
       expect(status.guidance).toBe(EMERGENCY_FALLBACK_GUIDANCE);
       expect(status.eligibleCount).toBe(0);
@@ -443,16 +452,16 @@ describe('EmergencyService (FN-063)', () => {
       lastEscalatedAt: new Date(),
       waveHistory: [],
     });
-    const status = await service.getStatus(bookingId, customerId);
+    const status = await service.getStatus(bookingId, principalFor(customerId));
     expect(status.fallbackRequired).toBe(true);
     expect(status.guidance).toBe(EMERGENCY_FALLBACK_GUIDANCE);
   });
 
   it('hides emergency requests from non-participants', async () => {
     const service = buildService();
-    await expect(service.getStatus(bookingId, 'stranger')).rejects.toThrow(
-      NotFoundException,
-    );
+    await expect(
+      service.getStatus(bookingId, principalFor('stranger')),
+    ).rejects.toThrow(NotFoundException);
   });
 
   it('raises the HIGH trust signal only at the repeat-use threshold', async () => {

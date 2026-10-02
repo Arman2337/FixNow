@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
+import type { AuthorizationPrincipal } from '../common/authorization/authorization.types';
+import { assertOwnedResource } from '../common/authorization/resource-ownership';
 import { ProviderApplicationEntity } from './provider-application.entity';
 import { ProviderProfileEntity } from './provider-profile.entity';
 import { ProviderSkillEntity } from './provider-skill.entity';
@@ -108,10 +110,13 @@ export class ProviderProfileService {
   }
 
   async checkCoverage(
-    userId: string,
+    principal: AuthorizationPrincipal,
     target: CoverageCheckDto,
   ): Promise<CoverageCheckResponseDto> {
-    const profile = await this.findByUserId(userId);
+    const profile = await this.findByUserId(principal.userId);
+    // SEC-002: the result is a bare boolean, so the only place the profile's
+    // real owning column is in hand is here.
+    assertOwnedResource(principal, profile.userId, 'providerProfile.userId');
     return {
       isWithinServiceArea:
         ProviderProfileService.distanceKm(

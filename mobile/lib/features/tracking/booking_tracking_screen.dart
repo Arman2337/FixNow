@@ -1579,7 +1579,7 @@ class _TrackingCard extends StatelessWidget {
                                         LocationAvailability.live
                                     ? AppColors.primaryEmerald
                                     : AppColors.textSecondary,
-                                fontSize: 10,
+                                fontSize: 11,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -1666,7 +1666,7 @@ class _TrackingCard extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   color: AppColors.textSecondary,
-                                  fontSize: 10,
+                                  fontSize: 11,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
@@ -1723,7 +1723,7 @@ class _TrackingCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             color: AppColors.textSecondary,
-                            fontSize: 10,
+                            fontSize: 11,
                           ),
                         ),
                         Row(

@@ -5,6 +5,7 @@ import { PushPlatform } from './push-device-token.entity';
 describe('PushDeviceService', () => {
   let repository: {
     findOne: jest.Mock;
+    findOneBy: jest.Mock;
     find: jest.Mock;
     save: jest.Mock;
     create: jest.Mock;
@@ -25,6 +26,7 @@ describe('PushDeviceService', () => {
   beforeEach(() => {
     repository = {
       findOne: jest.fn(),
+      findOneBy: jest.fn(),
       find: jest.fn().mockResolvedValue([]),
       save: jest.fn(<T extends object>(entity: T): Promise<T> =>
         Promise.resolve(entity),
@@ -90,18 +92,23 @@ describe('PushDeviceService', () => {
   });
 
   it('revokes an owned device', async () => {
-    await service.revoke('user-1', 'device-1');
-    expect(repository.delete).toHaveBeenCalledWith({
+    repository.findOneBy.mockResolvedValue(row());
+    const revoked = await service.revoke('user-1', 'device-1');
+    // The row is returned so the caller can prove ownership of what it removed.
+    expect(revoked.userId).toBe('user-1');
+    expect(repository.findOneBy).toHaveBeenCalledWith({
       id: 'device-1',
       userId: 'user-1',
     });
+    expect(repository.delete).toHaveBeenCalledWith({ id: 'device-1' });
   });
 
   it('refuses to revoke another account device', async () => {
-    repository.delete.mockResolvedValue({ affected: 0 });
+    repository.findOneBy.mockResolvedValue(null);
     await expect(service.revoke('user-1', 'foreign-device')).rejects.toThrow(
       NotFoundException,
     );
+    expect(repository.delete).not.toHaveBeenCalled();
   });
 
   it('removes provider-reported unregistered tokens', async () => {

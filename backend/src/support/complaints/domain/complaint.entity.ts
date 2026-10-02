@@ -10,14 +10,13 @@ import {
 } from 'typeorm';
 import { ComplaintEvidence } from './complaint-evidence.entity';
 import { AppealStatus } from '../../../../../shared/trust.types';
+// SEC-011: the status enum and its transition table now live beside the booking
+// lifecycle, so the two state machines in the product have one shape and one
+// import path. Re-exported here because the entity's `enum:` metadata and every
+// existing `from './complaint.entity'` import keep working.
+import { ComplaintStatus } from '../../../../../shared/complaint-lifecycle.types';
 
-export enum ComplaintStatus {
-  OPEN = 'OPEN',
-  IN_REVIEW = 'IN_REVIEW',
-  ESCALATED = 'ESCALATED',
-  RESOLVED = 'RESOLVED',
-  CLOSED = 'CLOSED',
-}
+export { ComplaintStatus };
 
 export enum ComplaintTargetRole {
   PROVIDER = 'PROVIDER',

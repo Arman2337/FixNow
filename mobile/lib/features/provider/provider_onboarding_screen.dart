@@ -1183,21 +1183,21 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
                                 '3 km (Local)',
                                 style: TextStyle(
                                   color: AppColors.textSecondary,
-                                  fontSize: 10,
+                                  fontSize: 11,
                                 ),
                               ),
                               Text(
                                 '15 km',
                                 style: TextStyle(
                                   color: AppColors.textSecondary,
-                                  fontSize: 10,
+                                  fontSize: 11,
                                 ),
                               ),
                               Text(
                                 '30 km (Metropolitan)',
                                 style: TextStyle(
                                   color: AppColors.textSecondary,
-                                  fontSize: 10,
+                                  fontSize: 11,
                                 ),
                               ),
                             ],
@@ -1300,7 +1300,7 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
                                               '1.5x Pay',
                                               style: TextStyle(
                                                 color: Colors.white,
-                                                fontSize: 10,
+                                                fontSize: 11,
                                                 fontWeight: FontWeight.w700,
                                               ),
                                             ),
@@ -1604,7 +1604,7 @@ class _StepIcon extends StatelessWidget {
             label,
             style: TextStyle(
               color: isActive ? AppColors.primary : AppColors.textPrimary,
-              fontSize: 10,
+              fontSize: 11,
               fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
             ),
           ),
@@ -1791,7 +1791,7 @@ class _DocumentCard extends StatelessWidget {
                       color: isVerified
                           ? AppColors.textSecondary
                           : AppColors.primary,
-                      fontSize: 10,
+                      fontSize: 11,
                       fontWeight: isVerified
                           ? FontWeight.w500
                           : FontWeight.w600,
@@ -1886,7 +1886,7 @@ class _ActionDocumentCard extends StatelessWidget {
                             'REQUIRED',
                             style: TextStyle(
                               color: AppColors.danger,
-                              fontSize: 9,
+                              fontSize: 11,
                               fontWeight: FontWeight.w700,
                             ),
                           ),

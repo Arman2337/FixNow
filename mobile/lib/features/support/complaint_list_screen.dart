@@ -649,7 +649,7 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
                     Text(
                       complaint.status,
                       style: const TextStyle(
-                        fontSize: 10,
+                        fontSize: 11,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.5,
                         color: AppColors.onTertiaryFixed,
@@ -704,7 +704,7 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
                                   ? 'Officer assignment is not available yet.'
                                   : 'FixNow support team',
                               style: const TextStyle(
-                                fontSize: 10,
+                                fontSize: 11,
                                 color: AppColors.textSecondary,
                               ),
                             ),
@@ -726,7 +726,7 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
                             ? 'Assignment pending'
                             : 'Assigned',
                         style: const TextStyle(
-                          fontSize: 10,
+                          fontSize: 11,
                           fontWeight: FontWeight.w700,
                           color: AppColors.primary,
                         ),
@@ -854,7 +854,7 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
                 const Text(
                   'DISPUTED ITEM',
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: 11,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 0.5,
                     color: AppColors.textSecondary,
@@ -1030,7 +1030,7 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
                       Text(
                         time,
                         style: TextStyle(
-                          fontSize: 10,
+                          fontSize: 11,
                           fontWeight: FontWeight.w600,
                           color: isActive
                               ? AppColors.tertiary
@@ -1108,7 +1108,7 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
                 child: const Text(
                   'Resolved',
                   style: TextStyle(
-                    fontSize: 9,
+                    fontSize: 11,
                     fontWeight: FontWeight.w800,
                     color: AppColors.onPrimaryFixed,
                   ),

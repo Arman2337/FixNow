@@ -285,7 +285,7 @@ class _PushSettingsCardState extends State<PushSettingsCard>
               const Text(
                 'REGISTERED DEVICES',
                 style: TextStyle(
-                  fontSize: 10,
+                  fontSize: 11,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 0.6,
                   color: AppColors.textSecondary,

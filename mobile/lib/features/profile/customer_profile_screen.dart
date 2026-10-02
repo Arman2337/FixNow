@@ -680,7 +680,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                 Text(
                   'End-to-end encrypted home maintenance records',
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: 11,
                     color: AppColors.textSecondary.withValues(alpha: 0.7),
                   ),
                 ),
@@ -869,7 +869,7 @@ class _SavedAddressesSection extends StatelessWidget {
                                       'DEFAULT',
                                       style: TextStyle(
                                         color: AppColors.onPrimaryFixed,
-                                        fontSize: 9,
+                                        fontSize: 11,
                                         fontWeight: FontWeight.w800,
                                       ),
                                     ),

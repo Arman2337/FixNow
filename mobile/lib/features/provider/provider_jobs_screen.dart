@@ -432,7 +432,7 @@ class _ProviderJobsScreenState extends State<ProviderJobsScreen> {
                       Text(
                         label,
                         style: TextStyle(
-                          fontSize: 10,
+                          fontSize: 11,
                           fontWeight: FontWeight.w700,
                           color: isSelected
                               ? AppColors.onPrimary
@@ -694,7 +694,7 @@ class _ProviderJobsScreenState extends State<ProviderJobsScreen> {
               const Text(
                 'DISPATCH ARCHIVE',
                 style: TextStyle(
-                  fontSize: 10,
+                  fontSize: 11,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 0.8,
                   color: AppColors.textSecondary,
@@ -831,7 +831,7 @@ class _TopUrgentJobCard extends StatelessWidget {
                   child: Text(
                     isEnRoute ? 'ETA 7 MINS' : job.status.replaceAll('_', ' '),
                     style: TextStyle(
-                      fontSize: 10,
+                      fontSize: 11,
                       fontWeight: FontWeight.w800,
                       color: isEnRoute
                           ? AppColors.dangerOnLight
@@ -983,7 +983,7 @@ class _TopUrgentJobCard extends StatelessWidget {
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
-                                      fontSize: 10,
+                                      fontSize: 11,
                                       color: AppColors.textSecondary,
                                     ),
                                   ),
@@ -1393,7 +1393,7 @@ class _UpcomingJobCard extends StatelessWidget {
                 child: Text(
                   job.status.replaceAll('_', ' '),
                   style: const TextStyle(
-                    fontSize: 10,
+                    fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textSecondary,
                   ),
@@ -1529,7 +1529,7 @@ class _HistoryJobCard extends StatelessWidget {
                 child: Text(
                   isCompleted ? 'Resolved' : job.status,
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: 11,
                     fontWeight: FontWeight.w800,
                     color: isCompleted
                         ? AppColors.primary
@@ -1685,7 +1685,7 @@ class _LiveTrackingBlock extends StatelessWidget {
                         'Sharing',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 10,
+                          fontSize: 11,
                           fontWeight: FontWeight.w700,
                         ),
                       ),

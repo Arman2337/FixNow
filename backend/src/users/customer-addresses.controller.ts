@@ -6,6 +6,7 @@ import {
   Req,
   Param,
   Delete,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -13,17 +14,11 @@ import { CustomerAddressEntity } from './customer-address.entity';
 import { RequireOwnPermission } from '../common/authorization/authorization.decorators';
 import { PERMISSIONS } from '../common/authorization/permission-policies';
 import type { AuthorizedRequest } from '../common/authorization/authorization.guard';
-
-type CreateCustomerAddressBody = {
-  isDefault?: boolean;
-  label?: string | null;
-  street: string;
-  city: string;
-  state: string;
-  zip: string;
-  latitude: number;
-  longitude: number;
-};
+import {
+  assertOwnedCollection,
+  assertOwnedResource,
+} from '../common/authorization/resource-ownership';
+import { CreateCustomerAddressDto } from './dto/create-customer-address.dto';
 
 @Controller('users/me/addresses')
 export class CustomerAddressesController {
@@ -35,17 +30,26 @@ export class CustomerAddressesController {
   @Get()
   @RequireOwnPermission(PERMISSIONS.profileReadSelf)
   async list(@Req() request: AuthorizedRequest) {
-    const userId = request.authorizationPrincipal!.userId;
-    return await this.addressRepo.findBy({ userId });
+    const principal = request.authorizationPrincipal!;
+    const userId = principal.userId;
+    const rows = await this.addressRepo.findBy({ userId });
+    // SEC-002: the guarantee here is the `where: { userId }` predicate, which a
+    // reader cannot verify and a later edit can silently drop. Handing the rows
+    // actually read to the assertion makes it checkable.
+    assertOwnedCollection(principal, rows, 'userId');
+    return rows;
   }
 
   @Post()
   @RequireOwnPermission(PERMISSIONS.profileUpdateSelf)
   async create(
     @Req() request: AuthorizedRequest,
-    @Body() body: CreateCustomerAddressBody,
+    // SEC-011: was a bare `type` alias, which the ValidationPipe skips entirely,
+    // so latitude/longitude reached the database unchecked.
+    @Body() body: CreateCustomerAddressDto,
   ) {
-    const userId = request.authorizationPrincipal!.userId;
+    const principal = request.authorizationPrincipal!;
+    const userId = principal.userId;
     // Set all other addresses to not default if this one is default
     if (body.isDefault) {
       await this.addressRepo.update({ userId }, { isDefault: false });
@@ -61,14 +65,27 @@ export class CustomerAddressesController {
       longitude: body.longitude,
       isDefault: body.isDefault,
     });
-    return await this.addressRepo.save(address);
+    const saved = await this.addressRepo.save(address);
+    assertOwnedResource(principal, saved.userId, 'customerAddress.userId');
+    return saved;
   }
 
   @Delete(':id')
   @RequireOwnPermission(PERMISSIONS.profileUpdateSelf)
   async remove(@Req() request: AuthorizedRequest, @Param('id') id: string) {
-    const userId = request.authorizationPrincipal!.userId;
-    await this.addressRepo.delete({ id, userId });
+    const principal = request.authorizationPrincipal!;
+    const userId = principal.userId;
+    // SEC-002. `delete({ id, userId })` was already scoped, but a scoped
+    // DELETE that matched nothing still returned `{ success: true }`, so
+    // deleting somebody else's id answered exactly like deleting your own —
+    // indistinguishable, and a silent 200 on a write that never happened.
+    // Load the row the caller owns first: absent is a 404, present is proven.
+    const existing = await this.addressRepo.findOneBy({ id, userId });
+    if (!existing) {
+      throw new NotFoundException(`Address with ID ${id} not found`);
+    }
+    assertOwnedResource(principal, existing.userId, 'customerAddress.userId');
+    await this.addressRepo.delete({ id });
     return { success: true };
   }
 }

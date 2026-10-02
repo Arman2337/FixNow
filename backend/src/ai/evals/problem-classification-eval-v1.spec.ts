@@ -28,6 +28,7 @@ import { AiService } from '../ai.service';
 import { DeterministicAiProvider } from '../providers/deterministic-ai.provider';
 import { isAllowedCategory } from '../problem-classification/categories.config';
 import { ProblemClassificationService } from '../problem-classification/problem-classification.service';
+import { mpegAudioWithTranscript } from '../policy/audio-fixtures';
 
 /** Full synthetic bookable catalog so a confident label always has a target. */
 const ACTIVE_CATEGORIES = [
@@ -84,8 +85,22 @@ function jpeg(hint: string): { bytes: Buffer; mimeType: string } {
   };
 }
 
+/**
+ * SEC-014. This fixture was `Buffer.from(transcript)` labelled `audio/mpeg` —
+ * a text file carrying a lie. It passed only because the media gate trusted the
+ * declared mime, which is the exact disguise that gate exists to reject.
+ *
+ * The transcript argument is still meaningful: `DeterministicAiProvider`
+ * synthesises its transcription by decoding the audio bytes as UTF-8, which is
+ * how this suite drives an exact transcript with no model and no network. The
+ * fix is a real MPEG frame header in front of the text, so the payload is
+ * identifiable as audio *and* still reads back as the intended transcript.
+ */
 function audio(transcript: string): { bytes: Buffer; mimeType: string } {
-  return { bytes: Buffer.from(transcript), mimeType: 'audio/mpeg' };
+  return {
+    bytes: mpegAudioWithTranscript(transcript),
+    mimeType: 'audio/mpeg',
+  };
 }
 
 function buildService(rawOutput?: string): ProblemClassificationService {

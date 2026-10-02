@@ -14,6 +14,7 @@ import {
 } from '../common/authorization/authorization.decorators';
 import type { AuthorizedRequest } from '../common/authorization/authorization.guard';
 import { PERMISSIONS } from '../common/authorization/permission-policies';
+import { assertNoResourceToProve } from '../common/authorization/resource-ownership';
 import { AuthenticationResponse, EmailPasswordDto } from './auth.dto';
 import { AuthService } from './auth.service';
 
@@ -33,6 +34,10 @@ export class AdminAuthController {
   @RequireOwnPermission(PERMISSIONS.adminSessionReadSelf)
   session(@Req() request: AuthorizedRequest) {
     const principal = request.authorizationPrincipal!;
+    // SEC-002: the resource *is* the caller. The guard proved the session and
+    // role rows; there is no separate owner column to compare, so the route
+    // says so out loud rather than leaving the obligation outstanding.
+    assertNoResourceToProve(principal);
     return { userId: principal.userId, roles: principal.roles };
   }
 }

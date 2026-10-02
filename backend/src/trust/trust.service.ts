@@ -98,7 +98,7 @@ export class TrustService {
         assignedAt: Not(IsNull()),
         createdAt: MoreThan(windowStart),
       },
-      select: { createdAt: true, assignedAt: true },
+      select: { id: true, createdAt: true, assignedAt: true },
       order: { assignedAt: 'DESC' },
       take: TRUST_RULES.acceptTimeSampleCap,
     });

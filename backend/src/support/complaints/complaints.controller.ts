@@ -13,6 +13,10 @@ import { AuthorizationGuard } from '../../common/authorization/authorization.gua
 import type { AuthorizedRequest } from '../../common/authorization/authorization.guard';
 import { RequireOwnPermission } from '../../common/authorization/authorization.decorators';
 import { PERMISSIONS } from '../../common/authorization/permission-policies';
+import {
+  assertNoResourceToProve,
+  assertOwnedByParty,
+} from '../../common/authorization/resource-ownership';
 
 @Controller('support/complaints')
 @UseGuards(AuthorizationGuard)
@@ -25,15 +29,35 @@ export class ComplaintsController {
     @Req() req: AuthorizedRequest,
     @Body() dto: CreateComplaintDto,
   ) {
-    const userId = req.authorizationPrincipal!.userId;
-    return this.complaintsService.createComplaint(userId, dto);
+    const principal = req.authorizationPrincipal!;
+    // SEC-002: the service proves the caller is a party to the named booking
+    // and that the target is the counterparty; the complaint row then carries
+    // both party columns, so assert on them.
+    const complaint = await this.complaintsService.createComplaint(
+      principal.userId,
+      dto,
+    );
+    assertOwnedByParty(principal, complaint.submitterId, complaint.targetId);
+    return complaint;
   }
 
   @Get()
   @RequireOwnPermission(PERMISSIONS.complaintsReadSelf)
   async getComplaints(@Req() req: AuthorizedRequest) {
-    const userId = req.authorizationPrincipal!.userId;
-    return this.complaintsService.getComplaints(userId, false);
+    const principal = req.authorizationPrincipal!;
+    const userId = principal.userId;
+    const complaints = await this.complaintsService.getComplaints(
+      userId,
+      false,
+    );
+    // SEC-002: a case is visible to its submitter *or* its target. Every row
+    // returned must be a case the caller is a party to. An empty inbox has
+    // proven nothing to leak.
+    if (complaints.length === 0) assertNoResourceToProve(principal);
+    for (const complaint of complaints) {
+      assertOwnedByParty(principal, complaint.submitterId, complaint.targetId);
+    }
+    return complaints;
   }
 
   @Post(':id/evidence')
@@ -43,8 +67,11 @@ export class ComplaintsController {
     @Param('id') id: string,
     @Body() dto: EvidenceDto,
   ) {
-    const userId = req.authorizationPrincipal!.userId;
-    return this.complaintsService.addEvidence(id, userId, dto);
+    const principal = req.authorizationPrincipal!;
+    const userId = principal.userId;
+    const complaint = await this.complaintsService.addEvidence(id, userId, dto);
+    assertOwnedByParty(principal, complaint.submitterId, complaint.targetId);
+    return complaint;
   }
 
   @Post(':id/callback-request')
@@ -53,8 +80,11 @@ export class ComplaintsController {
     @Req() req: AuthorizedRequest,
     @Param('id') id: string,
   ) {
-    const userId = req.authorizationPrincipal!.userId;
-    return this.complaintsService.requestCallback(id, userId);
+    const principal = req.authorizationPrincipal!;
+    const userId = principal.userId;
+    const complaint = await this.complaintsService.requestCallback(id, userId);
+    assertOwnedByParty(principal, complaint.submitterId, complaint.targetId);
+    return complaint;
   }
 
   @Get(':id')
@@ -63,7 +93,14 @@ export class ComplaintsController {
     @Req() req: AuthorizedRequest,
     @Param('id') id: string,
   ) {
-    const userId = req.authorizationPrincipal!.userId;
-    return this.complaintsService.getComplaintById(id, userId, false);
+    const principal = req.authorizationPrincipal!;
+    const userId = principal.userId;
+    const complaint = await this.complaintsService.getComplaintById(
+      id,
+      userId,
+      false,
+    );
+    assertOwnedByParty(principal, complaint.submitterId, complaint.targetId);
+    return complaint;
   }
 }

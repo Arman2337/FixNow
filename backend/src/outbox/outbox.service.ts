@@ -3,17 +3,20 @@ import {
   Logger,
   OnModuleDestroy,
   OnModuleInit,
+  Optional,
 } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import {
   DataSource,
   EntityManager,
   In,
+  IsNull,
   QueryFailedError,
   QueryRunner,
 } from 'typeorm';
 import { OutboxMessage, OutboxMessageKind } from './outbox-message.entity';
 import { runBounded } from '../common/run-bounded';
+import { ObservabilityService } from '../observability/observability.service';
 
 /**
  * FN-082. Transactional outbox: write the intent inside the transaction, drain
@@ -32,7 +35,29 @@ import { runBounded } from '../common/run-bounded';
 export class OutboxService {
   private readonly logger = new Logger(OutboxService.name);
 
-  constructor(@InjectDataSource() private readonly dataSource: DataSource) {}
+  constructor(
+    @InjectDataSource() private readonly dataSource: DataSource,
+    // `ObservabilityModule` is `@Global()`, so the running application always
+    // injects this. Optional so a unit test can build the service without a
+    // metrics graph — the backlog gauge is observability, not behaviour, and its
+    // absence must never change what a drain does.
+    private readonly observability?: ObservabilityService,
+  ) {}
+
+  /**
+   * Rows waiting to be drained: not yet processed, and not claimed by a worker
+   * that is still working on them.
+   *
+   * Claims are excluded deliberately. A row a worker currently holds is being
+   * handled, and counting it would make the gauge rise during a healthy slow
+   * drain and fall afterwards — a number that moves for the wrong reason is worse
+   * than no number at all.
+   */
+  async pendingBacklog(): Promise<number> {
+    return this.dataSource.getRepository(OutboxMessage).count({
+      where: { processedAt: IsNull(), claimedAt: IsNull() },
+    });
+  }
 
   /**
    * Records a message inside the caller's transaction.
@@ -207,7 +232,13 @@ export class OutboxWorker implements OnModuleInit, OnModuleDestroy {
 
   private readonly logger = new Logger(OutboxWorker.name);
 
-  constructor(private readonly outbox: OutboxService) {}
+  constructor(
+    private readonly outbox: OutboxService,
+    // See `OutboxService`'s note: observability is optional so it can never
+    // change what a drain does.
+    @Optional()
+    private readonly observability?: ObservabilityService,
+  ) {}
 
   register(kind: OutboxMessageKind, handler: OutboxHandler): void {
     this.handlers.set(kind, handler);
@@ -244,6 +275,12 @@ export class OutboxWorker implements OnModuleInit, OnModuleDestroy {
    */
   async drainOnce(limit = DRAIN_BATCH): Promise<number> {
     const claimed = await this.outbox.claimBatch(limit);
+    // Observability. A worker that stops draining is the quietest possible
+    // failure in this codebase: enqueueing still succeeds, the state changes
+    // still commit, and the only symptom is that customers stop being notified.
+    // Publishing the backlog on every pass — including the empty one, which is
+    // the case that matters — turns it into a number that stops moving.
+    this.observability?.setOutboxBacklog(await this.outbox.pendingBacklog());
     if (claimed.length === 0) return 0;
 
     const handled: string[] = [];

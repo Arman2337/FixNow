@@ -10,6 +10,10 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
+import {
+  LIST_ENDPOINT_MAX_LIMIT,
+  coerceOptionalLimit,
+} from '../common/list-pagination.dto';
 
 /**
  * Admin-published flat base price for a category. Amount is in minor
@@ -26,6 +30,16 @@ export class CategoryPricingInput {
   currency!: 'INR';
 }
 
+/**
+ * API-003. `limit` is enforced here rather than at the call site so the bound
+ * travels with the query shape: a new caller cannot forget it the way a
+ * `getMany()` could.
+ *
+ * The catalogue is small today, which is exactly why this needs to be explicit
+ * — "the table is small" is a property of the data, not of the endpoint, and
+ * nothing in the schema stops an operator publishing a large number of
+ * categories.
+ */
 export class ServiceCategoryQueryDto {
   @IsOptional()
   @Transform(({ value }) => value === 'true' || value === true)
@@ -36,6 +50,20 @@ export class ServiceCategoryQueryDto {
   @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   isEmergency?: boolean;
+
+  /**
+   * Optional rather than defaulted, so a direct TypeScript caller can pass
+   * `{ isActive: true }` and get the default applied by the service. Declaring
+   * it as `limit: number = …` would make it *required* in the type while only
+   * defaulting at runtime via the ValidationPipe, which is a mismatch that
+   * breaks every internal caller and every test.
+   */
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(LIST_ENDPOINT_MAX_LIMIT)
+  @Transform(coerceOptionalLimit)
+  limit?: number;
 }
 
 export class CreateServiceCategoryDto {

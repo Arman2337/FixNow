@@ -16,6 +16,11 @@ import { BookingReview } from './domain/review.entity';
 import { ReviewModerationEvent } from './domain/review-moderation-event.entity';
 import { CreateReviewDto } from './ratings.dto';
 import { emptyProviderRating } from './ratings.presenter';
+import type { AuthorizationPrincipal } from '../common/authorization/authorization.types';
+import {
+  assertOwnedByParty,
+  assertOwnedResource,
+} from '../common/authorization/resource-ownership';
 
 @Injectable()
 export class RatingsService {
@@ -25,6 +30,7 @@ export class RatingsService {
     bookingId: string,
     customerId: string,
     input: CreateReviewDto,
+    principal?: AuthorizationPrincipal,
   ): Promise<BookingReview> {
     const reviewText = input.reviewText?.trim() || null;
     try {
@@ -33,6 +39,16 @@ export class RatingsService {
         const reviews = manager.getRepository(BookingReview);
         const booking = await bookings.findOneBy({ id: bookingId });
         this.assertEligible(booking, customerId);
+        // SEC-002: `presentReview` projects away both party columns, so the
+        // comparison happens here, on the booking just proved to be the
+        // caller's — before the review row is written.
+        if (principal) {
+          assertOwnedResource(
+            principal,
+            booking.customerId,
+            'booking.customerId',
+          );
+        }
 
         const existing = await reviews.findOneBy({ bookingId });
         if (existing)
@@ -58,6 +74,7 @@ export class RatingsService {
   async getForBooking(
     bookingId: string,
     actorId: string,
+    principal?: AuthorizationPrincipal,
   ): Promise<BookingReview | null> {
     const booking = await this.dataSource
       .getRepository(Booking)
@@ -67,6 +84,11 @@ export class RatingsService {
       throw new ForbiddenException(
         'You are not authorized to view this review',
       );
+    }
+    // SEC-002: either party to the booking may read its review, and the
+    // response may be `null` — so discharge against the booking itself.
+    if (principal) {
+      assertOwnedByParty(principal, booking.customerId, booking.providerId);
     }
     return this.dataSource
       .getRepository(BookingReview)

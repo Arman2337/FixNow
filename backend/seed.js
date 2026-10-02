@@ -1,6 +1,9 @@
 require('dotenv').config();
 const { Client } = require('pg');
-const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:parin@localhost:5432/fixnow';
+// A placeholder, not a credential. The previous fallback carried someone's real
+// local database password inline, which put a live secret in every clone. Read
+// DATABASE_URL instead; this only keeps `node seed.js` from failing to connect.
+const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:replace-me@localhost:5432/fixnow';
 const client = new Client({
   connectionString,
   ssl: (connectionString.includes('localhost') || connectionString.includes('127.0.0.1')) ? false : { rejectUnauthorized: false }

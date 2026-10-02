@@ -143,7 +143,8 @@ async function bootstrap() {
 // a middleware-registration bug presented as a Flutter client unable to connect,
 // with no indication that the API had refused to start at all.
 void bootstrap().catch((error: unknown) => {
-  const message = error instanceof Error ? (error.stack ?? error.message) : String(error);
+  const message =
+    error instanceof Error ? (error.stack ?? error.message) : String(error);
   // Deliberately not the app logger: it may be exactly what failed to attach.
   process.stderr.write(`FixNow API failed to start: ${message}\n`);
   process.exit(1);

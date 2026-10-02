@@ -190,6 +190,13 @@ async function _moduleRoutes(page: Page): Promise<string[]> {
   const links = page
     .getByRole('navigation', { name: 'Admin navigation' })
     .getByRole('link');
+  // The shell renders a loading state first, and `evaluateAll` on a page that
+  // has not finished booting returns an empty list rather than waiting - which
+  // read as "this role sees no modules at all" and failed the role-gate
+  // assertions on a retry that happened to boot faster or slower than the run
+  // before. Waiting here makes the helper report the routes the nav actually
+  // offers instead of the routes that happened to be mounted when we looked.
+  await links.first().waitFor({ state: 'visible' });
   const hrefs = await links.evaluateAll((nodes) =>
     nodes.map((node) => new URL((node as HTMLAnchorElement).href).pathname),
   );

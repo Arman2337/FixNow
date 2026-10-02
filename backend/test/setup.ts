@@ -24,3 +24,11 @@ process.env.NODE_ENV = 'test';
 process.env.LOCAL_OTP_BYPASS_ENABLED = 'false';
 process.env.JWT_SECRET = 'test-only-jwt-secret-at-least-32-characters';
 process.env.OTP_SECRET = 'test-only-otp-secret-at-least-32-characters';
+// The specs that bootstrap the real `AppModule` construct
+// `S3PrivateObjectStorage`, which refuses to be constructed without credentials
+// for the identity-document bucket. Nothing in this suite talks to S3 - the
+// specs assert HTTP surfaces and authorization - so placeholders are honest
+// here: an absent variable made the whole module graph fail to assemble, which
+// is how a storage concern took the OpenAPI and ownership specs down with it.
+process.env.PROVIDER_DOCUMENT_S3_ACCESS_KEY ??= 'test-only-access-key';
+process.env.PROVIDER_DOCUMENT_S3_SECRET_KEY ??= 'test-only-secret-key';

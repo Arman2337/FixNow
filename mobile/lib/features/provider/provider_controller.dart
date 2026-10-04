@@ -37,6 +37,7 @@ class ProviderController extends ChangeNotifier {
   final Map<String, bool> locationPublished = {};
   final Set<String> _publishingLocation = {};
   bool refreshingRequests = false;
+  final Map<String, Future<bool>> _acceptingRequests = {};
   final Map<String, int> _locationSequences = {};
   final Map<String, DateTime> _lastLocationSentAt = {};
   final Map<String, bool> locationSharing = {};
@@ -660,7 +661,37 @@ class ProviderController extends ChangeNotifier {
     _ => 'Your current location could not be sent. Try again.',
   };
 
+  /// Whether an acceptance for [requestId] is already in flight.
+///
+/// Drives the disabled/loading state of the accept controls, so a second tap
+/// cannot be registered while the first is still waiting on the network. Both
+/// the home-screen card and the full-screen dialog read this, which is what
+/// closes the case where two of them are on the stack at once — each has its
+/// own local flag and neither can see the other's.
+bool isAcceptingRequest(String requestId) =>
+      _acceptingRequests.containsKey(requestId);
+
   Future<bool> acceptRequest(ProviderRequest request) async {
+    // Debounce by joining the in-flight call rather than by discarding the
+    // second one. Returning `false` for a duplicate tap would report a failure
+    // for work that is about to succeed, and dropping it would leave the caller
+    // awaiting a future nobody completes. Sharing the future means both callers
+    // learn the same outcome, and exactly one POST is sent — which is also what
+    // makes the request idempotent from the client's side rather than relying on
+    // the backend to reconcile a duplicate it should never have received.
+    final inFlight = _acceptingRequests[request.id];
+    if (inFlight != null) return inFlight;
+
+    final future = _performAccept(request);
+    _acceptingRequests[request.id] = future;
+    try {
+      return await future;
+    } finally {
+      _acceptingRequests.remove(request.id);
+    }
+  }
+
+  Future<bool> _performAccept(ProviderRequest request) async {
     actionError = null;
     notifyListeners();
     try {

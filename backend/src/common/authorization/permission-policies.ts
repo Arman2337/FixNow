@@ -47,6 +47,7 @@ export const PERMISSIONS = {
   realtimeSubscribeSelf: 'realtime.subscribe.self',
   roleGrantAuthorized: 'access.role.grant.authorized',
   securityAuditReadAuthorized: 'access.audit.read.authorized',
+  adminSystemHealthRead: 'admin.system-health.read',
   adminSessionReadSelf: 'admin.session.read.self',
   adminUsersRead: 'admin.users.read',
   adminProviderApplicationsRead: 'admin.provider-applications.read',
@@ -379,6 +380,24 @@ export const PERMISSION_POLICIES: Readonly<
   },
   [PERMISSIONS.securityAuditReadAuthorized]: {
     roles: ['security_administrator', 'auditor'],
+  },
+  // The rendered health dashboard at `GET /health/dashboard`.
+  //
+  // Deliberately NOT `@Public()` like `/health/liveness` and `/health/metrics`,
+  // because it shows more than those two do. Liveness is a bare `ok`, and the
+  // metrics endpoint's own comment records that every label it exposes is a
+  // route template, a method or a status class — no ids, no amounts. This page
+  // adds uptime, heap usage, `NODE_ENV`, the listening port, DB latency and
+  // `TRUST_PROXY_HOPS`. That last one is the reason this route is gated: it
+  // tells a caller how many hops to forge in `X-Forwarded-For` before Express
+  // stops trusting it, which is the exact input SEC-006's rate-limit boundary
+  // depends on.
+  //
+  // Restricted to the roles that already read system state rather than to every
+  // staff account — a support agent answering a customer does not need it.
+  [PERMISSIONS.adminSystemHealthRead]: {
+    roles: ['operations_administrator', 'security_administrator', 'auditor'],
+    audience: 'admin',
   },
   [PERMISSIONS.complaintsCreate]: {
     roles: ['customer', 'verified_provider'],

@@ -48,6 +48,17 @@ services:
       # One year. HSTS is only emitted in production, so this is safe here.
       - key: HSTS_MAX_AGE_SECONDS
         value: 31536000
+      # BUG-016. The throttle on PUT /provider-profile/me/location, read from
+      # config per request rather than from a @Throttle constant, so a live 429
+      # is tunable from the Render dashboard without a redeploy. The pair bounds
+      # how often a provider's coordinates — the sole input to dispatch distance
+      # — may move. Keep it well under the global 60/min: raising it widens how
+      # fast a provider can re-centre on a dense area. Raise the limit before
+      # lowering the window, not the other way round.
+      - key: PROVIDER_LOCATION_THROTTLE_LIMIT
+        value: 60
+      - key: PROVIDER_LOCATION_THROTTLE_TTL_MS
+        value: 60000
       # Leave unset to use the default deny-all CSP; the API serves JSON.
       # - key: CSP_DIRECTIVES
       #   value: "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"

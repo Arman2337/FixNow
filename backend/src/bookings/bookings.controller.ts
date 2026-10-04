@@ -6,6 +6,7 @@ import {
   Get,
   Body,
   Param,
+  ParseUUIDPipe,
   Query,
   Req,
   HttpCode,
@@ -44,6 +45,23 @@ import {
   presentBooking,
   presentProviderBookingRequest,
 } from './booking.presenter';
+
+/**
+ * Every `:id` on this controller is a booking primary key, and every booking id
+ * is a v4 UUID (`uuid_generate_v4()` / `gen_random_uuid()` in the migrations).
+ *
+ * Validating at the edge turns a mistyped or misrouted path segment into a 400
+ * naming the bad parameter, instead of letting it reach PostgreSQL. Without it
+ * the database is the thing that discovers the input is not a UUID, and it does
+ * so by raising `invalid input syntax for type uuid: "..."` — which surfaces to
+ * the caller as an opaque 500 on a route that was never a lookup at all. That
+ * is exactly how `GET /bookings/schedules` presented as a scheduling failure.
+ *
+ * Version 4 is specified rather than left open so a v1 or nil UUID is rejected
+ * too: the column default only ever produces v4, so anything else did not come
+ * from this schema.
+ */
+const BOOKING_ID_PIPE = new ParseUUIDPipe({ version: '4' });
 
 @Controller('bookings')
 export class BookingsController {
@@ -88,7 +106,7 @@ export class BookingsController {
   @HttpCode(HttpStatus.OK)
   @RequireOwnPermission(PERMISSIONS.bookingAccept)
   async accept(
-    @Param('id') bookingId: string,
+    @Param('id', BOOKING_ID_PIPE) bookingId: string,
     @Req() req: AuthorizedRequest,
     @Body() dto: AcceptBookingDto,
   ): Promise<BookingResponse> {
@@ -113,7 +131,7 @@ export class BookingsController {
   @HttpCode(HttpStatus.OK)
   @RequireOwnPermission(PERMISSIONS.bookingUpdateStatus)
   async updateStatus(
-    @Param('id') bookingId: string,
+    @Param('id', BOOKING_ID_PIPE) bookingId: string,
     @Req() req: AuthorizedRequest,
     @Body() dto: UpdateBookingStatusDto,
   ): Promise<BookingResponse> {
@@ -137,7 +155,7 @@ export class BookingsController {
   @HttpCode(HttpStatus.OK)
   @RequireOwnPermission(PERMISSIONS.bookingManageItems)
   async updateItems(
-    @Param('id') bookingId: string,
+    @Param('id', BOOKING_ID_PIPE) bookingId: string,
     @Req() req: AuthorizedRequest,
     @Body() dto: UpdateBookingItemsDto,
   ): Promise<BookingResponse> {
@@ -156,7 +174,7 @@ export class BookingsController {
   @HttpCode(HttpStatus.OK)
   @RequireOwnPermission(PERMISSIONS.bookingManageItems)
   async updateLineItems(
-    @Param('id') bookingId: string,
+    @Param('id', BOOKING_ID_PIPE) bookingId: string,
     @Req() req: AuthorizedRequest,
     @Body() dto: UpdateBookingLineItemsDto,
   ): Promise<BookingResponse> {
@@ -179,7 +197,7 @@ export class BookingsController {
   @Post(':id/service-start-otp')
   @RequireOwnPermission(PERMISSIONS.bookingServiceStartOtp)
   async serviceStartOtp(
-    @Param('id') bookingId: string,
+    @Param('id', BOOKING_ID_PIPE) bookingId: string,
     @Req() req: AuthorizedRequest,
   ): Promise<{ otp: string }> {
     // The service discloses a one-time code, so the caller must be the
@@ -194,7 +212,7 @@ export class BookingsController {
   @Post(':id/start-service')
   @RequireOwnPermission(PERMISSIONS.bookingUpdateStatus)
   async startService(
-    @Param('id') bookingId: string,
+    @Param('id', BOOKING_ID_PIPE) bookingId: string,
     @Req() req: AuthorizedRequest,
     @Body() dto: VerifyServiceStartOtpDto,
   ): Promise<BookingResponse> {
@@ -213,7 +231,7 @@ export class BookingsController {
   @HttpCode(HttpStatus.OK)
   @RequireOwnPermission(PERMISSIONS.bookingCancelSelf)
   async cancel(
-    @Param('id') bookingId: string,
+    @Param('id', BOOKING_ID_PIPE) bookingId: string,
     @Req() req: AuthorizedRequest,
     @Body() dto: CancelBookingDto,
   ): Promise<BookingResponse> {
@@ -242,7 +260,7 @@ export class BookingsController {
   @HttpCode(HttpStatus.OK)
   @RequireOwnPermission(PERMISSIONS.bookingCancelSelf)
   async reschedule(
-    @Param('id') bookingId: string,
+    @Param('id', BOOKING_ID_PIPE) bookingId: string,
     @Req() req: AuthorizedRequest,
     @Body() dto: RescheduleBookingDto,
   ): Promise<BookingResponse> {
@@ -315,7 +333,7 @@ export class BookingsController {
   @RequireOwnPermission(PERMISSIONS.bookingHistoryReadSelf)
   async getBooking(
     @Req() req: AuthorizedRequest,
-    @Param('id') bookingId: string,
+    @Param('id', BOOKING_ID_PIPE) bookingId: string,
   ): Promise<BookingResponse> {
     const principal = req.authorizationPrincipal!;
     const userId = principal.userId;

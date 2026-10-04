@@ -589,19 +589,30 @@ class ProviderHomeScreen extends StatelessWidget {
                           FixButton(
                             label: 'Accept request',
                             icon: Icons.check_circle_outline_rounded,
-                            onPressed: () async {
-                              final accepted = await controller.acceptRequest(
-                                request,
-                              );
-                              if (context.mounted && accepted) {
-                                showFixBanner(
-                                  ScaffoldMessenger.of(context),
-                                  message:
-                                      'Request accepted! Preparing active job details.',
-                                  tone: FixBannerTone.success,
-                                );
-                              }
-                            },
+                            // A card list renders many requests at once, so
+                            // the guard is per-request rather than a single
+                            // screen-wide flag — accepting one must not block
+                            // the others, and the same request must not be
+                            // posted twice while the first is in flight.
+                            isLoading: controller.isAcceptingRequest(
+                              request.id,
+                            ),
+                            onPressed: controller.isAcceptingRequest(request.id)
+                                ? null
+                                : () async {
+                                    final accepted =
+                                        await controller.acceptRequest(
+                                          request,
+                                        );
+                                    if (context.mounted && accepted) {
+                                      showFixBanner(
+                                        ScaffoldMessenger.of(context),
+                                        message:
+                                            'Request accepted! Preparing active job details.',
+                                        tone: FixBannerTone.success,
+                                      );
+                                    }
+                                  },
                           ),
                         ],
                       ),

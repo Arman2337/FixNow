@@ -1,11 +1,26 @@
-import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Req,
+  Res,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import {
   HealthCheck,
   HealthCheckService,
   TypeOrmHealthIndicator,
 } from '@nestjs/terminus';
-import { Public } from '../common/authorization/authorization.decorators';
+import type { Response } from 'express';
+import {
+  Public,
+  RequirePermission,
+} from '../common/authorization/authorization.decorators';
+import { PERMISSIONS } from '../common/authorization/permission-policies';
+import type { AuthorizedRequest } from '../common/authorization/authorization.guard';
+import { assertNoResourceToProve } from '../common/authorization/resource-ownership';
 import { ReadinessState } from './readiness-state.service';
+import { SystemHealthService } from './system-health.service';
+import { renderHealthDashboard } from './health-dashboard';
 
 @Controller('health')
 export class HealthController {
@@ -13,6 +28,7 @@ export class HealthController {
     private health: HealthCheckService,
     private db: TypeOrmHealthIndicator,
     private readonly readiness: ReadinessState,
+    private readonly systemHealth: SystemHealthService,
   ) {}
 
   /**
@@ -76,5 +92,67 @@ export class HealthController {
   @Get('readiness/state')
   state_() {
     return { ...this.readiness.state, timestamp: new Date().toISOString() };
+  }
+
+  /**
+   * The rendered health dashboard: status, uptime, memory, dependency latency,
+   * environment and recent metrics, with an auto-refresh toggle.
+   *
+   * Admin-gated, unlike the three probes above it. Those are safe to publish
+   * because they say almost nothing: liveness is a bare `ok`, and readiness
+   * reports dependency state that the metrics endpoint already exposes as
+   * route templates and status classes. This page adds uptime, heap usage,
+   * `NODE_ENV`, the listening port and `TRUST_PROXY_HOPS` — and that last one
+   * is the reason the gate is here rather than a `@Public()`. It tells a caller
+   * how many hops to forge in `X-Forwarded-For` before Express stops trusting
+   * it, which is precisely the input SEC-006's rate-limit boundary rests on.
+   *
+   * Rendered rather than returned as JSON because the request was for something
+   * an operator can read without a client. The facts themselves are collected
+   * by `SystemHealthService`, which has no opinion about markup.
+   */
+  @RequirePermission(PERMISSIONS.adminSystemHealthRead)
+  @Get('dashboard')
+  async dashboard(
+    @Req() req: AuthorizedRequest,
+    @Res() response: Response,
+  ): Promise<void> {
+    // SEC-002: there is no caller-named resource here. The page describes the
+    // instance, and the principal's job is only to prove they may read it — so
+    // the obligation is discharged explicitly rather than left outstanding for
+    // the interceptor to fail closed on.
+    assertNoResourceToProve(req.authorizationPrincipal);
+
+    const report = await this.systemHealth.collect();
+
+    response.setHeader('Content-Type', 'text/html; charset=utf-8');
+    // Same reasoning as the metrics endpoint: a cached health page is worse than
+    // no health page, because a stale reading is indistinguishable from a live
+    // one and an operator would act on it.
+    response.setHeader('Cache-Control', 'no-store');
+    // This page is the one response in the service that is HTML, so the global
+    // `default-src 'none'` CSP set by `SecurityHeadersMiddleware` would blank
+    // it. That directive is correct for the JSON API and wrong here, so it is
+    // replaced for this response only — narrowly, and without relaxing the
+    // directives that actually matter (`frame-ancestors 'none'` stops clickjacking
+    // an authenticated admin session, and stays).
+    response.setHeader(
+      'Content-Security-Policy',
+      [
+        "default-src 'none'",
+        // Inline style and script, which is why this page carries its own
+        // stylesheet. `'unsafe-inline'` is the concession made for a self-
+        // contained page; it is scoped to this response and to this route, and
+        // no other route inherits it.
+        "style-src 'unsafe-inline'",
+        "script-src 'unsafe-inline'",
+        "img-src 'self' data:",
+        "connect-src 'self'",
+        "frame-ancestors 'none'",
+        "base-uri 'none'",
+        "form-action 'none'",
+      ].join('; '),
+    );
+    response.status(200).send(renderHealthDashboard(report));
   }
 }

@@ -155,6 +155,35 @@ export class EnvironmentVariables {
   @IsOptional()
   PROVIDER_MAX_CONCURRENT_BOOKINGS: number = 5;
 
+  /**
+   * BUG-016. The `PUT /provider-profile/me/location` throttle.
+   *
+   * These coordinates are the sole input to dispatch distance, so this endpoint
+   * is a lever on which jobs a provider is offered rather than a profile field,
+   * and it is deliberately limited below the global rate. The limit used to be
+   * a `@Throttle({ limit: 6, ttl: 60 * 60_000 })` constant, which meant an
+   * operator could not relieve it without a code change and a redeploy — and
+   * during live testing the six-per-hour produced a stream of 429s that looked
+   * like a bug in the client rather than a policy doing its job.
+   *
+   * The protection is unchanged in kind, only in where it is set. A provider
+   * who genuinely moves sends a handful of updates; farming the dispatch radius
+   * needs far more. The durable bound is the freshness check in
+   * `MatchingService`, which this only makes cheaper to stop.
+   */
+  @IsInt()
+  @Min(1)
+  @Max(10_000)
+  @IsOptional()
+  PROVIDER_LOCATION_THROTTLE_LIMIT: number = 60;
+
+  /** The window `PROVIDER_LOCATION_THROTTLE_LIMIT` applies over, in ms. */
+  @IsInt()
+  @Min(1_000)
+  @Max(86_400_000)
+  @IsOptional()
+  PROVIDER_LOCATION_THROTTLE_TTL_MS: number = 60_000;
+
   @IsInt()
   @Min(60_000)
   @IsOptional()

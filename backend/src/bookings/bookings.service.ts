@@ -756,6 +756,36 @@ export class BookingsService {
       .getRepository(Booking)
       .findOneBy({ id: bookingId });
     if (!candidate) throw new NotFoundException('Booking not found');
+
+    // Idempotency. A second tap on "Accept" — or a client that retries a
+    // request whose response it never saw — used to fall through to
+    // `transition()` and be refused with `Booking version is stale`, because the
+    // first accept had already bumped the version the retry was carrying. The
+    // caller could not tell that apart from losing a genuine race for the job,
+    // so the UI reported a failure for something it had already achieved.
+    //
+    // Both answers are decided here, before the version check, because by the
+    // time `transition()` runs the expected version is stale by construction
+    // and the retry no longer has a version it could legitimately present.
+    if (candidate.providerId === providerId) {
+      // This provider already holds the booking. Returning the current row is
+      // the answer to "did my acceptance go through?" — yes — rather than an
+      // error. No second assignment event and no second notification: the work
+      // already happened, and repeating it would page the provider again for a
+      // job they are already on.
+      return candidate;
+    }
+    if (candidate.providerId) {
+      // Somebody else got it. Named plainly so the client can say so, instead of
+      // the generic "no longer available" that read as a bug during testing.
+      // Deliberately does not name them: a 409 that identified the winning
+      // provider turns this into an oracle for who is working where.
+      throw new ConflictException({
+        statusCode: 409,
+        message: 'Booking has already been accepted by another specialist',
+      });
+    }
+
     // BUG-007: eligibility must not depend on the provider's rank in a
     // distance-ordered shortlist. `isProviderEligible` applies the same
     // predicate with no LIMIT, so a provider is judged on merit rather than on

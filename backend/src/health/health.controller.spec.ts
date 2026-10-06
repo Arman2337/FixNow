@@ -3,6 +3,7 @@ import { ServiceUnavailableException } from '@nestjs/common';
 import { HealthController } from './health.controller';
 import { HealthCheckService, TypeOrmHealthIndicator } from '@nestjs/terminus';
 import { ReadinessState } from './readiness-state.service';
+import { SystemHealthService } from './system-health.service';
 
 describe('HealthController', () => {
   let controller: HealthController;
@@ -30,6 +31,13 @@ describe('HealthController', () => {
         {
           provide: ReadinessState,
           useValue: new ReadinessState(),
+        },
+        {
+          // Added with the rendered `/health/dashboard` route. The probes this
+          // spec covers never call it, so a stub is honest here: driving the
+          // dashboard is `health-dashboard.spec.ts`'s job.
+          provide: SystemHealthService,
+          useValue: { collect: jest.fn() },
         },
       ],
     }).compile();

@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Put, Request } from '@nestjs/common';
-import { Throttle } from '@nestjs/throttler';
+import { ConfigurableThrottle } from '../common/throttling/configurable-throttle.decorator';
 import { RequireOwnPermission } from '../common/authorization/authorization.decorators';
 import type { AuthorizedRequest } from '../common/authorization/authorization.guard';
 import { assertOwnedResource } from '../common/authorization/resource-ownership';
@@ -44,19 +44,26 @@ export class ProviderProfileController {
   }
 
   /**
-   * BUG-016. Rate-limited far below the global 60/min.
+   * BUG-016. Rate-limited far below the global 60/min, and configurable.
    *
    * These coordinates are the sole input to dispatch distance, so this endpoint
    * is not a profile field - it is a lever on which jobs a provider is offered.
    * At the global limit a provider could re-centre themselves on a dense area as
    * fast as the API would answer, and no audit row recorded any of it.
    *
-   * Six per hour is generous for a genuine use (a provider who moved, or whose
-   * phone's location fix was wrong when they registered) while making farming
-   * impractical. The freshness bound in `MatchingService` is the durable
-   * protection; this is the cheap one that stops the abuse in the first place.
+   * The allowance used to be a `@Throttle` constant, which put it in the
+   * compiled controller: an operator who hit the limit during testing had no
+   * way to relieve it but a code change and a redeploy. It is now read from
+   * `PROVIDER_LOCATION_THROTTLE_LIMIT` / `PROVIDER_LOCATION_THROTTLE_TTL_MS`
+   * per request, so a deployment can tune it without shipping. The policy
+   * itself is unchanged - still well below the global bucket, and still the
+   * cheap outer bound over the freshness check in `MatchingService`, which is
+   * the durable one.
    */
-  @Throttle({ default: { limit: 6, ttl: 60 * 60_000 } })
+  @ConfigurableThrottle({
+    limitKey: 'PROVIDER_LOCATION_THROTTLE_LIMIT',
+    ttlKey: 'PROVIDER_LOCATION_THROTTLE_TTL_MS',
+  })
   @Put('me/location')
   @RequireOwnPermission('provider.profile.update')
   async updateOwnLocation(

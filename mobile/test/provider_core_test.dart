@@ -390,6 +390,151 @@ void main() {
     expect(acceptRequest.path, 'bookings/request-1/accept');
     expect(acceptRequest.body?['expectedVersion'], 4);
   });
+
+  // A second tap must not become a second POST. Before the controller-level
+  // guard, two accepts for the same booking raced: the backend answered the
+  // loser with `Booking version is stale`, and the UI reported a failure for
+  // work it had already done.
+  test('a second accept for the same request sends only one POST', () async {
+    final transport = _ProviderTransport(verified: true);
+    final controller = ProviderController(
+      ProviderRepository(api: transport, accessToken: () async => 'token'),
+    );
+    await controller.load(verified: true);
+    controller.requests = [
+      ProviderRequest(
+        id: 'request-1',
+        serviceCategoryId: 'plumbing',
+        description: 'Kitchen sink leak',
+        version: 4,
+        distanceKm: 1.2,
+        createdAt: DateTime.parse('2026-08-14T10:00:00.000Z'),
+      ),
+    ];
+    final request = controller.requests.single;
+
+    // Both taps land before the first has resolved, which is the window where a
+    // duplicate is actually possible.
+    final results = await Future.wait([
+      controller.acceptRequest(request),
+      controller.acceptRequest(request),
+    ]);
+
+    final accepts = transport.requests
+        .where((r) => r.path.endsWith('/accept'))
+        .toList();
+    expect(accepts, hasLength(1));
+    // Both callers learn the same outcome, rather than the second being told it
+    // failed for work the first was already completing.
+    expect(results, [true, true]);
+  });
+
+  test('the accept button is disabled while an accept is in flight', () async {
+    final transport = _ProviderTransport(verified: true);
+    final controller = ProviderController(
+      ProviderRepository(api: transport, accessToken: () async => 'token'),
+    );
+    await controller.load(verified: true);
+    controller.requests = [
+      ProviderRequest(
+        id: 'request-1',
+        serviceCategoryId: 'plumbing',
+        description: 'Kitchen sink leak',
+        version: 4,
+        distanceKm: 1.2,
+        createdAt: DateTime.parse('2026-08-14T10:00:00.000Z'),
+      ),
+    ];
+
+    expect(controller.isAcceptingRequest('request-1'), isFalse);
+    final pending = controller.acceptRequest(controller.requests.single);
+    expect(controller.isAcceptingRequest('request-1'), isTrue);
+    await pending;
+    // Cleared afterwards, or the card would stay permanently disabled for any
+    // request the provider did not go on to accept.
+    expect(controller.isAcceptingRequest('request-1'), isFalse);
+  });
+
+  test('an in-flight flag is per request, so one accept does not block others', () async {
+    final transport = _ProviderTransport(verified: true);
+    final controller = ProviderController(
+      ProviderRepository(api: transport, accessToken: () async => 'token'),
+    );
+    await controller.load(verified: true);
+    controller.requests = [
+      ProviderRequest(
+        id: 'request-1',
+        serviceCategoryId: 'plumbing',
+        description: 'First',
+        version: 4,
+        distanceKm: 1.2,
+        createdAt: DateTime.parse('2026-08-14T10:00:00.000Z'),
+      ),
+      ProviderRequest(
+        id: 'request-2',
+        serviceCategoryId: 'electrical',
+        description: 'Second',
+        version: 7,
+        distanceKm: 3.4,
+        createdAt: DateTime.parse('2026-08-14T10:05:00.000Z'),
+      ),
+    ];
+
+    final pending = controller.acceptRequest(controller.requests.first);
+    // The home screen renders a card per request, so a single screen-wide flag
+    // would freeze every other card while one accept was in flight.
+    expect(controller.isAcceptingRequest('request-2'), isFalse);
+    await pending;
+  });
+
+  testWidgets('tapping accept twice on the dialog posts once', (tester) async {
+    final transport = _ProviderTransport(verified: true);
+    final controller = ProviderController(
+      ProviderRepository(api: transport, accessToken: () async => 'token'),
+    );
+    await controller.load(verified: true);
+    controller.requests = [
+      ProviderRequest(
+        id: 'request-1',
+        serviceCategoryId: 'plumbing',
+        description: 'Kitchen sink leak',
+        version: 4,
+        distanceKm: 1.2,
+        createdAt: DateTime.parse('2026-08-14T10:00:00.000Z'),
+      ),
+    ];
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData.dark(),
+        home: ProviderIncomingRequestScreen(
+          providerController: controller,
+          requestData: {
+            'bookingId': 'request-1',
+            'serviceCategoryId': 'plumbing',
+            'description': 'Kitchen sink leak',
+            'version': 4,
+            'createdAt': '2026-08-14T10:00:00.000Z',
+            'distanceKm': 1.2,
+            'priceMinor': '45000',
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Two taps with no pump between them: the second lands while the first
+    // request is still in flight.
+    await tester.tap(find.text('Accept'));
+    await tester.tap(find.text('Accept'), warnIfMissed: false);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    final accepts = transport.requests
+        .where((r) => r.path.endsWith('/accept'))
+        .toList();
+    expect(accepts, hasLength(1));
+  });
+
   testWidgets(
     'provider home does not report success after an acceptance conflict',
     (tester) async {

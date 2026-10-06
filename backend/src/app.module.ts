@@ -1,9 +1,10 @@
 import { Module } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AppConfigModule } from './config/app-config.module';
+import { ConfigurableThrottleGuard } from './common/throttling/configurable-throttle.guard';
 import { AppLoggerModule } from './logging/logger.module';
 import { DatabaseModule } from './database/database.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
@@ -68,8 +69,14 @@ import { OutboxModule } from './outbox/outbox.module';
       useClass: AllExceptionsFilter,
     },
     {
+      // Every request is throttled by this rather than `ThrottlerGuard`
+      // directly, because it extends it and only diverges on routes marked
+      // `@ConfigurableThrottle`, where the limit and window are read from
+      // `ConfigService` per request. Routes without that metadata are handed
+      // straight to the parent's own `canActivate`, so the global 60/min bucket
+      // is untouched.
       provide: APP_GUARD,
-      useClass: ThrottlerGuard,
+      useClass: ConfigurableThrottleGuard,
     },
   ],
 })

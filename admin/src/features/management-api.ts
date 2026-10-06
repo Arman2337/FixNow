@@ -6,11 +6,16 @@ export type ManagementResult<T> = { ok: true; value: T } | { ok: false; status: 
 export async function managementRequest<T>(path: string, init: RequestInit = {}): Promise<ManagementResult<T>> {
   const token = await accessToken();
   if (!token) return { ok: false, status: 401 };
-  try {
+    const headers: Record<string, string> = {
+      authorization: `Bearer ${token}`,
+      "content-type": "application/json",
+      ...(env.apiKey ? { "x-api-key": env.apiKey } : {}),
+      ...(init.headers as Record<string, string>),
+    };
     const response = await fetch(`${env.apiBaseUrl}${path}`, {
       ...init,
       cache: "no-store",
-      headers: { authorization: `Bearer ${token}`, "content-type": "application/json", ...init.headers },
+      headers,
     });
     if (!response.ok) return { ok: false, status: response.status };
     return { ok: true, value: await response.json() as T };

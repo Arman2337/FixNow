@@ -140,6 +140,33 @@ class _ProviderIncomingRequestScreenState
     final priceMinor =
         int.tryParse(widget.requestData['priceMinor']?.toString() ?? '0') ?? 0;
     final price = (priceMinor / 100).toStringAsFixed(2);
+    final bookingId = widget.requestData['bookingId'] as String?;
+    // `_isAccepting` guards this instance's own button. The controller's flag is
+    // what covers the case this screen cannot see: the app pushes a separate
+    // instance per notification, so the same booking can be on screen twice at
+    // once and the other copy's tap is invisible from here. Without the shared
+    // check, both copies accept and the second POST loses a race it started.
+    final acceptInFlight =
+        _isAccepting ||
+        (bookingId != null &&
+            widget.providerController.isAcceptingRequest(bookingId));
+    return ListenableBuilder(
+      listenable: widget.providerController,
+      builder: (context, _) => _buildBody(
+        context,
+        description: description,
+        price: price,
+        acceptInFlight: acceptInFlight,
+      ),
+    );
+  }
+
+  Widget _buildBody(
+    BuildContext context, {
+    required String description,
+    required String price,
+    required bool acceptInFlight,
+  }) {
 
     return Scaffold(
       backgroundColor: AppColors.backgroundSecondary,
@@ -219,7 +246,7 @@ class _ProviderIncomingRequestScreenState
                   const SizedBox(width: 16),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: _isAccepting ? null : _acceptRequest,
+                      onPressed: acceptInFlight ? null : _acceptRequest,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -227,7 +254,7 @@ class _ProviderIncomingRequestScreenState
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: _isAccepting
+                      child: acceptInFlight
                           ? const SizedBox(
                               height: 24,
                               width: 24,

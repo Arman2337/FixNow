@@ -385,6 +385,120 @@ describe('BookingsService', () => {
     expect(matchingService.findEligibleProviders).not.toHaveBeenCalled();
   });
 
+  // Idempotency. A second tap on Accept, or a client retrying a request whose
+  // response it never saw, used to reach `transition()` and be refused with
+  // `Booking version is stale` — because the first accept had already bumped the
+  // version the retry carried. The caller could not distinguish that from losing
+  // a genuine race for the job, so the client reported failure for something it
+  // had already achieved.
+  describe('acceptBooking idempotency', () => {
+    const providerId = '00000000-0000-4000-8000-000000000002';
+    // A third party, distinct from both the asking provider and `OTHER_USER_ID`
+    // (which is the same value as `providerId` — reusing it made the
+    // "someone else won" case resolve as an idempotent success).
+    const winnerId = '00000000-0000-4000-8000-000000000077';
+
+    it('returns the existing booking when this provider already holds it', async () => {
+      const assigned = booking({
+        providerId,
+        status: BookingStatus.ASSIGNED,
+        version: 2,
+      });
+      bookingFindOneBy.mockResolvedValue(assigned);
+
+      // The stale version the retry is carrying is the whole point: it is
+      // correct to ignore it here, because the answer does not depend on it.
+      await expect(
+        service.acceptBooking(assigned.id, providerId, 1),
+      ).resolves.toMatchObject({ id: assigned.id, providerId });
+
+      // Nothing was written, so no duplicate assignment event and no second
+      // notification paging a provider about a job they are already on.
+      expect(bookingSave).not.toHaveBeenCalled();
+      expect(eventSave).not.toHaveBeenCalled();
+      // Eligibility is not re-checked: the provider already has the job, so
+      // being eligible for it is no longer a question.
+      expect(matchingService.isProviderEligible).not.toHaveBeenCalled();
+    });
+
+    it('answers a second identical accept with the same booking, not an error', async () => {
+      const assigned = booking({
+        providerId,
+        status: BookingStatus.ASSIGNED,
+        version: 2,
+      });
+      bookingFindOneBy.mockResolvedValue(assigned);
+
+      const first = await service.acceptBooking(assigned.id, providerId, 1);
+      const second = await service.acceptBooking(assigned.id, providerId, 1);
+
+      expect(second).toMatchObject({
+        id: first.id,
+        providerId: first.providerId,
+      });
+    });
+
+    it("reports another provider's acceptance as a plain 409", async () => {
+      bookingFindOneBy.mockResolvedValue(
+        booking({
+          providerId: winnerId,
+          status: BookingStatus.ASSIGNED,
+          version: 2,
+        }),
+      );
+
+      await expect(
+        service.acceptBooking(
+          '00000000-0000-4000-8000-000000000101',
+          providerId,
+          1,
+        ),
+      ).rejects.toMatchObject({
+        response: {
+          statusCode: 409,
+          message: 'Booking has already been accepted by another specialist',
+        },
+      });
+    });
+
+    // The 409 must not name the winner. A message identifying the accepted
+    // provider turns this endpoint into an oracle for who is working where.
+    it('does not disclose which provider won the booking', async () => {
+      bookingFindOneBy.mockResolvedValue(
+        booking({
+          providerId: winnerId,
+          status: BookingStatus.ASSIGNED,
+        }),
+      );
+
+      const error = await service
+        .acceptBooking('00000000-0000-4000-8000-000000000101', providerId, 1)
+        .then(() => null)
+        .catch((caught: unknown) => caught as ConflictException);
+
+      expect(error).toBeInstanceOf(ConflictException);
+      expect(JSON.stringify(error?.getResponse())).not.toContain(winnerId);
+    });
+
+    it('still refuses a genuine race, where the booking is no longer REQUESTED', async () => {
+      // Idempotency covers "you already have it", not "a booking that is gone".
+      // A cancelled booking has a null providerId, so the new idempotent branch
+      // does not claim it — this must still fall through to the status check.
+      const cancelled = booking({ status: BookingStatus.CANCELLED });
+      bookingFindOneBy.mockResolvedValue(cancelled);
+      stubTransition(cancelled);
+      matchingService.isProviderEligible.mockResolvedValue(true);
+
+      await expect(
+        service.acceptBooking(
+          '00000000-0000-4000-8000-000000000101',
+          providerId,
+          1,
+        ),
+      ).rejects.toThrow('Booking is no longer available');
+    });
+  });
+
   it('rejects malformed history cursors', async () => {
     await expect(
       service.getBookingHistory('customer-id', 20, 'not-json'),

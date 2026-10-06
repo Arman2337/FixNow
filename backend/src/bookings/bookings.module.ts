@@ -48,9 +48,22 @@ import { OutboxModule } from '../outbox/outbox.module';
     // than performing it, and BookingDispatchHandlers drains it.
     OutboxModule,
   ],
+  // Route registration order is load-bearing. Nest registers a module's routes
+  // in the order its controllers are listed here, and Express matches in
+  // registration order, so `BookingsController`'s `@Get(':id')` used to be
+  // registered before `SchedulesController`'s `@Get()`. A `GET
+  // /api/v1/bookings/schedules` therefore matched `:id` with the literal
+  // string "schedules", and the lookup reached PostgreSQL as
+  // `invalid input syntax for type uuid: "schedules"` — a 500 that the mobile
+  // client surfaced as "Repeating services are unavailable".
+  //
+  // `SchedulesController` is listed first so the literal path wins. The
+  // `ParseUUIDPipe` on `BookingsController`'s `:id` routes is the second half
+  // of the same fix: even if this ordering is disturbed again, a non-UUID path
+  // segment is refused with a 400 at the edge instead of reaching the database.
   controllers: [
-    BookingsController,
     SchedulesController,
+    BookingsController,
     BookingMessagesController,
     BookingCallsController,
   ],

@@ -36,7 +36,7 @@ void main() {
         _booking(status: 'CANCELLED');
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.dark,
+        theme: AppTheme.light,
         home: BookingDetailScreen(booking: _booking(), onCancel: cancel),
       ),
     );
@@ -50,7 +50,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.dark,
+        theme: AppTheme.light,
         home: BookingDetailScreen(
           booking: _booking(status: 'COMPLETED'),
           onCancel: cancel,

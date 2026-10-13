@@ -65,7 +65,7 @@ void main() {
     );
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.dark,
+        theme: AppTheme.light,
         home: Scaffold(body: LocationConsentCard(controller: location)),
       ),
     );
@@ -99,7 +99,7 @@ void main() {
     await location.check();
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.dark,
+        theme: AppTheme.light,
         home: Scaffold(
           body: ServiceDiscoveryScreen(
             controller: discovery,
@@ -149,7 +149,7 @@ void main() {
     );
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.dark,
+        theme: AppTheme.light,
         home: Scaffold(
           body: ServiceDiscoveryScreen(
             controller: discovery,
@@ -209,7 +209,7 @@ void main() {
     );
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.dark,
+        theme: AppTheme.light,
         home: Scaffold(
           body: ServiceDiscoveryScreen(
             controller: discovery,
@@ -252,7 +252,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.dark,
+        theme: AppTheme.light,
         home: Scaffold(
           body: ServiceDiscoveryScreen(
             controller: discovery,
@@ -300,7 +300,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.dark,
+        theme: AppTheme.light,
         home: Scaffold(
           body: ServiceDiscoveryScreen(
             controller: discovery,

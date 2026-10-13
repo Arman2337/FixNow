@@ -69,9 +69,9 @@ class FixCard extends StatelessWidget {
       ).copyWith(textTheme: FixNowTypography.textTheme(foreground, supporting)),
       child: IconTheme(
         data: IconThemeData(color: foreground),
-        // A light card sits inside the app's dark theme. Use a complete
-        // DefaultTextStyle rather than merging with the page's white default;
-        // otherwise plain Text widgets can inherit white text on this surface.
+        // A light card sits inside the app's light theme. Use a complete
+        // DefaultTextStyle rather than merging with the page's default;
+        // otherwise plain Text widgets can inherit an unintended foreground.
         child: DefaultTextStyle(
           style: TextStyle(color: foreground),
           child: Padding(padding: padding, child: child),

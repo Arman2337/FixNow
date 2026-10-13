@@ -1,36 +1,35 @@
 # Bundled fonts
 
-`app_typography.dart` sets two font families that must be bundled here so the app
-renders in the intended faces instead of the system serif/sans fallback.
+`app_typography.dart` sets one font family that must be bundled here so the app
+renders in the intended face instead of the system fallback.
 
-Drop these five static TTF files into this folder, named **exactly** as below.
-The `family:` strings must match `app_typography.dart` character-for-character
-(`Playfair Display`, `Inter`) or Flutter silently falls back.
+Drop these static TTF files into this folder, named **exactly** as below.
+The `family:` string must match `app_typography.dart` character-for-character
+(`Inter`) or Flutter silently falls back.
 
-| Family           | Weight | Flutter `weight` | Expected filename                |
-|------------------|--------|------------------|----------------------------------|
-| Playfair Display | 600    | 600              | `PlayfairDisplay-SemiBold.ttf`   |
-| Playfair Display | 700    | 700              | `PlayfairDisplay-Bold.ttf`       |
-| Inter            | 400    | 400              | `Inter-Regular.ttf`              |
-| Inter            | 500    | 500              | `Inter-Medium.ttf`               |
-| Inter            | 600    | 600              | `Inter-SemiBold.ttf`             |
+| Family | Weight | Flutter `weight` | Filename |
+|--------|--------|------------------|----------------------------------|
+| Inter | 400 | 400 | `Inter-Regular.ttf` |
+| Inter | 500 | 500 | `Inter-Medium.ttf` |
+| Inter | 600 | 600 | `Inter-SemiBold.ttf` |
+| Inter | 700 | 700 | `Inter-Bold.ttf` |
 
-Only these weights are referenced by the type scale today (display/heading1 =
-700, heading2/heading3 = 600; body/caption = 400, bodyLarge = 500, title/label =
-600). Adding more weights later means adding both the file and a `pubspec.yaml`
-entry.
+Only these weights are referenced by the type scale today (headings/prices =
+700, labels/buttons = 600, emphasis = 500, body/caption = 400). Adding more
+weights later means adding both the file and a `pubspec.yaml` entry.
 
-## Where to get them
+## Where they came from
 
-Both families are licensed under the SIL Open Font License 1.1 (free to bundle
-and redistribute):
+Inter is licensed under the SIL Open Font License 1.1 (free to bundle and
+redistribute). The committed files are the static instances from Inter 4.1:
 
-- Playfair Display — https://fonts.google.com/specimen/Playfair+Display
-- Inter — https://fonts.google.com/specimen/Inter
+- https://github.com/rsms/inter/releases/tag/v4.1
 
-Download the family, take the static instances for the weights above, and rename
-to the filenames in the table. (Recent Inter releases ship static files named
-`Inter_18pt-SemiBold.ttf` etc. and a variable font — use the plain static
-instances and rename, or keep your own names and update `pubspec.yaml` to match.)
+The license ships alongside the TTFs as `Inter-LICENSE.txt`.
 
-Keep the OFL license file for each family alongside these TTFs for attribution.
+## Why bundled instead of fetched
+
+The app previously pulled a font from the network at runtime via
+`google_fonts`. That made text render in the system face until (and unless)
+the fetch resolved, shift mid-session when it did, and rendered inconsistently
+offline. Bundling removes all three failure modes and the dependency.

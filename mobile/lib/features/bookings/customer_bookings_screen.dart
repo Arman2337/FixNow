@@ -8,6 +8,7 @@ import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
 import 'package:fixnow_mobile/design_system/fix_status_chip.dart';
 import 'package:fixnow_mobile/design_system/fix_notification_bell.dart';
+import 'package:fixnow_mobile/design_system/fix_saved_data_banner.dart';
 import 'package:fixnow_mobile/features/bookings/booking.dart';
 import 'package:fixnow_mobile/features/bookings/booking_controller.dart';
 import 'package:fixnow_mobile/features/bookings/recurring_schedule.dart';
@@ -206,6 +207,17 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
             ],
           ),
           const SizedBox(height: AppSpacing.md),
+
+          // FN-140. Renders nothing on a live load; when the connection dropped
+          // this is what tells the customer the bookings below are a saved copy
+          // and how old it is (DESIGN.md §28).
+          if (widget.controller.isShowingSavedData) ...[
+            FixSavedDataBanner(
+              savedAt: widget.controller.savedDataAt,
+              onRetry: widget.controller.load,
+            ),
+            const SizedBox(height: AppSpacing.md),
+          ],
 
           if (widget.schedulesController != null)
             _SchedulesSection(

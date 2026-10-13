@@ -19,6 +19,8 @@ import 'package:fixnow_mobile/features/location/location_consent_controller.dart
 import 'package:fixnow_mobile/features/location/booking_location.dart';
 import 'package:fixnow_mobile/features/services/service_category.dart';
 import 'package:fixnow_mobile/features/services/service_discovery_controller.dart';
+import 'package:fixnow_mobile/features/services/rebook_row.dart';
+import 'package:fixnow_mobile/features/bookings/booking.dart';
 import 'package:fixnow_mobile/features/bookings/booking_controller.dart';
 import 'package:fixnow_mobile/features/services/service_image_resolver.dart';
 import 'package:flutter/material.dart';
@@ -34,6 +36,7 @@ import 'package:fixnow_mobile/features/ai/problem_analysis_repository.dart';
 import 'package:fixnow_mobile/features/ai/problem_diagnosis_controller.dart';
 import 'package:fixnow_mobile/features/ai/problem_diagnosis_screen.dart';
 import 'package:fixnow_mobile/design_system/fix_notification_bell.dart';
+import 'package:fixnow_mobile/design_system/fix_saved_data_banner.dart';
 import 'package:fixnow_mobile/design_system/fix_address_selector.dart';
 import 'package:fixnow_mobile/features/location/saved_address.dart';
 import 'package:fixnow_mobile/features/location/service_location_picker_sheet.dart';
@@ -54,6 +57,7 @@ class ServiceDiscoveryScreen extends StatefulWidget {
     this.notificationController,
     this.onBookingSelected,
     this.onInvoiceSelected,
+    this.onBookAgain,
     super.key,
   });
   final ServiceDiscoveryController controller;
@@ -66,6 +70,10 @@ class ServiceDiscoveryScreen extends StatefulWidget {
   final NotificationController? notificationController;
   final void Function(String bookingId)? onBookingSelected;
   final void Function(InAppNotification notification)? onInvoiceSelected;
+
+  /// FN-139 book-again: rebook a completed booking from Home. Null hides the
+  /// row entirely — the feature is opt-in per wiring, never a dead control.
+  final void Function(CustomerBooking booking)? onBookAgain;
 
   @override
   State<ServiceDiscoveryScreen> createState() => _ServiceDiscoveryScreenState();
@@ -416,6 +424,18 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
             _buildCustomerHeader(context),
             const SizedBox(height: AppSpacing.md),
 
+            // FN-140. Renders nothing on a live load; when the connection
+            // dropped it marks the catalogue below as a saved copy and says how
+            // old it is, instead of replacing browsing with a dead end
+            // (DESIGN.md §28).
+            if (widget.controller.isShowingSavedData) ...[
+              FixSavedDataBanner(
+                savedAt: widget.controller.savedDataAt,
+                onRetry: widget.controller.load,
+              ),
+              const SizedBox(height: AppSpacing.md),
+            ],
+
             // FN-130: Universal Live Search, Filter & Price Sort Bar
             FixUniversalSearchBar(
               searchController: _searchController,
@@ -449,6 +469,9 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                 onCallNow: _openEmergencyFlow,
                 subtitle: 'Priority dispatch for home safety hazards.',
               ),
+              const SizedBox(height: AppSpacing.md),
+
+              _buildRebookSection(),
               const SizedBox(height: AppSpacing.md),
 
               _buildQuickServicesSection(context),
@@ -1785,6 +1808,27 @@ MaterialPageRoute(
           ],
         );
       },
+    );
+  }
+
+  /// FN-139 book-again. Renders nothing when there is no callback, no
+  /// controller, or no completed bookings — Home never shows an empty shell
+  /// of a section.
+  Widget _buildRebookSection() {
+    final bookings = widget.bookingsController?.bookings;
+    final onBookAgain = widget.onBookAgain;
+    if (bookings == null || onBookAgain == null) {
+      return const SizedBox.shrink();
+    }
+    return FixRebookRow(
+      bookings: bookings,
+      categoryName: (categoryId) {
+        for (final category in widget.controller.categories) {
+          if (category.id == categoryId) return category.name;
+        }
+        return 'Home service';
+      },
+      onBookAgain: onBookAgain,
     );
   }
 

@@ -92,4 +92,23 @@ class ServiceCategory {
       reviewCount: (json['reviewCount'] as num?)?.toInt() ?? 0,
     );
   }
+
+  /// FN-140: the shape [fromJson] reads, so a category can be saved and
+  /// restored without the cache inventing a parallel schema. Mirrors the
+  /// backend's `locationLat`/`locationLng`-style field naming used elsewhere.
+  Map<String, Object?> toJson() => {
+    'id': id,
+    'name': name,
+    'slug': slug,
+    if (description != null) 'description': description,
+    if (iconName != null) 'iconName': iconName,
+    'pricing': pricing == null
+        ? null
+        : {'amountMinor': pricing!.amountMinor, 'currency': pricing!.currency},
+    'isEmergency': isEmergency,
+    'verifiedProCount': verifiedProCount,
+    'onlineProCount': onlineProCount,
+    if (rating != null) 'rating': rating,
+    'reviewCount': reviewCount,
+  };
 }

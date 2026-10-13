@@ -4,8 +4,8 @@ import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/features/bookings/booking.dart';
 import 'package:fixnow_mobile/features/bookings/cancellation_dialog.dart';
 import 'package:fixnow_mobile/features/bookings/booking_repository.dart';
-import 'package:fixnow_mobile/features/bookings/job_proof_service.dart';
-import 'package:fixnow_mobile/design_system/fix_job_proof_dialog.dart';
+import 'package:fixnow_mobile/features/bookings/fix_job_proof_panel.dart';
+import 'package:fixnow_mobile/features/bookings/job_proof_controller.dart';
 import 'package:fixnow_mobile/features/ratings/booking_review_panel.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -20,6 +20,7 @@ class BookingDetailScreen extends StatelessWidget {
     this.onBookAgain,
     this.onViewInvoice,
     this.onSubmitClaim,
+    this.jobProofController,
     super.key,
   });
   final CustomerBooking booking;
@@ -30,6 +31,9 @@ class BookingDetailScreen extends StatelessWidget {
   final VoidCallback? onBookAgain;
   final VoidCallback? onViewInvoice;
   final VoidCallback? onSubmitClaim;
+
+  /// FN-143. Null renders no proof section at all, rather than an empty one.
+  final JobProofController? jobProofController;
 
   @override
   Widget build(BuildContext context) {
@@ -522,10 +526,17 @@ class BookingDetailScreen extends StatelessWidget {
                   ),
                 ),
 
-                if (JobProofRepository.instance.getProof(booking.id)
-                    case final proof?) ...[
+                // FN-143. Server-backed proof. This used to read `JobProofRepository`, an
+                // in-memory map that only ever contained photos captured by the
+                // provider in this same process — so a customer who was not the
+                // phone holding the pro's app saw nothing, and the card could
+                // never survive a restart.
+                if (jobProofController != null) ...[
                   const SizedBox(height: AppSpacing.md),
-                  JobProofViewerCard(proof: proof),
+                  FixJobProofPanel(
+                    controller: jobProofController!,
+                    bookingId: booking.id,
+                  ),
                 ],
 
                 const SizedBox(height: AppSpacing.md),

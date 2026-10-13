@@ -21,6 +21,7 @@ import 'package:fixnow_mobile/auth/welcome_screen.dart';
 import 'package:fixnow_mobile/auth/verification_screen.dart';
 import 'package:fixnow_mobile/config/app_environment.dart';
 import 'package:fixnow_mobile/design_system/app_theme.dart';
+import 'package:fixnow_mobile/design_system/fix_active_booking_island.dart';
 import 'package:fixnow_mobile/design_system/fix_banner.dart';
 import 'package:fixnow_mobile/features/location/location_consent_controller.dart';
 import 'package:fixnow_mobile/features/bookings/booking_controller.dart';
@@ -76,6 +77,8 @@ import 'package:fixnow_mobile/features/tracking/booking_tracking_controller.dart
 import 'package:fixnow_mobile/features/tracking/booking_tracking_screen.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking_source.dart';
 import 'package:fixnow_mobile/features/location/saved_address.dart';
+import 'package:fixnow_mobile/data/last_good_cache.dart';
+import 'package:fixnow_mobile/features/bookings/job_proof_controller.dart';
 
 class AppScrollBehavior extends MaterialScrollBehavior {
   const AppScrollBehavior();
@@ -95,6 +98,7 @@ class FixNowApp extends StatefulWidget {
     this.apiTransport,
     this.sessionStore,
     this.locationGateway,
+    this.snapshotStore,
     super.key,
   });
 
@@ -103,6 +107,10 @@ class FixNowApp extends StatefulWidget {
   final AuthSessionStore? sessionStore;
   final LocationPermissionGateway? locationGateway;
 
+  /// FN-140: where the last-good snapshot is kept. Injectable so tests never
+  /// touch the real filesystem; null picks the platform's app-private store.
+  final SnapshotStore? snapshotStore;
+
   @override
   State<FixNowApp> createState() => _FixNowAppState();
 }
@@ -110,11 +118,15 @@ class FixNowApp extends StatefulWidget {
 class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
   late final ApiTransport _api;
   late final AuthController _auth;
+  late final LastGoodCache _lastGoodCache;
   late final CustomerProfileController _profile;
   late final ServiceDiscoveryController _discovery;
   late final ApiServiceCategoryRepository _categoryRepository;
   late final LocationConsentController _location;
   late final BookingController _bookings;
+  /// FN-143. Server-backed before/after job proof, shared by the customer
+  /// booking detail and the provider screens.
+  late final JobProofController _jobProof;
   late final SchedulesController _schedules;
   late final ProviderController _provider;
   late final ComplaintsController _complaints;
@@ -142,6 +154,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
   final FirebasePushGateway _pushGateway = FirebasePushGateway();
   final AppShellController _customerShellController = AppShellController();
+  final AppShellController _providerShellController = AppShellController();
   static const _secureStorage = FlutterSecureStorage();
   late final AppRouteRestorationStore _routeStore = AppRouteRestorationStore(
     read: (key) => _secureStorage.read(key: key),
@@ -329,6 +342,13 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
           widget.sessionStore ??
           (kIsWeb ? WebAuthSessionStore() : SecureAuthSessionStore()),
     );
+    // FN-140. Scoped to the signed-in account: the snapshot key carries the
+    // user id, so a device shared by two customers never shows the first
+    // customer's bookings to the second. Cleared outright on sign-out.
+    _lastGoodCache = LastGoodCache(
+      store: widget.snapshotStore ?? createDefaultSnapshotStore(),
+      scope: () => _auth.session?.userId,
+    );
     _profile = CustomerProfileController(
       ApiCustomerProfileRepository(
         api: api,
@@ -339,6 +359,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
     _discovery = ServiceDiscoveryController(
       _categoryRepository,
       SubServiceRepository(api),
+      cache: _lastGoodCache,
     );
     _location = LocationConsentController(
       widget.locationGateway ?? const PlatformLocationPermissionGateway(),
@@ -351,15 +372,31 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
     // keep their own, because a subscription has to be released when the screen
     // is popped and the shared socket outlives it.
     _sharedRealtime = _createRealtimeClient();
+    // FN-144: the same downloader that serves job-proof bytes also serves
+    // review-photo bytes; both live behind the private, participant-checked
+    // content endpoints.
+    final bookingRepository = BookingRepository(
+      api: api,
+      accessToken: _auth.validAccessToken,
+      downloader: api is BinaryDownloader ? api as BinaryDownloader : null,
+    );
     _bookings = BookingController(
-      BookingRepository(api: api, accessToken: _auth.validAccessToken),
+      bookingRepository,
       realtime: _sharedRealtime,
+      cache: _lastGoodCache,
+    );
+    _jobProof = JobProofController(
+      bookingRepository,
+      // A test transport answers JSON and cannot fetch bytes; the controller
+      // then reports "cannot show the photos" instead of drawing an empty frame.
+      downloader: api is BinaryDownloader ? api as BinaryDownloader : null,
     );
     _schedules = SchedulesController(_bookings.repository);
     _provider = ProviderController(
       ProviderRepository(api: api, accessToken: _auth.validAccessToken),
       realtime: _sharedRealtime,
       currentUserId: () => _auth.session?.userId,
+      jobProof: _jobProof,
     );
     _complaints = ComplaintsController(
       ComplaintsRepository(client: api, accessToken: _auth.validAccessToken),
@@ -419,12 +456,13 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
 
   @override
   void dispose() {
-    _customerShellController.dispose();
     WidgetsBinding.instance.removeObserver(this);
     _auth.removeListener(_handleAuthChange);
     unawaited(_foregroundPushSub?.cancel());
     unawaited(_backgroundPushSub?.cancel());
     _bookings.acceptedBooking.removeListener(_showAcceptCelebration);
+    _customerShellController.dispose();
+    _providerShellController.dispose();
     // The app owns the shared socket; the controllers above only borrow it and
     // deliberately do not dispose it. Tracking screens own their own, and
     // dispose them on pop; this catches any still registered - one mid-pop,
@@ -438,6 +476,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
     _discovery.dispose();
     _location.dispose();
     _bookings.dispose();
+    _jobProof.dispose();
     _schedules.dispose();
     _provider.dispose();
     _complaints.dispose();
@@ -454,6 +493,33 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
     if (state == AppLifecycleState.resumed) {
       _scheduleRouteRestore();
       _revalidateRealtime();
+      _revalidateCachedData();
+    }
+  }
+
+  /// FN-140: reconcile whatever the app was showing from saved data, or
+  /// reporting as offline.
+  ///
+  /// A screen that came up offline renders either a snapshot stamped with its
+  /// age or the plain offline state. Neither has been checked against the
+  /// server yet, and DESIGN.md §28 requires reconciling server state before
+  /// claiming anything is current. The reload clears the stamp on success and
+  /// simply leaves the stamp standing — with a newer one — if the connection is
+  /// still gone.
+  ///
+  /// Only the two controllers that read offline-eligible data are refreshed, and
+  /// only when their last answer was "we could not reach the server". An `error`
+  /// state is left alone deliberately: that is a server that answered with
+  /// something we could not stand behind, and retrying it on every resume would
+  /// hammer a broken endpoint without making the screen any more honest.
+  void _revalidateCachedData() {
+    if (_bookings.isShowingSavedData ||
+        _bookings.status == BookingListStatus.offline) {
+      unawaited(_bookings.load());
+    }
+    if (_discovery.isShowingSavedData ||
+        _discovery.status == DiscoveryStatus.offline) {
+      unawaited(_discovery.load());
     }
   }
 
@@ -480,9 +546,53 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
   ///
   /// Goes through the same probe as resume rather than forcing a reconnect,
   /// because most of the time the answer is "still fine" - a user who taps
-  /// reconnect on a healthy connection should not pay for a new handshake and a
-  /// replay of every subscription.
+  /// reconnect on a healthy connection should not pay for a new handshake and
+  /// a replay of every subscription.
   void _retryRealtime() => _revalidateRealtime();
+
+  String _serviceLabelFor(CustomerBooking booking) {
+    for (final category in _discovery.categories) {
+      if (category.id == booking.serviceCategoryId) {
+        final description = booking.description.trim();
+        return description.isEmpty
+            ? category.name
+            : '${category.name} · $description';
+      }
+    }
+    final description = booking.description.trim();
+    return description.isEmpty ? 'Active booking' : description;
+  }
+
+  /// Customer shell island: tapping opens that booking's tracking/detail
+  /// destination. Label and status are resolved from live booking data, never
+  /// invented.
+  ///
+  /// The listener lives INSIDE the slot rather than around the shell: the
+  /// shell builds an IndexedStack of every destination, and the Bookings tab
+  /// calls `load()` (which notifies) from its own initState. A listener
+  /// wrapping the whole shell would be an ancestor marked dirty during that
+  /// build, which the framework rejects.
+  Widget _customerActiveBookingIsland() => _ActiveBookingIslandSlot(
+    controller: _bookings,
+    serviceLabelFor: _serviceLabelFor,
+    onTap: (booking) {
+      final nav = _navigatorKey.currentState;
+      if (nav == null) return;
+      nav.push(_bookingRoute(booking));
+    },
+  );
+
+  /// Provider shell island: tapping jumps to the Active Job tab, which is
+  /// where a pro acts on the job.
+  Widget _providerActiveBookingIsland() => _ActiveBookingIslandSlot(
+    controller: _bookings,
+    serviceLabelFor: _serviceLabelFor,
+    showProviderInitial: false,
+    onTap: (booking) => _providerShellController.selectDestination(
+      1,
+      destinationCount: 4,
+    ),
+  );
 
   /// PERF-005. The status banner for the shell, or null while everything is live.
   Widget? _realtimeStatusBanner() {
@@ -608,9 +718,8 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
       navigatorKey: _navigatorKey,
       navigatorObservers: [_routeObserver],
       scaffoldMessengerKey: _messengerKey,
-      theme: AppTheme.dark,
-      darkTheme: AppTheme.dark,
-      themeMode: ThemeMode.dark,
+      theme: AppTheme.light,
+      themeMode: ThemeMode.light,
       home: ListenableBuilder(
         listenable: _auth,
         builder: (context, _) {
@@ -676,6 +785,8 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
             }
             return AppShell(
               statusBanner: _realtimeStatusBanner(),
+              controller: _providerShellController,
+              activeBookingIsland: _providerActiveBookingIsland(),
               role: AppShellRole.provider,
               providerHome: ProviderHomeScreen(
                 controller: _provider,
@@ -791,10 +902,12 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
           return AppShell(
             statusBanner: _realtimeStatusBanner(),
             controller: _customerShellController,
+            activeBookingIsland: _customerActiveBookingIsland(),
             customerHome: ServiceDiscoveryScreen(
               controller: _discovery,
               locationController: _location,
               bookingsController: _bookings,
+              onBookAgain: (booking) => _openRebooking(context, booking),
               emergencyRepository: EmergencyRepository(
                 _api,
                 accessToken: _auth.validAccessToken,
@@ -1080,8 +1193,9 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
         }.contains(currentBooking.status);
         if (!active) {
           return BookingDetailScreen(
-            booking: currentBooking,
-            onReportIssue: () {
+booking: currentBooking,
+      jobProofController: _jobProof,
+      onReportIssue: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => SubmitComplaintScreen(
@@ -1208,6 +1322,10 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
   Future<void> _signOut() async {
     await _auth.logout();
     await _routeStore.clear();
+    // FN-140: the last-good snapshots are the previous account's data. Leaving
+    // them on disk would let the next person to sign in on this device read the
+    // last customer's bookings before the network answered.
+    await _lastGoodCache.clear();
     if (!mounted) return;
     setState(() => _authEntryStep = _AuthEntryStep.welcome);
   }
@@ -1267,3 +1385,48 @@ class _AppRouteRestorationObserver extends NavigatorObserver {
 }
 
 enum _AuthEntryStep { welcome, form }
+
+/// Renders the live-booking island for a shell, or nothing when no booking is
+/// in flight.
+///
+/// Listens on its own so the notification a nested `BookingController.load()`
+/// fires during build only ever marks this subtree (a descendant of the
+/// Scaffold) dirty — never an ancestor of the destination that triggered it.
+class _ActiveBookingIslandSlot extends StatelessWidget {
+  const _ActiveBookingIslandSlot({
+    required this.controller,
+    required this.onTap,
+    this.serviceLabelFor,
+    this.showProviderInitial = true,
+  });
+
+  final BookingController controller;
+  final void Function(CustomerBooking booking) onTap;
+
+  /// Resolves the booking into the island's service line.
+  final String Function(CustomerBooking booking)? serviceLabelFor;
+
+  final bool showProviderInitial;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: controller,
+      builder: (context, _) {
+        final active = controller.bookings.firstActive;
+        if (active == null) return const SizedBox.shrink();
+        // A stable key: the island must persist across status changes so its
+        // text updates in place instead of re-playing the entrance animation
+        // every time the booking moves.
+        return FixActiveBookingIsland(
+          key: const ValueKey('fixnow-active-booking-island'),
+          serviceLabel:
+              serviceLabelFor?.call(active) ?? active.description.trim(),
+          statusLabel: fixActiveBookingStatusLabel(active.status),
+          initial: showProviderInitial ? active.providerName : null,
+          onTap: () => onTap(active),
+        );
+      },
+    );
+  }
+}

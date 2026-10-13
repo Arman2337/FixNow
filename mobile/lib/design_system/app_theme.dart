@@ -1,11 +1,19 @@
 import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/app_typography.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 
 abstract final class AppTheme {
-  static ThemeData get trustMatrixTheme {
+  /// The single approved FixNow theme: a calm light canvas with deep emerald
+  /// actions, slate ink and Inter typography.
+  ///
+  /// This used to be exposed as [trustMatrixTheme] with a `dark` sibling that
+  /// only flipped the `Brightness` flag while keeping the light palette — so
+  /// `themeMode: dark` rendered the light theme by accident. There is one
+  /// approved direction, so there is one theme.
+  static ThemeData get light => _buildLightTheme();
+
+  static ThemeData _buildLightTheme() {
     const scheme = ColorScheme.light(
       brightness: Brightness.light,
       primary: AppColors.primary,
@@ -45,7 +53,7 @@ abstract final class AppTheme {
       brightness: Brightness.light,
       colorScheme: scheme,
       scaffoldBackgroundColor: AppColors.background,
-      fontFamily: GoogleFonts.manrope().fontFamily,
+      fontFamily: kFixNowFontFamily,
       textTheme: textTheme,
       focusColor: AppColors.focus,
       textSelectionTheme: const TextSelectionThemeData(
@@ -206,19 +214,4 @@ abstract final class AppTheme {
       ),
     );
   }
-
-  static ThemeData get dark {
-    final base = trustMatrixTheme;
-    return base.copyWith(
-      brightness: Brightness.dark,
-      scaffoldBackgroundColor: AppColors.backgroundPrimary,
-      colorScheme: base.colorScheme.copyWith(
-        brightness: Brightness.dark,
-        surface: AppColors.surfacePrimary,
-        error: AppColors.danger,
-      ),
-    );
-  }
-
-  static ThemeData get light => trustMatrixTheme;
 }

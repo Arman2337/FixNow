@@ -133,15 +133,22 @@ class FixStaleDataBanner extends StatelessWidget {
           color: AppColors.warningSoft,
           border: Border(bottom: BorderSide(color: AppColors.warning)),
         ),
-        child: Row(
+        // FN-141. A Wrap, not a Row: at 200% text the message and the action
+        // together overflow the banner by 10px and the action is clipped. A
+        // Wrap drops the action onto its own line instead, which is the only
+        // layout that survives DESIGN.md §31's text-scaling requirement.
+        child: Wrap(
+          spacing: AppSpacing.md,
+          runSpacing: AppSpacing.sm,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             const Icon(
               Icons.sync_problem_rounded,
               color: AppColors.warning,
               size: 18,
             ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 280),
               child: Text(
                 message,
                 style: const TextStyle(

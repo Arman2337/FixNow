@@ -92,7 +92,7 @@ void main() {
 
   Widget wrapWidget(Widget child) {
     return MaterialApp(
-      theme: AppTheme.dark,
+      theme: AppTheme.light,
       home: Scaffold(body: child),
     );
   }

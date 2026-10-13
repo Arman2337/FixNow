@@ -45,7 +45,10 @@ import { ReviewModerationStatus } from '../../../shared/ratings.types';
 import { ProviderCapacityService } from '../providers/availability/provider-capacity.service';
 import { mapBounded } from '../common/run-bounded';
 import type { AuthorizationPrincipal } from '../common/authorization/authorization.types';
-import { assertOwnedResource } from '../common/authorization/resource-ownership';
+import {
+  assertOwnedByParty,
+  assertOwnedResource,
+} from '../common/authorization/resource-ownership';
 import { ObservabilityService } from '../observability/observability.service';
 import { OutboxService } from '../outbox/outbox.service';
 
@@ -1379,6 +1382,38 @@ export class BookingsService {
       });
     }
     return booking;
+  }
+
+  /// FN-145. Mints a share link only for somebody who can already see the job,
+  /// so a capability link can never become a way to disclose a booking to a
+  /// third party.
+  async assertParticipant(
+    bookingId: string,
+    userId: string,
+    principal?: AuthorizationPrincipal,
+  ): Promise<Booking> {
+    const booking = await this.dataSource
+      .getRepository(Booking)
+      .findOneBy({ id: bookingId });
+    if (!booking) throw new NotFoundException('Booking not found');
+    if (booking.customerId !== userId && booking.providerId !== userId) {
+      throw new ForbiddenException('Booking participants only');
+    }
+    if (principal) {
+      assertOwnedByParty(principal, booking.customerId, booking.providerId);
+    }
+    return booking;
+  }
+
+  /**
+   * FN-145. The booking behind a verified share token.
+   *
+   * Returns the entity unredacted — the controller decides what to disclose,
+   * and it discloses almost nothing. Nothing here is returned to a caller
+   * directly.
+   */
+  async findVisibleForShare(bookingId: string): Promise<Booking | null> {
+    return this.dataSource.getRepository(Booking).findOneBy({ id: bookingId });
   }
 
   async getAvailableRequests(

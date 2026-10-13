@@ -171,6 +171,25 @@ class LineItem {
   };
 }
 
+/// Statuses that mean a booking is genuinely in flight. Used by the shell's
+/// live-booking island: history-only state shows nothing.
+const Set<String> kActiveBookingStatuses = {
+  'REQUESTED',
+  'ASSIGNED',
+  'EN_ROUTE',
+  'IN_PROGRESS',
+};
+
+extension CustomerBookingList on List<CustomerBooking> {
+  /// The first in-flight booking, or null when the list holds only history.
+  CustomerBooking? get firstActive {
+    for (final booking in this) {
+      if (kActiveBookingStatuses.contains(booking.status)) return booking;
+    }
+    return null;
+  }
+}
+
 class CustomerBooking {
   const CustomerBooking({
     required this.id,
@@ -316,4 +335,47 @@ class CustomerBooking {
           .toList(),
     );
   }
+
+  /// FN-140: the shape [fromJson] reads, so the offline cache never needs a
+  /// second, drift-prone schema. Uses the same field names the API returns.
+  Map<String, Object?> toJson() => {
+    'id': id,
+    'serviceCategoryId': serviceCategoryId,
+    'status': status,
+    'description': description,
+    'createdAt': createdAt.toUtc().toIso8601String(),
+    'version': version,
+    if (customerPhone != null) 'customerPhone': customerPhone,
+    if (providerPhone != null) 'providerPhone': providerPhone,
+    if (providerName != null) 'providerName': providerName,
+    if (providerRating != null) 'providerRating': providerRating,
+    if (providerJobsCount != null) 'providerJobsCount': providerJobsCount,
+    if (locationLatitude != null) 'locationLat': locationLatitude,
+    if (locationLongitude != null) 'locationLng': locationLongitude,
+    if (scheduledAt != null)
+      'scheduledAt': scheduledAt!.toUtc().toIso8601String(),
+    if (items != null)
+      'items': items!
+          .map(
+            (item) => {
+              'id': item.id,
+              'name': item.name,
+              'quantity': item.quantity,
+              'unitPriceMinor': item.unitPriceMinor,
+              if (item.durationMinutes != null)
+                'durationMinutes': item.durationMinutes,
+            },
+          )
+          .toList(growable: false),
+    if (pricing != null)
+      'pricing': {
+        'subtotalMinor': pricing!.subtotalMinor,
+        'gstMinor': pricing!.gstMinor,
+        'totalMinor': pricing!.totalMinor,
+        'currency': pricing!.currency,
+      },
+    if (estimatedDurationMinutes != null)
+      'estimatedDurationMinutes': estimatedDurationMinutes,
+    'lineItems': lineItems.map((item) => item.toJson()).toList(growable: false),
+  };
 }

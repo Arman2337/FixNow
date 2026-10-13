@@ -12,7 +12,7 @@ FixNow combines **Uber-like immediacy + TaskRabbit-like provider trust + Urban C
 - Provider trust means professional profiles, verification context, ratings, completed-job evidence, skills, availability, and useful comparison.
 - Service discovery means understandable categories, clear service details, transparent indicative pricing, and a short booking path.
 
-These products are references for interaction principles, not templates. Do not reproduce their branding, layouts, copy, illustrations, icons, trade dress, or component geometry. FixNow must remain recognizable as an original premium utility platform: deep navy framing, bright white information surfaces, cobalt actions, compact trust-rich cards, and map-first active-service experiences.
+These products are references for interaction principles, not templates. Do not reproduce their branding, layouts, copy, illustrations, icons, trade dress, or component geometry. FixNow must remain recognizable as an original premium utility platform: a calm light canvas, bright white information surfaces, deep emerald actions, compact trust-rich cards, and map-first active-service experiences.
 
 Design decisions follow this order:
 
@@ -59,52 +59,54 @@ The voice is direct, respectful, and reassuring. Never sound playful during risk
 
 ## 4. Color System
 
-Use three layers: primitive values, semantic roles, then component tokens. Application code consumes semantic or component tokens, never raw hex values. The following premium dark theme is the approved mobile baseline and requires contrast validation in implementation.
+Use three layers: primitive values, semantic roles, then component tokens. Application code consumes semantic or component tokens, never raw hex values. The following premium light theme is the approved mobile baseline and requires contrast validation in implementation.
 
-### Approved navy and cobalt semantic tokens
+### Approved emerald and slate semantic tokens
 
 | Token | Value | Use |
-| --- | --- | --- |
-| `color.backgroundPrimary` | `#081020` | Main authenticated app background. |
-| `color.backgroundSecondary` | `#14213D` | Secondary page region and map fallback. |
-| `color.surfacePrimary` | `#F7F7FA` | Default information cards and inputs. |
-| `color.surfaceSecondary` | `#E2E6EF` | Grouped sections and muted controls. |
-| `color.surfaceElevated` | `#14213D` | Navy panels requiring a light foreground. |
-| `color.primary` | `#2857F5` | Main CTA, selected navigation, and interactive emphasis. |
-| `color.primaryPressed` | `#1E43C9` | Pressed/active feedback. |
-| `color.primarySoft` | `#DDE7FF` | Selected rows and restrained blue containers. |
+| --- | ---: | --- |
+| `color.background` | `#F8F9FF` | Main app canvas / scaffold background. |
+| `color.backgroundSecondary` | `#0F172A` | Dark blocks, snackbar, "+more" bubbles. |
+| `color.surfacePrimary` | `#FFFFFF` | Default information cards, inputs, navigation bar. |
+| `color.surfaceSecondary` | `#EFF4FF` | Grouped sections and muted controls. |
+| `color.primary` | `#006948` | Main CTA, selected navigation, interactive emphasis. |
+| `color.primaryHover` | `#047857` | Pressed/active feedback lift. |
+| `color.primaryPressed` | `#0A5C36` | Deep pressed state. |
+| `color.primarySoft` | `#ECFDF5` | Selected rows and restrained emerald containers. |
 | `color.onPrimary` | `#FFFFFF` | Content on primary fills. |
-| `color.textPrimary` | `#FFFFFF` | Text on navy framing and elevated panels. |
-| `color.textOnSurface` | `#172035` | Text on white/cream surfaces. |
-| `color.textOnSurfaceSecondary` | `#596579` | Supporting text on white/cream surfaces. |
-| `color.borderDefault` | `#D5DAE5` | Standard dividers and component borders. |
-| `color.focus` | `#4E8CFF` | Visible focus rings. |
-| `color.success` | `#1F9D68` | Verified, success, or online state only. |
-| `color.warning` | `#F59E0B` | Caution, delay, or urgency. |
-| `color.danger` | `#FF4D4F` | Validation failure and destructive actions. |
-| `color.info` | `#4E8CFF` | Neutral operational information. |
-| `color.emergency` | `#FF4D4F` | Genuine urgent escalation/SOS only. |
-| `color.scrim` | `rgba(8, 16, 32, 0.70)` | Modal/sheet scrim. |
+| `color.textPrimary` | `#0B1C30` | Headings and body text on light surfaces. |
+| `color.textOnSurface` | `#0B1C30` | Text on white/canvas surfaces. |
+| `color.textOnSurfaceSecondary` | `#565E74` | Supporting text on white/canvas surfaces. |
+| `color.borderDefault` | `#E2E8F0` | Standard dividers and component borders. |
+| `color.focus` | `#059669` | Visible focus rings. |
+| `color.success` | `#059669` | Verified, success, or online state only. |
+| `color.warning` | `#F59E0B` | Caution, delay, surge pricing, ratings. |
+| `color.danger` | `#DC2626` | Validation failure and destructive actions. |
+| `color.info` | `#0284C7` | Neutral operational information. |
+| `color.emergency` | `#DC2626` | Genuine urgent escalation/SOS only. |
+| `color.scrim` | `rgba(15, 23, 42, 0.40)` | Modal/sheet scrim. |
 
-`danger` covers errors and destructive actions. `emergency` is a separately governed role for an immediate safety escalation; neither is decorative. Green means verified success or current availability, not merely “good-looking.” Amber means caution or waiting, never failure. A component must use its surface's foreground token: light text/icons on navy surfaces and dark text/icons on white/cream surfaces.
+`danger` covers errors and destructive actions. `emergency` is a separately governed role for an immediate safety escalation; neither is decorative. Green means verified success or current availability, not merely "good-looking." Amber means caution, surge or waiting, never failure. A component must use its surface's foreground token: light text/icons on dark blocks and dark text/icons on white/canvas surfaces.
 
-The authenticated customer and provider experience uses this premium dark system by default. Authentication entry may use a controlled dark-to-surface composition, but must remain part of the same visual language. Any future light theme must override semantic tokens rather than screen components and requires independent contrast and visual validation. Dark implementation must test WCAG contrast, OLED smearing, map legibility, photographs, disabled states, and elevation boundaries; it is not approved by color substitution alone.
+The authenticated customer and provider experience uses this light system by default. Authentication entry may use a controlled composition, but must remain part of the same visual language. Any future dark theme must override semantic tokens rather than screen components, requires independent contrast and visual validation, and is not approved by color substitution alone.
+
+The token source of truth is `mobile/lib/design_system/app_colors.dart`. Screens consume those constants — never literal hex values.
 
 ## 5. Typography
 
-Use **Playfair Display** (with serif fallback) for premium headings (`display`, `heading1`, `heading2`, `heading3`) and **Inter** (with sans-serif fallback) for title, body, labels, and captions. Use tabular numerals for prices, ETA countdowns, and aligned financial data when supported.
+Use **Inter** (with sans-serif fallback) as the one font family across every surface, at the tokenized weights below. Inter is bundled as an app asset — never fetched at runtime — so text renders identically on first paint, on slow networks and offline. Use tabular numerals for prices, ETA countdowns, and aligned financial data when supported.
 
 | Token | Size | Weight | Line height | Use |
 | --- | ---: | ---: | ---: | --- |
-| `type.display` | 36px | 700 | 44px | Playfair Display: Hero / marketing headline. |
-| `type.heading1` | 28px | 700 | 36px | Playfair Display: Top-level page heading. |
-| `type.heading2` | 24px | 600 | 32px | Playfair Display: Major section or sheet heading. |
-| `type.heading3` | 20px | 600 | 28px | Playfair Display: Card group or subsection heading. |
-| `type.title` | 18px | 600 | 24px | Inter: Card/dialog title and prominent provider name. |
-| `type.bodyLarge` | 16px | 500 | 24px | Inter: High-priority explanatory text. |
-| `type.body` | 14px | 400 | 20px | Inter: Default body and input value. |
-| `type.label` | 14px | 600 | 20px | Inter: Buttons, field labels, navigation, status labels. |
-| `type.caption` | 12px | 400 | 16px | Inter: Supporting metadata; never critical instructions. |
+| `type.display` | 32px | 700 | 36.8px | Hero / marketing headline. |
+| `type.heading1` | 26px | 700 | 31.2px | Top-level page heading. |
+| `type.heading2` | 24px | 700 | 30px | Major section or sheet heading. |
+| `type.heading3` | 20px | 600 | 26px | Card group or subsection heading. |
+| `type.title` | 18px | 600 | 23.4px | Card/dialog title and prominent provider name. |
+| `type.bodyLarge` | 16px | 400 | 24px | High-priority explanatory text. |
+| `type.body` | 14px | 400 | 21px | Default body and input value. |
+| `type.label` | 14px | 600 | 20px | Buttons, field labels, navigation, status labels. |
+| `type.caption` | 13px | 400 | 18.9px | Supporting metadata; never critical instructions. |
 
 Mobile body text remains 16px equivalent by default. Support platform text scaling without clipping, hiding actions, or replacing text with ellipses where the full value is needed. Use only tokenized sizes, weights, and line heights.
 
@@ -448,7 +450,7 @@ Admin breakpoints are implementation tokens, not scattered media queries. Suppor
 
 Centralize three layers:
 
-1. **Primitive:** raw navy/emerald/neutral/status scales, 4px spacing, type values, radii, shadows, durations.
+1. **Primitive:** raw emerald/slate/neutral/status scales, 4px spacing, type values, radii, shadows, durations.
 2. **Semantic:** `primary`, `surface`, `textSecondary`, `danger`, `pagePadding`, `focus`, and other purpose roles.
 3. **Component:** `button.primary.background`, `input.focus.border`, `providerCard.padding`, etc., referencing semantic tokens.
 
@@ -547,7 +549,7 @@ Role context may change labels and content density, not the visual grammar.
 
 ## 38. Admin Consistency
 
-Admin uses denser desktop layouts while retaining the deep-neutral and emerald brand system, Inter typography, semantic statuses, 4/8px spacing philosophy, radii, focus behavior, form rules, and component states. Dense does not mean cramped: tables keep readable rows, actions remain discoverable, and mobile-only patterns such as bottom navigation are translated to suitable desktop patterns rather than copied literally.
+Admin uses denser desktop layouts while retaining the emerald/slate brand system, Inter typography, semantic statuses, 4/8px spacing philosophy, radii, focus behavior, form rules, and component states. Dense does not mean cramped: tables keep readable rows, actions remain discoverable, and mobile-only patterns such as bottom navigation are translated to suitable desktop patterns rather than copied literally.
 
 ## 39. Do / Don't Examples
 
@@ -575,4 +577,4 @@ Admin uses denser desktop layouts while retaining the deep-neutral and emerald b
 
 These references are inspiration only. FixNow must maintain its own original branding, layouts, components, content, and design identity. Do not download or copy their assets, reproduce their screens, or create trademark-confusing visual similarities.
 
-The approved FixNow visual benchmark is a premium dark utility interface with emerald/mint identity, compact information-rich provider cards, strong verification signals, restrained motion, clear emergency hierarchy, and map-first real-time service states. Customer and provider applications must look like role-specific parts of one product. The intended promise is: **Professional help is minutes away.**
+The approved FixNow visual benchmark is a premium light utility interface with emerald identity, compact information-rich provider cards, strong verification signals, restrained motion, clear emergency hierarchy, and map-first real-time service states. Customer and provider applications must look like role-specific parts of one product. The intended promise is: **Professional help is minutes away.**

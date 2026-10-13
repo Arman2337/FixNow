@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Widget host(Widget child, {bool disableAnimations = false}) => MaterialApp(
-  theme: AppTheme.dark,
+  theme: AppTheme.light,
   home: MediaQuery(
     data: MediaQueryData(disableAnimations: disableAnimations),
     child: Scaffold(body: Center(child: child)),

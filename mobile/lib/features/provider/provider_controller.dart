@@ -6,16 +6,57 @@ import 'package:fixnow_mobile/features/provider/provider_models.dart';
 import 'package:fixnow_mobile/features/provider/provider_repository.dart';
 import 'package:fixnow_mobile/features/realtime/realtime_client.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking.dart';
+import 'package:fixnow_mobile/features/bookings/job_proof_controller.dart';
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 
 enum ProviderLoadState { loading, ready, failure }
 
 class ProviderController extends ChangeNotifier {
-  ProviderController(this.repository, {this.realtime, this.currentUserId}) {
+  ProviderController(
+    this.repository, {
+    this.realtime,
+    this.currentUserId,
+    this.jobProof,
+  }) {
     _initRealtime();
   }
   final ProviderRepository repository;
+
+  /// FN-143. The server-backed before/after proof store. Borrowed, like the
+  /// socket: the app owns it and this controller never disposes it.
+  ///
+  /// Every provider screen needs job-proof access and none of them owns it, so
+  /// it hangs off the controller they already hold rather than being threaded
+  /// through five constructors.
+  final JobProofController? jobProof;
+
+  /// FN-143. Uploads one side of the job proof. Returns null on success or a
+  /// safe message on failure — never a raw backend error.
+  Future<String?> uploadJobProof(
+    JobProofStage stage,
+    Uint8List bytes,
+  ) async {
+    final proof = jobProof;
+    final id = proof?.bookingId;
+    if (proof == null || id == null) {
+      return 'Job photos are unavailable on this build.';
+    }
+    return proof.capture(
+      id: id,
+      stage: stage,
+      bytes: bytes,
+      contentType: 'image/jpeg',
+    );
+  }
+
+  /// Whether the server already holds a proof for [bookingId].
+  Future<bool> hasJobProof(String bookingId) async {
+    final proof = jobProof;
+    if (proof == null) return false;
+    await proof.load(bookingId);
+    return proof.hasBefore || proof.hasAfter;
+  }
 
   /// Borrowed, not owned - the app creates the socket and disposes it. Sharing
   /// it with the bookings and notification controllers is why this is not

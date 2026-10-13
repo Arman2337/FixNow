@@ -4,7 +4,8 @@ import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
 import 'package:fixnow_mobile/features/bookings/booking.dart';
 import 'package:fixnow_mobile/features/bookings/cancellation_dialog.dart';
-import 'package:fixnow_mobile/features/bookings/job_proof_service.dart';
+import 'package:fixnow_mobile/features/bookings/job_proof_controller.dart';
+import 'package:fixnow_mobile/features/bookings/fix_job_proof_panel.dart';
 import 'package:fixnow_mobile/design_system/fix_job_proof_dialog.dart';
 import 'package:fixnow_mobile/features/call/call_controller.dart';
 import 'package:fixnow_mobile/features/chat/booking_chat_screen.dart';
@@ -124,15 +125,20 @@ class _ProviderJobsScreenState extends State<ProviderJobsScreen> {
               const SizedBox(height: AppSpacing.md),
               ...historyJobs.map(
                 (job) =>
-                    _HistoryJobCard(job: job, controller: widget.controller),
+                    _HistoryJobCard(
+        job: job,
+        controller: widget.controller,
+        jobProof: widget.controller.jobProof,
+      ),
               ),
             ] else ...[
               // Assigned Jobs: Top Urgent Next Job Card first
               _TopUrgentJobCard(
-                job: assignedJobs.first,
-                controller: widget.controller,
-                chatRepository: widget.chatRepository,
-              ),
+job: assignedJobs.first,
+                  controller: widget.controller,
+                  chatRepository: widget.chatRepository,
+                  jobProof: widget.controller.jobProof,
+                ),
               // Subsequent upcoming jobs
               if (assignedJobs.length > 1) ...[
                 const SizedBox(height: AppSpacing.md),
@@ -739,18 +745,22 @@ class _ProviderJobsScreenState extends State<ProviderJobsScreen> {
 
 /// Top Urgent Next Job Card (Hero composition from Stitch blueprint)
 class _TopUrgentJobCard extends StatelessWidget {
-  const _TopUrgentJobCard({
-    required this.job,
-    required this.controller,
-    this.chatRepository,
-  });
+const _TopUrgentJobCard({
+      required this.job,
+      required this.controller,
+      this.chatRepository,
+      this.jobProof,
+    });
 
-  final CustomerBooking job;
-  final ProviderController controller;
-  final ChatRepository? chatRepository;
+final CustomerBooking job;
+    final ProviderController controller;
+    final ChatRepository? chatRepository;
 
-  @override
-  Widget build(BuildContext context) {
+    /// FN-143: the server-backed proof store, borrowed from the controller.
+    final JobProofController? jobProof;
+
+    @override
+    Widget build(BuildContext context) {
     final action = switch (job.status) {
       'ASSIGNED' => ('Start journey', Icons.navigation_rounded),
       'EN_ROUTE' => ('Verify OTP to start', Icons.lock_open_rounded),
@@ -1198,13 +1208,15 @@ class _TopUrgentJobCard extends StatelessWidget {
                               }
                               return;
                             }
-                            if (job.status == 'IN_PROGRESS') {
-                              if (!JobProofRepository.instance.hasProof(
-                                job.id,
-                              )) {
+if (job.status == 'IN_PROGRESS') {
+                              if (!await controller.hasJobProof(job.id)) {
+                                // The proof check is a network read, so this
+                                // card can be gone by the time it answers.
+                                if (!context.mounted) return;
                                 await JobProofVerificationDialog.show(
                                   context,
                                   bookingId: job.id,
+                                  onUpload: controller.uploadJobProof,
                                 );
                               }
                               await controller.advanceJob(job);
@@ -1284,10 +1296,12 @@ class _TopUrgentJobCard extends StatelessWidget {
                 ),
 
                 // Job Proof Viewer Card
-                if (JobProofRepository.instance.getProof(job.id)
-                    case final proof?) ...[
+                if (jobProof != null) ...[
                   const SizedBox(height: AppSpacing.md),
-                  JobProofViewerCard(proof: proof),
+                  FixJobProofPanel(
+                    controller: jobProof!,
+                    bookingId: job.id,
+                  ),
                 ],
 
                 // Verification Photos (for in-progress)
@@ -1300,9 +1314,7 @@ class _TopUrgentJobCard extends StatelessWidget {
                     onPressed: () => JobProofVerificationDialog.show(
                       context,
                       bookingId: job.id,
-                      initialProof: JobProofRepository.instance.getProof(
-                        job.id,
-                      ),
+                  onUpload: controller.uploadJobProof,
                     ),
                   ),
                 ],
@@ -1487,14 +1499,21 @@ class _UpcomingJobCard extends StatelessWidget {
 
 /// History Job Card
 class _HistoryJobCard extends StatelessWidget {
-  const _HistoryJobCard({required this.job, required this.controller});
+  const _HistoryJobCard({
+    required this.job,
+    required this.controller,
+    this.jobProof,
+  });
 
-  final CustomerBooking job;
-  final ProviderController controller;
+final CustomerBooking job;
+    final ProviderController controller;
 
-  @override
-  Widget build(BuildContext context) {
-    final isCompleted = job.status == 'COMPLETED';
+    /// FN-143: the server-backed proof store, borrowed from the controller.
+    final JobProofController? jobProof;
+
+    @override
+    Widget build(BuildContext context) {
+      final isCompleted = job.status == 'COMPLETED';
 
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
@@ -1572,11 +1591,13 @@ class _HistoryJobCard extends StatelessWidget {
               ),
             ],
           ),
-          if (JobProofRepository.instance.getProof(job.id)
-              case final proof?) ...[
-            const SizedBox(height: AppSpacing.sm),
-            JobProofViewerCard(proof: proof),
-          ],
+          if (jobProof != null) ...[
+                  const SizedBox(height: AppSpacing.md),
+                  FixJobProofPanel(
+                    controller: jobProof!,
+                    bookingId: job.id,
+                  ),
+                ],
         ],
       ),
     );

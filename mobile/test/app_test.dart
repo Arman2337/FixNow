@@ -3,6 +3,7 @@ import 'package:fixnow_mobile/api/api_client.dart';
 import 'package:fixnow_mobile/auth/auth_session.dart';
 import 'package:fixnow_mobile/auth/auth_session_store.dart';
 import 'package:fixnow_mobile/config/app_environment.dart';
+import 'package:fixnow_mobile/data/last_good_cache.dart';
 import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/features/location/location_consent_controller.dart';
 import 'package:flutter/material.dart';
@@ -16,7 +17,7 @@ void main() {
 
     final materialApp = tester.widget<MaterialApp>(find.byType(MaterialApp));
     expect(materialApp.theme?.colorScheme.primary, AppColors.primary);
-    expect(materialApp.themeMode, ThemeMode.dark);
+    expect(materialApp.themeMode, ThemeMode.light);
     expect(
       materialApp.theme?.scaffoldBackgroundColor,
       AppColors.backgroundPrimary,
@@ -87,6 +88,7 @@ FixNowApp _testApp(AppEnvironment environment) => FixNowApp(
   apiTransport: _TestTransport(),
   sessionStore: _AuthenticatedSessionStore(),
   locationGateway: _DeniedLocationGateway(),
+  snapshotStore: MemorySnapshotStore(),
 );
 
 class _TestTransport implements ApiTransport {

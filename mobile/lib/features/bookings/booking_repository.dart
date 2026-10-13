@@ -1,5 +1,8 @@
+import 'dart:typed_data';
+
 import 'package:fixnow_mobile/api/api_client.dart';
 import 'package:fixnow_mobile/features/bookings/booking.dart';
+import 'package:fixnow_mobile/features/bookings/job_proof_controller.dart';
 import 'package:fixnow_mobile/features/bookings/recurring_schedule.dart';
 import 'package:fixnow_mobile/features/ratings/booking_review.dart';
 import 'package:fixnow_mobile/features/ratings/review_photo.dart';
@@ -8,10 +11,20 @@ class BookingRepository {
   BookingRepository({
     required ApiTransport api,
     required Future<String?> Function() accessToken,
+    BinaryDownloader? downloader,
   }) : _api = api,
-       _accessToken = accessToken;
+       _accessToken = accessToken,
+       _downloader = downloader;
   final ApiTransport _api;
   final Future<String?> Function() _accessToken;
+
+  /// FN-144. Supplies the bytes for photos the backend stores privately. Null
+  /// on a transport that cannot fetch bytes, in which case the UI says so
+  /// rather than drawing a placeholder that looks like a real photo.
+  final BinaryDownloader? _downloader;
+
+  /// The downloader, or null when this repository cannot fetch photo bytes.
+  BinaryDownloader? get downloader => _downloader;
 
   Future<List<CustomerBooking>> history() async {
     final response = await _api.send(
@@ -162,6 +175,12 @@ class BookingRepository {
   }
 
   /// FN-110 review photos.
+  /// FN-144. The `{ photos: [...] }` envelope the backend actually returns.
+  ///
+  /// This read previously parsed the body as a bare list, so it returned an
+  /// empty list against the live API and the customer's review photos had never
+  /// once appeared. A bare list is now rejected rather than silently treated as
+  /// "no photos", because that silence is what hid the bug for so long.
   Future<List<ReviewPhoto>> reviewPhotos(String bookingId) async {
     final response = await _api.send(
       ApiRequest(
@@ -170,14 +189,54 @@ class BookingRepository {
         bearerToken: await _token(),
       ),
     );
-    final items = response.body;
-    if (items is! List) return const [];
-    return items
-        .map(
-          (item) =>
-              ReviewPhoto.fromJson(Map<String, Object?>.from(item as Map)),
-        )
-        .toList(growable: false);
+    final body = response.body is Map<String, dynamic>
+        ? response.body! as Map<String, dynamic>
+        : null;
+    final rows = body?['photos'];
+    if (rows is! List) {
+      throw const ApiException(
+        ApiFailureKind.invalidResponse,
+        'The review photos response was invalid.',
+      );
+    }
+    try {
+      return rows
+          .map(
+            (item) =>
+                ReviewPhoto.fromJson(Map<String, Object?>.from(item as Map)),
+          )
+          .toList(growable: false);
+    } on Object {
+      throw const ApiException(
+        ApiFailureKind.invalidResponse,
+        'The review photos response was invalid.',
+      );
+    }
+  }
+
+  /// FN-144. The bytes behind an approved (or own) review photo.
+  ///
+  /// Fetched through the participant-checked content endpoint rather than
+  /// assembled from a URL: the backend deliberately projects the storage key
+  /// out of every response.
+  Future<Uint8List> reviewPhotoBytes(
+    String bookingId,
+    String photoId,
+    BinaryDownloader downloader,
+  ) async {
+    try {
+      return await downloader.downloadFile(
+        path: 'bookings/$bookingId/review/photos/$photoId/content',
+        bearerToken: await _token(),
+      );
+    } on ApiException {
+      rethrow;
+    } catch (_) {
+      throw const ApiException(
+        ApiFailureKind.invalidResponse,
+        'The review photo could not be read.',
+      );
+    }
   }
 
   Future<void> attachReviewPhoto({
@@ -302,6 +361,104 @@ class BookingRepository {
       );
     }
     return BookingReview.fromJson(Map<String, Object?>.from(raw));
+  }
+
+  /// FN-143. The before/after proof recorded for a booking.
+  ///
+  /// Reads the `{ photos: [...] }` envelope the backend actually returns, not a
+  /// bare list. FN-110's review-photo read parses a bare list and therefore
+  /// yields nothing against the live API; that defect is tracked as FN-144 and
+  /// is deliberately not repeated here.
+  Future<List<JobProofPhoto>> jobProofPhotos(String bookingId) async {
+    final response = await _api.send(
+      ApiRequest(
+        method: ApiMethod.get,
+        path: 'bookings/$bookingId/job-proof/photos',
+        bearerToken: await _token(),
+      ),
+    );
+    final body = response.body is Map<String, dynamic>
+        ? response.body! as Map<String, dynamic>
+        : null;
+    final rows = body?['photos'];
+    if (rows is! List) {
+      throw const ApiException(
+        ApiFailureKind.invalidResponse,
+        'The job proof response was invalid.',
+      );
+    }
+    try {
+      return rows
+          .map(
+            (row) =>
+                JobProofPhoto.fromJson(Map<String, Object?>.from(row as Map)),
+          )
+          .toList(growable: false);
+    } on Object {
+      throw const ApiException(
+        ApiFailureKind.invalidResponse,
+        'The job proof response was invalid.',
+      );
+    }
+  }
+
+  /// The bytes behind one proof photograph, fetched through the
+  /// participant-checked content endpoint. Never assembled from a URL: the
+  /// backend deliberately projects the storage key out of every response.
+  Future<Uint8List> jobProofBytes(
+    String bookingId,
+    String photoId,
+    BinaryDownloader downloader,
+  ) async {
+    try {
+      return await downloader.downloadFile(
+        path: 'bookings/$bookingId/job-proof/photos/$photoId/content',
+        bearerToken: await _token(),
+      );
+    } on ApiException {
+      rethrow;
+    } catch (_) {
+      throw const ApiException(
+        ApiFailureKind.invalidResponse,
+        'The job proof photo could not be read.',
+      );
+    }
+  }
+
+  /// FN-143. Capture the before or after shot. Provider only — the backend
+  /// refuses anyone who is not the pro assigned to the booking.
+  Future<JobProofPhoto> captureJobProof({
+    required String bookingId,
+    required JobProofStage stage,
+    required Uint8List bytes,
+    required String contentType,
+  }) async {
+    final api = _api;
+    if (api is! ApiClient) {
+      throw const ApiException(
+        ApiFailureKind.invalidResponse,
+        'Job proof upload is unavailable.',
+      );
+    }
+    await api.uploadFile(
+      path: 'bookings/$bookingId/job-proof/photos',
+      bearerToken: await _token(),
+      fieldName: 'photo',
+      fileName: 'job-proof-${stage.wireValue.toLowerCase()}',
+      contentType: contentType,
+      bytes: bytes,
+      fields: {'stage': stage.wireValue},
+    );
+    // The upload answer is 201 with the stored photo; re-reading the list keeps
+    // the client on one code path instead of parsing a second envelope shape.
+    final photos = await jobProofPhotos(bookingId);
+    return photos.firstWhere(
+      (photo) => photo.stage == stage,
+      orElse: () => throw const ApiException(
+        ApiFailureKind.invalidResponse,
+        'The job proof response was invalid.',
+      ),
+    );
   }
 
   Future<String> _token() async {

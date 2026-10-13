@@ -15,7 +15,7 @@ void main() {
       final transport = _Transport();
       await tester.pumpWidget(
         MaterialApp(
-          theme: AppTheme.dark,
+          theme: AppTheme.light,
           home: BookingDetailScreen(
             booking: _booking('COMPLETED'),
             reviewRepository: BookingRepository(
@@ -46,7 +46,7 @@ void main() {
   testWidgets('non-completed booking has no review controls', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.dark,
+        theme: AppTheme.light,
         home: BookingDetailScreen(booking: _booking('IN_PROGRESS')),
       ),
     );
@@ -59,7 +59,7 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.dark,
+        theme: AppTheme.light,
         home: BookingDetailScreen(
           booking: _booking('COMPLETED'),
           reviewRepository: BookingRepository(
@@ -84,12 +84,18 @@ class _PhotoTransport implements ApiTransport {
   @override
   Future<ApiResponse> send(ApiRequest request) async {
     if (request.path.endsWith('/photos')) {
-      return ApiResponse(
+      // FN-144. The `{ photos: [...] }` envelope the backend actually returns.
+      // This fake used to answer with a bare list because the client did, which
+      // is how the mismatch stayed invisible: both sides agreed on a shape
+      // neither of them had.
+      return const ApiResponse(
         statusCode: 200,
-        body: [
-          {'id': 'photo-1', 'status': 'PENDING'},
-          {'id': 'photo-2', 'status': 'APPROVED'},
-        ],
+        body: {
+          'photos': [
+            {'id': 'photo-1', 'status': 'PENDING'},
+            {'id': 'photo-2', 'status': 'APPROVED'},
+          ],
+        },
       );
     }
     return ApiResponse(

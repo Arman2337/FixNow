@@ -28,7 +28,6 @@ function booking(overrides: Record<string, unknown> = {}) {
   };
 }
 
-type Booking = Parameters<BookingsServiceStub['assertParticipant']>[0];
 interface BookingsServiceStub {
   assertParticipant: jest.Mock;
   findVisibleForShare: jest.Mock;

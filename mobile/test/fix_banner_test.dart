@@ -11,7 +11,7 @@ Future<ScaffoldMessengerState> _pumpHost(
   final messengerKey = GlobalKey<ScaffoldMessengerState>();
   await tester.pumpWidget(
     MaterialApp(
-      theme: AppTheme.dark,
+      theme: AppTheme.light,
       scaffoldMessengerKey: messengerKey,
       home: MediaQuery(
         data: MediaQueryData(disableAnimations: disableAnimations),

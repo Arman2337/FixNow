@@ -8,10 +8,12 @@ import {
   Param,
   Post,
   Req,
+  Res,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import type { Response } from 'express';
 import type { AuthorizedRequest } from '../common/authorization/authorization.guard';
 import { RequireOwnPermission } from '../common/authorization/authorization.decorators';
 import { PERMISSIONS } from '../common/authorization/permission-policies';
@@ -119,5 +121,35 @@ export class RatingsController {
       request.authorizationPrincipal,
     );
     return { photos: rows.map((photo) => this.photos.present(photo)) };
+  }
+
+  /**
+   * FN-144. The image bytes for a photo this caller is allowed to see.
+   *
+   * `inline` because the consumer is a thumbnail in the app; `nosniff` plus the
+   * stored content type stop a rejected upload being re-interpreted as
+   * something executable, and `no-store` keeps a customer's review out of shared
+   * caches.
+   */
+  @Get(':id/review/photos/:photoId/content')
+  @RequireOwnPermission(PERMISSIONS.reviewReadBooking)
+  async photoContent(
+    @Req() request: AuthorizedRequest,
+    @Res() response: Response,
+    @Param('id') bookingId: string,
+    @Param('photoId') photoId: string,
+  ): Promise<void> {
+    const principal = request.authorizationPrincipal!;
+    const result = await this.photos.readPhoto(
+      bookingId,
+      photoId,
+      principal.userId,
+      principal,
+    );
+    response.setHeader('Content-Type', result.metadata.contentType);
+    response.setHeader('X-Content-Type-Options', 'nosniff');
+    response.setHeader('Content-Disposition', 'inline');
+    response.setHeader('Cache-Control', 'no-store, private');
+    response.send(result.content);
   }
 }

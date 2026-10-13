@@ -161,7 +161,7 @@ void main() {
       );
 
   Widget wrap(Widget child) => MaterialApp(
-        theme: AppTheme.dark,
+        theme: AppTheme.light,
         home: child,
       );
 
@@ -331,7 +331,7 @@ void main() {
         MediaQuery(
           data: const MediaQueryData(textScaler: TextScaler.linear(2)),
           child: MaterialApp(
-            theme: AppTheme.dark,
+            theme: AppTheme.light,
             home: ProviderJobsScreen(
               controller: controller,
               showHistory: false,

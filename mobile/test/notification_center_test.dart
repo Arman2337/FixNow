@@ -111,7 +111,7 @@ class _NotificationConnector implements RealtimeSocketConnector {
 }
 
 Widget host(Widget child) => MaterialApp(
-  theme: AppTheme.dark,
+  theme: AppTheme.light,
   home: Scaffold(body: child),
 );
 
@@ -286,7 +286,7 @@ void main() {
 
         await tester.pumpWidget(
           MaterialApp(
-            theme: AppTheme.dark,
+            theme: AppTheme.light,
             home: NotificationCenterScreen(
               controller: controller,
               onOpenBooking: (id) => openedBookingId = id,
@@ -343,7 +343,7 @@ void main() {
             disableAnimations: true,
           ),
           child: MaterialApp(
-            theme: AppTheme.dark,
+            theme: AppTheme.light,
             home: NotificationCenterScreen(controller: controller),
           ),
         ),
@@ -363,7 +363,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          theme: AppTheme.dark,
+          theme: AppTheme.light,
           home: NotificationCenterScreen(controller: controller),
         ),
       );
@@ -388,7 +388,7 @@ void main() {
 
         await tester.pumpWidget(
           MaterialApp(
-            theme: AppTheme.dark,
+            theme: AppTheme.light,
             home: NotificationCenterScreen(controller: controller),
           ),
         );
@@ -411,7 +411,7 @@ void main() {
 
         await tester.pumpWidget(
           MaterialApp(
-            theme: AppTheme.dark,
+            theme: AppTheme.light,
             home: NotificationCenterScreen(controller: controller),
           ),
         );
@@ -447,7 +447,7 @@ void main() {
 
         await tester.pumpWidget(
           MaterialApp(
-            theme: AppTheme.dark,
+            theme: AppTheme.light,
             home: NotificationCenterScreen(
               controller: controller,
               onOpenInvoice: (item) => openedInvoice = item,
@@ -486,7 +486,7 @@ void main() {
 
         await tester.pumpWidget(
           MaterialApp(
-            theme: AppTheme.dark,
+            theme: AppTheme.light,
             home: NotificationCenterScreen(controller: controller),
           ),
         );

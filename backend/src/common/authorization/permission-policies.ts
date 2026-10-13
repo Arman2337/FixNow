@@ -38,9 +38,17 @@ export const PERMISSIONS = {
   bookingServiceStartOtp: 'bookings.service-start-otp.issue',
   bookingCancelSelf: 'bookings.cancel.self',
   bookingHistoryReadSelf: 'bookings.history.read.self',
+  // FN-145. Minting a share link is a participant act on a job they can
+  // already see; it discloses nothing by itself.
+  bookingShareLink: 'bookings.share-link.create.self',
   reviewCreateSelf: 'ratings.review.create.self',
   reviewReadBooking: 'ratings.review.read.booking',
   reviewModerate: 'ratings.review.moderate',
+  // FN-142. Writing job proof is a provider act on a job they were assigned;
+  // reading it is a participant act, because the customer is the whole reason
+  // the photo exists.
+  jobProofCreateSelf: 'bookings.job-proof.create.self',
+  jobProofReadBooking: 'bookings.job-proof.read.booking',
   trustSignalsRead: 'trust.signals.read',
   trustSignalsUpdate: 'trust.signals.update',
   realtimeConnect: 'realtime.connect',
@@ -313,6 +321,10 @@ export const PERMISSION_POLICIES: Readonly<
     roles: ['customer', 'verified_provider'],
     relationship: 'self',
   },
+  [PERMISSIONS.bookingShareLink]: {
+    roles: ['customer', 'verified_provider'],
+    relationship: 'self',
+  },
   [PERMISSIONS.bookingChatSendSelf]: {
     roles: ['customer', 'verified_provider'],
     audience: 'mobile',
@@ -344,6 +356,16 @@ export const PERMISSION_POLICIES: Readonly<
   [PERMISSIONS.reviewModerate]: {
     roles: ['trust_safety_reviewer', 'operations_administrator'],
     audience: 'admin',
+  },
+  // FN-142. `verified_provider` only — a customer must not be able to author
+  // the evidence that is presented as proof of the provider's work.
+  [PERMISSIONS.jobProofCreateSelf]: {
+    roles: ['verified_provider'],
+    relationship: 'self',
+  },
+  [PERMISSIONS.jobProofReadBooking]: {
+    roles: ['customer', 'verified_provider'],
+    relationship: 'self',
   },
   [PERMISSIONS.trustSignalsRead]: {
     roles: ['trust_safety_reviewer', 'operations_administrator'],

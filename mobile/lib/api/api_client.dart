@@ -1,8 +1,22 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
+
+/// FN-143: fetches an authenticated binary resource as bytes.
+  ///
+  /// Separate from [ApiTransport] because every endpoint used so far answers
+  /// JSON; adding a byte-returning method to `ApiTransport` would have forced
+  /// every existing fake in the suite to implement it.
+abstract interface class BinaryDownloader {
+  Future<Uint8List> downloadFile({
+    required String path,
+    required String bearerToken,
+    int maxBytes,
+  });
+}
 
 enum ApiMethod { get, post, put, patch, delete }
 
@@ -63,7 +77,7 @@ class MultipartFileData {
   final List<int> bytes;
 }
 
-class ApiClient implements ApiTransport {
+class ApiClient implements ApiTransport, BinaryDownloader {
   ApiClient({
     required Uri baseUri,
     http.Client? httpClient,
@@ -89,11 +103,15 @@ class ApiClient implements ApiTransport {
     required String fileName,
     required String contentType,
     required List<int> bytes,
+    /// Text parts sent alongside the file. FN-143's job-proof capture needs a
+    /// `stage`; the review-photo upload has none and is unaffected.
+    Map<String, String>? fields,
   }) async {
     try {
       final request = http.MultipartRequest('POST', _baseUri.resolve(path))
         ..headers['Accept'] = 'application/json'
         ..headers['Authorization'] = 'Bearer $bearerToken'
+        ..fields.addAll(fields ?? const <String, String>{})
         ..files.add(
           http.MultipartFile.fromBytes(
             fieldName,
@@ -174,6 +192,54 @@ class ApiClient implements ApiTransport {
       );
     }
   }
+
+  /// FN-143. Authenticated binary download.
+  ///
+  /// Deliberately separate from [send]: `send` always decodes JSON and caps at
+  /// 1 MB, and a job-proof photograph is neither. Kept behind its own small
+  /// interface so repositories can depend on the capability without every test
+  /// fake having to implement a byte-returning transport.
+  @override
+  Future<Uint8List> downloadFile({
+    required String path,
+    required String bearerToken,
+    int maxBytes = _maximumDownloadBytes,
+  }) async {
+    try {
+      final request = http.Request('GET', _baseUri.resolve(path))
+        ..headers['Accept'] = 'image/*'
+        ..headers['Authorization'] = 'Bearer $bearerToken';
+      final response = await _httpClient.send(request).timeout(timeout);
+      final bytes = await response.stream.toBytes().timeout(timeout);
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw _safeHttpFailure(response.statusCode, null);
+      }
+      if (bytes.isEmpty) {
+        throw const ApiException(
+          ApiFailureKind.invalidResponse,
+          'The file response was empty.',
+        );
+      }
+      if (bytes.length > maxBytes) {
+        // Refuse rather than truncate: a half-decoded JPEG is not evidence of
+        // anything, and silently returning one would be worse than an error.
+        throw const ApiException(
+          ApiFailureKind.invalidResponse,
+          'The file was larger than expected.',
+        );
+      }
+      return bytes;
+    } on TimeoutException {
+      throw const ApiException(ApiFailureKind.timeout, 'The request timed out.');
+    } on http.ClientException {
+      throw const ApiException(
+        ApiFailureKind.offline,
+        'No network connection.',
+      );
+    }
+  }
+
+  static const int _maximumDownloadBytes = 12 * 1024 * 1024;
 
   @override
   Future<ApiResponse> send(ApiRequest request) async {

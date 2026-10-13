@@ -15,7 +15,7 @@ void main() {
     final controller = CustomerProfileController(repository);
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.dark,
+        theme: AppTheme.light,
         home: Scaffold(body: CustomerProfileScreen(controller: controller)),
       ),
     );
@@ -45,7 +45,7 @@ void main() {
     final controller = CustomerProfileController(repository);
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.dark,
+        theme: AppTheme.light,
         home: Scaffold(body: CustomerProfileScreen(controller: controller)),
       ),
     );
@@ -61,7 +61,7 @@ void main() {
     );
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.dark,
+        theme: AppTheme.light,
         home: Scaffold(body: CustomerProfileScreen(controller: controller)),
       ),
     );
@@ -80,7 +80,7 @@ void main() {
     );
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.dark,
+        theme: AppTheme.light,
         home: Scaffold(body: CustomerProfileScreen(controller: controller)),
       ),
     );

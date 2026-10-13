@@ -6,6 +6,7 @@ import { BookingMessage } from './domain/booking-message.entity';
 import { BookingCall } from './domain/booking-call.entity';
 import { BookingLineItem } from './domain/booking-line-item.entity';
 import { RecurringSchedule } from './domain/recurring-schedule.entity';
+import { JobProofPhoto } from './domain/job-proof-photo.entity';
 import { ServiceCategoryEntity } from '../services/service-category.entity';
 import { BookingsController } from './bookings.controller';
 import { SchedulesController } from './schedules.controller';
@@ -15,6 +16,10 @@ import { BookingsService } from './bookings.service';
 import { SchedulesService } from './schedules.service';
 import { BookingMessagesService } from './booking-messages.service';
 import { BookingCallsService } from './booking-calls.service';
+import { JobProofPhotosService } from './job-proof-photos.service';
+import { JobProofPhotosController } from './job-proof-photos.controller';
+import { ShareTokenService } from './share-token.service';
+import { BookingSharesController } from './booking-shares.controller';
 import { BookingDispatchHandlers } from './booking-dispatch.handlers';
 import { MatchingModule } from '../matching/matching.module';
 import { ProvidersModule } from '../providers/providers.module';
@@ -34,6 +39,7 @@ import { OutboxModule } from '../outbox/outbox.module';
       BookingCall,
       RecurringSchedule,
       ServiceCategoryEntity,
+      JobProofPhoto,
     ]),
     MatchingModule,
     // Provides ProviderCapacityService, which enforces the BUG-008 concurrent
@@ -66,12 +72,22 @@ import { OutboxModule } from '../outbox/outbox.module';
     BookingsController,
     BookingMessagesController,
     BookingCallsController,
+    // FN-142. Registered after `BookingsController` deliberately: its paths are
+    // three segments deep (`/:id/job-proof/photos`) so they cannot be swallowed
+    // by `:id`, and listing it last keeps the documented ordering comment above
+    // accurate.
+    JobProofPhotosController,
+    // FN-145. Its public route is `shares/:token`, two segments deep and not
+    // under `bookings/`, so it cannot be swallowed by any `:id` pattern here.
+    BookingSharesController,
   ],
   providers: [
     BookingsService,
     SchedulesService,
     BookingMessagesService,
     BookingCallsService,
+    JobProofPhotosService,
+    ShareTokenService,
     BookingDispatchHandlers,
   ],
   exports: [

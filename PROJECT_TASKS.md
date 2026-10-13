@@ -54,16 +54,84 @@ Only these statuses are valid. A task cannot be completed while required validat
 
 # Project Progress
 
-Total Tasks: 136
-Completed: 121
+Total Tasks: 141
+Completed: 128
 In Progress: 0
 Blocked: 0
 Pending: 0
 Deferred: 14
 Cancelled: 2
-Current Task: None (FN-137 completed)
+Current Task: None (FN-144 completed)
 Current Phase: Phase 19 — Mobile Widget-Test Reconciliation (Completed)
-Next Recommended Task: None; all tracked tasks are completed, deferred, or cancelled
+Next Recommended Task: None; all tracked tasks are completed, deferred, or cancelled. Phase 2 item 4 (share-live-ETA deep link) is the next roadmap item.
+
+2026-10-08 FN-142 completed on `fix/security-and-schema-integrity`: the before/after job-proof backend that did not exist. The roadmap item assumed `fix_before_after_slider.dart` and `fix_job_proof_dialog.dart` were "unused by the customer UI" and could simply be surfaced — research found there is **no backend at all** for provider job proof (no entity, table, migration, route or DTO), that the only data source is the client-side in-memory singleton `JobProofRepository`, and that `booking_detail_screen.dart:525` already renders a customer-facing proof card from that map, which can never be true across sessions. Shipping the roadmap item as written would have powered a production screen from a mock repository, which `AGENTS.md` forbids. Delivered instead: a `job_proof_photos` table (one BEFORE and one AFTER per booking, enforced by a named unique index) with a reversible migration, a quarantine + magic-byte + malware-scan + sha256 capture path restricted to the *assigned* provider and to on-site/completed statuses, participant-only read and byte streaming, `present()` that never leaks the storage key, two new declared permissions, and new invariants in the schema gate including behavioural proof that PostgreSQL refuses an unknown stage, a zero-byte photo and a duplicate stage. Validation: backend eslint clean, tsc clean, 107 suites / 912 tests, production build, `check:body-dtos`, `check:env-declarations`, `deploy:verify-env` all pass. Mobile consumers remain: FN-143.
+
+2026-10-08 FN-142 research also found two pre-existing defects, recorded as **FN-144** and not fixed here (one task per run): the mobile client parses `GET /bookings/:id/review/photos` as a bare list while the backend returns `{ photos: [...] }` (`booking_repository.dart:177`), so it silently returns `[]` against the real API; and no endpoint anywhere streams review-photo bytes (`review-photos.service.ts:203` omits `objectKey`), so an approved review photo cannot be rendered by any client.
+
+## FN-143 — Customer Before/After Job Proof Surface (Mobile)
+
+Status: ⬜ Pending
+Priority: P1 — High
+Area: Mobile Frontend (Bookings)
+Depends On: FN-142
+
+### Objective
+Consume the FN-142 endpoints from the app and replace the in-memory proof card with real server data.
+
+### Scope
+- `BookingRepository`: `captureJobProof`, `jobProofPhotos`, and authenticated fetch of the bytes behind `GET /bookings/:id/job-proof/photos/:photoId/content`.
+- Provider capture flow writes through the repository instead of `JobProofRepository`.
+- `booking_detail_screen.dart:525` reads from the API; delete the in-memory read path.
+- Honest states: no proof yet, one side only, load failure, and a partial pair that says which side is missing.
+
+### Do Not
+- Do not keep any fallback to `JobProofRepository`.
+
+### Acceptance Criteria
+- [ ] The customer before/after slider renders server-backed images.
+- [ ] `JobProofRepository` is no longer referenced by any production screen.
+- [ ] Accessibility harness passes over every new control.
+
+### Validation
+```bash
+cd mobile && flutter analyze && flutter test
+```
+
+---
+
+## FN-144 — Fix the FN-110 Review-Photo Contract Mismatch
+
+Status: ✅ Completed
+Priority: P1 — High
+Area: Backend/Ratings, Mobile Frontend (Ratings)
+Depends On: None
+
+### Objective
+`GET /bookings/:id/review/photos` returns `{ photos: [...] }` (`ratings.controller.ts:121`) but `booking_repository.dart` parsed the body as a bare list, so the customer never saw their own photos. Separately, no endpoint streamed review-photo bytes (`review-photos.service.ts:203` omits `objectKey`), so an approved photo could not be displayed at all — while the panel told the customer it was "Visible on your review".
+
+### Changes Delivered
+- **`backend/src/ratings/review-photos.service.ts`** — `readPhoto(bookingId, photoId, actorId, principal)` resolves the bytes **through the participant-visible set** rather than by bare id.
+- **`backend/src/ratings/ratings.controller.ts`** — `GET /bookings/:id/review/photos/:photoId/content`, gated on the existing `ratings.review.read.booking`, serving `inline` with `nosniff` and `no-store`.
+- **`mobile/.../booking_repository.dart`** — `reviewPhotos` reads the `{ photos: [...] }` envelope and **rejects a wrong shape** instead of returning `const []`; new `reviewPhotoBytes` hits the content endpoint; `BookingRepository` now takes an optional `BinaryDownloader`.
+- **`mobile/.../review_photo.dart`** — `canBeViewed`, so a rejected photo is never offered for display.
+- **`mobile/.../booking_review_panel.dart`** — fetches and renders the bytes as a 72px thumbnail with a semantic label; rows without bytes fall back to their status copy.
+- **Tests:** 6 new backend cases in `review-photos.service.spec.ts`; 7 new mobile cases in `review_photo_contract_test.dart`; the `booking_review_test.dart` fake was corrected to the real envelope.
+
+### Design decisions worth remembering
+1. **A wrong shape is an error, not an empty list.** The original `if (items is! List) return const []` is what hid this bug: every customer who *had* photos was told they had none, and it looked identical to a genuine empty result.
+2. **The test fake encoded the bug.** `booking_review_test.dart` answered with a bare list because the client did — both sides agreed on a shape neither had. Fixing the client alone would have failed the test that was supposed to catch it.
+3. **The content endpoint re-derives visibility, it does not trust the caller.** The author may fetch their own pending or rejected photo; the other participant gets APPROVED only. Reading through `listForParticipants` is what stops a guessed photo id from bypassing moderation.
+4. **`objectKey` is still never projected.** The bytes move; the storage key does not.
+5. **A rejected photo is not fetched at all**, so it cannot render as a broken thumbnail beside the copy saying it was not published.
+
+### Validation
+- Backend: eslint clean, `tsc` clean, production build, **107 suites / 918 tests** (6 new), `check:body-dtos`, `check:env-declarations`, `deploy:verify-env` pass.
+- Mobile: `flutter analyze` — No issues found. `flutter test` — **576 / 576 passing** (7 new).
+
+2026-10-08 FN-141 completed. Reusable accessibility harness plus the build-failing gate that uses it: `test/support/accessibility_harness.dart` provides one implementation of each DESIGN.md §31 requirement (WCAG contrast maths, a 200%-text/320pt/reduced-motion pump, unlabelled-action, sub-48px-target, overflow and focus-order assertions), and `test/accessibility_harness_test.dart` runs it over 13 real components, the token contrast contract, and a coverage map that fails the build when a new `lib/design_system/` component is added without being classified as audited or deferred-with-a-reason. The harness is itself tested against deliberately broken fixtures so a check that has stopped looking cannot pass silently. Three real defects were found and fixed: `FixTextField` gave its field no accessible name, `FixStaleDataBanner` clipped its own action at 200% text, and the WCAG contrast formula was duplicated across three test files. Validation: `flutter analyze` no issues; `flutter test` 552/552 (493 baseline + 59 new). Device-level screen-reader and platform-focus verification is explicitly not claimed and stays a manual release step.
+
+2026-10-08 FN-140 completed. Offline-first bookings and service-discovery cache: a `LastGoodCache` over a swappable snapshot store writes the last server-confirmed data on every live read and renders it, stamped and flagged, when the connection drops — the DESIGN.md §28 contract the app previously inverted into a dead-end "You are offline" screen. Only a transport failure reaches for the cache (a 5xx or an unparseable body still surfaces as an honest error), snapshots are keyed to the signed-in account and wiped on sign-out, and resume revalidates through a new `_revalidateCachedData()` alongside the existing socket probe. Validation: `flutter analyze` no issues; `flutter test` 493/493 (444 baseline + 49 new). Two defects were caught by the tests rather than assumed away: the saved-data path returned without notifying (leaving the screen on its loading skeleton), and the snapshot write was awaited before notifying (letting slow disk I/O hold live data off the screen).
 
 2026-09-25 FN-137 completed. Reconciled the remaining mobile widget-test drift without restoring fabricated production notifications: provider notification tests now inject an explicit API fixture, auth role-selection/small-screen expectations are covered, realtime subscription teardown and short acknowledgement handling are stable, payment checkout GST/totals are corrected, PDF download succeeds in the test/desktop environment, and the full mobile suite passes. Validation: `flutter test` 363/363; `flutter analyze` reports 0 errors (existing warnings/info remain); admin type-check, lint, and 20 tests pass; backend build passes. No commit was created.
 
@@ -3714,4 +3782,214 @@ Provider shared live location, but customer tracking screen did not show the pro
 - Backend tests: `npm test -- src/location` (12/12 passed), `npm test -- src/realtime` (12/12 passed), `npm test -- src/realtime/realtime.journey.spec.ts` (2/2 passed).
 - Mobile tests: `flutter test test/booking_tracking_test.dart test/booking_controller_test.dart test/provider_location_test.dart test/saved_address_test.dart test/realtime_client_socket_test.dart test/service_location_picker_sheet_test.dart test/service_request_acceptance_test.dart` (32/32 passed).
 - Flutter analyzer: `flutter analyze lib/features/tracking/booking_tracking_controller.dart lib/features/provider/provider_controller.dart lib/features/bookings/booking_controller.dart` (0 issues).
+
+---
+
+## FN-138 — Design System Unification: Bundled Inter + Single Approved Light Theme
+Status: ✅ Completed
+Priority: P1 — High
+Area: Mobile Design System / Documentation
+Depends On: FN-132
+Approved By: Product owner (direction chosen: light emerald + slate, Inter only)
+
+### Problem
+The app shipped three conflicting design directions:
+1. `DESIGN.md` documented a premium **dark navy/cobalt** theme with **Playfair Display + Inter**.
+2. `app_colors.dart` / `app_theme.dart` implemented a **light emerald/slate** theme.
+3. `app_typography.dart` fetched **Manrope from the network at runtime** via `google_fonts`, so text rendered in the system fallback face on first paint (and whenever offline) and shifted mid-session when the fetch resolved.
+
+Additionally, `AppTheme.dark` only flipped the `Brightness` flag while keeping the light palette and setting `scaffoldBackgroundColor` to `AppColors.backgroundPrimary` (a near-white `#F8F9FF`), so `themeMode: dark` rendered the light theme by accident. `app.dart` forced that fake-dark theme, and ~90 test call sites referenced the misleading getter.
+
+### Changes Delivered
+- **Fonts bundled (mobile/assets/fonts/)**: `Inter-Regular/Medium/SemiBold/Bold.ttf` (Inter 4.1, SIL OFL 1.1) + `Inter-LICENSE.txt`, replacing the README-only folder. `mobile/assets/fonts/README.md` remains as the provenance note.
+- **`mobile/pubspec.yaml`**: activated the `fonts:` block for family `Inter` (weights 400/500/600/700); removed the `google_fonts` dependency; removed the stale commented Playfair Display block.
+- **`mobile/lib/design_system/app_typography.dart`**: rewritten to use bundled Inter via a single `TextStyle` factory and the `kFixNowFontFamily` constant. All token sizes, weights, line-heights and letter-spacing preserved 1:1, including the backward-compatibility aliases.
+- **`mobile/lib/design_system/app_theme.dart`**: collapsed to one honest theme — `AppTheme.light` delegates to a private `_buildLightTheme()`; removed the fake `dark` getter and the `trustMatrixTheme` name; `fontFamily` now points at the bundled family instead of a runtime font fetch.
+- **`mobile/lib/app/app.dart`**: `theme: AppTheme.light`, `themeMode: ThemeMode.light`; removed the misleading `darkTheme` entry.
+- **`mobile/test/`**: migrated 85 `AppTheme.dark` references across 25 files to `AppTheme.light`; updated the `app_test.dart` theme-mode expectation; rewrote the "dark theme exposes the approved semantic colors" test as "the approved theme exposes the semantic colors", asserting `Brightness.light`, the canvas token and the bundled Inter family.
+- **`DESIGN.md`**: reconciled to the implemented system — single approved light emerald/slate palette and Inter-only typography, with the dark-theme provisions and Playfair Display references removed.
+
+### Validation
+- `flutter pub get` — resolved with `google_fonts` removed.
+- `flutter analyze` — **No issues found**.
+- `flutter test` — **428 / 428 passing** (verified against a clean HEAD worktree baseline, which also passed 428/428, confirming no behavioural regression; one test rewritten intentionally because it asserted the removed fake-dark brightness).
+- Interactive design preview shipped at `design-preview/index.html` (palette, type scale, before/after for every screen, motion playbook) and `design-preview/index_1.html` (next upgrades: 16 UX items, motion design language, 8 backend power-ups).
+
+---
+
+## FN-139 — Live Booking Island + One-Tap Rebook Row
+Status: ✅ Completed
+Priority: P0 — Critical
+Area: Mobile Frontend (Shell / Home / Design System)
+Depends On: FN-138
+
+### Problem
+Two of the highest-impact gaps in the shipped app:
+1. A live booking's status was invisible unless the customer opened the tracking screen. Switching tabs to Bookings, Help or Profile lost the one fact that matters while help is on the way.
+2. "Book again" (FN-107) existed only on a completed booking in the Bookings tab — a repeat service, the most likely next action for a returning customer, was buried two taps deep.
+
+### Changes Delivered
+- **`mobile/lib/design_system/fix_active_booking_island.dart` (new)** — the island: slate pill, provider initial, service + plain-language status, optional arrival time, chevron. Entrance follows `AppMotion.container` with an easeOutCubic curve and is skipped entirely under `MediaQuery.disableAnimations`. Ships `fixActiveBookingStatusLabel()` (backend token → plain language) and `fixActiveBookingInitial()`.
+- **`mobile/lib/app/app_shell.dart`** — new `activeBookingIsland` slot rendered between the page and the bottom navigation, so the shell stays free of feature imports.
+- **`mobile/lib/features/bookings/booking.dart`** — `kActiveBookingStatuses` + `CustomerBookingList.firstActive`: the "is anything in flight" rule lives in the domain model, not in widgets.
+- **`mobile/lib/app/app.dart`** — `_ActiveBookingIslandSlot` listens to `BookingController` internally (see note below), resolves the service label from live categories, and routes the tap: customer → the booking's tracking/detail destination, provider → the Active Job tab via a shell controller the app now owns. Wiring added for both customer and provider shells.
+- **`mobile/lib/features/services/rebook_row.dart` (new)** — `FixRebookRow`: up to three completed bookings as compact cards with a relative age label ("Completed 12 days ago") and a Book-again CTA. Renders nothing when there is no callback, no controller, or no completed history.
+- **`mobile/lib/features/services/service_discovery_screen.dart`** — new `onBookAgain` callback; the row renders between the emergency banner and Quick Services.
+- **`mobile/test/`** — `fix_active_booking_island_test.dart`, `fix_rebook_row_test.dart`, `app_shell_island_test.dart` (16 new tests).
+
+### Design decision worth remembering
+The island's `ListenableBuilder` is deliberately **inside the slot, not around the shell**. The shell builds an `IndexedStack` of every destination, and the Bookings tab calls `BookingController.load()` — which notifies — from its own `initState`. A listener wrapping the whole shell would be an *ancestor* marked dirty during that build, which the framework rejects ("setState() or markNeedsBuild() called during build"). The first implementation did exactly that and broke `app_test.dart`; the listener moved down.
+
+### Validation
+- `flutter analyze` — No issues found.
+- `flutter test` — **444 / 444 passing** (428 baseline + 16 new). Baseline parity confirmed earlier via a clean HEAD worktree.
+- Cases covered by tests: island copy per status, semantic label, tap routing, chevron absence when inert, neutral initial, reduced-motion static render; rebook row empty/history/max-3/callback/age labels/200% text scale; shell island positioning and absence.
+
+---
+
+## FN-140 — Offline-First Bookings & Discovery Cache
+
+Status: ✅ Completed
+Priority: P1 — High
+Area: Mobile Frontend (Data / Bookings / Discovery / Design System)
+Depends On: FN-138, FN-139
+
+### Problem
+DESIGN.md §28 requires the last verified booking state to stay visible when the connection drops, marked with its update time and flagged as possibly out of date. The shipped app did the opposite of all three: a lost connection replaced the Bookings list with "You are offline — reconnect to see your latest bookings" and the service catalogue with a dead-end message. A customer in a lift or a basement lost the one fact they needed — that a pro was on the way — precisely when they could least afford to.
+
+### Changes Delivered
+- **`mobile/lib/data/last_good_cache.dart` (new)** — `LastGoodCache` over a `SnapshotStore` interface, with `MemorySnapshotStore` (tests, web) and `FileSnapshotStore` (app-private documents directory on mobile/desktop). Versioned envelope `{v, savedAt, data}`; `offlineSnapshotAgeLabel()` for the "12m ago" stamp; `createDefaultSnapshotStore()`.
+- **`mobile/lib/design_system/fix_saved_data_banner.dart` (new)** — `FixSavedDataBanner`: "Showing saved data · Updated 12m ago · may be out of date", live region, optional retry, semantic tokens only. Renders nothing when there is no snapshot, so a screen can leave it in the tree unconditionally.
+- **`booking.dart` / `service_category.dart`** — added `toJson()` mirroring each model's own `fromJson`, so the cache has no second, drift-prone schema.
+- **`booking_controller.dart`** — optional `cache`; writes the snapshot on every live read (including the 5s realtime reconcile, create, cancel and reschedule); on `offline`/`timeout` falls back to the saved copy with `isShowingSavedData` + `savedDataAt`.
+- **`service_discovery_controller.dart`** — same treatment for the service catalogue.
+- **`customer_bookings_screen.dart` / `service_discovery_screen.dart`** — render the banner above the list.
+- **`app.dart`** — builds one `LastGoodCache` scoped to `() => _auth.session?.userId`, injects it into both controllers, clears it on sign-out, and calls the new `_revalidateCachedData()` on resume. `FixNowApp.snapshotStore` is injectable so tests never touch the real filesystem.
+
+### Design decisions worth remembering
+1. **Only a lost connection reaches for the cache.** A 5xx, an auth failure or an unparseable body still surfaces as an error. DESIGN.md §27 requires a real failure to be visible; a cached screen that looks live is worse than an honest error.
+2. **Snapshots are scoped to the signed-in account** (the user id is part of the key, and a signed-out session reads and writes nothing) and **wiped on sign-out**. Without this, a shared family device would show one customer's bookings to the next.
+3. **The UI is notified before any storage work.** The first implementation awaited the snapshot write before notifying, which meant a slow disk held live data off the screen — caught by `app_test.dart`, which regressed because `path_provider`'s real file I/O never completes under the widget tester's fake clock.
+4. **A cached read subscribes to nothing.** There is no verified state to stream updates against, and a live-looking card that can never update is a lie.
+5. **Corruption is never fatal.** Unreadable file, truncated JSON, a future envelope version or a row that fails to parse all fall back to the normal offline state.
+
+### Validation
+- `flutter analyze` — **No issues found**.
+- `flutter test` — **493 / 493 passing** (444 baseline + 49 new).
+- New tests: `last_good_cache_test.dart` (20 — envelope, account isolation, corrupt/foreign-version snapshots, throwing store, file-store persistence and clear, age labels, model round-trips), `fix_saved_data_banner_test.dart` (7), `offline_first_bookings_test.dart` (12 — offline fallback, timeout fallback, server-error boundary, reconnect, snapshot refresh on cancel, account isolation, screen integration), `offline_first_discovery_test.dart` (10).
+- `app_test.dart` updated to inject `MemorySnapshotStore`, keeping the suite off the real filesystem.
+
+---
+
+## FN-141 — Accessibility Harness in CI
+
+Status: ✅ Completed
+Priority: P1 — High
+Area: Mobile Frontend (Design System / Test Infrastructure)
+Depends On: FN-138
+
+### Problem
+DESIGN.md §31 requires four things of every surface — 4.5:1 contrast for normal text and 3:1 for large text and meaningful boundaries, 48×48 touch targets, semantic labels/roles/reading order, and no clipping at accessibility text sizes — and none of them was enforced by anything reusable:
+
+- The WCAG contrast formula was copy-pasted into three separate test files, in two different hand-rolled implementations.
+- The 48px and semantics checks existed only for whichever components someone remembered to write a test for. Nothing failed when a new component skipped all four.
+- **Focus/reading order was not checked anywhere.**
+- Text-scale coverage was one hand-written test with three hard-coded widths, not a contract.
+
+CI already runs `flutter test` in the `mobile` job, so the gate belongs in the test suite — no new pipeline step, no new tooling.
+
+### Changes Delivered
+- **`mobile/test/support/accessibility_harness.dart` (new)** — the reusable harness, importable by any widget test:
+  - `wcagRelativeLuminance` / `wcagContrastRatio` / `describeColor` / `expectMeetsWcagAa` — one implementation of the WCAG maths.
+  - `pumpForAccessibility()` — renders at 200% text, 320pt wide, reduced motion, then settles.
+  - `expectRendersWithoutOverflow()`, `expectActionsAreLabelled()`, `expectMinimumTouchTargets()`, `expectFocusOrder()` — failure messages that name the component, the colour values, the measured rect and the fix.
+  - `expectCheckFails()` — the harness's own self-test helper.
+  - `accessibilityCoverage` — the coverage map described below.
+- **`mobile/test/accessibility_harness_test.dart` (new, 59 tests)** — the gate: the harness is first run against deliberately broken widgets and asserted to fail (a 32px target, an unlabelled tappable region, an overcrowded row, a deliberately reversed focus order, a low-contrast pair); then over 13 real components at 200% text; then the token contrast contract; then the coverage gate.
+- **Three real defects found and fixed** (none of them had a test before):
+  - `FixTextField` rendered its label as plain text and never gave the field an accessible name — a screen reader announced "text field" and stopped. The `Text` is now `ExcludeSemantics` and the name is attached to the field.
+  - `FixStaleDataBanner` overflowed by 10px at 200% text, clipping its own reconnect action. `Row` → `Wrap`.
+  - `fix_journey_progress_line.dart` was not in the coverage map at all.
+- **De-duplication:** `design_system_test.dart`, `provider_core_test.dart` and `provider_active_job_cockpit_test.dart` now call the shared `wcagContrastRatio` instead of carrying their own copy.
+
+### The coverage gate
+`accessibilityCoverage` in the harness maps every `lib/design_system/*.dart` component file to `audited()` or `deferred(reason)`. Adding a component without classifying it fails the build. The gate also asserts that every entry still points at a file that exists and that every deferred entry carries a real written reason — so the debt is greppable and cannot rot into a permanent phantom. This is the mechanism that makes the file a gate rather than a snapshot that quietly stops describing the app.
+
+### What is deliberately not claimed
+The harness renders through the widget tester, not through a device. It does **not** exercise a real screen reader (TalkBack/VoiceOver), platform focus rings, gesture navigation, or the OS text-scale clamp. It checks that the semantics *tree* is well-formed and that text survives 200% scaling inside the framework — the part regressions actually break. Device-level verification remains a manual release step. This limitation is written into the harness header rather than left implicit.
+
+### Validation
+- `flutter analyze` — **No issues found**.
+- `flutter test` — **552 / 552 passing** (493 baseline + 59 new).
+- The harness's own checks are proven to fire: each violation check is run against a broken fixture via `expectCheckFails`, following the same self-test discipline as `scripts/scan-secrets.mjs --self-test` and the e2e "spec guard".
+
+---
+
+## FN-142 — Before/After Job Proof Backend Pipeline
+
+Status: ✅ Completed
+Priority: P1 — High
+Area: Backend/Data, Backend/Bookings, Backend/Security
+Depends On: FN-123
+
+### Problem
+The roadmap said before/after job proof on completed bookings was a UI wiring job because `fix_before_after_slider.dart` and `fix_job_proof_dialog.dart` already exist. They do — but the data behind them does not. There was no backend entity, table, migration, controller, service or DTO for provider-captured before/after photographs; the only source was `JobProofRepository`, a client-side in-memory singleton, and `booking_detail_screen.dart:525` already rendered a customer-facing proof card from that map. The card therefore could never be true in production: it lived only inside the provider's own process and vanished on restart. Wiring it up further would have powered a production screen from a mock repository, which `AGENTS.md` forbids.
+
+### Changes Delivered
+- **`backend/src/bookings/domain/job-proof-photo.entity.ts`** — `job_proof_photos`, one row per (booking, stage), with `UQ_job_proof_photos_booking_stage` and `UQ_job_proof_photos_object_key`, plus `CHK_job_proof_photos_stage` and `CHK_job_proof_photos_size`.
+- **`backend/migrations/1789750400000-JobProofPhotos.ts`** — reversible migration with named `FK_job_proof_photos_booking` (ON DELETE CASCADE) and `FK_job_proof_photos_uploader`.
+- **`backend/src/bookings/job-proof-photos.service.ts`** — `capture` (assigned provider only, on-site or completed only, magic-byte + size + malware scan before the row is written, sha256 recorded, same-stage re-capture replaces and deletes the previous object), `listForParticipants`, `readPhoto` (scoped by booking **and** photo id), and `present` (never emits `objectKey` or `sha256`).
+- **`backend/src/bookings/job-proof-photos.controller.ts`** — `POST /bookings/:id/job-proof/photos` (multipart `photo` + `stage`), `GET /bookings/:id/job-proof/photos`, and `GET /bookings/:id/job-proof/photos/:photoId/content`, which streams bytes with `nosniff` and `no-store`.
+- **`permission-policies.ts`** — `bookings.job-proof.create.self` (verified provider only) and `bookings.job-proof.read.booking` (customer + provider, participant-scoped).
+- **`scripts/verify-schema.ts`** — the new FKs, both CHECKs and both unique indexes are asserted, plus behavioural attempts proving PostgreSQL refuses an unknown stage, a zero-byte photo and a duplicate stage, and that one BEFORE and one AFTER can coexist.
+- **`test/support/test-data-source.ts`** — entity registered for integration tests.
+
+### Design decisions worth remembering
+1. **A customer must not be able to author the proof.** The create permission is `verified_provider` only; the read permission is both parties. Proof is evidence *about* the provider.
+2. **The provider must be the assigned one, not merely a provider.** `booking.providerId === providerId`, not a role check.
+3. **`REQUESTED` cannot be captured and `CANCELLED` cannot either**, but `COMPLETED` can — otherwise the customer's evidence would vanish the moment the status flipped.
+4. **The byte-streaming endpoint is the point.** The review-photo pipeline stores approved images no client can fetch (`review-photos.service.ts:203` omits `objectKey`). Here the key stays server-side and the client receives bytes.
+5. **Re-capture replaces rather than accumulates**, so the customer's slider always has exactly one "before".
+
+### Validation
+- `npx eslint "src/**/*.ts" "scripts/**/*.ts"` — clean.
+- `npx tsc --noEmit` — clean. Production build — clean.
+- `npx jest --ci` — **107 suites, 912 tests passing** (18 new in `job-proof-photos.service.spec.ts`).
+- `check:body-dtos`, `check:env-declarations`, `deploy:verify-env` — pass.
+- The schema gate could not be executed here (it requires a live PostgreSQL); its new assertions are written and will run in the `schema` CI job.
+
+---
+
+## FN-143 — Customer & Provider Job Proof Surface (Mobile)
+
+Status: ✅ Completed
+Priority: P1 — High
+Area: Mobile Frontend (Bookings / Provider / Design System)
+Depends On: FN-142
+
+### Problem
+FN-142 built the server-side pipeline but nothing on the app could reach it, and the customer-facing proof card was reading `JobProofRepository` — a client-side in-memory map that only ever contained photos captured by the provider in the same process. A customer on a different device saw nothing, and the card could never survive an app restart. The capture dialog wrote into that same map, so the provider's upload went nowhere durable either.
+
+### Changes Delivered
+- **`mobile/lib/api/api_client.dart`** — `BinaryDownloader` interface and `ApiClient.downloadFile` (authenticated, size-capped, refuses rather than truncating a partial image); `uploadFile` gained an optional `fields` map so the capture can send `stage`.
+- **`mobile/lib/features/bookings/booking_repository.dart`** — `jobProofPhotos` (reads the `{photos: [...]}` envelope the backend actually returns), `jobProofBytes` (the participant-checked content endpoint; never a URL), `captureJobProof`.
+- **`mobile/lib/features/bookings/job_proof_controller.dart` (new)** — `JobProofStage`, `JobProofPhoto`, and a `ChangeNotifier` whose states are `initial / loading / ready / none / partial / error`, plus `missingSideLabel`.
+- **`mobile/lib/features/bookings/fix_job_proof_panel.dart` (new)** — the customer surface. Renders nothing for `none`, the slider for `ready`, named-missing copy for `partial`, and an error state with a retry for `error`. Loads once per booking id.
+- **`mobile/lib/features/bookings/job_proof_service.dart`** — `JobProofRepository` **deleted**.
+- **`fix_job_proof_dialog.dart`** — `onUpload` is now a required callback; each side is uploaded independently and a failure is shown in place with the sheet kept open.
+- **`booking_detail_screen.dart` / `provider_*_screen.dart` / `ProviderController`** — wired to the controller; the provider screens reach it through `ProviderController.jobProof` rather than five new constructor parameters.
+
+### Design decisions worth remembering
+1. **`none` and `error` are different states.** Conflating them would tell a customer their pro took no photos when the truth is that the app could not ask.
+2. **`partial` names the missing side.** A slider with one real photo and one blank half reads as evidence of the work; a sentence saying which half is absent does not.
+3. **One unreadable side does not erase the other.** Each fetch is isolated, so a customer still sees the half that loaded.
+4. **A failed upload keeps the dialog open.** A pro who believes a photo was saved when it was not will not retake it.
+5. **`missingSideLabel` is computed, never authored** — the panel and the controller cannot disagree about what is absent.
+
+### Validation
+- `flutter analyze` — **No issues found**.
+- `flutter test` — **569 / 569 passing** (18 new in `job_proof_test.dart`, replacing the 4 tests that covered the deleted in-memory map).
+- The accessibility harness runs over `FixJobProofPanel` at 200% text and over `FixBeforeAfterSlider` with real decoded bytes. `fix_job_proof_dialog.dart` is marked `deferred` in `accessibilityCoverage` with a written reason — it is a modal bottom sheet and the harness fixtures pump inline, so claiming it audited would be the exact dishonesty the coverage map exists to prevent.
+
+(End of file)
 

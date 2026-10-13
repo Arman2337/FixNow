@@ -1,5 +1,8 @@
+import 'dart:typed_data';
+
 import 'package:fixnow_mobile/api/api_client.dart';
 import 'package:fixnow_mobile/design_system/app_colors.dart';
+import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
@@ -29,6 +32,11 @@ class _BookingReviewPanelState extends State<BookingReviewPanel> {
   final _text = TextEditingController();
   BookingReview? _review;
   List<ReviewPhoto> _photos = const [];
+
+  /// FN-144. Bytes for the photos this participant may actually see, keyed by
+  /// photo id. Absent means "not fetched or not fetchable", which the row
+  /// renders as its status copy rather than as a broken image.
+  final Map<String, Uint8List> _photoBytes = {};
   int? _rating;
   bool _loading = true;
   bool _submitting = false;
@@ -40,9 +48,36 @@ class _BookingReviewPanelState extends State<BookingReviewPanel> {
     try {
       final photos = await widget.repository.reviewPhotos(widget.booking.id);
       if (mounted) setState(() => _photos = photos);
+      await _fetchVisiblePhotoBytes(photos);
     } catch (_) {
       // The photo section keeps its last honest state on refresh failure.
     }
+  }
+
+  /// FN-144. Fetch the bytes for the photos the server will actually serve.
+  ///
+  /// Rejected photos are skipped outright: the customer is told they were not
+  /// published, and offering a broken thumbnail beside that copy would
+  /// contradict it.
+  Future<void> _fetchVisiblePhotoBytes(List<ReviewPhoto> photos) async {
+    final downloader = widget.repository.downloader;
+    if (downloader == null) return;
+    final wanted = photos.where((photo) => photo.canBeViewed).toList();
+    final fetched = <String, Uint8List>{};
+    for (final photo in wanted) {
+      try {
+        fetched[photo.id] = await widget.repository.reviewPhotoBytes(
+          widget.booking.id,
+          photo.id,
+          downloader,
+        );
+      } on ApiException {
+        // One unreadable photo must not lose the others; the row falls back to
+        // its status copy.
+      }
+    }
+    if (!mounted) return;
+    setState(() => _photoBytes..clear()..addAll(fetched));
   }
 
   /// FN-110: pick and attach up to three bounded review photos.
@@ -225,6 +260,7 @@ class _BookingReviewPanelState extends State<BookingReviewPanel> {
               const SizedBox(height: AppSpacing.md),
               _ReviewPhotosSection(
                 photos: _photos,
+            photoBytes: _photoBytes,
                 photoBusy: _photoBusy,
                 photoError: _photoError,
                 onChanged: _reloadPhotos,
@@ -503,12 +539,17 @@ class _BookingReviewPanelState extends State<BookingReviewPanel> {
 class _ReviewPhotosSection extends StatelessWidget {
   const _ReviewPhotosSection({
     required this.photos,
+    this.photoBytes = const {},
     required this.photoBusy,
     required this.photoError,
     required this.onChanged,
     required this.onAttach,
   });
   final List<ReviewPhoto> photos;
+
+  /// FN-144. Bytes keyed by photo id; an id that is absent has no viewable image.
+  final Map<String, Uint8List> photoBytes;
+
   final bool photoBusy;
   final String? photoError;
   final VoidCallback onChanged;
@@ -529,6 +570,7 @@ class _ReviewPhotosSection extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Icon(
                   switch (photo.status) {
@@ -540,13 +582,42 @@ class _ReviewPhotosSection extends StatelessWidget {
                   color: AppColors.textSecondary,
                 ),
                 const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: Text(switch (photo.status) {
-                    'APPROVED' => 'Visible on your review',
-                    'REJECTED' => 'Not published after moderation',
-                    _ => 'Awaiting a moderation check before it is shown',
-                  }, style: Theme.of(context).textTheme.bodySmall),
-                ),
+                // FN-144: the panel used to say "Visible on your review"
+                // while showing nothing, because the projection carried no
+                // image reference. Now the bytes are fetched and shown, and the
+                // copy describes what is actually on screen.
+                if (photoBytes[photo.id] case final bytes?)
+                  Semantics(
+                    label:
+                        '${photo.status == 'APPROVED' ? 'Published' : 'Awaiting review'} '
+                        'photo attached to this review',
+                    image: true,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(AppRadius.small),
+                      child: Image.memory(
+                        bytes,
+                        width: 72,
+                        height: 72,
+                        fit: BoxFit.cover,
+                        gaplessPlayback: true,
+                        errorBuilder: (_, _, _) => const SizedBox(
+                          width: 72,
+                          height: 72,
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  Expanded(
+                    child: Text(
+                      switch (photo.status) {
+                        'APPROVED' => 'Published on your review',
+                        'REJECTED' => 'Not published after moderation',
+                        _ => 'Awaiting a moderation check before it is shown',
+                      },
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ),
               ],
             ),
           ),

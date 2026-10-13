@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FixNow — Next Upgrades (index_1)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #F8F9FF; --surface: #FFFFFF; --surface-2: #EFF4FF; --surface-3: #E5EEFF;
+    --primary: #006948; --emerald: #059669; --primary-hover: #047857; --primary-pressed: #0A5C36;
+    --primary-soft: #ECFDF5; --slate: #0F172A; --text: #0B1C30; --text-2: #565E74; --text-3: #8E97A6;
+    --gold: #F59E0B; --gold-soft: #FFFBEB; --gold-border: #FDE68A; --on-gold: #2A1700;
+    --danger: #DC2626; --danger-soft: #FEF2F2; --info: #0284C7; --info-soft: #EFF4FF;
+    --live: #10B981; --live-soft: #D1FAE5; --border: #E2E8F0; --border-strong: #CBD5E1;
+    --r-sm: 8px; --r-md: 12px; --r-card: 16px; --r-lg: 20px; --ease-out: cubic-bezier(0.33, 1, 0.68, 1);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px 96px; }
+
+  .hero { padding: 72px 0 8px; }
+  .hero .eyebrow { font-size: 12px; font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase; color: var(--primary); }
+  .hero h1 { font-size: 40px; font-weight: 700; letter-spacing: -0.03em; line-height: 1.1; margin: 8px 0 12px; }
+  .hero p { color: var(--text-2); font-size: 16px; max-width: 780px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 6px 14px; font-size: 12.5px; font-weight: 600; }
+  .chip b { color: var(--primary); }
+
+  section { margin-top: 72px; }
+  .sec-head { margin-bottom: 24px; }
+  .sec-head h2 { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; }
+  .sec-head p { color: var(--text-2); margin-top: 6px; max-width: 780px; }
+  .src { display: inline-block; margin-top: 10px; font-size: 11.5px; font-weight: 600; color: var(--text-2); background: var(--surface-2); border: 1px solid var(--border); padding: 3px 10px; border-radius: 999px; }
+  .src code { font-family: ui-monospace, Consolas, monospace; font-size: 11px; color: var(--primary); }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 14px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-card); padding: 20px; display: flex; flex-direction: column; }
+  .card .top { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+  .tag { font-size: 10px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; padding: 3px 9px; border-radius: 999px; }
+  .tag.p0 { background: var(--danger-soft); color: #991B1B; }
+  .tag.p1 { background: var(--gold-soft); color: #92400E; }
+  .tag.p2 { background: var(--info-soft); color: #0369A1; }
+  .tag.eff { background: var(--surface-2); color: var(--text-2); }
+  .card h3 { font-size: 15.5px; font-weight: 700; letter-spacing: -0.01em; }
+  .card .why { font-size: 13px; color: var(--text-2); margin-top: 8px; line-height: 1.55; flex: 1; }
+  .card .what { font-size: 12.5px; color: var(--text); margin-top: 10px; line-height: 1.55; }
+  .card .what b { color: var(--primary); }
+  .card .file { margin-top: 12px; font-size: 11px; font-family: ui-monospace, Consolas, monospace; color: var(--text-3); background: var(--bg); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 6px 10px; }
+  .card .impact { display: flex; gap: 14px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+  .card .impact div { font-size: 11px; color: var(--text-3); font-weight: 600; }
+  .card .impact b { display: block; font-size: 13px; color: var(--text); margin-top: 1px; }
+
+  /* roadmap */
+  .road { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+  .phase { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-card); padding: 18px; border-top: 3px solid var(--primary); }
+  .phase .ph { font-size: 11px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: var(--primary); }
+  .phase h4 { font-size: 14.5px; font-weight: 700; margin: 6px 0 10px; }
+  .phase ul { list-style: none; }
+  .phase li { font-size: 12.5px; color: var(--text-2); padding: 6px 0 6px 16px; position: relative; border-top: 1px solid var(--border); line-height: 1.45; }
+  .phase li:first-child { border-top: none; }
+  .phase li::before { content: ''; position: absolute; left: 0; top: 12px; width: 6px; height: 6px; border-radius: 999px; background: var(--emerald); }
+
+  /* mini previews */
+  .preview { background: var(--bg); border: 1px solid var(--border); border-radius: var(--r-md); padding: 14px; margin-top: 14px; }
+  .preview .cap { font-size: 10.5px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase; color: var(--text-3); margin-bottom: 10px; }
+  .island { display: flex; align-items: center; gap: 10px; background: var(--slate); border-radius: 999px; padding: 9px 16px 9px 10px; box-shadow: 0 10px 28px rgba(15,23,42,.28); }
+  .island .av { width: 30px; height: 30px; border-radius: 999px; background: linear-gradient(135deg, var(--primary), var(--emerald)); display: grid; place-items: center; color: #fff; font-size: 12px; font-weight: 700; }
+  .island .t { flex: 1; min-width: 0; }
+  .island .t .a { font-size: 12px; font-weight: 700; color: #fff; }
+  .island .t .b { font-size: 10.5px; color: #CBD5E1; }
+  .island .eta { font-size: 13px; font-weight: 800; color: #6EE7B7; }
+  .ba { position: relative; height: 96px; border-radius: var(--r-sm); overflow: hidden; }
+  .ba img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .ba .after { clip-path: inset(0 0 0 50%); }
+  .ba .handle { position: absolute; top: 0; bottom: 0; left: 50%; width: 3px; background: #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.15); }
+  .ba .handle::after { content: '↔'; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 26px; height: 26px; border-radius: 999px; background: #fff; display: grid; place-items: center; font-size: 13px; color: var(--text); box-shadow: 0 2px 8px rgba(0,0,0,.25); }
+  .ba .lbl { position: absolute; bottom: 8px; font-size: 9.5px; font-weight: 700; letter-spacing: .4px; background: rgba(15,23,42,.75); color: #fff; padding: 3px 8px; border-radius: 999px; }
+  .ba .lbl.l { left: 8px; } .ba .lbl.r { right: 8px; }
+  .wave { display: flex; align-items: center; gap: 3px; height: 44px; }
+  .wave i { flex: 1; background: linear-gradient(180deg, var(--emerald), var(--primary)); border-radius: 999px; animation: wv 1.1s ease-in-out infinite; }
+  @keyframes wv { 0%,100% { height: 20%; } 50% { height: 100%; } }
+  .transcript { margin-top: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 10px 12px; font-size: 12px; color: var(--text-2); }
+  .transcript b { color: var(--text); }
+
+  .backend .card { border-left: 3px solid var(--info); }
+  .tablewrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-card); overflow: hidden; margin-top: 8px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th { background: var(--surface-2); text-align: left; padding: 10px 14px; font-weight: 700; }
+  td { padding: 10px 14px; border-top: 1px solid var(--border); color: var(--text-2); vertical-align: top; }
+  td b { color: var(--text); }
+  td code { font-family: ui-monospace, Consolas, monospace; font-size: 11px; color: var(--primary); }
+
+  /* ================= round-2 UX previews (x- prefix) ================= */
+  .x-row { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); padding: 10px 12px; }
+  .x-row + .x-row { margin-top: 8px; }
+  .x-row .ic { width: 34px; height: 34px; border-radius: var(--r-sm); background: var(--surface-2); display: grid; place-items: center; flex-shrink: 0; }
+  .x-row .tx { flex: 1; min-width: 0; }
+  .x-row .t { font-size: 12.5px; font-weight: 700; }
+  .x-row .s { font-size: 10.5px; color: var(--text-3); }
+  .x-rebook { display: inline-flex; align-items: center; gap: 5px; background: var(--primary); color: #fff; font-size: 11px; font-weight: 700; border-radius: 999px; padding: 6px 12px; border: none; cursor: pointer; font-family: inherit; }
+
+  .x-step { display: flex; align-items: center; gap: 0; }
+  .x-step .st { display: flex; align-items: center; }
+  .x-step .dot { width: 22px; height: 22px; border-radius: 999px; display: grid; place-items: center; font-size: 10px; font-weight: 700; background: var(--surface-2); color: var(--text-3); border: 1.5px solid var(--border); }
+  .x-step .dot.done { background: var(--emerald); border-color: var(--emerald); color: #fff; }
+  .x-step .dot.now { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .x-step .bar { width: 26px; height: 2px; background: var(--border); }
+  .x-step .bar.done { background: var(--emerald); }
+  .x-steplabel { font-size: 11px; font-weight: 600; color: var(--text-2); margin-top: 8px; }
+  .x-steplabel b { color: var(--primary); }
+
+  .x-fee { background: var(--gold-soft); border: 1px solid var(--gold-border); border-radius: var(--r-sm); padding: 9px 11px; font-size: 11.5px; color: #92400E; margin-top: 8px; display: flex; gap: 7px; align-items: flex-start; }
+
+  .x-stars { display: flex; gap: 4px; }
+  .x-stars svg { cursor: pointer; transition: transform 150ms var(--ease-out); }
+  .x-stars svg:active { transform: scale(0.85); }
+  .x-stars svg.on { animation: x-pop 300ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+  @keyframes x-pop { 0% { transform: scale(0.6); } 100% { transform: scale(1); } }
+  .x-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .x-tag-btn { font-size: 11px; font-weight: 600; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text-2); border-radius: 999px; padding: 5px 11px; cursor: pointer; font-family: inherit; transition: all 150ms var(--ease-out); }
+  .x-tag-btn.on { background: var(--primary-soft); border-color: var(--emerald); color: var(--primary-pressed); }
+
+  .x-check { display: flex; gap: 9px; align-items: flex-start; padding: 8px 0; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-2); }
+  .x-check:first-child { border-top: none; }
+  .x-check svg { flex-shrink: 0; margin-top: 1px; }
+  .x-check b { color: var(--text); }
+
+  .x-palette { position: absolute; left: 50%; top: 40%; transform: translate(-50%, -50%); width: 88%; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); box-shadow: 0 20px 50px rgba(15,23,42,.22); overflow: hidden; }
+  .x-palette .in { display: flex; align-items: center; gap: 9px; padding: 11px 13px; border-bottom: 1px solid var(--border); }
+  .x-palette .in svg { flex-shrink: 0; }
+  .x-palette .caret { width: 1.5px; height: 15px; background: var(--primary); animation: x-blink 1.1s steps(2) infinite; }
+  @keyframes x-blink { 50% { opacity: 0; } }
+  .x-palette .res { padding: 7px 13px; font-size: 11.5px; color: var(--text-2); display: flex; align-items: center; gap: 8px; }
+  .x-palette .res.sel { background: var(--primary-soft); color: var(--primary-pressed); font-weight: 600; }
+  .x-palette .kbd { margin-left: auto; font-size: 9.5px; font-weight: 700; background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; color: var(--text-3); }
+
+  .x-stage { position: relative; height: 178px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); overflow: hidden; }
+  .x-track { position: absolute; left: 12px; right: 12px; top: 24px; height: 30px; background: var(--surface-2); border-radius: var(--r-sm); }
+  .x-box { position: absolute; top: 24px; left: 12px; width: 34px; height: 30px; border-radius: var(--r-sm); background: var(--primary); }
+  .x-curves { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+  .x-curve-btn { font-size: 10.5px; font-weight: 700; border: 1px solid var(--border-strong); background: var(--surface); border-radius: var(--r-sm); padding: 6px 10px; cursor: pointer; font-family: inherit; }
+  .x-curve-btn.on { border-color: var(--primary); color: var(--primary); background: var(--primary-soft); }
+  .x-cap { font-size: 11px; color: var(--text-2); margin-top: 8px; line-height: 1.5; }
+  .x-cap b { color: var(--text); }
+
+  .x-ladder { display: flex; gap: 8px; align-items: flex-end; height: 74px; }
+  .x-ladder .lv { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .x-ladder .bar2 { width: 100%; border-radius: var(--r-sm) var(--r-sm) 0 0; background: linear-gradient(180deg, var(--emerald), var(--primary)); }
+  .x-ladder .l1 { font-size: 10px; font-weight: 800; }
+  .x-ladder .l2 { font-size: 9px; color: var(--text-3); font-weight: 600; text-align: center; }
+
+  .x-conduct { display: flex; gap: 10px; }
+  .x-conduct .col2 { flex: 1; }
+  .x-conduct .mini { height: 46px; border-radius: var(--r-sm); background: var(--surface-2); border: 1px solid var(--border); display: grid; place-items: center; font-size: 10.5px; font-weight: 700; color: var(--text-2); }
+  .x-conduct .mini.lead { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .x-conduct .col2.ok .mini.lead { animation: x-lead 500ms var(--ease-out); }
+  .x-conduct .col2.ok .mini.follow { animation: x-follow 500ms var(--ease-out) 60ms backwards; }
+  .x-conduct .col2.bad .mini.lead, .x-conduct .col2.bad .mini.follow { animation: x-lead 500ms var(--ease-out); }
+  @keyframes x-lead { 0% { transform: scale(1); } 35% { transform: scale(0.94); } 100% { transform: scale(1); } }
+  @keyframes x-follow { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  .x-conduct .lbl { font-size: 10px; font-weight: 700; margin-top: 7px; text-align: center; }
+  .x-conduct .lbl.good { color: var(--primary); }
+  .x-conduct .lbl.warn { color: #92400E; }
+
+  .x-grab { position: absolute; left: 0; right: 0; bottom: 0; background: var(--surface); border: 1px solid var(--border); border-bottom: none; border-radius: var(--r-lg) var(--r-lg) 0 0; padding: 10px 14px 14px; box-shadow: 0 -6px 18px rgba(15,23,42,.10); }
+  .x-grab .handle { width: 32px; height: 4px; border-radius: 999px; background: var(--border-strong); margin: 0 auto 10px; }
+  .x-grab .t { font-size: 12.5px; font-weight: 700; }
+  .x-grab .s { font-size: 11px; color: var(--text-2); margin: 3px 0 10px; }
+  .x-grab .btnrow { display: flex; gap: 8px; }
+  .x-open { position: absolute; left: 50%; top: 34%; transform: translate(-50%, -50%); background: var(--primary); color: #fff; border: none; border-radius: var(--r-md); padding: 11px 20px; font-size: 12.5px; font-weight: 600; cursor: pointer; font-family: inherit; }
+  .x-replay { background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--r-sm); padding: 7px 13px; font-size: 11.5px; font-weight: 700; cursor: pointer; font-family: inherit; }
+
+  .x-rm { display: flex; gap: 10px; }
+  .x-rm .half { flex: 1; }
+  .x-rm .box3 { height: 44px; border-radius: var(--r-sm); background: var(--primary-soft); border: 1px solid var(--live-soft); display: grid; place-items: center; font-size: 11px; font-weight: 700; color: var(--primary-pressed); }
+  .x-rm .half.on .box3 { animation: x-fade 1.4s var(--ease-out) infinite alternate; }
+  @keyframes x-fade { from { opacity: 0.35; } to { opacity: 1; } }
+  .x-rm .lbl { font-size: 10px; font-weight: 700; margin-top: 7px; text-align: center; color: var(--text-2); }
+
+  .x-moq { list-style: none; }
+  .x-moq li { display: flex; gap: 9px; align-items: flex-start; font-size: 12px; color: var(--text-2); padding: 7px 0; border-top: 1px solid var(--border); line-height: 1.5; }
+  .x-moq li:first-child { border-top: none; }
+  .x-moq li svg { flex-shrink: 0; margin-top: 2px; }
+
+  footer { margin-top: 96px; border-top: 1px solid var(--border); padding-top: 28px; color: var(--text-3); font-size: 12.5px; line-height: 1.7; }
+  footer code { font-family: ui-monospace, Consolas, monospace; color: var(--primary); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <div class="eyebrow">FixNow · Roadmap Preview — index_1</div>
+    <h1>What we upgrade next</h1>
+    <p>
+      The design system is now unified (Inter bundled, one approved light theme, 428/428 tests green).
+      This page is the <b>next</b> round: the UX upgrades that compound on top of that foundation, plus the
+      backend logic I'd strengthen to make the product more powerful. Each item names where it already
+      exists in your code — most of these are finishing moves on modules you've already built.
+    </p>
+    <div class="chips">
+      <span class="chip">Shipped <b>FN-138</b> design unification</span>
+      <span class="chip">Next <b>16 UX upgrades</b></span>
+      <span class="chip">Backend <b>8 power-ups</b></span>
+      <span class="chip">New <b>motion design language</b></span>
+      <span class="chip">Grounded in <b>your modules</b></span>
+    </div>
+  </div>
+
+  <!-- ================= NEXT UX ================= -->
+  <section>
+    <div class="sec-head">
+      <h2>1 · Next UX upgrades</h2>
+      <p>Ordered by impact per unit of effort. Every one of these uses the tokens, components and motion primitives that now exist — no new design language required.</p>
+    </div>
+    <div class="cards">
+
+      <div class="card">
+        <div class="top"><span class="tag p0">P0 impact</span><span class="tag eff">S effort</span></div>
+        <h3>Persistent live-booking island</h3>
+        <div class="why">While a job is live, the customer's most important fact — <i>"Suresh is 6 minutes away"</i> — disappears the moment they switch tabs. A floating island above the bottom nav keeps it visible everywhere, and taps straight into tracking.</div>
+        <div class="what"><b>Build:</b> an overlay in <code>AppShell</code> driven by <code>BookingController.activeBooking</code>, with the same 300ms slide-up used by sheets and a 150ms press-scale on tap.</div>
+        <div class="preview">
+          <div class="cap">Preview · island over any tab</div>
+          <div class="island">
+            <span class="av">S</span>
+            <span class="t"><span class="a">Suresh K. · Plumbing</span><br/><span class="b">On the way · verified pro</span></span>
+            <span class="eta">6 min</span>
+          </div>
+        </div>
+        <div class="file">mobile/lib/app/app_shell.dart · booking_controller.dart</div>
+        <div class="impact"><div>Retention<b>Fewer "where is my pro?" support calls</b></div><div>Effort<b>Small — reuses tracking data</b></div></div>
+      </div>
+
+      <div class="card">
+        <div class="top"><span class="tag p1">P1 impact</span><span class="tag eff">M effort</span></div>
+        <h3>AI diagnosis → prefilled booking</h3>
+        <div class="why">You already have a governed diagnosis flow (<code>problem_diagnosis_screen</code>, <code>ai_recommendation_screen</code>) and a price estimator. Today they feel like separate worlds. Diagnosing should hand the customer a prefilled booking — category, description, indicative price — one tap from raising the request.</div>
+        <div class="what"><b>Build:</b> a "Book this with prefilled details" CTA on the recommendation result that pushes <code>ServiceRequestScreen</code> with initialDescription + estimate already set.</div>
+        <div class="file">problem_diagnosis_screen.dart · ai_recommendation_screen.dart · service_request_screen.dart</div>
+        <div class="impact"><div>Conversion<b>Shorter path from "something's broken" to request</b></div><div>Trust<b>Shows the AI earning its keep</b></div></div>
+      </div>
+
+      <div class="card">
+        <div class="top"><span class="tag p1">P1 impact</span><span class="tag eff">S effort</span></div>
+        <h3>Before / after job proof</h3>
+        <div class="why">The single strongest trust artifact in home services is photographic proof. You already built the component (<code>fix_before_after_slider.dart</code>) and the provider captures proof (<code>fix_job_proof_dialog.dart</code>) — it just never reaches the customer.</div>
+        <div class="what"><b>Build:</b> surface captured proof on the completed booking card and detail, using the before/after slider with a drag handle and captions ("before", "after").</div>
+        <div class="preview">
+          <div class="cap">Preview · proof slider on a completed job</div>
+          <div class="ba">
+            <img src="../mobile/assets/images/services/plumbing.jpg" alt="before" />
+            <img class="after" src="../mobile/assets/images/services/plumbing.jpg" alt="after" style="filter:hue-rotate(90deg) saturate(1.4)" />
+            <span class="handle"></span>
+            <span class="lbl l">BEFORE</span><span class="lbl r">AFTER</span>
+          </div>
+        </div>
+        <div class="file">fix_before_after_slider.dart · fix_job_proof_dialog.dart · booking_detail_screen.dart</div>
+        <div class="impact"><div>Trust<b>Disputes drop when work is documented</b></div><div>Ratings<b>Proof lifts review quality</b></div></div>
+      </div>
+
+      <div class="card">
+        <div class="top"><span class="tag p1">P1 impact</span><span class="tag eff">S effort</span></div>
+        <h3>Offline-first bookings &amp; discovery</h3>
+        <div class="why">Your UI already has honest offline banners; the next step is making them <i>useful</i>. Cache the last good bookings list and category grid, render from cache instantly, and reconcile on reconnect (your realtime controller already revalidates on resume).</div>
+        <div class="what"><b>Build:</b> a small cache layer in front of the bookings/discovery repositories + skeletons with a "showing saved data · updated 4m ago" stamp.</div>
+        <div class="file">booking_repository.dart · service_discovery_controller.dart · app.dart (_revalidateRealtime)</div>
+        <div class="impact"><div>Perceived speed<b>Instant screens on weak networks</b></div><div>Reliability<b>No dead ends</b></div></div>
+      </div>
+
+      <div class="card">
+        <div class="top"><span class="tag p2">P2 impact</span><span class="tag eff">M effort</span></div>
+        <h3>Voice-first problem entry</h3>
+        <div class="why"><code>voice_assistance.dart</code> and <code>fix_audio_waveform.dart</code> exist. For a customer with water on the floor, speaking is faster than typing. A mic on the search bar that transcribes into the description field is a genuine differentiator for the "urgent" moment.</div>
+        <div class="what"><b>Build:</b> mic affordance → live waveform → editable transcript → straight into the booking description. Show a clear "recording" state and a stop control.</div>
+        <div class="preview">
+          <div class="cap">Preview · live waveform + transcript</div>
+          <div class="wave"><i style="animation-delay:0ms"></i><i style="animation-delay:80ms"></i><i style="animation-delay:160ms"></i><i style="animation-delay:240ms"></i><i style="animation-delay:320ms"></i><i style="animation-delay:400ms"></i><i style="animation-delay:480ms"></i><i style="animation-delay:560ms"></i><i style="animation-delay:640ms"></i><i style="animation-delay:720ms"></i><i style="animation-delay:800ms"></i><i style="animation-delay:880ms"></i></div>
+          <div class="transcript"><b>You:</b> "there's water leaking under the kitchen sink"</div>
+        </div>
+        <div class="file">voice_assistance.dart · fix_audio_waveform.dart · problem_diagnosis_controller.dart</div>
+        <div class="impact"><div>Speed<b>Urgent flows get faster</b></div><div>Accessibility<b>Helps low-literacy users</b></div></div>
+      </div>
+
+      <div class="card">
+        <div class="top"><span class="tag p2">P2 impact</span><span class="tag eff">S effort</span></div>
+        <h3>Share live ETA (deep link)</h3>
+        <div class="why">"Share my technician's ETA with family" is a one-tap feature with real emotional value — and it reuses tracking data you already stream. A signed, expiring link renders a minimal status page.</div>
+        <div class="what"><b>Build:</b> customer taps "Share" on tracking → signed URL (expiry ~ job end) → web view showing provider first name, service, ETA, live status — no phone numbers, no addresses.</div>
+        <div class="file">booking_tracking_screen.dart · realtime projections · new public share endpoint</div>
+        <div class="impact"><div>Trust<b>Family can see help is coming</b></div><div>Support<b>Fewer "is it really coming?" calls</b></div></div>
+      </div>
+
+      <div class="card">
+        <div class="top"><span class="tag p2">P2 impact</span><span class="tag eff">S effort</span></div>
+        <h3>Chat that feels alive</h3>
+        <div class="why">Booking chat exists; the polish that makes it feel modern is small: typing indicators, delivery/read ticks, quick canned replies (gate codes, arrival, "running 5 min late"), and photo sharing for the job site.</div>
+        <div class="what"><b>Build:</b> ephemeral typing events over the existing realtime socket + a 4-chip quick-reply row. No new infrastructure — the channel is already open per booking.</div>
+        <div class="file">booking_chat_screen.dart · chat_controller.dart · booking-messages.service.ts</div>
+        <div class="impact"><div>Engagement<b>Fewer phone calls, faster resolution</b></div><div>Trust<b>Visibility into delays</b></div></div>
+      </div>
+
+      <div class="card">
+        <div class="top"><span class="tag p2">P2 impact</span><span class="tag eff">S effort</span></div>
+        <h3>Accessibility &amp; dynamic-type audit</h3>
+        <div class="why">The design system is now consistent, which makes this the right moment to prove it scales: run every screen at 200% text scale, with a screen reader and with reduce-motion on, and fix what clips.</div>
+        <div class="what"><b>Build:</b> a golden/accessibility test pass (text scale, labels, focus order, contrast) as a reusable harness — turning "we think it's accessible" into a check that fails the build.</div>
+        <div class="file">mobile/test/ (new accessibility harness) · all screens</div>
+        <div class="impact"><div>Reach<b>Every customer, every device size</b></div><div>Compliance<b>WCAG 2.2 AA evidence</b></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= BACKEND ================= -->
+  <section class="backend">
+    <div class="sec-head">
+      <h2>2 · Backend power-ups</h2>
+      <p>
+        Your backend is already well-factored (matching, realtime projections, outbox, governed AI, vendor-neutral payments).
+        These are the logic upgrades with the highest leverage — each anchored to the module and, where relevant, the bug comments in your own code that already predict the problem.
+      </p>
+      <span class="src">Modules referenced from <code>backend/src/*</code></span>
+    </div>
+    <div class="cards">
+
+      <div class="card">
+        <div class="top"><span class="tag p0">P0 logic</span><span class="tag eff">M effort</span></div>
+        <h3>Fairness in the matching scoring layer</h3>
+        <div class="why">Your own comment in <code>matching.service.ts</code> says it exactly: the deterministic tie-break is "what made BUG-007's starvation perfectly repeatable: the same nearest providers won every job." Fixing the tie-break isn't enough — fairness has to live in the scoring layer.</div>
+        <div class="what"><b>Add:</b> weighted rotation among the top-K eligible providers, a per-provider fairness counter (jobs offered vs. jobs won), a soft penalty for repeated rejections/timeouts, and a starvation floor so no eligible pro goes a full shift without an offer. Emit fairness metrics alongside the existing eligibility durations.</div>
+        <div class="file">backend/src/matching/matching.service.ts · observability</div>
+        <div class="impact"><div>Supply health<b>Pros stay, churn drops</b></div><div>Marketplace<b>Better fills, fewer timeouts</b></div></div>
+      </div>
+
+      <div class="card">
+        <div class="top"><span class="tag p1">P1 logic</span><span class="tag eff">S effort</span></div>
+        <h3>ETA as an honest interval</h3>
+        <div class="why">You have <code>eta-adapter.ts</code> and a projection pipeline that deliberately preserves stale data instead of faking it. The next step is serving ETAs as a distribution, not a point: <code>{estimate, confidence, updatedAt}</code> — so the UI can say "6–9 min" when confidence is low instead of lying precisely.</div>
+        <div class="what"><b>Add:</b> confidence derivation from provider speed history + traffic, widened bands under low confidence, and a rule that a stale ETA is stamped rather than refreshed.</div>
+        <div class="file">backend/src/realtime/eta-adapter.ts · route-adapter.ts</div>
+        <div class="impact"><div>Trust<b>Fewer broken promises</b></div><div>Support<b>Fewer "you said 5 minutes"</b></div></div>
+      </div>
+
+      <div class="card">
+        <div class="top"><span class="tag p1">P1 logic</span><span class="tag eff">M effort</span></div>
+        <h3>Demand heatmaps → pro guidance</h3>
+        <div class="why">You ingest provider location continuously and the provider app already shows "High demand nearby". Turning raw location events into zone-level demand scores lets you nudge pros toward unmet demand <i>before</i> a request times out — the cheapest dispatch win available.</div>
+        <div class="what"><b>Add:</b> a rolling zone-demand job (requests per zone per hour vs. available pros), a "go here" nudge in the provider app, and a feeder into matching so candidates are scored with supply pressure in mind.</div>
+        <div class="file">backend/src/location · matching · provider app push</div>
+        <div class="impact"><div>Fill rate<b>More jobs matched first wave</b></div><div>Pro earnings<b>Pros earn more per hour</b></div></div>
+      </div>
+
+      <div class="card">
+        <div class="top"><span class="tag p1">P1 logic</span><span class="tag eff">M effort</span></div>
+        <h3>Automated settlement &amp; payout reconciliation</h3>
+        <div class="why"><code>payments.service.ts</code> already appends ledger events and exposes provider earnings. What's missing is the closed loop: scheduled payouts, automatic reconciliation of gateway settlements against your ledger, and disagreement alerts — all behind your vendor-neutral gateway interface so Razorpay stays swappable.</div>
+        <div class="what"><b>Add:</b> a payout scheduler, a settlement reconciliation job (gateway report vs. ledger), and a reconciliation dashboard in admin. Keep every state change an append-only event.</div>
+        <div class="file">backend/src/payments/payments.service.ts · payment-gateway.ts · outbox</div>
+        <div class="impact"><div>Finance ops<b>Books balance themselves</b></div><div>Pro trust<b>Payouts on time, provably</b></div></div>
+      </div>
+
+      <div class="card">
+        <div class="top"><span class="tag p2">P2 logic</span><span class="tag eff">M effort</span></div>
+        <h3>Calibrated price estimates (the learning loop)</h3>
+        <div class="why">Your AI estimates are governed and deterministic today. The upgrade is a feedback loop: every completed invoice becomes a labelled example, so estimates drift toward reality — and the system can say "P50 ₹900, P90 ₹1,400" with a measured confidence instead of one number.</div>
+        <div class="what"><b>Add:</b> estimate-vs-actual tracking per category, calibration review, and honest bands in the API contract (fixed / estimated / inspection-required) — the vocabulary your DESIGN.md already mandates.</div>
+        <div class="file">backend/src/ai · issue-recommendation.service.ts · bookings (invoice linkage)</div>
+        <div class="impact"><div>Pricing trust<b>Fewer surprises at completion</b></div><div>AI quality<b>Measured, not assumed</b></div></div>
+      </div>
+
+      <div class="card">
+        <div class="top"><span class="tag p2">P2 logic</span><span class="tag eff">M effort</span></div>
+        <h3>Event-sourced booking timeline</h3>
+        <div class="why">You already append payment events and audit some mutations. Making the booking itself event-sourced gives you a single source of truth for three products at once: the customer's "what happened" view, the admin audit trail, and dispute evidence — with zero duplicated bookkeeping.</div>
+        <div class="what"><b>Add:</b> a booking-events table + projection into the existing presenter/summary shapes; replayable for backfills; exposes a public timeline API that the tracking screen can render.</div>
+        <div class="file">backend/src/bookings/booking.presenter.ts · outbox · realtime projections</div>
+        <div class="impact"><div>Support<b>Every dispute answerable</b></div><div>Trust<b>Customers see the full story</b></div></div>
+      </div>
+
+      <div class="card">
+        <div class="top"><span class="tag p2">P2 logic</span><span class="tag eff">M effort</span></div>
+        <h3>Trust &amp; anti-fraud signals</h3>
+        <div class="why">You have a trust module and a verification queue. The missing layer is behavioural: cancellation patterns, review authenticity (velocity, text similarity, timing), and collusion rings between a customer and a pro.</div>
+        <div class="what"><b>Add:</b> signal collectors (velocity, geo-impossible travel, device reuse), a risk score on bookings and reviews, and auto-hold above threshold — feeding the existing verification queue instead of a parallel system.</div>
+        <div class="file">backend/src/trust · ratings · providers</div>
+        <div class="impact"><div>Marketplace health<b>Ratings mean something again</b></div><div>Risk<b>Fraud caught before payout</b></div></div>
+      </div>
+
+      <div class="card">
+        <div class="top"><span class="tag p3">P3 logic</span><span class="tag eff">L effort</span></div>
+        <h3>Matching precompute &amp; SLO dashboards</h3>
+        <div class="why">The comments in <code>matching.service.ts</code> already flag the eligibility predicate as the most expensive query on the accept path. Precomputing candidate sets per zone (refreshed on availability/location change) turns the hot path into a read. Pair it with SLO dashboards on matching latency and fill rate so regressions are visible before users feel them.</div>
+        <div class="what"><b>Add:</b> zone candidate cache with TTL + invalidation on location/availability events; percentile latency dashboards and fill-rate SLIs in observability; a soak test at 10× current booking rate.</div>
+        <div class="file">backend/src/matching · cache · observability</div>
+        <div class="impact"><div>Scale<b>Headroom before you need it</b></div><div>Reliability<b>Regressions caught in staging</b></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SEQUENCING ================= -->
+  <section>
+    <div class="sec-head">
+      <h2>3 · How I'd sequence it</h2>
+      <p>Foundation first, then trust, then intelligence — each phase compounds on the one before it.</p>
+    </div>
+    <div class="road">
+      <div class="phase">
+        <div class="ph">Phase 1 · Now</div>
+        <h4>Finish the foundation</h4>
+        <ul>
+          <li>Ship FN-138 design unification to all screens (tokens only, no redesign)</li>
+          <li>Live-booking island (highest impact per hour)</li>
+          <li>Offline-first bookings &amp; discovery cache</li>
+          <li>Accessibility harness in CI</li>
+        </ul>
+      </div>
+      <div class="phase">
+        <div class="ph">Phase 2 · Trust</div>
+        <h4>Make trust visible</h4>
+        <ul>
+          <li>Before/after job proof on completed bookings</li>
+          <li>Share live ETA via signed deep link</li>
+          <li>Chat: typing, receipts, quick replies</li>
+          <li>Event-sourced booking timeline + customer view</li>
+        </ul>
+      </div>
+      <div class="phase">
+        <div class="ph">Phase 3 · Marketplace</div>
+        <h4>Make the market smarter</h4>
+        <ul>
+          <li>Fairness in matching scoring + starvation floor</li>
+          <li>Honest ETA intervals (estimate + confidence)</li>
+          <li>Demand heatmaps → pro guidance</li>
+          <li>Anti-fraud signals into the trust queue</li>
+        </ul>
+      </div>
+      <div class="phase">
+        <div class="ph">Phase 4 · Scale</div>
+        <h4>Make it effortless</h4>
+        <ul>
+          <li>AI diagnosis → prefilled booking</li>
+          <li>Voice-first problem entry</li>
+          <li>Calibrated price estimates (P50/P90 bands)</li>
+          <li>Automated settlement reconciliation</li>
+          <li>Matching precompute + SLO dashboards + soak test</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= MORE UX ================= -->
+  <section>
+    <div class="sec-head">
+      <h2>4 · More UX upgrades (round 2)</h2>
+      <p>Eight more, again ordered by impact per effort. Several of these are finishing moves on screens you already built — they just stop one step short of the good version.</p>
+    </div>
+    <div class="cards">
+
+      <div class="card">
+        <div class="top"><span class="tag p0">P0 impact</span><span class="tag eff">S effort</span></div>
+        <h3>One-tap rebook row on Home</h3>
+        <div class="why">"Book again" (FN-107) works from a completed booking — but the customer has to find that booking first. The most likely next action for a repeat service should sit one tap from Home.</div>
+        <div class="what"><b>Build:</b> a "Book again" row above Quick Services listing the customer's last 3 completed services, each prefilled with the same category, description and address.</div>
+        <div class="preview">
+          <div class="cap">Preview · Home rebook row</div>
+          <div class="x-row">
+            <span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#006948" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 7h6v6"/><path d="M20 7 8 19l-5-5L15 3h5z"/></svg></span>
+            <span class="tx"><span class="t">Plumbing — Tap Repair</span><br/><span class="s">Completed 12 days ago · ₹449</span></span>
+            <button class="x-rebook">Book again</button>
+          </div>
+          <div class="x-row">
+            <span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#006948" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 7h6v6"/><path d="M20 7 8 19l-5-5L15 3h5z"/></svg></span>
+            <span class="tx"><span class="t">Cleaning — Deep Clean</span><br/><span class="s">Completed 1 month ago · ₹899</span></span>
+            <button class="x-rebook">Book again</button>
+          </div>
+        </div>
+        <div class="file">service_discovery_screen.dart · booking_controller.dart (book-again path)</div>
+        <div class="impact"><div>Revenue<b>Repeat jobs, zero friction</b></div><div>Effort<b>Reuses existing rebook logic</b></div></div>
+      </div>
+
+      <div class="card">
+        <div class="top"><span class="tag p1">P1 impact</span><span class="tag eff">M effort</span></div>
+        <h3>Provider onboarding as a visible ladder</h3>
+        <div class="why">Provider onboarding exists; what converts applicants into active pros is <i>seeing the finish line</i>. A stepper that names each verification stage turns a black-hole form into a progress bar they can complete.</div>
+        <div class="what"><b>Build:</b> 4-step stepper (Profile → Documents → Police verification → Go live) with the current step emphasized, completed steps ticked, and honest "usually takes X" copy from real medians.</div>
+        <div class="preview">
+          <div class="cap">Preview · onboarding ladder</div>
+          <div class="x-step">
+            <span class="st"><span class="dot done"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span class="bar done"></span></span>
+            <span class="st"><span class="dot now">2</span><span class="bar"></span></span>
+            <span class="st"><span class="dot">3</span><span class="bar"></span></span>
+            <span class="st"><span class="dot">4</span></span>
+          </div>
+          <div class="x-steplabel">Step 2 of 4 · <b>Upload documents</b> — ID + skill proof. Usually approved in under 24 hours.</div>
+        </div>
+        <div class="file">provider_onboarding_screen.dart · provider_onboarding_entry_screen.dart</div>
+        <div class="impact"><div>Supply<b>Higher applicant → active conversion</b></div><div>Support<b>Fewer "what's my status?" tickets</b></div></div>
+      </div>
+
+      <div class="card">
+        <div class="top"><span class="tag p1">P1 impact</span><span class="tag eff">S effort</span></div>
+        <h3>Cancel / reschedule with fee honesty</h3>
+        <div class="why">Your reschedule sheet exists and cancellation terms are in DESIGN.md. The upgrade is showing the consequence <i>before</i> the tap — a plain line stating the fee (or "free until the pro leaves") instead of discovering it after.</div>
+        <div class="what"><b>Build:</b> inline fee/impact block on the reschedule and cancel sheets, with the pro's state factored in, and a reason picker that feeds the trust signals.</div>
+        <div class="preview">
+          <div class="cap">Preview · consequence before commitment</div>
+          <div class="x-fee">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#92400E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
+            <span><b>Rescheduling now:</b> free until Suresh leaves (about 6 minutes). After that a ₹50 visit charge applies.</span>
+          </div>
+        </div>
+        <div class="file">fix_reschedule_sheet.dart · booking_detail_screen.dart</div>
+        <div class="impact"><div>Trust<b>No surprise fees</b></div><div>Retention<b>Fewer refund disputes</b></div></div>
+      </div>
+
+      <div class="card">
+        <div class="top"><span class="tag p1">P1 impact</span><span class="tag eff">S effort</span></div>
+        <h3>Post-job rating that actually gets used</h3>
+        <div class="why">Review panels exist, but ratings arrive late and thin. Tapping stars in-place with a pop, quick tags ("on time", "clean work", "fair price"), and optional proof photos lifts both response rate and review quality.</div>
+        <div class="what"><b>Build:</b> star row with spring pop on tap, 4 quick tags, optional photo, and a submit button that morphs to a check — reusing the motion already proven in the design system.</div>
+        <div class="preview">
+          <div class="cap">Preview · tap the stars</div>
+          <div class="x-stars" id="xStars">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.2 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z"/></svg>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.2 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z"/></svg>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.2 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z"/></svg>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.2 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z"/></svg>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.2 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z"/></svg>
+          </div>
+          <div class="x-tags">
+            <button class="x-tag-btn on">On time</button>
+            <button class="x-tag-btn on">Clean work</button>
+            <button class="x-tag-btn">Fair price</button>
+            <button class="x-tag-btn">Would book again</button>
+          </div>
+        </div>
+        <div class="file">booking_review_panel.dart · booking_review.dart · fix_star_rating_burst.dart</div>
+        <div class="impact"><div>Data quality<b>Tags give structure to reviews</b></div><div>Pro feedback<b>Pros learn what matters</b></div></div>
+      </div>
+
+      <div class="card">
+        <div class="top"><span class="tag p2">P2 impact</span><span class="tag eff">S effort</span></div>
+        <h3>In-job safety toolkit</h3>
+        <div class="why">The tracking screen already carries a safety guide with OTP rules, ID verification and in-app-only payment. Making it a persistent, always-reachable sheet turns good copy into a used feature.</div>
+        <div class="what"><b>Build:</b> a "Safety" entry in tracking that opens a checklist sheet — verify the ID badge, never share the OTP early, pay in-app only, one-tap call support — with the emergency path separate and red.</div>
+        <div class="preview">
+          <div class="cap">Preview · safety checklist</div>
+          <div class="x-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><b>Verify the ID badge</b> — match the pro's face and FixNow lanyard at the door.</span></div>
+          <div class="x-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><b>Share the OTP only when work starts</b> — never in advance, never by message.</span></div>
+          <div class="x-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><b>Pay in-app only</b> — the escrow release is your guarantee.</span></div>
+        </div>
+        <div class="file">booking_tracking_screen.dart (Safety Guide) · fix_page_frame.dart</div>
+        <div class="impact"><div>Safety<b>Rules used, not just written</b></div><div>Fraud<b>Cuts OTP-sharing scams</b></div></div>
+      </div>
+
+      <div class="card">
+        <div class="top"><span class="tag p2">P2 impact</span><span class="tag eff">S effort</span></div>
+        <h3>Address book with map confirmation</h3>
+        <div class="why">Saved addresses exist, but "which door exactly?" is the #1 cause of a wasted trip. Saving an address should end with a confirmed pin on a map and a landmark note, not a text field.</div>
+        <div class="what"><b>Build:</b> save → map pin confirm → landmark/hint field → "verified" badge on the address. Feed the pin into matching so ETAs account for it.</div>
+        <div class="file">saved_address.dart · fix_address_selector.dart · location consent flow</div>
+        <div class="impact"><div>Ops cost<b>Fewer wrong-door trips</b></div><div>ETA accuracy<b>Better routing from the start</b></div></div>
+      </div>
+
+      <div class="card">
+        <div class="top"><span class="tag p2">P2 impact</span><span class="tag eff">M effort</span></div>
+        <h3>Admin command palette (⌘K)</h3>
+        <div class="why">The admin app is desktop-first with a labeled sidebar. A command palette is the fastest possible path to any booking, provider, customer or complaint — and it's the feature ops people feel immediately.</div>
+        <div class="what"><b>Build:</b> ⌘K palette with fuzzy search across entities, recent items, keyboard-only navigation, and deep links into detail pages — respecting the existing permission-aware visibility.</div>
+        <div class="preview">
+          <div class="cap">Preview · ops command palette</div>
+          <div class="x-palette">
+            <div class="in">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8E97A6" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+              <span style="font-size:12px;color:var(--text-2)">booking FN-A1B2</span><span class="caret"></span>
+              <span class="kbd">esc</span>
+            </div>
+            <div class="res sel"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#006948" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Booking #A1B2C3D4 · Plumbing · EN_ROUTE<span class="kbd">↵</span></div>
+            <div class="res">Provider Suresh K. · verified · ★ 4.9</div>
+            <div class="res">Customer Arun M. · 14 completed</div>
+          </div>
+        </div>
+        <div class="file">admin/ (Next.js shell) · admin navigation tokens</div>
+        <div class="impact"><div>Ops speed<b>Seconds to any record</b></div><div>Delight<b>Feels like a real tool</b></div></div>
+      </div>
+
+      <div class="card">
+        <div class="top"><span class="tag p2">P2 impact</span><span class="tag eff">M effort</span></div>
+        <h3>Verification queue with evidence compare</h3>
+        <div class="why">The trust-signal review queue exists on the backend. The UX that makes reviewers fast is side-by-side comparison: submitted document vs. claimed identity vs. past approvals, with a keyboard-only accept/reject and a mandatory reason.</div>
+        <div class="what"><b>Build:</b> compare view, decision shortcuts (A/R), audit-trail immutable record, and queue metrics (median review time, first-pass approval rate) on the overview.</div>
+        <div class="file">admin/ · backend/src/trust · providers verification</div>
+        <div class="impact"><div>Supply velocity<b>Pros verified in hours, not days</b></div><div>Trust integrity<b>Every decision auditable</b></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= MOTION DESIGN ================= -->
+  <section>
+    <div class="sec-head">
+      <h2>5 · Motion design language</h2>
+      <p>
+        A motion designer wouldn't hand you a pile of animations — they'd hand you a <b>language</b>: named patterns, rules for when each applies, and a choreography order. That's what this is, with every pattern live below. Everything maps to tokens that already exist in <code>app_motion.dart</code> and <code>fix_motion.dart</code>.
+      </p>
+      <span class="src">Tokens <code>app_motion.dart</code> · primitives <code>fix_motion.dart</code></span>
+    </div>
+
+    <!-- vocabulary table -->
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Pattern</th><th>What it is</th><th>Use it for</th><th>Token / curve</th></tr></thead>
+        <tbody>
+          <tr><td><b>Press-in</b></td><td>Element scales to 0.96–0.97 under the finger</td><td>Every button, card, chip, nav item — instant acknowledgment</td><td><code>fast</code> 150ms · easeOutCubic</td></tr>
+          <tr><td><b>Elastic pop</b></td><td>Selected state springs past 1.0 and settles</td><td>Nav selection, tab switches, star taps — "you are here"</td><td>400ms · elasticOut (easeOutBack family)</td></tr>
+          <tr><td><b>Morph</b></td><td>Same widget swaps content, size animates with it</td><td>Button idle → loading → success; chips changing label</td><td><code>standard</code> 200ms · AnimatedSize + AnimatedSwitcher</td></tr>
+          <tr><td><b>Fade-through</b></td><td>Old content fades out as new fades in, no slide</td><td>Content swapping in place (filters, tabs of equal weight)</td><td><code>standard</code> 200ms</td></tr>
+          <tr><td><b>Shared-axis</b></td><td>New screen slides in on x, old fades back</td><td>Forward/back navigation between steps</td><td><code>container</code> 300–340ms</td></tr>
+          <tr><td><b>Hero flight</b></td><td>One element travels between two screens</td><td>Service tile → detail header; provider card → profile</td><td><code>container</code> 300ms · Hero widget</td></tr>
+          <tr><td><b>Sheet spring</b></td><td>Surface rises from the bottom, never blocking context</td><td>Booking confirm, location pick, payment — always with a close path</td><td><code>container</code> 300ms · sheetBorder radius</td></tr>
+          <tr><td><b>Shimmer</b></td><td>Highlight sweeps shape-matched placeholders</td><td>Any list/card loading, after the first brief threshold</td><td><code>shimmer</code> 1200ms loop</td></tr>
+          <tr><td><b>Stagger</b></td><td>Siblings enter in sequence, not unison</td><td>Grid tiles, list rows, avatar stacks on first paint</td><td><code>staggerStep</code> 60ms per item</td></tr>
+          <tr><td><b>Interpolated glide</b></td><td>Position eases between two <i>trustworthy</i> updates</td><td>Provider marker on the map — never for stale data</td><td>900ms · freeze + stamp when stale</td></tr>
+          <tr><td><b>Rubber-band</b></td><td>Drag past the edge resists, then settles</td><td>Overscroll, slide-to-confirm released early</td><td>Gesture-driven, settle <code>standard</code></td></tr>
+          <tr><td><b>Burst</b></td><td>One expanding ring + scale-in check</td><td>Provider accepted — once per booking, nowhere else</td><td><code>celebrateCurve</code> 600ms</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- live demos -->
+    <div class="cards" style="margin-top:18px">
+
+      <div class="card">
+        <div class="top"><span class="tag p1">Live demo</span><span class="tag eff">pick one</span></div>
+        <h3>Easing is the personality</h3>
+        <div class="why">The same 300ms move reads as cheap, smooth, or playful depending only on the curve. Pick the curve by intent, never by habit.</div>
+        <div class="preview">
+          <div class="cap">Preview · tap a curve</div>
+          <div class="x-stage">
+            <div class="x-track"></div>
+            <div class="x-box" id="xBox"></div>
+          </div>
+          <div class="x-curves">
+            <button class="x-curve-btn" data-ease="linear">linear (never)</button>
+            <button class="x-curve-btn on" data-ease="cubic-bezier(0.33,1,0.68,1)">easeOutCubic (default)</button>
+            <button class="x-curve-btn" data-ease="cubic-bezier(0.34,1.56,0.64,1)">easeOutBack (celebrate)</button>
+            <button class="x-curve-btn" data-ease="cubic-bezier(0.68,-0.6,0.32,1.6)">elasticOut (selection)</button>
+          </div>
+          <div class="x-cap"><b>Rule:</b> linear only for spinners. Everything that moves in response to a human starts fast and settles slow (easeOut). Back/elastic curves are reserved for the 2–3 delightful moments per flow — overused, they feel like a toy.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="top"><span class="tag p1">Live demo</span><span class="tag eff">tap to play</span></div>
+        <h3>The duration ladder</h3>
+        <div class="why">Duration should match the size of what's moving — a tiny icon that takes 340ms feels drunk; a full screen that takes 150ms feels glitchy. Sticky note: these are exactly your tokens.</div>
+        <div class="preview">
+          <div class="cap">Preview · ladder by element size</div>
+          <div class="x-ladder" id="xLadder">
+            <div class="lv"><span class="l1">150ms</span><span class="bar2" style="height:26%"></span><span class="l2">icon · ripple<br/>press</span></div>
+            <div class="lv"><span class="l1">200ms</span><span class="bar2" style="height:48%"></span><span class="l2">chip · card<br/>state</span></div>
+            <div class="lv"><span class="l1">300ms</span><span class="bar2" style="height:72%"></span><span class="l2">sheet · card<br/>expand</span></div>
+            <div class="lv"><span class="l1">340ms</span><span class="bar2" style="height:96%"></span><span class="l2">screen<br/>transition</span></div>
+          </div>
+          <div class="x-curves"><button class="x-replay" id="xLadderPlay">Play ladder</button></div>
+        </div>
+        <div class="file">app_motion.dart (fast / standard / emphasis / container)</div>
+      </div>
+
+      <div class="card">
+        <div class="top"><span class="tag p1">Live demo</span><span class="tag eff">watch both</span></div>
+        <h3>One conductor per transition</h3>
+        <div class="why">When several things animate at once with no leader, the eye doesn't know where to land. Let one element <i>lead</i> (the thing you touched), and let the rest follow 60ms behind.</div>
+        <div class="preview">
+          <div class="cap">Preview · choreography order</div>
+          <div class="x-conduct" id="xConduct">
+            <div class="col2 ok">
+              <div class="mini lead">Card</div>
+              <div class="mini follow">Label follows</div>
+              <div class="lbl good">Correct · leader first</div>
+            </div>
+            <div class="col2 bad">
+              <div class="mini lead">Card</div>
+              <div class="mini follow">Label at once</div>
+              <div class="lbl warn">Wrong · no leader</div>
+            </div>
+          </div>
+          <div class="x-curves"><button class="x-replay" id="xConductPlay">Replay</button></div>
+          <div class="x-cap"><b>Rule:</b> the touched element leads, siblings follow on the stagger step, and nothing else moves. If two things want to lead, the transition is doing too much — split it.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="top"><span class="tag p1">Live demo</span><span class="tag eff">grab it</span></div>
+        <h3>Animations must be interruptible</h3>
+        <div class="why">A sheet that springs up and <i>cannot be grabbed mid-flight</i> feels like a video, not an interface. Users change their minds in 100ms; motion must answer the finger immediately.</div>
+        <div class="preview">
+          <div class="cap">Preview · open, then grab the sheet mid-flight</div>
+          <div class="x-stage" id="xStage">
+            <button class="x-open" id="xGrabOpen">Open sheet</button>
+            <div class="x-grab" id="xGrab" style="transform:translateY(105%)">
+              <div class="handle"></div>
+              <div class="t">Confirm your booking</div>
+              <div class="s">Plumbing · tap repair · ₹149 visit</div>
+              <div class="btnrow">
+                <button class="x-replay" id="xGrabBack">Back</button>
+                <button class="x-rebook" style="flex:1">Confirm</button>
+              </div>
+            </div>
+          </div>
+          <div class="x-cap"><b>Rule:</b> open it and drag the handle before it lands — the sheet follows your finger instead of finishing its animation. In Flutter this is a <code>DraggableScrollableSheet</code>/gesture-driven controller, never a fixed tween.</div>
+        </div>
+        <div class="file">sheet components · fix_motion.dart gesture primitives</div>
+      </div>
+
+      <div class="card">
+        <div class="top"><span class="tag p2">Live demo</span><span class="tag eff">compare</span></div>
+        <h3>What reduced motion actually keeps</h3>
+        <div class="why">Reduced motion doesn't mean a dead interface — it means replacing spatial movement with fades and state changes. Design both versions deliberately instead of letting motion break for some users.</div>
+        <div class="preview">
+          <div class="cap">Preview · motion vs reduce-motion</div>
+          <div class="x-rm">
+            <div class="half on"><div class="box3">Full motion</div><div class="lbl">slides, springs, stagger</div></div>
+            <div class="half"><div class="box3" style="background:var(--surface-2);border-color:var(--border);color:var(--text-2)">Reduced</div><div class="lbl">instant fades only</div></div>
+          </div>
+          <div class="x-cap"><b>Rule:</b> under reduce-motion keep opacity changes and state swaps (they carry meaning), drop all spatial movement (slide, scale, parallax, stagger). Your <code>FixPressable</code>, <code>FixPulse</code> and <code>FixScaleIn</code> already branch on <code>MediaQuery.disableAnimations</code> — the job is extending that guard to every new animation.</div>
+        </div>
+        <div class="file">fix_button.dart:58 · fix_motion.dart</div>
+      </div>
+
+      <div class="card">
+        <div class="top"><span class="tag p2">Spec</span><span class="tag eff">ship with it</span></div>
+        <h3>Haptics, sound &amp; the QA checklist</h3>
+        <div class="why">Motion without the other senses is half a design. Haptics should mark decisions, not decoration — and every animation ships with the same five checks.</div>
+        <div class="preview">
+          <div class="cap">Pairing table</div>
+          <div class="x-check"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#006948" stroke-width="2" stroke-linecap="round"><path d="M18 8a6 6 0 0 1-12 0c0-7 3-8 6-8s6 1 6 8"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span><b>Nav select</b> → selectionClick (already in FixBottomNavigation)</span></div>
+          <div class="x-check"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#006948" stroke-width="2" stroke-linecap="round"><path d="M18 8a6 6 0 0 1-12 0c0-7 3-8 6-8s6 1 6 8"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span><b>Provider accepted</b> → light impact once, with the burst</span></div>
+          <div class="x-check"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#006948" stroke-width="2" stroke-linecap="round"><path d="M18 8a6 6 0 0 1-12 0c0-7 3-8 6-8s6 1 6 8"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span><b>Cancel / destructive</b> → warning tick, never success haptic</span></div>
+          <div class="x-check"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#006948" stroke-width="2" stroke-linecap="round"><path d="M18 8a6 6 0 0 1-12 0c0-7 3-8 6-8s6 1 6 8"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span><b>Status change</b> → optional soft tick (sound stays off by default)</span></div>
+        </div>
+        <div class="preview" style="margin-top:10px">
+          <div class="cap">QA checklist · every animation ships with these</div>
+          <ul class="x-moq">
+            <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>Runs at 60fps on a low-end Android device (profile with <code>flutter run --profile</code>)</span></li>
+            <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>Interruptible: a new gesture cancels the in-flight animation</span></li>
+            <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>No layout shift: animation moves paint, not layout</span></li>
+            <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>Degrades to a fade under <code>disableAnimations</code></span></li>
+            <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>Never delays an action, never animates data that isn't live</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <b>FixNow next-upgrades preview</b> · Built from the real modules and components in this repository — <code>mobile/lib/**</code> and <code>backend/src/**</code>.<br/>
+    Phase 1 is entirely buildable on what already exists. Tell me which items to start and I'll implement them the same way as FN-138: code, tests, verification, and a PROJECT_TASKS.md entry.
+  </footer>
+</div>
+
+<script>
+  (function () {
+    /* ---------- easing picker ---------- */
+    var box = document.getElementById('xBox');
+    var track = document.querySelector('.x-track');
+    var curveBtns = document.querySelectorAll('.x-curve-btn[data-ease]');
+    var ease = 'cubic-bezier(0.33,1,0.68,1)';
+    function playEase() {
+      if (!box || !track) return;
+      var max = track.clientWidth - box.offsetWidth;
+      box.animate(
+        [
+          { transform: 'translateX(0)' },
+          { transform: 'translateX(' + max + 'px)' },
+          { transform: 'translateX(0)' }
+        ],
+        { duration: 1000, easing: ease }
+      );
+    }
+    curveBtns.forEach(function (b) {
+      b.addEventListener('click', function () {
+        curveBtns.forEach(function (x) { x.classList.remove('on'); });
+        b.classList.add('on');
+        ease = b.getAttribute('data-ease');
+        playEase();
+      });
+    });
+    playEase();
+
+    /* ---------- duration ladder ---------- */
+    var ladderBars = document.querySelectorAll('#xLadder .bar2');
+    var ladderHeights = [26, 48, 72, 96];
+    var ladderDurations = [150, 200, 300, 340];
+    var ladderBtn = document.getElementById('xLadderPlay');
+    if (ladderBtn) {
+      ladderBtn.addEventListener('click', function () {
+        ladderBars.forEach(function (bar, i) {
+          bar.animate(
+            [{ height: '6%' }, { height: ladderHeights[i] + '%' }],
+            { duration: ladderDurations[i], easing: 'cubic-bezier(0.33,1,0.68,1)', fill: 'forwards' }
+          );
+        });
+      });
+    }
+
+    /* ---------- choreography replay ---------- */
+    var conduct = document.getElementById('xConduct');
+    var conductBtn = document.getElementById('xConductPlay');
+    if (conduct && conductBtn) {
+      conductBtn.addEventListener('click', function () {
+        conduct.querySelectorAll('.mini').forEach(function (m) {
+          m.style.animation = 'none';
+          void m.offsetWidth;
+          m.style.animation = '';
+        });
+      });
+    }
+
+    /* ---------- interruptible sheet ---------- */
+    var sheet = document.getElementById('xGrab');
+    var stage = document.getElementById('xStage');
+    var grabOpen = document.getElementById('xGrabOpen');
+    var grabBack = document.getElementById('xGrabBack');
+    if (sheet && stage) {
+      var SPRING = 'transform 300ms cubic-bezier(0.33,1,0.68,1)';
+      var SETTLE = 'transform 250ms cubic-bezier(0.33,1,0.68,1)';
+      function currentY() {
+        var t = getComputedStyle(sheet).transform;
+        if (!t || t === 'none') return stage.clientHeight;
+        var m = new DOMMatrixReadOnly(t);
+        return m.f;
+      }
+      function setY(y, transition) {
+        sheet.style.transition = transition || 'none';
+        sheet.style.transform = 'translateY(' + y + 'px)';
+      }
+      setY(stage.clientHeight);
+      grabOpen.addEventListener('click', function () { setY(0, SPRING); });
+      grabBack.addEventListener('click', function () { setY(stage.clientHeight, SPRING); });
+
+      var dragging = false, startY = 0, baseY = 0;
+      sheet.addEventListener('pointerdown', function (e) {
+        if (e.target.closest('button')) { /* let buttons work */ }
+        dragging = true;
+        startY = e.clientY;
+        baseY = currentY();
+        try { sheet.setPointerCapture(e.pointerId); } catch (err) {}
+      });
+      sheet.addEventListener('pointermove', function (e) {
+        if (!dragging) return;
+        var y = Math.max(0, baseY + (e.clientY - startY));
+        setY(y);
+      });
+      function endDrag() {
+        if (!dragging) return;
+        dragging = false;
+        var y = currentY();
+        setY(y > stage.clientHeight * 0.4 ? stage.clientHeight : 0, SETTLE);
+      }
+      sheet.addEventListener('pointerup', endDrag);
+      sheet.addEventListener('pointercancel', endDrag);
+    }
+
+    /* ---------- stars ---------- */
+    var stars = document.querySelectorAll('#xStars svg');
+    stars.forEach(function (s, i) {
+      s.classList.add('on');
+      s.addEventListener('click', function () {
+        stars.forEach(function (o, j) { o.classList.toggle('on', j <= i); });
+      });
+    });
+
+    /* ---------- tags ---------- */
+    document.querySelectorAll('.x-tag-btn').forEach(function (t) {
+      t.addEventListener('click', function () { t.classList.toggle('on'); });
+    });
+  })();
+</script>
+</body>
+</html>

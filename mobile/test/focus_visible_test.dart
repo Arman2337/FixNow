@@ -27,7 +27,7 @@ void main() {
     Future<void> pumpInApp(WidgetTester tester, Widget child) async {
       await tester.pumpWidget(
         MaterialApp(
-          theme: AppTheme.dark,
+          theme: AppTheme.light,
           home: Scaffold(
             body: Center(child: SizedBox(width: 320, child: child)),
           ),
@@ -99,7 +99,7 @@ void main() {
       var retried = 0;
       await tester.pumpWidget(
         MaterialApp(
-          theme: AppTheme.dark,
+          theme: AppTheme.light,
           home: Scaffold(body: FixStaleDataBanner(onRetry: () => retried++)),
         ),
       );
@@ -124,7 +124,7 @@ void main() {
       // they are not is how a user ends up ignoring the indicator that mattered.
       await tester.pumpWidget(
         MaterialApp(
-          theme: AppTheme.dark,
+          theme: AppTheme.light,
           home: Scaffold(body: FixStaleDataBanner()),
         ),
       );
@@ -136,14 +136,14 @@ void main() {
   group('theme declares the focus ring', () {
     test('focusedBorder is focus at 2px', () {
       final focused =
-          AppTheme.dark.inputDecorationTheme.focusedBorder!
+          AppTheme.light.inputDecorationTheme.focusedBorder!
               as OutlineInputBorder;
       expect(focused.borderSide.color, AppColors.focus);
       expect(focused.borderSide.width, 2.0);
     });
 
     test('resting border is declared, not absent', () {
-      final theme = AppTheme.dark.inputDecorationTheme;
+      final theme = AppTheme.light.inputDecorationTheme;
       expect(theme.border, isNotNull);
       expect(theme.enabledBorder, isNotNull);
       expect(theme.border, isNot(InputBorder.none));
@@ -183,7 +183,7 @@ void main() {
         isEmpty,
         reason:
             'A restated border with no side removes the focus ring. Delete the '
-            'override and let AppTheme.dark.inputDecorationTheme draw it: '
+            'override and let AppTheme.light.inputDecorationTheme draw it: '
             '${offenders.join(', ')}',
       );
     });

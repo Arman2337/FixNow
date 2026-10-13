@@ -38,6 +38,7 @@ class AppShell extends StatefulWidget {
     this.providerHistory,
     this.providerProfile,
     this.statusBanner,
+    this.activeBookingIsland,
     super.key,
   });
 
@@ -59,6 +60,11 @@ class AppShell extends StatefulWidget {
   /// shell that assumed a connection would have to be told to hide itself in
   /// each of them.
   final Widget? statusBanner;
+
+  /// Keeps a live booking visible on every tab (see
+  /// [FixActiveBookingIsland]). A slot so the shell stays free of feature
+  /// imports: the caller resolves the booking into the island's props.
+  final Widget? activeBookingIsland;
 
   @override
   State<AppShell> createState() => _AppShellState();
@@ -182,16 +188,31 @@ class _AppShellState extends State<AppShell> {
             ),
             bottomNavigationBar: SafeArea(
               top: false,
-              child: FixBottomNavigation(
-                destinations: destinations,
-                selectedIndex: selectedIndex,
-                onDestinationSelected: (index) {
-                  _controller.selectDestination(
-                    index,
-                    destinationCount: destinations.length,
-                  );
-                  _saveSelectedDestination(index);
-                },
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (widget.activeBookingIsland case final island?)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.lg,
+                        0,
+                        AppSpacing.lg,
+                        AppSpacing.sm,
+                      ),
+                      child: island,
+                    ),
+                  FixBottomNavigation(
+                    destinations: destinations,
+                    selectedIndex: selectedIndex,
+                    onDestinationSelected: (index) {
+                      _controller.selectDestination(
+                        index,
+                        destinationCount: destinations.length,
+                      );
+                      _saveSelectedDestination(index);
+                    },
+                  ),
+                ],
               ),
             ),
           ),

@@ -5,27 +5,41 @@ import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/app_typography.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/features/bookings/job_proof_service.dart';
+import 'package:fixnow_mobile/features/bookings/job_proof_controller.dart';
 import 'package:fixnow_mobile/design_system/fix_before_after_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 /// Modal dialog presented to the technician to capture mandatory
 /// Before and After work photos with notes before job completion.
+///
+/// FN-143: [onUpload] is required. It used to be optional and defaulted to
+/// writing into an in-memory map, which meant the photos existed only inside
+/// the pro's own phone and the customer could never be shown them. A capture
+/// dialog that cannot upload is not a capture dialog, so the parameter is not
+/// optional and there is no local fallback.
 class JobProofVerificationDialog extends StatefulWidget {
   const JobProofVerificationDialog({
     required this.bookingId,
+    required this.onUpload,
     this.initialProof,
     this.picker,
     super.key,
   });
 
   final String bookingId;
+
+  /// Uploads one side and returns null on success or a safe message on failure.
+  final Future<String?> Function(JobProofStage stage, Uint8List bytes) onUpload;
+
   final JobProof? initialProof;
   final ImagePicker? picker;
 
   static Future<JobProof?> show(
     BuildContext context, {
     required String bookingId,
+    required Future<String?> Function(JobProofStage stage, Uint8List bytes)
+    onUpload,
     JobProof? initialProof,
     ImagePicker? picker,
   }) {
@@ -35,6 +49,7 @@ class JobProofVerificationDialog extends StatefulWidget {
       backgroundColor: Colors.transparent,
       builder: (_) => JobProofVerificationDialog(
         bookingId: bookingId,
+        onUpload: onUpload,
         initialProof: initialProof,
         picker: picker,
       ),
@@ -56,6 +71,10 @@ class _JobProofVerificationDialogState
   Uint8List? _afterBytes;
   String? _afterName;
   bool _isProcessing = false;
+
+  /// FN-143. Upload failures are shown here rather than swallowed, because a
+  /// pro who believes a photo was saved when it was not will not retake it.
+  String? _error;
 
   @override
   void initState() {
@@ -257,21 +276,54 @@ class _JobProofVerificationDialogState
     });
   }
 
-  void _submit() {
-    final proof = JobProof(
-      bookingId: widget.bookingId,
-      beforePhotoBytes: _beforeBytes,
-      beforePhotoName: _beforeName,
-      afterPhotoBytes: _afterBytes,
-      afterPhotoName: _afterName,
-      notes: _notesController.text.trim().isNotEmpty
-          ? _notesController.text.trim()
-          : null,
-      capturedAt: DateTime.now(),
-      proName: 'FixNow Verified Pro',
-    );
-    JobProofRepository.instance.saveProof(proof);
-    Navigator.of(context).pop(proof);
+  Future<void> _submit() async {
+    if (_isProcessing) return;
+    setState(() {
+      _isProcessing = true;
+      _error = null;
+    });
+    try {
+      // Each side is uploaded on its own and independently reported: a failed
+      // "after" must still leave a genuine "before" on the server rather than
+      // discarding the pair.
+      if (_beforeBytes != null) {
+        final failure = await widget.onUpload(
+          JobProofStage.before,
+          _beforeBytes!,
+        );
+        if (failure != null) {
+          if (mounted) setState(() => _error = 'Before photo: $failure');
+          return;
+        }
+      }
+      if (_afterBytes != null) {
+        final failure = await widget.onUpload(
+          JobProofStage.after,
+          _afterBytes!,
+        );
+        if (failure != null) {
+          if (mounted) setState(() => _error = 'After photo: $failure');
+          return;
+        }
+      }
+      if (!mounted) return;
+      Navigator.of(context).pop(
+        JobProof(
+          bookingId: widget.bookingId,
+          beforePhotoBytes: _beforeBytes,
+          beforePhotoName: _beforeName,
+          afterPhotoBytes: _afterBytes,
+          afterPhotoName: _afterName,
+          notes: _notesController.text.trim().isNotEmpty
+              ? _notesController.text.trim()
+              : null,
+          capturedAt: DateTime.now(),
+          proName: 'FixNow Verified Pro',
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isProcessing = false);
+    }
   }
 
   @override
@@ -536,12 +588,39 @@ class _JobProofVerificationDialogState
 
               const SizedBox(height: AppSpacing.lg),
 
+              // FN-143. A failed upload is stated in place and the dialog stays
+              // open, rather than closing as if the photos had been saved.
+              if (_error != null) ...[
+                Semantics(
+                  liveRegion: true,
+                  label: _error!,
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(AppSpacing.sm),
+                    margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+                    decoration: BoxDecoration(
+                      color: AppColors.dangerSoft,
+                      borderRadius: BorderRadius.circular(AppRadius.small),
+                      border: Border.all(color: AppColors.danger),
+                    ),
+                    child: Text(
+                      _error!,
+                      style: const TextStyle(
+                        color: AppColors.dangerOnLight,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+
               // Submit Action
               FixButton(
                 label: 'Save Proof & Complete Job',
                 icon: Icons.check_circle_outline_rounded,
                 isLoading: _isProcessing,
-                onPressed: _submit,
+                onPressed: hasBoth && !_isProcessing ? _submit : null,
               ),
 
               const SizedBox(height: AppSpacing.xs),

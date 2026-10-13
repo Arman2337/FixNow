@@ -172,6 +172,104 @@ describe('ReviewPhotosService', () => {
     });
   });
 
+  describe('readPhoto (FN-144)', () => {
+    const stored = (
+      id: string,
+      status: string,
+      uploadedBy: string,
+    ): ReviewPhoto =>
+      ({
+        id,
+        status,
+        uploadedBy,
+        objectKey: `quarantine/${id}`,
+        contentType: 'image/jpeg',
+      }) as ReviewPhoto;
+
+    beforeEach(() => {
+      bookingRepo.findOneBy.mockResolvedValue({
+        id: 'booking-1',
+        customerId,
+        providerId,
+      });
+      storage.readPrivate.mockResolvedValue(JPEG);
+      // Faithful to the real lookup chain — booking -> its review -> that
+      // review's photos — so a test asking about another booking really does
+      // see an empty photo set rather than the mocked one leaking across.
+      reviews.findOneBy.mockImplementation(
+        ({ bookingId }: { bookingId: string }) =>
+          Promise.resolve({ id: `review-${bookingId}` }) as never,
+      );
+      photosRepo.find.mockImplementation(
+        ({ where }: { where: { reviewId: string } }) =>
+          Promise.resolve(
+            where.reviewId === 'review-booking-1'
+              ? [
+                  {
+                    id: 'p5',
+                    status: 'APPROVED',
+                    uploadedBy: customerId,
+                    objectKey: 'quarantine/p5',
+                    contentType: 'image/jpeg',
+                  },
+                ]
+              : [],
+          ) as never,
+      );
+    });
+
+    it('streams an approved photo to the other participant', async () => {
+      photosRepo.find.mockResolvedValue([stored('p1', 'APPROVED', customerId)]);
+
+      const result = await service.readPhoto('booking-1', 'p1', providerId);
+
+      expect(result.content).toEqual(JPEG);
+      expect(storage.readPrivate).toHaveBeenCalledWith('quarantine/p1');
+    });
+
+    it('streams the author their own pending photo', async () => {
+      photosRepo.find.mockResolvedValue([stored('p2', 'PENDING', customerId)]);
+
+      const result = await service.readPhoto('booking-1', 'p2', customerId);
+
+      expect(result.content).toEqual(JPEG);
+    });
+
+    it('refuses a pending photo to the participant who may not see it yet', async () => {
+      // Reading through the participant-visible set rather than by bare id is
+      // what stops a guessed photo id from bypassing moderation.
+      photosRepo.find.mockResolvedValue([stored('p3', 'PENDING', customerId)]);
+
+      await expect(
+        service.readPhoto('booking-1', 'p3', providerId),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(storage.readPrivate).not.toHaveBeenCalled();
+    });
+
+    it('refuses a rejected photo to the other participant', async () => {
+      photosRepo.find.mockResolvedValue([stored('p4', 'REJECTED', customerId)]);
+
+      await expect(
+        service.readPhoto('booking-1', 'p4', providerId),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(storage.readPrivate).not.toHaveBeenCalled();
+    });
+
+    it('refuses a photo belonging to another booking', async () => {
+      await expect(
+        service.readPhoto('booking-2', 'p5', customerId),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(storage.readPrivate).not.toHaveBeenCalled();
+    });
+
+    it('refuses a non-participant before touching storage', async () => {
+      await expect(
+        service.readPhoto('booking-1', 'p1', 'a-stranger'),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(storage.readPrivate).not.toHaveBeenCalled();
+    });
+  });
+
   describe('moderate', () => {
     it('records an immutable moderation event with the reason', async () => {
       photosRepo.findOneBy.mockResolvedValue({

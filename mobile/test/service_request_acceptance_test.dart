@@ -37,7 +37,7 @@ void main() {
 
         await tester.pumpWidget(
           MaterialApp(
-            theme: AppTheme.dark,
+            theme: AppTheme.light,
             home: Builder(
               builder: (context) => Scaffold(
                 body: ElevatedButton(
@@ -126,7 +126,7 @@ void main() {
 
         await tester.pumpWidget(
           MaterialApp(
-            theme: AppTheme.dark,
+            theme: AppTheme.light,
             home: Builder(
               builder: (context) => Scaffold(
                 body: ElevatedButton(
@@ -204,7 +204,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          theme: AppTheme.dark,
+          theme: AppTheme.light,
           home: ServiceRequestScreen(
             category: category,
             controller: controller,

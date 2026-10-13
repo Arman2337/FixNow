@@ -179,17 +179,26 @@ class FixTextField extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            color: AppColors.textOnSurfaceSecondary,
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.2,
+        // FN-141. The label is drawn here rather than handed to
+        // `InputDecoration.labelText`, which meant the field itself had no
+        // accessible name: a screen reader announced "text field" and stopped.
+        // The Text is therefore visual-only, and the name is attached to the
+        // field below, so it is spoken once and by the right widget.
+        ExcludeSemantics(
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: AppColors.textOnSurfaceSecondary,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.2,
+            ),
           ),
         ),
         const SizedBox(height: AppSpacing.xs),
-        TextFormField(
+        Semantics(
+          label: label,
+          child: TextFormField(
           controller: controller,
           obscureText: obscureText,
           keyboardType: keyboardType,
@@ -215,9 +224,12 @@ class FixTextField extends StatelessWidget {
             // field 0.5px off every other field is one nobody notices until
             // they turn on a screen reader.
             //
-            // So the borders are not restated. `fillColor` and the label stay,
-            // because those are deliberate choices of this component.
+            // So the borders are not restated. `fillColor` stays, because that
+            // is a deliberate choice of this component. `labelText` deliberately
+            // stays null too: the label is drawn above the field and named
+            // through `Semantics`, so it would otherwise be announced twice.
           ),
+        ),
         ),
       ],
     );

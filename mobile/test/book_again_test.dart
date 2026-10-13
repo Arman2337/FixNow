@@ -98,7 +98,7 @@ void main() {
     var opened = false;
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.dark,
+        theme: AppTheme.light,
         home: Scaffold(
           body: BookingDetailScreen(
             booking: _booking('COMPLETED'),
@@ -124,7 +124,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.dark,
+        theme: AppTheme.light,
         home: Scaffold(
           body: BookingDetailScreen(booking: _booking('REQUESTED')),
         ),
@@ -147,7 +147,7 @@ void main() {
     );
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.dark,
+        theme: AppTheme.light,
         home: Scaffold(
           body: CustomerBookingsScreen(
             controller: controller,
@@ -183,7 +183,7 @@ void main() {
     );
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.dark,
+        theme: AppTheme.light,
         home: Scaffold(
           body: ServiceRequestScreen(
             category: _category,
@@ -233,7 +233,7 @@ void main() {
     );
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.dark,
+        theme: AppTheme.light,
         home: Scaffold(
           body: ServiceRequestScreen(
             category: _category,
@@ -272,7 +272,7 @@ void main() {
       );
       await tester.pumpWidget(
         MaterialApp(
-          theme: AppTheme.dark,
+          theme: AppTheme.light,
           home: Scaffold(
             body: CustomerBookingsScreen(
               controller: controller,

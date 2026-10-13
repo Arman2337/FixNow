@@ -24,7 +24,7 @@ enum FixServiceCardState {
 
 /// FixNow's service-selection card — the tappable surface a customer uses to
 /// choose what needs fixing. It is the search/browse sibling of
-/// [FixProviderCard] and speaks the same cobalt & gold language.
+/// [FixProviderCard] and speaks the same emerald & gold language.
 ///
 /// Signature element: the **live availability strip** — a pulsing dot, a
 /// plain-language "N pros available now" line, and a small stack of real
@@ -457,7 +457,7 @@ class _TopRow extends StatelessWidget {
 
 /// A small gold "priority" pill for categories the backend flags as emergency.
 /// Gold (not red) so it reads as *help is prioritised here*, matching the
-/// card's cobalt-and-gold language; the dark on-gold text keeps it legible.
+/// card's emerald-and-gold language; the dark on-gold text keeps it legible.
 class _PriorityBadge extends StatelessWidget {
   const _PriorityBadge({required this.label});
 
@@ -499,7 +499,7 @@ class _PriorityBadge extends StatelessWidget {
   }
 }
 
-/// The service glyph in a soft cobalt tile. In the available/in-demand states a
+/// The service glyph in a soft emerald tile. In the available/in-demand states a
 /// small gold spark pops in (via [FixScaleIn]); the after-hours tile is muted
 /// and carries no spark.
 class _ServiceTile extends StatelessWidget {

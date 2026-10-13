@@ -105,7 +105,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          theme: AppTheme.dark,
+          theme: AppTheme.light,
           home: Scaffold(
             body: Builder(
               builder: (context) => ElevatedButton(
@@ -184,7 +184,7 @@ void main() {
 
         await tester.pumpWidget(
           MaterialApp(
-            theme: AppTheme.dark,
+            theme: AppTheme.light,
             home: InvoiceScreen(
               repository: InvoiceRepository(transport),
               bookingId: 'bk-101',

@@ -7,7 +7,6 @@ import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_job_proof_dialog.dart';
 import 'package:fixnow_mobile/features/bookings/booking.dart';
 import 'package:fixnow_mobile/features/bookings/cancellation_dialog.dart';
-import 'package:fixnow_mobile/features/bookings/job_proof_service.dart';
 import 'dart:async';
 import 'package:fixnow_mobile/features/call/call_controller.dart';
 import 'package:fixnow_mobile/features/chat/booking_chat_screen.dart';
@@ -147,7 +146,10 @@ class _ProviderActiveJobCockpitScreenState
   }
 
   Future<void> _handleCompleteService(CustomerBooking job) async {
-    if (!JobProofRepository.instance.hasProof(job.id)) {
+    if (!await widget.controller.hasJobProof(job.id)) {
+      // The proof check is a network read, so the widget can be gone by the time
+      // it answers.
+      if (!mounted) return;
       final shouldContinue = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
@@ -167,6 +169,7 @@ class _ProviderActiveJobCockpitScreenState
                 await JobProofVerificationDialog.show(
                   context,
                   bookingId: job.id,
+                  onUpload: widget.controller.uploadJobProof,
                 );
               },
               child: const Text('Add Photos'),
@@ -978,7 +981,7 @@ class _ProviderActiveJobCockpitScreenState
     }
 
     if (job.status == 'IN_PROGRESS') {
-      final proof = JobProofRepository.instance.getProof(job.id);
+      final proof = widget.controller.jobProof;
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -1015,12 +1018,12 @@ class _ProviderActiveJobCockpitScreenState
               Expanded(
                 child: _buildPhotoBox(
                   label: 'Before Photo',
-                  hasPhoto: proof?.hasBeforePhoto ?? false,
+                  hasPhoto: proof?.hasBefore ?? false,
                   isBefore: true,
                   onTap: () => JobProofVerificationDialog.show(
                     context,
                     bookingId: job.id,
-                    initialProof: proof,
+                  onUpload: widget.controller.uploadJobProof,
                   ),
                 ),
               ),
@@ -1028,12 +1031,12 @@ class _ProviderActiveJobCockpitScreenState
               Expanded(
                 child: _buildPhotoBox(
                   label: 'After Photo',
-                  hasPhoto: proof?.hasAfterPhoto ?? false,
+                  hasPhoto: proof?.hasAfter ?? false,
                   isBefore: false,
                   onTap: () => JobProofVerificationDialog.show(
                     context,
                     bookingId: job.id,
-                    initialProof: proof,
+                  onUpload: widget.controller.uploadJobProof,
                   ),
                 ),
               ),

@@ -46,6 +46,7 @@ import { ProviderVerificationEventEntity } from '../../src/providers/verificatio
 import { BookingReview } from '../../src/ratings/domain/review.entity';
 import { ReviewModerationEvent } from '../../src/ratings/domain/review-moderation-event.entity';
 import { ReviewPhoto } from '../../src/ratings/domain/review-photo.entity';
+import { JobProofPhoto } from '../../src/bookings/domain/job-proof-photo.entity';
 import { ReviewPhotoModerationEvent } from '../../src/ratings/domain/review-photo-moderation-event.entity';
 import { ServiceCategoryEntity } from '../../src/services/service-category.entity';
 import { SubServiceEntity } from '../../src/services/sub-service.entity';
@@ -72,6 +73,7 @@ export const ALL_ENTITIES: (new () => object)[] = [
   BookingEvent,
   BookingLineItem,
   BookingMessage,
+  JobProofPhoto,
   RecurringSchedule,
   EmergencyDispatch,
   OutboxMessage,

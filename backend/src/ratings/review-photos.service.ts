@@ -165,6 +165,42 @@ export class ReviewPhotosService {
     );
   }
 
+  /**
+   * FN-144. Bytes for one photo, for a booking participant only.
+   *
+   * The list endpoint never carried an image reference and `present()` still
+   * does not expose `objectKey`, so until this existed an approved photo was
+   * stored, moderated, listed as "Visible on your review" — and then
+   * unfetchable by the client that promised to show it.
+   *
+   * The visibility rule is the same one the list applies, re-checked here
+   * rather than trusted from the caller: the author may fetch their own
+   * pending or rejected photo, and the other participant may fetch APPROVED
+   * photos only. Reading this through the list's filter is what stops a
+   * participant from bypassing moderation by guessing photo ids.
+   */
+  async readPhoto(
+    bookingId: string,
+    photoId: string,
+    actorId: string,
+    principal?: AuthorizationPrincipal,
+  ): Promise<{ metadata: ReviewPhoto; content: Buffer }> {
+    const visible = await this.listForParticipants(
+      bookingId,
+      actorId,
+      principal,
+    );
+    // Scoped to the participant-visible set, so a valid photo id belonging to
+    // somebody else's booking — or one this actor may not see — is a miss
+    // rather than a leak.
+    const photo = visible.find((row) => row.id === photoId);
+    if (!photo) throw new NotFoundException('Review photo not found');
+    return {
+      metadata: photo,
+      content: await this.storage.readPrivate(photo.objectKey),
+    };
+  }
+
   /** Permission-gated approve/reject with an immutable audit event. */
   async moderate(
     photoId: string,

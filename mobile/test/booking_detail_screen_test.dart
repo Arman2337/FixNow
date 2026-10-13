@@ -22,7 +22,7 @@ void main() {
   testWidgets('renders item name, quantity, and line total', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.dark,
+        theme: AppTheme.light,
         home: BookingDetailScreen(
           booking: bookingWithItems(
             items: const [
@@ -54,7 +54,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.dark,
+        theme: AppTheme.light,
         home: BookingDetailScreen(
           booking: bookingWithItems(
             items: const [
@@ -80,7 +80,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.dark,
+        theme: AppTheme.light,
         home: BookingDetailScreen(
           booking: bookingWithItems(items: const []),
         ),

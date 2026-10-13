@@ -12,6 +12,7 @@ import 'package:fixnow_mobile/features/notifications/notification_controller.dar
 import 'package:fixnow_mobile/features/notifications/notification_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'support/accessibility_harness.dart';
 
 void main() {
   testWidgets(
@@ -983,14 +984,5 @@ class _ProviderTransport implements ApiTransport {
   }
 }
 
-double _contrastRatio(Color foreground, Color background) {
-  final foregroundLuminance = foreground.computeLuminance();
-  final backgroundLuminance = background.computeLuminance();
-  final lighter = foregroundLuminance > backgroundLuminance
-      ? foregroundLuminance
-      : backgroundLuminance;
-  final darker = foregroundLuminance > backgroundLuminance
-      ? backgroundLuminance
-      : foregroundLuminance;
-  return (lighter + 0.05) / (darker + 0.05);
-}
+double _contrastRatio(Color foreground, Color background) =>
+    wcagContrastRatio(foreground, background);

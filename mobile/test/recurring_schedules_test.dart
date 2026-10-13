@@ -83,7 +83,7 @@ void main() {
     final bookings = BookingController(repo(_Transport()));
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.dark,
+        theme: AppTheme.light,
         home: Scaffold(
           body: CustomerBookingsScreen(
             controller: bookings,
@@ -113,7 +113,7 @@ void main() {
     final bookings = BookingController(repo(_Transport()));
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.dark,
+        theme: AppTheme.light,
         home: Scaffold(
           body: CustomerBookingsScreen(
             controller: bookings,
@@ -144,7 +144,7 @@ void main() {
     final bookings = BookingController(repo(_Transport()));
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.dark,
+        theme: AppTheme.light,
         home: Scaffold(
           body: CustomerBookingsScreen(
             controller: bookings,

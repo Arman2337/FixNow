@@ -215,7 +215,7 @@ void main() {
       );
       await tester.pumpWidget(
         MaterialApp(
-          theme: AppTheme.dark,
+          theme: AppTheme.light,
           home: BookingTrackingScreen(controller: controller),
         ),
       );
@@ -318,7 +318,7 @@ void main() {
     );
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.dark,
+        theme: AppTheme.light,
         home: BookingTrackingScreen(controller: controller),
       ),
     );
@@ -356,7 +356,7 @@ void main() {
     );
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.dark,
+        theme: AppTheme.light,
         home: BookingTrackingScreen(controller: controller),
       ),
     );
@@ -375,7 +375,7 @@ void main() {
     );
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.dark,
+        theme: AppTheme.light,
         home: BookingTrackingScreen(
           controller: controller,
           onCancel: (_) async => throw UnimplementedError(),
@@ -403,7 +403,7 @@ void main() {
       );
       await tester.pumpWidget(
         MaterialApp(
-          theme: AppTheme.dark,
+          theme: AppTheme.light,
           home: BookingTrackingScreen(controller: controller),
         ),
       );
@@ -425,7 +425,7 @@ void main() {
       );
       await tester.pumpWidget(
         MaterialApp(
-          theme: AppTheme.dark,
+          theme: AppTheme.light,
           home: BookingTrackingScreen(controller: controller),
         ),
       );
@@ -487,7 +487,7 @@ void main() {
       );
       await tester.pumpWidget(
         MaterialApp(
-          theme: AppTheme.dark,
+          theme: AppTheme.light,
           home: BookingTrackingScreen(controller: controller),
         ),
       );
@@ -521,7 +521,7 @@ void main() {
       );
       await tester.pumpWidget(
         MaterialApp(
-          theme: AppTheme.dark,
+          theme: AppTheme.light,
           home: BookingTrackingScreen(controller: controller),
         ),
       );
@@ -544,7 +544,7 @@ void main() {
     );
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.dark,
+        theme: AppTheme.light,
         home: BookingTrackingScreen(controller: controller),
       ),
     );
@@ -603,7 +603,7 @@ void main() {
           disableAnimations: true,
         ),
         child: MaterialApp(
-          theme: AppTheme.dark,
+          theme: AppTheme.light,
           home: BookingTrackingScreen(controller: controller),
         ),
       ),

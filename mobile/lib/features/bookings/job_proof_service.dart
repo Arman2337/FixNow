@@ -1,5 +1,4 @@
 import 'dart:typed_data';
-import 'package:flutter/material.dart';
 
 /// Holds tamper-proof before and after work photos captured by the technician.
 class JobProof {
@@ -32,27 +31,8 @@ class JobProof {
   bool get isComplete => hasBeforePhoto && hasAfterPhoto;
 }
 
-/// In-memory repository persisting job proofs across provider and customer sessions.
-class JobProofRepository {
-  JobProofRepository._();
-  static final JobProofRepository instance = JobProofRepository._();
-
-  final Map<String, JobProof> _proofs = {};
-  final ValueNotifier<int> _changeNotifier = ValueNotifier(0);
-
-  ValueNotifier<int> get notifier => _changeNotifier;
-
-  void saveProof(JobProof proof) {
-    _proofs[proof.bookingId] = proof;
-    _changeNotifier.value++;
-  }
-
-  JobProof? getProof(String bookingId) => _proofs[bookingId];
-
-  bool hasProof(String bookingId) => _proofs.containsKey(bookingId);
-
-  void clear() {
-    _proofs.clear();
-    _changeNotifier.value++;
-  }
-}
+/// FN-142 shipped the server-side pipeline. FN-143 removed the in-memory
+/// `JobProofRepository` that used to stand in for it: it only ever held photos
+/// captured by the provider in the same process, so a customer on a different
+/// device saw nothing and the proof never survived a restart. Anything still
+/// needing the old behaviour should be reading `JobProofController`.

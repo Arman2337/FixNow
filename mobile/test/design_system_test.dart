@@ -8,16 +8,22 @@ import 'package:fixnow_mobile/design_system/fix_status_chip.dart';
 import 'package:fixnow_mobile/design_system/fix_state_views.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'support/accessibility_harness.dart';
 
 void main() {
-  test('dark theme exposes the approved semantic colors', () {
-    final theme = AppTheme.dark;
+  test('the approved theme exposes the semantic colors', () {
+    final theme = AppTheme.light;
 
-    expect(theme.brightness, Brightness.dark);
+    // One approved direction: a light canvas. The old build had a `dark`
+    // getter that only flipped Brightness while keeping the light palette,
+    // so anything asserting `Brightness.dark` was asserting an accident.
+    expect(theme.brightness, Brightness.light);
     expect(theme.colorScheme.primary, AppColors.primary);
     expect(theme.colorScheme.error, AppColors.danger);
     expect(theme.colorScheme.surface, AppColors.surfacePrimary);
-    expect(theme.scaffoldBackgroundColor, AppColors.backgroundPrimary);
+    expect(theme.scaffoldBackgroundColor, AppColors.background);
+    expect(theme.textTheme.bodyMedium?.fontFamily, 'Inter');
+    expect(theme.textTheme.headlineSmall?.fontFamily, 'Inter');
     expect(theme.textSelectionTheme.cursorColor, AppColors.primary);
     expect(theme.textSelectionTheme.selectionColor, AppColors.primarySoft);
     expect(AppColors.emergency, AppColors.danger);
@@ -105,7 +111,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.dark,
+        theme: AppTheme.light,
         home: const Scaffold(
           body: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -126,7 +132,7 @@ void main() {
   testWidgets('eta ring settles under reduced motion', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.dark,
+        theme: AppTheme.light,
         home: MediaQuery(
           data: const MediaQueryData(disableAnimations: true),
           child: Scaffold(body: Center(child: EtaProgressRing(minutes: 7))),
@@ -141,7 +147,7 @@ void main() {
   testWidgets('button preserves a 48px accessible target', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.dark,
+        theme: AppTheme.light,
         home: Scaffold(
           body: Center(
             child: FixButton(label: 'Continue', onPressed: () {}),
@@ -162,7 +168,7 @@ void main() {
     var taps = 0;
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.dark,
+        theme: AppTheme.light,
         home: Scaffold(
           body: Center(
             child: FixButton(
@@ -189,7 +195,7 @@ void main() {
   testWidgets('success morph settles under reduced motion', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.dark,
+        theme: AppTheme.light,
         home: MediaQuery(
           data: const MediaQueryData(disableAnimations: true),
           child: Scaffold(
@@ -209,7 +215,7 @@ void main() {
     final semantics = tester.ensureSemantics();
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.dark,
+        theme: AppTheme.light,
         home: const Scaffold(
           body: Column(
             children: [
@@ -235,7 +241,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.dark,
+        theme: AppTheme.light,
         home: const Scaffold(
           body: FixCard(
             semanticLabel: 'Request details',
@@ -259,7 +265,7 @@ void main() {
     final semantics = tester.ensureSemantics();
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.dark,
+        theme: AppTheme.light,
         home: const Scaffold(
           body: SingleChildScrollView(
             child: Column(
@@ -300,7 +306,7 @@ void main() {
         tester.view.devicePixelRatio = 1;
         await tester.pumpWidget(
           MaterialApp(
-            theme: AppTheme.dark,
+            theme: AppTheme.light,
             home: const MediaQuery(
               data: MediaQueryData(
                 textScaler: TextScaler.linear(2),
@@ -331,11 +337,5 @@ void main() {
   );
 }
 
-double _contrastRatio(Color foreground, Color background) {
-  final lighter = foreground.computeLuminance() > background.computeLuminance()
-      ? foreground
-      : background;
-  final darker = foreground == lighter ? background : foreground;
-  return (lighter.computeLuminance() + 0.05) /
-      (darker.computeLuminance() + 0.05);
-}
+double _contrastRatio(Color foreground, Color background) =>
+    wcagContrastRatio(foreground, background);

@@ -21,7 +21,7 @@ class _LoadingProbe extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => MaterialApp(
-    theme: AppTheme.dark,
+    theme: AppTheme.light,
     home: Scaffold(body: SizedBox(width: 400, child: child)),
   );
 }

@@ -46,7 +46,7 @@ void main() {
         (tester) async {
       await tester.pumpWidget(
         MaterialApp(
-          theme: AppTheme.dark,
+          theme: AppTheme.light,
           home: const Scaffold(
             body: SingleChildScrollView(
               child: PushSettingsCard(
@@ -71,7 +71,7 @@ void main() {
         (tester) async {
       await tester.pumpWidget(
         MaterialApp(
-          theme: AppTheme.dark,
+          theme: AppTheme.light,
           home: const Scaffold(
             body: SingleChildScrollView(
               child: PushSettingsCard(
@@ -102,7 +102,7 @@ void main() {
         (tester) async {
       await tester.pumpWidget(
         MaterialApp(
-          theme: AppTheme.dark,
+          theme: AppTheme.light,
           home: const Scaffold(
             body: SingleChildScrollView(
               child: PushSettingsCard(
@@ -159,7 +159,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          theme: AppTheme.dark,
+          theme: AppTheme.light,
           home: Scaffold(
             body: SingleChildScrollView(
               child: PushSettingsCard(
@@ -181,7 +181,7 @@ void main() {
       var requested = false;
       await tester.pumpWidget(
         MaterialApp(
-          theme: AppTheme.dark,
+          theme: AppTheme.light,
           home: Scaffold(
             body: SingleChildScrollView(
               child: PushSettingsCard(

@@ -11,6 +11,7 @@ import 'package:fixnow_mobile/features/tracking/provider_live_map.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'support/accessibility_harness.dart';
 
 /// Serves the pricing catalogue the adjustment sheet reads. Prices here are
 /// the catalogue prices, which is what the server will charge (SEC-001).
@@ -250,7 +251,7 @@ void main() {
   }
 
   Widget wrapWidget(Widget child) {
-    return MaterialApp(theme: AppTheme.dark, home: child);
+    return MaterialApp(theme: AppTheme.light, home: child);
   }
 
   group('cockpit navigation', () {
@@ -692,14 +693,5 @@ void main() {
   });
 }
 
-double _contrastRatio(Color foreground, Color background) {
-  final foregroundLuminance = foreground.computeLuminance();
-  final backgroundLuminance = background.computeLuminance();
-  final lighter = foregroundLuminance > backgroundLuminance
-      ? foregroundLuminance
-      : backgroundLuminance;
-  final darker = foregroundLuminance > backgroundLuminance
-      ? backgroundLuminance
-      : foregroundLuminance;
-  return (lighter + 0.05) / (darker + 0.05);
-}
+double _contrastRatio(Color foreground, Color background) =>
+    wcagContrastRatio(foreground, background);

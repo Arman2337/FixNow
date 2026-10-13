@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 ///
 /// Visually communicates native PCM 16kHz audio frame streaming and
 /// silence gating (< 200 amplitude threshold). When the remote or local party
-/// speaks, the frequency bars dance in emerald/cobalt. During silence or mute,
+/// speaks, the frequency bars dance in emerald/gold. During silence or mute,
 /// the bars collapse to calm minimal ticks, saving bandwidth & cognitive load.
 class FixAudioWaveform extends StatefulWidget {
   const FixAudioWaveform({

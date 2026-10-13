@@ -85,6 +85,11 @@ const REQUIRED_UNIQUE_INDEXES = [
   'UQ_refunds_request_key',
   'UQ_refunds_order_request_key',
   'UQ_review_photos_object_key',
+  // FN-142. A duplicated object key would let one photo be reachable through
+  // two bookings; a duplicated (booking, stage) pair would make "the before
+  // photo" ambiguous and break the customer's slider.
+  'UQ_job_proof_photos_object_key',
+  'UQ_job_proof_photos_booking_stage',
 ];
 
 /** Foreign keys with no hash-named replacement, so nothing else restores them. */
@@ -101,6 +106,17 @@ const REQUIRED_ORPHANED_FKS: ReadonlyArray<readonly [string, string]> = [
   ['trust_signals', 'FK_trust_signals_reviewer'],
   ['provider_document_audit_events', 'FK_provider_document_audit_document'],
   ['provider_verification_events', 'FK_provider_verification_application'],
+  // FN-142. Both are load-bearing: without the booking FK a proof can outlive
+  // the job it describes, and without the uploader FK the "assigned provider
+  // only" rule in the service stops being provable from the row.
+  ['job_proof_photos', 'FK_job_proof_photos_booking'],
+  ['job_proof_photos', 'FK_job_proof_photos_uploader'],
+];
+
+/** FN-142. The before/after pair is the feature; these make it singular. */
+const REQUIRED_JOB_PROOF_CHECKS = [
+  'CHK_job_proof_photos_stage',
+  'CHK_job_proof_photos_size',
 ];
 
 const REQUIRED_LOOKUP_INDEXES = [
@@ -194,6 +210,12 @@ async function main(): Promise<void> {
   for (const [table, name] of REQUIRED_ORPHANED_FKS) {
     gate.check(await hasConstraint(table, name), `fk ${table}.${name}`);
   }
+  for (const name of REQUIRED_JOB_PROOF_CHECKS) {
+    gate.check(
+      await hasConstraint('job_proof_photos', name),
+      `check job_proof_photos.${name}`,
+    );
+  }
   for (const name of REQUIRED_LOOKUP_INDEXES) {
     gate.check(await hasIndex(name), `index ${name}`);
   }
@@ -279,6 +301,76 @@ async function main(): Promise<void> {
         (e as Error).message,
       );
     }
+
+    // FN-142. The database itself must refuse an unknown stage, a duplicate
+    // stage for the same booking, and a zero-byte photo — not merely the
+    // service that happens to sit in front of it today.
+    const seededBooking = await query<{ b: string }>(
+      `SELECT id AS b FROM bookings WHERE customer_id = '${c}' LIMIT 1`,
+    );
+    if (seededBooking.length === 0) {
+      const created = await query<{ b: string }>(
+        `INSERT INTO bookings
+           (customer_id, service_category_id, status, description, location_lat,
+            location_lng, idempotency_key, request_fingerprint)
+         VALUES ('${c}', '${s}', 'IN_PROGRESS', 'schema gate job proof', 17.385,
+                 78.4867, 'gate-proof', 'gate-proof-fp')
+         RETURNING id AS b`,
+      );
+      seededBooking.push(...created);
+    }
+    const bookingId = seededBooking[0].b;
+    const proofColumns = (stage: string, key: string, size: number) =>
+      `('${bookingId}', '${stage}', '${c}', '${key}', 'image/jpeg', ${size}, '${'a'.repeat(
+        64,
+      )}')`;
+
+    await attempt(
+      'unknown job proof stage refused by CHECK',
+      `INSERT INTO job_proof_photos
+         (booking_id, stage, uploaded_by, object_key, content_type, size_bytes, sha256)
+       VALUES ${proofColumns('DURING', 'gate-stage-check', 10)}`,
+      '23514',
+    );
+    await attempt(
+      'zero-byte job proof photo refused by CHECK',
+      `INSERT INTO job_proof_photos
+         (booking_id, stage, uploaded_by, object_key, content_type, size_bytes, sha256)
+       VALUES ${proofColumns('BEFORE', 'gate-size-check', 0)}`,
+      '23514',
+    );
+
+    await query(
+      `INSERT INTO job_proof_photos
+         (booking_id, stage, uploaded_by, object_key, content_type, size_bytes, sha256)
+       VALUES ${proofColumns('BEFORE', 'gate-unique-a', 10)}`,
+    );
+    await attempt(
+      'second BEFORE photo for one booking refused by UNIQUE',
+      `INSERT INTO job_proof_photos
+         (booking_id, stage, uploaded_by, object_key, content_type, size_bytes, sha256)
+       VALUES ${proofColumns('BEFORE', 'gate-unique-b', 10)}`,
+      '23505',
+    );
+    // The AFTER side must still be insertable, or the unique index would be
+    // over-broad and would silently forbid the second half of the feature.
+    try {
+      await query(
+        `INSERT INTO job_proof_photos
+           (booking_id, stage, uploaded_by, object_key, content_type, size_bytes, sha256)
+         VALUES ${proofColumns('AFTER', 'gate-unique-after', 10)}`,
+      );
+      gate.check(true, 'one BEFORE and one AFTER coexist for one booking');
+    } catch (e) {
+      gate.check(
+        false,
+        'one BEFORE and one AFTER coexist for one booking',
+        (e as Error).message,
+      );
+    }
+    await query(
+      `DELETE FROM job_proof_photos WHERE booking_id = '${bookingId}'`,
+    );
   }
 
   const counts = await query(`

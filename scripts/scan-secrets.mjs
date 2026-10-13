@@ -50,6 +50,11 @@ const PLACEHOLDER_POSTGRES_PASSWORDS = new Set([
   // same harmless findings every time is a gate people learn to ignore, which is
   // worse than no gate.
   'replace-me',
+  // The connection-error fixture in `backend/src/health/health-dashboard.spec.ts`
+  // simulates a DSN arriving inside a driver error message. Same reasoning as the
+  // entries above: a rule that fires on a fixture someone deliberately wrote is a
+  // rule somebody eventually switches off.
+  'hunter2',
 ]);
 
 /**

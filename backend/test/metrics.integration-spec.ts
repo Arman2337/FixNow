@@ -1,5 +1,6 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
+import { ConfigModule } from '@nestjs/config';
 import { WsAdapter } from '@nestjs/platform-ws';
 import { APP_GUARD } from '@nestjs/core';
 import request from 'supertest';
@@ -37,7 +38,16 @@ describe('GET /health/metrics', () => {
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
-      imports: [ObservabilityModule],
+      // `ObservabilityModule` picks its error reporter from `ERROR_REPORTING_DSN`
+      // through the injected `ConfigService`, and registers that provider as
+      // `ERROR_REPORTER`. `ConfigModule.forRoot({ isGlobal: true })` is what
+      // `AppConfigModule` does for the real application; without it in scope this
+      // spec could not build the module at all, failing every assertion in the
+      // file with "Nest can't resolve dependencies of the ERROR_REPORTER".
+      // Deliberately no `validate`: the real application's validator is not what
+      // is under test here, and `ERROR_REPORTING_DSN` is unset in this suite,
+      // which is the no-op reporter this spec expects.
+      imports: [ConfigModule.forRoot({ isGlobal: true }), ObservabilityModule],
       providers: [
         // The real guard, with an authorization service that always denies: this
         // proves `@Public()` is what makes the route reachable, rather than the

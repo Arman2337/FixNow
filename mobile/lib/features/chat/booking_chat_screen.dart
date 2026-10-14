@@ -13,11 +13,15 @@ class BookingChatScreen extends StatefulWidget {
     super.key,
     required this.controller,
     this.providerName = 'Verified Professional',
+    this.recipientName,
+    this.customerName,
     this.onCallPressed,
   });
 
   final ChatController controller;
   final String providerName;
+  final String? recipientName;
+  final String? customerName;
   final VoidCallback? onCallPressed;
 
   @override
@@ -32,6 +36,29 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
 
   /// First index that should play the entrance animation; -1 = none.
   int _animateFrom = -1;
+
+  String get _resolvedRecipientName {
+    if (widget.recipientName != null && widget.recipientName!.trim().isNotEmpty) {
+      return widget.recipientName!;
+    }
+    if (widget.controller.isProvider) {
+      if (widget.customerName != null && widget.customerName!.trim().isNotEmpty) {
+        return widget.customerName!;
+      }
+      return (widget.providerName != 'Verified Professional' && widget.providerName.isNotEmpty)
+          ? widget.providerName
+          : 'Customer';
+    }
+    return widget.providerName;
+  }
+
+  String get _initials {
+    final name = _resolvedRecipientName.trim();
+    if (name.isEmpty) return '?';
+    final parts = name.split(RegExp(r'\s+'));
+    if (parts.length == 1) return parts[0][0].toUpperCase();
+    return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+  }
 
   List<String> get _quickResponses => widget.controller.isProvider
       ? const [
@@ -150,35 +177,17 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
         titleSpacing: 0,
         title: Row(
           children: [
-            Stack(
-              clipBehavior: Clip.none,
-              children: [
-                CircleAvatar(
-                  radius: 18,
-                  backgroundColor: AppColors.primary.withValues(alpha: 0.12),
-                  child: const Icon(
-                    Icons.person_rounded,
-                    color: AppColors.primary,
-                    size: 20,
-                  ),
+            CircleAvatar(
+              radius: 18,
+              backgroundColor: AppColors.primary.withValues(alpha: 0.12),
+              child: Text(
+                _initials,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  color: AppColors.primary,
                 ),
-                Positioned(
-                  right: -1,
-                  bottom: -1,
-                  child: Container(
-                    width: 10,
-                    height: 10,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: AppColors.surfaceContainerLowest,
-                        width: 1.5,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
@@ -189,7 +198,7 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
                     children: [
                       Flexible(
                         child: Text(
-                          widget.providerName,
+                          _resolvedRecipientName,
                           style: const TextStyle(
                             color: AppColors.textPrimary,
                             fontSize: 15,
@@ -198,21 +207,36 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      const SizedBox(width: 4),
-                      const Icon(
-                        Icons.verified_rounded,
-                        color: AppColors.primary,
-                        size: 14,
-                      ),
+                      if (!widget.controller.isProvider) ...[
+                        const SizedBox(width: 4),
+                        const Icon(
+                          Icons.verified_rounded,
+                          color: AppColors.primary,
+                          size: 14,
+                        ),
+                      ],
                     ],
                   ),
-                  Text(
-                    'Booking #$bookingShortId',
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                    ),
+                  Row(
+                    children: [
+                      Text(
+                        'Booking #$bookingShortId',
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        widget.controller.isProvider ? '· Customer' : '· Pro',
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -223,7 +247,7 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
           if (widget.onCallPressed != null)
             IconButton(
               icon: const Icon(Icons.phone_outlined, color: AppColors.primary),
-              tooltip: 'Call Pro',
+              tooltip: widget.controller.isProvider ? 'Call Customer' : 'Call Specialist',
               onPressed: widget.onCallPressed,
             ),
           const SizedBox(width: 4),

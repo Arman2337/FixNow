@@ -574,26 +574,17 @@ class _VerificationScreenState extends State<VerificationScreen> {
                         const SizedBox(height: AppSpacing.sm),
                         Row(
                           children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Image.network(
-                                'https://lh3.googleusercontent.com/aida-public/AB6AXuBkmKmBr13p03fGtTEBOV-3rJJ_QzeSXCbKAbO-CxSdB_oIKmryOEfKoNRby_bgARQ1Gp6uNLNj6e6sFOzHl4J4m7-SQ3hGhGKmmFKnlAmgMGNklZpGet-uaU3e-Z4Vz9P8vYHmNOmPwoSFdQPX0Coe7Moifh0UpTizZrMo5w-3enpi63B0ErkL86KIm4ZFSJEEk-d1qwxHTDiv7PUL01921yu5jIeRFmUbL2RFN_QixkVs2N9xppvb',
-                                width: 48,
-                                height: 48,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, _, _) => Container(
-                                  width: 48,
-                                  height: 48,
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primaryContainer,
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: const Icon(
-                                    Icons.security_rounded,
-                                    color: AppColors.primary,
-                                    size: 24,
-                                  ),
-                                ),
+                            Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryContainer,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(
+                                Icons.security_rounded,
+                                color: AppColors.primary,
+                                size: 24,
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -621,26 +612,17 @@ class _VerificationScreenState extends State<VerificationScreen> {
                               ),
                             ),
                             const SizedBox(width: 12),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Image.network(
-                                'https://lh3.googleusercontent.com/aida-public/AB6AXuAHdqWrYK6v7US1nQe3EoZoaVlUYoKfYAjzrft1Pz8nu4QHWWQIrj7jHS2DEWq7F_OL4_0J6WseaM_KrwoD3gXdvItmqroTOUjzUuHhWlwpYthIkBIBqHp1BrQlqaGd3TOzrbp3aUJytNkisA51JVztGIa9mfu61dCfdLr9fdNiYN2NVMbrH3JVCWZNt4eHSAGQbPpi3n1CqoHYoeE1yU_Uoses8zUwA9M9CgWe5-LgPk7IRUvLhsks',
-                                width: 48,
-                                height: 48,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, _, _) => Container(
-                                  width: 48,
-                                  height: 48,
-                                  decoration: BoxDecoration(
-                                    color: AppColors.secondaryContainer,
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: const Icon(
-                                    Icons.verified_user_rounded,
-                                    color: AppColors.primary,
-                                    size: 24,
-                                  ),
-                                ),
+                            Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                color: AppColors.secondaryContainer,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(
+                                Icons.verified_user_rounded,
+                                color: AppColors.primary,
+                                size: 24,
                               ),
                             ),
                           ],

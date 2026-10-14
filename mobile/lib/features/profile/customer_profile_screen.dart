@@ -559,17 +559,14 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
-                                children: [
-                                  const Text(
-                                    'Support Cases & Disputes',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.textPrimary,
-                                    ),
-                                  ),
-                                ],
+                              const Text(
+                                'Support Cases & Disputes',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textPrimary,
+                                ),
+                                overflow: TextOverflow.ellipsis,
                               ),
                               const SizedBox(height: 2),
                               const Text(
@@ -578,6 +575,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                                   fontSize: 12,
                                   color: AppColors.textSecondary,
                                 ),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ],
                           ),
@@ -700,8 +698,9 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
           Center(
             child: Column(
               children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     const Icon(
                       Icons.security_rounded,
@@ -825,23 +824,28 @@ class _SavedAddressesSection extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Row(
-                    children: [
-                      Icon(
-                        Icons.location_city_rounded,
-                        color: AppColors.primary,
-                        size: 20,
-                      ),
-                      SizedBox(width: AppSpacing.xs),
-                      Text(
-                        'Saved addresses',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
+                  const Expanded(
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.location_city_rounded,
+                          color: AppColors.primary,
+                          size: 20,
                         ),
-                      ),
-                    ],
+                        SizedBox(width: AppSpacing.xs),
+                        Expanded(
+                          child: Text(
+                            'Saved addresses',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   TextButton.icon(
                     onPressed: () => AddEditAddressModalSheet.show(context),

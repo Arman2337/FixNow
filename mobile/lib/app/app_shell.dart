@@ -132,10 +132,10 @@ class _AppShellState extends State<AppShell> {
       return widget.customerProfile ?? _ShellDestination(label: 'Profile');
     }
     if (widget.role == AppShellRole.provider && index == 0) {
-      return widget.providerHome ?? _ShellDestination(label: 'Jobs');
+      return widget.providerHome ?? _ShellDestination(label: 'Home');
     }
     if (widget.role == AppShellRole.provider && index == 1) {
-      return widget.providerJobs ?? _ShellDestination(label: 'Requests');
+      return widget.providerJobs ?? _ShellDestination(label: 'Active Job');
     }
     if (widget.role == AppShellRole.provider && index == 2) {
       return widget.providerHistory ?? _ShellDestination(label: 'History');

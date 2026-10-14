@@ -42,13 +42,13 @@ abstract final class AppNavigation {
   static const provider = <AppDestination>[
     AppDestination(
       label: 'Home',
-      icon: Icons.work_outline_rounded,
-      selectedIcon: Icons.work_rounded,
+      icon: Icons.dashboard_outlined,
+      selectedIcon: Icons.dashboard_rounded,
     ),
     AppDestination(
       label: 'Active Job',
-      icon: Icons.navigation_outlined,
-      selectedIcon: Icons.navigation_rounded,
+      icon: Icons.assignment_outlined,
+      selectedIcon: Icons.assignment_rounded,
     ),
     AppDestination(
       label: 'History',

@@ -1549,26 +1549,17 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
             // Stitch Brand Header Bar
             Row(
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.network(
-                    'https://lh3.googleusercontent.com/aida-public/AB6AXuBq3W54yVgIIYzS2ZmyZZ0d9kwFAN6ICfuhZt7xwzFvvtpyeMbbct9nXWFyX6ptnBKyMW12g8HEm89mm4UmVE44PrFuYKwUIb3SRYCHXq6Kv8tUUv752LSORLe_9kWLBzwm99CMXx7tdvhIVHJJ7TmMjQ0d0QncryYSbDns4E39pUp7H_O9pED5oar2w3k3xSsY_XM0-6M2n5Rytv5n6ety7Afuy6O3MEGapgQX1Qgy5iqdYxMhAfBqp19_6hNc40YqTw',
-                    width: 32,
-                    height: 32,
-                    fit: BoxFit.contain,
-                    errorBuilder: (_, _, _) => Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryContainer,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        Icons.build_rounded,
-                        color: AppColors.primary,
-                        size: 20,
-                      ),
-                    ),
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryContainer,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.build_rounded,
+                    color: AppColors.primary,
+                    size: 20,
                   ),
                 ),
                 const SizedBox(width: AppSpacing.sm),

@@ -47,6 +47,8 @@ import 'package:fixnow_mobile/features/provider/provider_earnings_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_home_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_jobs_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_onboarding_screen.dart';
+import 'package:fixnow_mobile/features/provider/provider_active_job_cockpit_screen.dart';
+import 'package:fixnow_mobile/features/provider/provider_profile_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_incoming_request_screen.dart';
 import 'package:fixnow_mobile/features/support/complaint_list_screen.dart';
 import 'package:fixnow_mobile/features/support/submit_complaint_screen.dart';
@@ -678,14 +680,74 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
   }
 
   MaterialPageRoute<void> _notificationRoute() {
+    final isProvider = _auth.session?.role == AccountRole.verifiedProvider ||
+        _auth.session?.role == AccountRole.providerApplicant;
     return MaterialPageRoute<void>(
       settings: const RouteSettings(name: 'notifications'),
       builder: (_) => NotificationCenterScreen(
         controller: _notifications,
         onOpenBooking: (bookingId) {
-          unawaited(_openBookingById(bookingId));
+          if (isProvider) {
+            unawaited(_openProviderBookingById(bookingId));
+          } else {
+            unawaited(_openBookingById(bookingId));
+          }
         },
-        onOpenInvoice: _openInvoiceFromNotification,
+        onOpenInvoice: (notification) {
+          if (isProvider) {
+            _openProviderEarnings();
+          } else {
+            _openInvoiceFromNotification(notification);
+          }
+        },
+      ),
+    );
+  }
+
+  Future<void> _openProviderBookingById(String bookingId) async {
+    CustomerBooking? match = _provider.jobs
+        .where((b) => b.id == bookingId)
+        .firstOrNull;
+    if (match == null) {
+      if (_bookings.bookings.isEmpty) {
+        try {
+          await _bookings.load();
+        } catch (_) {}
+      }
+      match = _bookings.bookings
+          .where((b) => b.id == bookingId)
+          .firstOrNull;
+    }
+    if (match == null) {
+      try {
+        match = await _bookings.repository.get(bookingId);
+      } catch (_) {}
+    }
+    if (!mounted || match == null) return;
+    final navigator = _navigatorKey.currentState;
+    if (navigator == null) return;
+    navigator.push(
+      MaterialPageRoute(
+        builder: (_) => ProviderActiveJobCockpitScreen(
+          job: match!,
+          controller: _provider,
+          chatRepository: _chatRepository,
+        ),
+      ),
+    );
+  }
+
+  void _openProviderEarnings() {
+    final navigator = _navigatorKey.currentState;
+    if (navigator == null) return;
+    navigator.push(
+      MaterialPageRoute(
+        builder: (_) => ProviderEarningsScreen(
+          repository: ProviderEarningsRepository(
+            _api,
+            accessToken: _auth.validAccessToken,
+          ),
+        ),
       ),
     );
   }
@@ -849,62 +911,15 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
                   nav.push(
                     MaterialPageRoute(
                       builder: (_) =>
-                          CustomerHelpScreen(controller: _complaints),
+                          CustomerHelpScreen(controller: _complaints, isProvider: true),
                     ),
                   );
                 },
                 notificationController: _notifications,
-                onOpenBooking: (bookingId) async {
-                  if (_bookings.bookings.isEmpty) {
-                    await _bookings.load();
-                  }
-                  CustomerBooking? match = _bookings.bookings
-                      .where((b) => b.id == bookingId)
-                      .firstOrNull;
-                  match ??= _bookings.bookings
-                      .where(
-                        (b) => const {
-                          'ASSIGNED',
-                          'EN_ROUTE',
-                          'IN_PROGRESS',
-                          'REQUESTED',
-                        }.contains(b.status),
-                      )
-                      .firstOrNull;
-                  if (match == null) {
-                    try {
-                      match = await _bookings.repository.get(bookingId);
-                    } catch (_) {
-                      return;
-                    }
-                  }
-                  if (!mounted) return;
-                  final nav = _navigatorKey.currentState;
-                  if (nav == null) return;
-                  nav.push(_bookingRoute(match));
+                onOpenBooking: (bookingId) {
+                  unawaited(_openProviderBookingById(bookingId));
                 },
-                onOpenInvoice: (InAppNotification notification) {
-                  final nav = _navigatorKey.currentState;
-                  if (nav == null) return;
-                  nav.push(
-                    MaterialPageRoute(
-                      builder: (_) => InvoiceScreen(
-                        repository: InvoiceRepository(
-                          _api,
-                          accessToken: _auth.validAccessToken,
-                        ),
-                        localPaymentRepository: notification.bookingId == null
-                            ? null
-                            : LocalPaymentRepository(
-                                _api,
-                                accessToken: _auth.validAccessToken,
-                              ),
-                        bookingId: notification.bookingId ?? '',
-                        paymentId: notification.paymentId,
-                      ),
-                    ),
-                  );
-                },
+                onOpenInvoice: (_) => _openProviderEarnings(),
                 loadAcceptTime: () async {
                   try {
                     return await _provider.repository.acceptTime();
@@ -934,15 +949,25 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
                 chatRepository: _chatRepository,
                 showHistory: true,
               ),
-              providerProfile: ProviderOnboardingScreen(
+              providerProfile: ProviderProfileScreen(
                 controller: _provider,
                 pushController: _push,
                 notificationController: _notifications,
+                onViewEarnings: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => ProviderEarningsScreen(
+                      repository: ProviderEarningsRepository(
+                        _api,
+                        accessToken: _auth.validAccessToken,
+                      ),
+                    ),
+                  ),
+                ),
                 onSupportCases: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) =>
-                          ComplaintListScreen(controller: _complaints),
+                          CustomerHelpScreen(controller: _complaints, isProvider: true),
                     ),
                   );
                 },

@@ -8,9 +8,14 @@ import 'package:fixnow_mobile/features/support/complaint_list_screen.dart';
 import 'package:fixnow_mobile/features/support/submit_complaint_screen.dart';
 
 class CustomerHelpScreen extends StatefulWidget {
-  const CustomerHelpScreen({required this.controller, super.key});
+  const CustomerHelpScreen({
+    required this.controller,
+    this.isProvider = false,
+    super.key,
+  });
 
   final ComplaintsController controller;
+  final bool isProvider;
 
   @override
   State<CustomerHelpScreen> createState() => _CustomerHelpScreenState();
@@ -20,6 +25,39 @@ class _CustomerHelpScreenState extends State<CustomerHelpScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   bool _expandAll = false;
+
+  final List<_FaqData> _providerFaqs = const [
+    _FaqData(
+      icon: Icons.no_meeting_room_rounded,
+      question: 'Doorstep Abandonment & Customer Unreachable Flow',
+      summary:
+          'If a customer is unreachable upon your arrival:\n1. Wait at the premise for a minimum of 15 minutes.\n2. Place at least 2 phone calls and send 1 in-app chat message.\n3. Capture a timestamped photo of the doorway/building.\n4. Tap "Customer Unreachable" in your Job Cockpit to claim travel reimbursement.',
+    ),
+    _FaqData(
+      icon: Icons.pin_rounded,
+      question: 'Customer Start PIN & Arrival Protocol',
+      summary:
+          'Security Rule: Never start diagnostic work without customer OTP validation.\n\nAsk the customer for their 4-digit code once you physically arrive at their doorway. This activates the job timer and platform accidental liability insurance.',
+    ),
+    _FaqData(
+      icon: Icons.account_balance_wallet_rounded,
+      question: 'Payout Schedule & Direct Deposit Settlements',
+      summary:
+          'Job earnings are held in escrow and immediately added to your ledger upon completion OTP verification.\n\nAutomated batch settlements transfer accumulated earnings directly to your verified bank account every Tuesday without withdrawal fees.',
+    ),
+    _FaqData(
+      icon: Icons.receipt_long_rounded,
+      question: 'Material & Spare Part Expense Reimbursement',
+      summary:
+          'When replacement hardware or parts are needed:\n• Always inform and receive customer confirmation on the part price first.\n• Upload a clear photo receipt of the store invoice under "Add Line Item" in Cockpit.\n• 100% pass-through cost is reimbursed directly on the final bill.',
+    ),
+    _FaqData(
+      icon: Icons.security_rounded,
+      question: 'Emergency Threat & Safe Work Policy',
+      summary:
+          'Your physical safety is our #1 priority. If you experience an unsafe environment, verbal abuse, or physical hazard:\n• Evacuate immediately to a public street or vehicle.\n• Trigger the red SOS button in the app to alert FixNow Safety Response & local police dispatch.',
+    ),
+  ];
 
   final List<_FaqData> _faqs = const [
     _FaqData(
@@ -62,7 +100,8 @@ class _CustomerHelpScreenState extends State<CustomerHelpScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final filteredFaqs = _faqs.where((faq) {
+    final activeFaqs = widget.isProvider ? _providerFaqs : _faqs;
+    final filteredFaqs = activeFaqs.where((faq) {
       if (_searchQuery.isEmpty) return true;
       final q = _searchQuery.toLowerCase();
       return faq.question.toLowerCase().contains(q) ||
@@ -129,9 +168,11 @@ class _CustomerHelpScreenState extends State<CustomerHelpScreen> {
                     ),
                   ],
                 ),
-                const Text(
-                  'Resolution & Knowledge Hub',
-                  style: TextStyle(
+                Text(
+                  widget.isProvider
+                      ? 'Partner Support & Operations Hub'
+                      : 'Resolution & Knowledge Hub',
+                  style: const TextStyle(
                     fontSize: 11,
                     color: AppColors.textSecondary,
                     fontWeight: FontWeight.w500,
@@ -180,15 +221,21 @@ class _CustomerHelpScreenState extends State<CustomerHelpScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  '24/7 RESOLUTION PORTAL',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.8,
-                    color: AppColors.primary,
+                Expanded(
+                  child: Text(
+                    widget.isProvider
+                        ? '24/7 PARTNER RESOLUTION DESK'
+                        : '24/7 RESOLUTION PORTAL',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.8,
+                      color: AppColors.primary,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
+                const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 8,
@@ -224,9 +271,11 @@ class _CustomerHelpScreenState extends State<CustomerHelpScreen> {
               ],
             ),
             const SizedBox(height: 6),
-            const Text(
-              'Help & Knowledge Base',
-              style: TextStyle(
+            Text(
+              widget.isProvider
+                  ? 'Partner Operations & Protocol Guide'
+                  : 'Help & Knowledge Base',
+              style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.w800,
                 color: AppColors.textPrimary,
@@ -234,9 +283,11 @@ class _CustomerHelpScreenState extends State<CustomerHelpScreen> {
               ),
             ),
             const SizedBox(height: 4),
-            const Text(
-              'Verified home repairs backed by FixNow Escrow and 30-Day Guarantee protection.',
-              style: TextStyle(
+            Text(
+              widget.isProvider
+                  ? 'Official operating procedures, dispute protection, and payout guarantees for FixNow verified partners.'
+                  : 'Verified home repairs backed by FixNow Escrow and 30-Day Guarantee protection.',
+              style: const TextStyle(
                 fontSize: 13,
                 color: AppColors.textSecondary,
                 height: 1.4,
@@ -267,7 +318,9 @@ class _CustomerHelpScreenState extends State<CustomerHelpScreen> {
                   });
                 },
                 decoration: InputDecoration(
-                  hintText: 'Search help articles, billing, warranty...',
+                  hintText: widget.isProvider
+                      ? 'Search partner protocols, payouts, safety...'
+                      : 'Search help articles, billing, warranty...',
                   hintStyle: const TextStyle(
                     fontSize: 13,
                     color: AppColors.textTertiary,
@@ -832,9 +885,11 @@ class _CustomerHelpScreenState extends State<CustomerHelpScreen> {
                         showDialog(
                           context: context,
                           builder: (ctx) => AlertDialog(
-                            title: const Text('Support Hotline'),
-                            content: const Text(
-                              'Direct phone callback is currently unavailable. For immediate assistance, please call our 24/7 toll-free safety helpline at 1800-FIX-NOW (1800-349-669) or file a ticket.',
+                            title: Text(widget.isProvider ? 'Partner Operations Hotline' : 'Support Hotline'),
+                            content: Text(
+                              widget.isProvider
+                                  ? 'Direct phone callback is currently busy. For immediate operations support, please call our 24/7 priority partner desk at 1800-FIX-PRO (1800-349-776) or file a ticket.'
+                                  : 'Direct phone callback is currently unavailable. For immediate assistance, please call our 24/7 toll-free safety helpline at 1800-FIX-NOW (1800-349-669) or file a ticket.',
                             ),
                             actions: [
                               TextButton(
@@ -847,7 +902,7 @@ class _CustomerHelpScreenState extends State<CustomerHelpScreen> {
                       }
                     },
                     icon: const Icon(Icons.phone_callback_rounded, size: 18),
-                    label: const Text('Request Instant Callback'),
+                    label: Text(widget.isProvider ? 'Request Operations Callback' : 'Request Instant Callback'),
                     style: OutlinedButton.styleFrom(
                       backgroundColor: AppColors.surfaceContainer,
                       foregroundColor: AppColors.textPrimary,
@@ -877,9 +932,9 @@ class _CustomerHelpScreenState extends State<CustomerHelpScreen> {
                   color: AppColors.outline.withValues(alpha: 0.08),
                 ),
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  CircleAvatar(
+                  const CircleAvatar(
                     radius: 20,
                     backgroundColor: AppColors.primarySoft,
                     child: Icon(
@@ -888,22 +943,26 @@ class _CustomerHelpScreenState extends State<CustomerHelpScreen> {
                       size: 22,
                     ),
                   ),
-                  SizedBox(width: AppSpacing.sm),
+                  const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '100% Background Checked',
-                          style: TextStyle(
+                          widget.isProvider
+                              ? 'Guaranteed Partner Protection'
+                              : '100% Background Checked',
+                          style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w800,
                             color: AppColors.textPrimary,
                           ),
                         ),
                         Text(
-                          'Police verified & trade-skill authenticated',
-                          style: TextStyle(
+                          widget.isProvider
+                              ? '100% dispute shield & daily accidental insurance'
+                              : 'Police verified & trade-skill authenticated',
+                          style: const TextStyle(
                             fontSize: 11,
                             color: AppColors.textSecondary,
                           ),
@@ -912,8 +971,8 @@ class _CustomerHelpScreenState extends State<CustomerHelpScreen> {
                     ),
                   ),
                   Text(
-                    '100% SAFE',
-                    style: TextStyle(
+                    widget.isProvider ? 'PARTNER' : '100% SAFE',
+                    style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
                       color: AppColors.primary,
@@ -1068,21 +1127,25 @@ class _QuickActionTile extends StatelessWidget {
                             ),
                             child: Icon(icon, color: baseColor, size: 24),
                           ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: baseColor.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              tag,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: baseColor,
+                          Flexible(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: baseColor.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                tag,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: baseColor,
+                                ),
                               ),
                             ),
                           ),

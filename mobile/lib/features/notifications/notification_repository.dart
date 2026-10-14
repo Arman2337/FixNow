@@ -89,9 +89,31 @@ class NotificationRepository {
 
   void deleteNotification(String id) {
     _deletedIds.add(id);
+    if (api != null) {
+      accessToken?.call().then((token) {
+        api!.send(
+          ApiRequest(
+            method: ApiMethod.delete,
+            path: 'users/me/notifications/$id',
+            bearerToken: token,
+          ),
+        );
+      }).catchError((_) {});
+    }
   }
 
   void clearAll(Iterable<String> ids) {
     _deletedIds.addAll(ids);
+    if (api != null) {
+      accessToken?.call().then((token) {
+        api!.send(
+          ApiRequest(
+            method: ApiMethod.delete,
+            path: 'users/me/notifications',
+            bearerToken: token,
+          ),
+        );
+      }).catchError((_) {});
+    }
   }
 }

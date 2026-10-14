@@ -35,12 +35,12 @@ void showFixBanner(
           borderRadius: AppRadius.buttonBorder,
           side: BorderSide(color: _toneColor(tone), width: 1),
         ),
-        action: actionLabel == null
+        action: (actionLabel == null || onAction == null)
             ? null
             : SnackBarAction(
                 label: actionLabel,
                 textColor: AppColors.accentGold,
-                onPressed: onAction ?? () {},
+                onPressed: onAction,
               ),
         content: _BannerContent(
           message: message,

@@ -46,7 +46,7 @@ export class ReviewPhoto {
   sha256!: string;
 
   /** Moderation gate: never publicly visible until APPROVED. */
-  @Column('varchar', { default: ReviewPhotoStatus.PENDING })
+  @Column('varchar', { length: 16, default: ReviewPhotoStatus.PENDING })
   status!: ReviewPhotoStatus;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })

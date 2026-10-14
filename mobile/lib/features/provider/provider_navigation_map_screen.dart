@@ -443,7 +443,7 @@ class ProviderNavigationMapScreen extends StatelessWidget {
 
   void _openCall(BuildContext context) {
     if (job.customerPhone != null) {
-      const CallController().launchCall(job.customerPhone!);
+      CallController().launchCall(job.customerPhone!);
     } else {
       ScaffoldMessenger.of(
         context,

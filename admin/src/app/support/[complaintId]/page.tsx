@@ -214,8 +214,10 @@ export default async function ComplaintDetailPage({ params, searchParams }: { pa
                     </div>
                     {submitter ? (
                       <div className="mt-2 flex flex-col font-body-sm text-on-surface-variant">
-                        <span className="font-bold text-on-surface">{submitter.name}</span>
-                        <span>{submitter.email}</span>
+                        <span className="font-bold text-on-surface">
+                          {submitter.name || `User (${shortId(submitter.id)})`}
+                        </span>
+                        <span>{submitter.email || "Identity redacted / system account"}</span>
                         <span>Role: {complaint.targetRole === "PROVIDER" ? "CUSTOMER" : "PROVIDER"}</span>
                       </div>
                     ) : (
@@ -233,8 +235,10 @@ export default async function ComplaintDetailPage({ params, searchParams }: { pa
                     </div>
                     {target ? (
                       <div className="mt-2 flex flex-col font-body-sm text-on-surface-variant">
-                        <span className="font-bold text-on-surface">{target.name}</span>
-                        <span>{target.email}</span>
+                        <span className="font-bold text-on-surface">
+                          {target.name || `User (${shortId(target.id)})`}
+                        </span>
+                        <span>{target.email || "Identity redacted / system account"}</span>
                       </div>
                     ) : (
                       <span className="mt-2 font-body-sm text-on-surface-variant">Target details unavailable</span>

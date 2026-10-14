@@ -74,7 +74,7 @@ Future<String?> showCancellationDialog(BuildContext context) async {
                           ),
                           SizedBox(height: 2),
                           Text(
-                            '100% refund back to original payment method. Zero fee prior to technician arrival.',
+                            '100% refund back to original payment method. Free cancellation before dispatch; ₹99 fee applies once en route.',
                             style: TextStyle(
                               color: AppColors.textSecondary,
                               fontSize: 11,

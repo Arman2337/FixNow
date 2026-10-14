@@ -1,9 +1,10 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/auth/session";
 import { AdminShell } from "@/components/admin-shell";
 import { env } from "@/config/env";
 import { requireManagementResult } from "@/features/management-api";
-import { reviewSignalAction } from "@/features/trust/actions";
+import { reviewSignalAction, moderateReviewAction, moderatePhotoAction } from "@/features/trust/actions";
 import { listSignals } from "@/features/trust/api";
 import type { TrustSignalSummary } from "@/features/trust/types";
 
@@ -20,6 +21,8 @@ const resultMessages: Record<string, string> = {
   dismissed: "Signal dismissed.",
   stale: "The signal changed before your decision was saved. Refresh and try again.",
   failed: "The action could not be completed.",
+  "review-moderated": "Review moderation decision applied successfully.",
+  "photo-moderated": "Review photo moderation decision applied successfully.",
 };
 
 const ruleLabels: Record<string, string> = {
@@ -32,26 +35,43 @@ const ruleLabels: Record<string, string> = {
 export default async function TrustPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; result?: string }>;
+  searchParams: Promise<{ status?: string; result?: string; page?: string }>;
 }) {
   const session = await getSession();
   if (session.state !== "authenticated") redirect("/login?reason=expired");
+  if (!session.session.roles.some((r) => r === "trust_safety_reviewer" || r === "operations_administrator")) {
+    redirect("/unauthorized");
+  }
 
   const params = await searchParams;
-  let signals = await requireManagementResult(await listSignals());
-  if (params.status === "OPEN") signals = signals.filter((signal) => signal.status === "OPEN");
+  const pageNumber = Math.max(1, parseInt(params.page ?? "1", 10));
+  const pageSize = 10;
+  const offset = (pageNumber - 1) * pageSize;
+
+  const allSignals = await requireManagementResult(await listSignals(pageSize + 1, offset));
+  const hasNextPage = allSignals.length > pageSize;
+  const pagedSignals = allSignals.slice(0, pageSize);
+
+  let filtered = pagedSignals;
+  if (params.status === "OPEN") filtered = filtered.filter((signal) => signal.status === "OPEN");
 
   const result = params.result ? resultMessages[params.result] : undefined;
   
-  const highSeverityCount = signals.filter((s) => s.severity === "HIGH" && s.status === "OPEN").length;
-  const mediumSeverityCount = signals.filter((s) => s.severity === "MEDIUM" && s.status === "OPEN").length;
+  const highSeverityCount = filtered.filter((s) => s.severity === "HIGH" && s.status === "OPEN").length;
+  const mediumSeverityCount = filtered.filter((s) => s.severity === "MEDIUM" && s.status === "OPEN").length;
 
   return (
-    <AdminShell environment={env.appEnvironment} roles={session.session.roles} current="Trust & Safety">
+    <AdminShell
+      environment={env.appEnvironment}
+      roles={session.session.roles}
+      email={session.session.email}
+      displayName={session.session.displayName}
+      current="Trust & Safety"
+    >
       <div className="flex flex-col w-full">
         <div className="p-space-lg lg:p-margin-desktop flex flex-col gap-space-lg">
           
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-space-md bg-surface-container-lowest p-space-lg rounded-xl shadow-sm">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-space-md bg-surface-container-lowest p-space-lg rounded-xl shadow-sm border border-outline-variant/30">
             <div className="flex flex-col gap-space-xs max-w-3xl">
               <div className="flex items-center gap-space-sm">
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-error-container px-2.5 py-1 font-label-sm text-label-sm tracking-wide text-on-error-container">
@@ -60,17 +80,17 @@ export default async function TrustPage({
                 </span>
               </div>
               <h1 className="font-headline-lg text-headline-lg text-on-surface tracking-tight mt-2">Trust & Safety Moderation</h1>
-              <p className="font-body-md text-body-md text-on-surface-variant">Review rule-based trust signals with the evidence and status returned by the management API.</p>
+              <p className="font-body-md text-body-md text-on-surface-variant">Review rule-based trust signals and moderate ratings and review evidence.</p>
             </div>
             {result && (
-              <div className="px-4 py-2 rounded-lg bg-surface-container-highest text-on-surface font-label-sm font-bold">
+              <div className="px-4 py-2 rounded-lg bg-surface-container-highest text-on-surface font-label-sm font-bold border border-outline-variant/30">
                 {result}
               </div>
             )}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-space-md">
-            <div className="flex flex-col justify-between p-space-md rounded-xl bg-surface-container-lowest shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+            <div className="flex flex-col justify-between p-space-md rounded-xl bg-surface-container-lowest shadow-sm hover:shadow-md transition-shadow relative overflow-hidden border border-outline-variant/20">
               <div className="absolute -right-6 -bottom-6 w-24 h-24 rounded-full bg-error/5 pointer-events-none"></div>
               <div className="flex items-start justify-between">
                 <div className="flex flex-col">
@@ -82,7 +102,7 @@ export default async function TrustPage({
                 </div>
               </div>
             </div>
-            <div className="flex flex-col justify-between p-space-md rounded-xl bg-surface-container-lowest shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+            <div className="flex flex-col justify-between p-space-md rounded-xl bg-surface-container-lowest shadow-sm hover:shadow-md transition-shadow relative overflow-hidden border border-outline-variant/20">
               <div className="absolute -right-6 -bottom-6 w-24 h-24 rounded-full bg-tertiary/5 pointer-events-none"></div>
               <div className="flex items-start justify-between">
                 <div className="flex flex-col">
@@ -113,19 +133,115 @@ export default async function TrustPage({
           </form>
 
           <section aria-label="Trust review queue" className="flex flex-col gap-space-lg">
-            {signals.length ? (
-              signals.map((signal) => <SignalCard key={signal.id} signal={signal} />)
+            {filtered.length ? (
+              filtered.map((signal) => <SignalCard key={signal.id} signal={signal} />)
             ) : (
               <div className="rounded-xl border border-outline-variant/30 bg-surface-container-lowest p-8 text-center flex flex-col items-center gap-4">
                 <span className="material-symbols-outlined text-outline text-5xl">shield</span>
                 <div>
-                    <h2 className="m-0 font-headline-sm text-headline-sm font-bold text-on-surface">No trust signals</h2>
+                  <h2 className="m-0 font-headline-sm text-headline-sm font-bold text-on-surface">No trust signals</h2>
                   <p className="mt-2 mb-0 font-body-md text-on-surface-variant">
                     Nothing has crossed an advisory threshold{params.status === "OPEN" ? " among open signals" : ""}. This queue fills only when rules observe a pattern.
                   </p>
                 </div>
               </div>
             )}
+
+            <div className="flex items-center justify-between border-t border-outline-variant/20 pt-4 mt-2">
+              <div>
+                {pageNumber > 1 ? (
+                  <Link
+                    href={{ pathname: "/trust", query: { status: params.status, page: String(pageNumber - 1) } }}
+                    className="px-4 py-2 rounded-xl border border-outline-variant/40 bg-surface-container-low text-on-surface font-label-md text-sm font-semibold hover:bg-surface-container transition-colors inline-flex items-center gap-1"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">arrow_back</span>
+                    <span>Previous page</span>
+                  </Link>
+                ) : <div />}
+              </div>
+              <span className="font-body-sm text-sm text-on-surface-variant">Page {pageNumber}</span>
+              <div>
+                {hasNextPage ? (
+                  <Link
+                    href={{ pathname: "/trust", query: { status: params.status, page: String(pageNumber + 1) } }}
+                    className="px-4 py-2 rounded-xl bg-primary text-on-primary font-label-md text-sm font-semibold hover:bg-primary/90 transition-colors inline-flex items-center gap-1"
+                  >
+                    <span>Next page</span>
+                    <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                  </Link>
+                ) : <div />}
+              </div>
+            </div>
+          </section>
+
+          {/* GAP-57: Review & Photo Moderation Controls */}
+          <section aria-labelledby="review-moderation-heading" className="rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-space-lg shadow-sm mt-4">
+            <div className="flex items-center gap-2 mb-space-md border-b border-outline-variant/20 pb-space-sm">
+              <span className="material-symbols-outlined text-primary text-2xl">rate_review</span>
+              <div>
+                <h2 id="review-moderation-heading" className="font-headline-sm text-headline-sm font-bold text-on-surface">Review & Photo Moderation</h2>
+                <p className="text-body-sm text-on-surface-variant">Execute moderation actions on customer reviews and submitted job proof photos.</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-space-lg">
+              {/* Review Moderation */}
+              <div className="p-space-md rounded-xl bg-surface-container-low border border-outline-variant/30">
+                <h3 className="font-label-lg font-bold text-on-surface mb-3 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-primary text-[20px]">edit_note</span>
+                  Moderate Review Text
+                </h3>
+                <form action={moderateReviewAction} className="flex flex-col gap-3">
+                  <label className="flex flex-col gap-1">
+                    <span className="font-label-sm font-semibold uppercase text-secondary">Review ID</span>
+                    <input required name="reviewId" placeholder="UUID of the review" className="py-2 px-3 rounded-lg border border-outline-variant/50 bg-surface text-sm text-on-surface" />
+                  </label>
+                  <label className="flex flex-col gap-1">
+                    <span className="font-label-sm font-semibold uppercase text-secondary">Target Status</span>
+                    <select name="moderationStatus" className="py-2 px-3 rounded-lg border border-outline-variant/50 bg-surface text-sm text-on-surface">
+                      <option value="PUBLISHED">PUBLISHED (Make visible)</option>
+                      <option value="HIDDEN">HIDDEN (Hide from public)</option>
+                      <option value="FLAGGED">FLAGGED (Flag for investigation)</option>
+                    </select>
+                  </label>
+                  <label className="flex flex-col gap-1">
+                    <span className="font-label-sm font-semibold uppercase text-secondary">Reason</span>
+                    <input required name="reason" placeholder="e.g. Terms violation or profanity" defaultValue="Content compliance review" className="py-2 px-3 rounded-lg border border-outline-variant/50 bg-surface text-sm text-on-surface" />
+                  </label>
+                  <button type="submit" className="mt-2 py-2 px-4 rounded-lg bg-primary text-on-primary font-label-md font-semibold hover:bg-primary/90 transition-colors">
+                    Apply Review Action
+                  </button>
+                </form>
+              </div>
+
+              {/* Photo Moderation */}
+              <div className="p-space-md rounded-xl bg-surface-container-low border border-outline-variant/30">
+                <h3 className="font-label-lg font-bold text-on-surface mb-3 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-primary text-[20px]">photo_camera</span>
+                  Moderate Review Photo
+                </h3>
+                <form action={moderatePhotoAction} className="flex flex-col gap-3">
+                  <label className="flex flex-col gap-1">
+                    <span className="font-label-sm font-semibold uppercase text-secondary">Photo ID</span>
+                    <input required name="photoId" placeholder="UUID of the photo" className="py-2 px-3 rounded-lg border border-outline-variant/50 bg-surface text-sm text-on-surface" />
+                  </label>
+                  <label className="flex flex-col gap-1">
+                    <span className="font-label-sm font-semibold uppercase text-secondary">Decision</span>
+                    <select name="photoStatus" className="py-2 px-3 rounded-lg border border-outline-variant/50 bg-surface text-sm text-on-surface">
+                      <option value="APPROVED">APPROVED (Valid proof)</option>
+                      <option value="REJECTED">REJECTED (Blurry or fraudulent)</option>
+                    </select>
+                  </label>
+                  <label className="flex flex-col gap-1">
+                    <span className="font-label-sm font-semibold uppercase text-secondary">Reason</span>
+                    <input required name="reason" placeholder="e.g. Inadequate resolution or irrelevant" defaultValue="Image verification review" className="py-2 px-3 rounded-lg border border-outline-variant/50 bg-surface text-sm text-on-surface" />
+                  </label>
+                  <button type="submit" className="mt-2 py-2 px-4 rounded-lg bg-primary text-on-primary font-label-md font-semibold hover:bg-primary/90 transition-colors">
+                    Apply Photo Action
+                  </button>
+                </form>
+              </div>
+            </div>
           </section>
 
         </div>

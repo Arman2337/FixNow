@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:fixnow_mobile/config/app_environment.dart';
 import 'package:fixnow_mobile/features/payments/invoice_repository.dart';
 
 /// Pure Dart PDF 1.4 Generator for FixNow GST Tax Invoices.
@@ -10,13 +11,12 @@ class FixPdfInvoiceBuilder {
   const FixPdfInvoiceBuilder._();
 
   /// FixNow Official Statutory Details
-  static const companyName = 'FixNow Technologies Private Limited';
-  static const companyGstin = '24AAACF1234F1Z5';
-  static const companySac = '9987';
-  static const companyAddress =
-      'Level 4, Commerce House, SG Highway, Ahmedabad, Gujarat - 380054';
-  static const supportEmail = 'support@fixnow.app';
-  static const verifyUrl = 'https://fixnow.app/verify/invoice';
+  static String get companyName => AppEnvironment.companyName;
+  static String get companyGstin => AppEnvironment.companyGstin;
+  static String get companySac => AppEnvironment.companySac;
+  static String get companyAddress => AppEnvironment.companyAddress;
+  static String get supportEmail => AppEnvironment.supportEmail;
+  static String get verifyUrl => AppEnvironment.invoiceVerifyUrl;
 
   /// Generates the standard A4 PDF byte stream.
   static Uint8List build(

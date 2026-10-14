@@ -10,7 +10,8 @@ import { listProviderApplications } from "@/features/providers/api";
 
 const bookingRoles = ["support_agent", "trust_safety_reviewer", "operations_administrator", "auditor"];
 const providerRoles = ["provider_reviewer", "operations_administrator", "auditor"];
-const complaintRoles = ["support_agent", "trust_safety_reviewer", "operations_administrator", "auditor"];
+const complaintRoles = ["support_agent", "trust_safety_reviewer", "operations_administrator"];
+const claimRoles = ["support_agent", "trust_safety_reviewer", "operations_administrator", "auditor"];
 
 function hasRole(roles: readonly string[], allowed: readonly string[]) {
   return roles.some((role) => allowed.includes(role));
@@ -29,24 +30,75 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   const results: { label: string; value: string; href: string }[] = [];
 
   if (query.length >= 2) {
+    const searchTasks: Promise<void>[] = [];
+
     if (hasRole(roles, bookingRoles)) {
-      const bookings = await requireManagementResult(await listBookings(query));
-      results.push(...bookings.items.map((booking) => textResult("Booking", `${booking.id} · ${booking.status} · ${booking.description}`, `/bookings?search=${encodeURIComponent(query)}`)));
+      searchTasks.push(
+        (async () => {
+          const bookings = await requireManagementResult(await listBookings(query));
+          results.push(
+            ...bookings.items.map((booking) =>
+              textResult("Booking", `${booking.id} · ${booking.status} · ${booking.description}`, `/bookings?search=${encodeURIComponent(query)}`),
+            ),
+          );
+        })(),
+      );
     }
+
     if (hasRole(roles, providerRoles)) {
-      const providers = await requireManagementResult(await listProviderApplications(query));
-      results.push(...providers.items.map((provider) => textResult("Provider", `${provider.displayName ?? provider.id} · ${provider.status}`, `/providers/${provider.id}`)));
+      searchTasks.push(
+        (async () => {
+          const providers = await requireManagementResult(await listProviderApplications(query));
+          results.push(
+            ...providers.items.map((provider) =>
+              textResult("Provider", `${provider.displayName ?? provider.id} · ${provider.status}`, `/providers/${provider.id}`),
+            ),
+          );
+        })(),
+      );
     }
+
     if (hasRole(roles, complaintRoles)) {
-      const complaints = await requireManagementResult(await listComplaints());
-      results.push(...complaints.filter((complaint) => `${complaint.id} ${complaint.category} ${complaint.description}`.toLowerCase().includes(normalized)).map((complaint) => textResult("Complaint", `${complaint.id} · ${complaint.status} · ${complaint.category}`, `/support/${complaint.id}`)));
-      const claims = await requireManagementResult(await listClaims());
-      results.push(...claims.filter((claim) => `${claim.id} ${claim.bookingId} ${claim.description}`.toLowerCase().includes(normalized)).map((claim) => textResult("Guarantee claim", `${claim.id} · ${claim.status} · ${claim.description}`, `/guarantees/${claim.id}`)));
+      searchTasks.push(
+        (async () => {
+          const complaints = await requireManagementResult(await listComplaints());
+          results.push(
+            ...complaints
+              .filter((complaint) => `${complaint.id} ${complaint.category} ${complaint.description}`.toLowerCase().includes(normalized))
+              .map((complaint) =>
+                textResult("Complaint", `${complaint.id} · ${complaint.status} · ${complaint.category}`, `/support/${complaint.id}`),
+              ),
+          );
+        })(),
+      );
     }
+
+    if (hasRole(roles, claimRoles)) {
+      searchTasks.push(
+        (async () => {
+          const claims = await requireManagementResult(await listClaims());
+          results.push(
+            ...claims
+              .filter((claim) => `${claim.id} ${claim.bookingId} ${claim.description}`.toLowerCase().includes(normalized))
+              .map((claim) =>
+                textResult("Guarantee claim", `${claim.id} · ${claim.status} · ${claim.description}`, `/guarantees/${claim.id}`),
+              ),
+          );
+        })(),
+      );
+    }
+
+    await Promise.all(searchTasks);
   }
 
   return (
-    <AdminShell environment={env.appEnvironment} roles={roles} current="Overview Dashboard">
+    <AdminShell
+      environment={env.appEnvironment}
+      roles={roles}
+      email={session.session.email}
+      displayName={session.session.displayName}
+      current="Search"
+    >
       <div className="w-full p-space-lg lg:p-margin-desktop">
         <div className="mx-auto flex max-w-4xl flex-col gap-space-lg">
           <header>
@@ -58,24 +110,29 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
             <label className="sr-only" htmlFor="command-search">Search operations</label>
             <input id="command-search" name="q" defaultValue={query} placeholder="Booking, provider, complaint or claim" className="min-w-0 flex-1 rounded-lg border border-outline-variant/50 bg-surface px-3 py-2 text-sm text-on-surface outline-none focus:border-primary" />
             <button type="submit" className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-on-primary">Search</button>
+            <Link href="/search" className="rounded-lg border border-outline-variant/30 bg-surface-container px-4 py-2 text-sm font-semibold text-on-surface">Clear</Link>
           </form>
-          {query.length < 2 ? (
-            <p className="rounded-xl border border-outline-variant/30 bg-surface-container-lowest p-5 text-sm text-on-surface-variant">Enter at least two characters to search authorized records.</p>
-          ) : results.length === 0 ? (
-            <p className="rounded-xl border border-outline-variant/30 bg-surface-container-lowest p-5 text-sm text-on-surface-variant">No authorized records match “{query}”.</p>
-          ) : (
-            <section aria-labelledby="search-results-heading" className="overflow-hidden rounded-2xl border border-outline-variant/30 bg-surface-container-lowest shadow-sm">
-              <h2 id="search-results-heading" className="m-0 border-b border-outline-variant/30 p-4 text-lg font-bold text-on-surface">Results ({results.length})</h2>
-              <div className="divide-y divide-outline-variant/20">
-                {results.map((result) => (
-                  <Link key={`${result.label}-${result.value}`} href={result.href} className="block p-4 transition-colors hover:bg-surface-container/60">
-                    <span className="text-xs font-bold uppercase tracking-wider text-primary">{result.label}</span>
-                    <span className="mt-1 block text-sm text-on-surface">{result.value}</span>
-                  </Link>
-                ))}
-              </div>
+          {query.length > 0 && query.length < 2 ? (
+            <p className="m-0 text-sm text-on-surface-variant">Enter at least two characters to search.</p>
+          ) : null}
+          {query.length >= 2 ? (
+            <section aria-labelledby="search-results-heading" className="flex flex-col gap-space-md">
+              <h2 id="search-results-heading" className="m-0 text-lg font-bold text-on-surface">Matches ({results.length})</h2>
+              {results.length > 0 ? (
+                <ul className="m-0 list-none divide-y divide-outline-variant/20 rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-0">
+                  {results.map((item, index) => (
+                    <li key={`${item.href}-${index}`} className="p-4">
+                      <span className="inline-block rounded-md bg-surface-container px-2 py-0.5 text-xs font-semibold text-on-surface-variant">{item.label}</span>
+                      <p className="mt-2 mb-1 text-sm font-medium text-on-surface">{item.value}</p>
+                      <Link href={item.href} className="text-sm font-semibold text-primary hover:underline">Open record</Link>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="m-0 text-sm text-on-surface-variant">No records matched {query}.</p>
+              )}
             </section>
-          )}
+          ) : null}
         </div>
       </div>
     </AdminShell>

@@ -4,6 +4,8 @@ export type UserSummary = Readonly<{
   roles: readonly string[];
   createdAt: string;
   updatedAt: string;
+  email?: string;
+  name?: string;
 }>;
 
 export type UserPage = Readonly<{ items: readonly UserSummary[]; nextCursor: string | null }>;

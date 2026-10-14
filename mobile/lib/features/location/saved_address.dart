@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:fixnow_mobile/api/api_client.dart';
 
-class MockApiTransport implements ApiTransport {
+class _NoopApiTransport implements ApiTransport {
+  const _NoopApiTransport();
   @override
   Future<ApiResponse> send(ApiRequest request) async =>
       const ApiResponse(statusCode: 200, body: []);
@@ -18,8 +19,8 @@ class SavedAddress {
     required this.flatBuilding,
     required this.streetArea,
     this.landmark,
-    this.city = 'Bengaluru',
-    this.postalCode = '560034',
+    this.city = '',
+    this.postalCode = '',
     required this.latitude,
     required this.longitude,
     this.isDefault = false,
@@ -111,7 +112,7 @@ class SavedAddressRepository extends ChangeNotifier {
 
   factory SavedAddressRepository.test() {
     return SavedAddressRepository(
-      api: MockApiTransport(),
+      api: const _NoopApiTransport(),
       accessToken: () async => '',
     );
   }
@@ -181,8 +182,8 @@ class SavedAddressRepository extends ChangeNotifier {
           customTitle: j['label'] ?? '',
           flatBuilding: j['street'],
           streetArea: j['street'], // simplify mapping
-          city: j['city'] ?? 'Bengaluru',
-          postalCode: j['zip'] ?? '560001',
+          city: j['city'] ?? '',
+          postalCode: j['zip'] ?? j['postalCode'] ?? '',
           latitude: j['latitude'] is String
               ? double.tryParse(j['latitude']) ?? 0.0
               : (j['latitude']?.toDouble() ?? 0.0),

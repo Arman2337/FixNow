@@ -93,4 +93,15 @@ describe("TrustPage", () => {
     expect(allMarkup).toContain('value="signal-open-1234"');
     expect(allMarkup).not.toContain('value="signal-done-5678"');
   });
+
+  it("redirects unauthorized roles to /unauthorized (GAP-05 / GAP-87)", async () => {
+    const { redirect } = await import("next/navigation");
+    vi.mocked(getSession).mockResolvedValue({
+      state: "authenticated",
+      session: { userId: "agent-1", roles: ["support_agent"] as const },
+    });
+
+    await TrustPage({ searchParams: Promise.resolve({}) });
+    expect(redirect).toHaveBeenCalledWith("/unauthorized");
+  });
 });

@@ -5,6 +5,7 @@ import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/app_typography.dart';
 import 'package:fixnow_mobile/design_system/fix_components.dart';
 import 'package:fixnow_mobile/design_system/fix_page_frame.dart';
+import 'package:fixnow_mobile/design_system/fix_state_views.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
@@ -31,7 +32,6 @@ class _AuthScreenState extends State<AuthScreen> {
   final _password = TextEditingController();
   final _fullName = TextEditingController();
   final _mobile = TextEditingController();
-  final _referral = TextEditingController();
   late bool _register;
   bool _obscure = true;
 
@@ -46,7 +46,6 @@ class _AuthScreenState extends State<AuthScreen> {
     _password.addListener(_onInputChanged);
     _fullName.addListener(_onInputChanged);
     _mobile.addListener(_onInputChanged);
-    _referral.addListener(_onInputChanged);
   }
 
   void _onInputChanged() {
@@ -61,12 +60,10 @@ class _AuthScreenState extends State<AuthScreen> {
     _password.removeListener(_onInputChanged);
     _fullName.removeListener(_onInputChanged);
     _mobile.removeListener(_onInputChanged);
-    _referral.removeListener(_onInputChanged);
     _email.dispose();
     _password.dispose();
     _fullName.dispose();
     _mobile.dispose();
-    _referral.dispose();
     super.dispose();
   }
 
@@ -167,6 +164,13 @@ class _AuthScreenState extends State<AuthScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  if (widget.controller.status == AuthStatus.offline) ...[
+                    FixOfflineBanner(
+                      message: widget.controller.errorMessage ??
+                          'You appear to be offline. Please check your connection.',
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                  ],
                   // Subtle Ambient Glow & Trust Banner
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -756,63 +760,6 @@ class _AuthScreenState extends State<AuthScreen> {
                               : null,
                         ),
 
-                        // Referral Field (Register Only)
-                        if (_register &&
-                            widget.role == AccountRole.customer) ...[
-                          const SizedBox(height: AppSpacing.md),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text(
-                                'Referral Code (Optional)',
-                                style: TextStyle(
-                                  color: AppColors.textSecondary,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 13,
-                                ),
-                              ),
-                              Text(
-                                'Get ₹150 OFF',
-                                style: TextStyle(
-                                  color: AppColors.tertiary,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 6),
-                          TextFormField(
-                            controller: _referral,
-                            enabled: !loading,
-                            textInputAction: TextInputAction.done,
-                            onFieldSubmitted: (_) => _submit(),
-                            style: FixNowTypography.dataMono.copyWith(
-                              color: AppColors.textPrimary,
-                            ),
-                            textCapitalization: TextCapitalization.characters,
-                            decoration: InputDecoration(
-                              hintText: 'e.g. FIXSAFE2025',
-                              hintStyle: TextStyle(
-                                color: AppColors.textSecondary.withValues(
-                                  alpha: 0.5,
-                                ),
-                              ),
-                              prefixIcon: const Icon(
-                                Icons.local_offer_outlined,
-                                size: 20,
-                                color: AppColors.tertiary,
-                              ),
-                              filled: true,
-                              fillColor: AppColors.surfaceContainerLowest,
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 14,
-                              ),
-                            ),
-                          ),
-                        ],
-
                         if (widget.controller.errorMessage
                             case final message?) ...[
                           const SizedBox(height: AppSpacing.sm),
@@ -877,9 +824,12 @@ class _AuthScreenState extends State<AuthScreen> {
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       Text(
-                                        _register
-                                            ? 'Create Account & Continue'
-                                            : 'Continue',
+                                        widget.controller.status ==
+                                                AuthStatus.offline
+                                            ? 'Retry Connection'
+                                            : _register
+                                                ? 'Create Account & Continue'
+                                                : 'Continue',
                                         style: FixNowTypography.headlineMd
                                             .copyWith(
                                               fontWeight: FontWeight.w600,
@@ -888,8 +838,11 @@ class _AuthScreenState extends State<AuthScreen> {
                                             ),
                                       ),
                                       const SizedBox(width: 8),
-                                      const Icon(
-                                        Icons.arrow_forward_rounded,
+                                      Icon(
+                                        widget.controller.status ==
+                                                AuthStatus.offline
+                                            ? Icons.refresh_rounded
+                                            : Icons.arrow_forward_rounded,
                                         size: 20,
                                       ),
                                     ],

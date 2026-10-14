@@ -32,6 +32,7 @@ export class GuaranteeClaim {
   @Column({
     type: 'enum',
     enum: GuaranteeClaimStatus,
+    enumName: 'guarantee_claims_status_enum',
     default: GuaranteeClaimStatus.PENDING,
   })
   status: GuaranteeClaimStatus;
@@ -39,7 +40,7 @@ export class GuaranteeClaim {
   @Column('text')
   description: string;
 
-  @Column('simple-array', { name: 'evidence_urls', nullable: true })
+  @Column('jsonb', { name: 'evidence_urls', nullable: true })
   evidenceUrls: string[] | null;
 
   @Column('text', { name: 'admin_notes', nullable: true })

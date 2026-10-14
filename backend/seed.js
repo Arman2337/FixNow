@@ -1,13 +1,5 @@
 require('dotenv').config();
 const { Client } = require('pg');
-// A placeholder, not a credential. The previous fallback carried someone's real
-// local database password inline, which put a live secret in every clone. Read
-// DATABASE_URL instead; this only keeps `node seed.js` from failing to connect.
-const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:replace-me@localhost:5432/fixnow';
-const client = new Client({
-  connectionString,
-  ssl: (connectionString.includes('localhost') || connectionString.includes('127.0.0.1')) ? false : { rejectUnauthorized: false }
-});
 
 const CATALOG = {
   'plumbing': [
@@ -69,6 +61,7 @@ const CATALOG = {
 };
 
 function getCatalogForSlug(slug) {
+  if (!slug || typeof slug !== 'string') return null;
   const s = slug.toLowerCase();
   if (s.includes('plumb')) return CATALOG['plumbing'];
   if (s.includes('electr')) return CATALOG['electrical'];
@@ -83,33 +76,112 @@ function getCatalogForSlug(slug) {
   return null;
 }
 
-async function run() {
-  await client.connect();
-  const categories = await client.query('SELECT id, slug, name FROM service_categories');
-  
-  // Clear old minimal rows
-  await client.query('DELETE FROM sub_services');
-
-  for (const cat of categories.rows) {
-    const items = getCatalogForSlug(cat.slug) || [
-      { name: `Standard ${cat.name} Inspection`, desc: `On-site technician visit, problem assessment & repair`, price: 24900, duration: 45, badge: 'POPULAR' },
-      { name: `Comprehensive ${cat.name} Overhaul`, desc: `Complete diagnostic, parts replacement and 30-day warranty`, price: 59900, duration: 90, badge: 'BEST VALUE' },
-    ];
-
-    for (const item of items) {
-      await client.query(
-        `INSERT INTO sub_services (category_id, name, description, price_minor, estimated_duration_minutes, badge, is_active)
-         VALUES ($1, $2, $3, $4, $5, $6, true)`,
-        [cat.id, item.name, item.desc, item.price, item.duration, item.badge]
-      );
-    }
+function getDatabaseUrl() {
+  const url = process.env.DATABASE_URL;
+  if (!url || typeof url !== 'string' || !url.trim()) {
+    throw new Error(
+      'DATABASE_URL environment variable is required to run seed.js. Set DATABASE_URL or configure .env before running.',
+    );
   }
-
-  console.log('Successfully seeded rich sub-services catalog into database!');
-  await client.end();
+  return url.trim();
 }
 
-run().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+function createClient(connectionString) {
+  return new Client({
+    connectionString,
+    ssl: (connectionString.includes('localhost') || connectionString.includes('127.0.0.1'))
+      ? false
+      : { rejectUnauthorized: false },
+  });
+}
+
+/**
+ * Safely seeds the sub-services catalog into the database.
+ *
+ * FN-175 / GAP-02:
+ * 1. Non-destructive: NEVER executes DELETE FROM sub_services. Admin-curated sub-services
+ *    and existing UUID primary keys are strictly preserved.
+ * 2. Idempotent: Inserts each catalog item using WHERE NOT EXISTS (category_id, name)
+ *    so re-running on deploy startup never creates duplicate rows or overwrites admin edits.
+ * 3. Atomic: Wrapped in a database transaction (BEGIN / COMMIT / ROLLBACK).
+ */
+async function seedCatalog(client) {
+  await client.query('BEGIN');
+  try {
+    const categories = await client.query('SELECT id, slug, name FROM service_categories');
+    let insertedCount = 0;
+    let existingCount = 0;
+
+    for (const cat of categories.rows) {
+      const items = getCatalogForSlug(cat.slug) || [
+        {
+          name: `Standard ${cat.name} Inspection`,
+          desc: `On-site technician visit, problem assessment & repair`,
+          price: 24900,
+          duration: 45,
+          badge: 'POPULAR',
+        },
+        {
+          name: `Comprehensive ${cat.name} Overhaul`,
+          desc: `Complete diagnostic, parts replacement and 30-day warranty`,
+          price: 59900,
+          duration: 90,
+          badge: 'BEST VALUE',
+        },
+      ];
+
+      for (const item of items) {
+        const result = await client.query(
+          `INSERT INTO sub_services (category_id, name, description, price_minor, estimated_duration_minutes, badge, is_active)
+           SELECT $1::uuid, $2::varchar, $3::text, $4::integer, $5::integer, $6::varchar, true
+           WHERE NOT EXISTS (
+             SELECT 1 FROM sub_services WHERE category_id = $1::uuid AND name = $2::varchar
+           )`,
+          [cat.id, item.name, item.desc, item.price, item.duration, item.badge]
+        );
+
+        if (result && typeof result.rowCount === 'number' && result.rowCount > 0) {
+          insertedCount += result.rowCount;
+        } else {
+          existingCount++;
+        }
+      }
+    }
+
+    await client.query('COMMIT');
+    return { insertedCount, existingCount, categoriesCount: categories.rows.length };
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  }
+}
+
+async function run() {
+  const connectionString = getDatabaseUrl();
+  const client = createClient(connectionString);
+  await client.connect();
+  try {
+    const { insertedCount, existingCount, categoriesCount } = await seedCatalog(client);
+    console.log(
+      `Successfully processed sub-services catalog: ${insertedCount} inserted, ${existingCount} already present across ${categoriesCount} categories.`
+    );
+  } finally {
+    await client.end();
+  }
+}
+
+if (require.main === module) {
+  run().catch((err) => {
+    console.error('Failed to seed sub-services catalog:', err.message || err);
+    process.exit(1);
+  });
+}
+
+module.exports = {
+  CATALOG,
+  getCatalogForSlug,
+  getDatabaseUrl,
+  createClient,
+  seedCatalog,
+  run,
+};

@@ -30,7 +30,6 @@ class _VerificationScreenState extends State<VerificationScreen> {
   final _code = TextEditingController();
   Timer? _resendTimer;
   int _secondsUntilResend = 30;
-  bool _biometricEnabled = false;
 
   @override
   void initState() {
@@ -645,60 +644,6 @@ class _VerificationScreenState extends State<VerificationScreen> {
                               ),
                             ),
                           ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  // Biometric Toggle Switch
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceContainerLowest,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.borderDefault),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.fingerprint_rounded,
-                              size: 20,
-                              color: AppColors.primary,
-                            ),
-                            const SizedBox(width: 8),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Biometric Quick Login',
-                                  style: TextStyle(
-                                    color: AppColors.textPrimary,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                                Text(
-                                  'Enable Face ID / Fingerprint',
-                                  style: FixNowTypography.caption.copyWith(
-                                    color: AppColors.textSecondary,
-                                    fontSize: 11,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                        Switch.adaptive(
-                          value: _biometricEnabled,
-                          activeTrackColor: AppColors.primary,
-                          onChanged: (val) =>
-                              setState(() => _biometricEnabled = val),
                         ),
                       ],
                     ),

@@ -399,4 +399,19 @@ export class AuthService {
   private hashPassword(password: string): Promise<string> {
     return argon2.hash(password, { type: argon2.argon2id });
   }
+
+  async getUserSessionDetails(
+    userId: string,
+  ): Promise<{ email: string | null; displayName: string | null }> {
+    const identity = await this.dataSource
+      .getRepository(IdentityEntity)
+      .findOne({ where: { userId, provider: LOCAL_EMAIL_PROVIDER } });
+    const profile = await this.dataSource
+      .getRepository(CustomerProfileEntity)
+      .findOne({ where: { userId } });
+    return {
+      email: identity?.subject ?? null,
+      displayName: profile?.displayName ?? null,
+    };
+  }
 }

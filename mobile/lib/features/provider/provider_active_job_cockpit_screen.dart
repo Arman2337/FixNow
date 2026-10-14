@@ -177,7 +177,7 @@ class _ProviderActiveJobCockpitScreenState
           ],
         ),
       );
-      if (shouldContinue != true && !mounted) return;
+      if (shouldContinue != true || !mounted) return;
     }
     setState(() {
       _isProcessing = true;
@@ -212,7 +212,7 @@ class _ProviderActiveJobCockpitScreenState
 
   void _openCall(BuildContext context, CustomerBooking job) {
     if (job.customerPhone != null) {
-      const CallController().launchCall(job.customerPhone!);
+      CallController().launchCall(job.customerPhone!);
     } else {
       ScaffoldMessenger.of(
         context,

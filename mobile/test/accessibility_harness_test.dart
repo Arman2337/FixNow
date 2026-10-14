@@ -306,6 +306,7 @@ void main() {
         beforeBytes: _onePixelPng,
         afterBytes: _onePixelPng,
       ),
+      'FixRatingBadge': () => const FixRatingBadge(rating: 4.8, reviewCount: 120),
     };
 
     for (final entry in components.entries) {

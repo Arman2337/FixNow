@@ -113,167 +113,15 @@ class _JobProofVerificationDialogState
           }
         });
       }
-    } catch (_) {
-      // Fallback dummy 1x1 png bytes if running in test / simulator without camera
-      final dummyBytes = Uint8List.fromList([
-        137,
-        80,
-        78,
-        71,
-        13,
-        10,
-        26,
-        10,
-        0,
-        0,
-        0,
-        13,
-        73,
-        72,
-        68,
-        82,
-        0,
-        0,
-        0,
-        1,
-        0,
-        0,
-        0,
-        1,
-        8,
-        6,
-        0,
-        0,
-        0,
-        31,
-        21,
-        196,
-        137,
-        0,
-        0,
-        0,
-        10,
-        73,
-        68,
-        65,
-        84,
-        120,
-        156,
-        99,
-        0,
-        1,
-        0,
-        0,
-        5,
-        0,
-        1,
-        13,
-        10,
-        45,
-        180,
-        0,
-        0,
-        0,
-        0,
-        73,
-        69,
-        78,
-        68,
-        174,
-        66,
-        96,
-        130,
-      ]);
-      setState(() {
-        if (isBefore) {
-          _beforeBytes = dummyBytes;
-          _beforeName = 'simulated_before.png';
-        } else {
-          _afterBytes = dummyBytes;
-          _afterName = 'simulated_after.png';
-        }
-      });
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = 'Camera capture failed: $e';
+        });
+      }
     } finally {
-      setState(() => _isProcessing = false);
+      if (mounted) setState(() => _isProcessing = false);
     }
-  }
-
-  void _simulateTestPhotos() {
-    final dummyBytes = Uint8List.fromList([
-      137,
-      80,
-      78,
-      71,
-      13,
-      10,
-      26,
-      10,
-      0,
-      0,
-      0,
-      13,
-      73,
-      72,
-      68,
-      82,
-      0,
-      0,
-      0,
-      1,
-      0,
-      0,
-      0,
-      1,
-      8,
-      6,
-      0,
-      0,
-      0,
-      31,
-      21,
-      196,
-      137,
-      0,
-      0,
-      0,
-      10,
-      73,
-      68,
-      65,
-      84,
-      120,
-      156,
-      99,
-      0,
-      1,
-      0,
-      0,
-      5,
-      0,
-      1,
-      13,
-      10,
-      45,
-      180,
-      0,
-      0,
-      0,
-      0,
-      73,
-      69,
-      78,
-      68,
-      174,
-      66,
-      96,
-      130,
-    ]);
-    setState(() {
-      _beforeBytes = dummyBytes;
-      _beforeName = 'before_verification.jpg';
-      _afterBytes = dummyBytes;
-      _afterName = 'after_verification.jpg';
-    });
   }
 
   Future<void> _submit() async {
@@ -438,24 +286,6 @@ class _JobProofVerificationDialogState
               ),
 
               const SizedBox(height: AppSpacing.md),
-
-              // Quick Simulation / Camera button for test convenience
-              if (!hasBoth)
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton.icon(
-                    onPressed: _simulateTestPhotos,
-                    icon: const Icon(
-                      Icons.auto_awesome_rounded,
-                      size: 14,
-                      color: AppColors.focus,
-                    ),
-                    label: const Text(
-                      'Simulate test photos',
-                      style: TextStyle(color: AppColors.focus, fontSize: 12),
-                    ),
-                  ),
-                ),
 
               // Preview Comparison Slider Button
               if (hasBoth)

@@ -810,22 +810,41 @@ class _CustomerHelpScreenState extends State<CustomerHelpScreen> {
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   OutlinedButton.icon(
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (ctx) => AlertDialog(
-                          title: const Text('Support Hotline'),
-                          content: const Text(
-                            'Direct phone callback is currently unavailable. For immediate assistance, please call our 24/7 toll-free safety helpline at 1800-FIX-NOW (1800-349-669) or file a ticket.',
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.of(ctx).pop(),
-                              child: const Text('OK'),
+                    onPressed: () async {
+                      if (widget.controller.complaints.isEmpty) {
+                        await widget.controller.loadComplaints();
+                      }
+                      if (!context.mounted) return;
+                      final activeComplaint = widget.controller.complaints.firstOrNull;
+                      if (activeComplaint != null) {
+                        final success = await widget.controller.requestCallback(activeComplaint.id);
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              success
+                                  ? 'Callback requested for ticket #${activeComplaint.id.length > 8 ? activeComplaint.id.substring(0, 8) : activeComplaint.id}. An agent will call shortly.'
+                                  : 'Could not request callback: ${widget.controller.actionError ?? "Please try again later"}',
                             ),
-                          ],
-                        ),
-                      );
+                          ),
+                        );
+                      } else {
+                        showDialog(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            title: const Text('Support Hotline'),
+                            content: const Text(
+                              'Direct phone callback is currently unavailable. For immediate assistance, please call our 24/7 toll-free safety helpline at 1800-FIX-NOW (1800-349-669) or file a ticket.',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(ctx).pop(),
+                                child: const Text('OK'),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
                     },
                     icon: const Icon(Icons.phone_callback_rounded, size: 18),
                     label: const Text('Request Instant Callback'),

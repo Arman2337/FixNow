@@ -1,4 +1,5 @@
 import {
+  IsEnum,
   IsIn,
   IsInt,
   IsOptional,
@@ -12,10 +13,12 @@ import {
 import { Transform, Type } from 'class-transformer';
 import { ProviderOnboardingStatus } from '../providers/provider-onboarding-status';
 import { BookingStatus } from '../../../shared/booking-lifecycle.types';
+import { ComplaintStatus } from '../../../shared/complaint-lifecycle.types';
 
 export class AdminPageQueryDto {
-  @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(50) limit = 20;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(100) limit = 20;
   @IsOptional() @IsString() @MaxLength(500) cursor?: string;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(0) offset?: number;
   @IsOptional()
   @Transform(({ value }: { value: unknown }) =>
     typeof value === 'string' ? value.trim() : value,
@@ -63,4 +66,20 @@ export class BookingIdParamDto {
 export class AdminCancelBookingDto {
   @Type(() => Number) @IsInt() @Min(1) expectedVersion!: number;
   @IsString() @Length(3, 500) reason!: string;
+}
+
+export class UpdateComplaintStatusDto {
+  @IsEnum(ComplaintStatus)
+  status!: ComplaintStatus;
+
+  @IsOptional()
+  @IsString()
+  @Length(3, 1000)
+  resolutionNotes?: string;
+}
+
+export class ComplaintsPageQueryDto extends AdminPageQueryDto {
+  @IsOptional()
+  @IsEnum(ComplaintStatus)
+  status?: ComplaintStatus;
 }

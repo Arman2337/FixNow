@@ -1,6 +1,13 @@
+import { redirect } from "next/navigation";
+import { getSession } from "@/auth/session";
 import { logoutAction } from "@/auth/actions";
 
-export default function UnauthorizedPage() {
+export default async function UnauthorizedPage() {
+  const session = await getSession();
+  if (session.state !== "authenticated") {
+    redirect("/login");
+  }
+
   return (
     <main className="grid min-h-screen place-items-center bg-surface px-4">
       <section className="max-w-lg rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-8 shadow-sm text-center">
@@ -9,7 +16,7 @@ export default function UnauthorizedPage() {
         </div>
         <h1 className="font-headline-md text-headline-md font-bold text-on-surface">Access Restricted</h1>
         <p className="mt-4 font-body-md text-on-surface-variant leading-relaxed">
-          Your identity is valid, but no current staff permission allows this admin session. Contact an access administrator if this is unexpected.
+          Your identity is valid, but your current staff role does not have permission to access this administration module. Contact an access administrator if this is unexpected.
         </p>
         <form action={logoutAction} className="mt-8">
           <button className="w-full min-h-12 rounded-xl bg-primary hover:bg-primary-container transition-colors text-on-primary font-label-md text-label-md font-bold shadow-sm flex items-center justify-center gap-2">

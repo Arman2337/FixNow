@@ -240,16 +240,27 @@ export class ComplaintsService {
     return complaint;
   }
 
-  async getComplaints(userId: string, isAdmin = false): Promise<Complaint[]> {
+  async getComplaints(
+    userId: string,
+    isAdmin = false,
+    limit = 20,
+    offset = 0,
+  ): Promise<Complaint[]> {
+    const take = Math.min(Math.max(limit, 1), 100);
+    const skip = Math.max(offset, 0);
     let complaints = [];
     if (isAdmin) {
       complaints = await this.complaintsRepository.find({
         order: { createdAt: 'DESC' },
+        take,
+        skip,
       });
     } else {
       complaints = await this.complaintsRepository.find({
         where: [{ submitterId: userId }, { targetId: userId }],
         order: { createdAt: 'DESC' },
+        take,
+        skip,
       });
     }
 

@@ -72,10 +72,19 @@ export class AdminOperationsService {
             ),
         ),
       );
-    const rows = await builder.getMany();
+    const [rows, emergencyCategories] = await Promise.all([
+      builder.getMany(),
+      this.categories.find({ where: { isEmergency: true } }),
+    ]);
+    const emergencyCategoryIds = new Set(emergencyCategories.map((c) => c.id));
     const page = rows.slice(0, query.limit);
     return {
-      items: page.map((booking) => this.projectBooking(booking)),
+      items: page.map((booking) =>
+        this.projectBooking(
+          booking,
+          emergencyCategoryIds.has(booking.serviceCategoryId),
+        ),
+      ),
       nextCursor:
         rows.length > query.limit ? this.encodeCursor(page.at(-1)!) : null,
     };
@@ -121,19 +130,22 @@ export class AdminOperationsService {
       version,
     );
   }
-  private projectBooking({
-    id,
-    customerId,
-    providerId,
-    serviceCategoryId,
-    status,
-    description,
-    scheduledAt,
-    cancellationReason,
-    version,
-    createdAt,
-    updatedAt,
-  }: Booking) {
+  private projectBooking(
+    {
+      id,
+      customerId,
+      providerId,
+      serviceCategoryId,
+      status,
+      description,
+      scheduledAt,
+      cancellationReason,
+      version,
+      createdAt,
+      updatedAt,
+    }: Booking,
+    isEmergency?: boolean,
+  ) {
     return {
       id,
       customerId,
@@ -146,6 +158,7 @@ export class AdminOperationsService {
       version,
       createdAt,
       updatedAt,
+      isEmergency: isEmergency ?? false,
     };
   }
   private decodeCursor(

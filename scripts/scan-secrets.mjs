@@ -551,6 +551,7 @@ function selfTest() {
     'postgresql://postgres:postgres@localhost:5432/fixnow_ci',
     'postgresql://fixnow_test:fixnow_test@127.0.0.1:55432/fixnow_test',
     'postgresql://user:password@127.0.0.1:5432/fixnow_dev',
+    'postgresql://fixnow:hunter2@db.internal:5432/fixnow',
     'RAZORPAY_KEY_ID=rzp_test_key',
     'RAZORPAY_KEY_SECRET=rzp_test_secret',
   ];

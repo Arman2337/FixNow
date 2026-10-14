@@ -61,6 +61,7 @@ export const PERMISSIONS = {
   adminProviderApplicationsRead: 'admin.provider-applications.read',
   adminProviderDocumentsRead: 'admin.provider-documents.read.assigned',
   adminBookingsRead: 'admin.bookings.read',
+  adminAnalyticsRead: 'admin.analytics.read',
   adminBookingsIntervene: 'admin.bookings.intervene',
   pushTokenManageSelf: 'notifications.push.token.manage.self',
   notificationInboxReadSelf: 'notifications.inbox.read.self',
@@ -382,6 +383,10 @@ export const PERMISSION_POLICIES: Readonly<
       'operations_administrator',
       'auditor',
     ],
+    audience: 'admin',
+  },
+  [PERMISSIONS.adminAnalyticsRead]: {
+    roles: ['operations_administrator', 'auditor'],
     audience: 'admin',
   },
   [PERMISSIONS.adminBookingsIntervene]: {

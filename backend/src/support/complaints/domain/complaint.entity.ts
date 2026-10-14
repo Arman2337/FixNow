@@ -57,6 +57,7 @@ export class Complaint {
   @Column({
     type: 'enum',
     enum: ComplaintStatus,
+    enumName: 'complaints_status_enum',
     default: ComplaintStatus.OPEN,
   })
   status: ComplaintStatus;

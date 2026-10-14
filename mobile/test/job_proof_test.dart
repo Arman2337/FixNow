@@ -7,6 +7,7 @@ import 'package:fixnow_mobile/design_system/fix_job_proof_dialog.dart';
 import 'package:fixnow_mobile/features/bookings/booking_repository.dart';
 import 'package:fixnow_mobile/features/bookings/fix_job_proof_panel.dart';
 import 'package:fixnow_mobile/features/bookings/job_proof_controller.dart';
+import 'package:fixnow_mobile/features/bookings/job_proof_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -15,6 +16,14 @@ import 'support/accessibility_harness.dart';
 
 const _beforeId = 'photo-before';
 const _afterId = 'photo-after';
+
+final _validTestPng = Uint8List.fromList([
+  137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82,
+  0, 0, 0, 1, 0, 0, 0, 1, 8, 6, 0, 0, 0, 31, 21, 196, 137,
+  0, 0, 0, 10, 73, 68, 65, 84, 120, 156, 99, 0, 1, 0, 0, 5,
+  0, 1, 13, 10, 45, 180, 0, 0, 0, 0, 73, 69, 78, 68, 174, 66,
+  96, 130,
+]);
 
 Map<String, Object?> _photo(String id, JobProofStage stage) => {
   'id': id,
@@ -419,6 +428,12 @@ void main() {
               onPressed: () => JobProofVerificationDialog.show(
                 context,
                 bookingId: 'booking-1',
+                initialProof: JobProof(
+                  bookingId: 'booking-1',
+                  beforePhotoBytes: _validTestPng,
+                  afterPhotoBytes: _validTestPng,
+                  capturedAt: DateTime(2026, 1, 1),
+                ),
                 onUpload: (stage, bytes) async =>
                     'The photo was not uploaded.',
               ),
@@ -430,9 +445,6 @@ void main() {
       await tester.tap(find.text('open'));
       await tester.pumpIdle();
 
-      // Simulate the pro supplying both photos, then submitting.
-      await tester.tap(find.text('Simulate test photos'));
-      await tester.pumpIdle();
       await tester.tap(find.text('Save Proof & Complete Job'));
       await tester.pumpIdle();
 
@@ -454,6 +466,12 @@ void main() {
               onPressed: () => JobProofVerificationDialog.show(
                 context,
                 bookingId: 'booking-1',
+                initialProof: JobProof(
+                  bookingId: 'booking-1',
+                  beforePhotoBytes: _validTestPng,
+                  afterPhotoBytes: _validTestPng,
+                  capturedAt: DateTime(2026, 1, 1),
+                ),
                 onUpload: (stage, bytes) async {
                   uploaded.add(stage);
                   return null;
@@ -465,8 +483,6 @@ void main() {
         ),
       );
       await tester.tap(find.text('open'));
-      await tester.pumpIdle();
-      await tester.tap(find.text('Simulate test photos'));
       await tester.pumpIdle();
       await tester.tap(find.text('Save Proof & Complete Job'));
       await tester.pumpIdle();

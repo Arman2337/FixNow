@@ -29,7 +29,7 @@ export class PushDeviceTokenEntity {
   @JoinColumn({ name: 'user_id' })
   user!: UserEntity;
 
-  @Column({ type: 'enum', enum: PushPlatform })
+  @Column({ type: 'enum', enum: PushPlatform, enumName: 'push_platform' })
   platform!: PushPlatform;
 
   // Stored server-side only. Never returned by any API response.

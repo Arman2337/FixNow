@@ -10,7 +10,12 @@ export const staffRoles = [
 ] as const;
 
 export type StaffRole = (typeof staffRoles)[number];
-export type AdminSession = Readonly<{ userId: string; roles: readonly StaffRole[] }>;
+export type AdminSession = Readonly<{
+  userId: string;
+  email?: string;
+  displayName?: string;
+  roles: readonly StaffRole[];
+}>;
 export type AuthenticationResponse = Readonly<{
   userId: string;
   role: StaffRole;

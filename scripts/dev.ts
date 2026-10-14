@@ -3,7 +3,7 @@ import { spawn, spawnSync, type Subprocess } from "bun";
 const args = process.argv.slice(2);
 const isBackendOnly = args.includes("--backend-only") || args.includes("--no-flutter");
 const isProxyOnly = args.includes("--proxy-only");
-const flutterWebPort = process.env.FLUTTER_WEB_PORT || "51355";
+const flutterWebPort = process.env.FLUTTER_WEB_PORT || "51354";
 
 console.log(`\x1b[36m
   ╔══════════════════════════════════════════════════════════════════╗
@@ -13,6 +13,46 @@ console.log(`\x1b[36m
 \x1b[0m`);
 
 const childProcesses: Subprocess[] = [];
+
+/**
+ * Polls until `port` accepts a TCP connection, or the timeout elapses.
+ * The orchestrator must never announce a URL before the app behind it is
+ * actually reachable — announcing early masks a failed launch as success.
+ */
+async function waitForPort(port: number, timeoutMs: number): Promise<boolean> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    try {
+      const socket = Bun.connect({
+        hostname: "127.0.0.1",
+        port,
+        socket: { data: () => {}, open: (s) => s.end(), error: () => {}, close: () => {} },
+      });
+      socket.end();
+      return true;
+    } catch {
+      await Bun.sleep(500);
+    }
+  }
+  return false;
+}
+
+/**
+ * Tracks a child so an unexpected exit is reported and shuts the stack down
+ * instead of leaving the orchestrator running against a dead service.
+ */
+function trackChild(proc: Subprocess, label: string) {
+  childProcesses.push(proc);
+  proc.exited.then((code, signal, error) => {
+    if (code === 0 || code === null) return;
+    console.error(
+      `\x1b[31m✖ ${label} exited unexpectedly (code ${code ?? "null"}${
+        signal ? `, signal ${signal}` : ""
+      }${error ? `: ${error.message}` : ""}).\x1b[0m`,
+    );
+    cleanup();
+  });
+}
 
 function cleanup() {
   console.log("\n\x1b[33m🛑 Shutting down all FixNow services...\x1b[0m");
@@ -134,7 +174,7 @@ async function start() {
     stdout: "inherit",
     stderr: "inherit",
   });
-  childProcesses.push(proxyProc);
+  trackChild(proxyProc, "Reverse proxy");
 
   if (isProxyOnly) {
     console.log("\n\x1b[32m✔ Running proxy only.\x1b[0m");
@@ -143,7 +183,13 @@ async function start() {
 
   // Helper for cross-platform command execution
   const npmCmd = process.platform === "win32" ? "npm.cmd" : "npm";
-  const flutterCmd = process.platform === "win32" ? "flutter.bat" : "flutter";
+  // `flutter` is a .bat on Windows, which Bun.spawn cannot execute directly —
+  // route it through cmd.exe so the batch file is actually invoked. This is the
+  // same requirement documented in mobile/tool/bisect_font_bump.dart.
+  const flutterCmd =
+    process.platform === "win32"
+      ? ["cmd.exe", "/d", "/s", "/c", "flutter.bat"]
+      : ["flutter"];
 
   // 4. Run database migrations
   console.log("📦 \x1b[1mChecking & running database migrations...\x1b[0m");
@@ -182,20 +228,18 @@ async function start() {
     stderr: "inherit",
     env: { ...process.env, PORT: "3300" },
   });
-  childProcesses.push(backendProc);
+  trackChild(backendProc, "Backend API");
 
-  // 5. Start Flutter Mobile (if not --backend-only)
+  // 6. Start Flutter Mobile (if not --backend-only)
   if (!isBackendOnly) {
     const flutterArgs = ["run"];
     if (hasDevice) {
-      console.log("?? \x1b[1mLaunching Flutter Mobile App on attached device...\x1b[0m");
+      console.log("📱 \x1b[1mLaunching Flutter Mobile App on attached device...\x1b[0m");
       // Explicit even though push now defaults on: it keeps the flag visible
       // and discoverable, and documents how to turn push off.
       flutterArgs.push("--dart-define=PUSH_NOTIFICATIONS_ENABLED=true");
     } else {
-
       console.log("🌐 \x1b[1mLaunching Flutter Web App...\x1b[0m");
-      console.log(`   \x1b[32mOpen http://localhost:${flutterWebPort}\x1b[0m`);
       flutterArgs.push(
         "-d", "chrome",
         "--web-hostname", "localhost",
@@ -205,13 +249,31 @@ async function start() {
     console.log("   \x1b[90mTip: Run with 'bun dev --backend-only' to only run backend + proxy.\x1b[0m\n");
 
     const flutterProc = spawn({
-      cmd: [flutterCmd, ...flutterArgs],
+      cmd: [...flutterCmd, ...flutterArgs],
       cwd: "mobile",
       stdin: "inherit",
       stdout: "inherit",
       stderr: "inherit",
     });
-    childProcesses.push(flutterProc);
+    trackChild(flutterProc, "Flutter app");
+
+    // Announce the URL only once the web server actually answers, so a failed
+    // launch is never reported as a ready application. A device build has no
+    // local port to probe, so there is nothing to wait for.
+    if (!hasDevice) {
+      const port = Number(flutterWebPort);
+      if (await waitForPort(port, 120_000)) {
+        console.log(
+          `   \x1b[32m✔ Flutter is serving — open http://localhost:${port}\x1b[0m\n`,
+        );
+      } else {
+        console.error(
+          `\x1b[31m✖ Flutter did not start listening on port ${port}.\x1b[0m`,
+        );
+        cleanup();
+        return;
+      }
+    }
   } else {
     console.log("\n\x1b[32m✔ FixNow Backend & Proxy running in watch mode. Press Ctrl+C to stop.\x1b[0m\n");
   }

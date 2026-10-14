@@ -32,12 +32,20 @@ export class AdminAuthController {
 
   @Get('session')
   @RequireOwnPermission(PERMISSIONS.adminSessionReadSelf)
-  session(@Req() request: AuthorizedRequest) {
+  async session(@Req() request: AuthorizedRequest) {
     const principal = request.authorizationPrincipal!;
     // SEC-002: the resource *is* the caller. The guard proved the session and
     // role rows; there is no separate owner column to compare, so the route
     // says so out loud rather than leaving the obligation outstanding.
     assertNoResourceToProve(principal);
-    return { userId: principal.userId, roles: principal.roles };
+    const details = await this.authService.getUserSessionDetails(
+      principal.userId,
+    );
+    return {
+      userId: principal.userId,
+      roles: principal.roles,
+      email: details.email,
+      displayName: details.displayName,
+    };
   }
 }

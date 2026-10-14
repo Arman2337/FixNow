@@ -466,8 +466,8 @@ class _AddEditAddressModalSheetState extends State<AddEditAddressModalSheet> {
     _flatController = TextEditingController(text: a?.flatBuilding ?? '');
     _streetController = TextEditingController(text: a?.streetArea ?? '');
     _landmarkController = TextEditingController(text: a?.landmark ?? '');
-    _cityController = TextEditingController(text: a?.city ?? 'Bengaluru');
-    _pincodeController = TextEditingController(text: a?.postalCode ?? '560034');
+    _cityController = TextEditingController(text: a?.city ?? '');
+    _pincodeController = TextEditingController(text: a?.postalCode ?? '');
     _isDefault = a?.isDefault ?? false;
     _latitude = a?.latitude;
     _longitude = a?.longitude;
@@ -741,10 +741,7 @@ class _AddEditAddressModalSheetState extends State<AddEditAddressModalSheet> {
                             color: AppColors.textPrimary,
                             fontSize: 13,
                           ),
-                          decoration: _inputDecoration('City *'),
-                          validator: (v) => (v == null || v.trim().isEmpty)
-                              ? 'Enter city'
-                              : null,
+                          decoration: _inputDecoration('City (Optional)'),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -755,8 +752,8 @@ class _AddEditAddressModalSheetState extends State<AddEditAddressModalSheet> {
                             color: AppColors.textPrimary,
                             fontSize: 13,
                           ),
-                          decoration: _inputDecoration('Pincode *'),
-                          validator: (v) => (v == null || v.trim().length < 6)
+                          decoration: _inputDecoration('Pincode (Optional)'),
+                          validator: (v) => (v != null && v.trim().isNotEmpty && v.trim().length < 6)
                               ? '6-digit pincode'
                               : null,
                         ),

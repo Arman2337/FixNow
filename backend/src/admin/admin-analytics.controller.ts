@@ -8,8 +8,12 @@ export class AdminAnalyticsController {
   constructor(private readonly analytics: AdminAnalyticsService) {}
 
   @Get()
-  @RequirePermission(PERMISSIONS.adminBookingsRead)
-  getOperationalAnalytics() {
+  @RequirePermission(PERMISSIONS.adminAnalyticsRead)
+  getAnalytics() {
     return this.analytics.getOperationalAnalytics();
+  }
+
+  getOperationalAnalytics() {
+    return this.getAnalytics();
   }
 }

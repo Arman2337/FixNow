@@ -1126,7 +1126,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
           ? cat.pricing!.displayLabel
           : 'On inspection';
       final ratingStr = cat.rating != null
-          ? '${cat.rating!.toStringAsFixed(1)} ★ (${cat.reviewCount})'
+          ? formatRatingWithReviews(cat.rating!, cat.reviewCount)
           : 'Verified Pro';
       return (
         '${cat.name} Package',
@@ -1677,7 +1677,7 @@ MaterialPageRoute(
                               TileLayer(
                                 urlTemplate:
                                     'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                                userAgentPackageName: 'com.stitch.fixnow',
+                                userAgentPackageName: 'com.fixnow.app',
                               ),
                             ],
                           ),
@@ -2042,47 +2042,53 @@ MaterialPageRoute(
           ),
           child: Column(
             children: [
-              Row(
-                children: [
-                  const Icon(
-                    Icons.phone_rounded,
-                    color: AppColors.primary,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 12),
-                  const Text(
-                    '+91 1800-FIX-NOW',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
+              // Only shown when a real, build-configured hotline exists. The
+              // previous literal was a non-dialable placeholder, so on an
+              // unconfigured build we say so plainly instead of publishing a
+              // number that would not connect anyone.
+              if (AppEnvironment.emergencyHotline.isNotEmpty)
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.phone_rounded,
+                      color: AppColors.primary,
+                      size: 20,
                     ),
-                  ),
-                  const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.primarySoft,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: const Text(
-                      'Call Now',
-                      style: TextStyle(
-                        color: AppColors.primary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
+                    const SizedBox(width: 12),
+                    Text(
+                      AppEnvironment.emergencyHotline,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
                       ),
                     ),
-                  ),
-                ],
-              ),
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 12),
-                child: Divider(height: 1, color: AppColors.border),
-              ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primarySoft,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Text(
+                        'Call Now',
+                        style: TextStyle(
+                          color: AppColors.primary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              if (AppEnvironment.emergencyHotline.isNotEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Divider(height: 1, color: AppColors.border),
+                ),
               Row(
                 children: [
                   const Icon(

@@ -19,6 +19,23 @@ export class RatingsAdminController {
     private readonly ratings: RatingsService,
     private readonly photos: ReviewPhotosService,
   ) {}
+  /** FN-110 / GAP-04: Specific subpath route must precede parameterised :id route to prevent Express shadowing. */
+  @Patch('photos/:photoId/moderation')
+  @RequirePermission(PERMISSIONS.reviewModerate)
+  async moderatePhoto(
+    @Param('photoId') photoId: string,
+    @Req() req: AuthorizedRequest,
+    @Body() dto: ModeratePhotoDto,
+  ) {
+    const photo = await this.photos.moderate(
+      photoId,
+      req.authorizationPrincipal!.userId,
+      dto.status,
+      dto.reason,
+    );
+    return { photo: this.photos.present(photo) };
+  }
+
   @Patch(':id/moderation')
   @RequirePermission(PERMISSIONS.reviewModerate)
   async moderate(
@@ -36,22 +53,5 @@ export class RatingsAdminController {
         ),
       ),
     };
-  }
-
-  /** FN-110: permission-gated photo approve/reject with audit. */
-  @Patch('photos/:photoId/moderation')
-  @RequirePermission(PERMISSIONS.reviewModerate)
-  async moderatePhoto(
-    @Param('photoId') photoId: string,
-    @Req() req: AuthorizedRequest,
-    @Body() dto: ModeratePhotoDto,
-  ) {
-    const photo = await this.photos.moderate(
-      photoId,
-      req.authorizationPrincipal!.userId,
-      dto.status,
-      dto.reason,
-    );
-    return { photo: this.photos.present(photo) };
   }
 }

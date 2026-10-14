@@ -1,5 +1,6 @@
 import {
   Controller,
+  Delete,
   ForbiddenException,
   Get,
   NotFoundException,
@@ -86,6 +87,48 @@ export class InboxController {
     assertOwnedResource(principal, existing.userId, 'inAppNotification.userId');
 
     await this.notificationRepo.update({ id, userId }, { readAt: new Date() });
+    return { success: true };
+  }
+
+  @Delete()
+  @RequireOwnPermission(PERMISSIONS.notificationInboxReadSelf)
+  async clearAll(
+    @Param('userId') userIdParam: string,
+    @Req() req: AuthorizedRequest,
+  ) {
+    const principal = req.authorizationPrincipal!;
+    const userId = this.resolveUserId(userIdParam, req);
+
+    if (!userId) {
+      return { success: false, deletedCount: 0 };
+    }
+
+    assertOwnedResource(principal, userId, 'inAppNotification.userId');
+    const result = await this.notificationRepo.delete({ userId });
+    return { success: true, deletedCount: result.affected ?? 0 };
+  }
+
+  @Delete(':id')
+  @RequireOwnPermission(PERMISSIONS.notificationInboxReadSelf)
+  async deleteNotification(
+    @Param('userId') userIdParam: string,
+    @Param('id') id: string,
+    @Req() req: AuthorizedRequest,
+  ) {
+    const principal = req.authorizationPrincipal!;
+    const userId = this.resolveUserId(userIdParam, req);
+
+    if (!userId) {
+      return { success: false };
+    }
+
+    const existing = await this.notificationRepo.findOneBy({ id, userId });
+    if (!existing) {
+      throw new NotFoundException(`Notification with ID ${id} not found`);
+    }
+    assertOwnedResource(principal, existing.userId, 'inAppNotification.userId');
+
+    await this.notificationRepo.delete({ id, userId });
     return { success: true };
   }
 

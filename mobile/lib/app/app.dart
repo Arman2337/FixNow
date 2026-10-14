@@ -72,6 +72,7 @@ import 'package:fixnow_mobile/features/realtime/realtime_client.dart';
 import 'package:fixnow_mobile/notifications/push_api.dart';
 import 'package:fixnow_mobile/notifications/push_enrollment.dart';
 import 'package:fixnow_mobile/features/chat/chat_repository.dart';
+import 'package:fixnow_mobile/features/call/call_repository.dart';
 import 'package:fixnow_mobile/features/call/call_controller.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking_controller.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking_screen.dart';
@@ -133,6 +134,8 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
   late final PushEnrollmentController _push;
   late final NotificationController _notifications;
   late final ChatRepository _chatRepository;
+  late final CallRepository _callRepository;
+  late final CallController _callController;
   late final SavedAddressRepository _savedAddresses;
   final Map<String, BookingTrackingController> _trackingControllers = {};
   RealtimeClient? _sharedRealtime;
@@ -418,6 +421,14 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
       api: api,
       accessToken: _auth.validAccessToken,
     );
+    _callRepository = HttpCallRepository(
+      api: api,
+      accessToken: _auth.validAccessToken,
+    );
+    _callController = CallController(
+      repository: _callRepository,
+      realtimeClient: _sharedRealtime,
+    );
     _auth.restore();
     _auth.addListener(_handleAuthChange);
     unawaited(_location.check());
@@ -481,6 +492,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
     _provider.dispose();
     _complaints.dispose();
     _push.dispose();
+    _callController.dispose();
     _savedAddresses.dispose();
     for (final controller in _trackingControllers.values) {
       controller.dispose();
@@ -736,6 +748,46 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
             // the app deciding whether it has a session at all, and there is no
             // shape to reserve because nothing has been decided yet. A skeleton
             // here would imply a bookings list that may never be shown.
+          }
+          if (_auth.status == AuthStatus.offline && _auth.session != null) {
+            return Scaffold(
+              body: SafeArea(
+                child: Column(
+                  children: [
+                    FixOfflineBanner(
+                      message: _auth.errorMessage ??
+                          'You appear to be offline. Please check your connection.',
+                    ),
+                    Expanded(
+                      child: Center(
+                        child: FixErrorState(
+                          title: 'Connection Offline',
+                          message:
+                              'Unable to verify your session while offline. Check your internet connection and try again.',
+                          retryLabel: 'Retry Connection',
+                          onRetry: () => _auth.restore(),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+          if (_auth.status == AuthStatus.failure && _auth.session != null) {
+            return Scaffold(
+              body: SafeArea(
+                child: Center(
+                  child: FixErrorState(
+                    title: 'Authentication Error',
+                    message: _auth.errorMessage ??
+                        'Something went wrong restoring your session.',
+                    retryLabel: 'Retry',
+                    onRetry: () => _auth.restore(),
+                  ),
+                ),
+              ),
+            );
           }
           if (_auth.status == AuthStatus.verificationRequired) {
             return VerificationScreen(controller: _auth);
@@ -1253,6 +1305,17 @@ booking: currentBooking,
                 ),
               ),
             ),
+            onCallPressed: (context, id) async {
+              final session = await _callController.startCall(
+                id,
+                fallbackPhoneNumber: currentBooking.providerPhone,
+              );
+              if (session != null && context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Audio call connected (ID: ${session.id})')),
+                );
+              }
+            },
           );
         }
         final tracking = _trackingController(currentBooking.id);
@@ -1272,12 +1335,14 @@ booking: currentBooking,
             3,
             destinationCount: 4,
           ),
-          onCallPressed: (context, id) {
-            if (currentBooking.providerPhone != null) {
-              const CallController().launchCall(currentBooking.providerPhone!);
-            } else {
+          onCallPressed: (context, id) async {
+            final session = await _callController.startCall(
+              id,
+              fallbackPhoneNumber: currentBooking.providerPhone,
+            );
+            if (session != null && context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Phone number unavailable')),
+                SnackBar(content: Text('Audio call connected (ID: ${session.id})')),
               );
             }
           },

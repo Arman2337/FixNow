@@ -6,24 +6,41 @@ import { env } from "@/config/env";
 import { requireManagementResult } from "@/features/management-api";
 import { listClaims } from "@/features/guarantees/api";
 import { StatusBadge } from "@/features/status-badge";
+import type { StaffRole } from "@/auth/types";
 
 const shortId = (id: string) => id.replaceAll("-", "").slice(0, 8).toUpperCase();
 
 export default async function GuaranteesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; page?: string }>;
 }) {
   const session = await getSession();
   if (session.state !== "authenticated") redirect("/login?reason=expired");
+
+  const allowedRoles: readonly StaffRole[] = ["support_agent", "trust_safety_reviewer", "operations_administrator", "auditor"];
+  if (!session.session.roles.some((r) => allowedRoles.includes(r))) {
+    redirect("/unauthorized");
+  }
   
   const params = await searchParams;
   const claims = await requireManagementResult(
     await listClaims(params.status),
   );
 
+  const pageNumber = Math.max(1, parseInt(params.page ?? "1", 10));
+  const pageSize = 10;
+  const totalPages = Math.max(1, Math.ceil(claims.length / pageSize));
+  const pagedClaims = claims.slice((pageNumber - 1) * pageSize, pageNumber * pageSize);
+
   return (
-    <AdminShell environment={env.appEnvironment} roles={session.session.roles} current="Guarantee Claims">
+    <AdminShell
+      environment={env.appEnvironment}
+      roles={session.session.roles}
+      email={session.session.email}
+      displayName={session.session.displayName}
+      current="Guarantee Claims"
+    >
       <div className="flex flex-col w-full">
         <div className="p-space-lg lg:p-margin-desktop flex flex-col gap-space-lg">
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-space-md">
@@ -34,10 +51,14 @@ export default async function GuaranteesPage({
               <h1 className="text-display-sm font-bold mt-2">Manage Claims</h1>
               <p className="text-body-md text-outline">Review and process 30-day guarantee claims.</p>
             </div>
+            <div className="rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-2.5 text-sm text-on-surface">
+              <span className="block text-xs uppercase tracking-wider text-on-surface-variant">Claims Count</span>
+              <strong>{claims.length} claim{claims.length === 1 ? "" : "s"}</strong>
+            </div>
           </div>
 
           <div className="flex flex-col gap-space-sm border border-outline rounded-lg overflow-hidden bg-surface">
-            {claims.map((claim) => (
+            {pagedClaims.map((claim) => (
               <Link
                 key={claim.id}
                 href={`/guarantees/${claim.id}`}
@@ -72,6 +93,35 @@ export default async function GuaranteesPage({
               </div>
             )}
           </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between border-t border-outline-variant/20 pt-4">
+              <div>
+                {pageNumber > 1 ? (
+                  <Link
+                    href={{ pathname: "/guarantees", query: { status: params.status, page: String(pageNumber - 1) } }}
+                    className="px-4 py-2 rounded-xl border border-outline-variant/40 bg-surface-container-low text-on-surface font-label-md text-sm font-semibold hover:bg-surface-container transition-colors inline-flex items-center gap-1"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">arrow_back</span>
+                    <span>Previous page</span>
+                  </Link>
+                ) : <div />}
+              </div>
+              <span className="font-body-sm text-sm text-on-surface-variant">Page {pageNumber} of {totalPages}</span>
+              <div>
+                {pageNumber < totalPages ? (
+                  <Link
+                    href={{ pathname: "/guarantees", query: { status: params.status, page: String(pageNumber + 1) } }}
+                    className="px-4 py-2 rounded-xl bg-primary text-on-primary font-label-md text-sm font-semibold hover:bg-primary/90 transition-colors inline-flex items-center gap-1"
+                  >
+                    <span>Next page</span>
+                    <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                  </Link>
+                ) : <div />}
+              </div>
+            </div>
+          )}
+
         </div>
       </div>
     </AdminShell>

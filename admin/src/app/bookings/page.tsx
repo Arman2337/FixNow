@@ -6,6 +6,7 @@ import { env } from "@/config/env";
 import { requireManagementResult } from "@/features/management-api";
 import { listBookings } from "@/features/operations/api";
 import { StatusBadge } from "@/features/status-badge";
+import type { StaffRole } from "@/auth/types";
 
 const statuses = ["", "REQUESTED", "ASSIGNED", "EN_ROUTE", "IN_PROGRESS", "COMPLETED", "CANCELLED"];
 
@@ -21,14 +22,22 @@ export default async function BookingsPage({
 }) {
   const session = await getSession();
   if (session.state !== "authenticated") redirect("/login?reason=expired");
+  const allowedRoles: readonly StaffRole[] = ["support_agent", "trust_safety_reviewer", "operations_administrator", "auditor"];
+  if (!session.session.roles.some((r) => allowedRoles.includes(r))) {
+    redirect("/unauthorized");
+  }
   const params = await searchParams;
   const page = await requireManagementResult(await listBookings(params.search, params.status, params.cursor));
-  const emergencyCount = page.items.filter(
-    (booking) => booking.serviceCategoryId.toLowerCase().includes("emergency") || booking.description.toLowerCase().includes("emergency"),
-  ).length;
+  const emergencyCount = page.items.filter((booking) => booking.isEmergency === true).length;
 
   return (
-    <AdminShell environment={env.appEnvironment} roles={session.session.roles} current="Live Dispatches & Radar">
+    <AdminShell
+      environment={env.appEnvironment}
+      roles={session.session.roles}
+      email={session.session.email}
+      displayName={session.session.displayName}
+      current="Live Dispatches & Radar"
+    >
       <div className="flex w-full flex-col">
         <div className="flex flex-col gap-space-lg p-space-lg lg:p-margin-desktop">
           <header className="flex flex-col justify-between gap-3 md:flex-row md:items-end">
@@ -95,7 +104,9 @@ export default async function BookingsPage({
                   <tbody className="divide-y divide-outline-variant/20">
                     {page.items.map((booking) => (
                       <tr key={booking.id} className="hover:bg-surface-container/50">
-                        <td className="px-4 py-3 font-mono text-xs font-semibold text-on-surface">{booking.id}</td>
+                        <td className="px-4 py-3 font-mono text-xs font-semibold text-primary hover:underline">
+                          <Link href={`/bookings/${booking.id}`}>{booking.id}</Link>
+                        </td>
                         <td className="max-w-56 px-4 py-3"><span className="block truncate text-on-surface">{booking.serviceCategoryId}</span><span className="block max-w-56 truncate text-xs text-on-surface-variant">{booking.description}</span></td>
                         <td className="px-4 py-3 font-mono text-xs text-on-surface-variant">{booking.customerId}</td>
                         <td className="px-4 py-3 font-mono text-xs text-on-surface-variant">{booking.providerId ?? "Unassigned"}</td>
@@ -114,6 +125,21 @@ export default async function BookingsPage({
                 <p className="m-0 text-sm text-on-surface-variant">Clear the filters or choose another status.</p>
               </div>
             )}
+            {page.nextCursor ? (
+              <div className="flex justify-center border-t border-outline-variant/30 p-4">
+                <Link
+                  href={`/bookings?${new URLSearchParams({
+                    ...(params.search ? { search: params.search } : {}),
+                    ...(params.status ? { status: params.status } : {}),
+                    cursor: page.nextCursor,
+                  }).toString()}`}
+                  className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-on-primary hover:bg-primary/90"
+                >
+                  <span>Load more</span>
+                  <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+                </Link>
+              </div>
+            ) : null}
           </section>
         </div>
       </div>

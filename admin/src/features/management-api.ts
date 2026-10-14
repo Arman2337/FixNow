@@ -13,6 +13,7 @@ export async function managementRequest<T>(path: string, init: RequestInit = {})
       headers: { authorization: `Bearer ${token}`, "content-type": "application/json", ...init.headers },
     });
     if (!response.ok) return { ok: false, status: response.status };
+    if (response.status === 204) return { ok: true, value: undefined as T };
     return { ok: true, value: await response.json() as T };
   } catch {
     return { ok: false, status: 503 };

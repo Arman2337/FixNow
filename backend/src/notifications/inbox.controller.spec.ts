@@ -28,6 +28,9 @@ describe('InboxController', () => {
     update: jest
       .fn<Promise<{ affected: number }>, [unknown, { readAt: Date }]>()
       .mockResolvedValue({ affected: 1 }),
+    delete: jest
+      .fn<Promise<{ affected: number }>, [unknown]>()
+      .mockResolvedValue({ affected: 1 }),
   };
   const request = {
     authorizationPrincipal: { userId },
@@ -129,6 +132,32 @@ describe('InboxController', () => {
         request,
       ),
     ).rejects.toBeInstanceOf(ForbiddenException);
+  });
+
+  it('deletes all notifications owned by the authenticated caller', async () => {
+    const result = await controller.clearAll('me', request);
+    expect(result).toEqual({ success: true, deletedCount: 1 });
+    expect(repository.delete).toHaveBeenCalledWith({ userId });
+  });
+
+  it('deletes a single notification owned by the authenticated caller', async () => {
+    const result = await controller.deleteNotification(
+      'me',
+      'notification-1',
+      request,
+    );
+    expect(result).toEqual({ success: true });
+    expect(repository.delete).toHaveBeenCalledWith({
+      id: 'notification-1',
+      userId,
+    });
+  });
+
+  it('throws 404 when deleting a non-existent notification', async () => {
+    repository.findOneBy.mockResolvedValue(null);
+    await expect(
+      controller.deleteNotification('me', 'notification-x', request),
+    ).rejects.toBeInstanceOf(NotFoundException);
   });
 });
 

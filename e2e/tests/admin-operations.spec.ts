@@ -145,7 +145,7 @@ test.describe('admin operations modules', () => {
    * to `admin/src/app/trust/page.tsx` - at which point it should be rewritten as
    * the positive test it wants to be.
    */
-  test.fixme(
+  test(
     'a support agent must not be able to open the trust module by URL',
     async ({ page, context }) => {
       await signIn(context, 'e2e-support');

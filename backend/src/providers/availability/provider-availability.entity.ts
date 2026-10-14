@@ -6,6 +6,7 @@ import {
   OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
+  VersionColumn,
 } from 'typeorm';
 import { UserEntity } from '../../users/user.entity';
 import {
@@ -45,7 +46,7 @@ export class ProviderAvailabilityEntity {
   @Column({ name: 'status_expires_at', type: 'timestamptz', nullable: true })
   statusExpiresAt!: Date | null;
 
-  @Column({ type: 'integer', default: 0 })
+  @VersionColumn()
   version!: number;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })

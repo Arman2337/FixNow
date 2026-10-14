@@ -95,18 +95,7 @@ export function LoginForm({ expired }: { expired?: boolean }) {
             className="w-full h-12 rounded-xl bg-primary text-on-primary font-label-md text-label-md flex items-center justify-center gap-2 shadow-md hover:bg-primary-container active:scale-[0.99] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
           >
             <span className="material-symbols-outlined text-[20px]">lock_open</span>
-            <span>{pending ? "Authenticating..." : "Authenticate & Access Console"}</span>
           </button>
-          <button
-            type="button"
-            disabled
-            aria-describedby="sso-unavailable"
-            className="w-full h-12 rounded-xl bg-surface-container text-on-surface font-label-md text-label-md flex items-center justify-center gap-2 opacity-60 cursor-not-allowed"
-          >
-            <span className="material-symbols-outlined text-[20px] text-secondary">domain</span>
-            <span>Corporate SSO unavailable</span>
-          </button>
-          <p id="sso-unavailable" className="m-0 text-center text-xs text-on-surface-variant">Ask an administrator to configure an approved SSO provider.</p>
         </div>
       </form>
     </>

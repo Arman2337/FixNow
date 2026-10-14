@@ -1,5 +1,14 @@
-import { Body, Controller, Get, Param, Patch, Req } from '@nestjs/common';
-import { IsEnum } from 'class-validator';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Query,
+  Req,
+} from '@nestjs/common';
+import { Type } from 'class-transformer';
+import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 import { TrustSignalStatus } from '../../../shared/trust.types';
 import { RequirePermission } from '../common/authorization/authorization.decorators';
 import type { AuthorizedRequest } from '../common/authorization/authorization.guard';
@@ -8,6 +17,12 @@ import { TrustService } from './trust.service';
 
 class ReviewSignalDto {
   @IsEnum(TrustSignalStatus) status: TrustSignalStatus;
+}
+
+export class TrustSignalsPageQueryDto {
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(100) limit = 20;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(0) offset = 0;
+  @IsOptional() @IsString() cursor?: string;
 }
 
 @Controller('admin/trust')
@@ -25,8 +40,8 @@ export class TrustAdminController {
   }
   @Get('signals')
   @RequirePermission(PERMISSIONS.trustSignalsRead)
-  signals() {
-    return this.trust.listSignals();
+  signals(@Query() query: TrustSignalsPageQueryDto) {
+    return this.trust.listSignals(query.limit, query.offset);
   }
   @Patch('signals/:id')
   @RequirePermission(PERMISSIONS.trustSignalsUpdate)

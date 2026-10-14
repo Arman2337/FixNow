@@ -451,6 +451,38 @@ void main() {
   );
 
   testWidgets(
+    'ProviderActiveJobCockpitScreen dismissing Complete Service dialog does not advance job (BUG-MOB-01)',
+    (tester) async {
+      final job = createJob('IN_PROGRESS');
+      controller.jobs = [job];
+
+      await tester.pumpWidget(
+        wrapWidget(
+          ProviderActiveJobCockpitScreen(job: job, controller: controller),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(
+        find.byKey(const Key('cockpit_complete_service_button')),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('cockpit_complete_service_button')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Add Job Photo Proof?'), findsOneWidget);
+
+      // Dismiss dialog by choosing Add Photos (or closing)
+      await tester.tap(find.text('Add Photos'));
+      await tester.pumpAndSettle();
+
+      // Verify advanceJob was NOT called
+      expect(repository.lastUpdatedStatus, isNull);
+    },
+  );
+
+  testWidgets(
     'ProviderActiveJobCockpitScreen for COMPLETED job shows celebration summary',
     (tester) async {
       final job = createJob('COMPLETED');

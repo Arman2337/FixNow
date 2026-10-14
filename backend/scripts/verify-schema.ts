@@ -47,6 +47,15 @@ class Gate {
   }
 }
 
+/**
+ * Migration sequence documentation (GAP-08 / GAP-09):
+ * Note on timestamp collision: 1786521300000-BookingLineItems.ts and
+ * 1786521300000-ComplaintsSchema.ts intentionally share the timestamp
+ * 1786521300000 across existing deployed database migrations tables.
+ * Lexicographical file ordering in TypeORM ensures BookingLineItems runs first,
+ * followed by ComplaintsSchema, maintaining deterministic schema state.
+ */
+
 /** Constraints and indexes that a migration dropped and never restored. */
 const REQUIRED_BOOKINGS_FKS = [
   'FK_bookings_customer',

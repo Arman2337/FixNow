@@ -70,26 +70,17 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
       ),
       title: Row(
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadius.small),
-            child: Image.network(
-              'https://lh3.googleusercontent.com/aida-public/AB6AXuD5p30JJ4xla5t1sty9n4wk388rQJ8NTT4EVcQxwUkSFFNIabrf8QeAkkMc_rR4nuu7D6NP0MuNneeDoe95jDDpkzWZuV_F6vdYLId2wTwZIKy2HNSuIHxxja5Itw6TGA59DzYezKUsdbqYWMwbL2MbodCGE8XidOaalteI9sNNNKeq_99u5vxzR83Qhaz4mgw7LMydMp-BCoX3lJLI40C5cAkXkr6A8wPRILlCbD06LufFnfkxVtitHj9urdIYeJ6iuw',
-              width: 32,
-              height: 32,
-              fit: BoxFit.contain,
-              errorBuilder: (_, _, _) => Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: AppColors.primaryContainer,
-                  borderRadius: BorderRadius.circular(AppRadius.small),
-                ),
-                child: const Icon(
-                  Icons.navigation_rounded,
-                  size: 18,
-                  color: AppColors.primary,
-                ),
-              ),
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: AppColors.primaryContainer,
+              borderRadius: BorderRadius.circular(AppRadius.small),
+            ),
+            child: const Icon(
+              Icons.navigation_rounded,
+              size: 18,
+              color: AppColors.primary,
             ),
           ),
           const SizedBox(width: 8),
@@ -133,14 +124,10 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
                 )
               : IconButton(
                   tooltip: 'Open profile',
-                  icon: CircleAvatar(
+                  icon: const CircleAvatar(
                     radius: 14,
                     backgroundColor: AppColors.primarySoft,
-                    backgroundImage: const NetworkImage(
-                      'https://lh3.googleusercontent.com/aida-public/AB6AXuC0fmQVzMF5Rs9tsmYYciE22juYHedjg4xdlfgpeJPLo_c1OH5vKW5FLwDdjmHCgNS-Zm04HM19nUNHjXKazC-ERm-09PmmZ0t9UWKgl0gtW4zPyDcckAwqOOpRtUJdKiGmku0L4h6pmM0GiXa759mhV3h7fANwBjZo0KlBPO2SgZkWyhJxMDMSi3gO97TQEsINn0kH5QyO1t3odNW--r6DJcOlfWCxmP59GEpDHwjKHWxZsj55b2Sa',
-                    ),
-                    onBackgroundImageError: (_, _) {},
-                    child: const Icon(
+                    child: Icon(
                       Icons.person_rounded,
                       size: 16,
                       color: AppColors.primary,
@@ -354,25 +341,22 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
             children: [
               Stack(
                 children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(AppRadius.medium),
-                    child: Image.network(
-                      'https://lh3.googleusercontent.com/aida-public/AB6AXuC0fmQVzMF5Rs9tsmYYciE22juYHedjg4xdlfgpeJPLo_c1OH5vKW5FLwDdjmHCgNS-Zm04HM19nUNHjXKazC-ERm-09PmmZ0t9UWKgl0gtW4zPyDcckAwqOOpRtUJdKiGmku0L4h6pmM0GiXa759mhV3h7fANwBjZo0KlBPO2SgZkWyhJxMDMSi3gO97TQEsINn0kH5QyO1t3odNW--r6DJcOlfWCxmP59GEpDHwjKHWxZsj55b2Sa',
-                      width: 64,
-                      height: 64,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => Container(
-                        width: 64,
-                        height: 64,
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryContainer,
-                          borderRadius: BorderRadius.circular(AppRadius.medium),
-                        ),
-                        child: const Icon(
-                          Icons.person_rounded,
-                          size: 36,
-                          color: AppColors.primary,
-                        ),
+                  Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryContainer,
+                      borderRadius: BorderRadius.circular(AppRadius.medium),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      providerFirstName.isNotEmpty
+                          ? providerFirstName[0].toUpperCase()
+                          : 'T',
+                      style: const TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primary,
                       ),
                     ),
                   ),
@@ -1274,11 +1258,6 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
   void _startCall(BuildContext context) {
     final bookingId =
         widget.controller.tracking?.bookingId ?? widget.controller.bookingId;
-
-    if (widget.onCallPressed != null) {
-      widget.onCallPressed!(context, bookingId);
-      return;
-    }
 
     if (widget.onCallPressed != null) {
       widget.onCallPressed!(context, bookingId);

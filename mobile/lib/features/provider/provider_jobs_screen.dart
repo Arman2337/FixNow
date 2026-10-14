@@ -62,7 +62,23 @@ class _ProviderJobsScreenState extends State<ProviderJobsScreen> {
           .where((j) => {'COMPLETED', 'CANCELLED'}.contains(j.status))
           .toList();
 
-      final currentJobs = _showHistory ? historyJobs : assignedJobs;
+      final now = DateTime.now();
+      final selectedDate = DateTime(now.year, now.month, now.day).add(Duration(days: _selectedDayIndex));
+
+      bool isJobOnDate(CustomerBooking j, DateTime date) {
+        final jobDate = j.scheduledAt ?? (j.createdAt);
+        if (j.scheduledAt == null && _selectedDayIndex == 0) {
+          return true;
+        }
+        return jobDate.year == date.year &&
+            jobDate.month == date.month &&
+            jobDate.day == date.day;
+      }
+
+      final filteredAssigned = assignedJobs.where((j) => isJobOnDate(j, selectedDate)).toList();
+      final filteredHistory = historyJobs.where((j) => isJobOnDate(j, selectedDate)).toList();
+
+      final currentJobs = _showHistory ? filteredHistory : filteredAssigned;
 
       return SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.pagePadding),
@@ -78,11 +94,11 @@ class _ProviderJobsScreenState extends State<ProviderJobsScreen> {
             const SizedBox(height: AppSpacing.md),
 
             // Horizontal Date Strip with Job Density Indicators
-            _buildDateStrip(assignedJobs.length),
+            _buildDateStrip(assignedJobs),
             const SizedBox(height: AppSpacing.md),
 
             // Tabbed Switcher: Assigned Jobs vs Completed History
-            _buildTabSwitcher(assignedJobs.length, historyJobs.length),
+            _buildTabSwitcher(filteredAssigned.length, filteredHistory.length),
             const SizedBox(height: AppSpacing.md),
 
             // Working Radius Shortcut
@@ -121,9 +137,9 @@ class _ProviderJobsScreenState extends State<ProviderJobsScreen> {
                 ),
               )
             else if (_showHistory) ...[
-              _buildHistorySummaryPill(historyJobs),
+              _buildHistorySummaryPill(filteredHistory),
               const SizedBox(height: AppSpacing.md),
-              ...historyJobs.map(
+              ...filteredHistory.map(
                 (job) =>
                     _HistoryJobCard(
         job: job,
@@ -134,13 +150,13 @@ class _ProviderJobsScreenState extends State<ProviderJobsScreen> {
             ] else ...[
               // Assigned Jobs: Top Urgent Next Job Card first
               _TopUrgentJobCard(
-job: assignedJobs.first,
+job: filteredAssigned.first,
                   controller: widget.controller,
                   chatRepository: widget.chatRepository,
                   jobProof: widget.controller.jobProof,
                 ),
               // Subsequent upcoming jobs
-              if (assignedJobs.length > 1) ...[
+              if (filteredAssigned.length > 1) ...[
                 const SizedBox(height: AppSpacing.md),
                 const Text(
                   'Upcoming Dispatches',
@@ -151,7 +167,7 @@ job: assignedJobs.first,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.sm),
-                ...assignedJobs
+                ...filteredAssigned
                     .skip(1)
                     .map(
                       (job) => _UpcomingJobCard(
@@ -394,9 +410,10 @@ job: assignedJobs.first,
     );
   }
 
-  Widget _buildDateStrip(int activeJobCount) {
+  Widget _buildDateStrip(List<CustomerBooking> activeJobs) {
     final now = DateTime.now();
-    final days = List.generate(5, (i) => now.add(Duration(days: i)));
+    final today = DateTime(now.year, now.month, now.day);
+    final days = List.generate(7, (i) => today.add(Duration(days: i)));
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -410,6 +427,14 @@ job: assignedJobs.first,
               : index == 1
               ? 'TOM'
               : _weekdayShort(date.weekday);
+
+          final dayJobCount = activeJobs.where((j) {
+            final jobDate = j.scheduledAt ?? (j.createdAt);
+            if (j.scheduledAt == null && index == 0) return true;
+            return jobDate.year == date.year &&
+                jobDate.month == date.month &&
+                jobDate.day == date.day;
+          }).length;
 
           return Padding(
             padding: EdgeInsets.only(right: index < days.length - 1 ? 8 : 0),
@@ -468,12 +493,12 @@ job: assignedJobs.first,
                               shape: BoxShape.circle,
                               color: isSelected
                                   ? AppColors.primaryFixed
-                                  : (index == 0 && activeJobCount > 0)
+                                  : (dayJobCount > 0)
                                   ? AppColors.primary
                                   : AppColors.borderStrong,
                             ),
                           ),
-                          if (index == 0 && activeJobCount > 1) ...[
+                          if (dayJobCount > 1) ...[
                             const SizedBox(width: 3),
                             Container(
                               width: 4,
@@ -1260,7 +1285,7 @@ if (job.status == 'IN_PROGRESS') {
                           variant: FixButtonVariant.secondary,
                           onPressed: () {
                             if (job.customerPhone != null) {
-                              const CallController().launchCall(
+                              CallController().launchCall(
                                 job.customerPhone!,
                               );
                             } else {

@@ -406,61 +406,104 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
           const SizedBox(height: AppSpacing.sm),
           const _SavedAddressesSection(),
           // Payment Methods & FastPay Card
-          const SizedBox(height: AppSpacing.sm),
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            decoration: BoxDecoration(
-              color: AppColors.surfaceContainerLowest,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: AppColors.outline.withValues(alpha: 0.12),
-              ),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceContainer,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(
-                    Icons.credit_card_rounded,
-                    color: AppColors.primary,
-                    size: 22,
-                  ),
+          InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () {
+              showModalBottomSheet(
+                context: context,
+                backgroundColor: AppColors.surfaceContainerLowest,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
                 ),
-                const SizedBox(width: AppSpacing.sm),
-                const Expanded(
+                builder: (ctx) => Padding(
+                  padding: const EdgeInsets.all(AppSpacing.pagePadding),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Text(
-                        'Payment Methods & Settlement',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
-                        ),
+                      Row(
+                        children: [
+                          const Icon(Icons.payments_rounded, color: AppColors.primary, size: 24),
+                          const SizedBox(width: AppSpacing.sm),
+                          Text(
+                            'Payment Methods & Settlement',
+                            style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        ],
                       ),
-                      SizedBox(height: 2),
-                      Text(
-                        'Pay upon service completion (Cash / UPI)',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textSecondary,
-                        ),
+                      const SizedBox(height: AppSpacing.md),
+                      const Text(
+                        'FixNow operates on an honest on-completion settlement model. Supported methods include UPI, Net Banking, Cards, and Cash on Delivery. All completed jobs generate a statutory GST tax invoice.',
+                        style: TextStyle(color: AppColors.textSecondary, height: 1.4, fontSize: 13),
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      FixButton(
+                        label: 'Close',
+                        onPressed: () => Navigator.of(ctx).pop(),
                       ),
                     ],
                   ),
                 ),
-                const Icon(
-                  Icons.chevron_right_rounded,
-                  color: AppColors.textSecondary,
-                  size: 22,
+              );
+            },
+            child: Container(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceContainerLowest,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: AppColors.outline.withValues(alpha: 0.12),
                 ),
-              ],
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceContainer,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.credit_card_rounded,
+                      color: AppColors.primary,
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Payment Methods & Settlement',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          'Pay upon service completion (Cash / UPI)',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    color: AppColors.textSecondary,
+                    size: 22,
+                  ),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: AppSpacing.md),

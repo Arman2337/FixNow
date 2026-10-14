@@ -5,6 +5,7 @@ import 'package:fixnow_mobile/design_system/app_typography.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
 import 'package:fixnow_mobile/design_system/fix_motion.dart';
+import 'package:fixnow_mobile/design_system/fix_rating_badge.dart';
 import 'package:flutter/material.dart';
 
 /// Availability state a [FixServiceCard] presents. The card is honest about
@@ -577,26 +578,15 @@ class _MetaRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(Icons.star_rounded, size: 14, color: AppColors.rating),
-        const SizedBox(width: 3),
-        Text(
-          rating.toStringAsFixed(1),
-          style: FixNowTypography.label.copyWith(
-            color: AppColors.textOnSurface,
-            fontWeight: FontWeight.w700,
-            fontSize: 12.5,
-          ),
+        FixRatingBadge(
+          rating: rating,
+          reviewCount: reviewCount,
+          starSize: 14,
+          fontSize: 12.5,
+          starColor: AppColors.rating,
+          textColor: AppColors.textOnSurface,
+          reviewColor: AppColors.textOnSurfaceMuted,
         ),
-        if (reviewCount != null) ...[
-          const SizedBox(width: 4),
-          Text(
-            '(${_formatCompactCount(reviewCount!)})',
-            style: FixNowTypography.caption.copyWith(
-              color: AppColors.textOnSurfaceMuted,
-              fontSize: 12.5,
-            ),
-          ),
-        ],
         if (etaText != null) ...[
           const SizedBox(width: 7),
           _DotSeparator(),
@@ -1195,15 +1185,4 @@ class _Foot extends StatelessWidget {
 String _formatPrice(num value) {
   if (value == value.roundToDouble()) return value.toInt().toString();
   return value.toString();
-}
-
-/// Compacts a non-negative count: 980 → "980", 2300 → "2.3k", 3100 → "3.1k".
-String _formatCompactCount(int value) {
-  if (value < 1000) return value.toString();
-  final thousands = value / 1000.0;
-  final oneDp = thousands.toStringAsFixed(1);
-  final trimmed = oneDp.endsWith('.0')
-      ? oneDp.substring(0, oneDp.length - 2)
-      : oneDp;
-  return '${trimmed}k';
 }

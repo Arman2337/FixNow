@@ -142,8 +142,7 @@ class _FixPaymentCheckoutSheetState extends State<FixPaymentCheckoutSheet>
           tipMinor: _selectedTipMinor,
         );
       } else {
-        // Fallback simulate quick confirmation
-        await Future<void>.delayed(const Duration(milliseconds: 600));
+        throw StateError('Payment processing callback is required for real verification.');
       }
 
       if (!mounted) return;
@@ -589,7 +588,7 @@ class _FixPaymentCheckoutSheetState extends State<FixPaymentCheckoutSheet>
           type: PaymentMethodType.wallet,
           icon: Icons.account_balance_wallet_rounded,
           title: 'FixNow Wallet',
-          subtitle: 'Balance: ₹250 available',
+          subtitle: 'Pay securely with your FixNow wallet balance',
         ),
       ],
     );

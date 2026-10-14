@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
@@ -10,6 +11,11 @@ import { Booking } from './booking.entity';
 import type { ChatSenderRole } from '../../../../shared/booking-chat.types';
 
 @Entity({ name: 'booking_messages' })
+@Index(
+  'uq_booking_messages_booking_client_msg',
+  ['bookingId', 'clientMessageId'],
+  { unique: true, where: '"client_message_id" IS NOT NULL' },
+)
 export class BookingMessage {
   @PrimaryGeneratedColumn('uuid')
   id!: string;

@@ -5,29 +5,54 @@ import { AdminShell } from "@/components/admin-shell";
 import { env } from "@/config/env";
 import { requireManagementResult } from "@/features/management-api";
 import { listComplaints } from "@/features/operations/api";
+import type { StaffRole } from "@/auth/types";
 
 const statuses = ["", "OPEN", "IN_REVIEW", "ESCALATED", "RESOLVED", "CLOSED"];
 const shortId = (id: string) => id.replaceAll("-", "").slice(0, 8).toUpperCase();
 
-export default async function SupportPage({ searchParams }: { searchParams: Promise<{ search?: string; status?: string }> }) {
+export default async function SupportPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ search?: string; status?: string; page?: string }>;
+}) {
   const session = await getSession();
   if (session.state !== "authenticated") redirect("/login?reason=expired");
-  
+
+  const allowedRoles: readonly StaffRole[] = ["support_agent", "trust_safety_reviewer", "operations_administrator"];
+  if (!session.session.roles.some((r) => allowedRoles.includes(r))) {
+    redirect("/unauthorized");
+  }
+
   const params = await searchParams;
-  let complaints = await requireManagementResult(await listComplaints());
-  
+  const pageNumber = Math.max(1, parseInt(params.page ?? "1", 10));
+  const pageSize = 20;
+  const offset = (pageNumber - 1) * pageSize;
+
+  const complaints = await requireManagementResult(await listComplaints(pageSize + 1, offset));
+  const hasNextPage = complaints.length > pageSize;
+  const pageItems = complaints.slice(0, pageSize);
+
+  let filtered = pageItems;
   if (params.search) {
     const s = params.search.toLowerCase();
-    complaints = complaints.filter(c => c.id.toLowerCase().includes(s) || c.submitterId.toLowerCase().includes(s));
+    filtered = filtered.filter(
+      (c) => c.id.toLowerCase().includes(s) || c.submitterId.toLowerCase().includes(s) || c.category.toLowerCase().includes(s),
+    );
   }
   if (params.status) {
-    complaints = complaints.filter(c => c.status === params.status);
+    filtered = filtered.filter((c) => c.status === params.status);
   }
 
-  const escalatedCount = complaints.filter(c => c.status === "ESCALATED").length;
+  const escalatedCount = filtered.filter((c) => c.status === "ESCALATED").length;
 
   return (
-    <AdminShell environment={env.appEnvironment} roles={session.session.roles} current="Complaints & Escrow">
+    <AdminShell
+      environment={env.appEnvironment}
+      roles={session.session.roles}
+      email={session.session.email}
+      displayName={session.session.displayName}
+      current="Complaints & Escrow"
+    >
       <div className="flex flex-col w-full">
         <div className="p-space-lg lg:p-margin-desktop flex flex-col gap-space-lg">
           
@@ -40,103 +65,130 @@ export default async function SupportPage({ searchParams }: { searchParams: Prom
               </div>
               <h1 className="font-headline-lg text-headline-lg text-on-surface tracking-tight mt-1">Complaints & Escrow Management</h1>
             </div>
+            <div className="flex items-center gap-3">
+              {escalatedCount > 0 && (
+                <div className="rounded-xl border border-error/30 bg-error-container/20 px-4 py-2.5 text-sm text-error font-semibold flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-[18px]">warning</span>
+                  <span>{escalatedCount} Escalated Case{escalatedCount === 1 ? "" : "s"}</span>
+                </div>
+              )}
+              <div className="rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-2.5 text-sm text-on-surface">
+                <span className="block text-xs uppercase tracking-wider text-on-surface-variant">Showing</span>
+                <strong>{filtered.length} dispute{filtered.length === 1 ? "" : "s"}</strong>
+              </div>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-space-lg">
-            
-            {/* LEFT PANE: Dispute Queue */}
-            <div className="lg:col-span-4 flex flex-col gap-space-md">
-              
-              <div className="flex items-center justify-between">
-                <h2 className="font-headline-sm text-headline-sm font-bold text-on-surface tracking-tight">Active Dispute Queue</h2>
-                <span className="font-data-mono text-data-mono text-error font-bold">{escalatedCount} Escalated</span>
+          <form role="search" className="flex flex-wrap items-center gap-3 rounded-2xl border border-outline-variant/30 bg-surface-container-low p-3">
+            <div className="flex min-w-56 flex-1 items-center bg-surface rounded-xl px-3 border border-outline-variant/50 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all">
+              <span className="material-symbols-outlined text-on-surface-variant text-[18px]">search</span>
+              <input
+                id="support-search"
+                name="search"
+                defaultValue={params.search}
+                placeholder="Search Case ID, Submitter, Category..."
+                className="w-full bg-transparent border-none py-2.5 px-2 font-body-sm text-body-sm text-on-surface placeholder:text-on-surface-variant focus:outline-none"
+              />
+            </div>
+            <select
+              id="status"
+              name="status"
+              defaultValue={params.status ?? ""}
+              className="bg-surface rounded-xl border border-outline-variant/50 py-2.5 px-3 font-body-sm text-body-sm text-on-surface focus:outline-none focus:border-primary transition-all"
+            >
+              {statuses.map((status) => (
+                <option key={status} value={status}>
+                  {status ? status.replaceAll("_", " ") : "All Statuses"}
+                </option>
+              ))}
+            </select>
+            <button type="submit" className="px-5 py-2.5 rounded-xl bg-primary text-on-primary font-label-md text-label-md font-semibold hover:bg-primary-container transition-colors shadow-sm">
+              Filter
+            </button>
+            <Link href="/support" className="px-4 py-2.5 rounded-xl border border-outline-variant/30 bg-surface-container text-on-surface font-label-md text-label-md font-semibold hover:bg-surface-container-high transition-colors">
+              Clear
+            </Link>
+          </form>
+
+          <div aria-label="Support results" className="flex flex-col gap-space-md">
+            {filtered.length === 0 ? (
+              <div className="p-12 rounded-2xl border border-outline-variant/30 bg-surface-container-lowest text-center">
+                <span className="material-symbols-outlined text-4xl text-on-surface-variant mb-2">support_agent</span>
+                <h3 className="font-headline-sm text-headline-sm font-bold text-on-surface">No open support cases</h3>
+                <p className="mt-1 font-body-sm text-body-sm text-on-surface-variant">No customer or provider complaints match the selected filters.</p>
               </div>
-              
-              <form role="search" aria-label="Support results" className="flex flex-col gap-3">
-                <div className="flex items-center bg-surface-container-low rounded-xl px-3 border border-outline-variant/50 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all">
-                  <span className="material-symbols-outlined text-on-surface-variant text-[18px]">search</span>
-                  <input
-                    id="support-search"
-                    name="search"
-                    defaultValue={params.search}
-                    placeholder="Search Case ID, Customer, Provider..."
-                    className="w-full bg-transparent border-none py-2.5 px-2 font-body-sm text-body-sm text-on-surface placeholder:text-on-surface-variant focus:outline-none"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <select
-                    id="support-status"
-                    name="status"
-                    defaultValue={params.status ?? ""}
-                    className="flex-1 bg-surface-container-low rounded-xl border border-outline-variant/50 py-2.5 px-3 font-body-sm text-body-sm text-on-surface focus:outline-none focus:border-primary transition-all"
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-space-md">
+                {filtered.map((complaint) => (
+                  <Link
+                    href={`/support/${complaint.id}`}
+                    key={complaint.id}
+                    className="p-space-md rounded-2xl bg-surface-container-lowest shadow-sm border border-outline-variant/20 hover:shadow-md hover:border-primary/50 transition-all cursor-pointer block"
                   >
-                    {statuses.map((status) => (
-                      <option key={status} value={status}>
-                        {status ? status.replaceAll("_", " ") : "All Statuses"}
-                      </option>
-                    ))}
-                  </select>
-                   <button type="submit" className="px-4 py-2.5 rounded-xl bg-primary text-on-primary font-label-md text-label-md font-semibold hover:bg-primary-container transition-colors shadow-sm">
-                    Filter
-                  </button>
-                </div>
-              </form>
+                    <div className="flex items-start justify-between gap-space-xs mb-2">
+                      <div className="flex items-center gap-space-xs">
+                        <span className={`font-data-mono text-data-mono font-bold ${complaint.status === 'ESCALATED' ? 'text-error' : 'text-primary'}`}>
+                          #{shortId(complaint.id)}
+                        </span>
+                        <span className={`px-2 py-0.5 rounded-full font-label-sm text-[10px] font-bold ${
+                          complaint.status === 'ESCALATED' ? 'bg-error-container text-on-error-container' : 'bg-surface-container-high text-on-surface'
+                        }`}>
+                          {complaint.status}
+                        </span>
+                      </div>
+                      <span className="font-data-mono text-xs text-secondary">{new Date(complaint.createdAt).toLocaleDateString()}</span>
+                    </div>
 
-              <div className="flex flex-col gap-space-sm mt-2">
-                {complaints.length === 0 ? (
-                  <div className="p-4 rounded-xl border border-outline-variant/30 text-center font-label-sm text-on-surface-variant">
-                    No open support cases.
-                  </div>
-                ) : (
-                  complaints.map((complaint) => (
-                    <Link
-                      href={`/support/${complaint.id}`}
-                      key={complaint.id}
-                      className="p-space-md rounded-xl bg-surface-container-lowest shadow-sm border border-outline-variant/20 hover:shadow-md transition-all cursor-pointer block"
-                    >
-                      <div className="flex items-start justify-between gap-space-xs mb-1">
-                        <div className="flex items-center gap-space-xs">
-                          <span className={`font-data-mono text-data-mono font-bold ${complaint.status === 'ESCALATED' ? 'text-error' : 'text-secondary'}`}>#{shortId(complaint.id)}</span>
-                          <span className={`px-2 py-0.5 rounded-full font-label-sm text-label-sm ${
-                            complaint.status === 'ESCALATED' ? 'bg-error-container text-on-error-container' : 'bg-surface-container-high text-on-surface'
-                          }`}>
-                            {complaint.status}
-                          </span>
-                        </div>
-                        <span className="font-data-mono text-data-mono text-secondary">{new Date(complaint.createdAt).toLocaleDateString()}</span>
+                    <h3 className="font-label-lg text-label-lg font-bold text-on-surface leading-snug truncate">
+                      {complaint.category}
+                    </h3>
+                    <p className="font-body-sm text-body-sm text-on-surface-variant mt-1.5 line-clamp-2">
+                      {complaint.description}
+                    </p>
+
+                    <div className="mt-4 pt-space-xs flex items-center justify-between border-t border-outline-variant/10 text-xs text-on-surface-variant">
+                      <div className="flex items-center gap-1 truncate">
+                        <span className="material-symbols-outlined text-[15px] text-secondary">person</span>
+                        <span className="truncate">Sub: #{shortId(complaint.submitterId)}</span>
                       </div>
-                      <h3 className="font-headline-md text-headline-md text-on-surface leading-snug truncate">
-                        {complaint.category}
-                      </h3>
-                      <p className="font-body-sm text-body-sm text-on-surface-variant mt-1 line-clamp-2">
-                        {complaint.description}
-                      </p>
-                      
-                      <div className="mt-space-sm pt-space-xs flex items-center justify-between bg-surface-container-low/60 p-2 rounded-lg">
-                        <div className="flex items-center gap-space-xs truncate w-1/2">
-                          <span className="material-symbols-outlined text-sm text-secondary">person</span>
-                          <span className="font-body-sm text-body-sm text-on-surface truncate">#{shortId(complaint.submitterId)}</span>
-                        </div>
-                        <div className="flex items-center gap-space-xs truncate w-1/2 justify-end">
-                          <span className="material-symbols-outlined text-sm text-secondary">target</span>
-                          <span className="font-body-sm text-body-sm text-on-surface-variant truncate">#{shortId(complaint.targetId ?? "N/A")}</span>
-                        </div>
+                      <div className="flex items-center gap-1 text-primary font-semibold">
+                        <span>Details</span>
+                        <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
                       </div>
-                    </Link>
-                  ))
-                )}
+                    </div>
+                  </Link>
+                ))}
               </div>
+            )}
 
+            <div className="flex items-center justify-between border-t border-outline-variant/20 pt-4 mt-2">
+              <div>
+                {pageNumber > 1 ? (
+                  <Link
+                    href={{ pathname: "/support", query: { search: params.search, status: params.status, page: String(pageNumber - 1) } }}
+                    className="px-4 py-2 rounded-xl border border-outline-variant/40 bg-surface-container-low text-on-surface font-label-md text-sm font-semibold hover:bg-surface-container transition-colors inline-flex items-center gap-1"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">arrow_back</span>
+                    <span>Previous page</span>
+                  </Link>
+                ) : <div />}
+              </div>
+              <span className="font-body-sm text-sm text-on-surface-variant">Page {pageNumber}</span>
+              <div>
+                {hasNextPage ? (
+                  <Link
+                    href={{ pathname: "/support", query: { search: params.search, status: params.status, page: String(pageNumber + 1) } }}
+                    className="px-4 py-2 rounded-xl bg-primary text-on-primary font-label-md text-sm font-semibold hover:bg-primary/90 transition-colors inline-flex items-center gap-1"
+                  >
+                    <span>Next page</span>
+                    <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                  </Link>
+                ) : <div />}
+              </div>
             </div>
 
-            {/* RIGHT PANE: Placeholder Dossier */}
-            <div className="lg:col-span-8 flex flex-col gap-space-lg justify-center items-center bg-surface-container-lowest rounded-xl border border-outline-variant/20 p-8 min-h-[500px]">
-              <span className="material-symbols-outlined text-outline text-6xl">gavel</span>
-              <h2 className="font-headline-sm text-headline-sm font-bold text-on-surface mt-4">No Case Selected</h2>
-              <p className="font-body-md text-body-md text-on-surface-variant">Select a dispute from the queue to view the dossier, evidence, and escrow status.</p>
-            </div>
-            
           </div>
+
         </div>
       </div>
     </AdminShell>

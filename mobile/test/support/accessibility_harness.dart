@@ -478,6 +478,7 @@ const Map<String, AccessibilityCoverage> accessibilityCoverage = {
   'fix_otp_input_sheet.dart': AccessibilityCoverage.audited(),
   'fix_reschedule_sheet.dart': AccessibilityCoverage.audited(),
   'fix_schedule_picker.dart': AccessibilityCoverage.audited(),
+  'fix_rating_badge.dart': AccessibilityCoverage.audited(),
   'fix_price_breakdown_card.dart': AccessibilityCoverage.audited(),
   'fix_provider_card.dart': AccessibilityCoverage.audited(),
   'fix_notification_bell.dart': AccessibilityCoverage.audited(),
@@ -517,12 +518,6 @@ const Map<String, AccessibilityCoverage> accessibilityCoverage = {
   ),
   'fix_star_rating_burst.dart': AccessibilityCoverage.deferred(
     'Decorative burst layered on the rating that already carries the value.',
-  ),
-  'fix_provider_card_gallery.dart': AccessibilityCoverage.deferred(
-    'Photo carousel wrapper; audited with its host card in a later pass.',
-  ),
-  'fix_service_card_gallery.dart': AccessibilityCoverage.deferred(
-    'Photo carousel wrapper; audited with its host card in a later pass.',
   ),
   'fix_motion.dart': AccessibilityCoverage.deferred(
     'Motion primitives with no semantics or controls of their own.',

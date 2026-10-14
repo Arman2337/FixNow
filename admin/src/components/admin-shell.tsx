@@ -1,22 +1,70 @@
 import type { AppEnvironment } from "@/config/env";
 import { logoutAction } from "@/auth/actions";
 import type { StaffRole } from "@/auth/types";
-import Image from "next/image";
 import Link from "next/link";
 
 const navigation = [
   { label: "Overview Dashboard", href: "/", icon: "dashboard", roles: null },
   { label: "Providers & KYC Verification", href: "/providers", icon: "verified_user", roles: ["provider_reviewer", "operations_administrator", "auditor"] },
   { label: "Live Dispatches & Radar", href: "/bookings", icon: "fmd_good", roles: ["support_agent", "trust_safety_reviewer", "operations_administrator", "auditor"] },
-  { label: "Complaints & Escrow", href: "/support", icon: "payments", roles: ["support_agent", "trust_safety_reviewer", "operations_administrator", "auditor"] },
+  { label: "Complaints & Escrow", href: "/support", icon: "payments", roles: ["support_agent", "trust_safety_reviewer", "operations_administrator"] },
   { label: "Guarantee Claims", href: "/guarantees", icon: "verified", roles: ["support_agent", "trust_safety_reviewer", "operations_administrator", "auditor"] },
   { label: "Trust & Safety Moderation", href: "/trust", icon: "gavel", roles: ["trust_safety_reviewer", "operations_administrator"] },
   { label: "Categories & Pricing", href: "/services", icon: "tune", roles: ["service_catalog_manager", "operations_administrator", "auditor"] },
+  { label: "Performance Analytics", href: "/analytics", icon: "analytics", roles: ["operations_administrator", "auditor"] },
+  { label: "User Registry", href: "/users", icon: "group", roles: ["support_agent", "operations_administrator", "security_administrator", "auditor"] },
 ] as const;
 
-export function AdminShell({ environment, roles, current = "Overview Dashboard", children }: { environment: AppEnvironment; roles: readonly StaffRole[]; current?: string; children?: React.ReactNode }) {
+export function AdminShell({
+  environment,
+  roles,
+  email,
+  displayName,
+  current = "Overview Dashboard",
+  children,
+}: {
+  environment: AppEnvironment;
+  roles: readonly StaffRole[];
+  email?: string;
+  displayName?: string;
+  current?: string;
+  children?: React.ReactNode;
+}) {
   const visibleNavigation = navigation.filter((item) => item.roles === null || item.roles.some((role) => roles.includes(role)));
-  const activeLabel = current === "Bookings" ? "Live Dispatches & Radar" : current === "Trust & Safety" ? "Trust & Safety Moderation" : current;
+  const activeLabel =
+    current === "Bookings" || current === "/bookings"
+      ? "Live Dispatches & Radar"
+      : current === "Trust & Safety" || current === "/trust"
+      ? "Trust & Safety Moderation"
+      : current === "Provider KYC Verification" || current === "Providers" || current === "/providers"
+      ? "Providers & KYC Verification"
+      : current === "Analytics" || current === "/analytics"
+      ? "Performance Analytics"
+      : current === "Users & Accounts" || current === "Users" || current === "/users"
+      ? "User Registry"
+      : current === "Complaints & Escrow" || current === "Support" || current === "/support"
+      ? "Complaints & Escrow"
+      : current === "Categories & Pricing" || current === "Services" || current === "/services"
+      ? "Categories & Pricing"
+      : current === "Guarantee Claims" || current === "Guarantees" || current === "/guarantees"
+      ? "Guarantee Claims"
+      : current === "Search" || current === "/search"
+      ? null
+      : current;
+
+  const userTitle =
+    displayName ||
+    (roles[0]
+      ? roles[0]
+          .split("_")
+          .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+          .join(" ")
+      : "Staff Member");
+  const userSubtitle = email || roles[0]?.replace(/_/g, " ") || "Administrator";
+  const initials = (displayName || email || roles[0] || "OP")
+    .replace(/[^a-zA-Z0-9]/g, "")
+    .slice(0, 2)
+    .toUpperCase();
 
   return (
     <div className="bg-surface font-body-md text-body-md text-on-surface antialiased">
@@ -105,22 +153,26 @@ export function AdminShell({ environment, roles, current = "Overview Dashboard",
                 />
               </form>
           </div>
+
           <div className="flex items-center gap-space-md">
             <Link href="/support" aria-label="Open support notifications" className="relative flex h-11 w-11 items-center justify-center rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors">
               <span className="material-symbols-outlined text-[22px]">notifications</span>
             </Link>
             <div className="flex items-center gap-space-sm pl-space-sm border-l border-outline-variant/30">
               <div className="text-right hidden sm:block">
-                <span className="block font-label-md text-label-md font-semibold text-on-surface leading-tight">Chief Dispatcher</span>
-                <span className="block font-label-sm text-label-sm text-on-surface-variant leading-none">{roles[0]?.replace('_', ' ') || 'Superadmin'}</span>
+                <span className="block font-label-md text-label-md font-semibold text-on-surface leading-tight">
+                  {userTitle}
+                </span>
+                <span className="block font-label-sm text-label-sm text-on-surface-variant leading-none">
+                  {userSubtitle}
+                </span>
               </div>
-              <Image
-                alt="Profile"
-                className="h-8 w-8 rounded-full object-cover ring-1 ring-outline-variant/40"
-                height={32}
-                width={32}
-                src="https://lh3.googleusercontent.com/aida/AEtjO1UHetTjpd4BB1e8njLlIDDmUsYV1qxX9ZC_wim9sHsXYmSrYRkJpnyD1IHW75IXxc9pB2kik0nzNC98TRCklpEgiq7TkSpL4ITZqzFt8uLi5EyWXYQq9m4a8YI9wZ3o6xvQSkDtb6AI5-x28GAADr5cRCtuuSX9N5FrvCQ7MBueDjttVq6CBcCdMU6PRAQsRnz78gBoZeg_WCxKbdy42V0Um4AxVfE0kNiMNfOiHfuES63iQSWWA34hjob7XGOL3mAbPdCfF9El6g"
-              />
+              <div
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-primary font-mono text-xs font-bold text-on-primary ring-1 ring-outline-variant/40"
+                aria-label={`Avatar for ${userTitle}`}
+              >
+                {initials}
+              </div>
               <form action={logoutAction} className="hidden sm:block">
                 <button type="submit" className="rounded-lg px-2 py-1 text-label-sm text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface">
                   Sign out

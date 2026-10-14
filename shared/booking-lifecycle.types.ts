@@ -24,6 +24,17 @@ export const VALID_BOOKING_TRANSITIONS: Readonly<
   [BookingStatus.CANCELLED]: [],
 };
 
+export function isValidBookingTransition(
+  from: BookingStatus,
+  to: BookingStatus,
+): boolean {
+  return VALID_BOOKING_TRANSITIONS[from].includes(to);
+}
+
+export function isTerminalBookingStatus(status: BookingStatus): boolean {
+  return VALID_BOOKING_TRANSITIONS[status].length === 0;
+}
+
 /**
  * Why a booking was abandoned rather than finished.
  *

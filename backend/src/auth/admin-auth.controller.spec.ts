@@ -4,8 +4,10 @@ import type { AuthorizedRequest } from '../common/authorization/authorization.gu
 
 describe('AdminAuthController', () => {
   const loginAdmin = jest.fn();
+  const getUserSessionDetails = jest.fn();
   const controller = new AdminAuthController({
     loginAdmin,
+    getUserSessionDetails,
   } as unknown as AuthService);
 
   beforeEach(() => jest.clearAllMocks());
@@ -22,7 +24,7 @@ describe('AdminAuthController', () => {
     expect(loginAdmin).toHaveBeenCalledWith(input);
   });
 
-  it('returns only the authorized principal session summary', () => {
+  it('returns authorized principal session summary with identity details', async () => {
     const request = {
       authorizationPrincipal: {
         userId: 'staff-1',
@@ -30,9 +32,15 @@ describe('AdminAuthController', () => {
         roles: ['support_agent'],
       },
     } as unknown as AuthorizedRequest;
-    expect(controller.session(request)).toEqual({
+    getUserSessionDetails.mockResolvedValue({
+      email: 'staff@example.com',
+      displayName: 'Staff Dispatcher',
+    });
+    await expect(controller.session(request)).resolves.toEqual({
       userId: 'staff-1',
       roles: ['support_agent'],
+      email: 'staff@example.com',
+      displayName: 'Staff Dispatcher',
     });
   });
 });

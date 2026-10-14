@@ -13,6 +13,7 @@ import { ProviderVerificationEventEntity } from '../providers/verification/provi
 import { ComplaintsService } from '../support/complaints/complaints.service';
 import type {
   AdminPageQueryDto,
+  ComplaintsPageQueryDto,
   ProviderApplicationPageQueryDto,
 } from './admin-management.dto';
 
@@ -34,8 +35,10 @@ export class AdminManagementService {
     private readonly complaintsService: ComplaintsService,
   ) {}
 
-  async listComplaints(adminId: string) {
-    return this.complaintsService.getComplaints(adminId, true);
+  async listComplaints(adminId: string, query?: ComplaintsPageQueryDto) {
+    const limit = query?.limit ?? 20;
+    const offset = query?.offset ?? 0;
+    return this.complaintsService.getComplaints(adminId, true, limit, offset);
   }
 
   async getComplaintDetail(id: string, adminId: string) {

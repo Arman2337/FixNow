@@ -21,6 +21,7 @@ class BookingDetailScreen extends StatelessWidget {
     this.onViewInvoice,
     this.onSubmitClaim,
     this.jobProofController,
+    this.onCallPressed,
     super.key,
   });
   final CustomerBooking booking;
@@ -31,6 +32,7 @@ class BookingDetailScreen extends StatelessWidget {
   final VoidCallback? onBookAgain;
   final VoidCallback? onViewInvoice;
   final VoidCallback? onSubmitClaim;
+  final void Function(BuildContext context, String bookingId)? onCallPressed;
 
   /// FN-143. Null renders no proof section at all, rather than an empty one.
   final JobProofController? jobProofController;
@@ -697,6 +699,14 @@ class BookingDetailScreen extends StatelessWidget {
                                             fontWeight: FontWeight.w500,
                                           ),
                                         ),
+                                        if (onCallPressed != null) ...[
+                                          const Spacer(),
+                                          IconButton(
+                                            icon: const Icon(Icons.call_rounded, size: 18, color: AppColors.primary),
+                                            tooltip: 'Call Technician',
+                                            onPressed: () => onCallPressed!(context, booking.id),
+                                          ),
+                                        ],
                                       ],
                                     ),
                                   ],

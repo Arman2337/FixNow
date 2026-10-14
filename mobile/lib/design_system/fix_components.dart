@@ -9,6 +9,8 @@ import 'package:fixnow_mobile/design_system/fix_motion.dart';
 import 'package:fixnow_mobile/design_system/fix_status_chip.dart';
 import 'package:flutter/material.dart';
 
+export 'package:fixnow_mobile/design_system/fix_rating_badge.dart';
+
 /// A bordered container whose border reacts to the focus of the field inside it.
 ///
 /// MOB-006. This exists because seven widgets had independently solved "put a

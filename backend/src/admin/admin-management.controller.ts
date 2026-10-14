@@ -25,14 +25,15 @@ import {
   UpdateServiceCategoryDto,
 } from '../services/service-categories.dto';
 import { ComplaintsService } from '../support/complaints/complaints.service';
-import { ComplaintStatus } from '../support/complaints/domain/complaint.entity';
 import {
   AdminPageQueryDto,
   ApplicationIdParamDto,
   ClaimReviewDto,
+  ComplaintsPageQueryDto,
   DocumentParamDto,
   ProviderApplicationPageQueryDto,
   ReviewDecisionDto,
+  UpdateComplaintStatusDto,
   UserIdParamDto,
   BookingIdParamDto,
   BookingPageQueryDto,
@@ -54,7 +55,7 @@ export class AdminManagementController {
   updateComplaintStatus(
     @Req() req: AuthorizedRequest,
     @Param('complaintId') complaintId: string,
-    @Body() body: { status: ComplaintStatus; resolutionNotes?: string },
+    @Body() body: UpdateComplaintStatusDto,
   ) {
     return this.complaints.updateComplaintStatus(
       complaintId,
@@ -210,8 +211,14 @@ export class AdminManagementController {
 
   @Get('complaints')
   @RequirePermission(PERMISSIONS.adminComplaintsRead)
-  listComplaints(@Req() req: AuthorizedRequest) {
-    return this.management.listComplaints(req.authorizationPrincipal!.userId);
+  listComplaints(
+    @Req() req: AuthorizedRequest,
+    @Query() query: ComplaintsPageQueryDto,
+  ) {
+    return this.management.listComplaints(
+      req.authorizationPrincipal!.userId,
+      query,
+    );
   }
 
   @Get('complaints/:complaintId')

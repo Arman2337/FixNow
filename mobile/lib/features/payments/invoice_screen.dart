@@ -183,7 +183,7 @@ class _PendingViewState extends State<_PendingView> {
                 'An invoice is issued once a payment is completed for '
                 'this booking.',
           ),
-          if (widget.repository != null) ...[
+          if (_canPayLocally) ...[
             const SizedBox(height: AppSpacing.lg),
             FixButton(
               label: 'Pay Now (Interactive Checkout)',
@@ -214,10 +214,17 @@ class _PendingViewState extends State<_PendingView> {
   );
 
   void _openCheckoutSheet(BuildContext context) {
+    // FN-118 / ADR-0016: reachable only through the dev-gated local bypass.
+    // This state is "no invoice yet", so no server amount exists to quote.
+    // The figure below is therefore a development placeholder for exercising
+    // the checkout sheet, never a customer-facing price. It must not become
+    // production-reachable — gate the caller with `_canPayLocally` instead of
+    // relying on the repository merely being present.
+    const devPlaceholderBaseMinor = 49900;
     FixPaymentCheckoutSheet.show(
       context,
       bookingId: widget.bookingId,
-      baseAmountMinor: 49900,
+      baseAmountMinor: devPlaceholderBaseMinor,
       onProcessPayment:
           ({
             required paymentMethod,
@@ -259,9 +266,10 @@ class _InvoiceView extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                 Row(
                   children: [
                     const Icon(
@@ -280,9 +288,9 @@ class _InvoiceView extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 4),
-                const Text(
-                  'FixNow Technologies Pvt Ltd',
-                  style: TextStyle(
+                Text(
+                  FixPdfInvoiceBuilder.companyName,
+                  style: const TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -295,16 +303,18 @@ class _InvoiceView extends StatelessWidget {
                     fontSize: 11,
                   ),
                 ),
-                const Text(
-                  'Bengaluru, Karnataka 560102',
-                  style: TextStyle(
+                Text(
+                  FixPdfInvoiceBuilder.companyAddress,
+                  style: const TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 11,
                   ),
                 ),
               ],
             ),
-            Container(
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Container(
               width: 44,
               height: 44,
               decoration: BoxDecoration(

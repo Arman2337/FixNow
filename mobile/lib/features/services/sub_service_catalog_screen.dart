@@ -176,8 +176,6 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
   @override
   Widget build(BuildContext context) {
     final proCount = widget.category.verifiedProCount;
-    final rating = widget.category.rating ?? 4.8;
-    final reviewCount = widget.category.reviewCount;
 
     return Scaffold(
       backgroundColor: AppColors.backgroundPrimary,
@@ -245,7 +243,7 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
               const SizedBox(height: AppSpacing.sm),
 
               // Stitch Header Card with verified pill & ambient background
-              _buildStitchHeaderCard(proCount, rating, reviewCount),
+              _buildStitchHeaderCard(proCount),
 
               const SizedBox(height: AppSpacing.sm),
 
@@ -332,7 +330,7 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
     );
   }
 
-  Widget _buildStitchHeaderCard(int proCount, double rating, int reviewCount) {
+  Widget _buildStitchHeaderCard(int proCount) {
     return Container(
       clipBehavior: Clip.hardEdge,
       decoration: BoxDecoration(
@@ -795,28 +793,12 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
                   children: [
                     Row(
                       children: [
-                        const Icon(
-                          Icons.star_rounded,
-                          size: 14,
-                          color: AppColors.accentGold,
-                        ),
-                        const SizedBox(width: 3),
-                        const Text(
-                          '4.8',
-                          style: TextStyle(
-                            color: AppColors.textPrimary,
-                            fontWeight: FontWeight.w700,
+                        if (widget.category.rating != null)
+                          FixRatingBadge(
+                            rating: widget.category.rating!,
+                            reviewCount: widget.category.reviewCount,
                             fontSize: 11,
                           ),
-                        ),
-                        const SizedBox(width: 4),
-                        const Text(
-                          '(1.2k)',
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 11,
-                          ),
-                        ),
                         if (item.badge != null) ...[
                           const Spacer(),
                           Container(

@@ -1,7 +1,7 @@
 export type ServiceCategoryPricing = { amountMinor: number; currency: string };
 export type ServiceCategory = { id: string; name: string; slug: string; description: string | null; displayOrder: number; isActive: boolean; isEmergency: boolean; pricing: ServiceCategoryPricing | null };
 export type BookingStatus = "REQUESTED" | "ASSIGNED" | "EN_ROUTE" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
-export type BookingSummary = { id: string; customerId: string; providerId: string | null; serviceCategoryId: string; status: BookingStatus; description: string; scheduledAt: string | null; cancellationReason: string | null; version: number; createdAt: string; updatedAt: string };
+export type BookingSummary = { id: string; customerId: string; providerId: string | null; serviceCategoryId: string; status: BookingStatus; description: string; scheduledAt: string | null; cancellationReason: string | null; version: number; createdAt: string; updatedAt: string; isEmergency?: boolean };
 export type BookingEvent = { id: string; actorUserId: string; fromStatus: BookingStatus | null; toStatus: BookingStatus; reason: string | null; bookingVersion: number; createdAt: string };
 export type BookingDetail = BookingSummary & { events: readonly BookingEvent[] };
 export type BookingPage = { items: readonly BookingSummary[]; nextCursor: string | null };
@@ -13,5 +13,5 @@ import type { ComplaintStatus } from './complaint-lifecycle';
 export type ComplaintEvidence = { id: string; uploadedBy: string; fileUrl: string; fileType: string; description?: string; createdAt: string; };
 export type Complaint = { id: string; submitterId: string; targetRole: 'PROVIDER' | 'CUSTOMER' | 'PLATFORM'; targetId?: string; bookingId?: string; category: string; description: string; status: ComplaintStatus; resolutionNotes?: string; resolvedAt?: string; resolvedBy?: string; createdAt: string; updatedAt: string; evidence: ComplaintEvidence[]; };
 
-export type UserDetail = { id: string; email: string; name: string; status: string; roles: string[]; createdAt: string; updatedAt: string; };
+export type UserDetail = { id: string; email?: string; name?: string; status: string; roles: readonly string[]; createdAt: string; updatedAt: string; };
 export type AnalyticsResponse = { generatedAt: string; bookings: { total: number; completed: number; cancelled: number; pending: number; }; providers: { total: number; active: number; verified: number; pendingVerification: number; }; services: { topCategories: { id: string; name: string; count: number }[]; }; emergencies: { activeRequests: number; totalRequests: number; }; trust: { averageAcceptMinutes: number | null; sampleSize: number; windowDays: number; }; };

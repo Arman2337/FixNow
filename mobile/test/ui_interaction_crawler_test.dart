@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -27,7 +25,6 @@ import 'package:fixnow_mobile/features/chat/chat_controller.dart';
 import 'package:fixnow_mobile/features/chat/chat_repository.dart';
 import 'package:fixnow_mobile/features/emergency/emergency_confirm_screen.dart';
 import 'package:fixnow_mobile/features/emergency/emergency_repository.dart';
-import 'package:fixnow_mobile/features/location/booking_location.dart';
 import 'package:fixnow_mobile/features/location/location_consent_controller.dart';
 import 'package:fixnow_mobile/features/notifications/notification_center_screen.dart';
 import 'package:fixnow_mobile/features/notifications/notification_controller.dart';
@@ -55,10 +52,7 @@ import 'package:fixnow_mobile/features/services/sub_service_catalog_screen.dart'
 import 'package:fixnow_mobile/features/services/sub_service_item.dart';
 import 'package:fixnow_mobile/features/support/complaint.dart';
 import 'package:fixnow_mobile/features/support/complaint_list_screen.dart';
-import 'package:fixnow_mobile/features/support/complaints_controller.dart';
-import 'package:fixnow_mobile/features/support/complaints_repository.dart';
 import 'package:fixnow_mobile/features/support/customer_help_screen.dart';
-import 'package:fixnow_mobile/features/support/submit_complaint_screen.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking_controller.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking_screen.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking_source.dart';
@@ -301,7 +295,7 @@ void main() {
   );
 
   final Map<String, Widget Function()> screens = {
-    'WelcomeScreen': () => WelcomeScreen(onContinue: (_, __) {}),
+    'WelcomeScreen': () => WelcomeScreen(onContinue: (context, role) {}),
     'AuthScreen': () => AuthScreen(
           controller: authController,
           role: AccountRole.customer,
@@ -537,7 +531,7 @@ void main() {
               for (final err in errorDetails) {
                 if (err.exceptionAsString().contains('overflowed') ||
                     err.exceptionAsString().contains('RenderFlex')) {
-                  print('FOUND MOUNT OVERFLOW in ${entry.key}: ${err.exceptionAsString()}');
+                  debugPrint('FOUND MOUNT OVERFLOW in ${entry.key}: ${err.exceptionAsString()}');
                 }
               }
 
@@ -582,7 +576,7 @@ void main() {
               for (final err in errorDetails) {
                 if (err.exceptionAsString().contains('overflowed') ||
                     err.exceptionAsString().contains('RenderFlex')) {
-                  print('FOUND INTERACTION OVERFLOW in ${entry.key}: ${err.exceptionAsString()}');
+                  debugPrint('FOUND INTERACTION OVERFLOW in ${entry.key}: ${err.exceptionAsString()}');
                 }
               }
             } finally {

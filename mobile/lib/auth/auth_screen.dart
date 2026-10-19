@@ -334,13 +334,19 @@ class _AuthScreenState extends State<AuthScreen> {
                                         : AppColors.textSecondary,
                                   ),
                                   const SizedBox(width: 6),
-                                  Text(
-                                    'Sign In',
-                                    style: FixNowTypography.label.copyWith(
-                                      color: !_register
-                                          ? AppColors.textPrimary
-                                          : AppColors.textSecondary,
-                                      fontWeight: FontWeight.w600,
+                                  Flexible(
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Text(
+                                        'Sign In',
+                                        maxLines: 1,
+                                        style: FixNowTypography.label.copyWith(
+                                          color: !_register
+                                              ? AppColors.textPrimary
+                                              : AppColors.textSecondary,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -388,13 +394,19 @@ class _AuthScreenState extends State<AuthScreen> {
                                         : AppColors.textSecondary,
                                   ),
                                   const SizedBox(width: 6),
-                                  Text(
-                                    'Create Account',
-                                    style: FixNowTypography.label.copyWith(
-                                      color: _register
-                                          ? AppColors.textPrimary
-                                          : AppColors.textSecondary,
-                                      fontWeight: FontWeight.w600,
+                                  Flexible(
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Text(
+                                        'Create Account',
+                                        maxLines: 1,
+                                        style: FixNowTypography.label.copyWith(
+                                          color: _register
+                                              ? AppColors.textPrimary
+                                              : AppColors.textSecondary,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -643,14 +655,18 @@ class _AuthScreenState extends State<AuthScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text(
-                              'Email Address',
-                              style: TextStyle(
-                                color: AppColors.textPrimary,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13,
+                            const Flexible(
+                              child: Text(
+                                'Email Address',
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: AppColors.textPrimary,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                ),
                               ),
                             ),
+                            const SizedBox(width: AppSpacing.xs),
                             Text(
                               'VERIFIED ID',
                               style: TextStyle(
@@ -823,19 +839,24 @@ class _AuthScreenState extends State<AuthScreen> {
                                 : Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Text(
-                                        widget.controller.status ==
-                                                AuthStatus.offline
-                                            ? 'Retry Connection'
-                                            : _register
-                                                ? 'Create Account & Continue'
-                                                : 'Continue',
-                                        style: FixNowTypography.headlineMd
-                                            .copyWith(
-                                              fontWeight: FontWeight.w600,
-                                              fontSize: 16,
-                                              letterSpacing: -0.5,
-                                            ),
+                                      Flexible(
+                                        child: FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          child: Text(
+                                            widget.controller.status ==
+                                                    AuthStatus.offline
+                                                ? 'Retry Connection'
+                                                : _register
+                                                    ? 'Create Account & Continue'
+                                                    : 'Continue',
+                                            style: FixNowTypography.headlineMd
+                                                .copyWith(
+                                                  fontWeight: FontWeight.w600,
+                                                  fontSize: 16,
+                                                  letterSpacing: -0.5,
+                                                ),
+                                          ),
+                                        ),
                                       ),
                                       const SizedBox(width: 8),
                                       Icon(

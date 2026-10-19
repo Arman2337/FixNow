@@ -66,36 +66,40 @@ class BookingDetailScreen extends StatelessWidget {
               onPressed: () => Navigator.of(context).pop(),
             ),
             titleSpacing: 0,
-            title: Row(
-              children: [
-                const Text(
-                  'FixNow',
-                  style: TextStyle(
-                    color: AppColors.primary,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.5,
+            title: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Row(
+                children: const [
+                  Text(
+                    'FixNow',
+                    style: TextStyle(
+                      color: AppColors.primary,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.5,
+                    ),
                   ),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                const Text(
-                  '/',
-                  style: TextStyle(
-                    color: AppColors.outlineVariant,
-                    fontSize: 16,
+                  SizedBox(width: AppSpacing.sm),
+                  Text(
+                    '/',
+                    style: TextStyle(
+                      color: AppColors.outlineVariant,
+                      fontSize: 16,
+                    ),
                   ),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                const Text(
-                  'Details',
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.5,
+                  SizedBox(width: AppSpacing.sm),
+                  Text(
+                    'Details',
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.5,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           SliverPadding(
@@ -224,12 +228,15 @@ class BookingDetailScreen extends StatelessWidget {
                             children: [
                               Row(
                                 children: [
-                                  Text(
-                                    'Assigned Professional',
-                                    style: TextStyle(
-                                      color: AppColors.textPrimary,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
+                                  Flexible(
+                                    child: Text(
+                                      'Assigned Professional',
+                                      style: TextStyle(
+                                        color: AppColors.textPrimary,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
                                   SizedBox(width: 4),

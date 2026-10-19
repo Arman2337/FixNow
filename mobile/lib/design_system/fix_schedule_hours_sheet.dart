@@ -257,32 +257,37 @@ class _FixProviderWorkingHoursSheetState
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(AppSpacing.xs),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(8),
+                Expanded(
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(AppSpacing.xs),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.calendar_month_rounded,
+                          // Dark surface: the light-surface primary token
+                          // measured 2.65:1 against #0F172A.
+                          color: AppColors.primaryFixed,
+                          size: 20,
+                        ),
                       ),
-                      child: const Icon(
-                        Icons.calendar_month_rounded,
-                        // Dark surface: the light-surface primary token
-                        // measured 2.65:1 against #0F172A.
-                        color: AppColors.primaryFixed,
-                        size: 20,
+                      const SizedBox(width: AppSpacing.sm),
+                      const Expanded(
+                        child: Text(
+                          'Working Schedule',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    const Text(
-                      'Working Schedule',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
                 IconButton(
                   icon: const Icon(Icons.close_rounded, color: Colors.white60),
@@ -348,15 +353,18 @@ class _FixProviderWorkingHoursSheetState
 
             // Individual Days Row
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                for (final item in daysMeta)
-                  _buildDayTile(
-                    label: item['label']! as String,
-                    day: item['day']! as int,
-                    isSelected: _selectedDays.contains(item['day']! as int),
-                    onTap: () => _toggleDay(item['day']! as int),
+                for (int i = 0; i < daysMeta.length; i++) ...[
+                  if (i > 0) const SizedBox(width: 4),
+                  Expanded(
+                    child: _buildDayTile(
+                      label: daysMeta[i]['label']! as String,
+                      day: daysMeta[i]['day']! as int,
+                      isSelected: _selectedDays.contains(daysMeta[i]['day']! as int),
+                      onTap: () => _toggleDay(daysMeta[i]['day']! as int),
+                    ),
                   ),
+                ],
               ],
             ),
             const SizedBox(height: AppSpacing.lg),
@@ -505,7 +513,6 @@ class _FixProviderWorkingHoursSheetState
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        width: 42,
         height: 48,
         decoration: BoxDecoration(
           color: isSelected ? AppColors.primary : AppColors.backgroundPrimary,
@@ -578,14 +585,21 @@ class _FixProviderWorkingHoursSheetState
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  '$hourStr:$minuteStr $periodStr',
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
+                Expanded(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      '$hourStr:$minuteStr $periodStr',
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ),
                 ),
+                const SizedBox(width: 4),
                 const Icon(
                   Icons.access_time_rounded,
                   color: AppColors.primary,

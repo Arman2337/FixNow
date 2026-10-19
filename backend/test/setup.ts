@@ -16,6 +16,8 @@
  * `scripts/verify-integration-env.ts`, which turns an absent or wrong URL into
  * one actionable message before jest is even invoked.
  */
+import 'dotenv/config';
+
 process.env.DATABASE_URL =
   process.env.TEST_DATABASE_URL ??
   'postgresql://fixnow:replace-me@localhost:5432/fixnow';

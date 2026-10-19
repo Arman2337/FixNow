@@ -383,9 +383,10 @@ function publicRoutesByMetadata(app: INestApplication): string[] {
  */
 function normalise(path: string): string {
   const withoutPrefix = path.replace(/^\/api\/v1/, '') || '/';
-  const withSlash = withoutPrefix.startsWith('/')
-    ? withoutPrefix
-    : `/${withoutPrefix}`;
+  const cleanSlashes = withoutPrefix.replace(/\/+/g, '/');
+  const withSlash = cleanSlashes.startsWith('/')
+    ? cleanSlashes
+    : `/${cleanSlashes}`;
   return withSlash.replace(/:([A-Za-z0-9_]+)/g, '{$1}');
 }
 

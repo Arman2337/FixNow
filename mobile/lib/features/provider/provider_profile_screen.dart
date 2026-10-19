@@ -237,24 +237,30 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          _MetricColumn(
-                            label: 'Rating',
-                            value: stats != null && stats.hasRating
-                                ? '⭐ ${stats.rating.toStringAsFixed(1)}'
-                                : '⭐ New',
-                            caption: stats != null && stats.hasRating
-                                ? '(${stats.reviewCount})'
-                                : 'No reviews',
+                          Expanded(
+                            child: _MetricColumn(
+                              label: 'Rating',
+                              value: stats != null && stats.hasRating
+                                  ? '⭐ ${stats.rating.toStringAsFixed(1)}'
+                                  : '⭐ New',
+                              caption: stats != null && stats.hasRating
+                                  ? '(${stats.reviewCount})'
+                                  : 'No reviews',
+                            ),
                           ),
-                          _MetricColumn(
-                            label: 'Completed',
-                            value: '${stats?.completedJobs ?? 0}',
-                            caption: 'Jobs done',
+                          Expanded(
+                            child: _MetricColumn(
+                              label: 'Completed',
+                              value: '${stats?.completedJobs ?? 0}',
+                              caption: 'Jobs done',
+                            ),
                           ),
-                          _MetricColumn(
-                            label: 'Acceptance',
-                            value: '${stats?.acceptanceRate ?? 100}%',
-                            caption: 'Response rate',
+                          Expanded(
+                            child: _MetricColumn(
+                              label: 'Acceptance',
+                              value: '${stats?.acceptanceRate ?? 100}%',
+                              caption: 'Response rate',
+                            ),
                           ),
                         ],
                       ),
@@ -400,12 +406,15 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                         children: [
                           Icon(Icons.handyman_rounded, color: AppColors.primary, size: 20),
                           SizedBox(width: 8),
-                          Text(
-                            'Verified Trade Skills',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.textPrimary,
+                          Expanded(
+                            child: Text(
+                              'Verified Trade Skills',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
@@ -548,14 +557,19 @@ class _MetricColumn extends StatelessWidget {
             fontWeight: FontWeight.w600,
             color: AppColors.textTertiary,
           ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
         const SizedBox(height: 2),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w800,
-            color: AppColors.textPrimary,
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            value,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textPrimary,
+            ),
           ),
         ),
         Text(
@@ -564,6 +578,8 @@ class _MetricColumn extends StatelessWidget {
             fontSize: 10,
             color: AppColors.textSecondary,
           ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
       ],
     );

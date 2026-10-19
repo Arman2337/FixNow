@@ -308,58 +308,64 @@ class _VerificationScreenState extends State<VerificationScreen> {
                                 children: List.generate(6, (index) {
                                   final isFilled = index < codeText.length;
                                   final isCurrent = index == codeText.length;
-                                  return Container(
-                                    width: 44,
-                                    height: 52,
-                                    decoration: BoxDecoration(
-                                      color: isFilled
-                                          ? AppColors.surfaceContainerLow
-                                          : (isCurrent
-                                                ? AppColors
-                                                      .surfaceContainerLowest
-                                                : AppColors.surfaceContainer),
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(
-                                        color: isCurrent
-                                            ? AppColors.primary
-                                            : AppColors.borderDefault,
-                                        width: isCurrent ? 2 : 1,
+                                  return Expanded(
+                                    child: Container(
+                                      margin: const EdgeInsets.symmetric(
+                                        horizontal: 2,
                                       ),
-                                      boxShadow: isCurrent
-                                          ? [
-                                              BoxShadow(
-                                                color: AppColors.primary
-                                                    .withValues(alpha: 0.15),
-                                                blurRadius: 6,
-                                                offset: const Offset(0, 2),
+                                      height: 52,
+                                      decoration: BoxDecoration(
+                                        color: isFilled
+                                            ? AppColors.surfaceContainerLow
+                                            : (isCurrent
+                                                  ? AppColors
+                                                        .surfaceContainerLowest
+                                                  : AppColors.surfaceContainer),
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                          color: isCurrent
+                                              ? AppColors.primary
+                                              : AppColors.borderDefault,
+                                          width: isCurrent ? 2 : 1,
+                                        ),
+                                        boxShadow: isCurrent
+                                            ? [
+                                                BoxShadow(
+                                                  color: AppColors.primary
+                                                      .withValues(alpha: 0.15),
+                                                  blurRadius: 6,
+                                                  offset: const Offset(0, 2),
+                                                ),
+                                              ]
+                                            : null,
+                                      ),
+                                      child: Center(
+                                        child: isCurrent
+                                            ? Container(
+                                                width: 2,
+                                                height: 24,
+                                                decoration: BoxDecoration(
+                                                  color: AppColors.primary,
+                                                  borderRadius:
+                                                      BorderRadius.circular(2),
+                                                ),
+                                              )
+                                            : Text(
+                                                isFilled
+                                                    ? codeText[index]
+                                                    : '•',
+                                                style: TextStyle(
+                                                  fontSize: 20,
+                                                  fontWeight: FontWeight.w800,
+                                                  color: isFilled
+                                                      ? AppColors.textPrimary
+                                                      : AppColors.textSecondary
+                                                            .withValues(
+                                                              alpha: 0.4,
+                                                            ),
+                                                ),
                                               ),
-                                            ]
-                                          : null,
-                                    ),
-                                    child: Center(
-                                      child: isCurrent
-                                          ? Container(
-                                              width: 2,
-                                              height: 24,
-                                              decoration: BoxDecoration(
-                                                color: AppColors.primary,
-                                                borderRadius:
-                                                    BorderRadius.circular(2),
-                                              ),
-                                            )
-                                          : Text(
-                                              isFilled ? codeText[index] : '•',
-                                              style: TextStyle(
-                                                fontSize: 20,
-                                                fontWeight: FontWeight.w800,
-                                                color: isFilled
-                                                    ? AppColors.textPrimary
-                                                    : AppColors.textSecondary
-                                                          .withValues(
-                                                            alpha: 0.4,
-                                                          ),
-                                              ),
-                                            ),
+                                      ),
                                     ),
                                   );
                                 }),
@@ -475,22 +481,30 @@ class _VerificationScreenState extends State<VerificationScreen> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.schedule_rounded,
-                                    size: 14,
-                                    color: AppColors.textSecondary,
+                              Flexible(
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerLeft,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.schedule_rounded,
+                                        size: 14,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Resend in',
+                                        style: FixNowTypography.caption
+                                            .copyWith(
+                                              color: AppColors.textSecondary,
+                                              fontSize: 11,
+                                            ),
+                                      ),
+                                    ],
                                   ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'Resend in',
-                                    style: FixNowTypography.caption.copyWith(
-                                      color: AppColors.textSecondary,
-                                      fontSize: 11,
-                                    ),
-                                  ),
-                                ],
+                                ),
                               ),
                               Text(
                                 '00:${_secondsUntilResend.toString().padLeft(2, '0')}',
@@ -520,9 +534,12 @@ class _VerificationScreenState extends State<VerificationScreen> {
                             ),
                           ),
                           icon: const Icon(Icons.refresh_rounded, size: 14),
-                          label: const Text(
-                            'Resend code',
-                            style: TextStyle(fontSize: 11),
+                          label: const FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              'Resend code',
+                              style: TextStyle(fontSize: 11),
+                            ),
                           ),
                         ),
                       ),

@@ -75,12 +75,15 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'Add Evidence Link',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
+                    const Expanded(
+                      child: Text(
+                        'Add Evidence Link',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textPrimary,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     IconButton(
@@ -260,27 +263,31 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
           ),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
-        title: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Disputes & Cases',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-                color: AppColors.textPrimary,
-                letterSpacing: -0.3,
+        title: const FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Disputes & Cases',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
+                  letterSpacing: -0.3,
+                ),
               ),
-            ),
-            Text(
-              'Resolution Hub',
-              style: TextStyle(
-                fontSize: 11,
-                color: AppColors.textSecondary,
-                fontWeight: FontWeight.w500,
+              Text(
+                'Resolution Hub',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         actions: [
           Padding(
@@ -448,14 +455,18 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text(
-                              'Past Complaints History',
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.textPrimary,
+                            const Expanded(
+                              child: Text(
+                                'Past Complaints History',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.textPrimary,
+                                ),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
+                            const SizedBox(width: 8),
                             Text(
                               '${pastComplaints.length} Resolved',
                               style: const TextStyle(
@@ -517,12 +528,15 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
               children: [
                 Row(
                   children: [
-                    Text(
-                      'FixNow Fair Dispute Guarantee',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.onPrimary,
+                    Flexible(
+                      child: Text(
+                        'FixNow Fair Dispute Guarantee',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.onPrimary,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     SizedBox(width: 4),
@@ -583,48 +597,57 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        '#CASE-$caseShort',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.primary,
-                          letterSpacing: 0.5,
-                        ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Row(
+                        children: [
+                          Text(
+                            '#CASE-$caseShort',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.primary,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          const Text(
+                            '•',
+                            style: TextStyle(color: AppColors.outlineVariant),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            complaint.bookingId != null
+                                ? 'Job #${complaint.bookingId!.substring(0, complaint.bookingId!.length > 8 ? 8 : complaint.bookingId!.length).toUpperCase()}'
+                                : 'Target: ${complaint.targetRole}',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 6),
-                      const Text(
-                        '•',
-                        style: TextStyle(color: AppColors.outlineVariant),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        complaint.bookingId != null
-                            ? 'Job #${complaint.bookingId!.substring(0, complaint.bookingId!.length > 8 ? 8 : complaint.bookingId!.length).toUpperCase()}'
-                            : 'Target: ${complaint.targetRole}',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    complaint.category,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 2),
+                    Text(
+                      complaint.category,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 10,
@@ -674,44 +697,51 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 16,
-                          backgroundColor: AppColors.surfaceContainerHigh,
-                          child: const Icon(
-                            Icons.support_agent_rounded,
-                            size: 18,
-                            color: AppColors.primary,
+                    Expanded(
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 16,
+                            backgroundColor: AppColors.surfaceContainerHigh,
+                            child: const Icon(
+                              Icons.support_agent_rounded,
+                              size: 18,
+                              color: AppColors.primary,
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: AppSpacing.sm),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              complaint.assigneeId == null
-                                  ? 'Awaiting assignment'
-                                  : 'Assigned support officer',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.textPrimary,
-                              ),
+                          const SizedBox(width: AppSpacing.sm),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  complaint.assigneeId == null
+                                      ? 'Awaiting assignment'
+                                      : 'Assigned support officer',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                Text(
+                                  complaint.assigneeId == null
+                                      ? 'Officer assignment is not available yet.'
+                                      : 'FixNow support team',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
                             ),
-                            Text(
-                              complaint.assigneeId == null
-                                  ? 'Officer assignment is not available yet.'
-                                  : 'FixNow support team',
-                              style: const TextStyle(
-                                fontSize: 11,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+                          ),
+                        ],
+                      ),
                     ),
+                    const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 8,
@@ -743,11 +773,14 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
                       color: AppColors.tertiary,
                     ),
                     const SizedBox(width: 4),
-                    Text(
-                      'Case #${complaint.id.length > 8 ? complaint.id.substring(0, 8) : complaint.id} • Under Review',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: AppColors.textSecondary,
+                    Expanded(
+                      child: Text(
+                        'Case #${complaint.id.length > 8 ? complaint.id.substring(0, 8) : complaint.id} • Under Review',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textSecondary,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],

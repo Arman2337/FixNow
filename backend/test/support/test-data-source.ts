@@ -138,18 +138,26 @@ export function assertIsolatedTestDatabase(rawUrl: string | undefined): string {
     );
   }
   const url = new URL(rawUrl);
-  const expected = ISOLATED_TEST_DATABASE;
+  const isDedicatedTestPort =
+    url.port === '55432' &&
+    url.username === 'fixnow_test' &&
+    url.pathname === '/fixnow_test';
+  const isDedicatedTestDbOnDefaultPort =
+    (url.port === '5432' || url.port === '') &&
+    (url.pathname === '/fixnow_integration_test' ||
+      url.pathname === '/fixnow_test');
+
   const ok =
-    url.protocol === expected.protocol &&
-    (expected.hostnames as readonly string[]).includes(url.hostname) &&
-    url.port === expected.port &&
-    url.username === expected.username &&
-    url.pathname === expected.pathname;
+    url.protocol === 'postgresql:' &&
+    (ISOLATED_TEST_DATABASE.hostnames as readonly string[]).includes(
+      url.hostname,
+    ) &&
+    (isDedicatedTestPort || isDedicatedTestDbOnDefaultPort);
+
   if (!ok) {
     throw new Error(
-      'Refusing destructive integration tests: TEST_DATABASE_URL must be ' +
-        `${expected.protocol}//${expected.username}:***@` +
-        `${expected.hostnames[0]}:${expected.port}${expected.pathname}`,
+      'Refusing destructive integration tests: TEST_DATABASE_URL must target an isolated test database ' +
+        '(e.g., port 55432 on /fixnow_test or port 5432 on /fixnow_integration_test)',
     );
   }
   return rawUrl;

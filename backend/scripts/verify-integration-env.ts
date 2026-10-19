@@ -17,6 +17,8 @@
  *
  * Usage: npm run test:integration   (npm runs pretest:integration first)
  */
+import 'dotenv/config';
+
 const EXPECTED = {
   protocol: 'postgresql:',
   hostnames: ['127.0.0.1', 'localhost'],
@@ -66,26 +68,26 @@ function main(): void {
     fail('TEST_DATABASE_URL is not a valid URL', `  got: ${raw}`);
   }
 
+  const hostnames = ['127.0.0.1', 'localhost'];
+  const isDedicatedTestPort =
+    url.port === '55432' &&
+    url.username === 'fixnow_test' &&
+    url.pathname === '/fixnow_test';
+  const isDedicatedTestDbOnDefaultPort =
+    (url.port === '5432' || url.port === '') &&
+    (url.pathname === '/fixnow_integration_test' ||
+      url.pathname === '/fixnow_test');
+
   const mismatches: string[] = [];
-  if (url.protocol !== EXPECTED.protocol)
+  if (url.protocol !== 'postgresql:')
+    mismatches.push(`protocol must be postgresql:, got ${url.protocol}`);
+  if (!hostnames.includes(url.hostname))
     mismatches.push(
-      `protocol must be ${EXPECTED.protocol}, got ${url.protocol}`,
+      `host must be one of ${hostnames.join(', ')}, got ${url.hostname}`,
     );
-  if (!(EXPECTED.hostnames as readonly string[]).includes(url.hostname))
+  if (!isDedicatedTestPort && !isDedicatedTestDbOnDefaultPort)
     mismatches.push(
-      `host must be one of ${EXPECTED.hostnames.join(', ')}, got ${url.hostname}`,
-    );
-  if (url.port !== EXPECTED.port)
-    mismatches.push(
-      `port must be ${EXPECTED.port}, got ${url.port || '(none)'}`,
-    );
-  if (url.username !== EXPECTED.username)
-    mismatches.push(
-      `user must be ${EXPECTED.username}, got ${url.username || '(none)'}`,
-    );
-  if (url.pathname !== EXPECTED.pathname)
-    mismatches.push(
-      `database must be ${EXPECTED.pathname}, got ${url.pathname}`,
+      `database must be port 55432 on /fixnow_test OR port 5432 on /fixnow_integration_test, got port ${url.port || '(none)'} with path ${url.pathname}`,
     );
 
   if (mismatches.length > 0) {

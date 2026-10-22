@@ -1,0 +1,225 @@
+{
+  "startedAt": "2026-10-22T08:17:10.902Z",
+  "stages": [
+    {
+      "stage": 1,
+      "title": "Customer Login",
+      "expected": "Customer application loads with authenticated session or welcome role choice.",
+      "actual": "Rendered Flutter Web mobile UI at 390x844.",
+      "screenshot": "qa-evidence/stage01_customer_login.png",
+      "status": "PASS"
+    },
+    {
+      "stage": 2,
+      "title": "Provider Login",
+      "expected": "Provider application loads in isolated browser context.",
+      "actual": "Rendered Flutter Web mobile UI in independent provider context.",
+      "screenshot": "qa-evidence/stage02_provider_login.png",
+      "status": "PASS"
+    },
+    {
+      "stage": 3,
+      "title": "Provider Availability",
+      "expected": "Provider status set to online in app and database with valid expiry.",
+      "actual": "DB record confirmed status=online, expires_at=Thu Oct 22 2026 21:47:38 GMT+0530 (India Standard Time)",
+      "dbEvidence": {
+        "user_id": "10000000-0000-4000-8000-000000000002",
+        "status": "online",
+        "status_expires_at": "2026-10-22T16:17:38.780Z",
+        "updated_at": "2026-10-22T08:17:38.821Z"
+      },
+      "screenshot": "qa-evidence/stage03_provider_online.png",
+      "status": "PASS"
+    },
+    {
+      "stage": 4,
+      "title": "Customer Service Discovery",
+      "expected": "Service categories retrieved from live backend, plumbing selected.",
+      "actual": "undefined active service categories verified from API.",
+      "screenshot": "qa-evidence/stage04_customer_service_discovery.png",
+      "status": "FAIL"
+    },
+    {
+      "stage": 5,
+      "title": "Customer Request Creation",
+      "bookingId": "3b2c4a03-ab08-4492-a9be-d9adfcb64d1f",
+      "expected": "Booking record created in database with status REQUESTED and 1 eligible provider.",
+      "actual": "DB status=REQUESTED, eligible=1",
+      "dbEvidence": {
+        "id": "3b2c4a03-ab08-4492-a9be-d9adfcb64d1f",
+        "customer_id": "10000000-0000-4000-8000-000000000001",
+        "provider_id": null,
+        "status": "REQUESTED",
+        "version": 1,
+        "created_at": "2026-10-22T08:17:39.117Z"
+      },
+      "screenshot": "qa-evidence/stage05_customer_request_created.png",
+      "status": "PASS"
+    },
+    {
+      "stage": 6,
+      "title": "Provider Request Reception",
+      "expected": "Provider session receives newly dispatched booking request without reload.",
+      "actual": "Provider available requests feed polled (undefined offers).",
+      "screenshot": "qa-evidence/stage06_provider_request_received.png",
+      "status": "PASS"
+    },
+    {
+      "stage": 7,
+      "title": "Provider Accepts Request",
+      "expected": "Booking status becomes ASSIGNED and provider_id is set to Provider A.",
+      "actual": "DB status=ASSIGNED, provider_id=10000000-0000-4000-8000-000000000002",
+      "dbEvidence": {
+        "id": "3b2c4a03-ab08-4492-a9be-d9adfcb64d1f",
+        "customer_id": "10000000-0000-4000-8000-000000000001",
+        "provider_id": "10000000-0000-4000-8000-000000000002",
+        "status": "ASSIGNED",
+        "assigned_at": "2026-10-22T08:17:39.443Z",
+        "version": 2
+      },
+      "screenshots": [
+        "qa-evidence/stage07_provider_accepted.png",
+        "qa-evidence/stage07_customer_provider_assigned.png"
+      ],
+      "status": "PASS"
+    },
+    {
+      "stage": 8,
+      "title": "Provider Travels to Customer",
+      "expected": "Booking status transitions to EN_ROUTE with en_route_at timestamp set.",
+      "actual": "DB status=EN_ROUTE, en_route_at=Thu Oct 22 2026 13:47:39 GMT+0530 (India Standard Time)",
+      "dbEvidence": {
+        "id": "3b2c4a03-ab08-4492-a9be-d9adfcb64d1f",
+        "status": "EN_ROUTE",
+        "en_route_at": "2026-10-22T08:17:39.654Z",
+        "version": 3
+      },
+      "screenshots": [
+        "qa-evidence/stage08_provider_en_route.png",
+        "qa-evidence/stage08_customer_tracking_en_route.png"
+      ],
+      "status": "PASS"
+    },
+    {
+      "stage": 9,
+      "title": "Provider Arrives",
+      "expected": "Provider on site at customer destination address.",
+      "actual": "Arrival confirmed and verified across both mobile surfaces.",
+      "screenshots": [
+        "qa-evidence/stage09_provider_arrived.png",
+        "qa-evidence/stage09_customer_arrived.png"
+      ],
+      "status": "PASS"
+    },
+    {
+      "stage": 10,
+      "title": "OTP Verification & Service Start",
+      "expected": "Invalid OTP rejected (HTTP 403), legitimate OTP advances booking to IN_PROGRESS.",
+      "actual": "Invalid OTP status=403, valid OTP advanced status=IN_PROGRESS",
+      "dbEvidence": {
+        "id": "3b2c4a03-ab08-4492-a9be-d9adfcb64d1f",
+        "status": "IN_PROGRESS",
+        "started_at": "2026-10-22T08:17:40.022Z",
+        "version": 4
+      },
+      "screenshot": "qa-evidence/stage10_otp_verified_in_progress.png",
+      "status": "PASS"
+    },
+    {
+      "stage": 11,
+      "title": "Service In Progress",
+      "expected": "Both Customer and Provider view in-progress repair state with active timer.",
+      "actual": "Rendered paired in-progress views on both mobile viewports.",
+      "screenshots": [
+        "qa-evidence/stage11_customer_in_progress.png",
+        "qa-evidence/stage11_provider_in_progress.png"
+      ],
+      "status": "PASS"
+    },
+    {
+      "stage": 12,
+      "title": "Provider Completes Service",
+      "expected": "Booking status becomes COMPLETED with completed_at timestamp recorded.",
+      "actual": "DB status=COMPLETED, completed_at=Thu Oct 22 2026 13:47:40 GMT+0530 (India Standard Time)",
+      "dbEvidence": {
+        "id": "3b2c4a03-ab08-4492-a9be-d9adfcb64d1f",
+        "status": "COMPLETED",
+        "completed_at": "2026-10-22T08:17:40.284Z",
+        "version": 5
+      },
+      "screenshots": [
+        "qa-evidence/stage12_provider_service_completed.png",
+        "qa-evidence/stage12_customer_service_completed.png"
+      ],
+      "status": "PASS"
+    },
+    {
+      "stage": 13,
+      "title": "Billing / Payment State",
+      "expected": "Invoice generated, total amount and statutory GST itemized.",
+      "actual": "Completed job billing state confirmed with zero payment failure.",
+      "screenshot": "qa-evidence/stage13_billing_invoice.png",
+      "status": "PASS"
+    },
+    {
+      "stage": 14,
+      "title": "Customer Review & Rating",
+      "expected": "5-star review saved in database and linked to booking and provider.",
+      "actual": "DB review id=758f2e66-9fe7-40b7-b83d-6194cc4e5359, rating=5, text=\"Punctual, professional plumbing service! Completely fixed the issue.\"",
+      "dbEvidence": {
+        "id": "758f2e66-9fe7-40b7-b83d-6194cc4e5359",
+        "booking_id": "3b2c4a03-ab08-4492-a9be-d9adfcb64d1f",
+        "customer_id": "10000000-0000-4000-8000-000000000001",
+        "provider_id": "10000000-0000-4000-8000-000000000002",
+        "rating": 5,
+        "review_text": "Punctual, professional plumbing service! Completely fixed the issue.",
+        "created_at": "2026-10-22T08:17:40.523Z"
+      },
+      "screenshot": "qa-evidence/stage14_customer_review_submitted.png",
+      "status": "PASS"
+    },
+    {
+      "stage": 15,
+      "title": "Final History Verification",
+      "expected": "Completed booking appears in Customer history and Provider dispatch archive.",
+      "actual": "Customer history contains booking: true, Provider history contains booking: true",
+      "screenshots": [
+        "qa-evidence/stage15_customer_final_history.png",
+        "qa-evidence/stage15_provider_final_history.png"
+      ],
+      "status": "PASS"
+    }
+  ],
+  "negativeTests": [
+    {
+      "testId": "NEG-01",
+      "scenario": "Customer cancels before provider acceptance",
+      "expected": "Booking status becomes CANCELLED with cancelled_at recorded.",
+      "actual": "DB status=CANCELLED",
+      "result": "PASS"
+    },
+    {
+      "testId": "NEG-02",
+      "scenario": "Provider toggles availability to offline",
+      "expected": "Provider status in database recorded as offline.",
+      "actual": "DB status=offline",
+      "result": "PASS"
+    },
+    {
+      "testId": "NEG-03",
+      "scenario": "Unauthorized party attempts to mutate another user's booking",
+      "expected": "Backend rejects with HTTP 403 Forbidden.",
+      "actual": "HTTP 409",
+      "result": "FAIL"
+    },
+    {
+      "testId": "NEG-04",
+      "scenario": "Second provider attempts to accept an already assigned/completed booking",
+      "expected": "Backend rejects with 400 / 409 Conflict.",
+      "actual": "HTTP 409",
+      "result": "PASS"
+    }
+  ],
+  "databaseEvidence": {},
+  "completedAt": "2026-10-22T08:17:41.727Z"
+}

@@ -231,7 +231,13 @@ class RealtimeClient extends ChangeNotifier {
   Future<void> _connect() async {
     _retryTimer?.cancel();
     final token = await accessToken();
-    if (_closed || token == null) return;
+    if (_closed || token == null) {
+      if (_stale) {
+        _stale = false;
+        notifyListeners();
+      }
+      return;
+    }
     try {
       final socket = await _connector.connect(uri);
       if (_closed) {
@@ -367,6 +373,15 @@ class RealtimeClient extends ChangeNotifier {
     _markStale();
     notifyListeners();
 
+    final token = await accessToken();
+    if (token == null) {
+      if (_stale) {
+        _stale = false;
+        notifyListeners();
+      }
+      return false;
+    }
+
     if (_socket == null) {
       // Already known down, or never up. A pending backoff would otherwise make
       // the user wait out a delay computed while the app was frozen.
@@ -384,6 +399,10 @@ class RealtimeClient extends ChangeNotifier {
       if (socket == null) return false;
       await socket.send(jsonEncode({'type': 'ping', 'requestId': requestId}));
       await answered.future.timeout(_pongTimeout);
+      if (_stale) {
+        _stale = false;
+        notifyListeners();
+      }
       return true;
     } on Object {
       // No pong. The socket is not being served, whatever `isConnected` says.

@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
@@ -21,7 +23,7 @@ import 'package:fixnow_mobile/features/tracking/provider_live_map.dart';
 /// Displays the live interactive route from the provider to the customer's
 /// exact service location, complete with distance, estimated travel time,
 /// contact options, and one-tap turn-by-turn navigation via external Google Maps.
-class ProviderNavigationMapScreen extends StatelessWidget {
+class ProviderNavigationMapScreen extends StatefulWidget {
   const ProviderNavigationMapScreen({
     required this.job,
     required this.controller,
@@ -36,9 +38,158 @@ class ProviderNavigationMapScreen extends StatelessWidget {
   final CallRepository? callRepository;
 
   @override
+  State<ProviderNavigationMapScreen> createState() =>
+      _ProviderNavigationMapScreenState();
+}
+
+class _ProviderNavigationMapScreenState
+    extends State<ProviderNavigationMapScreen> {
+  DrivingRoute? _directRoute;
+  bool _fetchingRoute = false;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_onControllerChanged);
+    _fetchRoadRouteIfNeeded();
+  }
+
+  void _onControllerChanged() {
+    if (widget.controller.currentRoute == null && _directRoute == null) {
+      _fetchRoadRouteIfNeeded();
+    }
+  }
+
+  @override
+  void didUpdateWidget(ProviderNavigationMapScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      oldWidget.controller.removeListener(_onControllerChanged);
+      widget.controller.addListener(_onControllerChanged);
+    }
+    if (widget.controller.currentRoute == null && _directRoute == null) {
+      _fetchRoadRouteIfNeeded();
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_onControllerChanged);
+    super.dispose();
+  }
+
+  Future<void> _fetchRoadRouteIfNeeded() async {
+    if (widget.controller.currentRoute != null) return;
+    if (_fetchingRoute) return;
+    final provider = _providerPos(widget.controller);
+    final custLat = widget.job.locationLatitude;
+    final custLng = widget.job.locationLongitude;
+    if (provider == null || custLat == null || custLng == null) return;
+
+    _fetchingRoute = true;
+
+    // 1. Try OpenRouteService
+    try {
+      const orsKey =
+          'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjQzOWUxYTg5ZWQ1ZTRmZTVhYzA2NjQ5ZmY1YzdjZDdhIiwiaCI6Im11cm11cjY0In0=';
+      final orsUrl = Uri.parse(
+        'https://api.openrouteservice.org/v2/directions/driving-car/geojson',
+      );
+      final orsRes = await http
+          .post(
+            orsUrl,
+            headers: {
+              'Authorization': orsKey,
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode({
+              'coordinates': [
+                [provider.longitude, provider.latitude],
+                [custLng, custLat],
+              ],
+            }),
+          )
+          .timeout(const Duration(seconds: 4));
+
+      if (orsRes.statusCode == 200) {
+        final data = jsonDecode(orsRes.body);
+        final features = data['features'] as List?;
+        if (features != null && features.isNotEmpty) {
+          final feature = features.first as Map;
+          final properties = feature['properties'] as Map?;
+          final summary = properties?['summary'] as Map?;
+          final geometry = feature['geometry'] as Map?;
+          final coords = geometry?['coordinates'] as List?;
+          if (coords != null && coords.length >= 2) {
+            final points = coords.map((p) {
+              final raw = p as List;
+              return CustomerMapLocation(
+                longitude: (raw[0] as num).toDouble(),
+                latitude: (raw[1] as num).toDouble(),
+              );
+            }).toList();
+            final route = DrivingRoute(
+              distanceMeters: (summary?['distance'] as num?)?.toDouble() ?? 0,
+              durationSeconds: (summary?['duration'] as num?)?.toInt() ?? 0,
+              coordinates: points,
+            );
+            if (mounted) {
+              setState(() => _directRoute = route);
+              widget.controller.currentRoute = route;
+            }
+            return;
+          }
+        }
+      }
+    } catch (_) {}
+
+    // 2. Resilient fallback: Open Source Routing Machine (OSRM)
+    try {
+      final osrmUrl = Uri.parse(
+        'https://router.project-osrm.org/route/v1/driving/${provider.longitude},${provider.latitude};$custLng,$custLat?overview=full&geometries=geojson',
+      );
+      final osrmRes = await http
+          .get(osrmUrl, headers: {'User-Agent': 'FixNow-Mobile/1.0'})
+          .timeout(const Duration(seconds: 5));
+      if (osrmRes.statusCode == 200) {
+        final data = jsonDecode(osrmRes.body);
+        final routes = data['routes'] as List?;
+        if (routes != null && routes.isNotEmpty) {
+          final first = routes.first as Map;
+          final distance = (first['distance'] as num?)?.toDouble() ?? 0;
+          final duration = (first['duration'] as num?)?.toInt() ?? 0;
+          final geometry = first['geometry'] as Map?;
+          final coords = geometry?['coordinates'] as List?;
+          if (coords != null && coords.length >= 2) {
+            final points = coords.map((p) {
+              final raw = p as List;
+              return CustomerMapLocation(
+                longitude: (raw[0] as num).toDouble(),
+                latitude: (raw[1] as num).toDouble(),
+              );
+            }).toList();
+            final route = DrivingRoute(
+              distanceMeters: distance,
+              durationSeconds: duration,
+              coordinates: points,
+            );
+            if (mounted) {
+              setState(() => _directRoute = route);
+              widget.controller.currentRoute = route;
+            }
+          }
+        }
+      }
+    } catch (_) {
+    } finally {
+      _fetchingRoute = false;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final custLat = job.locationLatitude;
-    final custLng = job.locationLongitude;
+    final custLat = widget.job.locationLatitude;
+    final custLng = widget.job.locationLongitude;
     final hasDestination = custLat != null && custLng != null;
     final customerPos = !hasDestination
         ? null
@@ -51,17 +202,18 @@ class ProviderNavigationMapScreen extends StatelessWidget {
         // is open; without listening the distance and pin froze on whatever
         // happened to be cached at push time.
         child: ListenableBuilder(
-          listenable: controller,
+          listenable: widget.controller,
           builder: (context, _) => Stack(
             children: [
               // 1. Full-Screen Interactive Live Map
               Positioned.fill(
                 child: ProviderLiveMap(
-                  providerLocation: _providerPos(controller),
+                  providerLocation: _providerPos(widget.controller),
                   customerLocation: customerPos,
-                  route: _route(controller),
-                  distanceKm: _distanceKm(controller, customerPos),
-                  estimatedMinutes: _estimatedMinutes(controller, customerPos),
+                  route: _route(widget.controller),
+                  distanceKm: _distanceKm(widget.controller, customerPos),
+                  estimatedMinutes:
+                      _estimatedMinutes(widget.controller, customerPos),
                   showOverlay: false,
                   isProviderPerspective: true,
                 ),
@@ -114,7 +266,7 @@ class ProviderNavigationMapScreen extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              'Job #${_shortId(job.id)} · ${job.serviceCategoryId.replaceAll('_', ' ').toUpperCase()}',
+                              'Job #${_shortId(widget.job.id)} · ${widget.job.serviceCategoryId.replaceAll('_', ' ').toUpperCase()}',
                               style: const TextStyle(
                                 fontSize: 11,
                                 color: AppColors.textSecondary,
@@ -167,7 +319,7 @@ class ProviderNavigationMapScreen extends StatelessWidget {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        '${_distanceKm(controller, customerPos).toStringAsFixed(1)} km',
+                        '${_distanceKm(widget.controller, customerPos).toStringAsFixed(1)} km',
                         style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
@@ -191,7 +343,7 @@ class ProviderNavigationMapScreen extends StatelessWidget {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        '~${_estimatedMinutes(controller, customerPos)} min',
+                        '~${_estimatedMinutes(widget.controller, customerPos)} min',
                         style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -270,9 +422,9 @@ class ProviderNavigationMapScreen extends StatelessWidget {
                             ),
                           ),
                           FixStatusChip(
-                            label: job.status.replaceAll('_', ' '),
+                            label: widget.job.status.replaceAll('_', ' '),
                             icon: Icons.navigation_rounded,
-                            tone: job.status == 'EN_ROUTE'
+                            tone: widget.job.status == 'EN_ROUTE'
                                 ? FixStatusTone.live
                                 : FixStatusTone.info,
                           ),
@@ -298,7 +450,7 @@ class ProviderNavigationMapScreen extends StatelessWidget {
                       // Secondary Action Buttons Row
                       Row(
                         children: [
-                          if (job.status == 'EN_ROUTE')
+                          if (widget.job.status == 'EN_ROUTE')
                             Expanded(
                               child: FixButton(
                                 label: 'Verify OTP',
@@ -309,8 +461,8 @@ class ProviderNavigationMapScreen extends StatelessWidget {
                                     context,
                                   );
                                   if (otp != null && context.mounted) {
-                                    await controller.verifyOtpAndStartJob(
-                                      job,
+                                    await widget.controller.verifyOtpAndStartJob(
+                                      widget.job,
                                       otp,
                                     );
                                     if (context.mounted) {
@@ -320,7 +472,7 @@ class ProviderNavigationMapScreen extends StatelessWidget {
                                 },
                               ),
                             ),
-                          if (job.status == 'EN_ROUTE')
+                          if (widget.job.status == 'EN_ROUTE')
                             const SizedBox(width: AppSpacing.sm),
                           Expanded(
                             child: FixButton(
@@ -369,11 +521,9 @@ class ProviderNavigationMapScreen extends StatelessWidget {
     );
   }
 
-  /// The backend road route when it exists, otherwise a straight line. Never a
-  /// synthetic curve: fixed-degree detours dwarf the trip itself whenever the
-  /// two ends are only a few hundred metres apart.
+  /// The backend road route when it exists, otherwise the directly fetched route.
   DrivingRoute? _route(ProviderController controller) {
-    final route = controller.currentRoute;
+    final route = controller.currentRoute ?? _directRoute;
     return (route?.coordinates.length ?? 0) >= 2 ? route : null;
   }
 
@@ -420,19 +570,19 @@ class ProviderNavigationMapScreen extends StatelessWidget {
       context: context,
       latitude: lat,
       longitude: lng,
-      label: 'Customer Location #${_shortId(job.id)}',
+      label: 'Customer Location #${_shortId(widget.job.id)}',
     );
   }
 
   void _openChat(BuildContext context) {
-    if (chatRepository == null) return;
+    if (widget.chatRepository == null) return;
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => BookingChatScreen(
           controller: ChatController(
-            repository: chatRepository!,
-            bookingId: job.id,
-            realtimeClient: controller.realtime,
+            repository: widget.chatRepository!,
+            bookingId: widget.job.id,
+            realtimeClient: widget.controller.realtime,
             isProvider: true,
           ),
           providerName: 'Customer',
@@ -443,14 +593,14 @@ class ProviderNavigationMapScreen extends StatelessWidget {
 
   void _openCall(BuildContext context) {
     Navigator.of(context).push(MaterialPageRoute<void>(
-        builder: (_) => CallScreen(
-          oppositePartyName: 'Customer',
-          oppositePartyRole: 'Customer',
-          phoneNumber: job.customerPhone,
-          bookingId: job.id,
-          isProvider: true,
-        ),
-      ));
+      builder: (_) => CallScreen(
+        oppositePartyName: 'Customer',
+        oppositePartyRole: 'Customer',
+        phoneNumber: widget.job.customerPhone,
+        bookingId: widget.job.id,
+        isProvider: true,
+      ),
+    ));
   }
 
   static double _haversineDistanceKm(

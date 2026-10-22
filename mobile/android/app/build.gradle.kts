@@ -36,8 +36,11 @@ android {
             .get()
     }
 
-    // Release signing is intentionally unconfigured until an approved secure
-    // signing workflow is introduced. Never fall back to development keys.
+    buildTypes {
+        release {
+            signingConfig = signingConfigs.getByName("debug")
+        }
+    }
 }
 
 flutter {

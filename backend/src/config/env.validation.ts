@@ -336,6 +336,14 @@ export class EnvironmentVariables {
   @IsOptional()
   FCM_CREDENTIALS_FILE?: string;
 
+  @IsString()
+  @IsOptional()
+  FCM_CREDENTIALS_JSON?: string;
+
+  @IsString()
+  @IsOptional()
+  FCM_CREDENTIALS_BASE64?: string;
+
   @IsEnum(PaymentProviderName)
   @IsOptional()
   PAYMENT_PROVIDER: PaymentProviderName = PaymentProviderName.Fake;
@@ -620,9 +628,13 @@ function validatePushConfiguration(config: EnvironmentVariables): void {
     throw new Error('PUSH_PROVIDER=fake is prohibited in production');
   }
   if (config.PUSH_PROVIDER === PushProviderName.Fcm) {
-    if (!config.FCM_CREDENTIALS_FILE) {
+    if (
+      !config.FCM_CREDENTIALS_FILE &&
+      !config.FCM_CREDENTIALS_JSON &&
+      !config.FCM_CREDENTIALS_BASE64
+    ) {
       throw new Error(
-        'PUSH_PROVIDER=fcm requires FCM_CREDENTIALS_FILE pointing at an untracked service-account JSON',
+        'PUSH_PROVIDER=fcm requires FCM_CREDENTIALS_FILE, FCM_CREDENTIALS_JSON, or FCM_CREDENTIALS_BASE64 pointing at an untracked service-account JSON',
       );
     }
     return;

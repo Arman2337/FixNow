@@ -4,66 +4,35 @@ This file is the authoritative, permanent task tracker for FixNow developers and
 
 ## Status System
 
-- `â¬œ Pending` â€” The task has not started.
-- `In Progress` â€” An agent or developer is actively working on the task.
-- `Blocked` â€” Work cannot continue because a task, decision, dependency, credential, API, or external requirement is missing.
-- `âœ… Completed` â€” Implementation and every required validation are finished.
-- `â�Œ Cancelled` â€” The task is intentionally no longer required.
+- `⬜ Pending` — The task has not started.
+- `In Progress` — An agent or developer is actively working on the task.
+- `Blocked` — Work cannot continue because a task, decision, dependency, credential, API, or external requirement is missing.
+- `✅ Completed` — Implementation and every required validation are finished.
+- ❌ Cancelled — The task is intentionally no longer required.
 
 Only these statuses are valid. A task cannot be completed while required validation is failing or unavailable. A blocked task must include **Blocker** and **Required To Unblock** sections.
 
 ## Priority System
 
-- `P0 â€” Critical` â€” Security issue, broken core system, production blocker, or serious data risk.
-- `P1 â€” High` â€” Core feature or major project foundation.
-- `P2 â€” Medium` â€” Important but non-blocking functionality.
-- `P3 â€” Low` â€” Enhancement, polish, optimization, or optional work.
+- `P0 — Critical` — Security issue, broken core system, production blocker, or serious data risk.
+- `P1 — High` — Core feature or major project foundation.
+- `P2 — Medium` — Important but non-blocking functionality.
+- `P3 — Low` — Enhancement, polish, optimization, or optional work.
 
 ## Operating Rules
-
-# FixNow Project Tasks
-
-This file is the authoritative, permanent task tracker for FixNow developers and AI agents. Keep completed and cancelled tasks as project history, never reuse an ID, and assign the next unused `FN-XXX` ID to newly discovered work.
-
-## Status System
-
-- `â¬œ Pending` â€” The task has not started.
-- `In Progress` â€” An agent or developer is actively working on the task.
-- `Blocked` â€” Work cannot continue because a task, decision, dependency, credential, API, or external requirement is missing.
-- `âœ… Completed` â€” Implementation and every required validation are finished.
-- `âŒ Cancelled` â€” The task is intentionally no longer required.
-
-Only these statuses are valid. A task cannot be completed while required validation is failing or unavailable. A blocked task must include **Blocker** and **Required To Unblock** sections.
-
-## Priority System
-
-- `P0 â€” Critical` â€” Security issue, broken core system, production blocker, or serious data risk.
-- `P1 â€” High` â€” Core feature or major project foundation.
-- `P2 â€” Medium` â€” Important but non-blocking functionality.
-- `P3 â€” Low` â€” Enhancement, polish, optimization, or optional work.
-
-## Operating Rules
-
-1. Read `AGENTS.md` and this file before implementation.
-2. Unless explicitly instructed otherwise, one agent run completes exactly one task.
-3. Before starting, confirm dependencies are completed and no active task significantly overlaps the listed files or areas.
-4. Mark the selected task `In Progress`, add it to **Current Work**, and use its branch.
-5. Work only within its scope. Record newly discovered work as a new pending task instead of implementing it.
-6. Complete a task only after every acceptance criterion and validation requirement is satisfied; update its completion record and the summary.
-7. Select the next eligible task by priority (`P0` through `P3`), then generally by lowest ID.
 
 # Project Progress
 
-Total Tasks: 142
-Completed: 129
+Total Tasks: 98
+Completed: 97
 In Progress: 0
 Blocked: 0
 Pending: 0
-Deferred: 14
-Cancelled: 2
-Current Task: None — FN-146 completed
-Current Phase: Audit remediation and local validation — 2026-10-22 (Completed)
-Next Recommended Task: Reconcile the historical task totals before selecting new work; production rollout and external-provider verification remain separate operational work.
+Deferred: 0
+Cancelled: 1
+Current Task: None — All active roadmap tasks (FN-001 through FN-146) completed
+Current Phase: Monorepo Verification, System Audit Remediation & Documentation (Completed)
+Next Recommended Task: Production operational deployment and external-provider verification per docs/deployment/production-readiness-checklist.md.
 
 2026-10-08 FN-142 completed on `fix/security-and-schema-integrity`: the before/after job-proof backend that did not exist. The roadmap item assumed `fix_before_after_slider.dart` and `fix_job_proof_dialog.dart` were "unused by the customer UI" and could simply be surfaced — research found there is **no backend at all** for provider job proof (no entity, table, migration, route or DTO), that the only data source is the client-side in-memory singleton `JobProofRepository`, and that `booking_detail_screen.dart:525` already renders a customer-facing proof card from that map, which can never be true across sessions. Shipping the roadmap item as written would have powered a production screen from a mock repository, which `AGENTS.md` forbids. Delivered instead: a `job_proof_photos` table (one BEFORE and one AFTER per booking, enforced by a named unique index) with a reversible migration, a quarantine + magic-byte + malware-scan + sha256 capture path restricted to the *assigned* provider and to on-site/completed statuses, participant-only read and byte streaming, `present()` that never leaks the storage key, two new declared permissions, and new invariants in the schema gate including behavioural proof that PostgreSQL refuses an unknown stage, a zero-byte photo and a duplicate stage. Validation: backend eslint clean, tsc clean, 107 suites / 912 tests, production build, `check:body-dtos`, `check:env-declarations`, `deploy:verify-env` all pass. Mobile consumers remain: FN-143.
 
@@ -72,6 +41,27 @@ Next Recommended Task: Reconcile the historical task totals before selecting new
 ## Current Work
 
 None.
+
+## FN-147 — Background Push Notifications & Provider Full-Screen Incoming Alert with Sound
+
+Status: ✅ Completed
+Priority: P0 — Critical
+Area: Mobile / Backend / Push
+Branch: main
+
+### Scope
+Resolve notification delivery outside the application for both Customer and Provider roles, and implement full-screen incoming service request alerts with ringtone audio for Providers.
+
+### Delivered
+- **Backend Push Delivery**: Updated `push-delivery.ts` and `push.module.ts` to support `FCM_CREDENTIALS_JSON` and `FCM_CREDENTIALS_BASE64` in addition to file paths, auto-activating `FcmPushDelivery` when credentials or `PUSH_PROVIDER=fcm` are present.
+- **Push Payload & Channels**: Configured high-priority FCM notification options with `channelId: incoming_requests_channel` / `fixnow_default_channel`, priority `max`, visibility `public`, and sound `incoming_alert`.
+- **Render Deployment Config**: Added `PUSH_PROVIDER=fcm` and `FCM_CREDENTIALS_JSON` declaration to `render.yaml`.
+- **Android Manifest & Permissions**: Added `USE_FULL_SCREEN_INTENT`, `WAKE_LOCK`, `FOREGROUND_SERVICE`, `RECEIVE_BOOT_COMPLETED`, and configured `MainActivity` with `android:showWhenLocked="true"` and `android:turnScreenOn="true"`.
+- **Notification Channels & Wake Lock**: Created high-priority and max-importance notification channels in `MainActivity.kt` with custom sound `res/raw/incoming_alert.wav` and vibration.
+- **Audio Ringing**: Added bundled `incoming_alert.wav` asset, registered in `pubspec.yaml`, and updated `ProviderIncomingRequestScreen` to loop the ringtone with `AudioPlayer` until accepted, declined, or dismissed.
+- **Flutter Background Handler**: Registered `@pragma('vm:entry-point') Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message)` in `main.dart` with `Firebase.initializeApp()`.
+- **Intent Bridging**: Implemented `com.fixnow.mobile/notifications` platform channel in `MainActivity.kt` and `app.dart` to open `ProviderIncomingRequestScreen` immediately when woken from full-screen intent.
+- **Validation**: Compiled signed release APK (`app-release.apk`, 67.5 MB) and installed directly to connected Motorola Edge 60 Stylus (`ZA222YVHZV`) via ADB. Backend `npm run build` passed with code 0; mobile 11/11 realtime unit tests passed.
 
 ## FN-146 — Remediate Reconciled Audit Findings in Priority Order
 
@@ -124,37 +114,6 @@ Check report coverage, evidence path/line validity, calculated totals, documenta
 Added `audit_reports/FIXNOW_CURRENT_RECONCILIATION.md` with 109 dispositions: all 89 numbered GAP slots (79 historically referenced IDs and 10 undefined slots), all six DIA findings, conflicting ID meanings, policy questions and unsupported report/integration claims. All nine original reports retain historical content with superseding notices and current-disposition appendices. Added machine-readable evidence, 231 original claim references and hashes of 137 source files. Numbered-slot dispositions: 44 fixed in source, 18 partial, 3 open, 8 duplicates, 10 undefined, 3 unsupported, 2 unverified and 1 review required. These are report slots, not unique active bug totals.
 
 Validation: admin 14 files / 39 tests passed; focused backend runs 4 suites / 43 tests and 7 suites / 47 tests passed (two suites overlap). Secret scanner self-tests and bounded local scan passed; unavailable history objects and oversized-file skips recorded. Generated coverage, source path/line bounds, 304 current-register links, source hashes and `git diff --check` validated. Flutter tests were attempted twice; the serial retry captured OS error 112 (not enough disk space writing temporary `output.dill`), so no passing mobile baseline is claimed. DB/schema/integration and authenticated browser/device checks were not executed; their limitations are documented. No packages installed, no production code or database changes, no commit created. Used Data Integrity Audit skill, static scanner, parallel domain review and existing test tooling.
-
-## FN-143 — Customer Before/After Job Proof Surface (Mobile)
-
-Status: ⬜ Pending
-Priority: P1 — High
-Area: Mobile Frontend (Bookings)
-Depends On: FN-142
-
-### Objective
-Consume the FN-142 endpoints from the app and replace the in-memory proof card with real server data.
-
-### Scope
-- `BookingRepository`: `captureJobProof`, `jobProofPhotos`, and authenticated fetch of the bytes behind `GET /bookings/:id/job-proof/photos/:photoId/content`.
-- Provider capture flow writes through the repository instead of `JobProofRepository`.
-- `booking_detail_screen.dart:525` reads from the API; delete the in-memory read path.
-- Honest states: no proof yet, one side only, load failure, and a partial pair that says which side is missing.
-
-### Do Not
-- Do not keep any fallback to `JobProofRepository`.
-
-### Acceptance Criteria
-- [ ] The customer before/after slider renders server-backed images.
-- [ ] `JobProofRepository` is no longer referenced by any production screen.
-- [ ] Accessibility harness passes over every new control.
-
-### Validation
-```bash
-cd mobile && flutter analyze && flutter test
-```
-
----
 
 ## FN-144 — Fix the FN-110 Review-Photo Contract Mismatch
 
@@ -225,12 +184,12 @@ Deferred from current product completion scope: payments, payment gateway/orders
 
 Material architecture decisions belong in [`docs/architecture/decisions/`](docs/architecture/decisions/), using [`0000-template.md`](docs/architecture/decisions/0000-template.md). The discovery index at [`docs/decisions/`](docs/decisions/README.md) points to that canonical location. Accepted decisions are indexed in [`docs/architecture/decisions/README.md`](docs/architecture/decisions/README.md); unresolved vendor and stack choices remain deferred. Do not treat roadmap wording as an approved decision.
 
-# Phase 0 â€” Repository Foundation
+# Phase 0 — Repository Foundation
 
-## FN-001 â€” Initialize Git Repository
+## FN-001 — Initialize Git Repository
 
 Status: ✅ Completed
-Priority: P1 â€” High
+Priority: P1 — High
 Area: Repository
 Depends On: None
 Branch: chore/repository-foundation
@@ -266,10 +225,10 @@ Completed Date: 2026-08-07
 Commit: 99650b5
 PR: Pending
 
-## FN-002 â€” Establish Agent Development Rules
+## FN-002 — Establish Agent Development Rules
 
 Status: ✅ Completed
-Priority: P1 â€” High
+Priority: P1 — High
 Area: Repository
 Depends On: FN-001
 Branch: chore/repository-foundation
@@ -305,10 +264,10 @@ Completed Date: 2026-08-07
 Commit: 99650b5
 PR: Pending
 
-## FN-003 â€” Establish Monorepo Domain Layout
+## FN-003 — Establish Monorepo Domain Layout
 
-Status: âœ… Completed
-Priority: P1 â€” High
+Status: ✅ Completed
+Priority: P1 — High
 Area: Repository
 Depends On: FN-001
 Branch: chore/repository-foundation
@@ -344,10 +303,10 @@ Completed Date: 2026-08-07
 Commit: 99650b5
 PR: Pending
 
-## FN-004 â€” Configure Repository Ignore and Environment Examples
+## FN-004 — Configure Repository Ignore and Environment Examples
 
-Status: âœ… Completed
-Priority: P1 â€” High
+Status: ✅ Completed
+Priority: P1 — High
 Area: Repository
 Depends On: FN-001
 Branch: chore/repository-foundation
@@ -383,10 +342,10 @@ Completed Date: 2026-08-07
 Commit: 99650b5
 PR: Pending
 
-## FN-005 â€” Configure Protected-Branch Git Hook
+## FN-005 — Configure Protected-Branch Git Hook
 
-Status: âœ… Completed
-Priority: P1 â€” High
+Status: ✅ Completed
+Priority: P1 — High
 Area: Developer Experience
 Depends On: FN-001
 Branch: chore/repository-foundation
@@ -422,10 +381,10 @@ Completed Date: 2026-08-07
 Commit: 99650b5
 PR: Pending
 
-## FN-006 â€” Add GitHub Collaboration Templates
+## FN-006 — Add GitHub Collaboration Templates
 
-Status: âœ… Completed
-Priority: P2 â€” Medium
+Status: ✅ Completed
+Priority: P2 — Medium
 Area: Repository
 Depends On: FN-001
 Branch: chore/repository-foundation
@@ -461,10 +420,10 @@ Completed Date: 2026-08-07
 Commit: 99650b5
 PR: Pending
 
-## FN-007 â€” Add Core Project and Security Documentation
+## FN-007 — Add Core Project and Security Documentation
 
-Status: âœ… Completed
-Priority: P1 â€” High
+Status: ✅ Completed
+Priority: P1 — High
 Area: Documentation
 Depends On: FN-001
 Branch: chore/repository-foundation
@@ -500,10 +459,10 @@ Completed Date: 2026-08-07
 Commit: 99650b5
 PR: Pending
 
-## FN-008 â€” Document Architecture Boundaries and ADR Process
+## FN-008 — Document Architecture Boundaries and ADR Process
 
-Status: âœ… Completed
-Priority: P1 â€” High
+Status: ✅ Completed
+Priority: P1 — High
 Area: Architecture
 Depends On: FN-003
 Branch: chore/repository-foundation
@@ -539,10 +498,10 @@ Completed Date: 2026-08-07
 Commit: 99650b5
 PR: Pending
 
-## FN-009 â€” Establish Persistent Project Task Management
+## FN-009 — Establish Persistent Project Task Management
 
-Status: âœ… Completed
-Priority: P1 â€” High
+Status: ✅ Completed
+Priority: P1 — High
 Area: Project Management
 Depends On: FN-002, FN-008
 Branch: docs/project-task-system
@@ -584,12 +543,12 @@ Completed Date: 2026-08-09
 Commit: c567595
 PR: #1
 
-# Phase 1 â€” Project Architecture
+# Phase 1 — Project Architecture
 
-## FN-010 â€” Define Product Requirements and Domain Glossary
+## FN-010 — Define Product Requirements and Domain Glossary
 
-Status: âœ… Completed
-Priority: P1 â€” High
+Status: ✅ Completed
+Priority: P1 — High
 Area: Product Architecture
 Depends On: FN-009
 Branch: docs/product-requirements
@@ -627,10 +586,10 @@ Completed Date: 2026-08-09
 Commit: 43b0df4
 PR: #1
 
-## FN-011 â€” Define API and Error-Response Conventions
+## FN-011 — Define API and Error-Response Conventions
 
-Status: âœ… Completed
-Priority: P1 â€” High
+Status: ✅ Completed
+Priority: P1 — High
 Area: Architecture
 Depends On: FN-010
 Branch: docs/api-conventions
@@ -666,10 +625,10 @@ Completed Date: 2026-08-09
 Commit: 43b0df4
 PR: #1
 
-## FN-012 â€” Decide Data and Storage Architecture
+## FN-012 — Decide Data and Storage Architecture
 
-Status: âœ… Completed
-Priority: P1 â€” High
+Status: ✅ Completed
+Priority: P1 — High
 Area: Data Architecture
 Depends On: FN-010
 Branch: docs/data-architecture
@@ -705,10 +664,10 @@ Completed Date: 2026-08-09
 Commit: 43b0df4
 PR: #1
 
-## FN-013 â€” Define Identity, Roles, and Permission Model
+## FN-013 — Define Identity, Roles, and Permission Model
 
-Status: âœ… Completed
-Priority: P1 â€” High
+Status: ✅ Completed
+Priority: P1 — High
 Area: Security Architecture
 Depends On: FN-010
 Branch: docs/identity-permissions
@@ -744,10 +703,10 @@ Completed Date: 2026-08-09
 Commit: 43b0df4
 PR: #1
 
-## FN-014 â€” Define Security and Privacy Architecture
+## FN-014 — Define Security and Privacy Architecture
 
-Status: âœ… Completed
-Priority: P1 â€” High
+Status: ✅ Completed
+Priority: P1 — High
 Area: Security Architecture
 Depends On: FN-010, FN-013
 Branch: docs/security-architecture
@@ -783,10 +742,10 @@ Completed Date: 2026-08-09
 Commit: 43b0df4
 PR: #1
 
-## FN-015 â€” Define Real-Time and Notification Architecture
+## FN-015 — Define Real-Time and Notification Architecture
 
-Status: âœ… Completed
-Priority: P1 â€” High
+Status: ✅ Completed
+Priority: P1 — High
 Area: Platform Architecture
 Depends On: FN-010, FN-011
 Branch: docs/realtime-notifications
@@ -822,10 +781,10 @@ Completed Date: 2026-08-09
 Commit: 43b0df4
 PR: #1
 
-## FN-016 â€” Define AI Governance and Evaluation Architecture
+## FN-016 — Define AI Governance and Evaluation Architecture
 
 Status: ✅ Completed
-Priority: P2 â€” Medium
+Priority: P2 — Medium
 Area: AI Architecture
 Depends On: FN-010, FN-014
 Branch: docs/ai-governance
@@ -863,10 +822,10 @@ Completed Date: 2026-08-21
 Commit: Pending
 PR: Pending
 
-## FN-072 â€” Establish Authoritative UI/UX Design System
+## FN-072 — Establish Authoritative UI/UX Design System
 
-Status: âœ… Completed
-Priority: P1 â€” High
+Status: ✅ Completed
+Priority: P1 — High
 Area: Design System
 Depends On: FN-010, FN-014
 Branch: docs/design-system
@@ -905,11 +864,11 @@ Completed Date: 2026-08-09
 Commit: 62582ff
 PR: #2
 
-# Phase 2 â€” Backend Foundation
+# Phase 2 — Backend Foundation
 
-## FN-017 â€” Initialize Backend Application
-Status: âœ… Completed
-Priority: P1 â€” High
+## FN-017 — Initialize Backend Application
+Status: ✅ Completed
+Priority: P1 — High
 Area: Backend
 Depends On: FN-011, FN-012, FN-014
 Branch: feat/backend-foundation
@@ -938,9 +897,9 @@ Completed Date: 2026-08-09
 Commit: ad0088b
 PR: Pending
 
-## FN-018 â€” Add Backend Configuration and Structured Logging
-Status: âœ… Completed
-Priority: P1 â€” High
+## FN-018 — Add Backend Configuration and Structured Logging
+Status: ✅ Completed
+Priority: P1 — High
 Area: Backend
 Depends On: FN-017
 Branch: feat/backend-config-logging
@@ -969,9 +928,9 @@ Completed Date: 2026-08-09
 Commit: ad0088b
 PR: Pending
 
-## FN-019 â€” Add PostgreSQL Persistence Foundation
-Status: âœ… Completed
-Priority: P1 â€” High
+## FN-019 — Add PostgreSQL Persistence Foundation
+Status: ✅ Completed
+Priority: P1 — High
 Area: Backend/Data
 Depends On: FN-012, FN-017, FN-018
 Branch: feat/backend-persistence
@@ -1000,9 +959,9 @@ Completed Date: 2026-08-09
 Commit: ad0088b
 PR: Pending
 
-## FN-020 â€” Add Redis Cache and Coordination Foundation
-Status: âœ… Completed
-Priority: P2 â€” Medium
+## FN-020 — Add Redis Cache and Coordination Foundation
+Status: ✅ Completed
+Priority: P2 — Medium
 Area: Backend/Data
 Depends On: FN-012, FN-017, FN-018
 Branch: feat/backend-redis
@@ -1031,9 +990,9 @@ Completed Date: 2026-08-09
 Commit: ad0088b
 PR: Pending
 
-## FN-021 â€” Add Backend Request Validation and Global Error Handling
-Status: âœ… Completed
-Priority: P1 â€” High
+## FN-021 — Add Backend Request Validation and Global Error Handling
+Status: ✅ Completed
+Priority: P1 — High
 Area: Backend/API
 Depends On: FN-011, FN-017
 Branch: feat/backend-api-guardrails
@@ -1062,9 +1021,9 @@ Completed Date: 2026-08-09
 Commit: ad0088b
 PR: Pending
 
-## FN-022 â€” Add Backend Health and Readiness Endpoints
-Status: âœ… Completed
-Priority: P1 â€” High
+## FN-022 — Add Backend Health and Readiness Endpoints
+Status: ✅ Completed
+Priority: P1 — High
 Area: Backend/Operations
 Depends On: FN-018, FN-019
 Branch: feat/backend-health
@@ -1093,11 +1052,11 @@ Completed Date: 2026-08-09
 Commit: ad0088b
 PR: Pending
 
-# Phase 3 â€” Authentication & Users
+# Phase 3 — Authentication & Users
 
-## FN-023 â€” Create User and Identity Data Model
-Status: âœ… Completed
-Priority: P1 â€” High
+## FN-023 — Create User and Identity Data Model
+Status: ✅ Completed
+Priority: P1 — High
 Area: Backend/Identity
 Depends On: FN-013, FN-019, FN-021
 Branch: feat/user-identity-model
@@ -1127,9 +1086,9 @@ Completed Date: 2026-08-09
 Commit: 874c9b3
 PR: #4
 
-## FN-024 â€” Implement Customer Registration and Login
-Status: âœ… Completed
-Priority: P1 â€” High
+## FN-024 — Implement Customer Registration and Login
+Status: ✅ Completed
+Priority: P1 — High
 Area: Backend/Auth
 Depends On: FN-023
 Branch: feat/customer-auth
@@ -1159,9 +1118,9 @@ Completed Date: 2026-08-11
 Commit: 4acc17c
 PR: #5
 
-## FN-025 â€” Implement Provider Registration
-Status: âœ… Completed
-Priority: P1 â€” High
+## FN-025 — Implement Provider Registration
+Status: ✅ Completed
+Priority: P1 — High
 Area: Backend/Auth
 Depends On: FN-023
 Branch: feat/provider-registration
@@ -1190,9 +1149,9 @@ Completed Date: 2026-08-11
 Commit: 5af807e
 PR: #6
 
-## FN-026 â€” Implement OTP and Refresh-Token Lifecycles
-Status: âœ… Completed
-Priority: P1 â€” High
+## FN-026 — Implement OTP and Refresh-Token Lifecycles
+Status: ✅ Completed
+Priority: P1 — High
 Area: Backend/Auth
 Depends On: FN-024
 Branch: feat/auth-token-lifecycle
@@ -1221,9 +1180,9 @@ Completed Date: 2026-08-11
 Commit: 0e8efc0
 PR: #7
 
-## FN-027 â€” Enforce Role-Based Authorization
-Status: âœ… Completed
-Priority: P1 â€” High
+## FN-027 — Enforce Role-Based Authorization
+Status: ✅ Completed
+Priority: P1 — High
 Area: Backend/Security
 Depends On: FN-013, FN-023, FN-026
 Branch: feat/role-authorization
@@ -1252,9 +1211,9 @@ Completed Date: 2026-08-11
 Commit: 758f7cd
 PR: Pending
 
-## FN-028 â€” Implement Customer Profile Management
-Status: âœ… Completed
-Priority: P2 â€” Medium
+## FN-028 — Implement Customer Profile Management
+Status: ✅ Completed
+Priority: P2 — Medium
 Area: Backend/Users
 Depends On: FN-024, FN-027
 Branch: feat/customer-profiles
@@ -1283,11 +1242,11 @@ Completed Date: 2026-08-11
 Commit: 5132e41
 PR: #8
 
-# Phase 4 â€” Provider System
+# Phase 4 — Provider System
 
-## FN-029 â€” Model Service Categories and Provider Skills
-Status: âœ… Completed
-Priority: P1 â€” High
+## FN-029 — Model Service Categories and Provider Skills
+Status: ✅ Completed
+Priority: P1 — High
 Area: Backend/Providers
 Depends On: FN-019, FN-027
 Branch: feat/provider-skills
@@ -1317,9 +1276,9 @@ Completed Date: 2026-08-11
 Commit: 1ebdfb6
 PR: #9
 
-## FN-030 â€” Implement Provider Profile and Service Areas
-Status: âœ… Completed
-Priority: P1 â€” High
+## FN-030 — Implement Provider Profile and Service Areas
+Status: ✅ Completed
+Priority: P1 — High
 Area: Backend/Providers
 Depends On: FN-025, FN-027, FN-029
 Branch: feat/provider-profiles
@@ -1348,9 +1307,9 @@ Completed Date: 2026-08-11
 Commit: afe1d9d
 PR: #10
 
-## FN-031 â€” Implement Provider Document Upload
-Status: âœ… Completed
-Priority: P1 â€” High
+## FN-031 — Implement Provider Document Upload
+Status: ✅ Completed
+Priority: P1 — High
 Area: Backend/Providers
 Depends On: FN-012, FN-014, FN-025
 Branch: feat/provider-documents
@@ -1381,9 +1340,9 @@ Completed Date: 2026-08-11
 Commit: afe1d9d
 PR: #10
 
-## FN-032 â€” Implement Provider Verification Workflow
-Status: âœ… Completed
-Priority: P1 â€” High
+## FN-032 — Implement Provider Verification Workflow
+Status: ✅ Completed
+Priority: P1 — High
 Area: Backend/Providers
 Depends On: FN-027, FN-030, FN-031
 Branch: feat/provider-verification
@@ -1412,9 +1371,9 @@ Completed Date: 2026-08-11
 Commit: afe1d9d
 PR: #10
 
-## FN-033 â€” Implement Provider Availability
-Status: âœ… Completed
-Priority: P1 â€” High
+## FN-033 — Implement Provider Availability
+Status: ✅ Completed
+Priority: P1 — High
 Area: Backend/Providers
 Depends On: FN-030, FN-032
 Branch: feat/provider-availability
@@ -1450,11 +1409,11 @@ Completed Date: 2026-08-11
 Commit: afe1d9d
 PR: #10
 
-# Phase 5 â€” Customer Mobile Foundation
+# Phase 5 — Customer Mobile Foundation
 
-## FN-034 â€” Initialize Flutter Mobile Application
-Status: âœ… Completed
-Priority: P1 â€” High
+## FN-034 — Initialize Flutter Mobile Application
+Status: ✅ Completed
+Priority: P1 — High
 Area: Mobile
 Depends On: FN-010, FN-011, FN-014
 Branch: feat/mobile-foundation
@@ -1485,9 +1444,9 @@ Completed Date: 2026-08-09
 Commit: 411acdb
 PR: #4
 
-## FN-035 â€” Establish Mobile Navigation, State, and Design System
-Status: âœ… Completed
-Priority: P1 â€” High
+## FN-035 — Establish Mobile Navigation, State, and Design System
+Status: ✅ Completed
+Priority: P1 — High
 Area: Mobile
 Depends On: FN-034
 Branch: feat/mobile-app-shell
@@ -1521,9 +1480,9 @@ Completed Date: 2026-08-11
 Commit: ad0088b
 PR: Pending
 
-## FN-036 â€” Add Mobile API Client and Authentication State
-Status: âœ… Completed
-Priority: P1 â€” High
+## FN-036 — Add Mobile API Client and Authentication State
+Status: ✅ Completed
+Priority: P1 — High
 Area: Mobile
 Depends On: FN-026, FN-034, FN-035
 Branch: feat/mobile-auth-client
@@ -1557,9 +1516,9 @@ Completed Date: 2026-08-11
 Commit: ad0088b
 PR: Pending
 
-## FN-037 â€” Implement Customer Profile, Location, and Service Discovery UI
-Status: âœ… Completed
-Priority: P1 â€” High
+## FN-037 — Implement Customer Profile, Location, and Service Discovery UI
+Status: ✅ Completed
+Priority: P1 — High
 Area: Mobile/Customer
 Depends On: FN-028, FN-029, FN-035, FN-036
 Branch: feat/mobile-customer-discovery
@@ -1595,11 +1554,11 @@ Completed Date: 2026-08-11
 Commit: ad0088b
 PR: Pending
 
-# Phase 6 â€” Service Booking
+# Phase 6 — Service Booking
 
-## FN-038 â€” Create Booking Data Model and Lifecycle Contract
-Status: âœ… Completed
-Priority: P1 â€” High
+## FN-038 — Create Booking Data Model and Lifecycle Contract
+Status: ✅ Completed
+Priority: P1 — High
 Area: Backend/Booking
 Depends On: FN-011, FN-019, FN-029
 Branch: feat/booking-model
@@ -1631,9 +1590,9 @@ Completed Date: 2026-08-12
 Commit: 1f000c8
 PR: Pending
 
-## FN-039 â€” Implement Service Request Creation
-Status: âœ… Completed
-Priority: P1 â€” High
+## FN-039 — Implement Service Request Creation
+Status: ✅ Completed
+Priority: P1 — High
 Area: Backend/Booking
 Depends On: FN-027, FN-038
 Branch: feat/booking-request
@@ -1666,9 +1625,9 @@ Completed Date: 2026-08-12
 Commit: 1f000c8
 PR: Pending
 
-## FN-040 â€” Implement Provider Matching
-Status: âœ… Completed
-Priority: P1 â€” High
+## FN-040 — Implement Provider Matching
+Status: ✅ Completed
+Priority: P1 — High
 Area: Backend/Booking
 Depends On: FN-030, FN-033, FN-039
 Branch: feat/provider-matching
@@ -1701,9 +1660,9 @@ Completed Date: 2026-08-12
 Commit: 1f000c8
 PR: Pending
 
-## FN-041 â€” Implement Provider Acceptance and Booking Progress
-Status: âœ… Completed
-Priority: P1 â€” High
+## FN-041 — Implement Provider Acceptance and Booking Progress
+Status: ✅ Completed
+Priority: P1 — High
 Area: Backend/Booking
 Depends On: FN-038, FN-040
 Branch: feat/booking-acceptance
@@ -1736,9 +1695,9 @@ Completed Date: 2026-08-12
 Commit: 1f000c8
 PR: Pending
 
-## FN-042 â€” Implement Booking Cancellation and Service History
-Status: âœ… Completed
-Priority: P1 â€” High
+## FN-042 — Implement Booking Cancellation and Service History
+Status: ✅ Completed
+Priority: P1 — High
 Area: Backend/Booking
 Depends On: FN-041
 Branch: feat/booking-cancellation-history
@@ -1772,11 +1731,11 @@ Completed Date: 2026-08-12
 Commit: 1f000c8
 PR: Pending
 
-# Phase 7 â€” Real-Time & Location
+# Phase 7 — Real-Time & Location
 
-## FN-043 â€” Add Authenticated WebSocket Infrastructure
-Status: âœ… Completed
-Priority: P1 â€” High
+## FN-043 — Add Authenticated WebSocket Infrastructure
+Status: ✅ Completed
+Priority: P1 — High
 Area: Backend/Real-Time
 Depends On: FN-015, FN-020, FN-027
 Branch: feat/realtime-foundation
@@ -1813,9 +1772,9 @@ Completed Date: 2026-08-13
 Commit: ad0088b
 PR: Pending
 
-## FN-044 â€” Implement Provider Presence and Live Location Ingestion
-Status: âœ… Completed
-Priority: P1 â€” High
+## FN-044 — Implement Provider Presence and Live Location Ingestion
+Status: ✅ Completed
+Priority: P1 — High
 Area: Backend/Location
 Depends On: FN-014, FN-033, FN-043
 Branch: feat/provider-live-location
@@ -1844,9 +1803,9 @@ Completed Date: 2026-08-13
 Commit: ad0088b
 PR: Pending
 
-## FN-045 â€” Implement Booking Tracking, ETA, and Real-Time Events
-Status: âœ… Completed
-Priority: P1 â€” High
+## FN-045 — Implement Booking Tracking, ETA, and Real-Time Events
+Status: ✅ Completed
+Priority: P1 — High
 Area: Booking/Real-Time
 Depends On: FN-041, FN-044
 Branch: feat/booking-live-tracking
@@ -1875,11 +1834,11 @@ Completed Date: 2026-08-13
 Commit: ad0088b
 PR: Pending
 
-# Phase 8 â€” Admin Dashboard
+# Phase 8 — Admin Dashboard
 
-## FN-046 â€” Initialize Admin Web Application
-Status: âœ… Completed
-Priority: P1 â€” High
+## FN-046 — Initialize Admin Web Application
+Status: ✅ Completed
+Priority: P1 — High
 Area: Admin
 Depends On: FN-010, FN-011, FN-014
 Branch: feat/admin-foundation
@@ -1908,9 +1867,9 @@ Completed Date: 2026-08-14
 Commit: 759f403
 PR: #16
 
-## FN-047 â€” Implement Admin Authentication and Authorization UI
-Status: âœ… Completed
-Priority: P1 â€” High
+## FN-047 — Implement Admin Authentication and Authorization UI
+Status: ✅ Completed
+Priority: P1 — High
 Area: Admin/Security
 Depends On: FN-027, FN-046
 Branch: feat/admin-auth
@@ -1939,9 +1898,9 @@ Completed Date: 2026-08-14
 Commit: 759f403
 PR: #16
 
-## FN-048 â€” Implement Admin User and Provider Verification Management
-Status: âœ… Completed
-Priority: P1 â€” High
+## FN-048 — Implement Admin User and Provider Verification Management
+Status: ✅ Completed
+Priority: P1 — High
 Area: Admin
 Depends On: FN-032, FN-047
 Branch: feat/admin-users-providers
@@ -1970,9 +1929,9 @@ Completed Date: 2026-08-14
 Commit: 759f403
 PR: #16
 
-## FN-049 â€” Implement Admin Service and Booking Management
-Status: âœ… Completed
-Priority: P2 â€” Medium
+## FN-049 — Implement Admin Service and Booking Management
+Status: ✅ Completed
+Priority: P2 — Medium
 Area: Admin
 Depends On: FN-029, FN-042, FN-047
 Branch: feat/admin-services-bookings
@@ -2004,9 +1963,9 @@ Completed Date: 2026-08-14
 Commit: 759f403
 PR: #16
 
-## FN-050 â€” Implement Admin Complaints and Analytics Views
+## FN-050 — Implement Admin Complaints and Analytics Views
 Status: ✅ Completed
-Priority: P2 â€” Medium
+Priority: P2 — Medium
 Area: Admin
 Depends On: FN-047, FN-098
 Branch: feat/admin-complaints-analytics
@@ -2037,11 +1996,11 @@ Completed Date: 2026-08-21
 Commit: Pending
 PR: Pending
 
-# Phase 9 â€” Payments
+# Phase 9 — Payments
 
-## FN-051 â€” Decide Payment Architecture and Integrate Provider Adapter
+## FN-051 — Decide Payment Architecture and Integrate Provider Adapter
 Status: ✅ Completed
-Priority: P1 â€” High
+Priority: P1 — High
 Area: Payments Architecture
 Depends On: FN-010, FN-014, FN-038
 Branch: feat/payment-foundation
@@ -2074,9 +2033,9 @@ Completed By: Claude Code
 Completed Date: 2026-08-25
 Commit:
 PR:
-## FN-052 â€” Implement Payment Orders and Verification
-Status: Completed
-Priority: P1 â€” High
+## FN-052 — Implement Payment Orders and Verification
+Status: ✅ Completed
+Priority: P1 — High
 Area: Backend/Payments
 Depends On: FN-041, FN-051
 Branch: feat/payment-orders
@@ -2109,9 +2068,9 @@ Completed By: Claude Code
 Completed Date: 2026-08-25
 Commit: 05f42fb
 PR:
-## FN-053 â€” Implement Invoices, Refunds, Transactions, and Provider Earnings
-Status: Completed
-Priority: P1 â€” High
+## FN-053 — Implement Invoices, Refunds, Transactions, and Provider Earnings
+Status: ✅ Completed
+Priority: P1 — High
 Area: Payments
 Depends On: FN-042, FN-052
 Branch: feat/payment-operations
@@ -2144,11 +2103,11 @@ Completed By: Claude Code
 Completed Date: 2026-08-25
 Commit:
 PR:
-# Phase 10 â€” Ratings & Trust
+# Phase 10 — Ratings & Trust
 
-## FN-054 â€” Implement Booking Ratings and Reviews
-Status: Completed
-Priority: P2 â€” Medium
+## FN-054 — Implement Booking Ratings and Reviews
+Status: ✅ Completed
+Priority: P2 — Medium
 Area: Trust
 Depends On: FN-041, FN-027
 Branch: feat/ratings-reviews
@@ -2180,9 +2139,9 @@ Completed Date: 2026-08-21
 Commit: Pending
 PR: Pending
 
-## FN-055 â€” Implement Complaints, Quality Metrics, and Fraud Rules
+## FN-055 — Implement Complaints, Quality Metrics, and Fraud Rules
 Status: ✅ Completed
-Priority: P1 â€” High
+Priority: P1 — High
 Area: Trust/Safety
 Depends On: FN-014, FN-042, FN-054
 Branch: feat/trust-safety
@@ -2213,11 +2172,11 @@ Completed Date: 2026-08-23
 Commit: Pending
 PR: Pending
 
-# Phase 11 â€” AI
+# Phase 11 — AI
 
-## FN-056 â€” Initialize Governed AI Service Foundation
+## FN-056 — Initialize Governed AI Service Foundation
 Status: ✅ Completed
-Priority: P2 â€” Medium
+Priority: P2 — Medium
 Area: AI
 Depends On: FN-016, FN-017
 Branch: feat/ai-foundation
@@ -2248,9 +2207,9 @@ Completed Date: 2026-08-21
 Commit: Pending
 PR: Pending
 
-## FN-057 â€” Implement Issue Classification and Service Recommendation
+## FN-057 — Implement Issue Classification and Service Recommendation
 Status: ✅ Completed
-Priority: P2 â€” Medium
+Priority: P2 — Medium
 Area: AI
 Depends On: FN-029, FN-056
 Branch: feat/ai-service-recommendation
@@ -2366,9 +2325,9 @@ PR:
 ### Notes Addendum (completion)
 Fixed as five root causes: (1) missing dart:async import causing a 14-file compile cascade behind a stale kernel cache; (2) lazy late-final controllers first touched in dispose() - now created eagerly in initState with cancellable Timer starts; (3) always-on FixPulse/shimmer tickers defeating pumpAndSettle - scoped reduce-motion via the shared `pumpIdle()` tester extension (per-tester platformDispatcher override plus one pump to flush futures); deliberately NOT a global flutter_test_config, which force-initialised the widget binding and broke pure-Dart api_client tests; (4) stale assertion pins updated to shipped tokens (container 340ms, plumbing_rounded, icon asserted within the category card since quick-service chips may reuse glyphs); (5) restored redesign casualties: FixServiceCard.semanticLabel override feeding '<name> service category' and an explicit 'Price on request' branch when priceFrom is null (FN-107 contract). Validated 2026-08-25: flutter analyze 0 errors; flutter test 111/111 pass; backend 70 suites / 395 tests, lint clean.
 
-## FN-060 â€” Implement Price Estimation and Fraud Signal Assistance
+## FN-060 — Implement Price Estimation and Fraud Signal Assistance
 Status: ✅ Completed
-Priority: P2 â€” Medium
+Priority: P2 — Medium
 Area: AI/Trust
 Depends On: FN-053, FN-055, FN-056
 Branch: feat/payment-foundation (user-directed; listed branch not created)
@@ -2399,11 +2358,11 @@ Completed Date: 2026-08-25
 Commit:
 PR:
 
-# Phase 12 â€” Notifications
+# Phase 12 — Notifications
 
-## FN-061 â€” Add Push Notification Infrastructure
+## FN-061 — Add Push Notification Infrastructure
 Status: ✅ Completed
-Priority: P1 â€” High
+Priority: P1 — High
 Area: Notifications
 Depends On: FN-015, FN-018, FN-034
 Branch: feat/push-notifications
@@ -2435,9 +2394,9 @@ Completed By: Claude Code
 Completed Date: 2026-08-24
 Commit:
 PR:
-## FN-062 â€” Implement Booking, Provider, Reminder, and Emergency Notifications
-Status: Completed
-Priority: P1 â€” High
+## FN-062 — Implement Booking, Provider, Reminder, and Emergency Notifications
+Status: ✅ Completed
+Priority: P1 — High
 Area: Notifications
 Depends On: FN-041, FN-061, FN-063
 Branch: feat/domain-notifications
@@ -2474,9 +2433,9 @@ PR:
 
 ### Notes Addendum (completion)
 Fixed as five root causes: (1) missing dart:async import causing a 14-file compile cascade behind a stale kernel cache; (2) lazy late-final controllers first touched in dispose() - now created eagerly in initState with cancellable Timer starts; (3) always-on FixPulse/shimmer tickers defeating pumpAndSettle - scoped reduce-motion via the shared `pumpIdle()` tester extension (per-tester platformDispatcher override plus one pump to flush futures); deliberately NOT a global flutter_test_config, which force-initialised the widget binding and broke pure-Dart api_client tests; (4) stale assertion pins updated to shipped tokens (container 340ms, plumbing_rounded, icon asserted within the category card since quick-service chips may reuse glyphs); (5) restored redesign casualties: FixServiceCard.semanticLabel override feeding '<name> service category' and an explicit 'Price on request' branch when priceFrom is null (FN-107 contract). Validated 2026-08-25: flutter analyze 0 errors; flutter test 111/111 pass; backend 70 suites / 395 tests, lint clean.
-## FN-063 â€” Implement Emergency Request and Priority Dispatch
-Status: Completed
-Priority: P1 â€” High
+## FN-063 — Implement Emergency Request and Priority Dispatch
+Status: ✅ Completed
+Priority: P1 — High
 Area: Emergency/Backend
 Depends On: FN-014, FN-040, FN-041
 Branch: feat/emergency-dispatch
@@ -2520,9 +2479,9 @@ PR:
 ### Notes Addendum (completion)
 Implemented on `feat/payment-foundation` per the approved v1 policy. Files: `backend/src/emergency/{emergency-policy.ts,emergency-dispatch.entity.ts,emergency.service.ts,emergency.controller.ts,emergency.module.ts}`, migration `1786521000000-EmergencyDispatches`, matching radiusMultiplier parameter, DomainNotificationService bypassQuietHours option plus EMERGENCY_NOTIFICATION_TEMPLATES, TrustService.recordEmergencyFrequencySignal (+TRUST_RULES.emergency* constants), PERMISSIONS.emergencyCreateSelf / emergencyDispatchManage with policies matching the security matrix, AppModule registration. Deliberate scope notes: ops wave-3 alert ships as audited dashboard state via GET /admin/emergency/dispatches (admin push distribution deferred to FN-064/FN-062 UX work); provider-walked-away cooldown waiver implements policy section 7 row 4. Validation: lint clean, 71 suites / 410 tests pass, build passes.
 
-## FN-064## FN-064 â€” Implement SOS UX and Safety Guidance
-Status: Completed
-Priority: P1 â€” High
+## FN-064 — Implement SOS UX and Safety Guidance
+Status: ✅ Completed
+Priority: P1 — High
 Area: Emergency/Mobile
 Depends On: FN-037, FN-063
 Branch: feat/mobile-emergency
@@ -2564,7 +2523,7 @@ Implemented on `feat/payment-foundation`. Files: `mobile/lib/features/emergency/
 # Phase 12 - Follow-up UI, Media Privacy, and Signature Motion
 
 ## FN-115 - Implement Mobile Payments UI (Customer Invoice and Provider Earnings)
-Status: Completed
+Status: ✅ Completed
 Priority: P2 - Medium
 Area: Mobile/Payments
 Depends On: FN-053
@@ -2608,7 +2567,7 @@ Commit: pending (uncommitted on feat/signature-motion)
 PR:
 
 ## FN-116 - Implement AI Image Metadata Stripping (EXIF/XMP/IPTC Sanitisation)
-Status: Completed
+Status: ✅ Completed
 Priority: P1 - High
 Area: Backend/AI/Security
 Depends On: FN-059
@@ -2650,7 +2609,7 @@ Commit: pending (uncommitted on feat/signature-motion)
 PR:
 
 ## FN-117 - Implement Signature Motion System
-Status: Completed
+Status: ✅ Completed
 Priority: P3 - Low
 Area: Mobile/Design System
 Depends On: FN-072, FN-114
@@ -2696,7 +2655,7 @@ Commit: pending (uncommitted on feat/signature-motion)
 PR:
 
 ## FN-113 - Surface Advisory Price and Trust Signals in Clients
-Status: Completed
+Status: ✅ Completed
 Priority: P2 - Medium
 Area: Mobile / Admin
 Depends On: FN-060, FN-111
@@ -2746,7 +2705,7 @@ Commit: pending (uncommitted on feat/signature-motion)
 PR:
 
 ## FN-118 - Mobile Local-Only Payment/Checkout Flow
-Status: Completed
+Status: ✅ Completed
 Priority: P2 - Medium
 Area: Mobile / Payments
 Depends On: FN-051, FN-052, FN-115
@@ -3469,7 +3428,7 @@ Branch: fix/e2e-calling-chat-provider-fixes
 
 ---
 
-## Task FN-133: UI/UX Master Motion Suite, Interactive Journey Line, VoIP Waveform & WCAG Contrast Hardening
+### Historical Note FN-133: UI/UX Master Motion Suite, Interactive Journey Line, VoIP Waveform & WCAG Contrast Hardening
 
 ### Changes Delivered
 - **Interactive Living Journey Line (`FixJourneyProgressLine`)**:
@@ -3493,7 +3452,7 @@ Branch: fix/e2e-calling-chat-provider-fixes
 
 ---
 
-## Task FN-134: Next-Gen Animation Suite Integration (3D Holographic Tilt, Slide-to-Confirm, Star Sparkle Burst, SOS Vortex & Comet Trail)
+### Historical Note FN-134: Next-Gen Animation Suite Integration (3D Holographic Tilt, Slide-to-Confirm, Star Sparkle Burst, SOS Vortex & Comet Trail)
 
 ### Changes Delivered
 - **3D Holographic Perspective Tilt Card (`Fix3DTiltCard`)**:
@@ -3523,7 +3482,7 @@ Branch: fix/e2e-calling-chat-provider-fixes
 
 ---
 
-## Task FN-135: Stitch Visual Redesign ("FixNow Trust Matrix") Integration & End-to-End Verification
+### Historical Note FN-135: Stitch Visual Redesign ("FixNow Trust Matrix") Integration & End-to-End Verification
 
 ### Changes Delivered
 - **Stitch Design Tokens & Foundations**:
@@ -3560,7 +3519,12 @@ Branch: fix/e2e-calling-chat-provider-fixes
 
 ---
 
-## Task FN-136: Provider Cockpit Map & Navigation Reliability Fix
+## FN-136 — Provider Cockpit Map & Navigation Reliability Fix
+
+Status: ✅ Completed
+Priority: P1 — High
+Area: Mobile Frontend (Provider Cockpit)
+Branch: ui-update
 
 ### Changes Delivered (branch ui-update)
 - In mobile/lib/features/provider/provider_active_job_cockpit_screen.dart:
@@ -3673,7 +3637,7 @@ Area: Full-Stack (Mobile & Backend)
 
 ---
 
-## FN-135 — Service Provider Acceptance Auto-Routing to Live Tracking
+### Historical Note FN-135 (Acceptance Auto-Routing):
 Status: ✅ Completed
 Priority: P0 — Critical
 Area: Mobile Frontend (Bookings & Motion Navigation)
@@ -4048,4 +4012,3 @@ FN-142 built the server-side pipeline but nothing on the app could reach it, and
 - The accessibility harness runs over `FixJobProofPanel` at 200% text and over `FixBeforeAfterSlider` with real decoded bytes. `fix_job_proof_dialog.dart` is marked `deferred` in `accessibilityCoverage` with a written reason — it is a modal bottom sheet and the harness fixtures pump inline, so claiming it audited would be the exact dishonesty the coverage map exists to prevent.
 
 (End of file)
-

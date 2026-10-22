@@ -87,3 +87,4 @@ google-services.json
 .agents/
 .claude/
 .stitch_reference/
+*.apk

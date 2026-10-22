@@ -78,19 +78,46 @@ export class FcmPushDelivery implements PushDelivery {
     content: PushNotificationContent,
   ): Promise<PushDeliveryResult> {
     const messaging = await this.resolveMessaging();
+    const isIncomingRequest =
+      content.data?.['type'] === 'booking:provider:REQUESTED';
+    const channelId = isIncomingRequest
+      ? 'incoming_requests_channel'
+      : 'fixnow_default_channel';
+
+    const mergedData: Record<string, string> = {
+      ...(content.data ?? {}),
+      title: content.title,
+      body: content.body,
+    };
+
     try {
       await messaging.send({
         token,
         notification: { title: content.title, body: content.body },
-        data: content.data,
+        data: mergedData,
         android: {
-          priority: content.data ? 'high' : 'normal',
+          priority: 'high',
+          notification: {
+            channelId,
+            sound: isIncomingRequest ? 'incoming_alert' : 'default',
+            priority: isIncomingRequest ? 'max' : 'high',
+            visibility: 'public',
+            defaultSound: !isIncomingRequest,
+            defaultVibrateTimings: true,
+          },
           // Drop stale booking pushes for the same booking rather than stacking
           // a tray full of superseded "provider accepted" messages.
           collapseKey: content.data?.['bookingId'],
           ttl: 86_400_000,
         },
-        apns: { headers: { 'apns-priority': content.data ? '10' : '5' } },
+        apns: {
+          headers: { 'apns-priority': '10' },
+          payload: {
+            aps: {
+              sound: isIncomingRequest ? 'incoming_alert.wav' : 'default',
+            },
+          },
+        },
       });
       return { status: 'sent' };
     } catch (error) {
@@ -116,15 +143,52 @@ export class FcmPushDelivery implements PushDelivery {
 
   private async initializeMessaging(): Promise<MessagingClient> {
     const credentialsFile = this.config.get<string>('FCM_CREDENTIALS_FILE');
-    if (!credentialsFile) {
-      throw new ServiceUnavailableException('Push delivery is unavailable');
+    const credentialsJson = this.config.get<string>('FCM_CREDENTIALS_JSON');
+    const credentialsBase64 = this.config.get<string>('FCM_CREDENTIALS_BASE64');
+    const googleAppCreds = this.config.get<string>('GOOGLE_APPLICATION_CREDENTIALS');
+
+    if (!credentialsFile && !credentialsJson && !credentialsBase64 && !googleAppCreds) {
+      throw new ServiceUnavailableException(
+        'Push delivery is unavailable: missing FCM credentials (set FCM_CREDENTIALS_JSON, FCM_CREDENTIALS_BASE64, or FCM_CREDENTIALS_FILE)',
+      );
     }
+
     const { initializeApp, cert, getApps } = await import('firebase-admin/app');
     const { getMessaging } = await import('firebase-admin/messaging');
     const existing = getApps().find((app) => app.name === 'fixnow-push');
-    const app =
-      existing ??
-      initializeApp({ credential: cert(credentialsFile) }, 'fixnow-push');
+    if (existing) {
+      return getMessaging(existing);
+    }
+
+    const parseServiceAccount = (raw: string) => {
+      const obj = JSON.parse(raw);
+      if (
+        obj.private_key &&
+        typeof obj.private_key === 'string' &&
+        obj.private_key.includes('\\n')
+      ) {
+        obj.private_key = obj.private_key.replace(/\\n/g, '\n');
+      }
+      return obj;
+    };
+
+    let credentialParam: any;
+    if (credentialsJson && credentialsJson.trim().startsWith('{')) {
+      credentialParam = cert(parseServiceAccount(credentialsJson));
+    } else if (credentialsBase64) {
+      const decoded = Buffer.from(credentialsBase64, 'base64').toString('utf8');
+      credentialParam = cert(parseServiceAccount(decoded));
+    } else if (credentialsFile) {
+      if (credentialsFile.trim().startsWith('{')) {
+        credentialParam = cert(parseServiceAccount(credentialsFile));
+      } else {
+        credentialParam = cert(credentialsFile);
+      }
+    } else if (googleAppCreds) {
+      credentialParam = cert(googleAppCreds);
+    }
+
+    const app = initializeApp({ credential: credentialParam }, 'fixnow-push');
     return getMessaging(app);
   }
 }

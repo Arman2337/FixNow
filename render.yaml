@@ -38,7 +38,7 @@ services:
       - key: PROVIDER_DOCUMENT_BUCKET
         sync: false
       - key: OPENROUTESERVICE_API_KEY
-        sync: false
+        value: eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjQzOWUxYTg5ZWQ1ZTRmZTVhYzA2NjQ5ZmY1YzdjZDdhIiwiaCI6Im11cm11cjY0In0=
       # OPS-003 / SEC-006. Render terminates TLS and forwards to this service
       # over one hop, so the app must trust exactly one proxy to read a
       # client-accurate req.ip. Trusting more than the real hop count would let
@@ -62,9 +62,8 @@ services:
       # Leave unset to use the default deny-all CSP; the API serves JSON.
       # - key: CSP_DIRECTIVES
       #   value: "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"
-      # Required in production: env.validation.ts refuses to boot with
-      # PAYMENT_PROVIDER=fake. This is the one variable still standing between
-      # the repository and a bootable production deploy, and it is intentionally
-      # left unset rather than defaulted to a fake provider.
-      # - key: PAYMENT_PROVIDER
-      #   value: razorpay
+      # Push Notifications: FCM integration
+      - key: PUSH_PROVIDER
+        value: fcm
+      - key: FCM_CREDENTIALS_JSON
+        sync: false

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:fixnow_mobile/features/provider/provider_controller.dart';
 import 'package:fixnow_mobile/features/provider/provider_models.dart';
@@ -37,11 +38,18 @@ class _ProviderIncomingRequestScreenState
 
   Future<void> _startRinging() async {
     try {
-      // If we had a ringtone asset, we would play it here.
-      // await _audioPlayer.play(AssetSource('audio/ringtone.mp3'));
+      await _audioPlayer.setReleaseMode(ReleaseMode.loop);
+      await _audioPlayer.play(AssetSource('audio/incoming_alert.wav'));
     } catch (e) {
       debugPrint('Error starting ringtone: $e');
     }
+  }
+
+  void _cancelNativeNotification() {
+    try {
+      const MethodChannel('com.fixnow.mobile/notifications')
+          .invokeMethod('cancelIncomingNotification');
+    } catch (_) {}
   }
 
   Future<void> _subscribeToBookingUpdates() async {
@@ -65,6 +73,7 @@ class _ProviderIncomingRequestScreenState
 
   void _dismissScreen() {
     if (_isDisposed) return;
+    _cancelNativeNotification();
     if (mounted) {
       Navigator.of(context).pop();
     }
@@ -73,6 +82,7 @@ class _ProviderIncomingRequestScreenState
   @override
   void dispose() {
     _isDisposed = true;
+    _cancelNativeNotification();
     _audioPlayer.stop();
     _audioPlayer.dispose();
     _subscription?.cancel();

@@ -219,7 +219,7 @@ describe('Push notification configuration', () => {
     ).toThrow(/fake is prohibited/);
   });
 
-  it('requires a credential file for the fcm provider', () => {
+  it('requires a credential file or JSON for the fcm provider', () => {
     expect(() =>
       validate({
         ...base,
@@ -227,12 +227,26 @@ describe('Push notification configuration', () => {
         PUSH_PROVIDER: 'fcm',
       }),
     ).toThrow(/FCM_CREDENTIALS_FILE/);
-    const configured = validate({
+    const configuredFile = validate({
       ...base,
       PUSH_PROVIDER: 'fcm',
       FCM_CREDENTIALS_FILE: '/untracked/local/service-account.json',
     });
-    expect(configured.PUSH_PROVIDER).toBe('fcm');
+    expect(configuredFile.PUSH_PROVIDER).toBe('fcm');
+
+    const configuredJson = validate({
+      ...base,
+      PUSH_PROVIDER: 'fcm',
+      FCM_CREDENTIALS_JSON: '{"type":"service_account"}',
+    });
+    expect(configuredJson.PUSH_PROVIDER).toBe('fcm');
+
+    const configuredBase64 = validate({
+      ...base,
+      PUSH_PROVIDER: 'fcm',
+      FCM_CREDENTIALS_BASE64: 'eyJ0eXBlIjoic2VydmljZV9hY2NvdW50In0=',
+    });
+    expect(configuredBase64.PUSH_PROVIDER).toBe('fcm');
   });
 });
 

@@ -2,6 +2,7 @@ import 'package:fixnow_mobile/features/services/sub_service_item.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -233,6 +234,41 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
           ),
         ),
       );
+    });
+
+    // Native full-screen intent bridge
+    const MethodChannel('com.fixnow.mobile/notifications')
+        .setMethodCallHandler((call) async {
+      if (call.method == 'onIncomingRequest') {
+        final data = Map<String, dynamic>.from(call.arguments as Map);
+        _navigatorKey.currentState?.push(
+          MaterialPageRoute(
+            fullscreenDialog: true,
+            builder: (context) => ProviderIncomingRequestScreen(
+              requestData: data,
+              providerController: _provider,
+            ),
+          ),
+        );
+      }
+    });
+
+    const MethodChannel('com.fixnow.mobile/notifications')
+        .invokeMethod<Map<dynamic, dynamic>>('getInitialIncomingRequest')
+        .then((initialData) {
+      if (initialData != null && initialData.isNotEmpty) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _navigatorKey.currentState?.push(
+            MaterialPageRoute(
+              fullscreenDialog: true,
+              builder: (context) => ProviderIncomingRequestScreen(
+                requestData: Map<String, dynamic>.from(initialData),
+                providerController: _provider,
+              ),
+            ),
+          );
+        });
+      }
     });
 
     _bookings.acceptedBooking.addListener(_showAcceptCelebration);
@@ -610,7 +646,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
 
   /// PERF-005. The status banner for the shell, or null while everything is live.
   Widget? _realtimeStatusBanner() {
-    if (!_realtimeStale) return null;
+    if (!_auth.isAuthenticated || !_realtimeStale) return null;
     return FixStaleDataBanner(onRetry: _retryRealtime);
   }
 

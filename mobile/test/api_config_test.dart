@@ -3,17 +3,17 @@ import 'package:fixnow_mobile/config/app_environment.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('uses the local API default in development', () {
+  test('uses the Render API default in development', () {
     expect(
       ApiConfig.baseUriFor(AppEnvironment.development),
-      Uri.parse('http://127.0.0.1:8080/api/v1/'),
+      Uri.parse('https://fixnow-lwys.onrender.com/api/v1/'),
     );
   });
 
-  test('requires HTTPS outside development', () {
+  test('allows HTTPS in production', () {
     expect(
-      () => ApiConfig.baseUriFor(AppEnvironment.production),
-      throwsStateError,
+      ApiConfig.baseUriFor(AppEnvironment.production),
+      Uri.parse('https://fixnow-lwys.onrender.com/api/v1/'),
     );
   });
 }

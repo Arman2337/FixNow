@@ -279,10 +279,19 @@ export class TrustService {
     });
   }
 
-  async listSignals(limit = 20, offset = 0): Promise<TrustSignal[]> {
+  async listSignals(
+    limit = 20,
+    offset = 0,
+    status?: TrustSignalStatus,
+  ): Promise<TrustSignal[]> {
     const take = Math.min(Math.max(limit, 1), 100);
     const skip = Math.max(offset, 0);
-    return this.signals.find({ order: { createdAt: 'DESC' }, take, skip });
+    return this.signals.find({
+      where: status ? { status } : {},
+      order: { createdAt: 'DESC', id: 'DESC' },
+      take,
+      skip,
+    });
   }
   async reviewSignal(
     id: string,

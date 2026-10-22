@@ -56,6 +56,7 @@ import 'package:fixnow_mobile/features/support/customer_help_screen.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking_controller.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking_screen.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking_source.dart';
+import 'support/test_address_repository.dart';
 
 class CrawlerTransport implements ApiTransport {
   @override
@@ -154,13 +155,11 @@ class CrawlerTransport implements ApiTransport {
       return const ApiResponse(
         statusCode: 200,
         body: {
-          'totalMinor': 2500000,
-          'todayMinor': 450000,
-          'weekMinor': 1200000,
-          'currency': 'INR',
-          'jobsCompleted': 42,
-          'rating': 4.9,
-          'payments': [],
+          'grossMinor': 2500000,
+          'refundedMinor': 150000,
+          'netMinor': 2350000,
+          'paidOrderCount': 42,
+          'note': 'Completed customer payments, less recorded refunds.',
         },
       );
     }
@@ -177,6 +176,7 @@ class FakeSessionStore implements AuthSessionStore {
   Future<void> write(AuthSession session) async {
     this.session = session;
   }
+
   @override
   Future<void> clear() async {
     session = null;
@@ -198,22 +198,23 @@ class FakeLocationGateway implements LocationPermissionGateway {
 class FakeComplaintsRepo implements ComplaintsRepository {
   @override
   Future<List<Complaint>> listComplaints() async => [
-        Complaint(
-          id: 'complaint-1',
-          bookingId: 'booking-crawler-1',
-          submitterId: 'user-1',
-          targetRole: 'provider',
-          targetId: 'prov-1',
-          category: 'SERVICE_QUALITY',
-          description: 'Technician arrived 10 minutes late.',
-          status: 'OPEN',
-          createdAt: DateTime.utc(2026, 10, 14, 11),
-          updatedAt: DateTime.utc(2026, 10, 14, 11),
-        ),
-      ];
+    Complaint(
+      id: 'complaint-1',
+      bookingId: 'booking-crawler-1',
+      submitterId: 'user-1',
+      targetRole: 'provider',
+      targetId: 'prov-1',
+      category: 'SERVICE_QUALITY',
+      description: 'Technician arrived 10 minutes late.',
+      status: 'OPEN',
+      createdAt: DateTime.utc(2026, 10, 14, 11),
+      updatedAt: DateTime.utc(2026, 10, 14, 11),
+    ),
+  ];
 
   @override
-  Future<Complaint> getComplaint(String id) async => (await listComplaints()).first;
+  Future<Complaint> getComplaint(String id) async =>
+      (await listComplaints()).first;
 
   @override
   Future<Complaint> addEvidence(
@@ -224,7 +225,8 @@ class FakeComplaintsRepo implements ComplaintsRepository {
   }) async => (await listComplaints()).first;
 
   @override
-  Future<Complaint> requestCallback(String id) async => (await listComplaints()).first;
+  Future<Complaint> requestCallback(String id) async =>
+      (await listComplaints()).first;
 
   @override
   Future<Complaint> submitComplaint({
@@ -237,6 +239,7 @@ class FakeComplaintsRepo implements ComplaintsRepository {
 }
 
 void main() {
+  setUp(createTestAddressRepository);
   TestWidgetsFlutterBinding.ensureInitialized();
 
   final transport = CrawlerTransport();
@@ -297,191 +300,189 @@ void main() {
   final Map<String, Widget Function()> screens = {
     'WelcomeScreen': () => WelcomeScreen(onContinue: (context, role) {}),
     'AuthScreen': () => AuthScreen(
-          controller: authController,
-          role: AccountRole.customer,
-          initialRegister: false,
-          onBack: () {},
-        ),
+      controller: authController,
+      role: AccountRole.customer,
+      initialRegister: false,
+      onBack: () {},
+    ),
     'VerificationScreen': () => VerificationScreen(
-          controller: authController,
-          localOtpBypassEnabled: true,
-        ),
+      controller: authController,
+      localOtpBypassEnabled: true,
+    ),
     'ServiceDiscoveryScreen': () => ServiceDiscoveryScreen(
-          controller: ServiceDiscoveryController(
-            ApiServiceCategoryRepository(transport),
-            SubServiceRepository(transport),
-          ),
-          locationController: LocationConsentController(
-            const FakeLocationGateway(LocationPermissionState.granted),
-          ),
-        ),
-    'SubServiceCatalogScreen': () => SubServiceCatalogScreen(
-          category: sampleCategory,
-          api: transport,
-        ),
+      controller: ServiceDiscoveryController(
+        ApiServiceCategoryRepository(transport),
+        SubServiceRepository(transport),
+      ),
+      locationController: LocationConsentController(
+        const FakeLocationGateway(LocationPermissionState.granted),
+      ),
+    ),
+    'SubServiceCatalogScreen': () =>
+        SubServiceCatalogScreen(category: sampleCategory, api: transport),
     'ServiceRequestScreen': () => ServiceRequestScreen(
-          category: sampleCategory,
-          controller: BookingController(
-            BookingRepository(
-              api: transport,
-              accessToken: () async => 'crawler-token',
-            ),
-          ),
+      category: sampleCategory,
+      controller: BookingController(
+        BookingRepository(
+          api: transport,
+          accessToken: () async => 'crawler-token',
         ),
+      ),
+    ),
     'CustomerBookingsScreen': () => CustomerBookingsScreen(
-          controller: BookingController(
-            BookingRepository(
-              api: transport,
-              accessToken: () async => 'crawler-token',
-            ),
-          ),
+      controller: BookingController(
+        BookingRepository(
+          api: transport,
+          accessToken: () async => 'crawler-token',
         ),
+      ),
+    ),
     'BookingDetailScreen': () => BookingDetailScreen(booking: sampleBooking),
     'BookingTrackingScreen': () => BookingTrackingScreen(
-          controller: BookingTrackingController(
-            bookingId: 'booking-crawler-1',
-            source: ApiBookingTrackingSource(
-              api: transport,
-              accessToken: () async => 'crawler-token',
-            ),
-          ),
+      controller: BookingTrackingController(
+        bookingId: 'booking-crawler-1',
+        source: ApiBookingTrackingSource(
+          api: transport,
+          accessToken: () async => 'crawler-token',
         ),
+      ),
+    ),
     'BookingChatScreen': () => BookingChatScreen(
-          controller: ChatController(
-            bookingId: 'booking-crawler-1',
-            repository: HttpChatRepository(
-              api: transport,
-              accessToken: () async => 'crawler-token',
-              currentUserId: () => 'crawler-user-1',
-            ),
-            currentUserId: 'crawler-user-1',
-          ),
+      controller: ChatController(
+        bookingId: 'booking-crawler-1',
+        repository: HttpChatRepository(
+          api: transport,
+          accessToken: () async => 'crawler-token',
+          currentUserId: () => 'crawler-user-1',
         ),
+        currentUserId: 'crawler-user-1',
+      ),
+    ),
     'CallScreen': () => const CallScreen(
-          oppositePartyName: 'Vikram Singh',
-          oppositePartyRole: 'Service Specialist',
-          phoneNumber: '+919876543211',
-          bookingId: 'booking-crawler-1',
-        ),
+      oppositePartyName: 'Vikram Singh',
+      oppositePartyRole: 'Service Specialist',
+      phoneNumber: '+919876543211',
+      bookingId: 'booking-crawler-1',
+    ),
     'ProblemDiagnosisScreen': () => ProblemDiagnosisScreen(
-          controller: ProblemDiagnosisController(
-            ProblemAnalysisRepository(transport),
-          ),
-          categories: [sampleCategory],
-        ),
+      controller: ProblemDiagnosisController(
+        ProblemAnalysisRepository(transport),
+      ),
+      categories: [sampleCategory],
+    ),
     'CustomerHelpScreen (Customer Mode)': () => CustomerHelpScreen(
-          controller: ComplaintsController(FakeComplaintsRepo()),
-          isProvider: false,
-        ),
+      controller: ComplaintsController(FakeComplaintsRepo()),
+      isProvider: false,
+    ),
     'CustomerHelpScreen (Provider Mode)': () => CustomerHelpScreen(
-          controller: ComplaintsController(FakeComplaintsRepo()),
-          isProvider: true,
-        ),
+      controller: ComplaintsController(FakeComplaintsRepo()),
+      isProvider: true,
+    ),
     'ComplaintListScreen': () => ComplaintListScreen(
-          controller: ComplaintsController(FakeComplaintsRepo()),
-        ),
+      controller: ComplaintsController(FakeComplaintsRepo()),
+    ),
     'SubmitComplaintScreen': () => SubmitComplaintScreen(
-          controller: ComplaintsController(FakeComplaintsRepo()),
-          targetRole: 'provider',
-          bookingId: 'booking-crawler-1',
-        ),
+      controller: ComplaintsController(FakeComplaintsRepo()),
+      targetRole: 'provider',
+      bookingId: 'booking-crawler-1',
+    ),
     'NotificationCenterScreen': () => NotificationCenterScreen(
-          controller: NotificationController(
-            NotificationRepository(api: transport),
-          ),
-        ),
+      controller: NotificationController(
+        NotificationRepository(api: transport),
+      ),
+    ),
     'EmergencyConfirmScreen': () => EmergencyConfirmScreen(
-          categories: [sampleCategory],
-          repository: EmergencyRepository(transport),
-        ),
+      categories: [sampleCategory],
+      repository: EmergencyRepository(transport),
+    ),
     'InvoiceScreen': () => InvoiceScreen(
-          repository: InvoiceRepository(transport),
-          bookingId: 'booking-crawler-1',
-          initialInvoice: sampleInvoice,
-        ),
+      repository: InvoiceRepository(transport),
+      bookingId: 'booking-crawler-1',
+      initialInvoice: sampleInvoice,
+    ),
     'CustomerProfileScreen': () => CustomerProfileScreen(
-          controller: CustomerProfileController(
-            ApiCustomerProfileRepository(
-              api: transport,
-              accessToken: () async => 'crawler-token',
-            ),
-          ),
+      controller: CustomerProfileController(
+        ApiCustomerProfileRepository(
+          api: transport,
+          accessToken: () async => 'crawler-token',
         ),
+      ),
+    ),
     'ProviderHomeScreen': () => ProviderHomeScreen(
-          controller: ProviderController(
-            ProviderRepository(
-              api: transport,
-              accessToken: () async => 'crawler-token',
-            ),
-          ),
+      controller: ProviderController(
+        ProviderRepository(
+          api: transport,
+          accessToken: () async => 'crawler-token',
         ),
+      ),
+    ),
     'ProviderJobsScreen': () => ProviderJobsScreen(
-          controller: ProviderController(
-            ProviderRepository(
-              api: transport,
-              accessToken: () async => 'crawler-token',
-            ),
-          ),
-          showHistory: false,
+      controller: ProviderController(
+        ProviderRepository(
+          api: transport,
+          accessToken: () async => 'crawler-token',
         ),
+      ),
+      showHistory: false,
+    ),
     'ProviderActiveJobCockpitScreen': () => ProviderActiveJobCockpitScreen(
-          job: sampleBooking,
-          controller: ProviderController(
-            ProviderRepository(
-              api: transport,
-              accessToken: () async => 'crawler-token',
-            ),
-          ),
+      job: sampleBooking,
+      controller: ProviderController(
+        ProviderRepository(
+          api: transport,
+          accessToken: () async => 'crawler-token',
         ),
+      ),
+    ),
     'ProviderNavigationMapScreen': () => ProviderNavigationMapScreen(
-          job: sampleBooking,
-          controller: ProviderController(
-            ProviderRepository(
-              api: transport,
-              accessToken: () async => 'crawler-token',
-            ),
-          ),
+      job: sampleBooking,
+      controller: ProviderController(
+        ProviderRepository(
+          api: transport,
+          accessToken: () async => 'crawler-token',
         ),
+      ),
+    ),
     'ProviderIncomingRequestScreen': () => ProviderIncomingRequestScreen(
-          requestData: {
-            'bookingId': 'booking-crawler-1',
-            'serviceCategoryId': 'cat-plumbing',
-            'categoryName': 'Plumbing Services',
-            'description': 'Kitchen sink pipe repair',
-            'estimatedAmountMinor': 49900,
-            'durationMinutes': 45,
-            'distanceKm': 2.3,
-            'customerName': 'Asha Patel',
-            'address': 'Flat 402, Shivalik Residency, Ahmedabad',
-          },
-          providerController: ProviderController(
-            ProviderRepository(
-              api: transport,
-              accessToken: () async => 'crawler-token',
-            ),
-          ),
+      requestData: {
+        'bookingId': 'booking-crawler-1',
+        'serviceCategoryId': 'cat-plumbing',
+        'categoryName': 'Plumbing Services',
+        'description': 'Kitchen sink pipe repair',
+        'estimatedAmountMinor': 49900,
+        'durationMinutes': 45,
+        'distanceKm': 2.3,
+        'customerName': 'Asha Patel',
+        'address': 'Flat 402, Shivalik Residency, Ahmedabad',
+      },
+      providerController: ProviderController(
+        ProviderRepository(
+          api: transport,
+          accessToken: () async => 'crawler-token',
         ),
+      ),
+    ),
     'ProviderEarningsScreen': () => ProviderEarningsScreen(
-          repository: ProviderEarningsRepository(transport),
-        ),
+      repository: ProviderEarningsRepository(transport),
+    ),
     'ProviderOnboardingScreen': () => ProviderOnboardingScreen(
-          controller: ProviderController(
-            ProviderRepository(
-              api: transport,
-              accessToken: () async => 'crawler-token',
-            ),
-          ),
-          onSignOut: () {},
+      controller: ProviderController(
+        ProviderRepository(
+          api: transport,
+          accessToken: () async => 'crawler-token',
         ),
+      ),
+      onSignOut: () {},
+    ),
     'ProviderProfileScreen': () => ProviderProfileScreen(
-          controller: ProviderController(
-            ProviderRepository(
-              api: transport,
-              accessToken: () async => 'crawler-token',
-            ),
-          ),
-          onSignOut: () {},
+      controller: ProviderController(
+        ProviderRepository(
+          api: transport,
+          accessToken: () async => 'crawler-token',
         ),
+      ),
+      onSignOut: () {},
+    ),
   };
 
   final viewports = [
@@ -500,100 +501,105 @@ void main() {
   for (final vp in viewports) {
     group('Viewport: ${vp.name}', () {
       for (final entry in screens.entries) {
-        testWidgets(
-          'crawls and verifies zero layout overflow on ${entry.key}',
-          (tester) async {
-            tester.view.physicalSize = vp.size;
-            tester.view.devicePixelRatio = 1.0;
-            tester.view.viewInsets = vp.insets;
-            addTearDown(() {
-              tester.view.resetPhysicalSize();
-              tester.view.resetDevicePixelRatio();
-              tester.view.resetViewInsets();
-            });
+        testWidgets('crawls and verifies zero layout overflow on ${entry.key}', (
+          tester,
+        ) async {
+          tester.view.physicalSize = vp.size;
+          tester.view.devicePixelRatio = 1.0;
+          tester.view.viewInsets = vp.insets;
+          addTearDown(() {
+            tester.view.resetPhysicalSize();
+            tester.view.resetDevicePixelRatio();
+            tester.view.resetViewInsets();
+          });
 
-            final List<FlutterErrorDetails> errorDetails = [];
-            final originalOnError = FlutterError.onError;
-            FlutterError.onError = (details) {
-              errorDetails.add(details);
-            };
+          final List<FlutterErrorDetails> errorDetails = [];
+          final originalOnError = FlutterError.onError;
+          FlutterError.onError = (details) {
+            errorDetails.add(details);
+          };
 
-            try {
-              await tester.pumpWidget(
-                MaterialApp(
-                  theme: AppTheme.light,
-                  home: Scaffold(body: entry.value()),
-                ),
-              );
-              await tester.pump(const Duration(milliseconds: 300));
+          try {
+            await tester.pumpWidget(
+              MaterialApp(
+                theme: AppTheme.light,
+                home: Scaffold(body: entry.value()),
+              ),
+            );
+            await tester.pump(const Duration(milliseconds: 300));
 
-              // Check for RenderFlex overflow on mount
-              for (final err in errorDetails) {
-                if (err.exceptionAsString().contains('overflowed') ||
-                    err.exceptionAsString().contains('RenderFlex')) {
-                  debugPrint('FOUND MOUNT OVERFLOW in ${entry.key}: ${err.exceptionAsString()}');
-                }
+            // Check for RenderFlex overflow on mount
+            for (final err in errorDetails) {
+              if (err.exceptionAsString().contains('overflowed') ||
+                  err.exceptionAsString().contains('RenderFlex')) {
+                debugPrint('FOUND MOUNT OVERFLOW in ${entry.key}: $err');
               }
+            }
 
-              // Discover interactive widgets
-              final interactiveTypes = [
-                ElevatedButton,
-                FilledButton,
-                OutlinedButton,
-                TextButton,
-                IconButton,
-                Switch,
-                ChoiceChip,
-                FilterChip,
-                InkWell,
-              ];
+            // Discover interactive widgets
+            final interactiveTypes = [
+              ElevatedButton,
+              FilledButton,
+              OutlinedButton,
+              TextButton,
+              IconButton,
+              Switch,
+              ChoiceChip,
+              FilterChip,
+              InkWell,
+            ];
 
-              for (final type in interactiveTypes) {
-                final elements = find.byType(type).evaluate().toList();
-                for (final elem in elements) {
-                  try {
-                    if (elem.renderObject != null && elem.renderObject!.attached) {
-                      await tester.tap(find.byWidget(elem.widget), warnIfMissed: false);
-                      await tester.pump(const Duration(milliseconds: 150));
-                    }
-                  } catch (_) {
-                    // Tap miss or already dismissed
-                  }
-
-                  // Cleanly dismiss any open Dialog or ModalBarrier
-                  final barrierFinder = find.byType(ModalBarrier);
-                  if (barrierFinder.evaluate().isNotEmpty) {
-                    final nav = Navigator.maybeOf(
-                      tester.element(barrierFinder.last),
+            for (final type in interactiveTypes) {
+              final elements = find.byType(type).evaluate().toList();
+              for (final elem in elements) {
+                try {
+                  if (elem.renderObject != null &&
+                      elem.renderObject!.attached) {
+                    await tester.tap(
+                      find.byWidget(elem.widget),
+                      warnIfMissed: false,
                     );
-                    if (nav != null && nav.canPop()) {
-                      nav.pop();
-                    }
+                    await tester.pump(const Duration(milliseconds: 150));
+                  }
+                } catch (_) {
+                  // Tap miss or already dismissed
+                }
+
+                // Cleanly dismiss any open Dialog or ModalBarrier
+                final barrierFinder = find.byType(ModalBarrier);
+                if (barrierFinder.evaluate().isNotEmpty) {
+                  final nav = Navigator.maybeOf(
+                    tester.element(barrierFinder.last),
+                  );
+                  if (nav != null && nav.canPop()) {
+                    nav.pop();
                   }
                 }
               }
-
-              for (final err in errorDetails) {
-                if (err.exceptionAsString().contains('overflowed') ||
-                    err.exceptionAsString().contains('RenderFlex')) {
-                  debugPrint('FOUND INTERACTION OVERFLOW in ${entry.key}: ${err.exceptionAsString()}');
-                }
-              }
-            } finally {
-              FlutterError.onError = originalOnError;
             }
 
             for (final err in errorDetails) {
               if (err.exceptionAsString().contains('overflowed') ||
                   err.exceptionAsString().contains('RenderFlex')) {
-                fail(
-                  'Layout overflow on ${entry.key} at ${vp.name}:\n${err.exceptionAsString()}',
+                debugPrint(
+                  'FOUND INTERACTION OVERFLOW in ${entry.key}: ${err.exceptionAsString()}',
                 );
               }
             }
-          },
-          );
-        }
+          } finally {
+            FlutterError.onError = originalOnError;
+          }
+
+          for (final err in errorDetails) {
+            if (err.exceptionAsString().contains('overflowed') ||
+                err.exceptionAsString().contains('RenderFlex')) {
+              fail(
+                'Layout overflow on ${entry.key} at ${vp.name}:\n${err.exceptionAsString()}',
+              );
+            }
+          }
+        });
+      }
     });
   }
 }

@@ -1,7 +1,7 @@
 /* Route handlers are pulled off the prototype to stand in for `getHandler()`,
  * which is exactly the unbound-method shape this rule warns about — the calls
  * here never re-attach `this`, and there is no object to detach them from. */
-/* eslint-disable @typescript-eslint/unbound-method */
+
 import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
 import type { ExecutionContext } from '@nestjs/common';

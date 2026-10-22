@@ -3,18 +3,21 @@ import { RatingsService } from './ratings.service';
 import { ReviewPhotosService } from './review-photos.service';
 import { PATH_METADATA } from '@nestjs/common/constants';
 import { ReviewModerationStatus } from '../../../shared/ratings.types';
+import type { AuthorizedRequest } from '../common/authorization/authorization.guard';
+import type { ReviewPhoto } from './domain/review-photo.entity';
+import type { BookingReview } from './domain/review.entity';
 
 describe('RatingsAdminController', () => {
   let controller: RatingsAdminController;
   let ratingsService: jest.Mocked<RatingsService>;
   let photosService: jest.Mocked<ReviewPhotosService>;
 
-  const req = {
+  const req: AuthorizedRequest = {
     authorizationPrincipal: {
       userId: 'admin-usr-1',
       role: 'trust_safety_reviewer',
     },
-  } as any;
+  } as unknown as AuthorizedRequest;
 
   beforeEach(() => {
     ratingsService = {
@@ -23,7 +26,7 @@ describe('RatingsAdminController', () => {
 
     photosService = {
       moderate: jest.fn(),
-      present: jest.fn((p) => ({ id: p.id, status: p.status })),
+      present: jest.fn((p: ReviewPhoto) => ({ id: p.id, status: p.status })),
     } as unknown as jest.Mocked<ReviewPhotosService>;
 
     controller = new RatingsAdminController(ratingsService, photosService);
@@ -34,7 +37,7 @@ describe('RatingsAdminController', () => {
       const prototype = RatingsAdminController.prototype;
       const methods = Object.getOwnPropertyNames(prototype).filter(
         (prop) =>
-          typeof (prototype as any)[prop] === 'function' &&
+          typeof (prototype as Record<string, unknown>)[prop] === 'function' &&
           prop !== 'constructor',
       );
 
@@ -58,7 +61,10 @@ describe('RatingsAdminController', () => {
 
   describe('moderatePhoto', () => {
     it('moderates a review photo and returns presented payload', async () => {
-      const mockPhoto = { id: 'photo-123', status: 'APPROVED' } as any;
+      const mockPhoto = {
+        id: 'photo-123',
+        status: 'APPROVED',
+      } as unknown as ReviewPhoto;
       photosService.moderate.mockResolvedValue(mockPhoto);
 
       const result = await controller.moderatePhoto('photo-123', req, {
@@ -92,7 +98,7 @@ describe('RatingsAdminController', () => {
         moderatedAt: new Date(),
         moderatedByUserId: 'admin-usr-1',
         moderationReason: 'Policy compliant',
-      } as any;
+      } as unknown as BookingReview;
       ratingsService.moderate.mockResolvedValue(mockReview);
 
       const result = await controller.moderate('rev-456', req, {

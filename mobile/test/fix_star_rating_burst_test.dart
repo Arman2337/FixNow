@@ -1,4 +1,4 @@
-import 'package:fixnow_mobile/design_system/fix_star_rating_burst.dart';
+import 'support/prototypes/fix_star_rating_burst.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

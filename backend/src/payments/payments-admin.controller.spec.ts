@@ -1,17 +1,18 @@
 import { BadRequestException } from '@nestjs/common';
 import { PaymentsAdminController } from './payments-admin.controller';
 import { PaymentsService } from './payments.service';
+import type { AuthorizedRequest } from '../common/authorization/authorization.guard';
 
 describe('PaymentsAdminController', () => {
   let controller: PaymentsAdminController;
   let service: jest.Mocked<PaymentsService>;
 
-  const req = {
+  const req: AuthorizedRequest = {
     authorizationPrincipal: {
       userId: 'admin-usr-1',
       role: 'operations_administrator',
     },
-  } as any;
+  } as unknown as AuthorizedRequest;
 
   beforeEach(() => {
     service = {
@@ -23,7 +24,12 @@ describe('PaymentsAdminController', () => {
 
   describe('refund', () => {
     it('executes refund when Idempotency-Key header is present', async () => {
-      const mockResult = { refundId: 'ref-1', status: 'PROCESSED' } as any;
+      const mockResult = {
+        id: 'ref-1',
+        gatewayRefundId: 'gw-ref-1',
+        amountMinor: 25000,
+        status: 'PROCESSED',
+      };
       service.refundOrder.mockResolvedValue(mockResult);
 
       const result = await controller.refund('ord-100', req, 'key-abc-123', {

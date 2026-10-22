@@ -1,3 +1,4 @@
+import { hasPermission } from "@/auth/roles";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getSession } from "@/auth/session";
@@ -9,7 +10,7 @@ import { getBooking } from "@/features/operations/api";
 import { StatusBadge } from "@/features/status-badge";
 
 const labels: Record<string, string> = { cancelled: "Booking cancelled and audit event recorded.", stale: "This booking changed. Review the latest version before trying again.", failed: "The action could not be completed.", "confirmation-required": "Enter a reason and confirm the intervention." };
-const shortId = (id: string) => id.replaceAll("-", "").slice(0, 8).toUpperCase();
+import { shortId } from "@/lib/format";
 const category = (value: string) => value.replaceAll("_", " ").split(" ").filter(Boolean).map((word) => `${word[0].toUpperCase()}${word.slice(1)}`).join(" ");
 
 export default async function BookingDetailPage({ params, searchParams }: { params: Promise<{ bookingId: string }>; searchParams: Promise<{ result?: string }> }) {
@@ -20,7 +21,7 @@ export default async function BookingDetailPage({ params, searchParams }: { para
   if (!response.ok && response.status === 404) notFound();
   const booking = await requireManagementResult(response);
   const { result } = await searchParams;
-  const canIntervene = session.session.roles.some((role) => role === "trust_safety_reviewer" || role === "operations_administrator");
+  const canIntervene = hasPermission(session.session.roles, "adminBookingsIntervene");
   const terminal = booking.status === "COMPLETED" || booking.status === "CANCELLED";
 
   return <AdminShell environment={env.appEnvironment} roles={session.session.roles} current="Bookings">

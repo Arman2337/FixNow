@@ -8,7 +8,7 @@ import 'package:fixnow_mobile/design_system/fix_job_proof_dialog.dart';
 import 'package:fixnow_mobile/features/bookings/booking.dart';
 import 'package:fixnow_mobile/features/bookings/cancellation_dialog.dart';
 import 'dart:async';
-import 'package:fixnow_mobile/features/call/call_controller.dart';
+import 'package:fixnow_mobile/features/call/call_screen.dart';
 import 'package:fixnow_mobile/features/chat/booking_chat_screen.dart';
 import 'package:fixnow_mobile/features/chat/chat_controller.dart';
 import 'package:fixnow_mobile/features/chat/chat_repository.dart';
@@ -211,13 +211,17 @@ class _ProviderActiveJobCockpitScreenState
   }
 
   void _openCall(BuildContext context, CustomerBooking job) {
-    if (job.customerPhone != null) {
-      CallController().launchCall(job.customerPhone!);
-    } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Phone number unavailable')));
-    }
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => CallScreen(
+          oppositePartyName: 'Customer',
+          oppositePartyRole: 'Customer',
+          phoneNumber: job.customerPhone,
+          bookingId: job.id,
+          isProvider: true,
+        ),
+      ),
+    );
   }
 
   Future<void> _openServiceAdjustment(CustomerBooking job) async {
@@ -425,7 +429,10 @@ class _ProviderActiveJobCockpitScreenState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         Container(
                           padding: const EdgeInsets.symmetric(
@@ -437,6 +444,7 @@ class _ProviderActiveJobCockpitScreenState
                             borderRadius: BorderRadius.circular(999),
                           ),
                           child: Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               if (job.status == 'EN_ROUTE' ||
                                   job.status == 'IN_PROGRESS') ...[
@@ -462,7 +470,6 @@ class _ProviderActiveJobCockpitScreenState
                             ],
                           ),
                         ),
-                        const SizedBox(width: 8),
                         Text(
                           '#JOB-$shortId',
                           style: const TextStyle(
@@ -761,9 +768,15 @@ class _ProviderActiveJobCockpitScreenState
                 size: 16,
               ),
               SizedBox(width: 4),
-              Text(
-                'Encrypted Telematics & On-Duty Insurance Protected',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 11),
+              Flexible(
+                child: Text(
+                  'Encrypted Telematics & On-Duty Insurance Protected',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 11,
+                  ),
+                ),
               ),
             ],
           ),
@@ -1023,7 +1036,7 @@ class _ProviderActiveJobCockpitScreenState
                   onTap: () => JobProofVerificationDialog.show(
                     context,
                     bookingId: job.id,
-                  onUpload: widget.controller.uploadJobProof,
+                    onUpload: widget.controller.uploadJobProof,
                   ),
                 ),
               ),
@@ -1036,90 +1049,11 @@ class _ProviderActiveJobCockpitScreenState
                   onTap: () => JobProofVerificationDialog.show(
                     context,
                     bookingId: job.id,
-                  onUpload: widget.controller.uploadJobProof,
+                    onUpload: widget.controller.uploadJobProof,
                   ),
                 ),
               ),
             ],
-          ),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.sm),
-            decoration: BoxDecoration(
-              color: AppColors.surfaceContainerLow,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Spare Parts Replaced',
-                      style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 13,
-                      ),
-                    ),
-                    TextButton.icon(
-                      onPressed: () => _handleAddExtraCharge(job),
-                      icon: const Icon(Icons.add_rounded, size: 16),
-                      label: const Text('Add Part'),
-                      style: TextButton.styleFrom(
-                        padding: EdgeInsets.zero,
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                if (job.lineItems
-                    .where((item) => item.type == 'EXTRA_CHARGE')
-                    .isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 8),
-                    child: Center(
-                      child: Text(
-                        'No parts added yet',
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-                  )
-                else
-                  ...job.lineItems
-                      .where((item) => item.type == 'EXTRA_CHARGE')
-                      .map(
-                        (item) => Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                item.description,
-                                style: const TextStyle(
-                                  color: AppColors.textPrimary,
-                                  fontSize: 13,
-                                ),
-                              ),
-                              Text(
-                                '₹${(item.amount / 100).toStringAsFixed(2)}',
-                                style: const TextStyle(
-                                  color: AppColors.textPrimary,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-              ],
-            ),
           ),
           const SizedBox(height: AppSpacing.md),
           FixButton(
@@ -1283,95 +1217,6 @@ class _ProviderActiveJobCockpitScreenState
     );
   }
 
-  Future<void> _handleAddExtraCharge(CustomerBooking job) async {
-    final descriptionController = TextEditingController();
-    final amountController = TextEditingController();
-
-    final result = await showModalBottomSheet<Map<String, dynamic>>(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: Container(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                'Add Spare Part / Extra Charge',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              TextField(
-                controller: descriptionController,
-                decoration: const InputDecoration(
-                  labelText: 'Description (e.g., Coolant gas, Filter)',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              TextField(
-                controller: amountController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Amount (₹)',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              FixButton(
-                label: 'Add Charge',
-                onPressed: () {
-                  final desc = descriptionController.text.trim();
-                  final amount = double.tryParse(amountController.text.trim());
-                  if (desc.isNotEmpty && amount != null && amount > 0) {
-                    Navigator.pop(context, {
-                      'type': 'EXTRA_CHARGE',
-                      'description': desc,
-                      'amount': (amount * 100)
-                          .toInt(), // assuming backend wants minor units, wait, DTO says positive number, backend expects minor units usually? Yes, amount is typically in paise.
-                    });
-                  }
-                },
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-
-    if (result != null && mounted) {
-      try {
-        setState(() => _isProcessing = true);
-        final currentLineItems = job.lineItems.map((e) => e.toJson()).toList();
-        currentLineItems.add(result);
-        await widget.controller.updateLineItems(job, currentLineItems);
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to add charge.')),
-          );
-        }
-      } finally {
-        if (mounted) {
-          setState(() => _isProcessing = false);
-        }
-      }
-    }
-  }
-
   Widget _buildInlineOtpInput() {
     return SizedBox(
       height: 56,
@@ -1517,7 +1362,9 @@ class _ServiceAdjustmentSheetState extends State<_ServiceAdjustmentSheet> {
       ).getAllSubServices();
       if (!mounted) return;
       setState(() {
-        _catalogue = items.where((i) => i.priceMinor > 0).toList(growable: false);
+        _catalogue = items
+            .where((i) => i.priceMinor > 0)
+            .toList(growable: false);
         _loadingCatalogue = false;
       });
     } catch (_) {
@@ -1548,9 +1395,9 @@ class _ServiceAdjustmentSheetState extends State<_ServiceAdjustmentSheet> {
       '₹${(minor / 100).toStringAsFixed(minor % 100 == 0 ? 0 : 2)}';
 
   int get _subtotalMinor => _lines.fold(
-        0,
-        (sum, line) => sum + _unitPriceOf(line.subServiceId) * line.quantity,
-      );
+    0,
+    (sum, line) => sum + _unitPriceOf(line.subServiceId) * line.quantity,
+  );
 
   void _increment(int index) {
     final line = _lines[index];
@@ -1578,8 +1425,7 @@ class _ServiceAdjustmentSheetState extends State<_ServiceAdjustmentSheet> {
 
   void _addSelected(String? subServiceId) {
     if (subServiceId == null) return;
-    final existing =
-        _lines.indexWhere((l) => l.subServiceId == subServiceId);
+    final existing = _lines.indexWhere((l) => l.subServiceId == subServiceId);
     setState(() {
       if (existing >= 0) {
         final line = _lines[existing];
@@ -1757,7 +1603,9 @@ class _ServiceAdjustmentSheetState extends State<_ServiceAdjustmentSheet> {
                           ),
                           decoration: BoxDecoration(
                             color: AppColors.surfaceContainerLowest,
-                            borderRadius: BorderRadius.circular(AppRadius.small),
+                            borderRadius: BorderRadius.circular(
+                              AppRadius.small,
+                            ),
                             // borderDefault (#E2E8F0) on white is only ~1.23:1
                             // and reads as an invisible edge, so the picker
                             // uses the strong border token.
@@ -1791,9 +1639,8 @@ class _ServiceAdjustmentSheetState extends State<_ServiceAdjustmentSheet> {
                               ],
                               onChanged: _saving
                                   ? null
-                                  : (value) => setState(
-                                        () => _selectedId = value,
-                                      ),
+                                  : (value) =>
+                                        setState(() => _selectedId = value),
                             ),
                           ),
                         ),
@@ -1809,8 +1656,7 @@ class _ServiceAdjustmentSheetState extends State<_ServiceAdjustmentSheet> {
                                   _addSelected(_selectedId);
                                   setState(() => _selectedId = null);
                                 },
-                          borderRadius:
-                              BorderRadius.circular(AppRadius.pill),
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
                           child: Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(

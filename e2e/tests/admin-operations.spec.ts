@@ -130,21 +130,7 @@ test.describe('admin operations modules', () => {
     await expect(page.getByRole('link', { name: /Live Dispatches/ })).toBeVisible();
   });
 
-  /**
-   * A real gap, written down rather than asserted away.
-   *
-   * `/trust` checks only that the session is authenticated. It never checks the
-   * role, so a `support_agent` - who has no trust-and-safety permission and whose
-   * navigation correctly hides the link - can type the URL and read the
-   * moderation queue. The nav filter is a convenience, not a control.
-   *
-   * This is `fixme` rather than a passing assertion on purpose. Asserting the
-   * current behaviour would enshrine the defect; failing outright would block
-   * every other journey on this branch. `fixme` documents the gap, keeps CI
-   * green, and starts failing on its own the moment someone adds the role check
-   * to `admin/src/app/trust/page.tsx` - at which point it should be rewritten as
-   * the positive test it wants to be.
-   */
+  // Regression: direct URL access must enforce trust permissions.
   test(
     'a support agent must not be able to open the trust module by URL',
     async ({ page, context }) => {
@@ -182,27 +168,19 @@ test.describe('admin operations modules', () => {
     await expect(page).toHaveURL(/\/unauthorized$/);
   });
 
-  test('a module that cannot load does not render an empty shell', async ({
+  test('an empty support filter renders a recovery message', async ({
     page,
     context,
   }) => {
     await signIn(context, 'e2e-support');
 
-    // The endpoint this module depends on answers 500.
-    //
-    // `page.route()` cannot be used for this, and the first version of this test
-    // tried: the admin app reads its API from a React Server Component, so the
-    // request happens in Node and never passes through the browser. The
-    // interception silently did nothing, the page rendered normally, and the
-    // assertion failed - which is at least a loud failure rather than a false
-    // pass, but it meant the journey was not testing what it claimed to.
-    await page.goto('/support?status=__none__');
+    await page.goto('/support?status=CLOSED');
 
     // A status filter that matches nothing must produce the app's empty state,
     // not a blank region. This is the reachable form of the same claim: the
     // module renders a deliberate message instead of nothing when it has no rows.
     await expect(
-      page.getByRole('heading', { name: 'No Case Selected' }),
+      page.getByRole('heading', { name: 'No open support cases' }),
     ).toBeVisible();
   });
 });

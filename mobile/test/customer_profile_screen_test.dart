@@ -6,8 +6,10 @@ import 'package:fixnow_mobile/features/profile/customer_profile_repository.dart'
 import 'package:fixnow_mobile/features/profile/customer_profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'support/test_address_repository.dart';
 
 void main() {
+  setUp(createTestAddressRepository);
   testWidgets('loads and saves only the display name', (tester) async {
     final repository = FakeProfileRepository(
       const CustomerProfile(displayName: 'Asha'),
@@ -20,6 +22,10 @@ void main() {
       ),
     );
     await tester.pump();
+
+    expect(find.text('FIXNOW PLUS MEMBER'), findsNothing);
+    expect(find.text('VIP Tier 1'), findsNothing);
+    expect(find.text('Cashback'), findsNothing);
 
     expect(
       find.text('Only your display name is collected here.'),
@@ -73,8 +79,9 @@ void main() {
     expect(find.text('Enter a display name.'), findsOneWidget);
   });
 
-  testWidgets('renders notification section in profile with allow option',
-      (tester) async {
+  testWidgets('renders notification section in profile with allow option', (
+    tester,
+  ) async {
     final controller = CustomerProfileController(
       FakeProfileRepository(const CustomerProfile(displayName: 'Asha')),
     );
@@ -111,8 +118,8 @@ class FakeProfileRepository implements CustomerProfileRepository {
   }
 }
 
-
 class MockClient implements ApiTransport {
   @override
-  Future<ApiResponse> send(ApiRequest request) async => ApiResponse(statusCode: 200, body: {});
+  Future<ApiResponse> send(ApiRequest request) async =>
+      ApiResponse(statusCode: 200, body: {});
 }

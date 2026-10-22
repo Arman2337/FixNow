@@ -110,12 +110,6 @@ class _MockProviderRepository implements ProviderRepository {
   Future<ProviderApplication> submitApplication() async => throw UnimplementedError();
 
   @override
-  Future<CustomerBooking> updateLineItems(
-    String bookingId,
-    List<Map<String, dynamic>> lineItems,
-  ) async => throw UnimplementedError();
-
-  @override
   Future<ProviderProfile> updateLocation(double latitude, double longitude) async =>
       (await profile())!;
 

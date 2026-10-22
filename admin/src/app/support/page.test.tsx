@@ -47,15 +47,6 @@ describe("SupportPage", () => {
           status: "OPEN",
           createdAt: "2026-08-21T00:00:00.000Z",
         },
-        {
-          id: "case-closed-5678",
-          submitterId: "customer-2",
-          targetRole: "PROVIDER",
-          category: "Resolved issue",
-          description: "Already resolved.",
-          status: "CLOSED",
-          createdAt: "2026-08-20T00:00:00.000Z",
-        },
       ],
     } as never);
 
@@ -68,5 +59,22 @@ describe("SupportPage", () => {
     expect(markup).toContain("Unsafe work");
     expect(markup).not.toContain("Resolved issue");
     expect(markup).toContain('href="/support/case-open-1234"');
+    expect(listComplaints).toHaveBeenCalledWith(21, 0, "OPEN", "open");
+  });
+
+  it("requests filtering before pagination so older matching cases are visible", async () => {
+    const cases = Array.from({ length: 45 }, (_, i) => ({
+      id: `case-${i}`, submitterId: "customer", category: "Leak", description: "Needs review",
+      status: i < 25 ? "CLOSED" : "OPEN", createdAt: "2026-10-01",
+    }));
+    vi.mocked(listComplaints).mockImplementation(async (limit = 20, offset = 0, status) => ({
+      ok: true, value: cases.filter(c => !status || c.status === status).slice(offset, offset + limit),
+    }) as never);
+    const markup = renderToStaticMarkup(await SupportPage({ searchParams: Promise.resolve({ status: "OPEN" }) }));
+    expect(markup).toContain('href="/support/case-25"');
+    expect(markup).not.toContain('href="/support/case-0"');
+    const second = renderToStaticMarkup(await SupportPage({ searchParams: Promise.resolve({ page: "2" }) }));
+    expect(second).toContain('href="/support/case-20"');
+    expect(second).toContain("Next page");
   });
 });

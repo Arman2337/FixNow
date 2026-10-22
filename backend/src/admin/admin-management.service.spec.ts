@@ -7,6 +7,7 @@ import { ProviderProfileEntity } from '../providers/provider-profile.entity';
 import { ProviderVerificationEventEntity } from '../providers/verification/provider-verification-event.entity';
 import { AdminManagementService } from './admin-management.service';
 import type { ComplaintsService } from '../support/complaints/complaints.service';
+import { ComplaintStatus } from '../../../shared/complaint-lifecycle.types';
 
 describe('AdminManagementService', () => {
   const users = { findOneBy: jest.fn() } as unknown as Repository<UserEntity>;
@@ -103,5 +104,39 @@ describe('AdminManagementService', () => {
     await expect(
       service.listUsers({ limit: 20, cursor: 'not-a-cursor' }),
     ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('filters complaint status and search in SQL before applying a later-page offset', async () => {
+    const query = {
+      andWhere: jest.fn().mockReturnThis(),
+      orderBy: jest.fn().mockReturnThis(),
+      addOrderBy: jest.fn().mockReturnThis(),
+      take: jest.fn().mockReturnThis(),
+      skip: jest.fn().mockReturnThis(),
+      getMany: jest.fn().mockResolvedValue([{ id: 'older-open-case' }]),
+    };
+    Object.assign(users, {
+      manager: {
+        getRepository: jest.fn(() => ({ createQueryBuilder: () => query })),
+      },
+    });
+    await expect(
+      service.listComplaints('admin', {
+        limit: 21,
+        offset: 20,
+        status: ComplaintStatus.OPEN,
+        search: 'leak',
+      }),
+    ).resolves.toEqual([{ id: 'older-open-case' }]);
+    expect(query.andWhere).toHaveBeenCalledWith('complaint.status = :status', {
+      status: ComplaintStatus.OPEN,
+    });
+    expect(query.andWhere).toHaveBeenCalledWith(
+      expect.stringContaining('complaint.description ILIKE'),
+      { search: '%leak%' },
+    );
+    expect(query.take).toHaveBeenCalledWith(21);
+    expect(query.skip).toHaveBeenCalledWith(20);
+    expect(query.addOrderBy).toHaveBeenCalledWith('complaint.id', 'DESC');
   });
 });

@@ -22,34 +22,34 @@ class NotificationRepository {
             bearerToken: token,
           ),
         );
-         if (response.statusCode < 200 || response.statusCode >= 300) {
-           throw ApiException(
-             ApiFailureKind.server,
-             'Notifications are temporarily unavailable.',
-             statusCode: response.statusCode,
-           );
-         }
-         if (response.body is! List) {
-           throw const ApiException(
-             ApiFailureKind.invalidResponse,
-             'Notifications returned an invalid response.',
-           );
-         }
-         final raw = response.body as List;
-         remoteList = raw
-             .whereType<Map>()
-             .map(
-               (m) => InAppNotification.fromJson(Map<String, dynamic>.from(m)),
-             )
-             .toList();
-       } on ApiException {
-         rethrow;
-       } catch (_) {
-         throw const ApiException(
-           ApiFailureKind.server,
-           'Notifications are temporarily unavailable.',
-         );
-       }
+        if (response.statusCode < 200 || response.statusCode >= 300) {
+          throw ApiException(
+            ApiFailureKind.server,
+            'Notifications are temporarily unavailable.',
+            statusCode: response.statusCode,
+          );
+        }
+        if (response.body is! List) {
+          throw const ApiException(
+            ApiFailureKind.invalidResponse,
+            'Notifications returned an invalid response.',
+          );
+        }
+        final raw = response.body as List;
+        remoteList = raw
+            .whereType<Map>()
+            .map(
+              (m) => InAppNotification.fromJson(Map<String, dynamic>.from(m)),
+            )
+            .toList();
+      } on ApiException {
+        rethrow;
+      } catch (_) {
+        throw const ApiException(
+          ApiFailureKind.server,
+          'Notifications are temporarily unavailable.',
+        );
+      }
     }
 
     final combined = <String, InAppNotification>{};
@@ -66,54 +66,56 @@ class NotificationRepository {
     return list;
   }
 
-  void markAsRead(String id) {
+  /// Await the server before changing local visibility or read state.
+  Future<void> _mutate(ApiMethod method, String path) async {
+    if (api == null) return; // Explicit local-only repository used by tests.
+    final token = await accessToken?.call();
+    if (token == null || token.isEmpty) {
+      throw const ApiException(
+        ApiFailureKind.unauthorized,
+        'Sign in to update notifications.',
+      );
+    }
+    final response = await api!.send(
+      ApiRequest(method: method, path: path, bearerToken: token),
+    );
+    if (response.statusCode < 200 ||
+        response.statusCode >= 300 ||
+        response.body is! Map ||
+        (response.body as Map)['success'] != true) {
+      throw ApiException(
+        ApiFailureKind.server,
+        'Could not update notifications.',
+        statusCode: response.statusCode,
+      );
+    }
+  }
+
+  Future<void> markAsRead(String id) async {
+    await _mutate(
+      ApiMethod.patch,
+      'users/me/notifications/${Uri.encodeComponent(id)}/read',
+    );
     _readIds.add(id);
-    if (api != null) {
-      accessToken?.call().then((token) {
-        api!.send(
-          ApiRequest(
-            method: ApiMethod.patch,
-            path: 'users/me/notifications/$id/read',
-            bearerToken: token,
-          ),
-        );
-      }).catchError((_) {});
+  }
+
+  Future<void> markAllAsRead(Iterable<String> ids) async {
+    for (final id in ids.toList()) {
+      await markAsRead(id);
     }
   }
 
-  void markAllAsRead(Iterable<String> ids) {
-    for (final id in ids) {
-      markAsRead(id);
-    }
-  }
-
-  void deleteNotification(String id) {
+  Future<void> deleteNotification(String id) async {
+    await _mutate(
+      ApiMethod.delete,
+      'users/me/notifications/${Uri.encodeComponent(id)}',
+    );
     _deletedIds.add(id);
-    if (api != null) {
-      accessToken?.call().then((token) {
-        api!.send(
-          ApiRequest(
-            method: ApiMethod.delete,
-            path: 'users/me/notifications/$id',
-            bearerToken: token,
-          ),
-        );
-      }).catchError((_) {});
-    }
   }
 
-  void clearAll(Iterable<String> ids) {
-    _deletedIds.addAll(ids);
-    if (api != null) {
-      accessToken?.call().then((token) {
-        api!.send(
-          ApiRequest(
-            method: ApiMethod.delete,
-            path: 'users/me/notifications',
-            bearerToken: token,
-          ),
-        );
-      }).catchError((_) {});
-    }
+  Future<void> clearAll(Iterable<String> ids) async {
+    final clearedIds = ids.toSet();
+    await _mutate(ApiMethod.delete, 'users/me/notifications');
+    _deletedIds.addAll(clearedIds);
   }
 }

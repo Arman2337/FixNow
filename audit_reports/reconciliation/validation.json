@@ -1,0 +1,50 @@
+{
+  "date": "2026-10-21",
+  "checks": [
+    {
+      "name": "Admin Vitest",
+      "result": "PASS — 14 files / 39 tests",
+      "details": "Existing npm test -- --reporter=dot. Sandbox initially blocked a build subprocess with EPERM; the same test command passed outside the sandbox. No dependencies installed. This is unit-level validation, not a browser or database persistence run."
+    },
+    {
+      "name": "Focused backend Jest: catalog, ratings moderation, call controller, complaints",
+      "result": "PASS — 4 suites / 43 tests",
+      "details": "node node_modules/jest/bin/jest.js --runInBand --ci --runTestsByPath src/services/catalog-seed.spec.ts src/ratings/ratings-admin.controller.spec.ts src/bookings/booking-calls.controller.spec.ts src/support/complaints/complaints.service.spec.ts. Existing tests; mocks only."
+    },
+    {
+      "name": "Focused backend Jest: outbox, malware scanner, S3, dispatch, shared state machines, ratings moderation, catalog",
+      "result": "PASS — 7 suites / 47 tests",
+      "details": "Existing specs executed by backend reviewer with --runInBand --ci. This run overlaps two suites with the preceding run; do not add counts as unique coverage. No live DB, S3 or antivirus daemon contacted."
+    },
+    {
+      "name": "Secret scanner",
+      "result": "PASS within reported scan limits",
+      "details": "All 11 self-test rules pass. Full invocation exit 0: 1557 available history blobs, 37 untracked-not-ignored files; 5251 Git objects missing from clone and 3 files over 1 MiB skipped. Sandbox git subprocess EPERM was resolved by running the same read-only scanner outside the sandbox. Credential samples were omitted from tool output. This is not complete-history or CI verification."
+    },
+    {
+      "name": "Data Integrity Audit static scanner",
+      "result": "COMPLETED — mobile 0, admin 0, backend 2 heuristic matches",
+      "details": "Scanned mobile/lib, admin/src and backend/src. Backend matches: audio-fixtures.ts constant declaration (no production reference found) and booking-messages.service.ts best-effort notification catch after message save. Neither proves production mock data or failed message persistence. Raw JSON saved in reconciliation/."
+    },
+    {
+      "name": "Focused Flutter tests",
+      "result": "UNAVAILABLE — compiler failed because temporary disk is full",
+      "details": "Existing cockpit, proof, notification, complaint repository and customer profile tests were attempted. Initial run reported Dart compiler exit; serial --no-pub --concurrency=1 retry captured FileSystemException writing output.dill in the Windows temporary directory: OS error 112, not enough disk space. No tests passed before compilation failed; the stalled runner was interrupted. See flutter-targeted-tests.log. No source failure or passing mobile baseline is inferred, and no user files were deleted to free space."
+    },
+    {
+      "name": "Live database/integration/schema verification",
+      "result": "NOT EXECUTED",
+      "details": "No database state inspected. Existing integration setup and schema probe scripts perform destructive/write operations, which are outside this documentation-only read-only audit. Source migration fixes are not proof of deployed schema."
+    },
+    {
+      "name": "Playwright/browser/device verification",
+      "result": "NOT EXECUTED",
+      "details": "e2e/node_modules absent; no dependencies or browser binaries installed. No authenticated browser or device interactions performed. Do not carry forward historical claim that missing browser binaries are the current proven blocker."
+    },
+    {
+      "name": "Report coverage and references",
+      "result": "GENERATED CHECK",
+      "details": "build_reconciliation.py asserts all 89 numbered slots and six DIA IDs, unique row IDs, 79 historical referenced GAP IDs, calculated counts and existing evidence paths/line bounds. Referenced source hashes recorded. Final link/diff checks recorded in FN-145."
+    }
+  ]
+}

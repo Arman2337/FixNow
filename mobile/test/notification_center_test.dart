@@ -23,6 +23,9 @@ class _FailingNotificationTransport implements ApiTransport {
 class _FixtureNotificationTransport implements ApiTransport {
   @override
   Future<ApiResponse> send(ApiRequest request) async {
+    if (request.method != ApiMethod.get) {
+      return const ApiResponse(statusCode: 200, body: {'success': true});
+    }
     final now = DateTime.now().toUtc();
     return ApiResponse(
       statusCode: 200,
@@ -32,7 +35,9 @@ class _FixtureNotificationTransport implements ApiTransport {
           'title': 'Booking Confirmed & Assigned',
           'body': 'Your booking is confirmed.',
           'category': 'bookings',
-          'timestamp': now.subtract(const Duration(minutes: 18)).toIso8601String(),
+          'timestamp': now
+              .subtract(const Duration(minutes: 18))
+              .toIso8601String(),
           'bookingId': 'booking-1',
           'isRead': false,
         },
@@ -49,7 +54,9 @@ class _FixtureNotificationTransport implements ApiTransport {
           'title': 'Payment Invoice Ready',
           'body': 'Invoice for Plumbing Service is ready.',
           'category': 'payments',
-          'timestamp': now.subtract(const Duration(hours: 18)).toIso8601String(),
+          'timestamp': now
+              .subtract(const Duration(hours: 18))
+              .toIso8601String(),
           'paymentId': 'payment-1',
           'serviceName': 'Plumbing Service',
           'isRead': true,
@@ -86,12 +93,15 @@ class _NotificationSocket implements RealtimeSocket {
     if (value['type'] == 'authenticate') {
       Future<void>.delayed(Duration.zero, () => emit({'type': 'ready'}));
     } else if (value['type'] == 'subscribe') {
-      Future<void>.delayed(Duration.zero, () => emit({
-            'type': 'subscribed',
-            'requestId': value['requestId'],
-            'channel': value['channel'],
-            'resourceId': value['resourceId'],
-          }));
+      Future<void>.delayed(
+        Duration.zero,
+        () => emit({
+          'type': 'subscribed',
+          'requestId': value['requestId'],
+          'channel': value['channel'],
+          'resourceId': value['resourceId'],
+        }),
+      );
     }
   }
 
@@ -116,18 +126,21 @@ Widget host(Widget child) => MaterialApp(
 );
 
 void main() {
-  test('does not return seed data when the notification API is unavailable', () async {
-    final repository = NotificationRepository(
-      api: _FailingNotificationTransport(),
-      accessToken: () async => 'token',
-    );
+  test(
+    'does not return seed data when the notification API is unavailable',
+    () async {
+      final repository = NotificationRepository(
+        api: _FailingNotificationTransport(),
+        accessToken: () async => 'token',
+      );
 
-    final controller = NotificationController(repository);
-    await controller.load();
+      final controller = NotificationController(repository);
+      await controller.load();
 
-    expect(controller.notifications, isEmpty);
-    expect(controller.hasError, isTrue);
-  });
+      expect(controller.notifications, isEmpty);
+      expect(controller.hasError, isTrue);
+    },
+  );
 
   group('NotificationModel', () {
     test('serializes and deserializes correctly with timeAgo', () {
@@ -170,7 +183,7 @@ void main() {
       }
 
       // Mark all as read
-      controller.markAllAsRead();
+      await controller.markAllAsRead();
       expect(controller.unreadCount, 0);
 
       // Add a new booking alert
@@ -188,44 +201,47 @@ void main() {
       expect(controller.unreadCount, 1);
     });
 
-    test('adds a notification delivered by the account realtime stream', () async {
-      final socket = _NotificationSocket();
-      final realtime = RealtimeClient(
-        uri: Uri.parse('ws://localhost/realtime'),
-        accessToken: () async => 'access-token',
-        connector: _NotificationConnector(socket),
-      );
-      final controller = NotificationController(
-        fixtureRepository(),
-        realtime: realtime,
-      );
-      await controller.load();
-      final received = Completer<void>();
-      controller.addListener(() {
-        if (controller.notifications.any((item) => item.id == 'realtime-1') &&
-            !received.isCompleted) {
-          received.complete();
-        }
-      });
+    test(
+      'adds a notification delivered by the account realtime stream',
+      () async {
+        final socket = _NotificationSocket();
+        final realtime = RealtimeClient(
+          uri: Uri.parse('ws://localhost/realtime'),
+          accessToken: () async => 'access-token',
+          connector: _NotificationConnector(socket),
+        );
+        final controller = NotificationController(
+          fixtureRepository(),
+          realtime: realtime,
+        );
+        await controller.load();
+        final received = Completer<void>();
+        controller.addListener(() {
+          if (controller.notifications.any((item) => item.id == 'realtime-1') &&
+              !received.isCompleted) {
+            received.complete();
+          }
+        });
 
-      await realtime.subscribeAccount('user-1');
-      socket.emit({
-        'type': 'notification.created.v1',
-        'data': {
-          'id': 'realtime-1',
-          'title': 'Realtime update',
-          'body': 'A new update arrived.',
-          'category': 'bookings',
-          'timestamp': DateTime.now().toUtc().toIso8601String(),
-          'isRead': false,
-        },
-      });
+        await realtime.subscribeAccount('user-1');
+        socket.emit({
+          'type': 'notification.created.v1',
+          'data': {
+            'id': 'realtime-1',
+            'title': 'Realtime update',
+            'body': 'A new update arrived.',
+            'category': 'bookings',
+            'timestamp': DateTime.now().toUtc().toIso8601String(),
+            'isRead': false,
+          },
+        });
 
-      await received.future.timeout(const Duration(seconds: 1));
-      expect(controller.notifications.first.id, 'realtime-1');
-      controller.dispose();
-      realtime.dispose();
-    });
+        await received.future.timeout(const Duration(seconds: 1));
+        expect(controller.notifications.first.id, 'realtime-1');
+        controller.dispose();
+        realtime.dispose();
+      },
+    );
 
     test('deletes individual and clears all notifications', () async {
       final repository = fixtureRepository();
@@ -233,10 +249,10 @@ void main() {
       await controller.load();
 
       final firstId = controller.notifications.first.id;
-      controller.deleteNotification(firstId);
+      await controller.deleteNotification(firstId);
       expect(controller.notifications.any((n) => n.id == firstId), isFalse);
 
-      controller.clearAll();
+      await controller.clearAll();
       expect(controller.notifications.isEmpty, isTrue);
       expect(controller.unreadCount, 0);
     });
@@ -369,7 +385,9 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final title = tester.widget<Text>(find.text('Booking Confirmed & Assigned'));
+      final title = tester.widget<Text>(
+        find.text('Booking Confirmed & Assigned'),
+      );
       expect(title.style?.color, AppColors.textPrimary);
       controller.dispose();
     });
@@ -384,7 +402,7 @@ void main() {
         final repository = fixtureRepository();
         final controller = NotificationController(repository);
         await controller.load();
-        controller.clearAll();
+        await controller.clearAll();
 
         await tester.pumpWidget(
           MaterialApp(
@@ -501,21 +519,21 @@ void main() {
         await tester.pumpAndSettle();
 
         // Modal sheet should be open
-         expect(find.text('Invoice'), findsOneWidget);
-         expect(
-           find.text(
-             'Open the payment details to view the authoritative invoice, amount, and status.',
-           ),
-           findsOneWidget,
-         );
-         expect(find.text('PAID'), findsNothing);
-         expect(find.text('₹649'), findsNothing);
+        expect(find.text('Invoice'), findsOneWidget);
+        expect(
+          find.text(
+            'Open the payment details to view the authoritative invoice, amount, and status.',
+          ),
+          findsOneWidget,
+        );
+        expect(find.text('PAID'), findsNothing);
+        expect(find.text('₹649'), findsNothing);
 
-         // Tap close button on modal
-         await tester.tap(find.text('Close'));
-         await tester.pumpAndSettle();
+        // Tap close button on modal
+        await tester.tap(find.text('Close'));
+        await tester.pumpAndSettle();
 
-         expect(find.text('Invoice'), findsNothing);
+        expect(find.text('Invoice'), findsNothing);
       },
     );
   });

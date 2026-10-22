@@ -168,7 +168,30 @@ export class BookingMessagesService {
       readAt: null,
     });
 
-    const saved = await this.messagesRepo.save(message);
+    let saved: BookingMessage;
+    try {
+      saved = await this.messagesRepo.save(message);
+    } catch (error) {
+      // The lookup above is only an optimization. The unique index arbitrates
+      // simultaneous retries; return only this sender's committed message.
+      const failure = error as { code?: string; constraint?: string };
+      if (
+        dto.clientMessageId &&
+        failure.code === '23505' &&
+        failure.constraint === 'uq_booking_messages_booking_client_msg'
+      ) {
+        const existing = await this.messagesRepo.findOne({
+          where: {
+            bookingId,
+            senderUserId: userId,
+            clientMessageId: dto.clientMessageId,
+          },
+        });
+        if (existing) return presentBookingMessage(existing);
+        throw new ConflictException('This client message id is already in use');
+      }
+      throw error;
+    }
     const presented = presentBookingMessage(saved);
 
     // Broadcast to real-time WebSocket subscribers

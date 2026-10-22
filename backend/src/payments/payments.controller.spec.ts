@@ -1,19 +1,32 @@
 import { BadRequestException } from '@nestjs/common';
 import { PaymentsController } from './payments.controller';
 import { PaymentsService } from './payments.service';
+import type { AuthorizedRequest } from '../common/authorization/authorization.guard';
+import type { AuthorizationPrincipal } from '../common/authorization/authorization.types';
+import type { PaymentOrderContract } from '../../../shared/payments.types';
 
 describe('PaymentsController', () => {
   let controller: PaymentsController;
   let service: jest.Mocked<PaymentsService>;
 
-  const principal = {
+  const principal: AuthorizationPrincipal = {
     userId: 'user-cust-1',
     role: 'customer',
-  } as any;
+  } as unknown as AuthorizationPrincipal;
 
-  const mockRequest = {
+  const mockRequest: AuthorizedRequest = {
     authorizationPrincipal: principal,
-  } as any;
+  } as unknown as AuthorizedRequest;
+
+  const sampleOrder: PaymentOrderContract = {
+    id: 'ord-123',
+    bookingId: 'book-123',
+    amountMinor: 50000,
+    currency: 'INR',
+    status: 'CREATED',
+    gatewayOrderId: 'order_gw_123',
+    createdAt: new Date().toISOString(),
+  };
 
   beforeEach(() => {
     service = {
@@ -29,7 +42,7 @@ describe('PaymentsController', () => {
 
   describe('createOrder', () => {
     it('calls service.createForBooking with principal and bookingId', async () => {
-      const mockOrder = { orderId: 'ord-123', status: 'CREATED' } as any;
+      const mockOrder = { ...sampleOrder };
       service.createForBooking.mockResolvedValue(mockOrder);
 
       const result = await controller.createOrder(mockRequest, {
@@ -47,7 +60,7 @@ describe('PaymentsController', () => {
 
   describe('getForBooking', () => {
     it('retrieves order bound to bookingId', async () => {
-      const mockOrder = { orderId: 'ord-123' } as any;
+      const mockOrder = { ...sampleOrder };
       service.getForBooking.mockResolvedValue(mockOrder);
 
       const result = await controller.getForBooking('book-123', mockRequest);
@@ -65,8 +78,11 @@ describe('PaymentsController', () => {
     it('retrieves tax invoice for completed order', async () => {
       const mockInvoice = {
         invoiceNumber: 'INV-001',
-        totalMinor: 50000,
-      } as any;
+        issuedAt: new Date().toISOString(),
+        amountMinor: 50000,
+        currency: 'INR',
+        status: 'PAID',
+      };
       service.getInvoice.mockResolvedValue(mockInvoice);
 
       const result = await controller.invoice('ord-123', mockRequest);
@@ -82,7 +98,10 @@ describe('PaymentsController', () => {
 
   describe('verifyCheckout', () => {
     it('verifies razorpay signature parameters', async () => {
-      const mockVerified = { orderId: 'ord-123', status: 'PAID' } as any;
+      const mockVerified: PaymentOrderContract = {
+        ...sampleOrder,
+        status: 'PAID',
+      };
       service.verifyCheckout.mockResolvedValue(mockVerified);
 
       const result = await controller.verifyCheckout(mockRequest, {
@@ -109,7 +128,7 @@ describe('PaymentsController', () => {
       const webhookReq = {
         rawBody,
         headers: { 'x-razorpay-signature': 'sig-webhook-123' },
-      } as any;
+      } as unknown as AuthorizedRequest & { rawBody?: Buffer };
 
       service.processWebhook.mockResolvedValue({ handled: true });
 
@@ -123,7 +142,9 @@ describe('PaymentsController', () => {
     });
 
     it('throws BadRequestException when rawBody is missing or not a Buffer', async () => {
-      const invalidReq = { headers: {} } as any;
+      const invalidReq = { headers: {} } as unknown as AuthorizedRequest & {
+        rawBody?: Buffer;
+      };
 
       await expect(controller.webhook(invalidReq)).rejects.toThrow(
         BadRequestException,

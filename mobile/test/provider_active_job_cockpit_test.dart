@@ -97,24 +97,6 @@ class _FakeProviderRepository implements ProviderRepository {
   }
 
   @override
-  Future<CustomerBooking> updateLineItems(
-    String bookingId,
-    List<Map<String, dynamic>> lineItems,
-  ) async {
-    final job =
-        lastUpdatedJob ??
-        CustomerBooking(
-          id: bookingId,
-          serviceCategoryId: 'plumbing',
-          status: 'IN_PROGRESS',
-          description: '',
-          createdAt: DateTime.now(),
-          version: 1,
-        );
-    return job.copyWith(version: job.version + 1);
-  }
-
-  @override
   Future<CustomerBooking> cancelJob(CustomerBooking job, String reason) async {
     return job.copyWith(status: 'CANCELLED', version: job.version + 1);
   }

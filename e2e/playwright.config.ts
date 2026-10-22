@@ -25,7 +25,7 @@ const baseURL = `http://127.0.0.1:${adminPort}`;
 
 /** The stub API the admin app talks to. See support/stub-api.ts for why it exists. */
 const stubApi = {
-  command: 'npx tsx support/stub-api.ts',
+  command: process.env.E2E_TS_RUNNER === 'bun' ? 'bun support/stub-api.ts' : 'npx --no-install tsx support/stub-api.ts',
   cwd: __dirname,
   url: `http://127.0.0.1:${stubApiPort}/api/v1/auth/admin/session`,
   reuseExistingServer: !process.env.CI,
@@ -74,6 +74,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: process.env.CI ? 'line' : 'html',
   use: {
+    launchOptions: process.env.E2E_BROWSER_EXECUTABLE ? { executablePath: process.env.E2E_BROWSER_EXECUTABLE } : {},
     actionTimeout: 0,
     baseURL,
     trace: 'on-first-retry',

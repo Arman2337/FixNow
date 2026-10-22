@@ -43,13 +43,13 @@ class _CustomerHelpScreenState extends State<CustomerHelpScreen> {
       icon: Icons.account_balance_wallet_rounded,
       question: 'Payout Schedule & Direct Deposit Settlements',
       summary:
-          'Job earnings are held in escrow and immediately added to your ledger upon completion OTP verification.\n\nAutomated batch settlements transfer accumulated earnings directly to your verified bank account every Tuesday without withdrawal fees.',
+          'Your earnings ledger shows captured payments less refunds. Provider payouts and automatic bank settlements are not available.',
     ),
     _FaqData(
       icon: Icons.receipt_long_rounded,
       question: 'Material & Spare Part Expense Reimbursement',
       summary:
-          'When replacement hardware or parts are needed:\n• Always inform and receive customer confirmation on the part price first.\n• Upload a clear photo receipt of the store invoice under "Add Line Item" in Cockpit.\n• 100% pass-through cost is reimbursed directly on the final bill.',
+          'Use Adjust Services & Price in the active job to select additional catalog work and quantities. Prices are set by the server. Custom parts reimbursement and arbitrary extra charges are not supported.',
     ),
     _FaqData(
       icon: Icons.security_rounded,
@@ -88,7 +88,7 @@ class _CustomerHelpScreenState extends State<CustomerHelpScreen> {
       icon: Icons.currency_exchange_rounded,
       question: 'Cancellation & Refund policy explained',
       summary:
-          'Free cancellation is granted anytime up to 30 minutes prior to technician dispatch. If a technician is already en route, a standard nominal travel fee (₹99) applies to reimburse fuel expenses. Full refunds process back to source method within 2-4 business days.',
+          'You can cancel an eligible booking from its details. Cancellation does not automatically refund a captured payment. Contact support for payment or refund assistance.',
     ),
   ];
 

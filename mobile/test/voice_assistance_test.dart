@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:fixnow_mobile/features/ai/voice_assistance.dart';
+import 'support/prototypes/voice_assistance.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:permission_handler/permission_handler.dart';
 

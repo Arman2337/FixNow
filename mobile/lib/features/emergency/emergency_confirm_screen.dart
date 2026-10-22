@@ -188,25 +188,30 @@ class _EmergencyConfirmScreenState extends State<EmergencyConfirmScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: const [
-                  Icon(
-                    Icons.warning_amber_rounded,
-                    color: AppColors.error,
-                    size: 18,
-                  ),
-                  SizedBox(width: 6),
-                  Text(
-                    'LIFE SAFETY NOTICE',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.6,
+              const Expanded(
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.warning_amber_rounded,
                       color: AppColors.error,
+                      size: 18,
                     ),
-                  ),
-                ],
+                    SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'LIFE SAFETY NOTICE',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.6,
+                          color: AppColors.error,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 6),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(

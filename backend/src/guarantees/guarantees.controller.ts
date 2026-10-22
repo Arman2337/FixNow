@@ -63,6 +63,8 @@ export class GuaranteesController {
     return this.guaranteesService.findAll(
       query.status as GuaranteeClaimStatus | undefined,
       query.limit ?? LIST_ENDPOINT_DEFAULT_LIMIT,
+      query.offset ?? 0,
+      query.search,
     );
   }
 

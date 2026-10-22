@@ -9,136 +9,84 @@ abstract class CallRepository {
   Future<CallSession> hangupCall(String bookingId, String callId);
 }
 
+/// Server call signaling. A CONNECTED record does not establish audio media.
 class HttpCallRepository implements CallRepository {
   HttpCallRepository({
     required ApiTransport api,
     required Future<String?> Function() accessToken,
   }) : _api = api,
        _accessToken = accessToken;
-
   final ApiTransport _api;
   final Future<String?> Function() _accessToken;
 
-  Future<String> _token() async {
+  Future<Object?> _request(ApiMethod method, String path) async {
     final token = await _accessToken();
     if (token == null || token.isEmpty) {
       throw const ApiException(
         ApiFailureKind.unauthorized,
-        'Sign in to place in-app audio calls.',
+        'Sign in to manage calls.',
       );
     }
-    return token;
+    final response = await _api.send(
+      ApiRequest(method: method, path: path, bearerToken: token),
+    );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw ApiException(
+        ApiFailureKind.server,
+        'Could not update the call.',
+        statusCode: response.statusCode,
+      );
+    }
+    return response.body;
   }
+
+  CallSession _parse(Object? raw) {
+    if (raw is! Map ||
+        raw['id'] is! String ||
+        (raw['id'] as String).isEmpty ||
+        raw['bookingId'] is! String ||
+        raw['status'] is! String) {
+      throw const ApiException(
+        ApiFailureKind.invalidResponse,
+        'The call response was invalid.',
+      );
+    }
+    return CallSession.fromJson(Map<String, Object?>.from(raw));
+  }
+
+  String _path(String bookingId) =>
+      'bookings/${Uri.encodeComponent(bookingId.trim())}/calls';
 
   @override
   Future<CallSession> initiateCall(String bookingId) async {
-    final cleanBookingId = bookingId.trim().toLowerCase();
-    final response = await _api.send(
-      ApiRequest(
-        method: ApiMethod.post,
-        path: 'bookings/$cleanBookingId/calls/initiate',
-        bearerToken: await _token(),
-      ),
-    );
-
-    final raw = response.body;
-    final Map<String, Object?>? body = raw is Map
-        ? Map<String, Object?>.from(raw)
-        : null;
-    final callData = body?['call'];
-    if (callData is! Map) {
-      throw const ApiException(
-        ApiFailureKind.invalidResponse,
-        'Unable to initiate audio call.',
-      );
-    }
-
-    return CallSession.fromJson(Map<String, Object?>.from(callData));
+    final raw = await _request(ApiMethod.post, '${_path(bookingId)}/initiate');
+    return _parse(raw is Map ? raw['call'] : null);
   }
 
   @override
   Future<CallSession?> getActiveCall(String bookingId) async {
-    try {
-      final cleanBookingId = bookingId.trim().toLowerCase();
-      final response = await _api.send(
-        ApiRequest(
-          method: ApiMethod.get,
-          path: 'bookings/$cleanBookingId/calls/active',
-          bearerToken: await _token(),
-        ),
-      );
-
-      final raw = response.body;
-      if (raw is! Map) return null;
-      return CallSession.fromJson(Map<String, Object?>.from(raw));
-    } catch (_) {
-      return null;
-    }
+    final raw = await _request(ApiMethod.get, '${_path(bookingId)}/active');
+    return raw == null ? null : _parse(raw);
   }
+
+  Future<CallSession> _transition(
+    String bookingId,
+    String callId,
+    String action,
+  ) async => _parse(
+    await _request(
+      ApiMethod.post,
+      '${_path(bookingId)}/${Uri.encodeComponent(callId)}/$action',
+    ),
+  );
 
   @override
-  Future<CallSession> answerCall(String bookingId, String callId) async {
-    final cleanBookingId = bookingId.trim().toLowerCase();
-    final response = await _api.send(
-      ApiRequest(
-        method: ApiMethod.post,
-        path: 'bookings/$cleanBookingId/calls/$callId/answer',
-        bearerToken: await _token(),
-      ),
-    );
-
-    final raw = response.body;
-    if (raw is! Map) {
-      throw const ApiException(
-        ApiFailureKind.invalidResponse,
-        'Unable to answer call.',
-      );
-    }
-
-    return CallSession.fromJson(Map<String, Object?>.from(raw));
-  }
-
+  Future<CallSession> answerCall(String bookingId, String callId) =>
+      _transition(bookingId, callId, 'answer');
   @override
-  Future<CallSession> rejectCall(String bookingId, String callId) async {
-    final cleanBookingId = bookingId.trim().toLowerCase();
-    final response = await _api.send(
-      ApiRequest(
-        method: ApiMethod.post,
-        path: 'bookings/$cleanBookingId/calls/$callId/reject',
-        bearerToken: await _token(),
-      ),
-    );
-
-    final raw = response.body;
-    if (raw is! Map) {
-      throw const ApiException(
-        ApiFailureKind.invalidResponse,
-        'Unable to reject call.',
-      );
-    }
-
-    return CallSession.fromJson(Map<String, Object?>.from(raw));
-  }
-
+  Future<CallSession> rejectCall(String bookingId, String callId) =>
+      _transition(bookingId, callId, 'reject');
   @override
-  Future<CallSession> hangupCall(String bookingId, String callId) async {
-    final cleanBookingId = bookingId.trim().toLowerCase();
-    final response = await _api.send(
-      ApiRequest(
-        method: ApiMethod.post,
-        path: 'bookings/$cleanBookingId/calls/$callId/hangup',
-        bearerToken: await _token(),
-      ),
-    );
-
-    final raw = response.body;
-    if (raw is! Map) {
-      throw const ApiException(
-        ApiFailureKind.invalidResponse,
-        'Unable to end call.',
-      );
-    }
-
-    return CallSession.fromJson(Map<String, Object?>.from(raw));
-  }
+  Future<CallSession> hangupCall(String bookingId, String callId) =>
+      _transition(bookingId, callId, 'hangup');
 }

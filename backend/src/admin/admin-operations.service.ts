@@ -13,7 +13,7 @@ import {
   CreateServiceCategoryDto,
   UpdateServiceCategoryDto,
 } from '../services/service-categories.dto';
-import { BookingPageQueryDto } from './admin-management.dto';
+import { AdminPageQueryDto, BookingPageQueryDto } from './admin-management.dto';
 
 @Injectable()
 export class AdminOperationsService {
@@ -26,9 +26,11 @@ export class AdminOperationsService {
     private readonly bookingCommands: BookingsService,
   ) {}
 
-  listCategories() {
+  listCategories(query: AdminPageQueryDto = { limit: 20 }) {
     return this.categories.find({
       order: { displayOrder: 'ASC', name: 'ASC' },
+      take: Math.min(Math.max(query.limit, 1), 100),
+      skip: Math.max(query.offset ?? 0, 0),
     });
   }
   createCategory(input: CreateServiceCategoryDto) {

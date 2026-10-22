@@ -38,14 +38,17 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
   int _animateFrom = -1;
 
   String get _resolvedRecipientName {
-    if (widget.recipientName != null && widget.recipientName!.trim().isNotEmpty) {
+    if (widget.recipientName != null &&
+        widget.recipientName!.trim().isNotEmpty) {
       return widget.recipientName!;
     }
     if (widget.controller.isProvider) {
-      if (widget.customerName != null && widget.customerName!.trim().isNotEmpty) {
+      if (widget.customerName != null &&
+          widget.customerName!.trim().isNotEmpty) {
         return widget.customerName!;
       }
-      return (widget.providerName != 'Verified Professional' && widget.providerName.isNotEmpty)
+      return (widget.providerName != 'Verified Professional' &&
+              widget.providerName.isNotEmpty)
           ? widget.providerName
           : 'Customer';
     }
@@ -219,12 +222,16 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
                   ),
                   Row(
                     children: [
-                      Text(
-                        'Booking #$bookingShortId',
-                        style: const TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
+                      Expanded(
+                        child: Text(
+                          'Booking #$bookingShortId',
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       const SizedBox(width: 4),
@@ -247,7 +254,9 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
           if (widget.onCallPressed != null)
             IconButton(
               icon: const Icon(Icons.phone_outlined, color: AppColors.primary),
-              tooltip: widget.controller.isProvider ? 'Call Customer' : 'Call Specialist',
+              tooltip: widget.controller.isProvider
+                  ? 'Call Customer'
+                  : 'Call Specialist',
               onPressed: widget.onCallPressed,
             ),
           const SizedBox(width: 4),

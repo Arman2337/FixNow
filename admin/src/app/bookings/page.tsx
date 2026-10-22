@@ -6,7 +6,7 @@ import { env } from "@/config/env";
 import { requireManagementResult } from "@/features/management-api";
 import { listBookings } from "@/features/operations/api";
 import { StatusBadge } from "@/features/status-badge";
-import type { StaffRole } from "@/auth/types";
+import { hasPermission } from "@/auth/roles";
 
 const statuses = ["", "REQUESTED", "ASSIGNED", "EN_ROUTE", "IN_PROGRESS", "COMPLETED", "CANCELLED"];
 
@@ -22,8 +22,7 @@ export default async function BookingsPage({
 }) {
   const session = await getSession();
   if (session.state !== "authenticated") redirect("/login?reason=expired");
-  const allowedRoles: readonly StaffRole[] = ["support_agent", "trust_safety_reviewer", "operations_administrator", "auditor"];
-  if (!session.session.roles.some((r) => allowedRoles.includes(r))) {
+  if (!hasPermission(session.session.roles, "adminBookingsRead")) {
     redirect("/unauthorized");
   }
   const params = await searchParams;

@@ -1,4 +1,4 @@
-import 'package:fixnow_mobile/design_system/fix_sos_vortex_button.dart';
+import 'support/prototypes/fix_sos_vortex_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

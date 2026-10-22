@@ -7,7 +7,7 @@ import 'package:fixnow_mobile/features/bookings/cancellation_dialog.dart';
 import 'package:fixnow_mobile/features/bookings/job_proof_controller.dart';
 import 'package:fixnow_mobile/features/bookings/fix_job_proof_panel.dart';
 import 'package:fixnow_mobile/design_system/fix_job_proof_dialog.dart';
-import 'package:fixnow_mobile/features/call/call_controller.dart';
+import 'package:fixnow_mobile/features/call/call_screen.dart';
 import 'package:fixnow_mobile/features/chat/booking_chat_screen.dart';
 import 'package:fixnow_mobile/features/chat/chat_controller.dart';
 import 'package:fixnow_mobile/features/chat/chat_repository.dart';
@@ -1284,17 +1284,15 @@ if (job.status == 'IN_PROGRESS') {
                           icon: Icons.call_rounded,
                           variant: FixButtonVariant.secondary,
                           onPressed: () {
-                            if (job.customerPhone != null) {
-                              CallController().launchCall(
-                                job.customerPhone!,
-                              );
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Phone number unavailable'),
-                                ),
-                              );
-                            }
+                            Navigator.of(context).push(MaterialPageRoute<void>(
+        builder: (_) => CallScreen(
+          oppositePartyName: 'Customer',
+          oppositePartyRole: 'Customer',
+          phoneNumber: job.customerPhone,
+          bookingId: job.id,
+          isProvider: true,
+        ),
+      ));
                           },
                         ),
                       ),

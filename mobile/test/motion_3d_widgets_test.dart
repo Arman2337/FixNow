@@ -1,6 +1,6 @@
 import 'package:fixnow_mobile/design_system/fix_3d_flip_card.dart';
-import 'package:fixnow_mobile/design_system/fix_3d_spatial_beacon.dart';
-import 'package:fixnow_mobile/design_system/fix_jelly_squish_button.dart';
+import 'support/prototypes/fix_3d_spatial_beacon.dart';
+import 'support/prototypes/fix_jelly_squish_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

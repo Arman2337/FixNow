@@ -1,10 +1,11 @@
 import { managementRequest } from "../management-api";
 import type { TrustSignalSummary, TrustSignalStatus } from "./types";
 
-export function listSignals(limit?: number, offset?: number) {
+export function listSignals(limit?: number, offset?: number, status?: TrustSignalStatus) {
   const query = new URLSearchParams();
   if (limit !== undefined) query.set("limit", String(limit));
   if (offset !== undefined) query.set("offset", String(offset));
+  if (status) query.set("status", status);
   return managementRequest<readonly TrustSignalSummary[]>(
     `/admin/trust/signals${query.toString() ? `?${query}` : ""}`,
   );

@@ -136,7 +136,7 @@ class FixShareInvoiceSheet extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Official Tax Invoice • $fileName ($sizeKb KB)',
+                      '${FixPdfInvoiceBuilder.documentTitle} • $fileName ($sizeKb KB)',
                       style: const TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12,
@@ -210,8 +210,7 @@ class FixShareInvoiceSheet extends StatelessWidget {
             icon: Icons.copy_rounded,
             iconColor: AppColors.accentGold,
             title: 'Copy Invoice Summary & Verification Link',
-            subtitle:
-                'Includes GST breakdown, SAC code 9987 & online verification ref',
+            subtitle: FixPdfInvoiceBuilder.registrationLabel,
             onTap: () {
               Navigator.pop(context);
               final text = FixPdfInvoiceBuilder.generateShareSummary(invoice);

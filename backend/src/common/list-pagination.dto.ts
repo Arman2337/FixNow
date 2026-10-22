@@ -1,5 +1,6 @@
 import {
   IsInt,
+  IsEnum,
   IsOptional,
   IsString,
   Max,
@@ -7,6 +8,7 @@ import {
   Min,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
+import { GuaranteeClaimStatus } from '../../../shared/guarantee-lifecycle.types';
 
 /**
  * API-003. The shared bound for list endpoints that have no cursor.
@@ -80,12 +82,22 @@ export class ListQueryDto {
 
 export class GuaranteesPageQueryDto extends ListQueryDto {
   @IsOptional()
-  @IsString()
-  @MaxLength(40)
+  @IsEnum(GuaranteeClaimStatus)
   @Transform(({ value }: { value: unknown }) =>
     typeof value === 'string' ? value.trim() : value,
   )
   status?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Transform(coerceOptionalLimit)
+  offset?: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  search?: string;
 }
 
 /** Kept separate so the enum stays the single source of truth. */

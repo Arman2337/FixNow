@@ -82,6 +82,7 @@ describe('GuaranteesService.createReServiceBooking (BUG-011 / SEC-007)', () => {
         .mockResolvedValue({
           id: RESERVICE_ID,
           status: BookingStatus.ASSIGNED,
+          providerId: PROVIDER_ID,
         } as Booking),
     };
     matchingService = {
@@ -178,8 +179,8 @@ describe('GuaranteesService.createReServiceBooking (BUG-011 / SEC-007)', () => {
     await service.createReServiceBooking(CLAIM_ID, PROVIDER_ID, ADMIN_ID);
 
     expect(claimUpdate.where).toHaveBeenCalledWith(
-      'id = :id AND re_service_booking_id IS NULL',
-      { id: CLAIM_ID },
+      'id = :id AND re_service_booking_id IS NULL AND status = :status',
+      { id: CLAIM_ID, status: GuaranteeClaimStatus.APPROVED },
     );
     expect(claimUpdate.set).toHaveBeenCalledWith({
       status: GuaranteeClaimStatus.COMPLETED,
@@ -211,5 +212,115 @@ describe('GuaranteesService.createReServiceBooking (BUG-011 / SEC-007)', () => {
     ).rejects.toBeInstanceOf(BadRequestException);
     expect(bookingsService.createAssignedBooking).not.toHaveBeenCalled();
     expect(claimUpdate.execute).not.toHaveBeenCalled();
+  });
+
+  it('does not attach a losing reviewer provider to an existing remedy booking', async () => {
+    claimsRepository.findOne.mockResolvedValue(approvedClaim());
+    bookingsRepository.findOne.mockResolvedValue(originalBooking());
+    bookingsService.createAssignedBooking.mockResolvedValue({
+      id: RESERVICE_ID,
+      providerId: 'another-provider',
+    } as Booking);
+    await expect(
+      service.createReServiceBooking(CLAIM_ID, PROVIDER_ID, ADMIN_ID),
+    ).rejects.toBeInstanceOf(ConflictException);
+    expect(claimUpdate.execute).not.toHaveBeenCalled();
+  });
+});
+
+describe('Guarantee lifecycle and concurrent review', () => {
+  const updatedAt = new Date('2026-10-20T12:00:00Z');
+  let repository: { findOne: jest.Mock; update: jest.Mock };
+  let service: GuaranteesService;
+
+  beforeEach(() => {
+    repository = {
+      findOne: jest.fn().mockResolvedValue(
+        approvedClaim({
+          status: GuaranteeClaimStatus.PENDING,
+          updatedAt,
+          version: 4,
+        }),
+      ),
+      update: jest.fn().mockResolvedValue({ affected: 1 }),
+    };
+    service = new GuaranteesService(
+      repository as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    );
+  });
+
+  it('rejects reopening a completed claim before writing', async () => {
+    repository.findOne.mockResolvedValue(
+      approvedClaim({ status: GuaranteeClaimStatus.COMPLETED, updatedAt }),
+    );
+    await expect(
+      service.updateStatus(CLAIM_ID, { status: GuaranteeClaimStatus.PENDING }),
+    ).rejects.toBeInstanceOf(ConflictException);
+    expect(repository.update).not.toHaveBeenCalled();
+  });
+
+  it('compares both previous status and version so stale notes cannot overwrite newer work', async () => {
+    await service.updateStatus(CLAIM_ID, {
+      status: GuaranteeClaimStatus.IN_REVIEW,
+      adminNotes: 'Reviewing evidence',
+    });
+    expect(repository.update).toHaveBeenCalledWith(
+      { id: CLAIM_ID, status: GuaranteeClaimStatus.PENDING, version: 4 },
+      {
+        status: GuaranteeClaimStatus.IN_REVIEW,
+        adminNotes: 'Reviewing evidence',
+      },
+    );
+  });
+
+  it('reports a conflict when another review wins the conditional update', async () => {
+    repository.update.mockResolvedValue({ affected: 0 });
+    await expect(
+      service.updateStatus(CLAIM_ID, { status: GuaranteeClaimStatus.APPROVED }),
+    ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('requires provider assignment through the validated re-service workflow', async () => {
+    await expect(
+      service.updateStatus(CLAIM_ID, { assignedProviderId: PROVIDER_ID }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(repository.update).not.toHaveBeenCalled();
+  });
+});
+
+describe('Guarantee queue pagination', () => {
+  it('filters before applying offset and limit, with deterministic ordering', async () => {
+    const query = {
+      where: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      orderBy: jest.fn().mockReturnThis(),
+      addOrderBy: jest.fn().mockReturnThis(),
+      take: jest.fn().mockReturnThis(),
+      skip: jest.fn().mockReturnThis(),
+      getMany: jest.fn().mockResolvedValue([]),
+    };
+    const repository = { createQueryBuilder: jest.fn().mockReturnValue(query) };
+    const service = new GuaranteesService(
+      repository as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    );
+    await service.findAll(GuaranteeClaimStatus.PENDING, 21, 40, 'pipe');
+    expect(query.where).toHaveBeenCalledWith('claim.status = :status', {
+      status: GuaranteeClaimStatus.PENDING,
+    });
+    expect(query.andWhere).toHaveBeenCalledWith(expect.any(String), {
+      search: '%pipe%',
+    });
+    expect(query.take).toHaveBeenCalledWith(21);
+    expect(query.skip).toHaveBeenCalledWith(40);
+    expect(query.andWhere.mock.invocationCallOrder[0]).toBeLessThan(
+      query.take.mock.invocationCallOrder[0],
+    );
+    expect(query.addOrderBy).toHaveBeenCalledWith('claim.id', 'DESC');
   });
 });

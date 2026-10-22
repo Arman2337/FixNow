@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_motion.dart';
 import 'package:fixnow_mobile/design_system/app_radius.dart';
@@ -29,7 +28,6 @@ import 'package:latlong2/latlong.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:fixnow_mobile/features/ai/ai_recommendation_repository.dart';
 import 'package:fixnow_mobile/features/ai/problem_analysis_repository.dart';
@@ -182,31 +180,13 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
           return;
         }
       } catch (_) {
-        // Geocoder service unavailable; fall through to HTTP geocoding
+        // Platform geocoder unavailable; retain the real GPS fix.
       }
     }
 
-    try {
-      final uri = Uri.parse(
-        'https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=$lat&longitude=$lng&localityLanguage=en',
-      );
-      final response = await http.get(uri).timeout(const Duration(seconds: 3));
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final city = data['city'] ?? data['locality'];
-        final state = data['principalSubdivision'] ?? data['countryName'];
-        if (mounted && city != null && city.toString().trim().isNotEmpty) {
-          setState(() {
-            _locationName =
-                (state != null && state.toString().trim().isNotEmpty)
-                ? '${city.toString().trim()}, ${state.toString().trim()}'
-                : city.toString().trim();
-          });
-        }
-      }
-    } catch (e) {
-      debugPrint('HTTP geocoding fallback failed: $e');
-    }
+    // No third-party HTTP fallback: preserve the coordinates without sending
+    // them outside the consented platform service merely to produce a label.
+    if (mounted) setState(() => _locationName = 'Current location');
   }
 
   void _updateLocationName(Placemark place) {
@@ -1609,9 +1589,9 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                     controller: widget.notificationController!,
                     onTap: () {
                       Navigator.of(context).push(
-MaterialPageRoute(
-                           settings: const RouteSettings(name: 'notifications'),
-                           builder: (_) => NotificationCenterScreen(
+                        MaterialPageRoute(
+                          settings: const RouteSettings(name: 'notifications'),
+                          builder: (_) => NotificationCenterScreen(
                             controller: widget.notificationController!,
                             onOpenBooking: widget.onBookingSelected,
                             onOpenInvoice: widget.onInvoiceSelected,

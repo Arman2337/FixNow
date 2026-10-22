@@ -67,8 +67,8 @@ export class AdminManagementController {
 
   @Get('service-categories')
   @RequirePermission(PERMISSIONS.adminServicesRead)
-  listServiceCategories() {
-    return this.operations.listCategories();
+  listServiceCategories(@Query() query: AdminPageQueryDto) {
+    return this.operations.listCategories(query);
   }
 
   @Post('service-categories')

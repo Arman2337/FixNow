@@ -1,18 +1,19 @@
+import { hasPermission } from "@/auth/roles";
 import type { AppEnvironment } from "@/config/env";
 import { logoutAction } from "@/auth/actions";
 import type { StaffRole } from "@/auth/types";
 import Link from "next/link";
 
 const navigation = [
-  { label: "Overview Dashboard", href: "/", icon: "dashboard", roles: null },
-  { label: "Providers & KYC Verification", href: "/providers", icon: "verified_user", roles: ["provider_reviewer", "operations_administrator", "auditor"] },
-  { label: "Live Dispatches & Radar", href: "/bookings", icon: "fmd_good", roles: ["support_agent", "trust_safety_reviewer", "operations_administrator", "auditor"] },
-  { label: "Complaints & Escrow", href: "/support", icon: "payments", roles: ["support_agent", "trust_safety_reviewer", "operations_administrator"] },
-  { label: "Guarantee Claims", href: "/guarantees", icon: "verified", roles: ["support_agent", "trust_safety_reviewer", "operations_administrator", "auditor"] },
-  { label: "Trust & Safety Moderation", href: "/trust", icon: "gavel", roles: ["trust_safety_reviewer", "operations_administrator"] },
-  { label: "Categories & Pricing", href: "/services", icon: "tune", roles: ["service_catalog_manager", "operations_administrator", "auditor"] },
-  { label: "Performance Analytics", href: "/analytics", icon: "analytics", roles: ["operations_administrator", "auditor"] },
-  { label: "User Registry", href: "/users", icon: "group", roles: ["support_agent", "operations_administrator", "security_administrator", "auditor"] },
+  { label: "Overview Dashboard", href: "/", icon: "dashboard", permission: null },
+  { label: "Providers & KYC Verification", href: "/providers", icon: "verified_user", permission: "adminProviderApplicationsRead" },
+  { label: "Live Dispatches & Radar", href: "/bookings", icon: "fmd_good", permission: "adminBookingsRead" },
+  { label: "Complaints & Escrow", href: "/support", icon: "payments", permission: "adminComplaintsRead" },
+  { label: "Guarantee Claims", href: "/guarantees", icon: "verified", permission: "adminGuaranteesRead" },
+  { label: "Trust & Safety Moderation", href: "/trust", icon: "gavel", permission: "trustSignalsRead" },
+  { label: "Categories & Pricing", href: "/services", icon: "tune", permission: "adminServicesRead" },
+  { label: "Performance Analytics", href: "/analytics", icon: "analytics", permission: "adminAnalyticsRead" },
+  { label: "User Registry", href: "/users", icon: "group", permission: "adminUsersRead" },
 ] as const;
 
 export function AdminShell({
@@ -30,7 +31,7 @@ export function AdminShell({
   current?: string;
   children?: React.ReactNode;
 }) {
-  const visibleNavigation = navigation.filter((item) => item.roles === null || item.roles.some((role) => roles.includes(role)));
+  const visibleNavigation = navigation.filter((item) => item.permission === null || hasPermission(roles, item.permission));
   const activeLabel =
     current === "Bookings" || current === "/bookings"
       ? "Live Dispatches & Radar"
@@ -155,9 +156,9 @@ export function AdminShell({
           </div>
 
           <div className="flex items-center gap-space-md">
-            <Link href="/support" aria-label="Open support notifications" className="relative flex h-11 w-11 items-center justify-center rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors">
+            {hasPermission(roles, "adminComplaintsRead") && <Link href="/support" aria-label="Open support notifications" className="relative flex h-11 w-11 items-center justify-center rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors">
               <span className="material-symbols-outlined text-[22px]">notifications</span>
-            </Link>
+            </Link>}
             <div className="flex items-center gap-space-sm pl-space-sm border-l border-outline-variant/30">
               <div className="text-right hidden sm:block">
                 <span className="block font-label-md text-label-md font-semibold text-on-surface leading-tight">

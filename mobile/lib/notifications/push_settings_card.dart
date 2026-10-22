@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
@@ -13,7 +11,7 @@ import 'package:permission_handler/permission_handler.dart';
 /// - Checks real OS notification permission status.
 /// - Allows granting notification permission with one tap.
 /// - Directs to system settings if permanently denied.
-/// - Shows active notification preferences (arrival alerts, chat, warranties) when granted.
+/// - Explains that per-category controls are unavailable; device settings remain authoritative.
 /// - Seamlessly integrates with [PushEnrollmentController] when push is configured.
 class PushSettingsCard extends StatefulWidget {
   const PushSettingsCard({
@@ -35,11 +33,7 @@ class _PushSettingsCardState extends State<PushSettingsCard>
     with WidgetsBindingObserver {
   PermissionStatus? _permissionStatus;
   bool _requesting = false;
-
-  // Notification category preferences
-  bool _bookingAlerts = true;
-  bool _technicianMessages = true;
-  bool _serviceReminders = true;
+  String? _requestError;
 
   @override
   void initState() {
@@ -99,59 +93,60 @@ class _PushSettingsCardState extends State<PushSettingsCard>
   }
 
   Future<void> _requestPermission() async {
-    if (_requesting) return;
-    setState(() => _requesting = true);
+    if (_requesting || (widget.controller?.busy ?? false)) return;
+    setState(() {
+      _requesting = true;
+      _requestError = null;
+    });
     try {
-      PermissionStatus status;
-      if (widget.onRequestPermission != null) {
-        status = await widget.onRequestPermission!();
-      } else {
-        try {
-          status = await Permission.notification.request();
-        } catch (_) {
-          status = PermissionStatus.granted;
-        }
-      }
+      final status = _permissionStatus?.isGranted == true
+          ? _permissionStatus!
+          : await (widget.onRequestPermission?.call() ??
+                Permission.notification.request());
       if (!mounted) return;
-      setState(() {
-        _permissionStatus = status;
-      });
-
-      if (status.isGranted) {
-        final ctrl = widget.controller;
-        if (ctrl != null && ctrl.canEnable) {
-          unawaited(ctrl.enable());
-        }
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Notifications allowed! You will receive live arrival and booking alerts.',
-              ),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
-      } else if (status.isPermanentlyDenied) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text(
-                'Notification permission was declined in system settings.',
-              ),
-              action: SnackBarAction(
-                label: 'Settings',
-                onPressed: openAppSettings,
-              ),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
+      setState(() => _permissionStatus = status);
+      if (!status.isGranted) {
+        setState(
+          () => _requestError = status.isPermanentlyDenied
+              ? 'Notification permission is blocked. Allow it in device settings.'
+              : 'Notification permission was not granted. You can try again.',
+        );
+        return;
+      }
+      final ctrl = widget.controller;
+      if (ctrl == null) {
+        setState(
+          () => _requestError =
+              'Device permission is allowed, but push registration is unavailable in this build.',
+        );
+        return;
+      }
+      await ctrl.enable();
+      if (!mounted) return;
+      if (ctrl.status != PushEnrollmentStatus.ready || ctrl.devices.isEmpty) {
+        setState(
+          () => _requestError =
+              'Device permission is allowed, but push registration could not be completed. Try again.',
+        );
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Notification permission is allowed and push registration completed.',
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (_) {
+      if (mounted) {
+        setState(
+          () => _requestError =
+              'Could not enable notifications. Check device settings and your connection, then try again.',
+        );
       }
     } finally {
-      if (mounted) {
-        setState(() => _requesting = false);
-      }
+      if (mounted) setState(() => _requesting = false);
     }
   }
 
@@ -179,9 +174,7 @@ class _PushSettingsCardState extends State<PushSettingsCard>
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppColors.outline.withValues(alpha: 0.12),
-        ),
+        border: Border.all(color: AppColors.outline.withValues(alpha: 0.12)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
@@ -245,10 +238,20 @@ class _PushSettingsCardState extends State<PushSettingsCard>
           ),
           const SizedBox(height: AppSpacing.md),
 
+          if (_requestError != null) ...[
+            Semantics(
+              liveRegion: true,
+              child: Text(
+                _requestError!,
+                style: const TextStyle(color: AppColors.error, fontSize: 12),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+          ],
           // Body Content based on permission state
           if (isGranted) ...[
             const Text(
-              'You are set to receive real-time updates for active bookings and technician dispatches.',
+              'Device notification permission is allowed. Push delivery also requires registration with FixNow.',
               style: TextStyle(
                 fontSize: 12,
                 color: AppColors.textSecondary,
@@ -258,23 +261,13 @@ class _PushSettingsCardState extends State<PushSettingsCard>
             const SizedBox(height: AppSpacing.sm),
             const Divider(height: 1, color: AppColors.border),
             const SizedBox(height: AppSpacing.xs),
-            _buildPreferenceToggle(
-              title: 'Booking & Arrival Alerts',
-              subtitle: 'Live technician location, ETA, and job progress',
-              value: _bookingAlerts,
-              onChanged: (val) => setState(() => _bookingAlerts = val),
-            ),
-            _buildPreferenceToggle(
-              title: 'Technician Chat',
-              subtitle: 'Direct messages and repair photo updates',
-              value: _technicianMessages,
-              onChanged: (val) => setState(() => _technicianMessages = val),
-            ),
-            _buildPreferenceToggle(
-              title: 'Reminders & Warranties',
-              subtitle: 'Warranty expirations and scheduled checkups',
-              value: _serviceReminders,
-              onChanged: (val) => setState(() => _serviceReminders = val),
+            const Text(
+              'Per-category notification preferences are not available yet. Manage notification permission in your device settings.',
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.textSecondary,
+                height: 1.4,
+              ),
             ),
             if (controller != null &&
                 controller.status == PushEnrollmentStatus.ready &&
@@ -324,6 +317,17 @@ class _PushSettingsCardState extends State<PushSettingsCard>
                     ],
                   ),
                 ),
+            ],
+            if (controller != null &&
+                (controller.devices.isEmpty || _requestError != null)) ...[
+              const SizedBox(height: AppSpacing.sm),
+              FixButton(
+                label: 'Retry push registration',
+                icon: Icons.refresh_rounded,
+                variant: FixButtonVariant.secondary,
+                isLoading: _requesting || controller.busy,
+                onPressed: _requestPermission,
+              ),
             ],
             const SizedBox(height: AppSpacing.xs),
             InkWell(
@@ -399,17 +403,19 @@ class _PushSettingsCardState extends State<PushSettingsCard>
         decoration: BoxDecoration(
           color: AppColors.success.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: AppColors.success.withValues(alpha: 0.3),
-          ),
+          border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
         ),
         child: const Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.check_circle_rounded, size: 12, color: AppColors.success),
+            Icon(
+              Icons.check_circle_rounded,
+              size: 12,
+              color: AppColors.success,
+            ),
             SizedBox(width: 4),
             Text(
-              'Active',
+              'Permission allowed',
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
@@ -426,14 +432,16 @@ class _PushSettingsCardState extends State<PushSettingsCard>
         decoration: BoxDecoration(
           color: AppColors.warning.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: AppColors.warning.withValues(alpha: 0.3),
-          ),
+          border: Border.all(color: AppColors.warning.withValues(alpha: 0.3)),
         ),
         child: const Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.warning_amber_rounded, size: 12, color: AppColors.warning),
+            Icon(
+              Icons.warning_amber_rounded,
+              size: 12,
+              color: AppColors.warning,
+            ),
             SizedBox(width: 4),
             Text(
               'Blocked',
@@ -460,54 +468,6 @@ class _PushSettingsCardState extends State<PushSettingsCard>
           fontWeight: FontWeight.w600,
           color: AppColors.textSecondary,
         ),
-      ),
-    );
-  }
-
-  Widget _buildPreferenceToggle({
-    required String title,
-    required String subtitle,
-    required bool value,
-    required ValueChanged<bool> onChanged,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 1),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Switch.adaptive(
-            value: value,
-            activeThumbColor: AppColors.primaryEmerald,
-            activeTrackColor: AppColors.primaryEmerald.withValues(alpha: 0.35),
-            inactiveThumbColor: AppColors.textTertiary,
-            inactiveTrackColor: AppColors.surfaceContainer,
-            onChanged: onChanged,
-          ),
-        ],
       ),
     );
   }

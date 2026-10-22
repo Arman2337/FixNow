@@ -8,6 +8,7 @@ import 'package:fixnow_mobile/features/profile/customer_profile_repository.dart'
 import 'package:fixnow_mobile/features/profile/customer_profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'support/test_address_repository.dart';
 
 Widget host(Widget child) => MaterialApp(
   theme: AppTheme.light,
@@ -16,6 +17,7 @@ Widget host(Widget child) => MaterialApp(
 
 void main() {
   setUp(() {
+    createTestAddressRepository();
     SavedAddressRepository.instance
       ..reset()
       ..seedAll(const [

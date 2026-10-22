@@ -4,19 +4,17 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  VersionColumn,
 } from 'typeorm';
 
-export enum GuaranteeClaimStatus {
-  PENDING = 'PENDING',
-  IN_REVIEW = 'IN_REVIEW',
-  MORE_INFO = 'MORE_INFO',
-  APPROVED = 'APPROVED',
-  REJECTED = 'REJECTED',
-  COMPLETED = 'COMPLETED',
-}
+import { GuaranteeClaimStatus } from '../../../../shared/guarantee-lifecycle.types';
+export { GuaranteeClaimStatus } from '../../../../shared/guarantee-lifecycle.types';
 
 @Entity('guarantee_claims')
 export class GuaranteeClaim {
+  @VersionColumn()
+  version: number;
+
   @PrimaryGeneratedColumn('uuid')
   id: string;
 

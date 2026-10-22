@@ -1,0 +1,1225 @@
+{
+  "schema_version": 1,
+  "task": "FN-146",
+  "generated_date": "2026-10-22",
+  "baseline": "audit_reports/FIXNOW_CURRENT_RECONCILIATION.md",
+  "baseline_commit": "a45d9c5",
+  "scope": "Post-reconciliation remediation overlay. The frozen FN-145 register is not rewritten.",
+  "deployment_state": "local_working_tree_only",
+  "final_validation_state": "passed_local_validation",
+  "validation": {
+    "mobile": {
+      "analyze": "passed_no_issues",
+      "flutter_test": "95 suites / 745 tests passed",
+      "interaction_crawler": "56 / 56 passed"
+    },
+    "backend": {
+      "unit": "124 suites / 1051 tests passed",
+      "typescript": "passed",
+      "production_build": "passed",
+      "body_dto_guard": "passed",
+      "environment_declaration_guard": "passed",
+      "eslint": "0 errors / 39 pre-existing warnings"
+    },
+    "isolated_postgresql": {
+      "migrations": "41 / 41 applied",
+      "schema_gate": "67 / 67 passed",
+      "existing_integration": "14 suites / 100 tests passed",
+      "domain_reconciliation": "1 suite / 5 tests passed",
+      "cluster_state": "stopped"
+    },
+    "admin": {
+      "unit": "18 files / 50 tests passed",
+      "typecheck": "passed",
+      "lint": "passed",
+      "production_build": "passed",
+      "playwright": "18 / 18 passed against actual Next app with local stub API"
+    },
+    "secret_scanner": {
+      "self_test": "11 / 11 passed",
+      "bounded_scan": "clean",
+      "available_history_blobs": 1557,
+      "untracked_not_ignored_files": 6013,
+      "missing_git_objects": 5251,
+      "files_over_1_mib_skipped": 5
+    }
+  },
+  "limitations": [
+    "Native in-app VoIP media capture/playback is not implemented; the supported fallback launches the device phone app.",
+    "Real tax identity and verification URL are deployment configuration; absent data produces an honest Payment Receipt.",
+    "FCM, S3 and ClamAV were not live-tested against external services.",
+    "Production migrations and production orphan validation were not executed.",
+    "No authoritative 365-day provider reverification policy was available."
+  ],
+  "entries": [
+    {
+      "id": "GAP-01",
+      "baseline_status": "fixed",
+      "remediation_status": "carried_forward_fixed",
+      "outcome": "The FN-145 source disposition remains closed; FN-146 introduced no contradictory evidence.",
+      "evidence": [
+        "scripts/scan-secrets.mjs"
+      ]
+    },
+    {
+      "id": "GAP-02",
+      "baseline_status": "fixed",
+      "remediation_status": "carried_forward_fixed",
+      "outcome": "The FN-145 source disposition remains closed; FN-146 introduced no contradictory evidence.",
+      "evidence": [
+        "backend/seed.js",
+        "backend/src/services/catalog-seed.spec.ts"
+      ]
+    },
+    {
+      "id": "GAP-03",
+      "baseline_status": "fixed",
+      "remediation_status": "carried_forward_fixed",
+      "outcome": "The FN-145 source disposition remains closed; FN-146 introduced no contradictory evidence.",
+      "evidence": [
+        "mobile/lib/features/provider/provider_active_job_cockpit_screen.dart"
+      ]
+    },
+    {
+      "id": "GAP-04",
+      "baseline_status": "unsupported",
+      "remediation_status": "report_corrected_no_code_change",
+      "outcome": "The unsupported historical assertion remains corrected; it is not treated as an application defect.",
+      "evidence": [
+        "backend/src/ratings/ratings-admin.controller.ts"
+      ]
+    },
+    {
+      "id": "GAP-05",
+      "baseline_status": "fixed",
+      "remediation_status": "carried_forward_fixed",
+      "outcome": "The FN-145 source disposition remains closed; FN-146 introduced no contradictory evidence.",
+      "evidence": [
+        "admin/src/app/trust/page.tsx",
+        "admin/src/app/bookings/page.tsx",
+        "admin/src/app/providers/page.tsx",
+        "admin/src/app/trust/page.test.tsx",
+        "e2e/tests/admin-operations.spec.ts"
+      ]
+    },
+    {
+      "id": "GAP-06",
+      "baseline_status": "fixed",
+      "remediation_status": "carried_forward_fixed",
+      "outcome": "The FN-145 source disposition remains closed; FN-146 introduced no contradictory evidence.",
+      "evidence": [
+        "admin/src/components/admin-shell.tsx",
+        "admin/src/app/support/page.tsx",
+        "admin/src/app/services/page.tsx",
+        "admin/src/auth/roles.ts",
+        "backend/src/common/authorization/permission-policies.ts"
+      ]
+    },
+    {
+      "id": "GAP-07",
+      "baseline_status": "partial",
+      "remediation_status": "implemented_and_locally_verified",
+      "outcome": "Backend now enforces the shared guarantee transition table with optimistic version comparison; assignment is restricted to re-service actions. Client reason validation is aligned.",
+      "evidence": [
+        "admin/src/app/guarantees/[id]/page.tsx",
+        "backend/src/guarantees/guarantees.service.ts",
+        "admin/src/app/guarantees/[id]/page.test.ts",
+        "shared/guarantee-lifecycle.types.ts",
+        "backend/src/guarantees/domain/guarantee-claim.entity.ts"
+      ]
+    },
+    {
+      "id": "GAP-08",
+      "baseline_status": "fixed",
+      "remediation_status": "carried_forward_fixed",
+      "outcome": "The FN-145 source disposition remains closed; FN-146 introduced no contradictory evidence.",
+      "evidence": [
+        "backend/typeorm.config.ts",
+        "backend/src/database/database.module.ts"
+      ]
+    },
+    {
+      "id": "GAP-09",
+      "baseline_status": "open",
+      "remediation_status": "mitigated_preserving_applied_history",
+      "outcome": "The duplicate historical timestamp is intentionally preserved because deployed migration identities must not be renamed casually. A deterministic migration-history regression gate now guards ordering and fresh application.",
+      "evidence": [
+        "backend/migrations/1786521300000-BookingLineItems.ts",
+        "backend/migrations/1786521300000-ComplaintsSchema.ts",
+        "backend/src/common/domain-integrity-migrations.spec.ts"
+      ]
+    },
+    {
+      "id": "GAP-10",
+      "baseline_status": "fixed",
+      "remediation_status": "carried_forward_fixed",
+      "outcome": "The FN-145 source disposition remains closed; FN-146 introduced no contradictory evidence.",
+      "evidence": [
+        "backend/migrations/1789750500000-Phase2IntegrityAndConstraints.ts"
+      ]
+    },
+    {
+      "id": "GAP-11",
+      "baseline_status": "fixed",
+      "remediation_status": "carried_forward_fixed",
+      "outcome": "The FN-145 source disposition remains closed; FN-146 introduced no contradictory evidence.",
+      "evidence": [
+        "backend/migrations/1789750500000-Phase2IntegrityAndConstraints.ts",
+        "shared/complaint-lifecycle.types.ts"
+      ]
+    },
+    {
+      "id": "GAP-12",
+      "baseline_status": "partial",
+      "remediation_status": "implemented_and_locally_verified",
+      "outcome": "Concurrent message replay now recovers only the same sender's unique-key collision, re-reads the persisted message and avoids a second publication.",
+      "evidence": [
+        "backend/src/bookings/domain/booking-message.entity.ts",
+        "backend/migrations/1789750500000-Phase2IntegrityAndConstraints.ts",
+        "backend/src/bookings/booking-messages.service.ts",
+        "backend/src/bookings/booking-messages.service.spec.ts",
+        "backend/test/domain-reconciliation.integration-spec.ts"
+      ]
+    },
+    {
+      "id": "GAP-13",
+      "baseline_status": "fixed",
+      "remediation_status": "carried_forward_fixed",
+      "outcome": "The FN-145 source disposition remains closed; FN-146 introduced no contradictory evidence.",
+      "evidence": [
+        "backend/src/notifications/domain/inbox.controller.ts"
+      ]
+    },
+    {
+      "id": "GAP-14",
+      "baseline_status": "fixed",
+      "remediation_status": "carried_forward_fixed",
+      "outcome": "The FN-145 source disposition remains closed; FN-146 introduced no contradictory evidence.",
+      "evidence": [
+        "backend/src/admin/admin-management.controller.ts",
+        "backend/src/admin/admin-management.dto.ts"
+      ]
+    },
+    {
+      "id": "GAP-15",
+      "baseline_status": "partial",
+      "remediation_status": "implemented_with_production_followup",
+      "outcome": "A forward migration adds the remaining foreign keys as indexed NOT VALID constraints and guarantee versioning. It protects new writes while avoiding a rewrite of unknown production data. Existing production orphans and historically comma-corrupted URLs still require operator review.",
+      "evidence": [
+        "backend/migrations/1789750500000-Phase2IntegrityAndConstraints.ts",
+        "backend/src/guarantees/domain/guarantee-claim.entity.ts",
+        "backend/src/bookings/domain/recurring-schedule.entity.ts",
+        "backend/src/ratings/domain/review-photo-moderation-event.entity.ts",
+        "backend/migrations/1789750600000-RemainingDomainForeignKeys.ts",
+        "backend/test/domain-reconciliation.integration-spec.ts"
+      ]
+    },
+    {
+      "id": "GAP-16",
+      "baseline_status": "partial",
+      "remediation_status": "implemented_and_locally_verified",
+      "outcome": "Schema probes now create their own fixtures and execute inside one rollback-only transaction, so empty databases exercise the checks without deleting retained proof records.",
+      "evidence": [
+        "backend/scripts/verify-schema.ts",
+        "backend/scripts/schema-behavior-probes.ts",
+        "backend/src/common/schema-behavior-probes.spec.ts"
+      ]
+    },
+    {
+      "id": "GAP-17",
+      "baseline_status": "fixed",
+      "remediation_status": "carried_forward_fixed",
+      "outcome": "The FN-145 source disposition remains closed; FN-146 introduced no contradictory evidence.",
+      "evidence": [
+        "admin/src/features/users/types.ts",
+        "admin/src/features/operations/api.ts",
+        "admin/src/app/support/[complaintId]/page.tsx",
+        "backend/src/admin/admin-management.service.ts"
+      ]
+    },
+    {
+      "id": "GAP-18",
+      "baseline_status": "fixed",
+      "remediation_status": "carried_forward_fixed",
+      "outcome": "The FN-145 source disposition remains closed; FN-146 introduced no contradictory evidence.",
+      "evidence": [
+        "backend/src/admin/admin-analytics.controller.ts",
+        "backend/src/common/authorization/permission-policies.ts",
+        "admin/src/features/operations/types.ts"
+      ]
+    },
+    {
+      "id": "GAP-19",
+      "baseline_status": "fixed",
+      "remediation_status": "carried_forward_fixed",
+      "outcome": "The FN-145 source disposition remains closed; FN-146 introduced no contradictory evidence.",
+      "evidence": [
+        "mobile/lib/design_system/fix_job_proof_dialog.dart",
+        "mobile/lib/features/provider/provider_active_job_cockpit_screen.dart",
+        "mobile/lib/features/bookings/job_proof_service.dart"
+      ]
+    },
+    {
+      "id": "GAP-20",
+      "baseline_status": "fixed",
+      "remediation_status": "carried_forward_fixed",
+      "outcome": "The FN-145 source disposition remains closed; FN-146 introduced no contradictory evidence.",
+      "evidence": [
+        "admin/src/app/bookings/page.tsx",
+        "backend/src/admin/admin-operations.service.ts"
+      ]
+    },
+    {
+      "id": "GAP-21",
+      "baseline_status": "fixed",
+      "remediation_status": "carried_forward_fixed",
+      "outcome": "The FN-145 source disposition remains closed; FN-146 introduced no contradictory evidence.",
+      "evidence": [
+        "admin/src/app/guarantees/[id]/page.tsx"
+      ]
+    },
+    {
+      "id": "GAP-22",
+      "baseline_status": "fixed",
+      "remediation_status": "carried_forward_fixed",
+      "outcome": "The FN-145 source disposition remains closed; FN-146 introduced no contradictory evidence.",
+      "evidence": [
+        "mobile/lib/features/location/url_launcher_stub.dart"
+      ]
+    },
+    {
+      "id": "GAP-23",
+      "baseline_status": "partial",
+      "remediation_status": "implemented_and_locally_verified",
+      "outcome": "Admin status/search filters are applied by backend queries before pagination; guarantees support bounded continuation and services use bounded category listing. Global search delegates to backend queries.",
+      "evidence": [
+        "admin/src/app/search/page.tsx",
+        "admin/src/app/services/page.tsx",
+        "backend/src/admin/admin-operations.service.ts",
+        "admin/src/app/guarantees/page.tsx",
+        "backend/src/guarantees/guarantees.service.ts",
+        "backend/src/common/list-pagination.dto.ts",
+        "backend/src/admin/admin-management.service.ts",
+        "backend/src/trust/trust.service.ts",
+        "e2e/tests/admin-pagination.spec.ts"
+      ]
+    },
+    {
+      "id": "GAP-24",
+      "baseline_status": "fixed",
+      "remediation_status": "carried_forward_fixed",
+      "outcome": "The FN-145 source disposition remains closed; FN-146 introduced no contradictory evidence.",
+      "evidence": [
+        "mobile/lib/features/provider/provider_jobs_screen.dart"
+      ]
+    },
+    {
+      "id": "GAP-25",
+      "baseline_status": "fixed",
+      "remediation_status": "carried_forward_fixed",
+      "outcome": "The FN-145 source disposition remains closed; FN-146 introduced no contradictory evidence.",
+      "evidence": [
+        "admin/src/app/bookings/page.tsx"
+      ]
+    },
+    {
+      "id": "GAP-26",
+      "baseline_status": "fixed",
+      "remediation_status": "carried_forward_fixed",
+      "outcome": "The FN-145 source disposition remains closed; FN-146 introduced no contradictory evidence.",
+      "evidence": [
+        "admin/src/components/admin-shell.tsx"
+      ]
+    },
+    {
+      "id": "GAP-27",
+      "baseline_status": "fixed",
+      "remediation_status": "carried_forward_fixed",
+      "outcome": "The FN-145 source disposition remains closed; FN-146 introduced no contradictory evidence.",
+      "evidence": [
+        "admin/src/app/bookings/page.tsx"
+      ]
+    },
+    {
+      "id": "GAP-28",
+      "baseline_status": "fixed",
+      "remediation_status": "carried_forward_fixed",
+      "outcome": "The FN-145 source disposition remains closed; FN-146 introduced no contradictory evidence.",
+      "evidence": [
+        "admin/src/app/providers/page.tsx",
+        "admin/src/app/support/page.tsx"
+      ]
+    },
+    {
+      "id": "GAP-29",
+      "baseline_status": "fixed",
+      "remediation_status": "carried_forward_fixed",
+      "outcome": "The FN-145 source disposition remains closed; FN-146 introduced no contradictory evidence.",
+      "evidence": [
+        "mobile/lib/features/location/saved_address.dart"
+      ]
+    },
+    {
+      "id": "GAP-30",
+      "baseline_status": "fixed",
+      "remediation_status": "carried_forward_fixed",
+      "outcome": "The FN-145 source disposition remains closed; FN-146 introduced no contradictory evidence.",
+      "evidence": [
+        "mobile/lib/features/tracking/booking_tracking_screen.dart"
+      ]
+    },
+    {
+      "id": "GAP-31",
+      "baseline_status": "undefined",
+      "remediation_status": "no_historical_finding",
+      "outcome": "No source defect was defined for this identifier, so no remediation was invented.",
+      "evidence": [
+        "audit_reports/FIXNOW_COMPLETENESS_AND_GAPS.md"
+      ]
+    },
+    {
+      "id": "GAP-32",
+      "baseline_status": "review_required",
+      "remediation_status": "implemented_and_locally_verified",
+      "outcome": "The hidden BigDataCloud coordinate disclosure was removed. Platform geocoding is used and the UI preserves the real GPS fix with an honest Current location fallback.",
+      "evidence": [
+        "mobile/lib/features/location/live_location_service.dart",
+        "mobile/lib/features/services/service_discovery_screen.dart"
+      ]
+    },
+    {
+      "id": "GAP-33",
+      "baseline_status": "undefined",
+      "remediation_status": "no_historical_finding",
+      "outcome": "No source defect was defined for this identifier, so no remediation was invented.",
+      "evidence": [
+        "audit_reports/FIXNOW_COMPLETENESS_AND_GAPS.md"
+      ]
+    },
+    {
+      "id": "GAP-34",
+      "baseline_status": "unsupported",
+      "remediation_status": "report_corrected_no_code_change",
+      "outcome": "The unsupported historical assertion remains corrected; it is not treated as an application defect.",
+      "evidence": [
+        "admin/src/auth/actions.ts",
+        "backend/src/auth/admin-auth.controller.ts",
+        "backend/src/app.module.ts",
+        "backend/src/auth/auth.service.ts",
+        "admin/src/auth/session.ts"
+      ]
+    },
+    {
+      "id": "GAP-35",
+      "baseline_status": "fixed",
+      "remediation_status": "carried_forward_fixed",
+      "outcome": "The FN-145 source disposition remains closed; FN-146 introduced no contradictory evidence.",
+      "evidence": [
+        "backend/src/ratings/domain/review-photo.entity.ts"
+      ]
+    },
+    {
+      "id": "GAP-36",
+      "baseline_status": "fixed",
+      "remediation_status": "carried_forward_fixed",
+      "outcome": "The FN-145 source disposition remains closed; FN-146 introduced no contradictory evidence.",
+      "evidence": [
+        "backend/src/support/complaints/domain/complaint.entity.ts",
+        "backend/src/notifications/push/push-device-token.entity.ts",
+        "backend/src/guarantees/domain/guarantee-claim.entity.ts"
+      ]
+    },
+    {
+      "id": "GAP-37",
+      "baseline_status": "undefined",
+      "remediation_status": "no_historical_finding",
+      "outcome": "No source defect was defined for this identifier, so no remediation was invented.",
+      "evidence": [
+        "audit_reports/FIXNOW_COMPLETENESS_AND_GAPS.md"
+      ]
+    },
+    {
+      "id": "GAP-38",
+      "baseline_status": "fixed",
+      "remediation_status": "carried_forward_fixed",
+      "outcome": "The FN-145 source disposition remains closed; FN-146 introduced no contradictory evidence.",
+      "evidence": [
+        "mobile/lib/features/tracking/provider_live_map.dart",
+        "mobile/lib/features/location/service_location_picker_sheet.dart"
+      ]
+    },
+    {
+      "id": "GAP-39",
+      "baseline_status": "fixed",
+      "remediation_status": "carried_forward_fixed",
+      "outcome": "The FN-145 source disposition remains closed; FN-146 introduced no contradictory evidence.",
+      "evidence": [
+        "mobile/android/app/src/main/kotlin/com/fixnow/fixnow_mobile/MainActivity.kt"
+      ]
+    },
+    {
+      "id": "GAP-40",
+      "baseline_status": "duplicate",
+      "remediation_status": "alias_to_canonical_outcome",
+      "outcome": "No separate defect is counted. This row follows the canonical finding named in the frozen reconciliation.",
+      "evidence": [
+        "mobile/lib/design_system/fix_job_proof_dialog.dart"
+      ]
+    },
+    {
+      "id": "GAP-41",
+      "baseline_status": "fixed",
+      "remediation_status": "carried_forward_fixed",
+      "outcome": "The FN-145 source disposition remains closed; FN-146 introduced no contradictory evidence.",
+      "evidence": [
+        "mobile/lib/design_system/fix_payment_checkout_sheet.dart",
+        "mobile/lib/features/payments/invoice_screen.dart"
+      ]
+    },
+    {
+      "id": "GAP-42",
+      "baseline_status": "partial",
+      "remediation_status": "implemented_with_configuration_limit",
+      "outcome": "Fake tax identity, address and verification URL defaults were removed. Without complete configured registration data the app emits a Payment Receipt; configured tax details are used only when validated. Real statutory identity remains deployment configuration.",
+      "evidence": [
+        "mobile/lib/features/payments/fix_pdf_invoice_builder.dart",
+        "mobile/lib/features/payments/invoice_screen.dart",
+        "mobile/lib/config/app_environment.dart",
+        "mobile/test/pdf_tax_invoice_test.dart"
+      ]
+    },
+    {
+      "id": "GAP-43",
+      "baseline_status": "partial",
+      "remediation_status": "implemented_and_locally_verified",
+      "outcome": "Notification delete and clear operations now await a successful server response before mutating local state; failures preserve items, and clear preserves realtime arrivals.",
+      "evidence": [
+        "mobile/lib/features/notifications/notification_repository.dart",
+        "backend/src/notifications/domain/inbox.controller.ts",
+        "mobile/lib/features/notifications/notification_controller.dart",
+        "mobile/test/call_and_notification_persistence_test.dart"
+      ]
+    },
+    {
+      "id": "GAP-44",
+      "baseline_status": "fixed",
+      "remediation_status": "carried_forward_fixed",
+      "outcome": "The FN-145 source disposition remains closed; FN-146 introduced no contradictory evidence.",
+      "evidence": [
+        "admin/src/components/admin-shell.tsx",
+        "backend/src/auth/admin-auth.controller.ts",
+        "admin/src/app/bookings/[bookingId]/page.tsx"
+      ]
+    },
+    {
+      "id": "GAP-45",
+      "baseline_status": "partial",
+      "remediation_status": "implemented_and_locally_verified",
+      "outcome": "Unsupported local-only push category switches were removed and device notification settings are described honestly; remaining actions have real callbacks or explicit unavailable states.",
+      "evidence": [
+        "mobile/lib/notifications/push_settings_card.dart",
+        "mobile/lib/features/support/customer_help_screen.dart",
+        "mobile/lib/features/profile/customer_profile_screen.dart",
+        "mobile/test/push_settings_card_test.dart"
+      ]
+    },
+    {
+      "id": "GAP-46",
+      "baseline_status": "fixed",
+      "remediation_status": "carried_forward_fixed",
+      "outcome": "The FN-145 source disposition remains closed; FN-146 introduced no contradictory evidence.",
+      "evidence": [
+        "mobile/lib/design_system/fix_banner.dart"
+      ]
+    },
+    {
+      "id": "GAP-47",
+      "baseline_status": "fixed",
+      "remediation_status": "carried_forward_fixed",
+      "outcome": "The FN-145 source disposition remains closed; FN-146 introduced no contradictory evidence.",
+      "evidence": [
+        "mobile/lib/features/notifications/notification_center_screen.dart",
+        "mobile/lib/app/app.dart"
+      ]
+    },
+    {
+      "id": "GAP-48",
+      "baseline_status": "partial",
+      "remediation_status": "implemented_and_locally_verified",
+      "outcome": "Invented ₹99/full-refund, free-window, escrow and Tuesday-settlement promises were removed. The UI now directs users to recorded booking/payment terms without asserting an unimplemented fee or payout schedule.",
+      "evidence": [
+        "mobile/lib/design_system/fix_payment_checkout_sheet.dart",
+        "mobile/lib/features/bookings/cancellation_dialog.dart",
+        "mobile/lib/features/tracking/booking_tracking_screen.dart",
+        "mobile/lib/features/payments/invoice_screen.dart",
+        "mobile/lib/features/support/customer_help_screen.dart"
+      ]
+    },
+    {
+      "id": "GAP-49",
+      "baseline_status": "fixed",
+      "remediation_status": "carried_forward_fixed",
+      "outcome": "The FN-145 source disposition remains closed; FN-146 introduced no contradictory evidence.",
+      "evidence": [
+        "admin/src/auth/login-form.tsx"
+      ]
+    },
+    {
+      "id": "GAP-50",
+      "baseline_status": "fixed",
+      "remediation_status": "carried_forward_fixed",
+      "outcome": "The FN-145 source disposition remains closed; FN-146 introduced no contradictory evidence.",
+      "evidence": [
+        "mobile/lib/main.dart",
+        "mobile/lib/features/call/call_screen.dart"
+      ]
+    },
+    {
+      "id": "GAP-51",
+      "baseline_status": "partial",
+      "remediation_status": "supported_fallback_capability_limit",
+      "outcome": "Call actions now navigate to a shared screen and open the authorized real phone number through the device phone app with visible launch errors. Native in-app VoIP media capture/playback is not implemented; existing signaling alone is not presented as an audio call.",
+      "evidence": [
+        "mobile/lib/app/app.dart",
+        "mobile/lib/features/call/call_screen.dart",
+        "mobile/lib/features/call/call_controller.dart",
+        "mobile/test/call_and_notification_persistence_test.dart"
+      ]
+    },
+    {
+      "id": "GAP-52",
+      "baseline_status": "fixed",
+      "remediation_status": "carried_forward_fixed",
+      "outcome": "The FN-145 source disposition remains closed; FN-146 introduced no contradictory evidence.",
+      "evidence": [
+        "mobile/lib/main.dart"
+      ]
+    },
+    {
+      "id": "GAP-53",
+      "baseline_status": "partial",
+      "remediation_status": "implemented_and_locally_verified",
+      "outcome": "Unreachable design and voice prototypes were moved from production lib into test/support/prototypes while retaining their focused tests.",
+      "evidence": [
+        "mobile/lib/design_system/fix_3d_spatial_beacon.dart",
+        "mobile/lib/design_system/fix_slide_to_confirm.dart",
+        "mobile/test/support/prototypes/README.md",
+        "mobile/test/accessibility_harness_test.dart"
+      ]
+    },
+    {
+      "id": "GAP-54",
+      "baseline_status": "fixed",
+      "remediation_status": "carried_forward_fixed",
+      "outcome": "The FN-145 source disposition remains closed; FN-146 introduced no contradictory evidence.",
+      "evidence": [
+        "admin/src/components/admin-shell.tsx",
+        "admin/src/app/users/page.tsx",
+        "admin/src/app/guarantees/[id]/page.tsx"
+      ]
+    },
+    {
+      "id": "GAP-55",
+      "baseline_status": "fixed",
+      "remediation_status": "carried_forward_fixed",
+      "outcome": "The FN-145 source disposition remains closed; FN-146 introduced no contradictory evidence.",
+      "evidence": [
+        "admin/src/app/unauthorized/page.tsx"
+      ]
+    },
+    {
+      "id": "GAP-56",
+      "baseline_status": "duplicate",
+      "remediation_status": "alias_to_canonical_outcome",
+      "outcome": "No separate defect is counted. This row follows the canonical finding named in the frozen reconciliation.",
+      "evidence": [
+        "mobile/lib/features/notifications/notification_repository.dart"
+      ]
+    },
+    {
+      "id": "GAP-57",
+      "baseline_status": "fixed",
+      "remediation_status": "carried_forward_fixed",
+      "outcome": "The FN-145 source disposition remains closed; FN-146 introduced no contradictory evidence.",
+      "evidence": [
+        "admin/src/app/trust/page.tsx",
+        "admin/src/features/trust/actions.ts",
+        "admin/src/features/trust/api.ts"
+      ]
+    },
+    {
+      "id": "GAP-58",
+      "baseline_status": "duplicate",
+      "remediation_status": "alias_to_canonical_outcome",
+      "outcome": "No separate defect is counted. This row follows the canonical finding named in the frozen reconciliation.",
+      "evidence": [
+        "admin/src/app/guarantees/[id]/page.tsx",
+        "backend/src/guarantees/guarantees.service.ts"
+      ]
+    },
+    {
+      "id": "GAP-59",
+      "baseline_status": "duplicate",
+      "remediation_status": "alias_to_canonical_outcome",
+      "outcome": "No separate defect is counted. This row follows the canonical finding named in the frozen reconciliation.",
+      "evidence": [
+        "mobile/lib/app/app.dart",
+        "audit_reports/FIXNOW_MASTER_FEATURE_INVENTORY.md"
+      ]
+    },
+    {
+      "id": "GAP-60",
+      "baseline_status": "undefined",
+      "remediation_status": "no_historical_finding",
+      "outcome": "No source defect was defined for this identifier, so no remediation was invented.",
+      "evidence": [
+        "audit_reports/FIXNOW_COMPLETENESS_AND_GAPS.md"
+      ]
+    },
+    {
+      "id": "GAP-61",
+      "baseline_status": "undefined",
+      "remediation_status": "no_historical_finding",
+      "outcome": "No source defect was defined for this identifier, so no remediation was invented.",
+      "evidence": [
+        "audit_reports/FIXNOW_COMPLETENESS_AND_GAPS.md"
+      ]
+    },
+    {
+      "id": "GAP-62",
+      "baseline_status": "undefined",
+      "remediation_status": "no_historical_finding",
+      "outcome": "No source defect was defined for this identifier, so no remediation was invented.",
+      "evidence": [
+        "audit_reports/FIXNOW_COMPLETENESS_AND_GAPS.md"
+      ]
+    },
+    {
+      "id": "GAP-63",
+      "baseline_status": "undefined",
+      "remediation_status": "no_historical_finding",
+      "outcome": "No source defect was defined for this identifier, so no remediation was invented.",
+      "evidence": [
+        "audit_reports/FIXNOW_COMPLETENESS_AND_GAPS.md"
+      ]
+    },
+    {
+      "id": "GAP-64",
+      "baseline_status": "undefined",
+      "remediation_status": "no_historical_finding",
+      "outcome": "No source defect was defined for this identifier, so no remediation was invented.",
+      "evidence": [
+        "audit_reports/FIXNOW_COMPLETENESS_AND_GAPS.md"
+      ]
+    },
+    {
+      "id": "GAP-65",
+      "baseline_status": "undefined",
+      "remediation_status": "no_historical_finding",
+      "outcome": "No source defect was defined for this identifier, so no remediation was invented.",
+      "evidence": [
+        "audit_reports/FIXNOW_COMPLETENESS_AND_GAPS.md"
+      ]
+    },
+    {
+      "id": "GAP-66",
+      "baseline_status": "undefined",
+      "remediation_status": "no_historical_finding",
+      "outcome": "No source defect was defined for this identifier, so no remediation was invented.",
+      "evidence": [
+        "audit_reports/FIXNOW_COMPLETENESS_AND_GAPS.md"
+      ]
+    },
+    {
+      "id": "GAP-67",
+      "baseline_status": "duplicate",
+      "remediation_status": "alias_to_canonical_outcome",
+      "outcome": "No separate defect is counted. This row follows the canonical finding named in the frozen reconciliation.",
+      "evidence": [
+        "admin/src/app/bookings/page.tsx"
+      ]
+    },
+    {
+      "id": "GAP-68",
+      "baseline_status": "duplicate",
+      "remediation_status": "alias_to_canonical_outcome",
+      "outcome": "No separate defect is counted. This row follows the canonical finding named in the frozen reconciliation.",
+      "evidence": [
+        "mobile/lib/features/provider/provider_jobs_screen.dart"
+      ]
+    },
+    {
+      "id": "GAP-69",
+      "baseline_status": "fixed",
+      "remediation_status": "carried_forward_fixed",
+      "outcome": "The FN-145 source disposition remains closed; FN-146 introduced no contradictory evidence.",
+      "evidence": [
+        "mobile/lib/app/app.dart"
+      ]
+    },
+    {
+      "id": "GAP-70",
+      "baseline_status": "fixed",
+      "remediation_status": "carried_forward_fixed",
+      "outcome": "The FN-145 source disposition remains closed; FN-146 introduced no contradictory evidence.",
+      "evidence": [
+        "mobile/pubspec.yaml",
+        "mobile/assets/fonts/Inter-Regular.ttf"
+      ]
+    },
+    {
+      "id": "GAP-71",
+      "baseline_status": "open",
+      "remediation_status": "implemented_and_locally_verified",
+      "outcome": "Complaint lifecycle transitions now have one shared definition consumed by backend and admin.",
+      "evidence": [
+        "shared/complaint-lifecycle.types.ts",
+        "admin/src/features/operations/complaint-lifecycle.ts",
+        "backend/src/support/complaints/complaints.service.ts"
+      ]
+    },
+    {
+      "id": "GAP-72",
+      "baseline_status": "open",
+      "remediation_status": "implemented_and_locally_verified",
+      "outcome": "Admin pages now use the shared shortId formatter instead of page-local copies.",
+      "evidence": [
+        "admin/src/lib/format.ts",
+        "admin/src/app/bookings/[bookingId]/page.tsx",
+        "admin/src/app/trust/page.tsx",
+        "admin/src/app/support/page.tsx",
+        "admin/src/app/users/page.tsx",
+        "admin/src/app/users/[userId]/page.tsx",
+        "admin/src/app/support/[complaintId]/page.tsx",
+        "admin/src/app/guarantees/page.tsx",
+        "admin/src/app/guarantees/[id]/page.tsx",
+        "admin/src/app/providers/page.tsx",
+        "admin/src/app/providers/[applicationId]/page.tsx"
+      ]
+    },
+    {
+      "id": "GAP-73",
+      "baseline_status": "fixed",
+      "remediation_status": "carried_forward_fixed",
+      "outcome": "The FN-145 source disposition remains closed; FN-146 introduced no contradictory evidence.",
+      "evidence": [
+        "admin/src/features/operations/api.ts",
+        "admin/src/features/users/api.ts",
+        "admin/src/features/users/types.ts",
+        "admin/src/features/operations/types.ts"
+      ]
+    },
+    {
+      "id": "GAP-74",
+      "baseline_status": "unsupported",
+      "remediation_status": "report_corrected_no_code_change",
+      "outcome": "The unsupported historical assertion remains corrected; it is not treated as an application defect.",
+      "evidence": [
+        "admin/src/auth/api.ts",
+        "admin/src/features/management-api.ts"
+      ]
+    },
+    {
+      "id": "GAP-75",
+      "baseline_status": "partial",
+      "remediation_status": "implemented_and_locally_verified",
+      "outcome": "Admin role capability checks and navigation visibility are centralized and aligned with backend authorization policies; regression tests cover parity.",
+      "evidence": [
+        "admin/src/auth/roles.ts",
+        "admin/src/components/admin-shell.tsx",
+        "admin/src/app/search/page.tsx",
+        "admin/src/app/services/page.tsx",
+        "admin/src/app/guarantees/[id]/page.tsx",
+        "admin/src/auth/roles.test.ts",
+        "backend/src/common/authorization/resource-ownership.spec.ts"
+      ]
+    },
+    {
+      "id": "GAP-76",
+      "baseline_status": "fixed",
+      "remediation_status": "carried_forward_fixed",
+      "outcome": "The FN-145 source disposition remains closed; FN-146 introduced no contradictory evidence.",
+      "evidence": [
+        "mobile/lib/features/services/sub_service_catalog_screen.dart",
+        "mobile/lib/features/services/service_discovery_screen.dart",
+        "mobile/lib/design_system/fix_service_card.dart"
+      ]
+    },
+    {
+      "id": "GAP-77",
+      "baseline_status": "fixed",
+      "remediation_status": "carried_forward_fixed",
+      "outcome": "The FN-145 source disposition remains closed; FN-146 introduced no contradictory evidence.",
+      "evidence": [
+        "mobile/lib/design_system/fix_rating_badge.dart",
+        "mobile/lib/features/services/service_discovery_screen.dart"
+      ]
+    },
+    {
+      "id": "GAP-78",
+      "baseline_status": "duplicate",
+      "remediation_status": "alias_to_canonical_outcome",
+      "outcome": "No separate defect is counted. This row follows the canonical finding named in the frozen reconciliation.",
+      "evidence": [
+        "backend/src/notifications/domain/inbox.controller.ts"
+      ]
+    },
+    {
+      "id": "GAP-79",
+      "baseline_status": "partial",
+      "remediation_status": "implemented_and_locally_verified",
+      "outcome": "Common admin status presentation uses the shared StatusBadge; domain-specific wording remains only where it conveys distinct state semantics.",
+      "evidence": [
+        "admin/src/features/status-badge.tsx",
+        "admin/src/app/bookings/page.tsx",
+        "admin/src/app/guarantees/page.tsx",
+        "admin/src/app/users/page.tsx",
+        "admin/src/app/providers/page.tsx",
+        "admin/src/app/support/page.tsx",
+        "admin/src/features/status-badge.test.tsx"
+      ]
+    },
+    {
+      "id": "GAP-80",
+      "baseline_status": "duplicate",
+      "remediation_status": "alias_to_canonical_outcome",
+      "outcome": "No separate defect is counted. This row follows the canonical finding named in the frozen reconciliation.",
+      "evidence": [
+        "mobile/lib/features/payments/invoice_screen.dart",
+        "mobile/lib/features/payments/fix_pdf_invoice_builder.dart"
+      ]
+    },
+    {
+      "id": "GAP-81",
+      "baseline_status": "unverified",
+      "remediation_status": "verified_in_isolated_database",
+      "outcome": "The integration guard accepted a dedicated loopback PostgreSQL database. Migrations, schema probes, existing integration tests and reconciliation concurrency/FK scenarios were exercised only against that disposable database. Production was not inspected.",
+      "evidence": [
+        "backend/test/support/test-data-source.ts",
+        "backend/package.json",
+        "backend/test/domain-reconciliation.integration-spec.ts",
+        "backend/scripts/verify-schema.ts"
+      ]
+    },
+    {
+      "id": "GAP-82",
+      "baseline_status": "fixed",
+      "remediation_status": "carried_forward_fixed",
+      "outcome": "The FN-145 source disposition remains closed; FN-146 introduced no contradictory evidence.",
+      "evidence": [
+        "backend/src/outbox/outbox.service.spec.ts"
+      ]
+    },
+    {
+      "id": "GAP-83",
+      "baseline_status": "fixed",
+      "remediation_status": "carried_forward_fixed",
+      "outcome": "The FN-145 source disposition remains closed; FN-146 introduced no contradictory evidence.",
+      "evidence": [
+        "backend/src/storage/clamav-malware-scanner.spec.ts",
+        "backend/src/storage/s3-private-object-storage.spec.ts"
+      ]
+    },
+    {
+      "id": "GAP-84",
+      "baseline_status": "partial",
+      "remediation_status": "implemented_and_locally_verified",
+      "outcome": "Security-boundary tests now exercise the formerly uncovered controller authorization surfaces. This closes the named risk-based gap without treating file-to-spec ratios as a coverage percentage.",
+      "evidence": [
+        "backend/src/payments/payments.controller.spec.ts",
+        "backend/src/payments/payments-admin.controller.spec.ts",
+        "backend/src/ratings/ratings-admin.controller.spec.ts",
+        "backend/src/emergency/emergency.controller.spec.ts",
+        "backend/src/common/controller-security-boundaries.spec.ts"
+      ]
+    },
+    {
+      "id": "GAP-85",
+      "baseline_status": "partial",
+      "remediation_status": "implemented_and_locally_verified",
+      "outcome": "Dedicated admin-operations and resource-ownership tests now cover bounds, continuation, emergency flags, cursor behavior, not-found behavior and ownership checks.",
+      "evidence": [
+        "backend/src/bookings/booking-dispatch.handlers.spec.ts",
+        "backend/src/admin/admin-operations.service.ts",
+        "backend/src/common/authorization/resource-ownership.ts",
+        "backend/src/admin/admin-operations.service.spec.ts",
+        "backend/src/common/authorization/resource-ownership.spec.ts"
+      ]
+    },
+    {
+      "id": "GAP-86",
+      "baseline_status": "partial",
+      "remediation_status": "implemented_and_locally_verified",
+      "outcome": "Shared booking, complaint and guarantee lifecycle invariants are exercised by backend state-machine tests using the canonical shared tables.",
+      "evidence": [
+        "backend/src/common/state-machines.spec.ts",
+        "backend/src/support/complaints/complaints.service.spec.ts",
+        "shared/guarantee-lifecycle.types.ts",
+        "shared/complaint-lifecycle.types.ts"
+      ]
+    },
+    {
+      "id": "GAP-87",
+      "baseline_status": "partial",
+      "remediation_status": "implemented_and_locally_verified",
+      "outcome": "Admin route, API, role, proxy and pagination regression coverage was expanded, including later-page records. Final suite totals remain pending orchestrator confirmation.",
+      "evidence": [
+        "audit_reports/FIXNOW_TEST_COVERAGE_INVENTORY.md",
+        "e2e/tests/admin-access.spec.ts",
+        "e2e/tests/admin-operations.spec.ts",
+        "admin/src/app/guarantees/[id]/page.test.ts",
+        "admin/src/app/trust/page.test.tsx",
+        "admin/src/app/list-pages.test.tsx",
+        "admin/src/app/providers/[applicationId]/documents/[documentId]/route.test.ts",
+        "e2e/tests/admin-pagination.spec.ts"
+      ]
+    },
+    {
+      "id": "GAP-88",
+      "baseline_status": "unverified",
+      "remediation_status": "verified_locally",
+      "outcome": "The browser suite was made runnable with an installed browser and the existing Playwright runtime, including pagination regressions. This is a local stub-API browser run, not production authentication or database verification.",
+      "evidence": [
+        "e2e/playwright.config.ts",
+        "e2e/tests/admin-operations.spec.ts",
+        "e2e/package.json",
+        "e2e/tests/admin-pagination.spec.ts"
+      ]
+    },
+    {
+      "id": "GAP-89",
+      "baseline_status": "partial",
+      "remediation_status": "implemented_and_locally_verified",
+      "outcome": "Repository-rewriting helper scripts were removed. The no-op address transport moved out of production source into test support, and an uninitialized production repository now fails fast.",
+      "evidence": [
+        "mobile/fix_tests.py",
+        "mobile/fix_tests_again.py",
+        "mobile/lib/features/location/saved_address.dart",
+        "mobile/test/support/test_address_repository.dart",
+        "mobile/test/saved_address_integrity_test.dart"
+      ]
+    },
+    {
+      "id": "GAP-14/API-route-shadowing",
+      "baseline_status": "duplicate",
+      "remediation_status": "alias_to_canonical_outcome",
+      "outcome": "No separate defect is counted. This row follows the canonical finding named in the frozen reconciliation.",
+      "evidence": [
+        "audit_reports/FIXNOW_API_AND_BACKEND_INVENTORY.md",
+        "backend/src/ratings/ratings-admin.controller.ts"
+      ]
+    },
+    {
+      "id": "GAP-16/API-DTO",
+      "baseline_status": "duplicate",
+      "remediation_status": "alias_to_canonical_outcome",
+      "outcome": "No separate defect is counted. This row follows the canonical finding named in the frozen reconciliation.",
+      "evidence": [
+        "audit_reports/FIXNOW_API_AND_BACKEND_INVENTORY.md",
+        "backend/src/admin/admin-management.controller.ts"
+      ]
+    },
+    {
+      "id": "GAP-18/API-pagination",
+      "baseline_status": "fixed",
+      "remediation_status": "carried_forward_fixed",
+      "outcome": "The FN-145 source disposition remains closed; FN-146 introduced no contradictory evidence.",
+      "evidence": [
+        "audit_reports/FIXNOW_API_AND_BACKEND_INVENTORY.md",
+        "backend/src/admin/admin-management.service.ts",
+        "backend/src/support/complaints/complaints.service.ts"
+      ]
+    },
+    {
+      "id": "GAP-19/API-trust-pagination",
+      "baseline_status": "fixed",
+      "remediation_status": "carried_forward_fixed",
+      "outcome": "The FN-145 source disposition remains closed; FN-146 introduced no contradictory evidence.",
+      "evidence": [
+        "audit_reports/FIXNOW_API_AND_BACKEND_INVENTORY.md",
+        "backend/src/trust/trust-admin.controller.ts",
+        "backend/src/trust/trust.service.ts"
+      ]
+    },
+    {
+      "id": "GAP-25/DB-audit-cascade",
+      "baseline_status": "duplicate",
+      "remediation_status": "alias_to_canonical_outcome",
+      "outcome": "No separate defect is counted. This row follows the canonical finding named in the frozen reconciliation.",
+      "evidence": [
+        "audit_reports/FIXNOW_DATABASE_AND_INTEGRATIONS.md",
+        "backend/migrations/1789750500000-Phase2IntegrityAndConstraints.ts"
+      ]
+    },
+    {
+      "id": "DIA-001",
+      "baseline_status": "partial",
+      "remediation_status": "implemented_and_locally_verified",
+      "outcome": "The broken arbitrary extra-charge form and client-supplied price path were removed. Providers use the existing catalog-backed item editor, which sends sub-service IDs, quantities and expectedVersion for server pricing.",
+      "evidence": [
+        "mobile/lib/features/bookings/booking.dart",
+        "mobile/lib/features/provider/provider_active_job_cockpit_screen.dart",
+        "mobile/lib/features/provider/provider_repository.dart",
+        "backend/src/bookings/bookings.dto.ts"
+      ]
+    },
+    {
+      "id": "DIA-002",
+      "baseline_status": "open",
+      "remediation_status": "implemented_and_locally_verified",
+      "outcome": "General platform support complaints are accepted only when targetRole is PLATFORM and no arbitrary targetId is supplied. Booking and participant authorization remains required for booking complaints.",
+      "evidence": [
+        "mobile/lib/features/support/customer_help_screen.dart",
+        "mobile/lib/features/support/complaint_list_screen.dart",
+        "mobile/lib/features/support/submit_complaint_screen.dart",
+        "backend/src/support/complaints/complaints.service.ts",
+        "backend/src/support/complaints/complaints.service.spec.ts"
+      ]
+    },
+    {
+      "id": "DIA-003",
+      "baseline_status": "duplicate",
+      "remediation_status": "alias_to_canonical_outcome",
+      "outcome": "No separate defect is counted. This row follows the canonical finding named in the frozen reconciliation.",
+      "evidence": [
+        "mobile/lib/app/app.dart",
+        "mobile/lib/features/call/call_screen.dart"
+      ]
+    },
+    {
+      "id": "DIA-004",
+      "baseline_status": "open",
+      "remediation_status": "implemented_and_locally_verified",
+      "outcome": "Support/trust search and status filters now execute in backend queries before pagination; browser regressions include matching records beyond the first page.",
+      "evidence": [
+        "admin/src/app/support/page.tsx",
+        "admin/src/app/trust/page.tsx",
+        "admin/src/features/operations/api.ts",
+        "backend/src/admin/admin-management.service.ts",
+        "backend/src/trust/trust.service.ts",
+        "e2e/tests/admin-pagination.spec.ts"
+      ]
+    },
+    {
+      "id": "DIA-005",
+      "baseline_status": "open",
+      "remediation_status": "implemented_and_locally_verified",
+      "outcome": "The hardcoded VIP tier and unsupported cashback benefit were removed from the customer profile.",
+      "evidence": [
+        "mobile/lib/features/profile/customer_profile_screen.dart",
+        "mobile/test/customer_profile_screen_test.dart"
+      ]
+    },
+    {
+      "id": "DIA-006",
+      "baseline_status": "open",
+      "remediation_status": "implemented_and_locally_verified",
+      "outcome": "The claim form now rejects trimmed reasons shorter than 10 characters, bounds input length and prevents duplicate submission.",
+      "evidence": [
+        "mobile/lib/features/guarantees/ui/submit_claim_screen.dart",
+        "backend/src/guarantees/dto/create-guarantee-claim.dto.ts",
+        "mobile/test/guarantee_claim_validation_test.dart"
+      ]
+    },
+    {
+      "id": "POLICY-cancellation",
+      "baseline_status": "open",
+      "remediation_status": "presentation_corrected_policy_not_invented",
+      "outcome": "Unsupported fee/refund guarantees were removed from the UI. Actual cancellation pricing remains governed by recorded backend/payment behavior and an adopted product policy.",
+      "evidence": [
+        "mobile/lib/features/bookings/cancellation_dialog.dart",
+        "mobile/lib/features/support/customer_help_screen.dart",
+        "backend/src/payments/payments.service.ts",
+        "mobile/lib/features/tracking/booking_tracking_screen.dart"
+      ]
+    },
+    {
+      "id": "POLICY-escrow",
+      "baseline_status": "unsupported",
+      "remediation_status": "presentation_corrected_no_escrow_claim",
+      "outcome": "Unsupported escrow and payout-schedule promises were removed. The product does not claim an escrow scheduler exists.",
+      "evidence": [
+        "backend/src/payments/payments.service.ts",
+        "backend/src/payments/provider-earnings.controller.ts",
+        "mobile/lib/features/support/customer_help_screen.dart",
+        "mobile/lib/features/tracking/booking_tracking_screen.dart"
+      ]
+    },
+    {
+      "id": "POLICY-provider-reverification",
+      "baseline_status": "unverified",
+      "remediation_status": "external_policy_decision_required",
+      "outcome": "No authoritative adopted 365-day reverification policy was found. Code cannot safely invent this compliance rule; a product/legal decision and operational owner are still required.",
+      "evidence": [
+        "backend/src/providers/verification/provider-verification.controller.ts"
+      ]
+    },
+    {
+      "id": "REPORT-counts-and-confidence",
+      "baseline_status": "unsupported",
+      "remediation_status": "report_corrected_no_code_change",
+      "outcome": "The unsupported historical assertion remains corrected; it is not treated as an application defect.",
+      "evidence": [
+        "audit_reports/data_integrity_audit_report.md",
+        "audit_reports/FIXNOW_AUDIT_SUMMARY.md"
+      ]
+    },
+    {
+      "id": "REPORT-emergency-policy",
+      "baseline_status": "unsupported",
+      "remediation_status": "report_corrected_no_code_change",
+      "outcome": "The unsupported historical assertion remains corrected; it is not treated as an application defect.",
+      "evidence": [
+        "audit_reports/FIXNOW_DOMAIN_AND_WORKFLOW_INVENTORY.md",
+        "backend/src/emergency/emergency-policy.ts"
+      ]
+    },
+    {
+      "id": "REPORT-integration-adapters",
+      "baseline_status": "unsupported",
+      "remediation_status": "report_corrected_no_code_change",
+      "outcome": "The unsupported historical assertion remains corrected; it is not treated as an application defect.",
+      "evidence": [
+        "audit_reports/FIXNOW_DATABASE_AND_INTEGRATIONS.md",
+        "backend/src/ai/providers/huggingface-ai.provider.ts",
+        "backend/src/notifications/otp-delivery.ts",
+        "backend/src/cache/cache.module.ts",
+        "backend/src/payments/payment-gateway.ts",
+        "backend/src/notifications/push/push-delivery.ts"
+      ]
+    },
+    {
+      "id": "REPORT-integration-config-behavior",
+      "baseline_status": "unsupported",
+      "remediation_status": "report_corrected_no_code_change",
+      "outcome": "The unsupported historical assertion remains corrected; it is not treated as an application defect.",
+      "evidence": [
+        "backend/src/storage/s3-private-object-storage.ts",
+        "backend/src/cache/cache.module.ts",
+        "backend/src/database/database.module.ts"
+      ]
+    },
+    {
+      "id": "REPORT-map-geocode",
+      "baseline_status": "unsupported",
+      "remediation_status": "report_corrected_no_code_change",
+      "outcome": "The unsupported historical assertion remains corrected; it is not treated as an application defect.",
+      "evidence": [
+        "mobile/lib/features/location/live_location_service.dart",
+        "mobile/lib/features/tracking/provider_live_map.dart",
+        "mobile/lib/features/services/service_discovery_screen.dart"
+      ]
+    },
+    {
+      "id": "REPORT-metrics-mail",
+      "baseline_status": "unsupported",
+      "remediation_status": "report_corrected_no_code_change",
+      "outcome": "The unsupported historical assertion remains corrected; it is not treated as an application defect.",
+      "evidence": [
+        "backend/src/observability/metrics.controller.ts",
+        "backend/src/notifications/otp-delivery.ts"
+      ]
+    }
+  ]
+}
+

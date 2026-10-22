@@ -9,8 +9,10 @@ import 'package:fixnow_mobile/features/location/booking_location.dart';
 import 'package:fixnow_mobile/features/services/service_category.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'support/test_address_repository.dart';
 
 void main() {
+  setUp(createTestAddressRepository);
   group('ServiceRequestScreen acceptance routing', () {
     testWidgets(
       'auto-pops with CustomerBooking when provider accepts during radar animation',

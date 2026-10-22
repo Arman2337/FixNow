@@ -270,51 +270,51 @@ class _InvoiceView extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.verified_user_rounded,
-                      color: AppColors.primary,
-                      size: 22,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'FixNow',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.verified_user_rounded,
                         color: AppColors.primary,
-                        fontWeight: FontWeight.bold,
+                        size: 22,
                       ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'FixNow',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    FixPdfInvoiceBuilder.companyName,
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
                     ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  FixPdfInvoiceBuilder.companyName,
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
                   ),
-                ),
-                Text(
-                  'GSTIN: ${FixPdfInvoiceBuilder.companyGstin}',
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 11,
+                  Text(
+                    FixPdfInvoiceBuilder.registrationLabel,
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 11,
+                    ),
                   ),
-                ),
-                Text(
-                  FixPdfInvoiceBuilder.companyAddress,
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 11,
+                  Text(
+                    FixPdfInvoiceBuilder.companyAddress,
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 11,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Container(
+            const SizedBox(width: AppSpacing.sm),
+            Container(
               width: 44,
               height: 44,
               decoration: BoxDecoration(
@@ -430,7 +430,7 @@ class _InvoiceView extends StatelessWidget {
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: const Text(
-                    'SAC 9987 • 18% GST',
+                    '18% GST breakdown',
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
@@ -450,7 +450,7 @@ class _InvoiceView extends StatelessWidget {
             _Row(label: 'Total GST (18%)', value: invoice.totalGstLabel),
             const SizedBox(height: AppSpacing.xs),
             Text(
-              'GSTIN: ${FixPdfInvoiceBuilder.companyGstin} • Registered under CGST Act 2017',
+              FixPdfInvoiceBuilder.registrationLabel,
               style: const TextStyle(
                 fontSize: 11,
                 color: AppColors.textOnSurfaceSecondary,

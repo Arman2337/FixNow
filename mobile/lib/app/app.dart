@@ -75,6 +75,7 @@ import 'package:fixnow_mobile/notifications/push_api.dart';
 import 'package:fixnow_mobile/notifications/push_enrollment.dart';
 import 'package:fixnow_mobile/features/chat/chat_repository.dart';
 import 'package:fixnow_mobile/features/call/call_repository.dart';
+import 'package:fixnow_mobile/features/call/call_screen.dart';
 import 'package:fixnow_mobile/features/call/call_controller.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking_controller.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking_screen.dart';
@@ -127,6 +128,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
   late final ApiServiceCategoryRepository _categoryRepository;
   late final LocationConsentController _location;
   late final BookingController _bookings;
+
   /// FN-143. Server-backed before/after job proof, shared by the customer
   /// booking detail and the provider screens.
   late final JobProofController _jobProof;
@@ -602,10 +604,8 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
     controller: _bookings,
     serviceLabelFor: _serviceLabelFor,
     showProviderInitial: false,
-    onTap: (booking) => _providerShellController.selectDestination(
-      1,
-      destinationCount: 4,
-    ),
+    onTap: (booking) =>
+        _providerShellController.selectDestination(1, destinationCount: 4),
   );
 
   /// PERF-005. The status banner for the shell, or null while everything is live.
@@ -680,7 +680,8 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
   }
 
   MaterialPageRoute<void> _notificationRoute() {
-    final isProvider = _auth.session?.role == AccountRole.verifiedProvider ||
+    final isProvider =
+        _auth.session?.role == AccountRole.verifiedProvider ||
         _auth.session?.role == AccountRole.providerApplicant;
     return MaterialPageRoute<void>(
       settings: const RouteSettings(name: 'notifications'),
@@ -714,9 +715,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
           await _bookings.load();
         } catch (_) {}
       }
-      match = _bookings.bookings
-          .where((b) => b.id == bookingId)
-          .firstOrNull;
+      match = _bookings.bookings.where((b) => b.id == bookingId).firstOrNull;
     }
     if (match == null) {
       try {
@@ -817,7 +816,8 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
                 child: Column(
                   children: [
                     FixOfflineBanner(
-                      message: _auth.errorMessage ??
+                      message:
+                          _auth.errorMessage ??
                           'You appear to be offline. Please check your connection.',
                     ),
                     Expanded(
@@ -842,7 +842,8 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
                 child: Center(
                   child: FixErrorState(
                     title: 'Authentication Error',
-                    message: _auth.errorMessage ??
+                    message:
+                        _auth.errorMessage ??
                         'Something went wrong restoring your session.',
                     retryLabel: 'Retry',
                     onRetry: () => _auth.restore(),
@@ -910,8 +911,10 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
                   if (nav == null) return;
                   nav.push(
                     MaterialPageRoute(
-                      builder: (_) =>
-                          CustomerHelpScreen(controller: _complaints, isProvider: true),
+                      builder: (_) => CustomerHelpScreen(
+                        controller: _complaints,
+                        isProvider: true,
+                      ),
                     ),
                   );
                 },
@@ -966,8 +969,10 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
                 onSupportCases: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (_) =>
-                          CustomerHelpScreen(controller: _complaints, isProvider: true),
+                      builder: (_) => CustomerHelpScreen(
+                        controller: _complaints,
+                        isProvider: true,
+                      ),
                     ),
                   );
                 },
@@ -1270,9 +1275,9 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
         }.contains(currentBooking.status);
         if (!active) {
           return BookingDetailScreen(
-booking: currentBooking,
-      jobProofController: _jobProof,
-      onReportIssue: () {
+            booking: currentBooking,
+            jobProofController: _jobProof,
+            onReportIssue: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => SubmitComplaintScreen(
@@ -1331,15 +1336,18 @@ booking: currentBooking,
               ),
             ),
             onCallPressed: (context, id) async {
-              final session = await _callController.startCall(
-                id,
-                fallbackPhoneNumber: currentBooking.providerPhone,
+              await Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => CallScreen(
+                    oppositePartyName:
+                        currentBooking.providerName ?? 'Service Specialist',
+                    oppositePartyRole: 'Service Specialist',
+                    phoneNumber: currentBooking.providerPhone,
+                    bookingId: id,
+                    controller: _callController,
+                  ),
+                ),
               );
-              if (session != null && context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Audio call connected (ID: ${session.id})')),
-                );
-              }
             },
           );
         }
@@ -1361,15 +1369,18 @@ booking: currentBooking,
             destinationCount: 4,
           ),
           onCallPressed: (context, id) async {
-            final session = await _callController.startCall(
-              id,
-              fallbackPhoneNumber: currentBooking.providerPhone,
+            await Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => CallScreen(
+                  oppositePartyName:
+                      currentBooking.providerName ?? 'Service Specialist',
+                  oppositePartyRole: 'Service Specialist',
+                  phoneNumber: currentBooking.providerPhone,
+                  bookingId: id,
+                  controller: _callController,
+                ),
+              ),
             );
-            if (session != null && context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Audio call connected (ID: ${session.id})')),
-              );
-            }
           },
         );
       },

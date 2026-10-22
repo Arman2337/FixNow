@@ -11,6 +11,30 @@ import {
   isValidComplaintTransition,
   isTerminalComplaintStatus,
 } from '../../../shared/complaint-lifecycle.types';
+import {
+  GuaranteeClaimStatus,
+  nextGuaranteeStatuses,
+} from '../../../shared/guarantee-lifecycle.types';
+
+describe('Guarantee lifecycle', () => {
+  it('defines every status, keeps terminal states closed and prevents backward reviews', () => {
+    for (const status of Object.values(GuaranteeClaimStatus)) {
+      expect(Array.isArray(nextGuaranteeStatuses(status))).toBe(true);
+      expect(nextGuaranteeStatuses(status)).not.toContain(status);
+      for (const next of nextGuaranteeStatuses(status)) {
+        expect(Object.values(GuaranteeClaimStatus)).toContain(next);
+      }
+    }
+    expect(nextGuaranteeStatuses(GuaranteeClaimStatus.COMPLETED)).toEqual([]);
+    expect(nextGuaranteeStatuses(GuaranteeClaimStatus.REJECTED)).toEqual([]);
+    expect(nextGuaranteeStatuses(GuaranteeClaimStatus.APPROVED)).toEqual([
+      GuaranteeClaimStatus.COMPLETED,
+    ]);
+    expect(nextGuaranteeStatuses(GuaranteeClaimStatus.IN_REVIEW)).not.toContain(
+      GuaranteeClaimStatus.PENDING,
+    );
+  });
+});
 
 describe('Shared State Machine Transition Tables (GAP-86)', () => {
   describe('Booking Lifecycle Transitions', () => {

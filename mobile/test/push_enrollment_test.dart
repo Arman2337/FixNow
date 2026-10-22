@@ -63,6 +63,23 @@ class RefreshingGateway extends FakeGateway implements PushTokenRefresher {
 }
 
 void main() {
+  test(
+    'push register and revoke reject unconfirmed server mutations',
+    () async {
+      final transport = FakeTransport(
+        responses: [
+          const ApiResponse(statusCode: 503, body: null),
+          const ApiResponse(statusCode: 403, body: null),
+        ],
+      );
+      final api = PushApi(transport);
+      await expectLater(
+        api.register(token: 'device-token', platform: 'ANDROID'),
+        throwsA(isA<ApiException>()),
+      );
+      await expectLater(api.revoke('device-1'), throwsA(isA<ApiException>()));
+    },
+  );
   test('stays fully inert when the build omits push support', () async {
     final transport = FakeTransport();
     final controller = PushEnrollmentController(

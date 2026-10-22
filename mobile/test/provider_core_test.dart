@@ -456,37 +456,40 @@ void main() {
     expect(controller.isAcceptingRequest('request-1'), isFalse);
   });
 
-  test('an in-flight flag is per request, so one accept does not block others', () async {
-    final transport = _ProviderTransport(verified: true);
-    final controller = ProviderController(
-      ProviderRepository(api: transport, accessToken: () async => 'token'),
-    );
-    await controller.load(verified: true);
-    controller.requests = [
-      ProviderRequest(
-        id: 'request-1',
-        serviceCategoryId: 'plumbing',
-        description: 'First',
-        version: 4,
-        distanceKm: 1.2,
-        createdAt: DateTime.parse('2026-08-14T10:00:00.000Z'),
-      ),
-      ProviderRequest(
-        id: 'request-2',
-        serviceCategoryId: 'electrical',
-        description: 'Second',
-        version: 7,
-        distanceKm: 3.4,
-        createdAt: DateTime.parse('2026-08-14T10:05:00.000Z'),
-      ),
-    ];
+  test(
+    'an in-flight flag is per request, so one accept does not block others',
+    () async {
+      final transport = _ProviderTransport(verified: true);
+      final controller = ProviderController(
+        ProviderRepository(api: transport, accessToken: () async => 'token'),
+      );
+      await controller.load(verified: true);
+      controller.requests = [
+        ProviderRequest(
+          id: 'request-1',
+          serviceCategoryId: 'plumbing',
+          description: 'First',
+          version: 4,
+          distanceKm: 1.2,
+          createdAt: DateTime.parse('2026-08-14T10:00:00.000Z'),
+        ),
+        ProviderRequest(
+          id: 'request-2',
+          serviceCategoryId: 'electrical',
+          description: 'Second',
+          version: 7,
+          distanceKm: 3.4,
+          createdAt: DateTime.parse('2026-08-14T10:05:00.000Z'),
+        ),
+      ];
 
-    final pending = controller.acceptRequest(controller.requests.first);
-    // The home screen renders a card per request, so a single screen-wide flag
-    // would freeze every other card while one accept was in flight.
-    expect(controller.isAcceptingRequest('request-2'), isFalse);
-    await pending;
-  });
+      final pending = controller.acceptRequest(controller.requests.first);
+      // The home screen renders a card per request, so a single screen-wide flag
+      // would freeze every other card while one accept was in flight.
+      expect(controller.isAcceptingRequest('request-2'), isFalse);
+      await pending;
+    },
+  );
 
   testWidgets('tapping accept twice on the dialog posts once', (tester) async {
     final transport = _ProviderTransport(verified: true);
@@ -576,7 +579,8 @@ void main() {
         isTrue,
       );
       expect(find.text('Request accepted!'), findsNothing);
-      expect(find.textContaining('no longer available'), findsOneWidget);
+      // Preserve the backend's actionable conflict message for the provider.
+      expect(find.textContaining('Booking version is stale'), findsOneWidget);
       expect(controller.requests, hasLength(1));
     },
   );
@@ -827,6 +831,9 @@ ProviderController _loadedVerifiedController() {
 class _ProviderNotificationTransport implements ApiTransport {
   @override
   Future<ApiResponse> send(ApiRequest request) async {
+    if (request.method != ApiMethod.get) {
+      return const ApiResponse(statusCode: 200, body: {'success': true});
+    }
     final now = DateTime.now().toUtc();
     return ApiResponse(
       statusCode: 200,

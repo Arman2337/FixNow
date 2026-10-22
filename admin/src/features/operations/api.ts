@@ -1,16 +1,18 @@
 import { managementRequest } from "../management-api";
 import type { BookingDetail, BookingPage, ServiceCategory, Complaint, ComplaintStatus } from "./types";
-export const listCategories = () => managementRequest<readonly ServiceCategory[]>("/admin/service-categories");
+export const listCategories = (limit = 20, offset = 0) => managementRequest<readonly ServiceCategory[]>(`/admin/service-categories?${new URLSearchParams({ limit: String(limit), offset: String(offset) })}`);
 export const createCategory = (body: object) => managementRequest<ServiceCategory>("/admin/service-categories", { method: "POST", body: JSON.stringify(body) });
 export const updateCategory = (id: string, body: object) => managementRequest<ServiceCategory>(`/admin/service-categories/${encodeURIComponent(id)}`, { method: "PUT", body: JSON.stringify(body) });
 export const deleteCategory = (id: string) => managementRequest<void>(`/admin/service-categories/${encodeURIComponent(id)}`, { method: "DELETE" });
 export function listBookings(search?: string, status?: string, cursor?: string) { const query = new URLSearchParams({ limit: "20" }); if (search) query.set("search", search); if (status) query.set("status", status); if (cursor) query.set("cursor", cursor); return managementRequest<BookingPage>(`/admin/bookings?${query}`); }
 export const getBooking = (id: string) => managementRequest<BookingDetail>(`/admin/bookings/${encodeURIComponent(id)}`);
 export const cancelBooking = (id: string, expectedVersion: number, reason: string) => managementRequest<BookingDetail>(`/admin/bookings/${encodeURIComponent(id)}/cancel`, { method: "POST", body: JSON.stringify({ expectedVersion, reason }) });
-export function listComplaints(limit?: number, offset?: number) {
+export function listComplaints(limit?: number, offset?: number, status?: string, search?: string) {
   const query = new URLSearchParams();
   if (limit !== undefined) query.set("limit", String(limit));
   if (offset !== undefined) query.set("offset", String(offset));
+  if (status) query.set("status", status);
+  if (search) query.set("search", search);
   return managementRequest<readonly Complaint[]>(`/admin/complaints${query.toString() ? `?${query}` : ""}`);
 }
 export const getComplaint = (id: string) => managementRequest<Complaint>(`/admin/complaints/${encodeURIComponent(id)}`);

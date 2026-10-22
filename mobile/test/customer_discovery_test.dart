@@ -17,6 +17,7 @@ import 'package:fixnow_mobile/design_system/app_theme.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_service_card.dart';
 import 'pump_idle.dart';
+import 'support/test_address_repository.dart';
 
 class MockGeolocatorPlatform extends GeolocatorPlatform
     with MockPlatformInterfaceMixin {
@@ -41,6 +42,7 @@ class MockGeolocatorPlatform extends GeolocatorPlatform
 
 void main() {
   setUp(() {
+    createTestAddressRepository();
     GeolocatorPlatform.instance = MockGeolocatorPlatform();
   });
   test('reports loading until category discovery completes', () async {

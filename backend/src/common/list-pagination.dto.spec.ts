@@ -22,6 +22,23 @@ import { LIST_ENDPOINT_MAX_LIMIT } from './list-pagination.dto';
  * whatever happens to be in the table — cannot come back unnoticed.
  */
 describe('list endpoint bounds (API-003)', () => {
+  it('coerces a nonnegative guarantee offset and rejects invalid statuses and oversized search', async () => {
+    const valid = plainToInstance(GuaranteesPageQueryDto, {
+      status: 'PENDING',
+      offset: '20',
+      search: 'claim',
+    });
+    expect(await validate(valid)).toHaveLength(0);
+    expect(valid.offset).toBe(20);
+    const invalid = plainToInstance(GuaranteesPageQueryDto, {
+      status: 'bogus',
+      offset: '-1',
+      search: 'x'.repeat(201),
+    });
+    expect(
+      (await validate(invalid)).map((error) => error.property).sort(),
+    ).toEqual(['offset', 'search', 'status']);
+  });
   const cases: Array<[string, new () => object]> = [
     ['GuaranteesPageQueryDto', GuaranteesPageQueryDto],
     ['ListQueryDto', ListQueryDto],

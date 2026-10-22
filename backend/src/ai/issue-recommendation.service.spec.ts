@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method -- Jest assertions inspect mocks without invoking them. */
 import { ConfigService } from '@nestjs/config';
 import type { EnvironmentVariables } from '../config/env.validation';
 import { Logger } from 'nestjs-pino';

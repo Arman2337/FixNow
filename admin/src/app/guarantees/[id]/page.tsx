@@ -7,25 +7,10 @@ import { requireManagementResult } from "@/features/management-api";
 import { getClaim, scheduleReService, updateClaimStatus, type GuaranteeStatus } from "@/features/guarantees/api";
 import { StatusBadge } from "@/features/status-badge";
 import { revalidatePath } from "next/cache";
-import { listProviderApplications } from "@/features/providers/api";
-import type { StaffRole } from "@/auth/types";
+import { hasPermission } from "@/auth/roles";
+import { nextGuaranteeClaimStatuses } from "@/features/guarantees/lifecycle";
 
-const shortId = (id: string) => id.replaceAll("-", "").slice(0, 8).toUpperCase();
-
-export const GUARANTEE_CLAIM_TRANSITIONS: Record<GuaranteeStatus, readonly GuaranteeStatus[]> = {
-  PENDING: ["IN_REVIEW", "MORE_INFO", "REJECTED"],
-  IN_REVIEW: ["APPROVED", "MORE_INFO", "REJECTED"],
-  MORE_INFO: ["IN_REVIEW", "REJECTED"],
-  APPROVED: ["COMPLETED"],
-  REJECTED: [],
-  COMPLETED: [],
-};
-
-export function nextGuaranteeClaimStatuses(currentStatus: string): readonly GuaranteeStatus[] {
-  const status = currentStatus.toUpperCase() as GuaranteeStatus;
-  const allowed = GUARANTEE_CLAIM_TRANSITIONS[status] ?? [];
-  return [status, ...allowed.filter((s) => s !== status)];
-}
+import { shortId } from "@/lib/format";
 
 export default async function GuaranteeClaimDetailsPage(props: {
   params: Promise<{ id: string }>;
@@ -34,20 +19,16 @@ export default async function GuaranteeClaimDetailsPage(props: {
   const session = await getSession();
   if (session.state !== "authenticated") redirect("/login?reason=expired");
 
-  const allowedRoles: readonly StaffRole[] = ["support_agent", "trust_safety_reviewer", "operations_administrator", "auditor"];
-  if (!session.session.roles.some((r) => allowedRoles.includes(r))) {
+  if (!hasPermission(session.session.roles, "adminGuaranteesRead")) {
     redirect("/unauthorized");
   }
 
   const params = await props.params;
   const sParams = props.searchParams ? await props.searchParams : {};
   const claim = await requireManagementResult(await getClaim(params.id));
-  const providersPage = await requireManagementResult(
-    await listProviderApplications(undefined, "approved"),
-  );
-  const providers = providersPage.items;
   const availableStatuses = nextGuaranteeClaimStatuses(claim.status);
   const isTerminal = availableStatuses.length <= 1;
+  const canUpdate = hasPermission(session.session.roles, "adminGuaranteesUpdate");
 
   async function updateStatusAction(formData: FormData) {
     "use server";
@@ -135,8 +116,8 @@ export default async function GuaranteeClaimDetailsPage(props: {
               <section className="bg-surface border border-outline rounded-lg p-space-lg flex flex-col gap-space-md">
                 <h2 className="text-headline-sm font-bold">Admin Actions</h2>
                 <div className="flex items-center gap-space-sm">
-                  {isTerminal ? (
-                    <span className="text-sm text-outline italic">Claim status is final ({claim.status}). No further transitions allowed.</span>
+                  {isTerminal || !canUpdate ? (
+                    <span className="text-sm text-outline italic">{isTerminal ? `Claim status is final (${claim.status}). No further transitions allowed.` : "Your role has read-only access to this claim."}</span>
                   ) : (
                     <form action={updateStatusAction} className="flex items-center gap-space-sm flex-wrap">
                       <select name="status" defaultValue={claim.status} className="bg-surface-elevated border border-outline rounded-md px-3 py-2 text-body-md focus:outline-none focus:border-primary">
@@ -151,19 +132,15 @@ export default async function GuaranteeClaimDetailsPage(props: {
                   )}
                 </div>
 
-                {claim.status === "APPROVED" && !claim.reServiceBookingId && (
+                {canUpdate && claim.status === "APPROVED" && !claim.reServiceBookingId && (
                   <div className="mt-space-lg pt-space-lg border-t border-outline flex flex-col gap-space-md">
                     <h3 className="text-headline-sm font-bold text-accent">Schedule Re-Service</h3>
                     <p className="text-body-sm text-outline">Assign a provider to perform the guarantee work. A zero-cost booking will be created automatically.</p>
                     <form action={scheduleReServiceAction} className="flex items-center gap-space-sm max-w-md">
-                      <select name="providerId" className="flex-1 bg-surface-elevated border border-outline rounded-md px-3 py-2 text-body-md focus:outline-none focus:border-primary" required>
-                        <option value="">Select a Provider...</option>
-                        {providers.map((provider) => (
-                          <option key={provider.id} value={provider.id}>
-                            {provider.displayName ?? "Verified provider"}
-                          </option>
-                        ))}
-                      </select>
+                      <label className="flex-1 text-body-sm">
+                        Verified provider user ID
+                        <input name="providerId" required placeholder="Provider UUID" className="w-full bg-surface-elevated border border-outline rounded-md px-3 py-2 text-body-md" />
+                      </label>
                       <button type="submit" className="bg-accent text-on-accent px-4 py-2 rounded-md font-medium hover:opacity-90 transition-opacity whitespace-nowrap">
                         Dispatch
                       </button>
@@ -178,7 +155,7 @@ export default async function GuaranteeClaimDetailsPage(props: {
                       Booking ID: <Link href={`/bookings/${claim.reServiceBookingId}`} className="text-primary hover:underline font-data-mono">{shortId(claim.reServiceBookingId)}</Link>
                     </p>
                     <p className="text-body-md">
-                      Assigned Provider: <Link href={`/providers/${claim.assignedProviderId}`} className="text-primary hover:underline font-data-mono">{claim.assignedProviderId ? shortId(claim.assignedProviderId) : "Unassigned"}</Link>
+                      Assigned Provider: <Link href={`/users/${claim.assignedProviderId}`} className="text-primary hover:underline font-data-mono">{claim.assignedProviderId ? shortId(claim.assignedProviderId) : "Unassigned"}</Link>
                     </p>
                   </div>
                 )}
@@ -200,7 +177,7 @@ export default async function GuaranteeClaimDetailsPage(props: {
                   <div className="flex justify-between py-2 border-b border-outline">
                     <span className="text-outline">Original Provider</span>
                     {claim.originalProviderId ? (
-                      <Link href={`/providers/${claim.originalProviderId}`} className="text-primary hover:underline font-data-mono">{shortId(claim.originalProviderId)}</Link>
+                      <Link href={`/users/${claim.originalProviderId}`} className="text-primary hover:underline font-data-mono">{shortId(claim.originalProviderId)}</Link>
                     ) : (
                       <span className="text-outline">None</span>
                     )}

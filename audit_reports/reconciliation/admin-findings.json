@@ -1,0 +1,727 @@
+{
+  "scope": "Admin UI/auth/navigation/contracts/test claims across all nine audit reports",
+  "baseline": "a45d9c5; working tree inspected read-only",
+  "method": "Static source tracing under data-integrity-audit skill. No runtime/DB assertions established; confidence HIGH for direct source facts, MEDIUM for predicted runtime impact. No application files changed.",
+  "findings": [
+    {
+      "id": "GAP-05",
+      "status": "fixed",
+      "claim": "Trust route lacks role checks; inventory extends claim to bookings/providers.",
+      "current": "Trust rejects non-trust roles; bookings/providers also gate roles. Backend still enforces access. Old test.fixme assertion is active now, but stale explanatory comment remains.",
+      "evidence": [
+        {
+          "path": "admin/src/app/trust/page.tsx",
+          "line": 40
+        },
+        {
+          "path": "admin/src/app/bookings/page.tsx",
+          "line": 24
+        },
+        {
+          "path": "admin/src/app/providers/page.tsx",
+          "line": 15
+        },
+        {
+          "path": "admin/src/app/trust/page.test.tsx",
+          "line": 97
+        },
+        {
+          "path": "e2e/tests/admin-operations.spec.ts",
+          "line": 148
+        }
+      ]
+    },
+    {
+      "id": "GAP-06",
+      "status": "fixed",
+      "claim": "Auditor support navigation and service mutation forms conflict with backend permissions.",
+      "current": "Support nav/page excludes auditor; services checks canMutateServices to hide mutation UI. Unconditional header notifications still links support for every role; this is a distinct residual UX issue.",
+      "evidence": [
+        {
+          "path": "admin/src/components/admin-shell.tsx",
+          "line": 10
+        },
+        {
+          "path": "admin/src/app/support/page.tsx",
+          "line": 21
+        },
+        {
+          "path": "admin/src/app/services/page.tsx",
+          "line": 26
+        },
+        {
+          "path": "admin/src/auth/roles.ts",
+          "line": 114
+        },
+        {
+          "path": "admin/src/components/admin-shell.tsx",
+          "line": 158
+        },
+        {
+          "path": "backend/src/common/authorization/permission-policies.ts",
+          "line": 492
+        }
+      ]
+    },
+    {
+      "id": "GAP-07",
+      "status": "partial",
+      "claim": "Guarantee dropdown allows illegal transitions, leading to backend 409 crash.",
+      "current": "UI transition table and terminal rendering now exist. Claimed backend invalid-transition 409 is unsupported: updateStatus assigns any valid DTO enum without lifecycle validation. Thus UI gap fixed, backend invariant remains absent.",
+      "evidence": [
+        {
+          "path": "admin/src/app/guarantees/[id]/page.tsx",
+          "line": 15
+        },
+        {
+          "path": "admin/src/app/guarantees/[id]/page.tsx",
+          "line": 138
+        },
+        {
+          "path": "backend/src/guarantees/guarantees.service.ts",
+          "line": 128
+        },
+        {
+          "path": "admin/src/app/guarantees/[id]/page.test.ts",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "id": "GAP-17",
+      "status": "fixed",
+      "claim": "Complaint dossier renders blank name/email due to UserDetail contract mismatch.",
+      "current": "Canonical user fields are optional, operations getUser reexports users implementation, and dossier renders explicit user-ID / identity-redacted fallbacks. Backend still intentionally projects minimal PII; unavailable personal fields are not by themselves defects.",
+      "evidence": [
+        {
+          "path": "admin/src/features/users/types.ts",
+          "line": 1
+        },
+        {
+          "path": "admin/src/features/operations/api.ts",
+          "line": 19
+        },
+        {
+          "path": "admin/src/app/support/[complaintId]/page.tsx",
+          "line": 215
+        },
+        {
+          "path": "admin/src/app/support/[complaintId]/page.tsx",
+          "line": 237
+        },
+        {
+          "path": "backend/src/admin/admin-management.service.ts",
+          "line": 153
+        }
+      ]
+    },
+    {
+      "id": "GAP-18",
+      "status": "fixed",
+      "claim": "Analytics API allows support agents through adminBookingsRead.",
+      "current": "Controller now requires dedicated adminAnalyticsRead, whose policy permits operations administrator and auditor only. Platform-financial leak claim also overstated current response fields.",
+      "evidence": [
+        {
+          "path": "backend/src/admin/admin-analytics.controller.ts",
+          "line": 11
+        },
+        {
+          "path": "backend/src/common/authorization/permission-policies.ts",
+          "line": 388
+        },
+        {
+          "path": "admin/src/features/operations/types.ts",
+          "line": 17
+        }
+      ]
+    },
+    {
+      "id": "GAP-18:api-inventory",
+      "status": "fixed",
+      "claim": "API inventory reuses GAP-18 for unpaginated complaints/trust endpoints.",
+      "current": "Complaints and trust now accept limit/offset and apply bounded queries. Filtering defect is separately DIA-004.",
+      "evidence": [
+        {
+          "path": "backend/src/admin/admin-management.service.ts",
+          "line": 38
+        },
+        {
+          "path": "backend/src/support/complaints/complaints.service.ts",
+          "line": 243
+        },
+        {
+          "path": "backend/src/trust/trust.service.ts",
+          "line": 282
+        },
+        {
+          "path": "audit_reports/FIXNOW_API_AND_BACKEND_INVENTORY.md",
+          "line": 452
+        }
+      ]
+    },
+    {
+      "id": "GAP-20",
+      "status": "fixed",
+      "claim": "Bookings emergency banner matches description substring.",
+      "current": "Now counts booking.isEmergency true; backend derives flag from emergency category IDs.",
+      "evidence": [
+        {
+          "path": "admin/src/app/bookings/page.tsx",
+          "line": 31
+        },
+        {
+          "path": "backend/src/admin/admin-operations.service.ts",
+          "line": 75
+        },
+        {
+          "path": "backend/src/admin/admin-operations.service.ts",
+          "line": 161
+        }
+      ]
+    },
+    {
+      "id": "GAP-21",
+      "status": "fixed",
+      "claim": "Guarantee server actions throw on API failure and trigger error.tsx.",
+      "current": "Both status/re-service mutations redirect with error query and page renders alert; successful actions revalidate and redirect.",
+      "evidence": [
+        {
+          "path": "admin/src/app/guarantees/[id]/page.tsx",
+          "line": 52
+        },
+        {
+          "path": "admin/src/app/guarantees/[id]/page.tsx",
+          "line": 63
+        },
+        {
+          "path": "admin/src/app/guarantees/[id]/page.tsx",
+          "line": 91
+        }
+      ]
+    },
+    {
+      "id": "GAP-23",
+      "status": "partial",
+      "claim": "Seven admin pages load full unpaginated tables; search queries run sequentially.",
+      "current": "Search uses Promise.all; complaints/trust have server offset pagination, provider/users/bookings cursor pagination. Admin services still loads all categories then slices; guarantees backend caps default 50 without continuation and UI paginates only fetched slice. Search locally filters default first 20 complaints / 50 claims, so older matching records remain absent.",
+      "evidence": [
+        {
+          "path": "admin/src/app/search/page.tsx",
+          "line": 35
+        },
+        {
+          "path": "admin/src/app/search/page.tsx",
+          "line": 64
+        },
+        {
+          "path": "admin/src/app/search/page.tsx",
+          "line": 79
+        },
+        {
+          "path": "admin/src/app/search/page.tsx",
+          "line": 91
+        },
+        {
+          "path": "admin/src/app/services/page.tsx",
+          "line": 27
+        },
+        {
+          "path": "backend/src/admin/admin-operations.service.ts",
+          "line": 29
+        },
+        {
+          "path": "admin/src/app/guarantees/page.tsx",
+          "line": 27
+        },
+        {
+          "path": "backend/src/guarantees/guarantees.service.ts",
+          "line": 103
+        },
+        {
+          "path": "backend/src/common/list-pagination.dto.ts",
+          "line": 41
+        }
+      ]
+    },
+    {
+      "id": "GAP-25",
+      "status": "fixed",
+      "claim": "Bookings reads nextCursor without Load More control.",
+      "current": "Load more link passes cursor and current filters.",
+      "evidence": [
+        {
+          "path": "admin/src/app/bookings/page.tsx",
+          "line": 128
+        }
+      ]
+    },
+    {
+      "id": "GAP-25:database-inventory",
+      "status": "unverified",
+      "claim": "Database inventory reuses GAP-25 for audit-events user deletion CASCADE.",
+      "current": "ID collision with canonical GAP-10, not bookings pagination. Database-focused reviewer must resolve against complete migrations.",
+      "evidence": [
+        {
+          "path": "audit_reports/FIXNOW_DATABASE_AND_INTEGRATIONS.md",
+          "line": 34
+        },
+        {
+          "path": "audit_reports/FIXNOW_DATABASE_AND_INTEGRATIONS.md",
+          "line": 122
+        }
+      ]
+    },
+    {
+      "id": "GAP-26",
+      "status": "fixed",
+      "claim": "Provider highlight label mismatches; search highlights Dashboard.",
+      "current": "Shell normalizes Provider label and sets activeLabel null for Search.",
+      "evidence": [
+        {
+          "path": "admin/src/components/admin-shell.tsx",
+          "line": 39
+        },
+        {
+          "path": "admin/src/components/admin-shell.tsx",
+          "line": 51
+        }
+      ]
+    },
+    {
+      "id": "GAP-27",
+      "status": "fixed",
+      "claim": "Bookings table has no dossier navigation.",
+      "current": "Booking ID is now Link to detail.",
+      "evidence": [
+        {
+          "path": "admin/src/app/bookings/page.tsx",
+          "line": 108
+        }
+      ]
+    },
+    {
+      "id": "GAP-28",
+      "status": "fixed",
+      "claim": "Providers/support permanent placeholder panes consume 40% layout.",
+      "current": "Queue pages use real empty/list state and navigation controls; literal placeholder panes absent.",
+      "evidence": [
+        {
+          "path": "admin/src/app/providers/page.tsx",
+          "line": 86
+        },
+        {
+          "path": "admin/src/app/providers/page.tsx",
+          "line": 128
+        },
+        {
+          "path": "admin/src/app/support/page.tsx",
+          "line": 114
+        },
+        {
+          "path": "admin/src/app/support/page.tsx",
+          "line": 122
+        },
+        {
+          "path": "admin/src/app/support/page.tsx",
+          "line": 162
+        }
+      ]
+    },
+    {
+      "id": "GAP-34",
+      "status": "unsupported",
+      "claim": "No explicit CSRF token beyond Origin checking and no login action rate limiter constitute security gap.",
+      "current": "No custom Next limiter exists, but backend login is throttled 5/min, global guard applies, lockout persists in credentials, UI handles 429. Session cookies Strict/HttpOnly/prod Secure. No exploit established; separate CSRF token absence alone is not vulnerability evidence. Runtime security testing not performed.",
+      "evidence": [
+        {
+          "path": "admin/src/auth/actions.ts",
+          "line": 14
+        },
+        {
+          "path": "admin/src/auth/actions.ts",
+          "line": 22
+        },
+        {
+          "path": "backend/src/auth/admin-auth.controller.ts",
+          "line": 26
+        },
+        {
+          "path": "backend/src/app.module.ts",
+          "line": 72
+        },
+        {
+          "path": "backend/src/auth/auth.service.ts",
+          "line": 217
+        },
+        {
+          "path": "backend/src/auth/auth.service.ts",
+          "line": 252
+        },
+        {
+          "path": "admin/src/auth/session.ts",
+          "line": 9
+        }
+      ]
+    },
+    {
+      "id": "GAP-44",
+      "status": "fixed",
+      "claim": "Shell hardcodes Chief Dispatcher and external avatar.",
+      "current": "Shell derives title/subtitle/initials from props/role, displays local initials avatar; backend session exposes email/displayName. Some older dossier callers pass only roles, producing honest role fallback rather than person identity.",
+      "evidence": [
+        {
+          "path": "admin/src/components/admin-shell.tsx",
+          "line": 55
+        },
+        {
+          "path": "admin/src/components/admin-shell.tsx",
+          "line": 170
+        },
+        {
+          "path": "backend/src/auth/admin-auth.controller.ts",
+          "line": 41
+        },
+        {
+          "path": "admin/src/app/bookings/[bookingId]/page.tsx",
+          "line": 26
+        }
+      ]
+    },
+    {
+      "id": "GAP-49",
+      "status": "fixed",
+      "claim": "Permanently disabled Corporate SSO button.",
+      "current": "No SSO button remains in admin source; login-form disabled state is only pending submit. LDAP ID text still appears but is unrelated to removed button.",
+      "evidence": [
+        {
+          "path": "admin/src/auth/login-form.tsx",
+          "line": 38
+        },
+        {
+          "path": "admin/src/auth/login-form.tsx",
+          "line": 94
+        }
+      ]
+    },
+    {
+      "id": "GAP-54",
+      "status": "fixed",
+      "claim": "Analytics/users/user-detail routes orphaned.",
+      "current": "Navigation links analytics/users, user table links detail. Prior inventory itself acknowledged guarantee-to-user links, so absolute zero inbound claim was inaccurate.",
+      "evidence": [
+        {
+          "path": "admin/src/components/admin-shell.tsx",
+          "line": 14
+        },
+        {
+          "path": "admin/src/components/admin-shell.tsx",
+          "line": 15
+        },
+        {
+          "path": "admin/src/app/users/page.tsx",
+          "line": 115
+        },
+        {
+          "path": "admin/src/app/guarantees/[id]/page.tsx",
+          "line": 198
+        }
+      ]
+    },
+    {
+      "id": "GAP-55",
+      "status": "fixed",
+      "claim": "Unauthorized page has no session check.",
+      "current": "Page obtains session and redirects unauthenticated users to login.",
+      "evidence": [
+        {
+          "path": "admin/src/app/unauthorized/page.tsx",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "id": "GAP-57",
+      "status": "fixed",
+      "claim": "No admin UI exists for review/photo moderation.",
+      "current": "Trust page provides review/photo UUID moderation forms wired via server actions to backend endpoints. Moderation browsing queue is still absent; current forms require externally known IDs. Original zero-UI claim fixed; richer queue is scope distinction.",
+      "evidence": [
+        {
+          "path": "admin/src/app/trust/page.tsx",
+          "line": 194
+        },
+        {
+          "path": "admin/src/app/trust/page.tsx",
+          "line": 223
+        },
+        {
+          "path": "admin/src/features/trust/actions.ts",
+          "line": 18
+        },
+        {
+          "path": "admin/src/features/trust/actions.ts",
+          "line": 31
+        },
+        {
+          "path": "admin/src/features/trust/api.ts",
+          "line": 22
+        }
+      ]
+    },
+    {
+      "id": "GAP-58",
+      "status": "duplicate",
+      "claim": "Guarantee missing client transition table.",
+      "current": "Same claim as GAP-07; UI fixed, backend lifecycle guard absent. Do not count twice.",
+      "evidence": [
+        {
+          "path": "admin/src/app/guarantees/[id]/page.tsx",
+          "line": 15
+        },
+        {
+          "path": "backend/src/guarantees/guarantees.service.ts",
+          "line": 128
+        }
+      ]
+    },
+    {
+      "id": "GAP-67",
+      "status": "duplicate",
+      "claim": "Bookings cursor without Load More.",
+      "current": "Same as GAP-25; fixed.",
+      "evidence": [
+        {
+          "path": "admin/src/app/bookings/page.tsx",
+          "line": 128
+        }
+      ]
+    },
+    {
+      "id": "GAP-72",
+      "status": "open",
+      "claim": "shortId copied across ten admin files.",
+      "current": "Ten app pages retain local shortId definitions despite shared lib formatter; maintainability duplication, no proven runtime bug.",
+      "evidence": [
+        {
+          "path": "admin/src/lib/format.ts",
+          "line": 1
+        },
+        {
+          "path": "admin/src/app/bookings/[bookingId]/page.tsx",
+          "line": 12
+        },
+        {
+          "path": "admin/src/app/trust/page.tsx",
+          "line": 11
+        },
+        {
+          "path": "admin/src/app/support/page.tsx",
+          "line": 11
+        },
+        {
+          "path": "admin/src/app/users/page.tsx",
+          "line": 10
+        },
+        {
+          "path": "admin/src/app/users/[userId]/page.tsx",
+          "line": 10
+        },
+        {
+          "path": "admin/src/app/support/[complaintId]/page.tsx",
+          "line": 22
+        },
+        {
+          "path": "admin/src/app/guarantees/page.tsx",
+          "line": 11
+        },
+        {
+          "path": "admin/src/app/guarantees/[id]/page.tsx",
+          "line": 13
+        },
+        {
+          "path": "admin/src/app/providers/page.tsx",
+          "line": 11
+        },
+        {
+          "path": "admin/src/app/providers/[applicationId]/page.tsx",
+          "line": 11
+        }
+      ]
+    },
+    {
+      "id": "GAP-73",
+      "status": "fixed",
+      "claim": "Two conflicting getUser client implementations/types.",
+      "current": "Operations reexports canonical getUser; old operations UserDetail optional-field alias remains unused but no competing request implementation.",
+      "evidence": [
+        {
+          "path": "admin/src/features/operations/api.ts",
+          "line": 19
+        },
+        {
+          "path": "admin/src/features/users/api.ts",
+          "line": 11
+        },
+        {
+          "path": "admin/src/features/users/types.ts",
+          "line": 1
+        },
+        {
+          "path": "admin/src/features/operations/types.ts",
+          "line": 16
+        }
+      ]
+    },
+    {
+      "id": "GAP-74",
+      "status": "unsupported",
+      "claim": "Two admin fetch wrappers have conflicting error semantics.",
+      "current": "Both preserve HTTP status, handle 204, map network failures to 503. Management wrapper adds bearer and downstream redirect helper; auth wrapper supports pre-session login. Duplication exists but claimed conflict not established.",
+      "evidence": [
+        {
+          "path": "admin/src/auth/api.ts",
+          "line": 9
+        },
+        {
+          "path": "admin/src/features/management-api.ts",
+          "line": 6
+        },
+        {
+          "path": "admin/src/features/management-api.ts",
+          "line": 23
+        }
+      ]
+    },
+    {
+      "id": "GAP-75",
+      "status": "partial",
+      "claim": "Staff role lists duplicated across seven files with divergent permissions.",
+      "current": "Shared roles helper exists and services uses it; shell, search, several route arrays remain duplicated. Specific support/auditor mismatch fixed. No new unsupported permission divergence inferred from duplication alone.",
+      "evidence": [
+        {
+          "path": "admin/src/auth/roles.ts",
+          "line": 6
+        },
+        {
+          "path": "admin/src/components/admin-shell.tsx",
+          "line": 6
+        },
+        {
+          "path": "admin/src/app/search/page.tsx",
+          "line": 11
+        },
+        {
+          "path": "admin/src/app/services/page.tsx",
+          "line": 9
+        },
+        {
+          "path": "admin/src/app/guarantees/[id]/page.tsx",
+          "line": 37
+        }
+      ]
+    },
+    {
+      "id": "GAP-79",
+      "status": "partial",
+      "claim": "Status label mappings duplicated across four admin files.",
+      "current": "Shared StatusBadge is used by booking/guarantee/user pages; provider/support/trust still use domain-specific inline status rendering. Blanket four duplicated mapping claim no longer accurate; remaining inline renderers are maintainability concern without demonstrated status bug.",
+      "evidence": [
+        {
+          "path": "admin/src/features/status-badge.tsx",
+          "line": 1
+        },
+        {
+          "path": "admin/src/app/bookings/page.tsx",
+          "line": 8
+        },
+        {
+          "path": "admin/src/app/guarantees/page.tsx",
+          "line": 8
+        },
+        {
+          "path": "admin/src/app/users/page.tsx",
+          "line": 7
+        },
+        {
+          "path": "admin/src/app/providers/page.tsx",
+          "line": 107
+        },
+        {
+          "path": "admin/src/app/support/page.tsx",
+          "line": 134
+        }
+      ]
+    },
+    {
+      "id": "GAP-87",
+      "status": "partial",
+      "claim": "12/18 routes have zero automated coverage.",
+      "current": "Numerical absolute claim stale/unsupported: dashboard/login/bookings/users/unauthorized have E2E route coverage; guarantee detail has lifecycle unit tests; trust role regression test exists. Several dossier/CRUD/routes still lack dedicated behavior coverage. Unit-helper coverage is not full rendered-page or persistence coverage. Parent runs current admin tests; no tests rerun by this subagent. Historical inventory cites management-api.test.ts and features/search/search.test.ts, neither exists in current admin/src; do not treat those as present tests.",
+      "evidence": [
+        {
+          "path": "audit_reports/FIXNOW_TEST_COVERAGE_INVENTORY.md",
+          "line": 100
+        },
+        {
+          "path": "e2e/tests/admin-access.spec.ts",
+          "line": 81
+        },
+        {
+          "path": "e2e/tests/admin-access.spec.ts",
+          "line": 97
+        },
+        {
+          "path": "e2e/tests/admin-operations.spec.ts",
+          "line": 171
+        },
+        {
+          "path": "e2e/tests/admin-operations.spec.ts",
+          "line": 171
+        },
+        {
+          "path": "admin/src/app/guarantees/[id]/page.test.ts",
+          "line": 4
+        },
+        {
+          "path": "admin/src/app/trust/page.test.tsx",
+          "line": 97
+        }
+      ]
+    },
+    {
+      "id": "DIA-004",
+      "status": "open",
+      "claim": "Support/trust filter only first fetched slice, masking matching older records.",
+      "current": "Both now expose subsequent pages, but filters still run after fetch-and-slice and are not sent to database. Support fetches 21 then slices 20, trust fetches 11 then slices 10; status/search matches on later pages invisible in current filter result; counts are slice-local.",
+      "evidence": [
+        {
+          "path": "admin/src/app/support/page.tsx",
+          "line": 28
+        },
+        {
+          "path": "admin/src/app/support/page.tsx",
+          "line": 35
+        },
+        {
+          "path": "admin/src/app/trust/page.tsx",
+          "line": 47
+        },
+        {
+          "path": "admin/src/app/trust/page.tsx",
+          "line": 55
+        },
+        {
+          "path": "admin/src/features/operations/api.ts",
+          "line": 10
+        },
+        {
+          "path": "backend/src/admin/admin-management.service.ts",
+          "line": 38
+        },
+        {
+          "path": "backend/src/trust/trust.service.ts",
+          "line": 282
+        }
+      ]
+    }
+  ]
+}

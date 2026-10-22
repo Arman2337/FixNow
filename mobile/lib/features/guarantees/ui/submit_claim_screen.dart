@@ -17,11 +17,18 @@ class SubmitClaimScreen extends StatefulWidget {
 }
 
 class _SubmitClaimScreenState extends State<SubmitClaimScreen> {
+  final _formKey = GlobalKey<FormState>();
   final _descriptionController = TextEditingController();
   bool _isSubmitting = false;
 
+  @override
+  void dispose() {
+    _descriptionController.dispose();
+    super.dispose();
+  }
+
   Future<void> _submitClaim() async {
-    if (_descriptionController.text.trim().isEmpty) return;
+    if (_isSubmitting || !(_formKey.currentState?.validate() ?? false)) return;
 
     setState(() => _isSubmitting = true);
     try {
@@ -77,41 +84,50 @@ class _SubmitClaimScreenState extends State<SubmitClaimScreen> {
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                'Describe the issue with your completed service.',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _descriptionController,
-                maxLines: 5,
-                decoration: const InputDecoration(
-                  hintText: 'Please provide details about what went wrong...',
-                  border: OutlineInputBorder(),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Describe the issue with your completed service.',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: _isSubmitting ? null : _submitClaim,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.all(16),
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _descriptionController,
+                  maxLines: 5,
+                  maxLength: 2000,
+                  validator: (value) => (value?.trim().length ?? 0) < 10
+                      ? 'Describe the issue in at least 10 characters.'
+                      : null,
+                  decoration: const InputDecoration(
+                    labelText: 'Incident description',
+                    helperText: 'At least 10 characters',
+                    hintText: 'Please provide details about what went wrong...',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
-                child: _isSubmitting
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text(
-                        'Submit Claim',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: _isSubmitting ? null : _submitClaim,
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.all(16),
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                  ),
+                  child: _isSubmitting
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text(
+                          'Submit Claim',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
         ),
       ),

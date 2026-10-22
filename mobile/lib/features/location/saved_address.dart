@@ -1,13 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fixnow_mobile/api/api_client.dart';
 
-class _NoopApiTransport implements ApiTransport {
-  const _NoopApiTransport();
-  @override
-  Future<ApiResponse> send(ApiRequest request) async =>
-      const ApiResponse(statusCode: 200, body: []);
-}
-
 enum AddressLabel { home, work, other }
 
 /// A customer's saved address for 1-tap booking address selection.
@@ -53,7 +46,10 @@ class SavedAddress {
   };
 
   String get formattedSnippet {
-    final parts = [flatBuilding, streetArea].where((s) => s.trim().isNotEmpty).toList();
+    final parts = [
+      flatBuilding,
+      streetArea,
+    ].where((s) => s.trim().isNotEmpty).toList();
     return parts.join(', ');
   }
 
@@ -61,12 +57,13 @@ class SavedAddress {
     final areaPart = [
       flatBuilding,
       streetArea,
-      if (landmark != null && landmark!.trim().isNotEmpty) '(Near )',
+      if (landmark != null && landmark!.trim().isNotEmpty)
+        '(Near ${landmark!.trim()})',
     ].where((s) => s.trim().isNotEmpty).toList();
 
     final cityZip = [
       if (city.trim().isNotEmpty && postalCode.trim().isNotEmpty)
-        ' - '
+        '$city - $postalCode'
       else ...[
         if (city.trim().isNotEmpty) city,
         if (postalCode.trim().isNotEmpty) postalCode,
@@ -109,22 +106,13 @@ class SavedAddressRepository extends ChangeNotifier {
     _instance = this;
   }
 
-
-  factory SavedAddressRepository.test() {
-    return SavedAddressRepository(
-      api: const _NoopApiTransport(),
-      accessToken: () async => '',
-    );
-  }
-
   static SavedAddressRepository? _instance;
 
   static SavedAddressRepository get instance {
     if (_instance == null) {
-      debugPrint(
-        'WARNING: SavedAddressRepository.instance was null. Falling back to test instance.',
+      throw StateError(
+        'SavedAddressRepository must be initialized with an authenticated API transport.',
       );
-      _instance = SavedAddressRepository.test();
     }
     return _instance!;
   }
@@ -298,13 +286,14 @@ class SavedAddressRepository extends ChangeNotifier {
     String? state,
     String? postalCode,
   }) {
-    final liveCity =
-        (city != null && city.trim().isNotEmpty) ? city.trim() : 'Local Area';
+    final liveCity = (city != null && city.trim().isNotEmpty)
+        ? city.trim()
+        : 'Local Area';
     final liveArea = (area != null && area.trim().isNotEmpty)
         ? area.trim()
         : ((state != null && state.trim().isNotEmpty)
-            ? state.trim()
-            : 'Current Area');
+              ? state.trim()
+              : 'Current Area');
     final livePostal = (postalCode != null && postalCode.trim().isNotEmpty)
         ? postalCode.trim()
         : '';

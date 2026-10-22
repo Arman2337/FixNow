@@ -137,6 +137,51 @@ describe('ComplaintsService', () => {
   // the request body, so one account could replay this endpoint to manufacture
   // a trust-and-safety signal against an arbitrary user.
   describe('complaint target validation (SEC-002)', () => {
+    it('accepts general platform support without a booking or targeted user', async () => {
+      const complaint = {
+        id: 'platform-case',
+        submitterId: 'user-1',
+        targetRole: ComplaintTargetRole.PLATFORM,
+        targetId: null,
+      };
+      mockComplaintRepository.create.mockReturnValue(complaint);
+      mockComplaintRepository.save.mockResolvedValue(complaint);
+      mockComplaintRepository.findOne.mockResolvedValue(complaint);
+      await expect(
+        service.createComplaint('user-1', {
+          targetRole: ComplaintTargetRole.PLATFORM,
+          category: 'App issue',
+          description: 'Cannot change my settings',
+        }),
+      ).resolves.toMatchObject({ id: 'platform-case' });
+      expect(mockBookingRepository.findOne).not.toHaveBeenCalled();
+      expect(mockEvaluateComplaintSignal).not.toHaveBeenCalled();
+    });
+
+    it('rejects a targeted platform complaint even when the caller owns the booking', async () => {
+      await expect(
+        service.createComplaint('user-1', {
+          bookingId: 'booking-1',
+          targetRole: ComplaintTargetRole.PLATFORM,
+          targetId: 'provider-1',
+          category: 'App issue',
+          description: 'Targeted platform report',
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(mockComplaintRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('rejects general platform reports that name an arbitrary target', async () => {
+      await expect(
+        service.createComplaint('user-1', {
+          targetRole: ComplaintTargetRole.PLATFORM,
+          targetId: 'victim',
+          category: 'App issue',
+          description: 'Targeted platform report',
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(mockComplaintRepository.save).not.toHaveBeenCalled();
+    });
     const baseDto = {
       targetRole: ComplaintTargetRole.PROVIDER,
       category: 'Unprofessional Behavior',

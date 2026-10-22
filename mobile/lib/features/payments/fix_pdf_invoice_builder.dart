@@ -3,10 +3,7 @@ import 'dart:typed_data';
 import 'package:fixnow_mobile/config/app_environment.dart';
 import 'package:fixnow_mobile/features/payments/invoice_repository.dart';
 
-/// Pure Dart PDF 1.4 Generator for FixNow GST Tax Invoices.
-///
-/// Produces 100% compliant, standard `%PDF-1.4` binary documents without
-/// requiring external binary plugins or native platform channels.
+/// PDF receipt generator. Registration details are included only when configured.
 class FixPdfInvoiceBuilder {
   const FixPdfInvoiceBuilder._();
 
@@ -17,17 +14,20 @@ class FixPdfInvoiceBuilder {
   static String get companyAddress => AppEnvironment.companyAddress;
   static String get supportEmail => AppEnvironment.supportEmail;
   static String get verifyUrl => AppEnvironment.invoiceVerifyUrl;
+  static String get documentTitle =>
+      AppEnvironment.hasTaxRegistration ? 'Tax Invoice' : 'Payment Receipt';
+  static String get registrationLabel => AppEnvironment.hasTaxRegistration
+      ? 'GSTIN: $companyGstin  |  SAC: $companySac'
+      : 'Tax registration details not configured';
 
   /// Generates the standard A4 PDF byte stream.
   static Uint8List build(
     Invoice invoice, {
     String customerName = 'FixNow Customer',
-    String serviceAddress = 'Ahmedabad, Gujarat, India',
+    String serviceAddress = 'Not provided',
   }) {
     final issuedStr = _formatDate(invoice.issuedAt);
-    final bookingIdStr =
-        invoice.bookingId ??
-        'BK-${invoice.invoiceNumber.replaceAll(RegExp(r'[^0-9]'), '')}';
+    final bookingIdStr = invoice.bookingId ?? 'Not provided';
     final serviceNameStr =
         invoice.serviceName ?? 'Home Maintenance & Repair Service';
 
@@ -74,7 +74,9 @@ class FixPdfInvoiceBuilder {
     op('/F2 10 Tf');
     op('1 1 1 rg');
     op('440 790 Td');
-    op('(${_escape('TAX INVOICE [PAID]')}) Tj');
+    op(
+      '(${_escape(AppEnvironment.hasTaxRegistration ? 'TAX INVOICE [PAID]' : 'RECEIPT [PAID]')}) Tj',
+    );
     op('ET');
 
     // -------------------------------------------------------------
@@ -92,7 +94,7 @@ class FixPdfInvoiceBuilder {
     op('/F1 9 Tf');
     op('0.35 0.40 0.47 rg');
     op('40 726 Td');
-    op('(${_escape('GSTIN: $companyGstin  |  SAC: $companySac')}) Tj');
+    op('(${_escape(registrationLabel)}) Tj');
     op('ET');
 
     op('BT');
@@ -339,26 +341,20 @@ class FixPdfInvoiceBuilder {
     op('/F2 9 Tf');
     op('0.157 0.341 0.961 rg');
     op('50 508 Td');
-    op('(${_escape('TAX INVOICE COMPLIANCE GUARANTEE')}) Tj');
+    op('(${_escape('PAYMENT RECORD')}) Tj');
     op('ET');
 
     op('BT');
     op('/F1 8 Tf');
     op('0.2 0.25 0.35 rg');
     op('50 492 Td');
-    op(
-      '(${_escape('This invoice is generated in strict accordance with the')}) Tj',
-    );
+    op('(${_escape('Keep this receipt with your booking records.')}) Tj');
     op('0 -12 Td');
-    op('(${_escape('Central Goods & Services Tax (CGST) Act, 2017.')}) Tj');
+    op('(${_escape('Amounts reflect the recorded payment.')}) Tj');
     op('0 -12 Td');
-    op(
-      '(${_escape('Includes reverse charge & marketplace intermediary taxes.')}) Tj',
-    );
+    op('(${_escape('Contact support about billing questions.')}) Tj');
     op('0 -12 Td');
-    op(
-      '(${_escape('Payment verified and authenticated by FixNow platform.')}) Tj',
-    );
+    op('(${_escape(registrationLabel)}) Tj');
     op('ET');
 
     // -------------------------------------------------------------
@@ -380,7 +376,7 @@ class FixPdfInvoiceBuilder {
     op('0.4 0.45 0.52 rg');
     op('40 90 Td');
     op(
-      '(${_escape('1. This is a computer-generated tax invoice and requires no physical or digital signature under the Information Technology Act, 2000.')}) Tj',
+      '(${_escape('1. This is a computer-generated record of the payment shown above.')}) Tj',
     );
     op('0 -10 Td');
     op(
@@ -392,7 +388,7 @@ class FixPdfInvoiceBuilder {
     );
     op('0 -10 Td');
     op(
-      '(${_escape('4. All claims and arbitrations are exclusively subject to Ahmedabad, Gujarat jurisdiction.')}) Tj',
+      '(${_escape('4. Contact support with your booking and payment reference for assistance.')}) Tj',
     );
     op('ET');
 
@@ -500,7 +496,7 @@ class FixPdfInvoiceBuilder {
     final gstStr = _rupees(invoice.totalGstMinor);
 
     return '''
-FixNow Official Tax Invoice
+FixNow $documentTitle
 ----------------------------------------
 Invoice No : ${invoice.invoiceNumber}
 Date       : $dateStr
@@ -512,9 +508,8 @@ Base Charge : $baseStr
 GST (18%)   : $gstStr (CGST 9% + SGST 9%)
 Total Paid  : $totalStr
 
-GSTIN: $companyGstin | SAC: $companySac
-Download official PDF receipt or verify at:
-$verifyUrl?ref=${invoice.invoiceNumber}
+$registrationLabel
+${verifyUrl.isEmpty ? 'Keep this receipt for your records.' : 'Verification: ${Uri.parse(verifyUrl).replace(queryParameters: {'ref': invoice.invoiceNumber})}'}
 ----------------------------------------
 Thank you for choosing FixNow!
 '''

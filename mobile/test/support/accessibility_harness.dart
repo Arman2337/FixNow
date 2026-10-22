@@ -65,13 +65,10 @@ double wcagContrastRatio(Color first, Color second) {
 /// Renders a colour as `#RRGGBB` so a failure names the exact value someone has
 /// to go and change.
 String describeColor(Color color) {
-  String channel(double value) => (value * 255)
-      .round()
-      .clamp(0, 255)
-      .toRadixString(16)
-      .padLeft(2, '0');
-  final rgb =
-      '#${channel(color.r)}${channel(color.g)}${channel(color.b)}'.toUpperCase();
+  String channel(double value) =>
+      (value * 255).round().clamp(0, 255).toRadixString(16).padLeft(2, '0');
+  final rgb = '#${channel(color.r)}${channel(color.g)}${channel(color.b)}'
+      .toUpperCase();
   return color.a < 1 ? '$rgb${channel(color.a)}' : rgb;
 }
 
@@ -258,7 +255,7 @@ extension AccessibilityAudit on WidgetTester {
     }
   }
 
-/// Walks Tab focus through the tree and returns the keys of the controls it
+  /// Walks Tab focus through the tree and returns the keys of the controls it
   /// lands on, in the order a keyboard user reaches them.
   ///
   /// Keys rather than labels or rects: a focused text field exposes its name
@@ -290,7 +287,8 @@ extension AccessibilityAudit on WidgetTester {
       expect(
         find.byKey(key).evaluate().isNotEmpty,
         isTrue,
-        reason: '$screen declares focus stop $key, but nothing in its tree '
+        reason:
+            '$screen declares focus stop $key, but nothing in its tree '
             'carries that key',
       );
     }
@@ -470,7 +468,6 @@ const Map<String, AccessibilityCoverage> accessibilityCoverage = {
   'fix_active_booking_island.dart': AccessibilityCoverage.audited(),
   'fix_banner.dart': AccessibilityCoverage.audited(),
   'fix_service_card.dart': AccessibilityCoverage.audited(),
-  'fix_eta_ring.dart': AccessibilityCoverage.audited(),
   'fix_page_frame.dart': AccessibilityCoverage.audited(),
   'fix_components.dart': AccessibilityCoverage.audited(),
   'fix_image.dart': AccessibilityCoverage.audited(),
@@ -480,44 +477,24 @@ const Map<String, AccessibilityCoverage> accessibilityCoverage = {
   'fix_schedule_picker.dart': AccessibilityCoverage.audited(),
   'fix_rating_badge.dart': AccessibilityCoverage.audited(),
   'fix_price_breakdown_card.dart': AccessibilityCoverage.audited(),
-  'fix_provider_card.dart': AccessibilityCoverage.audited(),
   'fix_notification_bell.dart': AccessibilityCoverage.audited(),
   'fix_bottom_navigation.dart': AccessibilityCoverage.audited(),
   'fix_payment_checkout_sheet.dart': AccessibilityCoverage.audited(),
   'fix_before_after_slider.dart': AccessibilityCoverage.audited(),
-  'fix_slide_to_confirm.dart': AccessibilityCoverage.audited(),
-  'fix_sos_vortex_button.dart': AccessibilityCoverage.audited(),
   'fix_schedule_hours_sheet.dart': AccessibilityCoverage.audited(),
-  'fix_jelly_squish_button.dart': AccessibilityCoverage.audited(),
-  'fix_audio_waveform.dart': AccessibilityCoverage.audited(),
   'fix_job_proof_dialog.dart': AccessibilityCoverage.deferred(
     'A modal bottom sheet, so it cannot be pumped inline the way the harness '
     'fixtures are. Its upload states are covered by test/job_proof_test.dart, '
     'but the 200% text and 48px target checks have not been run against the '
     'rendered sheet.',
   ),
-  'fix_journey_progress_line.dart': AccessibilityCoverage.deferred(
-    'Its steps are individually tappable, so it needs a fixture that drives a '
-    'full booking journey and asserts the step order - not a single-component '
-    'render. Deferred until that journey exists rather than half-checked.',
-  ),
   'fix_3d_flip_card.dart': AccessibilityCoverage.deferred(
     'Decorative payment-card flip. Its only action opens the payment sheet, '
     'which is itself audited via fix_payment_checkout_sheet.dart.',
   ),
-  'fix_3d_tilt_card.dart': AccessibilityCoverage.deferred(
-    'Pointer-driven 3D tilt with no semantics of its own; it wraps content '
-    'that supplies its own.',
-  ),
-  'fix_3d_spatial_beacon.dart': AccessibilityCoverage.deferred(
-    'Purely decorative 3D beacon with no tappable or readable content.',
-  ),
   'fix_accept_celebration.dart': AccessibilityCoverage.deferred(
     'Transient celebration overlay whose information is duplicated by the '
     'booking card it celebrates.',
-  ),
-  'fix_star_rating_burst.dart': AccessibilityCoverage.deferred(
-    'Decorative burst layered on the rating that already carries the value.',
   ),
   'fix_motion.dart': AccessibilityCoverage.deferred(
     'Motion primitives with no semantics or controls of their own.',
@@ -562,13 +539,14 @@ final class _Deferred extends AccessibilityCoverage {
 List<String> dartFilesIn(String rootPath) {
   final directory = Directory(rootPath);
   if (!directory.existsSync()) return const [];
-  final names = directory
-      .listSync()
-      .whereType<File>()
-      .where((file) => file.path.endsWith('.dart'))
-      .map((file) => file.uri.pathSegments.last)
-      .toList()
-    ..sort();
+  final names =
+      directory
+          .listSync()
+          .whereType<File>()
+          .where((file) => file.path.endsWith('.dart'))
+          .map((file) => file.uri.pathSegments.last)
+          .toList()
+        ..sort();
   return names;
 }
 

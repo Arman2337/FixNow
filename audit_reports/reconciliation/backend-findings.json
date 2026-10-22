@@ -1,0 +1,706 @@
+{
+  "scope": "Backend, database, integrations, tests and policy claims from all audit reports; static reconciliation at HEAD a45d9c5 on 2026-10-21. No database queried or changed. Fixed schema means migration/source exists, not deployed proof.",
+  "findings": [
+    {
+      "id": "GAP-01",
+      "status": "unverified",
+      "claim": "Secret-scanner fixture blocks CI",
+      "current": "Historical remediation is recorded; self-test passes per root agent, current full scan blocked by sandbox spawnSync git EPERM. Do not claim current clean scan or CI result.",
+      "evidence": [
+        {
+          "path": "scripts/scan-secrets.mjs",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "GAP-02",
+      "status": "fixed",
+      "claim": "seed.js deletes all custom sub-services on every deploy",
+      "current": "Seed now inserts with WHERE NOT EXISTS and preserves existing catalog entries. Regression spec exists; live deployment not tested.",
+      "evidence": [
+        {
+          "path": "backend/seed.js",
+          "line": 137
+        },
+        {
+          "path": "backend/src/services/catalog-seed.spec.ts",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "GAP-04",
+      "status": "unsupported",
+      "claim": "Review :id/moderation route shadows photos/:photoId/moderation",
+      "current": "Specific photo route is now first. Original collision explanation is also incorrect: the patterns have different path-segment counts and cannot match the same URL in standard Express routing. Keep reorder as implemented, remove claim that endpoint was proven unreachable.",
+      "evidence": [
+        {
+          "path": "backend/src/ratings/ratings-admin.controller.ts",
+          "line": 24
+        },
+        {
+          "path": "backend/src/ratings/ratings-admin.controller.ts",
+          "line": 41
+        }
+      ]
+    },
+    {
+      "id": "GAP-08",
+      "status": "fixed",
+      "claim": "Orphan phone migration remains outside configured glob",
+      "current": "Named orphan file no longer exists. Configured migration glob remains backend/migrations. Absence checked against filesystem.",
+      "evidence": [
+        {
+          "path": "backend/typeorm.config.ts",
+          "line": 19
+        },
+        {
+          "path": "backend/src/database/database.module.ts",
+          "line": 20
+        }
+      ]
+    },
+    {
+      "id": "GAP-09",
+      "status": "open",
+      "claim": "Two migrations share timestamp 1786521300000",
+      "current": "Both classes/files remain. Ordering ambiguity is maintenance risk; no demonstrated dependency/fresh-schema failure. Do not re-key already-applied migrations casually.",
+      "evidence": [
+        {
+          "path": "backend/migrations/1786521300000-BookingLineItems.ts",
+          "line": 3
+        },
+        {
+          "path": "backend/migrations/1786521300000-ComplaintsSchema.ts",
+          "line": 14
+        }
+      ]
+    },
+    {
+      "id": "GAP-10",
+      "status": "fixed",
+      "claim": "User deletion cascades authentication audit rows",
+      "current": "Later Phase2 migration replaces FK with ON DELETE SET NULL and permits null user_id. Whether deployment ran it is unverified; historical RestoreBookingIntegrity still has CASCADE but is superseded in source.",
+      "evidence": [
+        {
+          "path": "backend/migrations/1789750500000-Phase2IntegrityAndConstraints.ts",
+          "line": 27
+        }
+      ]
+    },
+    {
+      "id": "GAP-11",
+      "status": "fixed",
+      "claim": "Complaint transitions unenforced in SQL",
+      "current": "Phase2 migration defines complaint transition function and BEFORE UPDATE OF status trigger consistent with current shared transition table. Database installation/behavior unverified.",
+      "evidence": [
+        {
+          "path": "backend/migrations/1789750500000-Phase2IntegrityAndConstraints.ts",
+          "line": 36
+        },
+        {
+          "path": "backend/migrations/1789750500000-Phase2IntegrityAndConstraints.ts",
+          "line": 61
+        },
+        {
+          "path": "shared/complaint-lifecycle.types.ts",
+          "line": 27
+        }
+      ]
+    },
+    {
+      "id": "GAP-12",
+      "status": "partial",
+      "claim": "Chat client_message_id has no unique constraint",
+      "current": "Partial unique index now exists in entity and Phase2 migration. Original missing-index defect addressed in source. Service retains lookup-then-save pattern without demonstrated unique-violation replay recovery, so concurrent retries may fail instead of return existing message; live behavior unverified.",
+      "evidence": [
+        {
+          "path": "backend/src/bookings/domain/booking-message.entity.ts",
+          "line": 14
+        },
+        {
+          "path": "backend/migrations/1789750500000-Phase2IntegrityAndConstraints.ts",
+          "line": 32
+        },
+        {
+          "path": "backend/src/bookings/booking-messages.service.ts",
+          "line": 148
+        }
+      ]
+    },
+    {
+      "id": "GAP-13",
+      "status": "fixed",
+      "claim": "Dead public mock inbox controller ships in source",
+      "current": "backend/src/notifications/inbox.controller.ts no longer exists. Active domain controller remains; deletion verified by filesystem. Original stub was unmounted, not an exposed production endpoint.",
+      "evidence": [
+        {
+          "path": "backend/src/notifications/domain/inbox.controller.ts",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "GAP-14",
+      "status": "fixed",
+      "claim": "Complaint status body is inline type bypassing ValidationPipe",
+      "current": "Controller uses decorated UpdateComplaintStatusDto with IsEnum and bounded optional notes.",
+      "evidence": [
+        {
+          "path": "backend/src/admin/admin-management.controller.ts",
+          "line": 58
+        },
+        {
+          "path": "backend/src/admin/admin-management.dto.ts",
+          "line": 71
+        }
+      ]
+    },
+    {
+      "id": "GAP-14/API-route-shadowing",
+      "status": "duplicate",
+      "claim": "API inventory uses GAP-14 for photo route shadowing",
+      "current": "ID collision: this claim corresponds to canonical GAP-04, not complaint DTO GAP-14. Original path collision is unsupported; route reordered.",
+      "evidence": [
+        {
+          "path": "audit_reports/FIXNOW_API_AND_BACKEND_INVENTORY.md",
+          "line": 446
+        },
+        {
+          "path": "backend/src/ratings/ratings-admin.controller.ts",
+          "line": 24
+        }
+      ]
+    },
+    {
+      "id": "GAP-15",
+      "status": "partial",
+      "claim": "Recurring, guarantee, moderation tables lack FKs; evidence_urls simple-array corrupts commas",
+      "current": "Phase2 adds recurring customer, guarantee booking and moderation photo FKs; evidence_urls is jsonb in entity and migration. Additional soft UUID associations remain (recurring service_category_id, guarantee customer/provider/re-service references, moderation actor). Historical comma-corrupted data cannot be reconstructed by string_to_array migration.",
+      "evidence": [
+        {
+          "path": "backend/migrations/1789750500000-Phase2IntegrityAndConstraints.ts",
+          "line": 67
+        },
+        {
+          "path": "backend/migrations/1789750500000-Phase2IntegrityAndConstraints.ts",
+          "line": 104
+        },
+        {
+          "path": "backend/src/guarantees/domain/guarantee-claim.entity.ts",
+          "line": 43
+        },
+        {
+          "path": "backend/src/bookings/domain/recurring-schedule.entity.ts",
+          "line": 25
+        },
+        {
+          "path": "backend/src/ratings/domain/review-photo-moderation-event.entity.ts",
+          "line": 23
+        }
+      ]
+    },
+    {
+      "id": "GAP-16",
+      "status": "partial",
+      "claim": "Schema probes all skip on empty DB",
+      "current": "Orphan-booking FK probe runs before empty-seed branch. Negative amount, coordinate and job-proof probes still skip when users/categories absent. Report path scripts/verify-schema.ts is wrong; actual file is backend/scripts/verify-schema.ts. Script performs writes/deletes, so not run in read-only reconciliation.",
+      "evidence": [
+        {
+          "path": "backend/scripts/verify-schema.ts",
+          "line": 247
+        },
+        {
+          "path": "backend/scripts/verify-schema.ts",
+          "line": 263
+        }
+      ]
+    },
+    {
+      "id": "GAP-16/API-DTO",
+      "status": "duplicate",
+      "claim": "API inventory uses GAP-16 for inline complaint body",
+      "current": "ID collision: corresponds to canonical GAP-14, fixed with decorated DTO.",
+      "evidence": [
+        {
+          "path": "audit_reports/FIXNOW_API_AND_BACKEND_INVENTORY.md",
+          "line": 330
+        },
+        {
+          "path": "backend/src/admin/admin-management.controller.ts",
+          "line": 58
+        }
+      ]
+    },
+    {
+      "id": "GAP-17",
+      "status": "open",
+      "claim": "Admin UserDetail expects name/email omitted by backend",
+      "current": "Backend intentionally returns minimal profile id/status/roles/timestamps. UI/type contract must honestly represent absent PII; adding PII is not automatically appropriate. Parent admin reconciliation covers current rendering.",
+      "evidence": [
+        {
+          "path": "backend/src/admin/admin-management.service.ts",
+          "line": 149
+        }
+      ]
+    },
+    {
+      "id": "GAP-18",
+      "status": "fixed",
+      "claim": "Support can directly access financial analytics",
+      "current": "Controller now requires adminAnalyticsRead; policy limits permission to operations_administrator and auditor.",
+      "evidence": [
+        {
+          "path": "backend/src/admin/admin-analytics.controller.ts",
+          "line": 12
+        },
+        {
+          "path": "backend/src/common/authorization/permission-policies.ts",
+          "line": 388
+        }
+      ]
+    },
+    {
+      "id": "GAP-18/API-pagination",
+      "status": "partial",
+      "claim": "API inventory uses GAP-18 for unpaginated complaint list",
+      "current": "ID collision: complaints now support bounded limit/offset, but management service ignores declared query.status. Canonical GAP-18 is analytics permission, not pagination.",
+      "evidence": [
+        {
+          "path": "audit_reports/FIXNOW_API_AND_BACKEND_INVENTORY.md",
+          "line": 328
+        },
+        {
+          "path": "backend/src/admin/admin-management.service.ts",
+          "line": 38
+        },
+        {
+          "path": "backend/src/support/complaints/complaints.service.ts",
+          "line": 243
+        }
+      ]
+    },
+    {
+      "id": "GAP-19/API-trust-pagination",
+      "status": "fixed",
+      "claim": "API inventory uses GAP-19 for unpaginated trust signals",
+      "current": "ID collision with mobile fabricated job proof. Trust endpoint now accepts limit/offset; service clamps take to 1..100 and applies skip. Status filtering remains a separate UI defect covered by parent.",
+      "evidence": [
+        {
+          "path": "audit_reports/FIXNOW_API_AND_BACKEND_INVENTORY.md",
+          "line": 279
+        },
+        {
+          "path": "backend/src/trust/trust-admin.controller.ts",
+          "line": 27
+        },
+        {
+          "path": "backend/src/trust/trust.service.ts",
+          "line": 282
+        }
+      ]
+    },
+    {
+      "id": "GAP-25/DB-audit-cascade",
+      "status": "duplicate",
+      "claim": "Database inventory uses GAP-25 for auth audit CASCADE",
+      "current": "ID collision with bookings pagination; corresponds to canonical GAP-10, source fixed by later migration.",
+      "evidence": [
+        {
+          "path": "audit_reports/FIXNOW_DATABASE_AND_INTEGRATIONS.md",
+          "line": 122
+        },
+        {
+          "path": "backend/migrations/1789750500000-Phase2IntegrityAndConstraints.ts",
+          "line": 27
+        }
+      ]
+    },
+    {
+      "id": "GAP-34",
+      "status": "unsupported",
+      "claim": "No CSRF tokens and no login limiter imply high-severity defect",
+      "current": "No extra CSRF token/Next-action limiter exists, but Next Server Actions have origin checks and backend admin login has explicit 5/min throttling plus credential lockout. Missing second limiter/token alone does not establish exploitable vulnerability; no bypass reproduced.",
+      "evidence": [
+        {
+          "path": "admin/src/auth/actions.ts",
+          "line": 15
+        },
+        {
+          "path": "backend/src/auth/admin-auth.controller.ts",
+          "line": 28
+        },
+        {
+          "path": "backend/src/auth/auth.service.ts",
+          "line": 213
+        }
+      ]
+    },
+    {
+      "id": "GAP-35",
+      "status": "fixed",
+      "claim": "Review photo status varchar length 512 disagrees with DB 16",
+      "current": "Status column is varchar(16); 512 now belongs to object_key, appropriately. No DB queried.",
+      "evidence": [
+        {
+          "path": "backend/src/ratings/domain/review-photo.entity.ts",
+          "line": 36
+        },
+        {
+          "path": "backend/src/ratings/domain/review-photo.entity.ts",
+          "line": 49
+        }
+      ]
+    },
+    {
+      "id": "GAP-36",
+      "status": "fixed",
+      "claim": "ComplaintStatus, PushPlatform, GuaranteeClaimStatus omit enumName",
+      "current": "All three named fields now explicitly declare native enum names. No live schema-diff proof.",
+      "evidence": [
+        {
+          "path": "backend/src/support/complaints/domain/complaint.entity.ts",
+          "line": 60
+        },
+        {
+          "path": "backend/src/notifications/push/push-device-token.entity.ts",
+          "line": 32
+        },
+        {
+          "path": "backend/src/guarantees/domain/guarantee-claim.entity.ts",
+          "line": 35
+        }
+      ]
+    },
+    {
+      "id": "GAP-71",
+      "status": "open",
+      "claim": "Complaint lifecycle tables duplicated in shared/admin",
+      "current": "Both independent tables remain with currently matching transitions. Admin comment claiming table is imported by both sides is inaccurate; drift risk persists.",
+      "evidence": [
+        {
+          "path": "shared/complaint-lifecycle.types.ts",
+          "line": 27
+        },
+        {
+          "path": "admin/src/features/operations/complaint-lifecycle.ts",
+          "line": 22
+        }
+      ]
+    },
+    {
+      "id": "GAP-78",
+      "status": "duplicate",
+      "claim": "Duplicate dead and active inbox controllers",
+      "current": "Same underlying dead stub as GAP-13, removed; active domain controller remains.",
+      "evidence": [
+        {
+          "path": "backend/src/notifications/domain/inbox.controller.ts",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "GAP-81",
+      "status": "unverified",
+      "claim": "Integration suite blocked by mandatory PostgreSQL port 55432",
+      "current": "Current guard also permits loopback default port 5432 with dedicated fixnow_integration_test or fixnow_test DB. Old mandatory-port statement stale. Suite not rerun: harness truncates data and scope is read-only. Counts and historical execution claims are not current results.",
+      "evidence": [
+        {
+          "path": "backend/test/support/test-data-source.ts",
+          "line": 139
+        },
+        {
+          "path": "backend/test/support/test-data-source.ts",
+          "line": 143
+        },
+        {
+          "path": "backend/package.json",
+          "line": 23
+        }
+      ]
+    },
+    {
+      "id": "GAP-82",
+      "status": "fixed",
+      "claim": "Transactional outbox has zero tests",
+      "current": "Dedicated tests now cover enqueue/dedupe, lease/SKIP LOCKED query, rollback, process, retry/backoff/dead-letter and prune. Existence does not prove real DB locking under concurrency.",
+      "evidence": [
+        {
+          "path": "backend/src/outbox/outbox.service.spec.ts",
+          "line": 11
+        },
+        {
+          "path": "backend/src/outbox/outbox.service.spec.ts",
+          "line": 111
+        },
+        {
+          "path": "backend/src/outbox/outbox.service.spec.ts",
+          "line": 191
+        }
+      ]
+    },
+    {
+      "id": "GAP-83",
+      "status": "fixed",
+      "claim": "ClamAV and S3 have zero tests",
+      "current": "Dedicated socket-mock scanner tests and mocked S3 command tests exist. Real storage and daemon integrations not exercised by these unit specs.",
+      "evidence": [
+        {
+          "path": "backend/src/storage/clamav-malware-scanner.spec.ts",
+          "line": 8
+        },
+        {
+          "path": "backend/src/storage/s3-private-object-storage.spec.ts",
+          "line": 11
+        }
+      ]
+    },
+    {
+      "id": "GAP-84",
+      "status": "partial",
+      "claim": "Eleven named controllers lack dedicated tests",
+      "current": "Four previously named gaps now have dedicated specs: payments, payments-admin, ratings-admin, emergency. Seven listed controllers still lack exact dedicated specs: provider earnings, application, profile, availability, documents, verification, ratings. Overall static inventory is 40 controller.ts files and 24 controller.spec.ts files, not coverage percentages.",
+      "evidence": [
+        {
+          "path": "backend/src/payments/payments.controller.spec.ts",
+          "line": 1
+        },
+        {
+          "path": "backend/src/payments/payments-admin.controller.spec.ts",
+          "line": 1
+        },
+        {
+          "path": "backend/src/ratings/ratings-admin.controller.spec.ts",
+          "line": 1
+        },
+        {
+          "path": "backend/src/emergency/emergency.controller.spec.ts",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "GAP-85",
+      "status": "partial",
+      "claim": "Admin operations, dispatch and resource ownership have no unit specs",
+      "current": "Dispatch handlers now have dedicated tests for registrations, fanout, project and expiry. No exact admin-operations.service.spec.ts or resource-ownership.spec.ts found; other authorization tests provide indirect coverage and do not prove none.",
+      "evidence": [
+        {
+          "path": "backend/src/bookings/booking-dispatch.handlers.spec.ts",
+          "line": 12
+        },
+        {
+          "path": "backend/src/admin/admin-operations.service.ts",
+          "line": 1
+        },
+        {
+          "path": "backend/src/common/authorization/resource-ownership.ts",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "GAP-86",
+      "status": "partial",
+      "claim": "All seventeen shared contracts lack tests; state machines untested",
+      "current": "Dedicated backend state-machines.spec.ts imports and checks booking and complaint tables; complaint service spec also covers transition invariants. No colocated shared specs, but zero-tests blanket claim false. Other compile-time type-only files do not inherently need runtime tests.",
+      "evidence": [
+        {
+          "path": "backend/src/common/state-machines.spec.ts",
+          "line": 1
+        },
+        {
+          "path": "backend/src/support/complaints/complaints.service.spec.ts",
+          "line": 390
+        }
+      ]
+    },
+    {
+      "id": "GAP-89/backend-test-harness",
+      "status": "partial",
+      "claim": "fix_tests.dart rewrites tests and MockApiTransport ships in production saved_address",
+      "current": "No fix_tests.dart found repository-wide. Named MockApiTransport no longer exists there; file has _NoopApiTransport retained for an in-memory repository factory. This is not evidence that actual production app injects mocks; parent mobile agent checks reachability.",
+      "evidence": [
+        {
+          "path": "mobile/lib/features/location/saved_address.dart",
+          "line": 4
+        },
+        {
+          "path": "mobile/lib/features/location/saved_address.dart",
+          "line": 115
+        }
+      ]
+    },
+    {
+      "id": "POLICY-cancellation",
+      "status": "open",
+      "claim": "En-route cancellation charges 100 rupees but backend fully refunds",
+      "current": "Current UI copy says 99 rupees, not 100. Booking cancellation and payment refunds are distinct operations; absence of fee capture is supported, automatic full refund claim is not established. Product pricing/fee decision remains required.",
+      "evidence": [
+        {
+          "path": "mobile/lib/features/bookings/cancellation_dialog.dart",
+          "line": 77
+        },
+        {
+          "path": "mobile/lib/features/support/customer_help_screen.dart",
+          "line": 91
+        },
+        {
+          "path": "backend/src/payments/payments.service.ts",
+          "line": 408
+        }
+      ]
+    },
+    {
+      "id": "POLICY-provider-reverification",
+      "status": "unverified",
+      "claim": "Police certificates require expiry after 365 days but no cron exists",
+      "current": "No expiry/reverification scheduler found in provider verification source. Report supplies no authoritative adopted 365-day policy; classify product requirement unverified, not proven compliance defect.",
+      "evidence": [
+        {
+          "path": "backend/src/providers/verification/provider-verification.controller.ts",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "POLICY-escrow",
+      "status": "unsupported",
+      "claim": "Escrow holding window ambiguously 24 versus 72 hours",
+      "current": "Current payments service explicitly describes ledger net of refunds and no payouts. No implemented escrow release scheduler found. Customer help promises Tuesday settlements, which is unsupported product copy and should be reconciled; do not invent approved 24/72 hour requirement.",
+      "evidence": [
+        {
+          "path": "backend/src/payments/payments.service.ts",
+          "line": 598
+        },
+        {
+          "path": "backend/src/payments/provider-earnings.controller.ts",
+          "line": 10
+        },
+        {
+          "path": "mobile/lib/features/support/customer_help_screen.dart",
+          "line": 46
+        }
+      ]
+    },
+    {
+      "id": "REPORT-integration-adapters",
+      "status": "unsupported",
+      "claim": "Database inventory describes Gemini vision, standalone speech adapter, redis-cache.service and mail.service as installed implementations",
+      "current": "Named paths do not exist. Actual AI adapter is ai/providers/huggingface-ai.provider.ts; SMTP is notifications/otp-delivery.ts; Redis is cache/cache.module.ts and realtime publisher. FCM is push-delivery.ts; Razorpay is payment-gateway.ts. Do not report nonexistent integrations as deployed/operational.",
+      "evidence": [
+        {
+          "path": "audit_reports/FIXNOW_DATABASE_AND_INTEGRATIONS.md",
+          "line": 146
+        },
+        {
+          "path": "backend/src/ai/providers/huggingface-ai.provider.ts",
+          "line": 53
+        },
+        {
+          "path": "backend/src/notifications/otp-delivery.ts",
+          "line": 16
+        },
+        {
+          "path": "backend/src/cache/cache.module.ts",
+          "line": 179
+        },
+        {
+          "path": "backend/src/payments/payment-gateway.ts",
+          "line": 1
+        },
+        {
+          "path": "backend/src/notifications/push/push-delivery.ts",
+          "line": 118
+        }
+      ]
+    },
+    {
+      "id": "REPORT-integration-config-behavior",
+      "status": "unsupported",
+      "claim": "Generic S3/AWS variables, presigned URLs, Redis graceful fallback, Postgres pool/TLS options are verified inventory",
+      "current": "S3 actually uses PROVIDER_DOCUMENT_* variables, private GetObject reads, quarantine metadata; no presigner here. Redis production failures remove readiness/fail boot, not blanket EventEmitter degradation. Database module does not explicitly set claimed pool/SSL options. Adapter defaults/retries/security promises must be re-evidenced individually; environment state not read.",
+      "evidence": [
+        {
+          "path": "backend/src/storage/s3-private-object-storage.ts",
+          "line": 41
+        },
+        {
+          "path": "backend/src/storage/s3-private-object-storage.ts",
+          "line": 76
+        },
+        {
+          "path": "backend/src/cache/cache.module.ts",
+          "line": 212
+        },
+        {
+          "path": "backend/src/database/database.module.ts",
+          "line": 9
+        }
+      ]
+    },
+    {
+      "id": "REPORT-emergency-policy",
+      "status": "unsupported",
+      "claim": "SOS waves at 60/120 seconds radii 3/6/12km with 300-second hotline fallback",
+      "current": "Current approved constant table uses wave 2 after 3 minutes, wave 3 after 8 minutes, wave2 radius multiplier 2, max wave 3, daily cap 3 and cooldown 30 minutes. Fallback guidance is local emergency services, not a proven dedicated hotline. Audit workflow table must not substitute invented schedule.",
+      "evidence": [
+        {
+          "path": "audit_reports/FIXNOW_DOMAIN_AND_WORKFLOW_INVENTORY.md",
+          "line": 245
+        },
+        {
+          "path": "backend/src/emergency/emergency-policy.ts",
+          "line": 23
+        },
+        {
+          "path": "backend/src/emergency/emergency-policy.ts",
+          "line": 40
+        }
+      ]
+    },
+    {
+      "id": "REPORT-map-geocode",
+      "status": "unsupported",
+      "claim": "Inventory says native geocoding service, BigDataCloud API key and Nominatim fallback plus OSM lacking custom User-Agent",
+      "current": "Actual BigDataCloud reverse-geocode-client calls live in location/live_location_service.dart and service_discovery_screen.dart. No referenced core/location/geocoding_service.dart exists. OSM widgets set userAgentPackageName to com.fixnow.app; no missing-User-Agent defect established. External terms/rate limits not verified.",
+      "evidence": [
+        {
+          "line": 73,
+          "path": "mobile/lib/features/location/live_location_service.dart"
+        },
+        {
+          "line": 493,
+          "path": "mobile/lib/features/tracking/provider_live_map.dart"
+        },
+        {
+          "line": 191,
+          "path": "mobile/lib/features/services/service_discovery_screen.dart"
+        }
+      ]
+    },
+    {
+      "id": "REPORT-metrics-mail",
+      "status": "unsupported",
+      "claim": "Inventory promises metrics IP allowlist and SMTP_PASSWORD/MAIL_FROM with audit persistence and timeout",
+      "current": "MetricsController is explicitly public with aggregate non-PII content, no controller IP allowlist. SMTP uses SMTP_PASS/SMTP_FROM in otp-delivery.ts; the adapter sends plain text, and its code does not set the reported 30-second timeout or audit-table write. Inventory must represent actual controls.",
+      "evidence": [
+        {
+          "line": 26,
+          "path": "backend/src/observability/metrics.controller.ts"
+        },
+        {
+          "line": 18,
+          "path": "backend/src/notifications/otp-delivery.ts"
+        },
+        {
+          "line": 24,
+          "path": "backend/src/notifications/otp-delivery.ts"
+        }
+      ]
+    }
+  ],
+  "validation": "2026-10-21 focused Jest run: outbox.service, clamav-malware-scanner, s3-private-object-storage, booking-dispatch.handlers, state-machines, ratings-admin.controller, catalog-seed: 7 suites passed; 47 tests passed; 103.022 seconds. Unit mocks only, no DB or external adapters contacted."
+}

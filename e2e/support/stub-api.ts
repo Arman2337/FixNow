@@ -58,6 +58,7 @@ interface StubSession {
  * path renders two different pages depending only on what the API says.
  */
 const tokens: Record<string, StubSession> = {
+  'e2e-paging': { userId: 'staff-paging', roles: ['operations_administrator'] },
   'e2e-analytics': { userId: 'staff-analytics', roles: ['operations_administrator'] },
   'e2e-auditor': { userId: 'staff-auditor', roles: ['auditor'] },
   'e2e-support': { userId: 'staff-support', roles: ['support_agent'] },
@@ -148,6 +149,33 @@ function send(res: ServerResponse, status: number, body: unknown): void {
   res.end(payload);
 }
 
+const olderComplaints = Array.from({ length: 46 }, (_, i) => ({
+  ...complaints[1], id: `older-case-${String(i).padStart(4, '0')}`, category: i < 25 ? 'ARCHIVED' : 'OLDER_ONLY',
+  status: i < 25 ? 'CLOSED' : 'OPEN', description: `Case record ${i}`,
+}));
+const signals = Array.from({ length: 16 }, (_, i) => ({
+  id: `signal-${i}`, subjectType: 'PROVIDER', subjectId: 'provider-1', ruleCode: 'provider-cancellation-frequency-v1',
+  windowStart: '2026-10-01', severity: 'HIGH', status: i < 15 ? 'REVIEWED' : 'OPEN',
+  evidenceSummary: i < 15 ? 'Previously reviewed' : 'Older open signal needs review', createdAt: '2026-10-01',
+}));
+const claims = Array.from({ length: 71 }, (_, i) => ({
+  id: `claim-${i}`, bookingId: `booking-${i}`, customerId: 'customer-1', status: 'PENDING',
+  description: `Guarantee repair ${i}`, createdAt: '2026-10-01',
+}));
+const categories = Array.from({ length: 20 }, (_, i) => ({
+  id: `category-${i}`, name: `Service category ${i}`, slug: `service-${i}`, description: `Catalog record ${i}`,
+  isActive: true, isEmergency: false, displayOrder: i, pricing: null,
+}));
+
+function filteredPage<T extends { status?: string }>(rows: T[], url: URL): T[] {
+  const status = url.searchParams.get('status');
+  const search = url.searchParams.get('search')?.toLowerCase();
+  const filtered = rows.filter(row => (!status || row.status === status) && (!search || JSON.stringify(row).toLowerCase().includes(search)));
+  const offset = Number(url.searchParams.get('offset') ?? 0);
+  const limit = Number(url.searchParams.get('limit') ?? 20);
+  return filtered.slice(offset, offset + limit);
+}
+
 function sessionFor(req: IncomingMessage): StubSession | null {
   const header = req.headers.authorization;
   if (typeof header !== 'string') return null;
@@ -196,8 +224,20 @@ const server = createServer((req, res) => {
     // The support page maps over the result directly, so an envelope here would
     // render zero rows and every assertion about complaint content would fail -
     // correctly, but for a reason that has nothing to do with the app.
-    send(res, 200, complaints);
+    const rows = req.headers.authorization === 'Bearer e2e-paging' ? olderComplaints : complaints;
+    send(res, 200, filteredPage(rows, url));
     return;
+  }
+
+  if (path === '/admin/trust/signals') { send(res, 200, filteredPage(signals, url)); return; }
+  if (path === '/guarantees/claims') { send(res, 200, filteredPage(claims, url)); return; }
+  if (path === '/admin/service-categories') {
+    const offset = Number(url.searchParams.get('offset') ?? 0);
+    const limit = Number(url.searchParams.get('limit') ?? 20);
+    send(res, 200, categories.slice(offset, offset + limit)); return;
+  }
+  if (['/admin/bookings', '/admin/users', '/admin/provider-applications'].includes(path)) {
+    send(res, 200, { items: [], nextCursor: null }); return;
   }
 
   send(res, 404, {

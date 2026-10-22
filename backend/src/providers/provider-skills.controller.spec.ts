@@ -1,5 +1,5 @@
 /* Jest repository/service mocks are intentionally asserted as detached functions. */
-/* eslint-disable @typescript-eslint/unbound-method */
+
 import { ForbiddenException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ProviderSkillsController } from './provider-skills.controller';

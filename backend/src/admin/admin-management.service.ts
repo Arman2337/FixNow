@@ -11,6 +11,7 @@ import { ProviderApplicationEntity } from '../providers/provider-application.ent
 import { ProviderProfileEntity } from '../providers/provider-profile.entity';
 import { ProviderVerificationEventEntity } from '../providers/verification/provider-verification-event.entity';
 import { ComplaintsService } from '../support/complaints/complaints.service';
+import { Complaint } from '../support/complaints/domain/complaint.entity';
 import type {
   AdminPageQueryDto,
   ComplaintsPageQueryDto,
@@ -35,10 +36,25 @@ export class AdminManagementService {
     private readonly complaintsService: ComplaintsService,
   ) {}
 
-  async listComplaints(adminId: string, query?: ComplaintsPageQueryDto) {
+  async listComplaints(_adminId: string, query?: ComplaintsPageQueryDto) {
     const limit = query?.limit ?? 20;
     const offset = query?.offset ?? 0;
-    return this.complaintsService.getComplaints(adminId, true, limit, offset);
+    const builder = this.users.manager
+      .getRepository(Complaint)
+      .createQueryBuilder('complaint');
+    if (query?.status)
+      builder.andWhere('complaint.status = :status', { status: query.status });
+    if (query?.search)
+      builder.andWhere(
+        '(CAST(complaint.id AS text) ILIKE :search OR CAST(complaint.submitterId AS text) ILIKE :search OR complaint.category ILIKE :search OR complaint.description ILIKE :search)',
+        { search: `%${query.search}%` },
+      );
+    return builder
+      .orderBy('complaint.createdAt', 'DESC')
+      .addOrderBy('complaint.id', 'DESC')
+      .take(Math.min(Math.max(limit, 1), 100))
+      .skip(Math.max(offset, 0))
+      .getMany();
   }
 
   async getComplaintDetail(id: string, adminId: string) {

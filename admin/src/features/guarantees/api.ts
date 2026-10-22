@@ -17,9 +17,11 @@ export interface GuaranteeClaim {
 
 export type GuaranteeStatus = "PENDING" | "IN_REVIEW" | "MORE_INFO" | "APPROVED" | "REJECTED" | "COMPLETED";
 
-export function listClaims(status?: string) {
-  const query = status ? `?${new URLSearchParams({ status })}` : "";
-  return managementRequest<readonly GuaranteeClaim[]>(`/guarantees/claims${query}`);
+export function listClaims(status?: string, limit = 20, offset = 0, search?: string) {
+  const query = new URLSearchParams({ limit: String(limit), offset: String(offset) });
+  if (status) query.set("status", status);
+  if (search) query.set("search", search);
+  return managementRequest<readonly GuaranteeClaim[]>(`/guarantees/claims?${query}`);
 }
 
 export function getClaim(id: string) {

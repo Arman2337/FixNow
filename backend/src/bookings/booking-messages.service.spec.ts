@@ -168,6 +168,59 @@ describe('BookingMessagesService', () => {
   });
 
   describe('sendMessage', () => {
+    it('returns the committed winner of a concurrent retry without publishing twice', async () => {
+      bookingsRepo.findOne.mockResolvedValue(mockBooking());
+      messagesRepo.findOne
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(mockMessage());
+      messagesRepo.save.mockRejectedValue({
+        code: '23505',
+        constraint: 'uq_booking_messages_booking_client_msg',
+      });
+      const result = await service.sendMessage(bookingId, customerId, {
+        messageText: 'Buzz code is #402',
+        clientMessageId: 'client-1',
+      });
+      expect(result.id).toBe(mockMessage().id);
+      expect(messagesRepo.findOne).toHaveBeenLastCalledWith({
+        where: {
+          bookingId,
+          senderUserId: customerId,
+          clientMessageId: 'client-1',
+        },
+      });
+      expect(projections.publishChatMessage).not.toHaveBeenCalled();
+      expect(notifications.notifyChatMessage).not.toHaveBeenCalled();
+    });
+
+    it('does not return the other participant message on a colliding client id', async () => {
+      bookingsRepo.findOne.mockResolvedValue(mockBooking());
+      messagesRepo.findOne.mockResolvedValue(null);
+      messagesRepo.save.mockRejectedValue({
+        code: '23505',
+        constraint: 'uq_booking_messages_booking_client_msg',
+      });
+      await expect(
+        service.sendMessage(bookingId, customerId, {
+          messageText: 'Private',
+          clientMessageId: 'other-client',
+        }),
+      ).rejects.toBeInstanceOf(ConflictException);
+      expect(projections.publishChatMessage).not.toHaveBeenCalled();
+    });
+
+    it('propagates unrelated persistence failures', async () => {
+      bookingsRepo.findOne.mockResolvedValue(mockBooking());
+      messagesRepo.findOne.mockResolvedValue(null);
+      const failure = { code: '23505', constraint: 'some_other_index' };
+      messagesRepo.save.mockRejectedValue(failure);
+      await expect(
+        service.sendMessage(bookingId, customerId, {
+          messageText: 'Hello',
+          clientMessageId: 'client-1',
+        }),
+      ).rejects.toBe(failure);
+    });
     it('saves, broadcasts, and notifies for valid message during ASSIGNED status', async () => {
       bookingsRepo.findOne.mockResolvedValue(
         mockBooking(BookingStatus.ASSIGNED),

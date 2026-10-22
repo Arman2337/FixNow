@@ -75,7 +75,7 @@ describe("TrustPage", () => {
   it("filters to open-only when requested and hides actions on reviewed rows", async () => {
     vi.mocked(listSignals).mockResolvedValue({
       ok: true,
-      value: [openSignal, reviewedSignal],
+      value: [openSignal],
     } as never);
 
     const markup = renderToStaticMarkup(
@@ -84,6 +84,9 @@ describe("TrustPage", () => {
 
     expect(markup).toContain("signal-open-1234");
     expect(markup).not.toContain("signal-done-5678");
+    expect(listSignals).toHaveBeenCalledWith(11, 0, "OPEN");
+
+    vi.mocked(listSignals).mockResolvedValue({ ok: true, value: [openSignal, reviewedSignal] } as never);
 
     const allMarkup = renderToStaticMarkup(
       await TrustPage({ searchParams: Promise.resolve({}) }),

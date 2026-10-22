@@ -76,11 +76,15 @@ void main() {
 
         // Verify FixNow statutory details are embedded in stream
         expect(pdfString.contains('FixNow'), isTrue);
-        expect(pdfString.contains('24AAACF1234F1Z5'), isTrue); // GSTIN
-        expect(pdfString.contains('9987'), isTrue); // SAC Code
+        expect(pdfString.contains('24AAACF1234F1Z5'), isFalse);
+        expect(
+          pdfString.contains('Tax registration details not configured'),
+          isTrue,
+        );
         expect(pdfString.contains('INV-2026-0899'), isTrue);
         expect(pdfString.contains('Rahul Verma'), isTrue);
-        expect(pdfString.contains('TAX INVOICE'), isTrue);
+        expect(pdfString.contains('RECEIPT [PAID]'), isTrue);
+        expect(pdfString.contains('COMPLIANCE GUARANTEE'), isFalse);
       },
     );
 
@@ -91,8 +95,12 @@ void main() {
       final summary = FixPdfInvoiceBuilder.generateShareSummary(sampleInvoice);
       expect(summary.contains('INV-2026-0899'), isTrue);
       expect(summary.contains('PAID'), isTrue);
-      expect(summary.contains('GSTIN: 24AAACF1234F1Z5'), isTrue);
-      expect(summary.contains('SAC: 9987'), isTrue);
+      expect(summary.contains('GSTIN: 24AAACF1234F1Z5'), isFalse);
+      expect(
+        summary.contains('Tax registration details not configured'),
+        isTrue,
+      );
+      expect(summary.contains('https://fixnow.app/verify/invoice'), isFalse);
       expect(summary.contains('booking-seed-1'), isTrue);
     });
   });
@@ -199,7 +207,10 @@ void main() {
 
         // GST Tax Breakdown card
         expect(find.text('GST Tax Breakdown'), findsOneWidget);
-        expect(find.text('SAC 9987 • 18% GST'), findsOneWidget);
+        expect(
+          find.text('Tax registration details not configured'),
+          findsNWidgets(2),
+        );
         expect(find.text('Taxable Service Base'), findsOneWidget);
         expect(find.text('Central GST (CGST @ 9%)'), findsOneWidget);
         expect(find.text('State GST (SGST @ 9%)'), findsOneWidget);

@@ -1,5 +1,5 @@
 /* Jest service mocks are intentionally asserted as detached functions. */
-/* eslint-disable @typescript-eslint/unbound-method */
+
 import {
   BadRequestException,
   ConflictException,

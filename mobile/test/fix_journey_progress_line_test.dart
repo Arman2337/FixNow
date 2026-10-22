@@ -1,4 +1,4 @@
-import 'package:fixnow_mobile/design_system/fix_journey_progress_line.dart';
+import 'support/prototypes/fix_journey_progress_line.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

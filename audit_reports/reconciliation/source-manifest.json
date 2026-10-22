@@ -1,0 +1,687 @@
+[
+  {
+    "path": "admin/src/app/bookings/[bookingId]/page.tsx",
+    "sha256": "8b8cedcae85d823a960d3074990f59535ed92d4bd916fccd517a8206a0444268",
+    "bytes": 6883
+  },
+  {
+    "path": "admin/src/app/bookings/page.tsx",
+    "sha256": "158033ab90702174e34a7952dc746a751dc7ee8f31c50b75a1e4c8275dcacc7e",
+    "bytes": 9889
+  },
+  {
+    "path": "admin/src/app/guarantees/[id]/page.test.ts",
+    "sha256": "b67dcc94868d8e5a68520b1386ec91870c81e3d3fed7bbc4a8a85ad33690631d",
+    "bytes": 1140
+  },
+  {
+    "path": "admin/src/app/guarantees/[id]/page.tsx",
+    "sha256": "4c7bcce85279700a9f3637760695e0a0bd79e9016e6aec88dad6a315b661c343",
+    "bytes": 11588
+  },
+  {
+    "path": "admin/src/app/guarantees/page.tsx",
+    "sha256": "3f2269b27fb9bbf04c75f031006e2513acb3f312cf277cca8caf23080489d455",
+    "bytes": 5907
+  },
+  {
+    "path": "admin/src/app/providers/[applicationId]/page.tsx",
+    "sha256": "2e39434e14df7983e13f787370d170fd32754d8d80264dabac656cf8031e9609",
+    "bytes": 18762
+  },
+  {
+    "path": "admin/src/app/providers/page.tsx",
+    "sha256": "8518631f09d98973f95d24cec6b54e6243e83fce93c10fe717a7aa28c6d6b1a4",
+    "bytes": 8549
+  },
+  {
+    "path": "admin/src/app/search/page.tsx",
+    "sha256": "92904988bed95cfc7325a538b969b3890da75e68a1301e12b286b711b51645f6",
+    "bytes": 6719
+  },
+  {
+    "path": "admin/src/app/services/page.tsx",
+    "sha256": "30593f2c7cde9df045ae5ba6417bfc5b838b589e09f8b0435699bd2319958644",
+    "bytes": 14209
+  },
+  {
+    "path": "admin/src/app/support/[complaintId]/page.tsx",
+    "sha256": "cabeac377b838c3421f7342bf1002f12fd1d3b7268e23aab86fc793db4ce62d0",
+    "bytes": 22146
+  },
+  {
+    "path": "admin/src/app/support/page.tsx",
+    "sha256": "2bae599305e494053660e607cd3fe045bd44deba4f0a90a9bd26334a5d22ce47",
+    "bytes": 10728
+  },
+  {
+    "path": "admin/src/app/trust/page.test.tsx",
+    "sha256": "9b4bcb7fd61bd05327bfcd9c374db7f3b90d7b121a3dce1961c7dfe8e28232bf",
+    "bytes": 3772
+  },
+  {
+    "path": "admin/src/app/trust/page.tsx",
+    "sha256": "346187c534f8510761788ca5d7ec1282c383b88746b256e60bba47e1c3507796",
+    "bytes": 18687
+  },
+  {
+    "path": "admin/src/app/unauthorized/page.tsx",
+    "sha256": "54003422f123b7829aee39acf3200c23f3f499da8a2cf63d810dd70dca366d34",
+    "bytes": 1589
+  },
+  {
+    "path": "admin/src/app/users/[userId]/page.tsx",
+    "sha256": "03e933c468df4906eee70b3ebdaa438986221a21332ff4fa52b0d632119996c9",
+    "bytes": 5592
+  },
+  {
+    "path": "admin/src/app/users/page.tsx",
+    "sha256": "5fddb9e9ca05b170ba8415c6badbf53fb8641f7eaebf0e1914fb8811b9e7c125",
+    "bytes": 8520
+  },
+  {
+    "path": "admin/src/auth/actions.ts",
+    "sha256": "4b400bda8abfeb3ad8aa4b7727b3d5910de40728014916905f16677b198f0341",
+    "bytes": 1771
+  },
+  {
+    "path": "admin/src/auth/api.ts",
+    "sha256": "73fa8becd8bc5601750ac5b5942e484c12b31337848edcb2a81e302578db2583",
+    "bytes": 1969
+  },
+  {
+    "path": "admin/src/auth/login-form.tsx",
+    "sha256": "8ff679a010c33c12f4b37a46d4c2b6de212b9b534ea1e8a890d81c8ff0464805",
+    "bytes": 5396
+  },
+  {
+    "path": "admin/src/auth/roles.ts",
+    "sha256": "367b5bcce22373bde048da301c1734493c2f7f9e7b36e72cd43e7edd217409c9",
+    "bytes": 2949
+  },
+  {
+    "path": "admin/src/auth/session.ts",
+    "sha256": "3bb831cfd7660516734cda3ead9bc3c78a494311e9380f0fa2029af4c1c183a1",
+    "bytes": 2115
+  },
+  {
+    "path": "admin/src/components/admin-shell.tsx",
+    "sha256": "77f86f656d39d208fa282ac2060179401bd2aa9f75ea24149a49601e30ac04f7",
+    "bytes": 10755
+  },
+  {
+    "path": "admin/src/features/management-api.ts",
+    "sha256": "5c5e42f99753efbabbb47b84580f294c9c2460f6706b2c56b8c65e4f5b3e877b",
+    "bytes": 1265
+  },
+  {
+    "path": "admin/src/features/operations/api.ts",
+    "sha256": "2c0ea64503784562f93566789be748ea82c61d8021d945aecf93db31b6a0babf",
+    "bytes": 2363
+  },
+  {
+    "path": "admin/src/features/operations/complaint-lifecycle.ts",
+    "sha256": "8489a77a70f8a9f31e933e5d40ccfb33f469094506db150e032f6ee5c456bba9",
+    "bytes": 1703
+  },
+  {
+    "path": "admin/src/features/operations/types.ts",
+    "sha256": "f353c0d8d176c1533026a2e757fb466b6be582a660b6634cd195dce770e02da4",
+    "bytes": 2520
+  },
+  {
+    "path": "admin/src/features/status-badge.tsx",
+    "sha256": "2d7bdb084feca889bcb5ef484339ebab71155349f70f528e76891b5af5556c11",
+    "bytes": 857
+  },
+  {
+    "path": "admin/src/features/trust/actions.ts",
+    "sha256": "0c9bb60d3dc536b3541af3100b99b593f080468c4cb57c64e738a47b520a7451",
+    "bytes": 1828
+  },
+  {
+    "path": "admin/src/features/trust/api.ts",
+    "sha256": "aea93ed12084bf385122d0e9d6ca4497aab06e695a6bf71939e398a304581cf6",
+    "bytes": 1396
+  },
+  {
+    "path": "admin/src/features/users/api.ts",
+    "sha256": "43d91123f3c8233033a08fab6823c88779da66f9942bc38ed79a6eb75d246dd6",
+    "bytes": 522
+  },
+  {
+    "path": "admin/src/features/users/types.ts",
+    "sha256": "d7a3ed03911b9e347a45c145ed882062c42b7bef2a2867c3c4e0d5f482370bbd",
+    "bytes": 285
+  },
+  {
+    "path": "admin/src/lib/format.ts",
+    "sha256": "de2ef7ddb7da926474ca0391df532fc24a64cf3966f71ef8a34638ca3aba8029",
+    "bytes": 129
+  },
+  {
+    "path": "backend/migrations/1786521300000-BookingLineItems.ts",
+    "sha256": "c9a4489ace4076017a368336647a83e946335b84ea23af7296b0245f2fd748aa",
+    "bytes": 924
+  },
+  {
+    "path": "backend/migrations/1786521300000-ComplaintsSchema.ts",
+    "sha256": "7434a7bb763ca6a658ba64653d718fd451e56bd438998d478968577d2e48f757",
+    "bytes": 6810
+  },
+  {
+    "path": "backend/migrations/1789750500000-Phase2IntegrityAndConstraints.ts",
+    "sha256": "726cf18901966c1caef26c15f34ef371f080e684b59b864ecacbdf052662ba13",
+    "bytes": 6548
+  },
+  {
+    "path": "backend/package.json",
+    "sha256": "d28fd99b9877ab085831a8f0c73f16e8a9fe6f3123f65d208a3eed96263de64c",
+    "bytes": 4785
+  },
+  {
+    "path": "backend/scripts/verify-schema.ts",
+    "sha256": "fb7688cab751ced959d630fe7bd53aec9027094a19e9f9f67e3f4ca7f0429871",
+    "bytes": 15234
+  },
+  {
+    "path": "backend/seed.js",
+    "sha256": "8633ad244cbd0d3e4914014cb23683f91593639f815452adcd8e7d5b64cf52a3",
+    "bytes": 10348
+  },
+  {
+    "path": "backend/src/admin/admin-analytics.controller.ts",
+    "sha256": "59d96b41716cd651ae973d2d1d1fa5062e51eb8fdb85e0a7341b667c3ba29329",
+    "bytes": 645
+  },
+  {
+    "path": "backend/src/admin/admin-management.controller.ts",
+    "sha256": "165453a1aea7a8d12cce22725598094622c4277489d9a597fdce51213b8b89eb",
+    "bytes": 7278
+  },
+  {
+    "path": "backend/src/admin/admin-management.dto.ts",
+    "sha256": "6eee95b8cbc1cf74278020873d1b029689964335762d09e0457e41544972e577",
+    "bytes": 2394
+  },
+  {
+    "path": "backend/src/admin/admin-management.service.ts",
+    "sha256": "34efca29529ef042026ba43133603e65ca7675e890bac597409c8404e7da1adf",
+    "bytes": 8055
+  },
+  {
+    "path": "backend/src/admin/admin-operations.service.ts",
+    "sha256": "f175c4e52419162b24a2c1099d283d3a0e05a330c82ca54a645407ded43b0d2f",
+    "bytes": 5696
+  },
+  {
+    "path": "backend/src/ai/providers/huggingface-ai.provider.ts",
+    "sha256": "19dfa1eafdaaf0b738f5817369f78f30f023a2875a91ad22369fcafa6ab5ad7f",
+    "bytes": 8578
+  },
+  {
+    "path": "backend/src/app.module.ts",
+    "sha256": "644c5882b90bc0613c66195608068070fcd3a4931224edbba4136c551ff154bd",
+    "bytes": 3397
+  },
+  {
+    "path": "backend/src/auth/admin-auth.controller.ts",
+    "sha256": "338129accf4809f0c1efa715ed98f4893b2e808adb6995c97accc0f59f9aea37",
+    "bytes": 1731
+  },
+  {
+    "path": "backend/src/auth/auth.service.ts",
+    "sha256": "f14dae786076c96bc270ada49d6723411b92a8f42f8e592c29f24a648bb39a3b",
+    "bytes": 14937
+  },
+  {
+    "path": "backend/src/bookings/booking-dispatch.handlers.spec.ts",
+    "sha256": "ae7c42dca7e0e7dc964ad5a1069bccab3aae813dda32cac9da094393a0119a37",
+    "bytes": 7253
+  },
+  {
+    "path": "backend/src/bookings/booking-messages.service.ts",
+    "sha256": "a1f83c80999d87d8619a981cae0e72dcfeec6944e79852875ca9530c561a62cf",
+    "bytes": 6270
+  },
+  {
+    "path": "backend/src/bookings/bookings.dto.ts",
+    "sha256": "b991bc107e8648fe48f5aea3767b7d441d7190761df357bc9cd0f66fe02250d4",
+    "bytes": 4812
+  },
+  {
+    "path": "backend/src/bookings/domain/booking-message.entity.ts",
+    "sha256": "ff5ad07d9379451416e60e414cf3b6845451786d61a17ab05647347f7a4c372c",
+    "bytes": 1327
+  },
+  {
+    "path": "backend/src/bookings/domain/recurring-schedule.entity.ts",
+    "sha256": "51342b1e7991289406632f4460155a11bfb67415f9b52640320e570dea8bb77a",
+    "bytes": 1266
+  },
+  {
+    "path": "backend/src/cache/cache.module.ts",
+    "sha256": "be2a074e83b6c37863b675e5192ccb99fbe18b960a08069c2ae6c5b24e60f519",
+    "bytes": 8303
+  },
+  {
+    "path": "backend/src/common/authorization/permission-policies.ts",
+    "sha256": "4c8cd91cfc855988a504a6e13b632ddb450de6a39844f174cd244976158ed207",
+    "bytes": 18025
+  },
+  {
+    "path": "backend/src/common/authorization/resource-ownership.ts",
+    "sha256": "905836b084a53c2a1a5ce3c6af0e882553d40f79c8165a49bc2a4e89e58ed989",
+    "bytes": 8031
+  },
+  {
+    "path": "backend/src/common/list-pagination.dto.ts",
+    "sha256": "4b02be70836b34f4526ab3159500d49b3ad7a49bd20b1d876b530f57a44642f0",
+    "bytes": 3498
+  },
+  {
+    "path": "backend/src/common/state-machines.spec.ts",
+    "sha256": "0e510778749eba2642e9c95d261636a251689a4f8e953a687b365aa149aa1df2",
+    "bytes": 7791
+  },
+  {
+    "path": "backend/src/database/database.module.ts",
+    "sha256": "998dcde46795fb584d03c333f7806138aa696e6065c3dbe87bd0dd11fd7f005e",
+    "bytes": 1142
+  },
+  {
+    "path": "backend/src/emergency/emergency-policy.ts",
+    "sha256": "621be84cad01bcb9a72060dabd41807fc934cd3740c50366f5ff60e14963c33a",
+    "bytes": 1920
+  },
+  {
+    "path": "backend/src/emergency/emergency.controller.spec.ts",
+    "sha256": "0d7b02690e5188ff645fcbdd1f66b647561528d46ebca9b582b6c8ac2f259555",
+    "bytes": 3000
+  },
+  {
+    "path": "backend/src/guarantees/domain/guarantee-claim.entity.ts",
+    "sha256": "c06154e3cd94063b60b8a4054ba8e082722687f6c6e6780fd7c41479dd809fd4",
+    "bytes": 1509
+  },
+  {
+    "path": "backend/src/guarantees/dto/create-guarantee-claim.dto.ts",
+    "sha256": "d432e698350828be41f61a272a348c138fc56c2bd6ae81e80e6eb92099f3e763",
+    "bytes": 2087
+  },
+  {
+    "path": "backend/src/guarantees/guarantees.service.ts",
+    "sha256": "79024f7fb55fa76606ff61c86b6305adb5e660e1f4ec2339b3fc23b8f4441232",
+    "bytes": 8872
+  },
+  {
+    "path": "backend/src/notifications/domain/inbox.controller.ts",
+    "sha256": "7ffbdc8749e6023e8a58093f2443315178c298722320460e7d54b614fe558a91",
+    "bytes": 4787
+  },
+  {
+    "path": "backend/src/notifications/otp-delivery.ts",
+    "sha256": "251b24cb1b2116bd4cbc9a8c1c42791d3c62531ce5de593a102a1a8e203b8a8d",
+    "bytes": 1311
+  },
+  {
+    "path": "backend/src/notifications/push/push-delivery.ts",
+    "sha256": "7cf94801d037a255074cd16ccc0226b112da0f9810c7d8f4fede8fa7b4b26348",
+    "bytes": 4635
+  },
+  {
+    "path": "backend/src/notifications/push/push-device-token.entity.ts",
+    "sha256": "a4d23e4c19be0c85dc01f78ff5580b41392de90a185d8952880ef22265ef5c57",
+    "bytes": 1129
+  },
+  {
+    "path": "backend/src/observability/metrics.controller.ts",
+    "sha256": "77f39d5135d4d0a17a0da2f3ec60b5879799f69a1260202f278377a9135a87fa",
+    "bytes": 1663
+  },
+  {
+    "path": "backend/src/outbox/outbox.service.spec.ts",
+    "sha256": "ca720091774e1fbcb6afbb31b68b8bf993ae0a42d1eec36dd06fa7649fad1c0c",
+    "bytes": 8415
+  },
+  {
+    "path": "backend/src/payments/payment-gateway.ts",
+    "sha256": "8da9498994542ea4c672311b8f734fd7bd775af1024970f209b841881a41f392",
+    "bytes": 8080
+  },
+  {
+    "path": "backend/src/payments/payments-admin.controller.spec.ts",
+    "sha256": "90c1fcfcf4194927f40e79ad639772c3f43a164ba05f3587e2968af35cd2babe",
+    "bytes": 1822
+  },
+  {
+    "path": "backend/src/payments/payments.controller.spec.ts",
+    "sha256": "f7cb5e7f6e63ce3112f4fbed714c42f52d5a442a152d52d39d05e23c4daca4bf",
+    "bytes": 3836
+  },
+  {
+    "path": "backend/src/payments/payments.service.ts",
+    "sha256": "90ff58a57f87855ab1c00e0050fa7333c280b718da8886e96c5410a4e75deef6",
+    "bytes": 27408
+  },
+  {
+    "path": "backend/src/payments/provider-earnings.controller.ts",
+    "sha256": "ea6d375a2e7e1f5114695d16480cbf5225c944ba70ff720e690ff9764e5a0905",
+    "bytes": 1776
+  },
+  {
+    "path": "backend/src/providers/verification/provider-verification.controller.ts",
+    "sha256": "a0fc0702145683d29c965626fabeadd9fa469f3f96218da6fb08cc5075812a3f",
+    "bytes": 1560
+  },
+  {
+    "path": "backend/src/ratings/domain/review-photo-moderation-event.entity.ts",
+    "sha256": "2512812cc286357dadf95675f0f126dbd727055ba23e75453a30f1704dbf4bc9",
+    "bytes": 780
+  },
+  {
+    "path": "backend/src/ratings/domain/review-photo.entity.ts",
+    "sha256": "40162830cb7fb9b5524198e75b646678474e632a73186b1838d4c213390bbbb2",
+    "bytes": 1471
+  },
+  {
+    "path": "backend/src/ratings/ratings-admin.controller.spec.ts",
+    "sha256": "ee184aab5b1e28ba81b530e3b9d3e37488a639b2a218ca224aba5cc1b78c5e18",
+    "bytes": 3773
+  },
+  {
+    "path": "backend/src/ratings/ratings-admin.controller.ts",
+    "sha256": "39cfa90c930b2f8ed0143ff4df75ef0dddfd90adfe09f27ce72637e8a165a6e5",
+    "bytes": 1925
+  },
+  {
+    "path": "backend/src/services/catalog-seed.spec.ts",
+    "sha256": "11aa3f369904b7de49f16b92c74135d92c2059671dde521d391259283a65f33c",
+    "bytes": 7179
+  },
+  {
+    "path": "backend/src/storage/clamav-malware-scanner.spec.ts",
+    "sha256": "417fde978874c5a53a137b7c025617ce8b32b7bcb9d11d94639952aed06fd87b",
+    "bytes": 2763
+  },
+  {
+    "path": "backend/src/storage/s3-private-object-storage.spec.ts",
+    "sha256": "861d843ced8300ceee0cfd33676aeae7d42d679c411c981e79d1bc0b5129aae5",
+    "bytes": 3163
+  },
+  {
+    "path": "backend/src/storage/s3-private-object-storage.ts",
+    "sha256": "0032bb419b2b81386b88701a2ad1f037cb72eb342b3eaad5398a207d735abd71",
+    "bytes": 2741
+  },
+  {
+    "path": "backend/src/support/complaints/complaints.service.spec.ts",
+    "sha256": "c8544cbf9acdad1c56079784553a037a5ae1f772f85e6025f00a3096dc37ee57",
+    "bytes": 17208
+  },
+  {
+    "path": "backend/src/support/complaints/complaints.service.ts",
+    "sha256": "c0cf8bc3f0011682a90731bfdcdf9b3eee1d052cfb52dc10e0c19d42798e7ea6",
+    "bytes": 12432
+  },
+  {
+    "path": "backend/src/support/complaints/domain/complaint.entity.ts",
+    "sha256": "99c8139913cd5eac108904cf080ef8f3799d012f98e467d206734e4e8a5e964f",
+    "bytes": 2468
+  },
+  {
+    "path": "backend/src/trust/trust-admin.controller.ts",
+    "sha256": "223d35b009089ba3170c31233b6da11af3f7155b56790551bf36f37c2e433bb1",
+    "bytes": 1976
+  },
+  {
+    "path": "backend/src/trust/trust.service.ts",
+    "sha256": "194e547c65597cff0e4801b1ebf616544434d35e39bfaabc97fb4c6924d3eb9e",
+    "bytes": 16776
+  },
+  {
+    "path": "backend/test/support/test-data-source.ts",
+    "sha256": "511d6c8fe07211f1b1366e37f6545881e1bfdd7ba8b847b8c91c5de56952ef39",
+    "bytes": 8345
+  },
+  {
+    "path": "backend/typeorm.config.ts",
+    "sha256": "77a504616b8e36d33ff8174f0a2527e58fbfe08044d6243f4532993abdfd6cd6",
+    "bytes": 713
+  },
+  {
+    "path": "e2e/package.json",
+    "sha256": "52d044cd1b343599f3adb278535090b16fd609d6b7590501622daf728fa101a8",
+    "bytes": 580
+  },
+  {
+    "path": "e2e/playwright.config.ts",
+    "sha256": "405b49b3f71ff68c836f3315f52d868b7999e2967e4813a3325898dc72733fbb",
+    "bytes": 3515
+  },
+  {
+    "path": "e2e/tests/admin-access.spec.ts",
+    "sha256": "f3bf1f77ba6cad3ea4e0cfc68e9f220b7aab78a5d99d5701c58306305a35c8f4",
+    "bytes": 8850
+  },
+  {
+    "path": "e2e/tests/admin-operations.spec.ts",
+    "sha256": "0fec7a81fa9f2684ea60265461a4fcfae7a4e786480d43b6e91f1c386d4aa8ed",
+    "bytes": 9060
+  },
+  {
+    "path": "mobile/android/app/src/main/kotlin/com/fixnow/fixnow_mobile/MainActivity.kt",
+    "sha256": "65086029340a7c96a392c148ac17f22945ff78d566413c8e8cf316675f212bd6",
+    "bytes": 2108
+  },
+  {
+    "path": "mobile/assets/fonts/Inter-Regular.ttf",
+    "sha256": "40d692fce188e4471e2b3cba937be967878f631ad3ebbbdcd587687c7ebe0c82",
+    "bytes": 411640
+  },
+  {
+    "path": "mobile/fix_tests.py",
+    "sha256": "d01c2bef999ac49c98716840aff88ba10944ce92c5aed576dbf7e309e68a5d1d",
+    "bytes": 3728
+  },
+  {
+    "path": "mobile/fix_tests_again.py",
+    "sha256": "18bddbe2a6e05abb6ebeee21dcc78887448ccbaffd8920eb8e0e4c03e871a29d",
+    "bytes": 918
+  },
+  {
+    "path": "mobile/lib/app/app.dart",
+    "sha256": "85585ff69cba87b400f1e35a025a2141775fdbd56b0a31e4e25ed917d26701f0",
+    "bytes": 60679
+  },
+  {
+    "path": "mobile/lib/config/app_environment.dart",
+    "sha256": "33930154765ffe53f907e5b2a250bd5251c8e451d683b4f98f85585652dbbe10",
+    "bytes": 1459
+  },
+  {
+    "path": "mobile/lib/design_system/fix_3d_spatial_beacon.dart",
+    "sha256": "86ffae7f0d509451be1b9be4648ea7a6052b99e1715bf95b22e5304102d86435",
+    "bytes": 8803
+  },
+  {
+    "path": "mobile/lib/design_system/fix_banner.dart",
+    "sha256": "777ea5df1b2af7d00badd4a19eae007ea3a96c00d0f5b955700e912ed43901c1",
+    "bytes": 4660
+  },
+  {
+    "path": "mobile/lib/design_system/fix_job_proof_dialog.dart",
+    "sha256": "aed57b5a355d950247e5fb09f436e3a79eadb5ac8a1328046eea75d6629672fc",
+    "bytes": 29228
+  },
+  {
+    "path": "mobile/lib/design_system/fix_payment_checkout_sheet.dart",
+    "sha256": "a3f63d87ba2b1b5ac7364282c6b296969ba21df39c6267407a93f6784a9535d3",
+    "bytes": 29225
+  },
+  {
+    "path": "mobile/lib/design_system/fix_rating_badge.dart",
+    "sha256": "deb34a5ad940c9837639e222f2a761583478dac7616724a57e6b9e5b9895755e",
+    "bytes": 2132
+  },
+  {
+    "path": "mobile/lib/design_system/fix_service_card.dart",
+    "sha256": "21765e6f7d044095826de8c1fb5a7f3ded413158f4322f5118a5016be51c4925",
+    "bytes": 39443
+  },
+  {
+    "path": "mobile/lib/design_system/fix_slide_to_confirm.dart",
+    "sha256": "a9cd2debabe713a1d72c26d87aa065450d93373de982e7ce3d00092ff5f439dd",
+    "bytes": 7333
+  },
+  {
+    "path": "mobile/lib/features/bookings/booking.dart",
+    "sha256": "517d48fac785219d88a1e55d4d2467fbf6eb954e13ba4917d4c3e8f365cf9475",
+    "bytes": 12780
+  },
+  {
+    "path": "mobile/lib/features/bookings/cancellation_dialog.dart",
+    "sha256": "9cf085852e76f8088e6eeda7ab8d75d2784c3cf203d88daf52bb2d2163fcb338",
+    "bytes": 7179
+  },
+  {
+    "path": "mobile/lib/features/bookings/job_proof_service.dart",
+    "sha256": "72ba6f8be3345322585d98ea1b7860c47bf3b5fba192211171ad282f79513504",
+    "bytes": 1270
+  },
+  {
+    "path": "mobile/lib/features/call/call_controller.dart",
+    "sha256": "7f083d1b502cf3cf2c4db3787469c2e4af499439ee2bcb7da9fdab7a6a96a2f6",
+    "bytes": 2437
+  },
+  {
+    "path": "mobile/lib/features/call/call_screen.dart",
+    "sha256": "08e6e2b03748871dedb52b0d38b1bd05b7ac7ab1e1ebf4c0fe73b767226c34a5",
+    "bytes": 10372
+  },
+  {
+    "path": "mobile/lib/features/guarantees/ui/submit_claim_screen.dart",
+    "sha256": "a507a5be021743d298aee38f0ae55ec1a266313c705cc1bac522104b536e4b3b",
+    "bytes": 3960
+  },
+  {
+    "path": "mobile/lib/features/location/live_location_service.dart",
+    "sha256": "067259ffadc87ce1bba805ac9444bee0b4b0dbddce8dcb95bed2116cca31073f",
+    "bytes": 6129
+  },
+  {
+    "path": "mobile/lib/features/location/saved_address.dart",
+    "sha256": "c743fe539631326c0a9b3b3db4b57899066f6b98355ad3afcf89ad1ebfb76674",
+    "bytes": 9609
+  },
+  {
+    "path": "mobile/lib/features/location/service_location_picker_sheet.dart",
+    "sha256": "d5d0f400d81cfa6211ea6000793a1455d8933f28f364a91baf5ebf28c07dd57f",
+    "bytes": 6780
+  },
+  {
+    "path": "mobile/lib/features/location/url_launcher_stub.dart",
+    "sha256": "ce34a91af8e4878dbf3fcf84c76dbf2edb672ac411c95b6ad8ea3f0b5f91e19f",
+    "bytes": 258
+  },
+  {
+    "path": "mobile/lib/features/notifications/notification_center_screen.dart",
+    "sha256": "15d8f84b6dbb9ba2609bb2fb1a6643884d26d52486961e87ed08d6207379b25f",
+    "bytes": 37905
+  },
+  {
+    "path": "mobile/lib/features/notifications/notification_repository.dart",
+    "sha256": "837e0f4f13124d8e9bf1cdf697892fe9abc45c9fad8428dd5904f69e6462422e",
+    "bytes": 3380
+  },
+  {
+    "path": "mobile/lib/features/payments/fix_pdf_invoice_builder.dart",
+    "sha256": "584cf73fe0fe4526a475baa7837d563e71e1470d2b6042d69344833e8a66d9ef",
+    "bytes": 15873
+  },
+  {
+    "path": "mobile/lib/features/payments/invoice_screen.dart",
+    "sha256": "2520c9c420214660fac53f3d43d11758ed928debc55f0088c10d294d5e77dfb7",
+    "bytes": 22454
+  },
+  {
+    "path": "mobile/lib/features/profile/customer_profile_screen.dart",
+    "sha256": "0286772294535d997b029ea58eda9eecb7ff6352fd9313c5bab40117ef92baa1",
+    "bytes": 41247
+  },
+  {
+    "path": "mobile/lib/features/provider/provider_active_job_cockpit_screen.dart",
+    "sha256": "376eb819110a823326d47317fa55f21439041fc470d95584a66532c05e8e6653",
+    "bytes": 72786
+  },
+  {
+    "path": "mobile/lib/features/provider/provider_jobs_screen.dart",
+    "sha256": "5c4d77a18e58bfd0cc5051f0cd98d31633923c964160c0394530d5f6f1a3f83a",
+    "bytes": 75805
+  },
+  {
+    "path": "mobile/lib/features/provider/provider_repository.dart",
+    "sha256": "4c4a448056c11b588ffa24ced700a5597f44924f85aafb1bda37b7208cca39b1",
+    "bytes": 12836
+  },
+  {
+    "path": "mobile/lib/features/services/service_discovery_screen.dart",
+    "sha256": "ef6f1cb6f3ac76a3f3574cd8dfdea18bd1f4ed2ed7b06ea778bc141600822bf0",
+    "bytes": 112407
+  },
+  {
+    "path": "mobile/lib/features/services/sub_service_catalog_screen.dart",
+    "sha256": "fcf3f67bae5b6861ce579df75f01a6214188a3ee5d8383a3384531a81db4fca5",
+    "bytes": 47657
+  },
+  {
+    "path": "mobile/lib/features/support/complaint_list_screen.dart",
+    "sha256": "abbe946d7e2e34c82e5724a07516e772936292fb75923dbc75911e50717d8bb1",
+    "bytes": 48024
+  },
+  {
+    "path": "mobile/lib/features/support/customer_help_screen.dart",
+    "sha256": "e7fe9da314cc73809911849e8cd0a4be209d8da59f01d24ef601737290916867",
+    "bytes": 51360
+  },
+  {
+    "path": "mobile/lib/features/support/submit_complaint_screen.dart",
+    "sha256": "f7ccf0b81821e0c72f9072c155882dc14dede573ef029b81d10a72dde22780b0",
+    "bytes": 9441
+  },
+  {
+    "path": "mobile/lib/features/tracking/booking_tracking_screen.dart",
+    "sha256": "900d7a7ab7044d6abb73c98e63ab6cda842b9c5d9f0002a93c92607f0c85314d",
+    "bytes": 66242
+  },
+  {
+    "path": "mobile/lib/features/tracking/provider_live_map.dart",
+    "sha256": "2ea2789cc4fab70a616ec0ace6a292d501dcbd15191c699bf0feffb32f4b6904",
+    "bytes": 40365
+  },
+  {
+    "path": "mobile/lib/main.dart",
+    "sha256": "10c822b5bb85ad81588ae6fd08e809637a5d84903db804281b3a3b47098a2f9e",
+    "bytes": 227
+  },
+  {
+    "path": "mobile/lib/notifications/push_settings_card.dart",
+    "sha256": "3e8c48ecb69395b8e94dd690f84ad9fd361df5324da67fd6485a4e38db2e81a3",
+    "bytes": 18088
+  },
+  {
+    "path": "mobile/pubspec.yaml",
+    "sha256": "669342f2a8772e70b7cf26786a197b2a0cfd080182cc164c6780f1cf956544d4",
+    "bytes": 2019
+  },
+  {
+    "path": "scripts/scan-secrets.mjs",
+    "sha256": "fc625faf01565050d5063ae4c2a67a25d4bf58888ba7034803175488ff3253de",
+    "bytes": 26110
+  },
+  {
+    "path": "shared/complaint-lifecycle.types.ts",
+    "sha256": "cd91c374f8b7d9b3237df1a9ebcfe7bbb1ea8d96f64cb692d2ef2c1c563d8b7e",
+    "bytes": 3006
+  }
+]

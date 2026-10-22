@@ -20,6 +20,7 @@ class ReviewSignalDto {
 }
 
 export class TrustSignalsPageQueryDto {
+  @IsOptional() @IsEnum(TrustSignalStatus) status?: TrustSignalStatus;
   @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(100) limit = 20;
   @IsOptional() @Type(() => Number) @IsInt() @Min(0) offset = 0;
   @IsOptional() @IsString() cursor?: string;
@@ -41,7 +42,7 @@ export class TrustAdminController {
   @Get('signals')
   @RequirePermission(PERMISSIONS.trustSignalsRead)
   signals(@Query() query: TrustSignalsPageQueryDto) {
-    return this.trust.listSignals(query.limit, query.offset);
+    return this.trust.listSignals(query.limit, query.offset, query.status);
   }
   @Patch('signals/:id')
   @RequirePermission(PERMISSIONS.trustSignalsUpdate)

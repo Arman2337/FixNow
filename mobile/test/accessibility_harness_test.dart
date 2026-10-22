@@ -7,7 +7,7 @@ import 'package:fixnow_mobile/design_system/fix_before_after_slider.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
 import 'package:fixnow_mobile/design_system/fix_components.dart';
-import 'package:fixnow_mobile/design_system/fix_eta_ring.dart';
+import 'support/prototypes/fix_eta_ring.dart';
 import 'package:fixnow_mobile/design_system/fix_saved_data_banner.dart';
 import 'package:fixnow_mobile/design_system/fix_state_views.dart';
 import 'package:fixnow_mobile/design_system/fix_status_chip.dart';

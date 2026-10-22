@@ -1,0 +1,776 @@
+{
+  "scope": "Mobile reconciliation",
+  "asOf": "2026-10-21",
+  "method": "Read-only static source and main.dart import/export/part graph. Current working tree including existing provider_controller.dart edits. Application code unmodified.",
+  "findings": [
+    {
+      "id": "GAP-03",
+      "status": "fixed",
+      "claim": "Completion cancel dialog continues anyway",
+      "current": "Guard uses || and returns when cancelled/unmounted.",
+      "evidence": [
+        {
+          "path": "mobile/lib/features/provider/provider_active_job_cockpit_screen.dart",
+          "line": 180
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification."
+    },
+    {
+      "id": "GAP-19",
+      "status": "fixed",
+      "claim": "Simulated proof images and in-memory repository",
+      "current": "Capture failure reports error; upload callback mandatory; legacy repository removed.",
+      "evidence": [
+        {
+          "path": "mobile/lib/design_system/fix_job_proof_dialog.dart",
+          "line": 119
+        },
+        {
+          "path": "mobile/lib/design_system/fix_job_proof_dialog.dart",
+          "line": 134
+        },
+        {
+          "path": "mobile/lib/features/provider/provider_active_job_cockpit_screen.dart",
+          "line": 172
+        },
+        {
+          "path": "mobile/lib/features/bookings/job_proof_service.dart",
+          "line": 36
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification."
+    },
+    {
+      "id": "GAP-40",
+      "status": "duplicate",
+      "claim": "Fabricated job proof",
+      "current": "Same historical issue as GAP-19; fixed in source.",
+      "evidence": [
+        {
+          "path": "mobile/lib/design_system/fix_job_proof_dialog.dart",
+          "line": 134
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification."
+    },
+    {
+      "id": "GAP-22",
+      "status": "fixed",
+      "claim": "Native maps launcher no-op",
+      "current": "Native helper uses url_launcher external application.",
+      "evidence": [
+        {
+          "path": "mobile/lib/features/location/url_launcher_stub.dart",
+          "line": 1
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification."
+    },
+    {
+      "id": "GAP-24",
+      "status": "fixed",
+      "claim": "Date strip never filters jobs",
+      "current": "Selected date filters both assigned/history lists.",
+      "evidence": [
+        {
+          "path": "mobile/lib/features/provider/provider_jobs_screen.dart",
+          "line": 66
+        },
+        {
+          "path": "mobile/lib/features/provider/provider_jobs_screen.dart",
+          "line": 78
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification."
+    },
+    {
+      "id": "GAP-68",
+      "status": "duplicate",
+      "claim": "Cosmetic provider date strip",
+      "current": "Same issue as GAP-24; fixed.",
+      "evidence": [
+        {
+          "path": "mobile/lib/features/provider/provider_jobs_screen.dart",
+          "line": 78
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification."
+    },
+    {
+      "id": "GAP-29",
+      "status": "fixed",
+      "claim": "Fabricated Bengaluru postal defaults",
+      "current": "Model defaults city/postalCode to empty strings.",
+      "evidence": [
+        {
+          "path": "mobile/lib/features/location/saved_address.dart",
+          "line": 23
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification."
+    },
+    {
+      "id": "GAP-30",
+      "status": "fixed",
+      "claim": "Hardcoded customer tracking avatar",
+      "current": "Tracking renders person icons.",
+      "evidence": [
+        {
+          "path": "mobile/lib/features/tracking/booking_tracking_screen.dart",
+          "line": 116
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification."
+    },
+    {
+      "id": "GAP-32",
+      "status": "open",
+      "claim": "Third-party reverse geocoder receives raw coordinates",
+      "current": "BigDataCloud requests still interpolate precise latitude/longitude. Presence confirmed; whether this violates approved privacy policy cannot be inferred from code alone.",
+      "evidence": [
+        {
+          "path": "mobile/lib/features/location/live_location_service.dart",
+          "line": 73
+        },
+        {
+          "path": "mobile/lib/features/location/live_location_service.dart",
+          "line": 105
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification."
+    },
+    {
+      "id": "GAP-38",
+      "status": "fixed",
+      "claim": "OSM tiles lack custom User-Agent",
+      "current": "Tile layers specify userAgentPackageName com.fixnow.app.",
+      "evidence": [
+        {
+          "path": "mobile/lib/features/tracking/provider_live_map.dart",
+          "line": 493
+        },
+        {
+          "path": "mobile/lib/features/location/service_location_picker_sheet.dart",
+          "line": 140
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification."
+    },
+    {
+      "id": "GAP-39",
+      "status": "fixed",
+      "claim": "Dead Android audio_tone/voice_stream MethodChannels",
+      "current": "Only navigation MethodChannel remains; historical audio/voice channels absent.",
+      "evidence": [
+        {
+          "path": "mobile/android/app/src/main/kotlin/com/fixnow/fixnow_mobile/MainActivity.kt",
+          "line": 16
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification."
+    },
+    {
+      "id": "GAP-41",
+      "status": "fixed",
+      "claim": "Missing payment callback fabricates success",
+      "current": "Missing callback throws StateError. Only caller is development-gated checkout with callback.",
+      "evidence": [
+        {
+          "path": "mobile/lib/design_system/fix_payment_checkout_sheet.dart",
+          "line": 145
+        },
+        {
+          "path": "mobile/lib/features/payments/invoice_screen.dart",
+          "line": 216
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification."
+    },
+    {
+      "id": "GAP-42",
+      "status": "partial",
+      "claim": "Fake GSTIN, conflicting legal addresses, broken QR URL",
+      "current": "UI/PDF now share environment-derived statutory fields. Development defaults retain claimed GSTIN and URL; deployed overrides and URL availability unverified. Historical 404 cannot be reaffirmed statically.",
+      "evidence": [
+        {
+          "path": "mobile/lib/features/payments/fix_pdf_invoice_builder.dart",
+          "line": 14
+        },
+        {
+          "path": "mobile/lib/features/payments/invoice_screen.dart",
+          "line": 300
+        },
+        {
+          "path": "mobile/lib/config/app_environment.dart",
+          "line": 19
+        },
+        {
+          "path": "mobile/lib/config/app_environment.dart",
+          "line": 35
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification."
+    },
+    {
+      "id": "GAP-80",
+      "status": "duplicate",
+      "claim": "Company address disagreement",
+      "current": "Address disagreement fixed through shared config; related residual configuration uncertainty tracked GAP-42.",
+      "evidence": [
+        {
+          "path": "mobile/lib/features/payments/invoice_screen.dart",
+          "line": 307
+        },
+        {
+          "path": "mobile/lib/features/payments/fix_pdf_invoice_builder.dart",
+          "line": 17
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification."
+    },
+    {
+      "id": "GAP-43",
+      "status": "fixed",
+      "claim": "Notification deletes never persist/no backend endpoint",
+      "current": "Repository now issues DELETE per item/all; owned backend endpoints delete rows. Network response failures are not awaited or validated, so current optimistic error handling remains weaker than guaranteed persistence.",
+      "evidence": [
+        {
+          "path": "mobile/lib/features/notifications/notification_repository.dart",
+          "line": 112
+        },
+        {
+          "path": "mobile/lib/features/notifications/notification_repository.dart",
+          "line": 113
+        },
+        {
+          "path": "backend/src/notifications/domain/inbox.controller.ts",
+          "line": 93
+        },
+        {
+          "path": "backend/src/notifications/domain/inbox.controller.ts",
+          "line": 111
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification."
+    },
+    {
+      "id": "GAP-56",
+      "status": "duplicate",
+      "claim": "Clear All in-memory only",
+      "current": "Same as GAP-43; server endpoint and dispatch now exist.",
+      "evidence": [
+        {
+          "path": "mobile/lib/features/notifications/notification_repository.dart",
+          "line": 113
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification."
+    },
+    {
+      "id": "GAP-45",
+      "status": "partial",
+      "claim": "Five inert controls",
+      "current": "Referral and biometric placeholder controls removed (no matching identifiers in files). Push category switches still local state. Help callback now dispatches for existing complaint, honestly unavailable otherwise. Payment Methods row opens information sheet.",
+      "evidence": [
+        {
+          "path": "mobile/lib/notifications/push_settings_card.dart",
+          "line": 265
+        },
+        {
+          "path": "mobile/lib/features/support/customer_help_screen.dart",
+          "line": 883
+        },
+        {
+          "path": "mobile/lib/features/profile/customer_profile_screen.dart",
+          "line": 411
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification."
+    },
+    {
+      "id": "GAP-46",
+      "status": "fixed",
+      "claim": "Banner creates no-op action",
+      "current": "Action omitted unless label and callback both provided.",
+      "evidence": [
+        {
+          "path": "mobile/lib/design_system/fix_banner.dart",
+          "line": 38
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification."
+    },
+    {
+      "id": "GAP-47",
+      "status": "fixed",
+      "claim": "Notification invoice sheet Close only",
+      "current": "Production notification route passes onOpenInvoice. Payment notifications open InvoiceScreen with notification paymentId/bookingId for customers and earnings for providers. Fallback sheet offers booking navigation.",
+      "evidence": [
+        {
+          "path": "mobile/lib/features/notifications/notification_center_screen.dart",
+          "line": 861
+        },
+        {
+          "path": "mobile/lib/app/app.dart",
+          "line": 696
+        },
+        {
+          "path": "mobile/lib/app/app.dart",
+          "line": 763
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification."
+    },
+    {
+      "id": "GAP-48",
+      "status": "partial",
+      "claim": "Fake wallet balance and conflicting cancellation fee copy",
+      "current": "Fake numerical wallet balance removed; generic wallet method remains in development-gated sheet. Cancellation dialog still says full refund and fee once en route; tracking says fee after free window. Actual fee collection/policy agreement needs backend/domain reconciliation.",
+      "evidence": [
+        {
+          "path": "mobile/lib/design_system/fix_payment_checkout_sheet.dart",
+          "line": 591
+        },
+        {
+          "path": "mobile/lib/features/bookings/cancellation_dialog.dart",
+          "line": 77
+        },
+        {
+          "path": "mobile/lib/features/tracking/booking_tracking_screen.dart",
+          "line": 1022
+        },
+        {
+          "path": "mobile/lib/features/payments/invoice_screen.dart",
+          "line": 216
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification."
+    },
+    {
+      "id": "GAP-50",
+      "status": "fixed",
+      "claim": "22 unreachable mobile files including six obsolete screens",
+      "current": "All six named obsolete screen sources absent. Current import graph has 10 unreferenced DS sources, voice_assistance, call_screen plus conditional-import url_launcher_web false positive; historical 22 count unsupported. Residuals tracked GAP-53/51.",
+      "evidence": [
+        {
+          "path": "mobile/lib/main.dart",
+          "line": 2
+        },
+        {
+          "path": "mobile/lib/features/call/call_screen.dart",
+          "line": 14
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification."
+    },
+    {
+      "id": "GAP-51",
+      "status": "partial",
+      "claim": "HttpCallRepository never instantiated/entire calling unwired",
+      "current": "Repository/controller instantiated, buttons start API call then show snackbar. No navigation/import to CallScreen. Screen hangup only local; controller does not expose accept/reject/hangup. Do not claim backend 100% complete or actual audio connected from this source trace.",
+      "evidence": [
+        {
+          "path": "mobile/lib/app/app.dart",
+          "line": 426
+        },
+        {
+          "path": "mobile/lib/app/app.dart",
+          "line": 1333
+        },
+        {
+          "path": "mobile/lib/app/app.dart",
+          "line": 1363
+        },
+        {
+          "path": "mobile/lib/features/call/call_screen.dart",
+          "line": 90
+        },
+        {
+          "path": "mobile/lib/features/call/call_controller.dart",
+          "line": 35
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification."
+    },
+    {
+      "id": "GAP-59",
+      "status": "duplicate",
+      "claim": "Unwired calling (master feature inventory alias)",
+      "current": "Alias for GAP-51, not independent finding.",
+      "evidence": [
+        {
+          "path": "mobile/lib/app/app.dart",
+          "line": 426
+        },
+        {
+          "path": "audit_reports/FIXNOW_MASTER_FEATURE_INVENTORY.md",
+          "line": 55
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification."
+    },
+    {
+      "id": "GAP-52",
+      "status": "fixed",
+      "claim": "Demo galleries fake data in binary",
+      "current": "Both named gallery sources absent, no production references. Original compiled-binary claim unsupported without build artifact inspection.",
+      "evidence": [
+        {
+          "path": "mobile/lib/main.dart",
+          "line": 2
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification."
+    },
+    {
+      "id": "GAP-53",
+      "status": "partial",
+      "claim": "33 unused DS widgets compiled into binary",
+      "current": "Read-only import graph finds 10 unreachable DS sources: fix_3d_spatial_beacon,fix_3d_tilt_card,fix_audio_waveform,fix_eta_ring,fix_jelly_squish_button,fix_journey_progress_line,fix_provider_card,fix_slide_to_confirm,fix_sos_vortex_button,fix_star_rating_burst. Source deadness retained; binary inclusion cannot be concluded due to tree shaking. Historical count stale.",
+      "evidence": [
+        {
+          "path": "mobile/lib/design_system/fix_3d_spatial_beacon.dart",
+          "line": 9
+        },
+        {
+          "path": "mobile/lib/design_system/fix_slide_to_confirm.dart",
+          "line": 11
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification."
+    },
+    {
+      "id": "GAP-69",
+      "status": "fixed",
+      "claim": "Auth offline/failure states lack screens",
+      "current": "App handles offline and failure session states explicitly.",
+      "evidence": [
+        {
+          "path": "mobile/lib/app/app.dart",
+          "line": 814
+        },
+        {
+          "path": "mobile/lib/app/app.dart",
+          "line": 839
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification."
+    },
+    {
+      "id": "GAP-70",
+      "status": "fixed",
+      "claim": "Brand fonts commented out/missing assets",
+      "current": "Inter weights bundled, declared in pubspec; asset files present. Historical Playfair requirement not assumed.",
+      "evidence": [
+        {
+          "path": "mobile/pubspec.yaml",
+          "line": 60
+        },
+        {
+          "path": "mobile/assets/fonts/Inter-Regular.ttf",
+          "line": 1
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification."
+    },
+    {
+      "id": "GAP-76",
+      "status": "fixed",
+      "claim": "Category rating renderers have divergent honesty rules",
+      "current": "Catalog uses shared FixRatingBadge, discovery uses shared FixServiceCard with nullable rating and shared formatting.",
+      "evidence": [
+        {
+          "path": "mobile/lib/features/services/sub_service_catalog_screen.dart",
+          "line": 805
+        },
+        {
+          "path": "mobile/lib/features/services/service_discovery_screen.dart",
+          "line": 2294
+        },
+        {
+          "path": "mobile/lib/design_system/fix_service_card.dart",
+          "line": 581
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification."
+    },
+    {
+      "id": "GAP-77",
+      "status": "fixed",
+      "claim": "Duplicate compact review-count formatters",
+      "current": "Single shared formatReviewCount/formatRatingWithReviews helper; named duplicate helpers absent.",
+      "evidence": [
+        {
+          "path": "mobile/lib/design_system/fix_rating_badge.dart",
+          "line": 6
+        },
+        {
+          "path": "mobile/lib/features/services/service_discovery_screen.dart",
+          "line": 1132
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification."
+    },
+    {
+      "id": "GAP-89",
+      "status": "partial",
+      "claim": "fix_tests.dart rewrites tests; mock transports shipped",
+      "current": "Named Dart script absent; mobile/fix_tests.py mutates tests and fix_tests_again.py mutates app plus tests. Noop transport remains in lib for explicit SavedAddressRepository.test factory. Does not establish production use; app uses real repository. Source inclusion is not binary proof.",
+      "evidence": [
+        {
+          "path": "mobile/fix_tests.py",
+          "line": 7
+        },
+        {
+          "path": "mobile/fix_tests_again.py",
+          "line": 4
+        },
+        {
+          "path": "mobile/lib/features/location/saved_address.dart",
+          "line": 4
+        },
+        {
+          "path": "mobile/lib/features/location/saved_address.dart",
+          "line": 114
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification."
+    },
+    {
+      "id": "GAP-31",
+      "status": "unsupported",
+      "claim": "No finding definition in any of nine historical reports",
+      "current": "No matching ID occurs in audit_reports. Do not invent a bug to fill sequence gap.",
+      "evidence": [
+        {
+          "path": "audit_reports/FIXNOW_COMPLETENESS_AND_GAPS.md",
+          "line": 6
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification."
+    },
+    {
+      "id": "GAP-33",
+      "status": "unsupported",
+      "claim": "No finding definition in any of nine historical reports",
+      "current": "No matching ID occurs in audit_reports. Do not invent a bug to fill sequence gap.",
+      "evidence": [
+        {
+          "path": "audit_reports/FIXNOW_COMPLETENESS_AND_GAPS.md",
+          "line": 6
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification."
+    },
+    {
+      "id": "GAP-37",
+      "status": "unsupported",
+      "claim": "No finding definition in any of nine historical reports",
+      "current": "No matching ID occurs in audit_reports. Do not invent a bug to fill sequence gap.",
+      "evidence": [
+        {
+          "path": "audit_reports/FIXNOW_COMPLETENESS_AND_GAPS.md",
+          "line": 6
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification."
+    },
+    {
+      "id": "GAP-60",
+      "status": "unsupported",
+      "claim": "No finding definition in any of nine historical reports",
+      "current": "No matching ID occurs in audit_reports. Do not invent a bug to fill sequence gap.",
+      "evidence": [
+        {
+          "path": "audit_reports/FIXNOW_COMPLETENESS_AND_GAPS.md",
+          "line": 6
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification."
+    },
+    {
+      "id": "GAP-61",
+      "status": "unsupported",
+      "claim": "No finding definition in any of nine historical reports",
+      "current": "No matching ID occurs in audit_reports. Do not invent a bug to fill sequence gap.",
+      "evidence": [
+        {
+          "path": "audit_reports/FIXNOW_COMPLETENESS_AND_GAPS.md",
+          "line": 6
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification."
+    },
+    {
+      "id": "GAP-62",
+      "status": "unsupported",
+      "claim": "No finding definition in any of nine historical reports",
+      "current": "No matching ID occurs in audit_reports. Do not invent a bug to fill sequence gap.",
+      "evidence": [
+        {
+          "path": "audit_reports/FIXNOW_COMPLETENESS_AND_GAPS.md",
+          "line": 6
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification."
+    },
+    {
+      "id": "GAP-63",
+      "status": "unsupported",
+      "claim": "No finding definition in any of nine historical reports",
+      "current": "No matching ID occurs in audit_reports. Do not invent a bug to fill sequence gap.",
+      "evidence": [
+        {
+          "path": "audit_reports/FIXNOW_COMPLETENESS_AND_GAPS.md",
+          "line": 6
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification."
+    },
+    {
+      "id": "GAP-64",
+      "status": "unsupported",
+      "claim": "No finding definition in any of nine historical reports",
+      "current": "No matching ID occurs in audit_reports. Do not invent a bug to fill sequence gap.",
+      "evidence": [
+        {
+          "path": "audit_reports/FIXNOW_COMPLETENESS_AND_GAPS.md",
+          "line": 6
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification."
+    },
+    {
+      "id": "GAP-65",
+      "status": "unsupported",
+      "claim": "No finding definition in any of nine historical reports",
+      "current": "No matching ID occurs in audit_reports. Do not invent a bug to fill sequence gap.",
+      "evidence": [
+        {
+          "path": "audit_reports/FIXNOW_COMPLETENESS_AND_GAPS.md",
+          "line": 6
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification."
+    },
+    {
+      "id": "GAP-66",
+      "status": "unsupported",
+      "claim": "No finding definition in any of nine historical reports",
+      "current": "No matching ID occurs in audit_reports. Do not invent a bug to fill sequence gap.",
+      "evidence": [
+        {
+          "path": "audit_reports/FIXNOW_COMPLETENESS_AND_GAPS.md",
+          "line": 6
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification."
+    },
+    {
+      "id": "DIA-001",
+      "status": "partial",
+      "claim": "Extra charges crashes because toJson absent and DTO mismatch",
+      "current": "Crash assertion false: actual LineItem has toJson; lineItems typed List<LineItem>. API mismatch remains: UI emits type/description/amount and repository lacks required expectedVersion. Current backend line items require subServiceId and quantity, not client-supplied name/unitPriceMinor; do not copy historical remediation DTO example.",
+      "evidence": [
+        {
+          "path": "mobile/lib/features/bookings/booking.dart",
+          "line": 167
+        },
+        {
+          "path": "mobile/lib/features/bookings/booking.dart",
+          "line": 231
+        },
+        {
+          "path": "mobile/lib/features/provider/provider_active_job_cockpit_screen.dart",
+          "line": 1332
+        },
+        {
+          "path": "mobile/lib/features/provider/provider_repository.dart",
+          "line": 437
+        },
+        {
+          "path": "backend/src/bookings/bookings.dto.ts",
+          "line": 100
+        },
+        {
+          "path": "backend/src/bookings/bookings.dto.ts",
+          "line": 30
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification."
+    },
+    {
+      "id": "DIA-002",
+      "status": "open",
+      "claim": "General complaint cannot submit without booking ID",
+      "current": "General entry points omit optional bookingId while backend requires it. Eligibility requirement may be deliberate, but UI contract remains incompatible.",
+      "evidence": [
+        {
+          "path": "mobile/lib/features/support/customer_help_screen.dart",
+          "line": 527
+        },
+        {
+          "path": "mobile/lib/features/support/complaint_list_screen.dart",
+          "line": 299
+        },
+        {
+          "path": "mobile/lib/features/support/submit_complaint_screen.dart",
+          "line": 60
+        },
+        {
+          "path": "backend/src/support/complaints/complaints.service.ts",
+          "line": 110
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification."
+    },
+    {
+      "id": "DIA-003",
+      "status": "duplicate",
+      "claim": "Dead call navigation/local hangup",
+      "current": "Same current partial finding as GAP-51. Screen is unreachable, so its local hangup is latent rather than currently exposed.",
+      "evidence": [
+        {
+          "path": "mobile/lib/app/app.dart",
+          "line": 1333
+        },
+        {
+          "path": "mobile/lib/features/call/call_screen.dart",
+          "line": 90
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification."
+    },
+    {
+      "id": "DIA-005",
+      "status": "open",
+      "claim": "Hardcoded VIP membership",
+      "current": "Profile still renders VIP Tier 1 without membership source.",
+      "evidence": [
+        {
+          "path": "mobile/lib/features/profile/customer_profile_screen.dart",
+          "line": 229
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification."
+    },
+    {
+      "id": "DIA-006",
+      "status": "open",
+      "claim": "Guarantee reason minimum length absent in client",
+      "current": "Client checks nonempty only, backend requires >=10 chars; backend protects persistence but UI permits avoidable rejected requests.",
+      "evidence": [
+        {
+          "path": "mobile/lib/features/guarantees/ui/submit_claim_screen.dart",
+          "line": 24
+        },
+        {
+          "path": "backend/src/guarantees/dto/create-guarantee-claim.dto.ts",
+          "line": 38
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification."
+    }
+  ]
+}

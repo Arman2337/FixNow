@@ -1,3 +1,5 @@
+import { StatusBadge } from "@/features/status-badge";
+import { hasPermission } from "@/auth/roles";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getSession } from "@/auth/session";
@@ -19,7 +21,7 @@ import {
 // legal next states makes the constraint visible instead of something you learn
 // from a 409.
 const statuses = ["", "OPEN", "IN_REVIEW", "ESCALATED", "RESOLVED", "CLOSED"];
-const shortId = (id: string) => id.replaceAll("-", "").slice(0, 8).toUpperCase();
+import { shortId } from "@/lib/format";
 
 const labels: Record<string, string> = { 
   updated: "Case status successfully updated.",
@@ -44,7 +46,7 @@ export default async function ComplaintDetailPage({ params, searchParams }: { pa
 
   const submitter = submitterRes?.ok ? submitterRes.value : null;
   const target = targetRes?.ok ? targetRes.value : null;
-  const canIntervene = session.session.roles.some((role) => role === "support_agent" || role === "trust_safety_reviewer" || role === "operations_administrator");
+  const canIntervene = hasPermission(session.session.roles, "adminComplaintsUpdate");
   // SEC-011: the option list is the backend's transition table, so this page
   // cannot offer a move the server will refuse, and a terminal case offers
   // nothing at all.
@@ -52,14 +54,7 @@ export default async function ComplaintDetailPage({ params, searchParams }: { pa
   const complaintTerminal = isTerminalComplaintStatus(complaint.status as ComplaintStatus);
   const notesRequired = selectableStatuses.some((s) => COMPLAINT_STATUSES_REQUIRING_NOTES.has(s));
   
-  let complaints = await requireManagementResult(await listComplaints());
-  if (sParams.search) {
-    const s = sParams.search.toLowerCase();
-    complaints = complaints.filter(c => c.id.toLowerCase().includes(s) || c.submitterId.toLowerCase().includes(s));
-  }
-  if (sParams.status) {
-    complaints = complaints.filter(c => c.status === sParams.status);
-  }
+  const complaints = await requireManagementResult(await listComplaints(20, 0, sParams.status, sParams.search));
   const escalatedCount = complaints.filter(c => c.status === "ESCALATED").length;
 
   return (
@@ -136,11 +131,7 @@ export default async function ComplaintDetailPage({ params, searchParams }: { pa
                       <div className="flex items-start justify-between gap-space-xs mb-1">
                         <div className="flex items-center gap-space-xs">
                           <span className={`font-data-mono text-data-mono font-bold ${c.status === 'ESCALATED' ? 'text-error' : isActive ? 'text-on-primary-container' : 'text-secondary'}`}>#{shortId(c.id)}</span>
-                          <span className={`px-2 py-0.5 rounded-full font-label-sm text-[10px] ${
-                            c.status === 'ESCALATED' ? 'bg-error-container text-on-error-container' : isActive ? 'bg-primary text-on-primary' : 'bg-surface-container-high text-on-surface'
-                          }`}>
-                            {c.status}
-                          </span>
+                          <StatusBadge status={c.status} />
                         </div>
                       </div>
                       <h3 className={`font-label-md text-label-md font-bold leading-snug truncate ${isActive ? 'text-on-primary-container' : 'text-on-surface'}`}>

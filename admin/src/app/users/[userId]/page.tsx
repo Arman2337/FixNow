@@ -7,7 +7,7 @@ import { requireManagementResult } from "@/features/management-api";
 import { StatusBadge } from "@/features/status-badge";
 import { getUser } from "@/features/users/api";
 
-const shortId = (id: string) => id.replaceAll("-", "").slice(0, 8).toUpperCase();
+import { shortId } from "@/lib/format";
 const accountLabel = (roles: readonly string[]) => roles.some((role) => role.includes("provider")) ? "Provider account" : roles.some((role) => role.includes("administrator") || role.includes("agent") || role.includes("auditor")) ? "Staff account" : "Customer account";
 
 export default async function UserDetailPage({ params }: { params: Promise<{ userId: string }> }) {

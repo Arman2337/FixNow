@@ -16,6 +16,7 @@
 import 'dotenv/config';
 import { DataSource } from 'typeorm';
 import { dataSourceOptions } from '../typeorm.config';
+import { verifySchemaBehavior } from './schema-behavior-probes';
 
 interface Failure {
   label: string;
@@ -120,6 +121,15 @@ const REQUIRED_ORPHANED_FKS: ReadonlyArray<readonly [string, string]> = [
   // only" rule in the service stops being provable from the row.
   ['job_proof_photos', 'FK_job_proof_photos_booking'],
   ['job_proof_photos', 'FK_job_proof_photos_uploader'],
+  ['recurring_schedules', 'fk_recurring_schedules_service_category_id'],
+  ['guarantee_claims', 'fk_guarantee_claims_customer_id'],
+  ['guarantee_claims', 'fk_guarantee_claims_original_provider_id'],
+  ['guarantee_claims', 'fk_guarantee_claims_assigned_provider_id'],
+  ['guarantee_claims', 'fk_guarantee_claims_re_service_booking_id'],
+  [
+    'review_photo_moderation_events',
+    'fk_review_photo_moderation_events_actor_user_id',
+  ],
 ];
 
 /** FN-142. The before/after pair is the feature; these make it singular. */
@@ -230,157 +240,9 @@ async function main(): Promise<void> {
   }
 
   // --- behaviour: the database must actually refuse bad data -----------------
-  const attempt = async (
-    label: string,
-    sql: string,
-    expectedCode: string,
-  ): Promise<void> => {
-    try {
-      await query(sql);
-      gate.check(false, label, 'insert unexpectedly succeeded');
-    } catch (e) {
-      const code = (e as { code?: string }).code;
-      gate.check(code === expectedCode, label, `sqlstate ${code}`);
-    }
-  };
-
-  // A booking for a user that does not exist must be refused.
-  await attempt(
-    'orphan booking refused by FK',
-    `INSERT INTO bookings
-       (customer_id, service_category_id, status, description,
-        location_lat, location_lng, idempotency_key, request_fingerprint)
-     VALUES (gen_random_uuid(), gen_random_uuid(), 'REQUESTED', 'schema gate',
-             17.385, 78.4867, 'gate-orphan', 'gate-orphan-fp')`,
-    '23503',
-  );
-
-  // Money outside the allowed range must be refused.
-  const bookingRef = await query<{ c: string; s: string }>(
-    `SELECT (SELECT id FROM users LIMIT 1) AS c,
-            (SELECT id FROM service_categories LIMIT 1) AS s`,
-  );
-  if (bookingRef.length === 0 || !bookingRef[0].c || !bookingRef[0].s) {
-    console.log(
-      '\n  note: no users/service_categories seeded, skipping write checks',
-    );
-  } else {
-    const { c, s } = bookingRef[0];
-    await attempt(
-      'negative total_amount_minor refused by CHECK',
-      `INSERT INTO bookings
-         (customer_id, service_category_id, status, description, location_lat,
-          location_lng, idempotency_key, request_fingerprint, total_amount_minor)
-       VALUES ('${c}', '${s}', 'REQUESTED', 'schema gate', 17.385, 78.4867,
-               'gate-neg', 'gate-neg-fp', -5)`,
-      '23514',
-    );
-    await attempt(
-      'out-of-range latitude refused by CHECK',
-      `INSERT INTO bookings
-         (customer_id, service_category_id, status, description, location_lat,
-          location_lng, idempotency_key, request_fingerprint)
-       VALUES ('${c}', '${s}', 'REQUESTED', 'schema gate', 999, 78.4867,
-               'gate-lat', 'gate-lat-fp')`,
-      '23514',
-    );
-
-    // A valid insert that omits `version` must land on 1.
-    try {
-      const proof = await query<{ id: string; version: number }>(
-        `INSERT INTO bookings
-           (customer_id, service_category_id, status, description, location_lat,
-            location_lng, idempotency_key, request_fingerprint)
-         VALUES ('${c}', '${s}', 'REQUESTED', 'schema gate version default',
-                 17.385, 78.4867, 'gate-ver', 'gate-ver-fp')
-         RETURNING id, version`,
-      );
-      gate.check(
-        proof.length > 0 && proof[0].version === 1,
-        'insert without version yields version = 1',
-        proof.length ? `got ${proof[0].version}` : 'no row returned',
-      );
-      if (proof.length > 0) {
-        await query(`DELETE FROM bookings WHERE id = '${proof[0].id}'`);
-      }
-    } catch (e) {
-      gate.check(
-        false,
-        'insert without version yields version = 1',
-        (e as Error).message,
-      );
-    }
-
-    // FN-142. The database itself must refuse an unknown stage, a duplicate
-    // stage for the same booking, and a zero-byte photo — not merely the
-    // service that happens to sit in front of it today.
-    const seededBooking = await query<{ b: string }>(
-      `SELECT id AS b FROM bookings WHERE customer_id = '${c}' LIMIT 1`,
-    );
-    if (seededBooking.length === 0) {
-      const created = await query<{ b: string }>(
-        `INSERT INTO bookings
-           (customer_id, service_category_id, status, description, location_lat,
-            location_lng, idempotency_key, request_fingerprint)
-         VALUES ('${c}', '${s}', 'IN_PROGRESS', 'schema gate job proof', 17.385,
-                 78.4867, 'gate-proof', 'gate-proof-fp')
-         RETURNING id AS b`,
-      );
-      seededBooking.push(...created);
-    }
-    const bookingId = seededBooking[0].b;
-    const proofColumns = (stage: string, key: string, size: number) =>
-      `('${bookingId}', '${stage}', '${c}', '${key}', 'image/jpeg', ${size}, '${'a'.repeat(
-        64,
-      )}')`;
-
-    await attempt(
-      'unknown job proof stage refused by CHECK',
-      `INSERT INTO job_proof_photos
-         (booking_id, stage, uploaded_by, object_key, content_type, size_bytes, sha256)
-       VALUES ${proofColumns('DURING', 'gate-stage-check', 10)}`,
-      '23514',
-    );
-    await attempt(
-      'zero-byte job proof photo refused by CHECK',
-      `INSERT INTO job_proof_photos
-         (booking_id, stage, uploaded_by, object_key, content_type, size_bytes, sha256)
-       VALUES ${proofColumns('BEFORE', 'gate-size-check', 0)}`,
-      '23514',
-    );
-
-    await query(
-      `INSERT INTO job_proof_photos
-         (booking_id, stage, uploaded_by, object_key, content_type, size_bytes, sha256)
-       VALUES ${proofColumns('BEFORE', 'gate-unique-a', 10)}`,
-    );
-    await attempt(
-      'second BEFORE photo for one booking refused by UNIQUE',
-      `INSERT INTO job_proof_photos
-         (booking_id, stage, uploaded_by, object_key, content_type, size_bytes, sha256)
-       VALUES ${proofColumns('BEFORE', 'gate-unique-b', 10)}`,
-      '23505',
-    );
-    // The AFTER side must still be insertable, or the unique index would be
-    // over-broad and would silently forbid the second half of the feature.
-    try {
-      await query(
-        `INSERT INTO job_proof_photos
-           (booking_id, stage, uploaded_by, object_key, content_type, size_bytes, sha256)
-         VALUES ${proofColumns('AFTER', 'gate-unique-after', 10)}`,
-      );
-      gate.check(true, 'one BEFORE and one AFTER coexist for one booking');
-    } catch (e) {
-      gate.check(
-        false,
-        'one BEFORE and one AFTER coexist for one booking',
-        (e as Error).message,
-      );
-    }
-    await query(
-      `DELETE FROM job_proof_photos WHERE booking_id = '${bookingId}'`,
-    );
-  }
+  // Every probe owns its fixtures and is rolled back. Never borrow an existing
+  // customer's booking: doing so previously deleted their real proof photos.
+  await verifySchemaBehavior(ds, gate);
 
   const counts = await query(`
     SELECT

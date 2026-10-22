@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'pump_idle.dart';
+import 'support/test_address_repository.dart';
 
 class FakeTransport implements ApiTransport {
   FakeTransport(this.respond);
@@ -50,6 +51,7 @@ Widget host({
 );
 
 void main() {
+  setUp(createTestAddressRepository);
   testWidgets('observed history shows the band, typical value, and notice', (
     tester,
   ) async {

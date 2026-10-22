@@ -108,12 +108,18 @@ export class ComplaintsService {
     dto: CreateComplaintDto,
   ): Promise<void> {
     if (!dto.bookingId) {
-      // Without a booking there is no relationship to prove, so there is
-      // nothing to complain about. Previously this path let a caller name any
-      // `targetId` at all.
+      // General platform support has no counterparty. Never let this exception
+      // become a way to attach an arbitrary user's id to a complaint.
+      if (dto.targetRole === ComplaintTargetRole.PLATFORM && !dto.targetId) {
+        return;
+      }
       throw new ForbiddenException(
         'A bookingId is required so the complaint can be validated against your booking',
       );
+    }
+
+    if (dto.targetRole === ComplaintTargetRole.PLATFORM && dto.targetId) {
+      throw new BadRequestException('Platform complaints cannot name a target');
     }
 
     const booking = await this.bookingRepository.findOne({
@@ -140,6 +146,9 @@ export class ComplaintsService {
 
     if (dto.targetRole === ComplaintTargetRole.PROVIDER && !isCustomer) {
       // Only the customer can raise a complaint against the provider.
+      throw new NotFoundException('Booking not found for this complaint');
+    }
+    if (dto.targetRole === ComplaintTargetRole.CUSTOMER && !isProvider) {
       throw new NotFoundException('Booking not found for this complaint');
     }
   }

@@ -17,11 +17,11 @@
  * the product read the same way.
  */
 export enum ComplaintStatus {
-  OPEN = 'OPEN',
-  IN_REVIEW = 'IN_REVIEW',
-  ESCALATED = 'ESCALATED',
-  RESOLVED = 'RESOLVED',
-  CLOSED = 'CLOSED',
+  OPEN = "OPEN",
+  IN_REVIEW = "IN_REVIEW",
+  ESCALATED = "ESCALATED",
+  RESOLVED = "RESOLVED",
+  CLOSED = "CLOSED",
 }
 
 export const VALID_COMPLAINT_TRANSITIONS: Readonly<
@@ -72,4 +72,10 @@ export function isValidComplaintTransition(
 
 export function isTerminalComplaintStatus(status: ComplaintStatus): boolean {
   return VALID_COMPLAINT_TRANSITIONS[status].length === 0;
+}
+
+export function nextComplaintStatuses(
+  status: ComplaintStatus,
+): readonly ComplaintStatus[] {
+  return VALID_COMPLAINT_TRANSITIONS[status];
 }

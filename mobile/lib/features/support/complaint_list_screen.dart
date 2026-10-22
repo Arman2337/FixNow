@@ -742,23 +742,26 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryFixed.withValues(alpha: 0.4),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        complaint.assigneeId == null
-                            ? 'Assignment pending'
-                            : 'Assigned',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.primary,
+                    Flexible(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryFixed.withValues(alpha: 0.4),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          complaint.assigneeId == null
+                              ? 'Assignment pending'
+                              : 'Assigned',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primary,
+                          ),
                         ),
                       ),
                     ),
@@ -794,14 +797,17 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Resolution Milestones',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+              const Expanded(
+                child: Text(
+                  'Resolution Milestones',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
               ),
+              const SizedBox(width: AppSpacing.sm),
               Text(
                 'Stage ${complaint.status == 'OPEN'
                     ? 1
@@ -1048,18 +1054,21 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: isActive
-                              ? FontWeight.w800
-                              : FontWeight.w700,
-                          color: isActive
-                              ? AppColors.tertiary
-                              : AppColors.textPrimary,
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: isActive
+                                ? FontWeight.w800
+                                : FontWeight.w700,
+                            color: isActive
+                                ? AppColors.tertiary
+                                : AppColors.textPrimary,
+                          ),
                         ),
                       ),
+                      const SizedBox(width: AppSpacing.xs),
                       Text(
                         time,
                         style: TextStyle(

@@ -149,7 +149,7 @@ void main() {
       'lib/features/guarantees/ui/submit_claim_screen.dart':
           'submitting a claim',
       'lib/design_system/fix_button.dart': 'a button in its busy state',
-      'lib/design_system/fix_slide_to_confirm.dart':
+      'test/support/prototypes/fix_slide_to_confirm.dart':
           'a slide-to-confirm in flight',
       'lib/auth/auth_screen.dart': 'submitting credentials',
       'lib/design_system/fix_address_selector.dart':

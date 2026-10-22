@@ -2,21 +2,29 @@ import {
   EmergencyController,
   EmergencyAdminController,
 } from './emergency.controller';
-import { EmergencyService } from './emergency.service';
+import {
+  EmergencyService,
+  type EmergencyCreationResult,
+  type EmergencyStatusResult,
+} from './emergency.service';
+import type { AuthorizedRequest } from '../common/authorization/authorization.guard';
+import type { AuthorizationPrincipal } from '../common/authorization/authorization.types';
+import type { CreateBookingDto } from '../bookings/bookings.dto';
+import { BookingStatus } from '../../../shared/booking-lifecycle.types';
 
 describe('EmergencyController & EmergencyAdminController', () => {
   let controller: EmergencyController;
   let adminController: EmergencyAdminController;
   let emergencyService: jest.Mocked<EmergencyService>;
 
-  const principal = {
+  const principal: AuthorizationPrincipal = {
     userId: 'user-emergency-1',
     role: 'customer',
-  } as any;
+  } as unknown as AuthorizationPrincipal;
 
-  const mockRequest = {
+  const mockRequest: AuthorizedRequest = {
     authorizationPrincipal: principal,
-  } as any;
+  } as unknown as AuthorizedRequest;
 
   beforeEach(() => {
     emergencyService = {
@@ -31,10 +39,14 @@ describe('EmergencyController & EmergencyAdminController', () => {
 
   describe('EmergencyController.create', () => {
     it('creates an emergency request and passes idempotencyKey', async () => {
-      const mockResult = {
+      const mockResult: EmergencyCreationResult = {
         bookingId: 'book-em-1',
-        status: 'DISPATCHING',
-      } as any;
+        status: BookingStatus.DISPATCHING,
+        currentWave: 1,
+        fallbackRequired: false,
+        guidance: null,
+        eligibleCount: 3,
+      };
       emergencyService.createEmergency.mockResolvedValue(mockResult);
 
       const dto = {
@@ -42,7 +54,7 @@ describe('EmergencyController & EmergencyAdminController', () => {
         locationLat: 12.97,
         locationLng: 77.59,
         lineItems: [],
-      } as any;
+      } as unknown as CreateBookingDto;
 
       const result = await controller.create(mockRequest, dto, 'idem-key-999');
 
@@ -55,9 +67,21 @@ describe('EmergencyController & EmergencyAdminController', () => {
     });
 
     it('defaults idempotencyKey to empty string when not provided', async () => {
-      emergencyService.createEmergency.mockResolvedValue({} as any);
+      const mockResult: EmergencyCreationResult = {
+        bookingId: 'book-em-1',
+        status: BookingStatus.DISPATCHING,
+        currentWave: 1,
+        fallbackRequired: false,
+        guidance: null,
+        eligibleCount: 3,
+      };
+      emergencyService.createEmergency.mockResolvedValue(mockResult);
 
-      await controller.create(mockRequest, {} as any, undefined);
+      await controller.create(
+        mockRequest,
+        {} as unknown as CreateBookingDto,
+        undefined,
+      );
 
       expect(emergencyService.createEmergency).toHaveBeenCalledWith(
         'user-emergency-1',
@@ -69,7 +93,15 @@ describe('EmergencyController & EmergencyAdminController', () => {
 
   describe('EmergencyController.status', () => {
     it('retrieves emergency status for given bookingId', async () => {
-      const mockStatus = { bookingId: 'book-em-1', isEmergency: true } as any;
+      const mockStatus: EmergencyStatusResult = {
+        bookingId: 'book-em-1',
+        status: BookingStatus.DISPATCHING,
+        currentWave: 1,
+        fallbackRequired: false,
+        guidance: null,
+        eligibleCount: 3,
+        isEmergency: true,
+      } as unknown as EmergencyStatusResult;
       emergencyService.getStatus.mockResolvedValue(mockStatus);
 
       const result = await controller.status(mockRequest, {
@@ -86,7 +118,17 @@ describe('EmergencyController & EmergencyAdminController', () => {
 
   describe('EmergencyAdminController.dispatches', () => {
     it('lists active emergency dispatches for administrators', async () => {
-      const mockDispatches = [{ id: 'disp-1' }, { id: 'disp-2' }] as any;
+      const mockDispatches = [
+        {
+          bookingId: 'disp-1',
+          customerId: 'cust-1',
+          categoryName: 'Plumbing',
+          status: BookingStatus.REQUESTED,
+          currentWave: 1,
+          lastEscalatedAt: null,
+          createdAt: new Date(),
+        },
+      ];
       emergencyService.listActiveDispatches.mockResolvedValue(mockDispatches);
 
       const result = await adminController.dispatches();

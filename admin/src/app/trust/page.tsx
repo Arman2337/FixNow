@@ -1,3 +1,6 @@
+import { StatusBadge } from "@/features/status-badge";
+import { hasPermission } from "@/auth/roles";
+import { pageNumber as parsePageNumber } from "@/lib/format";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/auth/session";
@@ -8,7 +11,7 @@ import { reviewSignalAction, moderateReviewAction, moderatePhotoAction } from "@
 import { listSignals } from "@/features/trust/api";
 import type { TrustSignalSummary } from "@/features/trust/types";
 
-const shortId = (id: string) => id.replaceAll("-", "").slice(0, 8).toUpperCase();
+import { shortId } from "@/lib/format";
 
 const severityTone: Record<string, string> = {
   LOW: "bg-surface-container text-on-surface-variant",
@@ -39,21 +42,20 @@ export default async function TrustPage({
 }) {
   const session = await getSession();
   if (session.state !== "authenticated") redirect("/login?reason=expired");
-  if (!session.session.roles.some((r) => r === "trust_safety_reviewer" || r === "operations_administrator")) {
+  if (!hasPermission(session.session.roles, "trustSignalsRead")) {
     redirect("/unauthorized");
   }
 
   const params = await searchParams;
-  const pageNumber = Math.max(1, parseInt(params.page ?? "1", 10));
+  const pageNumber = parsePageNumber(params.page);
   const pageSize = 10;
   const offset = (pageNumber - 1) * pageSize;
 
-  const allSignals = await requireManagementResult(await listSignals(pageSize + 1, offset));
+  const allSignals = await requireManagementResult(await listSignals(pageSize + 1, offset, params.status === "OPEN" ? "OPEN" : undefined));
   const hasNextPage = allSignals.length > pageSize;
   const pagedSignals = allSignals.slice(0, pageSize);
 
-  let filtered = pagedSignals;
-  if (params.status === "OPEN") filtered = filtered.filter((signal) => signal.status === "OPEN");
+  const filtered = pagedSignals;
 
   const result = params.result ? resultMessages[params.result] : undefined;
   
@@ -300,9 +302,7 @@ function SignalCard({ signal }: { signal: TrustSignalSummary }) {
         </div>
       ) : (
         <div className="flex justify-end pt-space-xs mt-2">
-          <span className="font-label-md text-label-md font-bold uppercase tracking-wide text-secondary">
-            {signal.status === "REVIEWED" ? "Reviewed" : "Dismissed"}
-          </span>
+          <StatusBadge status={signal.status} />
         </div>
       )}
     </div>

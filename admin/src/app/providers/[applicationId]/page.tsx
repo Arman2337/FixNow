@@ -1,3 +1,4 @@
+import { hasPermission } from "@/auth/roles";
 import Link from "next/link";
 import { getSession } from "@/auth/session";
 import { AdminShell } from "@/components/admin-shell";
@@ -8,7 +9,7 @@ import { requireManagementResult } from "@/features/management-api";
 import { redirect } from "next/navigation";
 
 const statuses = ["", "unverified", "under_review", "approved", "rejected", "resubmission_requested"];
-const shortId = (id: string) => id.replaceAll("-", "").slice(0, 8).toUpperCase();
+import { shortId } from "@/lib/format";
 
 const messages: Record<string, string> = {
   claimed: "Review assigned to you.", decided: "Decision recorded in the audit history.",
@@ -26,7 +27,7 @@ export default async function ProviderDetailPage({ params, searchParams }: { par
   
   const application = await requireManagementResult(await getProviderApplication(applicationId));
   const assigned = application.assignedReviewerUserId === session.session.userId;
-  const canReview = session.session.roles.some((role) => role === "provider_reviewer" || role === "operations_administrator");
+  const canReview = hasPermission(session.session.roles, "adminProviderDocumentsRead");
   const documents = assigned && canReview ? (await requireManagementResult(await listProviderDocuments(applicationId))).documents : [];
   const result = sParams.result;
 

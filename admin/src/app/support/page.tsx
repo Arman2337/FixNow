@@ -1,3 +1,5 @@
+import { StatusBadge } from "@/features/status-badge";
+import { pageNumber as parsePageNumber } from "@/lib/format";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/auth/session";
@@ -5,10 +7,10 @@ import { AdminShell } from "@/components/admin-shell";
 import { env } from "@/config/env";
 import { requireManagementResult } from "@/features/management-api";
 import { listComplaints } from "@/features/operations/api";
-import type { StaffRole } from "@/auth/types";
+import { hasPermission } from "@/auth/roles";
 
 const statuses = ["", "OPEN", "IN_REVIEW", "ESCALATED", "RESOLVED", "CLOSED"];
-const shortId = (id: string) => id.replaceAll("-", "").slice(0, 8).toUpperCase();
+import { shortId } from "@/lib/format";
 
 export default async function SupportPage({
   searchParams,
@@ -18,30 +20,20 @@ export default async function SupportPage({
   const session = await getSession();
   if (session.state !== "authenticated") redirect("/login?reason=expired");
 
-  const allowedRoles: readonly StaffRole[] = ["support_agent", "trust_safety_reviewer", "operations_administrator"];
-  if (!session.session.roles.some((r) => allowedRoles.includes(r))) {
+  if (!hasPermission(session.session.roles, "adminComplaintsRead")) {
     redirect("/unauthorized");
   }
 
   const params = await searchParams;
-  const pageNumber = Math.max(1, parseInt(params.page ?? "1", 10));
+  const pageNumber = parsePageNumber(params.page);
   const pageSize = 20;
   const offset = (pageNumber - 1) * pageSize;
 
-  const complaints = await requireManagementResult(await listComplaints(pageSize + 1, offset));
+  const complaints = await requireManagementResult(await listComplaints(pageSize + 1, offset, params.status, params.search));
   const hasNextPage = complaints.length > pageSize;
   const pageItems = complaints.slice(0, pageSize);
 
-  let filtered = pageItems;
-  if (params.search) {
-    const s = params.search.toLowerCase();
-    filtered = filtered.filter(
-      (c) => c.id.toLowerCase().includes(s) || c.submitterId.toLowerCase().includes(s) || c.category.toLowerCase().includes(s),
-    );
-  }
-  if (params.status) {
-    filtered = filtered.filter((c) => c.status === params.status);
-  }
+  const filtered = pageItems;
 
   const escalatedCount = filtered.filter((c) => c.status === "ESCALATED").length;
 
@@ -130,11 +122,7 @@ export default async function SupportPage({
                         <span className={`font-data-mono text-data-mono font-bold ${complaint.status === 'ESCALATED' ? 'text-error' : 'text-primary'}`}>
                           #{shortId(complaint.id)}
                         </span>
-                        <span className={`px-2 py-0.5 rounded-full font-label-sm text-[10px] font-bold ${
-                          complaint.status === 'ESCALATED' ? 'bg-error-container text-on-error-container' : 'bg-surface-container-high text-on-surface'
-                        }`}>
-                          {complaint.status}
-                        </span>
+                        <StatusBadge status={complaint.status} />
                       </div>
                       <span className="font-data-mono text-xs text-secondary">{new Date(complaint.createdAt).toLocaleDateString()}</span>
                     </div>

@@ -40,7 +40,7 @@ class PushApi {
     required String token,
     required String platform,
   }) async {
-    await _transport.send(
+    final response = await _transport.send(
       ApiRequest(
         method: ApiMethod.put,
         path: 'notifications/push/devices',
@@ -48,6 +48,7 @@ class PushApi {
         body: {'token': token, 'platform': platform},
       ),
     );
+    _requireSuccess(response);
   }
 
   Future<List<PushDeviceSummary>> list() async {
@@ -71,13 +72,23 @@ class PushApi {
   }
 
   Future<void> revoke(String deviceId) async {
-    await _transport.send(
+    final response = await _transport.send(
       ApiRequest(
         method: ApiMethod.delete,
         path: 'notifications/push/devices/$deviceId',
         bearerToken: await _token(),
       ),
     );
+    _requireSuccess(response);
+  }
+
+  static void _requireSuccess(ApiResponse response) {
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw const ApiException(
+        ApiFailureKind.invalidResponse,
+        'Push settings could not be saved. Try again.',
+      );
+    }
   }
 }
 

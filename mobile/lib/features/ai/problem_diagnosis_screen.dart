@@ -101,7 +101,10 @@ class _ProblemDiagnosisScreenState extends State<ProblemDiagnosisScreen> {
       elevation: 0,
       scrolledUnderElevation: 1,
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+        icon: const Icon(
+          Icons.arrow_back_rounded,
+          color: AppColors.textPrimary,
+        ),
         onPressed: () => Navigator.of(context).maybePop(),
       ),
       title: const Text(
@@ -451,12 +454,15 @@ class _ProblemDiagnosisScreenState extends State<ProblemDiagnosisScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              'Describe the problem',
-              style: Theme.of(
-                context,
-              ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
+            Expanded(
+              child: Text(
+                'Describe the problem',
+                style: Theme.of(
+                  context,
+                ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
+              ),
             ),
+            const SizedBox(width: AppSpacing.sm),
             Text(
               '${_controller.textDescription.length}/500',
               style: const TextStyle(

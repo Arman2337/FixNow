@@ -1006,29 +1006,6 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text.rich(
-                  TextSpan(
-                    children: [
-                      TextSpan(text: 'Cancellation is free for another '),
-                      TextSpan(
-                        text: '3 minutes',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      TextSpan(
-                        text:
-                            '. A ₹99 technician dispatch fee applies thereafter.',
-                      ),
-                    ],
-                  ),
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 11,
-                  ),
-                ),
               ],
             ),
           ),
@@ -1156,7 +1133,7 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
                 _buildSafetyRule(
                   Icons.lock_rounded,
                   'In-App Digital Payments Only',
-                  'Never settle with cash outside the platform. All guarantees require FixNow in-app escrow billing.',
+                  'Confirm the agreed service and price before work starts. Keep your booking and payment records for support.',
                 ),
                 const SizedBox(height: AppSpacing.xl),
                 SizedBox(

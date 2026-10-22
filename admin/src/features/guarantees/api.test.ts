@@ -19,12 +19,12 @@ describe("guarantee management API", () => {
       .mockResolvedValueOnce(new Response(JSON.stringify({ id: "claim-1" }), { status: 200 }));
     vi.stubGlobal("fetch", fetchMock);
 
-    await listClaims("OPEN");
+    await listClaims("PENDING");
     await getClaim("claim-1");
 
     expect(fetchMock).toHaveBeenNthCalledWith(
       1,
-      "http://localhost:3000/api/v1/guarantees/claims?status=OPEN",
+      "http://localhost:3000/api/v1/guarantees/claims?limit=20&offset=0&status=PENDING",
       expect.objectContaining({ cache: "no-store", headers: expect.objectContaining({ authorization: "Bearer access-token" }) }),
     );
     expect(fetchMock).toHaveBeenNthCalledWith(

@@ -1,3 +1,4 @@
+import { hasPermission } from "@/auth/roles";
 import { redirect } from "next/navigation";
 import { getSession } from "@/auth/session";
 import { AdminShell } from "@/components/admin-shell";
@@ -9,7 +10,7 @@ export default async function AnalyticsPage() {
   const session = await getSession();
   if (session.state !== "authenticated") redirect("/login?reason=expired");
   
-  const hasAccess = session.session.roles.some((role) => role === "operations_administrator" || role === "auditor");
+  const hasAccess = hasPermission(session.session.roles, "adminAnalyticsRead");
   if (!hasAccess) redirect("/unauthorized");
 
   const response = await getAnalytics();

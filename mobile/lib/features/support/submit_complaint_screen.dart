@@ -76,7 +76,10 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
         elevation: 0,
         scrolledUnderElevation: 1,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+          icon: const Icon(
+            Icons.arrow_back_rounded,
+            color: AppColors.textPrimary,
+          ),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         title: const Text(
@@ -145,6 +148,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
                         ),
                         const SizedBox(height: AppSpacing.sm),
                         DropdownButtonFormField<String>(
+                          isExpanded: true,
                           initialValue: _selectedCategory,
                           dropdownColor: AppColors.surfacePrimary,
                           style: const TextStyle(color: AppColors.inputText),
@@ -158,6 +162,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
                                   value: c,
                                   child: Text(
                                     c,
+                                    overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(
                                       color: AppColors.inputText,
                                     ),

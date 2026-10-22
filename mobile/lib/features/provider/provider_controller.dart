@@ -741,9 +741,10 @@ bool isAcceptingRequest(String requestId) =>
       jobs = [accepted, ...jobs.where((item) => item.id != accepted.id)];
       notifyListeners();
       return true;
-    } on ApiException {
-      actionError =
-          'That request is no longer available. Refresh to try another.';
+    } on ApiException catch (error) {
+      actionError = error.message.isNotEmpty
+          ? error.message
+          : 'That request is no longer available. Refresh to try another.';
       notifyListeners();
       return false;
     }
@@ -775,20 +776,5 @@ bool isAcceptingRequest(String requestId) =>
     }
   }
 
-  Future<void> updateLineItems(
-    CustomerBooking job,
-    List<Map<String, dynamic>> lineItems,
-  ) async {
-    actionError = null;
-    notifyListeners();
-    try {
-      final updated = await repository.updateLineItems(job.id, lineItems);
-      jobs = [updated, ...jobs.where((item) => item.id != updated.id)];
-    } on ApiException {
-      actionError = 'Could not update extra charges. Try again.';
-      rethrow;
-    } finally {
-      notifyListeners();
-    }
-  }
+
 }

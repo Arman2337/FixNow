@@ -10,6 +10,7 @@ import 'package:fixnow_mobile/features/location/booking_location.dart';
 import 'package:fixnow_mobile/features/services/service_category.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'support/test_address_repository.dart';
 
 Widget host(Widget child) => MaterialApp(
   theme: AppTheme.light,
@@ -17,6 +18,7 @@ Widget host(Widget child) => MaterialApp(
 );
 
 void main() {
+  setUp(createTestAddressRepository);
   group('BookingSchedule model', () {
     test('computes targetScheduledAt and formatted summaries accurately', () {
       final baseDate = DateTime(2026, 8, 29);

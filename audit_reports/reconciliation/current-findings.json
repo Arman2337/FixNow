@@ -1,0 +1,2356 @@
+{
+  "date": "2026-10-21",
+  "head": "a45d9c5",
+  "method": "Source reconciliation; see validation.json for actual executions and limitations.",
+  "numbered_gap_counts": {
+    "FIXED_IN_SOURCE": 44,
+    "UNSUPPORTED": 3,
+    "PARTIAL": 18,
+    "OPEN": 3,
+    "UNDEFINED_ID": 10,
+    "REVIEW_REQUIRED": 1,
+    "DUPLICATE": 8,
+    "UNVERIFIED": 2
+  },
+  "findings": [
+    {
+      "id": "GAP-01",
+      "status": "fixed",
+      "claim": "Secret-scanner fixture blocks CI",
+      "current": "Historical allowlist remediation remains. Scanner self-test passes all 11 rules. Current full invocation exits 0, reporting 1,557 available history blobs, 37 untracked-not-ignored files, 5,251 unavailable Git objects and 3 files over 1 MiB skipped. This is a bounded local result, not a clean complete-history or current CI claim.",
+      "evidence": [
+        {
+          "path": "scripts/scan-secrets.mjs",
+          "line": 1
+        }
+      ],
+      "status_label": "FIXED_IN_SOURCE",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-02",
+      "status": "fixed",
+      "claim": "seed.js deletes all custom sub-services on every deploy",
+      "current": "Seed now inserts with WHERE NOT EXISTS and preserves existing catalog entries. Regression spec exists; live deployment not tested.",
+      "evidence": [
+        {
+          "path": "backend/seed.js",
+          "line": 137
+        },
+        {
+          "path": "backend/src/services/catalog-seed.spec.ts",
+          "line": 1
+        }
+      ],
+      "status_label": "FIXED_IN_SOURCE",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-03",
+      "status": "fixed",
+      "claim": "Completion cancel dialog continues anyway",
+      "current": "Guard uses || and returns when cancelled/unmounted.",
+      "evidence": [
+        {
+          "path": "mobile/lib/features/provider/provider_active_job_cockpit_screen.dart",
+          "line": 180
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification.",
+      "status_label": "FIXED_IN_SOURCE",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-04",
+      "status": "unsupported",
+      "claim": "Review :id/moderation route shadows photos/:photoId/moderation",
+      "current": "Specific photo route is now first. Original collision explanation is also incorrect: the patterns have different path-segment counts and cannot match the same URL in standard Express routing. Keep reorder as implemented, remove claim that endpoint was proven unreachable.",
+      "evidence": [
+        {
+          "path": "backend/src/ratings/ratings-admin.controller.ts",
+          "line": 24
+        },
+        {
+          "path": "backend/src/ratings/ratings-admin.controller.ts",
+          "line": 41
+        }
+      ],
+      "status_label": "UNSUPPORTED",
+      "confidence": "See disposition; no live verification"
+    },
+    {
+      "id": "GAP-05",
+      "status": "fixed",
+      "claim": "Trust route lacks role checks; inventory extends claim to bookings/providers.",
+      "current": "Trust rejects non-trust roles; bookings/providers also gate roles. Backend still enforces access. Old test.fixme assertion is active now, but stale explanatory comment remains.",
+      "evidence": [
+        {
+          "path": "admin/src/app/trust/page.tsx",
+          "line": 40
+        },
+        {
+          "path": "admin/src/app/bookings/page.tsx",
+          "line": 24
+        },
+        {
+          "path": "admin/src/app/providers/page.tsx",
+          "line": 15
+        },
+        {
+          "path": "admin/src/app/trust/page.test.tsx",
+          "line": 97
+        },
+        {
+          "path": "e2e/tests/admin-operations.spec.ts",
+          "line": 148
+        }
+      ],
+      "status_label": "FIXED_IN_SOURCE",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-06",
+      "status": "fixed",
+      "claim": "Auditor support navigation and service mutation forms conflict with backend permissions.",
+      "current": "Support nav/page excludes auditor; services checks canMutateServices to hide mutation UI. Unconditional header notifications still links support for every role; this is a distinct residual UX issue.",
+      "evidence": [
+        {
+          "path": "admin/src/components/admin-shell.tsx",
+          "line": 10
+        },
+        {
+          "path": "admin/src/app/support/page.tsx",
+          "line": 21
+        },
+        {
+          "path": "admin/src/app/services/page.tsx",
+          "line": 26
+        },
+        {
+          "path": "admin/src/auth/roles.ts",
+          "line": 114
+        },
+        {
+          "path": "admin/src/components/admin-shell.tsx",
+          "line": 158
+        },
+        {
+          "path": "backend/src/common/authorization/permission-policies.ts",
+          "line": 492
+        }
+      ],
+      "status_label": "FIXED_IN_SOURCE",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-07",
+      "status": "partial",
+      "claim": "Guarantee dropdown allows illegal transitions, leading to backend 409 crash.",
+      "current": "UI transition table and terminal rendering now exist. Claimed backend invalid-transition 409 is unsupported: updateStatus assigns any valid DTO enum without lifecycle validation. Thus UI gap fixed, backend invariant remains absent.",
+      "evidence": [
+        {
+          "path": "admin/src/app/guarantees/[id]/page.tsx",
+          "line": 15
+        },
+        {
+          "path": "admin/src/app/guarantees/[id]/page.tsx",
+          "line": 138
+        },
+        {
+          "path": "backend/src/guarantees/guarantees.service.ts",
+          "line": 128
+        },
+        {
+          "path": "admin/src/app/guarantees/[id]/page.test.ts",
+          "line": 4
+        }
+      ],
+      "status_label": "PARTIAL",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-08",
+      "status": "fixed",
+      "claim": "Orphan phone migration remains outside configured glob",
+      "current": "Named orphan file no longer exists. Configured migration glob remains backend/migrations. Absence checked against filesystem.",
+      "evidence": [
+        {
+          "path": "backend/typeorm.config.ts",
+          "line": 19
+        },
+        {
+          "path": "backend/src/database/database.module.ts",
+          "line": 20
+        }
+      ],
+      "status_label": "FIXED_IN_SOURCE",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-09",
+      "status": "open",
+      "claim": "Two migrations share timestamp 1786521300000",
+      "current": "Both classes/files remain. Ordering ambiguity is maintenance risk; no demonstrated dependency/fresh-schema failure. Do not re-key already-applied migrations casually.",
+      "evidence": [
+        {
+          "path": "backend/migrations/1786521300000-BookingLineItems.ts",
+          "line": 3
+        },
+        {
+          "path": "backend/migrations/1786521300000-ComplaintsSchema.ts",
+          "line": 14
+        }
+      ],
+      "status_label": "OPEN",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-10",
+      "status": "fixed",
+      "claim": "User deletion cascades authentication audit rows",
+      "current": "Later Phase2 migration replaces FK with ON DELETE SET NULL and permits null user_id. Whether deployment ran it is unverified; historical RestoreBookingIntegrity still has CASCADE but is superseded in source.",
+      "evidence": [
+        {
+          "path": "backend/migrations/1789750500000-Phase2IntegrityAndConstraints.ts",
+          "line": 27
+        }
+      ],
+      "status_label": "FIXED_IN_SOURCE",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-11",
+      "status": "fixed",
+      "claim": "Complaint transitions unenforced in SQL",
+      "current": "Phase2 migration defines complaint transition function and BEFORE UPDATE OF status trigger consistent with current shared transition table. Database installation/behavior unverified.",
+      "evidence": [
+        {
+          "path": "backend/migrations/1789750500000-Phase2IntegrityAndConstraints.ts",
+          "line": 36
+        },
+        {
+          "path": "backend/migrations/1789750500000-Phase2IntegrityAndConstraints.ts",
+          "line": 61
+        },
+        {
+          "path": "shared/complaint-lifecycle.types.ts",
+          "line": 27
+        }
+      ],
+      "status_label": "FIXED_IN_SOURCE",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-12",
+      "status": "partial",
+      "claim": "Chat client_message_id has no unique constraint",
+      "current": "Partial unique index now exists in entity and Phase2 migration. Original missing-index defect addressed in source. Service retains lookup-then-save pattern without demonstrated unique-violation replay recovery, so concurrent retries may fail instead of return existing message; live behavior unverified.",
+      "evidence": [
+        {
+          "path": "backend/src/bookings/domain/booking-message.entity.ts",
+          "line": 14
+        },
+        {
+          "path": "backend/migrations/1789750500000-Phase2IntegrityAndConstraints.ts",
+          "line": 32
+        },
+        {
+          "path": "backend/src/bookings/booking-messages.service.ts",
+          "line": 148
+        }
+      ],
+      "status_label": "PARTIAL",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-13",
+      "status": "fixed",
+      "claim": "Dead public mock inbox controller ships in source",
+      "current": "backend/src/notifications/inbox.controller.ts no longer exists. Active domain controller remains; deletion verified by filesystem. Original stub was unmounted, not an exposed production endpoint.",
+      "evidence": [
+        {
+          "path": "backend/src/notifications/domain/inbox.controller.ts",
+          "line": 1
+        }
+      ],
+      "status_label": "FIXED_IN_SOURCE",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-14",
+      "status": "fixed",
+      "claim": "Complaint status body is inline type bypassing ValidationPipe",
+      "current": "Controller uses decorated UpdateComplaintStatusDto with IsEnum and bounded optional notes.",
+      "evidence": [
+        {
+          "path": "backend/src/admin/admin-management.controller.ts",
+          "line": 58
+        },
+        {
+          "path": "backend/src/admin/admin-management.dto.ts",
+          "line": 71
+        }
+      ],
+      "status_label": "FIXED_IN_SOURCE",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-15",
+      "status": "partial",
+      "claim": "Recurring, guarantee, moderation tables lack FKs; evidence_urls simple-array corrupts commas",
+      "current": "Phase2 adds recurring customer, guarantee booking and moderation photo FKs; evidence_urls is jsonb in entity and migration. Additional soft UUID associations remain (recurring service_category_id, guarantee customer/provider/re-service references, moderation actor). Historical comma-corrupted data cannot be reconstructed by string_to_array migration.",
+      "evidence": [
+        {
+          "path": "backend/migrations/1789750500000-Phase2IntegrityAndConstraints.ts",
+          "line": 67
+        },
+        {
+          "path": "backend/migrations/1789750500000-Phase2IntegrityAndConstraints.ts",
+          "line": 104
+        },
+        {
+          "path": "backend/src/guarantees/domain/guarantee-claim.entity.ts",
+          "line": 43
+        },
+        {
+          "path": "backend/src/bookings/domain/recurring-schedule.entity.ts",
+          "line": 25
+        },
+        {
+          "path": "backend/src/ratings/domain/review-photo-moderation-event.entity.ts",
+          "line": 23
+        }
+      ],
+      "status_label": "PARTIAL",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-16",
+      "status": "partial",
+      "claim": "Schema probes all skip on empty DB",
+      "current": "Orphan-booking FK probe runs before empty-seed branch. Negative amount, coordinate and job-proof probes still skip when users/categories absent. Report path scripts/verify-schema.ts is wrong; actual file is backend/scripts/verify-schema.ts. Script performs writes/deletes, so not run in read-only reconciliation.",
+      "evidence": [
+        {
+          "path": "backend/scripts/verify-schema.ts",
+          "line": 247
+        },
+        {
+          "path": "backend/scripts/verify-schema.ts",
+          "line": 263
+        }
+      ],
+      "status_label": "PARTIAL",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-17",
+      "status": "fixed",
+      "claim": "Complaint dossier renders blank name/email due to UserDetail contract mismatch.",
+      "current": "Canonical user fields are optional, operations getUser reexports users implementation, and dossier renders explicit user-ID / identity-redacted fallbacks. Backend still intentionally projects minimal PII; unavailable personal fields are not by themselves defects.",
+      "evidence": [
+        {
+          "path": "admin/src/features/users/types.ts",
+          "line": 1
+        },
+        {
+          "path": "admin/src/features/operations/api.ts",
+          "line": 19
+        },
+        {
+          "path": "admin/src/app/support/[complaintId]/page.tsx",
+          "line": 215
+        },
+        {
+          "path": "admin/src/app/support/[complaintId]/page.tsx",
+          "line": 237
+        },
+        {
+          "path": "backend/src/admin/admin-management.service.ts",
+          "line": 153
+        }
+      ],
+      "status_label": "FIXED_IN_SOURCE",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-18",
+      "status": "fixed",
+      "claim": "Analytics API allows support agents through adminBookingsRead.",
+      "current": "Controller now requires dedicated adminAnalyticsRead, whose policy permits operations administrator and auditor only. Platform-financial leak claim also overstated current response fields.",
+      "evidence": [
+        {
+          "path": "backend/src/admin/admin-analytics.controller.ts",
+          "line": 11
+        },
+        {
+          "path": "backend/src/common/authorization/permission-policies.ts",
+          "line": 388
+        },
+        {
+          "path": "admin/src/features/operations/types.ts",
+          "line": 17
+        }
+      ],
+      "status_label": "FIXED_IN_SOURCE",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-19",
+      "status": "fixed",
+      "claim": "Simulated proof images and in-memory repository",
+      "current": "Capture failure reports error; upload callback mandatory; legacy repository removed.",
+      "evidence": [
+        {
+          "path": "mobile/lib/design_system/fix_job_proof_dialog.dart",
+          "line": 119
+        },
+        {
+          "path": "mobile/lib/design_system/fix_job_proof_dialog.dart",
+          "line": 134
+        },
+        {
+          "path": "mobile/lib/features/provider/provider_active_job_cockpit_screen.dart",
+          "line": 172
+        },
+        {
+          "path": "mobile/lib/features/bookings/job_proof_service.dart",
+          "line": 36
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification.",
+      "status_label": "FIXED_IN_SOURCE",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-20",
+      "status": "fixed",
+      "claim": "Bookings emergency banner matches description substring.",
+      "current": "Now counts booking.isEmergency true; backend derives flag from emergency category IDs.",
+      "evidence": [
+        {
+          "path": "admin/src/app/bookings/page.tsx",
+          "line": 31
+        },
+        {
+          "path": "backend/src/admin/admin-operations.service.ts",
+          "line": 75
+        },
+        {
+          "path": "backend/src/admin/admin-operations.service.ts",
+          "line": 161
+        }
+      ],
+      "status_label": "FIXED_IN_SOURCE",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-21",
+      "status": "fixed",
+      "claim": "Guarantee server actions throw on API failure and trigger error.tsx.",
+      "current": "Both status/re-service mutations redirect with error query and page renders alert; successful actions revalidate and redirect.",
+      "evidence": [
+        {
+          "path": "admin/src/app/guarantees/[id]/page.tsx",
+          "line": 52
+        },
+        {
+          "path": "admin/src/app/guarantees/[id]/page.tsx",
+          "line": 63
+        },
+        {
+          "path": "admin/src/app/guarantees/[id]/page.tsx",
+          "line": 91
+        }
+      ],
+      "status_label": "FIXED_IN_SOURCE",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-22",
+      "status": "fixed",
+      "claim": "Native maps launcher no-op",
+      "current": "Native helper uses url_launcher external application.",
+      "evidence": [
+        {
+          "path": "mobile/lib/features/location/url_launcher_stub.dart",
+          "line": 1
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification.",
+      "status_label": "FIXED_IN_SOURCE",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-23",
+      "status": "partial",
+      "claim": "Seven admin pages load full unpaginated tables; search queries run sequentially.",
+      "current": "Search uses Promise.all; complaints/trust have server offset pagination, provider/users/bookings cursor pagination. Admin services still loads all categories then slices; guarantees backend caps default 50 without continuation and UI paginates only fetched slice. Search locally filters default first 20 complaints / 50 claims, so older matching records remain absent.",
+      "evidence": [
+        {
+          "path": "admin/src/app/search/page.tsx",
+          "line": 35
+        },
+        {
+          "path": "admin/src/app/search/page.tsx",
+          "line": 64
+        },
+        {
+          "path": "admin/src/app/search/page.tsx",
+          "line": 79
+        },
+        {
+          "path": "admin/src/app/search/page.tsx",
+          "line": 91
+        },
+        {
+          "path": "admin/src/app/services/page.tsx",
+          "line": 27
+        },
+        {
+          "path": "backend/src/admin/admin-operations.service.ts",
+          "line": 29
+        },
+        {
+          "path": "admin/src/app/guarantees/page.tsx",
+          "line": 27
+        },
+        {
+          "path": "backend/src/guarantees/guarantees.service.ts",
+          "line": 103
+        },
+        {
+          "path": "backend/src/common/list-pagination.dto.ts",
+          "line": 41
+        }
+      ],
+      "status_label": "PARTIAL",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-24",
+      "status": "fixed",
+      "claim": "Date strip never filters jobs",
+      "current": "Selected date filters both assigned/history lists.",
+      "evidence": [
+        {
+          "path": "mobile/lib/features/provider/provider_jobs_screen.dart",
+          "line": 66
+        },
+        {
+          "path": "mobile/lib/features/provider/provider_jobs_screen.dart",
+          "line": 78
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification.",
+      "status_label": "FIXED_IN_SOURCE",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-25",
+      "status": "fixed",
+      "claim": "Bookings reads nextCursor without Load More control.",
+      "current": "Load more link passes cursor and current filters.",
+      "evidence": [
+        {
+          "path": "admin/src/app/bookings/page.tsx",
+          "line": 128
+        }
+      ],
+      "status_label": "FIXED_IN_SOURCE",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-26",
+      "status": "fixed",
+      "claim": "Provider highlight label mismatches; search highlights Dashboard.",
+      "current": "Shell normalizes Provider label and sets activeLabel null for Search.",
+      "evidence": [
+        {
+          "path": "admin/src/components/admin-shell.tsx",
+          "line": 39
+        },
+        {
+          "path": "admin/src/components/admin-shell.tsx",
+          "line": 51
+        }
+      ],
+      "status_label": "FIXED_IN_SOURCE",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-27",
+      "status": "fixed",
+      "claim": "Bookings table has no dossier navigation.",
+      "current": "Booking ID is now Link to detail.",
+      "evidence": [
+        {
+          "path": "admin/src/app/bookings/page.tsx",
+          "line": 108
+        }
+      ],
+      "status_label": "FIXED_IN_SOURCE",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-28",
+      "status": "fixed",
+      "claim": "Providers/support permanent placeholder panes consume 40% layout.",
+      "current": "Queue pages use real empty/list state and navigation controls; literal placeholder panes absent.",
+      "evidence": [
+        {
+          "path": "admin/src/app/providers/page.tsx",
+          "line": 86
+        },
+        {
+          "path": "admin/src/app/providers/page.tsx",
+          "line": 128
+        },
+        {
+          "path": "admin/src/app/support/page.tsx",
+          "line": 114
+        },
+        {
+          "path": "admin/src/app/support/page.tsx",
+          "line": 122
+        },
+        {
+          "path": "admin/src/app/support/page.tsx",
+          "line": 162
+        }
+      ],
+      "status_label": "FIXED_IN_SOURCE",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-29",
+      "status": "fixed",
+      "claim": "Fabricated Bengaluru postal defaults",
+      "current": "Model defaults city/postalCode to empty strings.",
+      "evidence": [
+        {
+          "path": "mobile/lib/features/location/saved_address.dart",
+          "line": 23
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification.",
+      "status_label": "FIXED_IN_SOURCE",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-30",
+      "status": "fixed",
+      "claim": "Hardcoded customer tracking avatar",
+      "current": "Tracking renders person icons.",
+      "evidence": [
+        {
+          "path": "mobile/lib/features/tracking/booking_tracking_screen.dart",
+          "line": 116
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification.",
+      "status_label": "FIXED_IN_SOURCE",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-31",
+      "status": "undefined",
+      "claim": "No finding definition in any of nine historical reports",
+      "current": "No definition or reference exists in the nine historical reports. This is a missing report ID, not a verified application defect.",
+      "evidence": [
+        {
+          "path": "audit_reports/FIXNOW_COMPLETENESS_AND_GAPS.md",
+          "line": 10
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification.",
+      "status_label": "UNDEFINED_ID",
+      "confidence": "See disposition; no live verification"
+    },
+    {
+      "id": "GAP-32",
+      "status": "review_required",
+      "claim": "Third-party reverse geocoder receives raw coordinates",
+      "current": "Precise coordinates are sent to BigDataCloud by the current reverse-geocoding implementation. This is an integration/privacy review item; the historical reports do not establish an approved policy violation. No external request or legal conclusion was made in this reconciliation.",
+      "evidence": [
+        {
+          "path": "mobile/lib/features/location/live_location_service.dart",
+          "line": 73
+        },
+        {
+          "path": "mobile/lib/features/location/live_location_service.dart",
+          "line": 105
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification.",
+      "status_label": "REVIEW_REQUIRED",
+      "confidence": "See disposition; no live verification"
+    },
+    {
+      "id": "GAP-33",
+      "status": "undefined",
+      "claim": "No finding definition in any of nine historical reports",
+      "current": "No definition or reference exists in the nine historical reports. This is a missing report ID, not a verified application defect.",
+      "evidence": [
+        {
+          "path": "audit_reports/FIXNOW_COMPLETENESS_AND_GAPS.md",
+          "line": 10
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification.",
+      "status_label": "UNDEFINED_ID",
+      "confidence": "See disposition; no live verification"
+    },
+    {
+      "id": "GAP-34",
+      "status": "unsupported",
+      "claim": "No explicit CSRF token beyond Origin checking and no login action rate limiter constitute security gap.",
+      "current": "No custom Next limiter exists, but backend login is throttled 5/min, global guard applies, lockout persists in credentials, UI handles 429. Session cookies Strict/HttpOnly/prod Secure. No exploit established; separate CSRF token absence alone is not vulnerability evidence. Runtime security testing not performed.",
+      "evidence": [
+        {
+          "path": "admin/src/auth/actions.ts",
+          "line": 14
+        },
+        {
+          "path": "admin/src/auth/actions.ts",
+          "line": 22
+        },
+        {
+          "path": "backend/src/auth/admin-auth.controller.ts",
+          "line": 26
+        },
+        {
+          "path": "backend/src/app.module.ts",
+          "line": 72
+        },
+        {
+          "path": "backend/src/auth/auth.service.ts",
+          "line": 217
+        },
+        {
+          "path": "backend/src/auth/auth.service.ts",
+          "line": 252
+        },
+        {
+          "path": "admin/src/auth/session.ts",
+          "line": 9
+        }
+      ],
+      "status_label": "UNSUPPORTED",
+      "confidence": "See disposition; no live verification"
+    },
+    {
+      "id": "GAP-35",
+      "status": "fixed",
+      "claim": "Review photo status varchar length 512 disagrees with DB 16",
+      "current": "Status column is varchar(16); 512 now belongs to object_key, appropriately. No DB queried.",
+      "evidence": [
+        {
+          "path": "backend/src/ratings/domain/review-photo.entity.ts",
+          "line": 36
+        },
+        {
+          "path": "backend/src/ratings/domain/review-photo.entity.ts",
+          "line": 49
+        }
+      ],
+      "status_label": "FIXED_IN_SOURCE",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-36",
+      "status": "fixed",
+      "claim": "ComplaintStatus, PushPlatform, GuaranteeClaimStatus omit enumName",
+      "current": "All three named fields now explicitly declare native enum names. No live schema-diff proof.",
+      "evidence": [
+        {
+          "path": "backend/src/support/complaints/domain/complaint.entity.ts",
+          "line": 60
+        },
+        {
+          "path": "backend/src/notifications/push/push-device-token.entity.ts",
+          "line": 32
+        },
+        {
+          "path": "backend/src/guarantees/domain/guarantee-claim.entity.ts",
+          "line": 35
+        }
+      ],
+      "status_label": "FIXED_IN_SOURCE",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-37",
+      "status": "undefined",
+      "claim": "No finding definition in any of nine historical reports",
+      "current": "No definition or reference exists in the nine historical reports. This is a missing report ID, not a verified application defect.",
+      "evidence": [
+        {
+          "path": "audit_reports/FIXNOW_COMPLETENESS_AND_GAPS.md",
+          "line": 10
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification.",
+      "status_label": "UNDEFINED_ID",
+      "confidence": "See disposition; no live verification"
+    },
+    {
+      "id": "GAP-38",
+      "status": "fixed",
+      "claim": "OSM tiles lack custom User-Agent",
+      "current": "Tile layers specify userAgentPackageName com.fixnow.app.",
+      "evidence": [
+        {
+          "path": "mobile/lib/features/tracking/provider_live_map.dart",
+          "line": 493
+        },
+        {
+          "path": "mobile/lib/features/location/service_location_picker_sheet.dart",
+          "line": 140
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification.",
+      "status_label": "FIXED_IN_SOURCE",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-39",
+      "status": "fixed",
+      "claim": "Dead Android audio_tone/voice_stream MethodChannels",
+      "current": "Only navigation MethodChannel remains; historical audio/voice channels absent.",
+      "evidence": [
+        {
+          "path": "mobile/android/app/src/main/kotlin/com/fixnow/fixnow_mobile/MainActivity.kt",
+          "line": 16
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification.",
+      "status_label": "FIXED_IN_SOURCE",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-40",
+      "status": "duplicate",
+      "claim": "Fabricated job proof",
+      "current": "Same historical issue as GAP-19; fixed in source.",
+      "evidence": [
+        {
+          "path": "mobile/lib/design_system/fix_job_proof_dialog.dart",
+          "line": 134
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification.",
+      "status_label": "DUPLICATE",
+      "confidence": "See disposition; no live verification"
+    },
+    {
+      "id": "GAP-41",
+      "status": "fixed",
+      "claim": "Missing payment callback fabricates success",
+      "current": "Missing callback throws StateError. Only caller is development-gated checkout with callback.",
+      "evidence": [
+        {
+          "path": "mobile/lib/design_system/fix_payment_checkout_sheet.dart",
+          "line": 145
+        },
+        {
+          "path": "mobile/lib/features/payments/invoice_screen.dart",
+          "line": 216
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification.",
+      "status_label": "FIXED_IN_SOURCE",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-42",
+      "status": "partial",
+      "claim": "Fake GSTIN, conflicting legal addresses, broken QR URL",
+      "current": "UI/PDF use shared compile-time configuration, removing duplicated conflicting addresses. The default GSTIN and verification URL remain placeholders with no production-specific required override check in AppEnvironment. Production configuration and URL availability were not inspected; the old specific 404 claim is unverified.",
+      "evidence": [
+        {
+          "path": "mobile/lib/features/payments/fix_pdf_invoice_builder.dart",
+          "line": 14
+        },
+        {
+          "path": "mobile/lib/features/payments/invoice_screen.dart",
+          "line": 300
+        },
+        {
+          "path": "mobile/lib/config/app_environment.dart",
+          "line": 19
+        },
+        {
+          "path": "mobile/lib/config/app_environment.dart",
+          "line": 35
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification.",
+      "status_label": "PARTIAL",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-43",
+      "status": "partial",
+      "claim": "Notification deletes never persist/no backend endpoint",
+      "current": "Original no-backend/local-only assertion is fixed: owned DELETE endpoints and real requests exist. The repository still marks items deleted locally before an unawaited request, ignores token errors, and does not validate response success or roll back the local dismissal. Successful persistence and reload behavior were not established by a live test.",
+      "evidence": [
+        {
+          "path": "mobile/lib/features/notifications/notification_repository.dart",
+          "line": 112
+        },
+        {
+          "path": "mobile/lib/features/notifications/notification_repository.dart",
+          "line": 113
+        },
+        {
+          "path": "backend/src/notifications/domain/inbox.controller.ts",
+          "line": 93
+        },
+        {
+          "path": "backend/src/notifications/domain/inbox.controller.ts",
+          "line": 111
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification.",
+      "status_label": "PARTIAL",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-44",
+      "status": "fixed",
+      "claim": "Shell hardcodes Chief Dispatcher and external avatar.",
+      "current": "Shell derives title/subtitle/initials from props/role, displays local initials avatar; backend session exposes email/displayName. Some older dossier callers pass only roles, producing honest role fallback rather than person identity.",
+      "evidence": [
+        {
+          "path": "admin/src/components/admin-shell.tsx",
+          "line": 55
+        },
+        {
+          "path": "admin/src/components/admin-shell.tsx",
+          "line": 170
+        },
+        {
+          "path": "backend/src/auth/admin-auth.controller.ts",
+          "line": 41
+        },
+        {
+          "path": "admin/src/app/bookings/[bookingId]/page.tsx",
+          "line": 26
+        }
+      ],
+      "status_label": "FIXED_IN_SOURCE",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-45",
+      "status": "partial",
+      "claim": "Five inert controls",
+      "current": "Referral and biometric placeholder controls removed (no matching identifiers in files). Push category switches still local state. Help callback now dispatches for existing complaint, honestly unavailable otherwise. Payment Methods row opens information sheet.",
+      "evidence": [
+        {
+          "path": "mobile/lib/notifications/push_settings_card.dart",
+          "line": 265
+        },
+        {
+          "path": "mobile/lib/features/support/customer_help_screen.dart",
+          "line": 883
+        },
+        {
+          "path": "mobile/lib/features/profile/customer_profile_screen.dart",
+          "line": 411
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification.",
+      "status_label": "PARTIAL",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-46",
+      "status": "fixed",
+      "claim": "Banner creates no-op action",
+      "current": "Action omitted unless label and callback both provided.",
+      "evidence": [
+        {
+          "path": "mobile/lib/design_system/fix_banner.dart",
+          "line": 38
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification.",
+      "status_label": "FIXED_IN_SOURCE",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-47",
+      "status": "fixed",
+      "claim": "Notification invoice sheet Close only",
+      "current": "Production notification route passes onOpenInvoice. Payment notifications open InvoiceScreen with notification paymentId/bookingId for customers and earnings for providers. Fallback sheet offers booking navigation.",
+      "evidence": [
+        {
+          "path": "mobile/lib/features/notifications/notification_center_screen.dart",
+          "line": 861
+        },
+        {
+          "path": "mobile/lib/app/app.dart",
+          "line": 696
+        },
+        {
+          "path": "mobile/lib/app/app.dart",
+          "line": 763
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification.",
+      "status_label": "FIXED_IN_SOURCE",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-48",
+      "status": "partial",
+      "claim": "Fake wallet balance and conflicting cancellation fee copy",
+      "current": "Fake numerical wallet balance removed; generic wallet method remains in development-gated sheet. Cancellation dialog still says full refund and fee once en route; tracking says fee after free window. Actual fee collection/policy agreement needs backend/domain reconciliation.",
+      "evidence": [
+        {
+          "path": "mobile/lib/design_system/fix_payment_checkout_sheet.dart",
+          "line": 591
+        },
+        {
+          "path": "mobile/lib/features/bookings/cancellation_dialog.dart",
+          "line": 77
+        },
+        {
+          "path": "mobile/lib/features/tracking/booking_tracking_screen.dart",
+          "line": 1022
+        },
+        {
+          "path": "mobile/lib/features/payments/invoice_screen.dart",
+          "line": 216
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification.",
+      "status_label": "PARTIAL",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-49",
+      "status": "fixed",
+      "claim": "Permanently disabled Corporate SSO button.",
+      "current": "No SSO button remains in admin source; login-form disabled state is only pending submit. LDAP ID text still appears but is unrelated to removed button.",
+      "evidence": [
+        {
+          "path": "admin/src/auth/login-form.tsx",
+          "line": 38
+        },
+        {
+          "path": "admin/src/auth/login-form.tsx",
+          "line": 94
+        }
+      ],
+      "status_label": "FIXED_IN_SOURCE",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-50",
+      "status": "fixed",
+      "claim": "22 unreachable mobile files including six obsolete screens",
+      "current": "All six named obsolete screen sources absent. Current import graph has 10 unreferenced DS sources, voice_assistance, call_screen plus conditional-import url_launcher_web false positive; historical 22 count unsupported. Residuals tracked GAP-53/51.",
+      "evidence": [
+        {
+          "path": "mobile/lib/main.dart",
+          "line": 2
+        },
+        {
+          "path": "mobile/lib/features/call/call_screen.dart",
+          "line": 14
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification.",
+      "status_label": "FIXED_IN_SOURCE",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-51",
+      "status": "partial",
+      "claim": "HttpCallRepository never instantiated/entire calling unwired",
+      "current": "Repository/controller instantiated, buttons start API call then show snackbar. No navigation/import to CallScreen. Screen hangup only local; controller does not expose accept/reject/hangup. Do not claim backend 100% complete or actual audio connected from this source trace.",
+      "evidence": [
+        {
+          "path": "mobile/lib/app/app.dart",
+          "line": 426
+        },
+        {
+          "path": "mobile/lib/app/app.dart",
+          "line": 1333
+        },
+        {
+          "path": "mobile/lib/app/app.dart",
+          "line": 1363
+        },
+        {
+          "path": "mobile/lib/features/call/call_screen.dart",
+          "line": 90
+        },
+        {
+          "path": "mobile/lib/features/call/call_controller.dart",
+          "line": 35
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification.",
+      "status_label": "PARTIAL",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-52",
+      "status": "fixed",
+      "claim": "Demo galleries fake data in binary",
+      "current": "Both named gallery sources absent, no production references. Original compiled-binary claim unsupported without build artifact inspection.",
+      "evidence": [
+        {
+          "path": "mobile/lib/main.dart",
+          "line": 2
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification.",
+      "status_label": "FIXED_IN_SOURCE",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-53",
+      "status": "partial",
+      "claim": "33 unused DS widgets compiled into binary",
+      "current": "Read-only import graph finds 10 unreachable DS sources: fix_3d_spatial_beacon,fix_3d_tilt_card,fix_audio_waveform,fix_eta_ring,fix_jelly_squish_button,fix_journey_progress_line,fix_provider_card,fix_slide_to_confirm,fix_sos_vortex_button,fix_star_rating_burst. Source deadness retained; binary inclusion cannot be concluded due to tree shaking. Historical count stale.",
+      "evidence": [
+        {
+          "path": "mobile/lib/design_system/fix_3d_spatial_beacon.dart",
+          "line": 9
+        },
+        {
+          "path": "mobile/lib/design_system/fix_slide_to_confirm.dart",
+          "line": 11
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification.",
+      "status_label": "PARTIAL",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-54",
+      "status": "fixed",
+      "claim": "Analytics/users/user-detail routes orphaned.",
+      "current": "Navigation links analytics/users, user table links detail. Prior inventory itself acknowledged guarantee-to-user links, so absolute zero inbound claim was inaccurate.",
+      "evidence": [
+        {
+          "path": "admin/src/components/admin-shell.tsx",
+          "line": 14
+        },
+        {
+          "path": "admin/src/components/admin-shell.tsx",
+          "line": 15
+        },
+        {
+          "path": "admin/src/app/users/page.tsx",
+          "line": 115
+        },
+        {
+          "path": "admin/src/app/guarantees/[id]/page.tsx",
+          "line": 198
+        }
+      ],
+      "status_label": "FIXED_IN_SOURCE",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-55",
+      "status": "fixed",
+      "claim": "Unauthorized page has no session check.",
+      "current": "Page obtains session and redirects unauthenticated users to login.",
+      "evidence": [
+        {
+          "path": "admin/src/app/unauthorized/page.tsx",
+          "line": 5
+        }
+      ],
+      "status_label": "FIXED_IN_SOURCE",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-56",
+      "status": "duplicate",
+      "claim": "Clear All in-memory only",
+      "current": "Same as GAP-43; server endpoint and dispatch now exist.",
+      "evidence": [
+        {
+          "path": "mobile/lib/features/notifications/notification_repository.dart",
+          "line": 113
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification.",
+      "status_label": "DUPLICATE",
+      "confidence": "See disposition; no live verification"
+    },
+    {
+      "id": "GAP-57",
+      "status": "fixed",
+      "claim": "No admin UI exists for review/photo moderation.",
+      "current": "Trust page provides review/photo UUID moderation forms wired via server actions to backend endpoints. Moderation browsing queue is still absent; current forms require externally known IDs. Original zero-UI claim fixed; richer queue is scope distinction.",
+      "evidence": [
+        {
+          "path": "admin/src/app/trust/page.tsx",
+          "line": 194
+        },
+        {
+          "path": "admin/src/app/trust/page.tsx",
+          "line": 223
+        },
+        {
+          "path": "admin/src/features/trust/actions.ts",
+          "line": 18
+        },
+        {
+          "path": "admin/src/features/trust/actions.ts",
+          "line": 31
+        },
+        {
+          "path": "admin/src/features/trust/api.ts",
+          "line": 22
+        }
+      ],
+      "status_label": "FIXED_IN_SOURCE",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-58",
+      "status": "duplicate",
+      "claim": "Guarantee missing client transition table.",
+      "current": "Same claim as GAP-07; UI fixed, backend lifecycle guard absent. Do not count twice.",
+      "evidence": [
+        {
+          "path": "admin/src/app/guarantees/[id]/page.tsx",
+          "line": 15
+        },
+        {
+          "path": "backend/src/guarantees/guarantees.service.ts",
+          "line": 128
+        }
+      ],
+      "status_label": "DUPLICATE",
+      "confidence": "See disposition; no live verification"
+    },
+    {
+      "id": "GAP-59",
+      "status": "duplicate",
+      "claim": "Unwired calling (master feature inventory alias)",
+      "current": "Alias for GAP-51, not independent finding.",
+      "evidence": [
+        {
+          "path": "mobile/lib/app/app.dart",
+          "line": 426
+        },
+        {
+          "path": "audit_reports/FIXNOW_MASTER_FEATURE_INVENTORY.md",
+          "line": 59
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification.",
+      "status_label": "DUPLICATE",
+      "confidence": "See disposition; no live verification"
+    },
+    {
+      "id": "GAP-60",
+      "status": "undefined",
+      "claim": "No finding definition in any of nine historical reports",
+      "current": "No definition or reference exists in the nine historical reports. This is a missing report ID, not a verified application defect.",
+      "evidence": [
+        {
+          "path": "audit_reports/FIXNOW_COMPLETENESS_AND_GAPS.md",
+          "line": 10
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification.",
+      "status_label": "UNDEFINED_ID",
+      "confidence": "See disposition; no live verification"
+    },
+    {
+      "id": "GAP-61",
+      "status": "undefined",
+      "claim": "No finding definition in any of nine historical reports",
+      "current": "No definition or reference exists in the nine historical reports. This is a missing report ID, not a verified application defect.",
+      "evidence": [
+        {
+          "path": "audit_reports/FIXNOW_COMPLETENESS_AND_GAPS.md",
+          "line": 10
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification.",
+      "status_label": "UNDEFINED_ID",
+      "confidence": "See disposition; no live verification"
+    },
+    {
+      "id": "GAP-62",
+      "status": "undefined",
+      "claim": "No finding definition in any of nine historical reports",
+      "current": "No definition or reference exists in the nine historical reports. This is a missing report ID, not a verified application defect.",
+      "evidence": [
+        {
+          "path": "audit_reports/FIXNOW_COMPLETENESS_AND_GAPS.md",
+          "line": 10
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification.",
+      "status_label": "UNDEFINED_ID",
+      "confidence": "See disposition; no live verification"
+    },
+    {
+      "id": "GAP-63",
+      "status": "undefined",
+      "claim": "No finding definition in any of nine historical reports",
+      "current": "No definition or reference exists in the nine historical reports. This is a missing report ID, not a verified application defect.",
+      "evidence": [
+        {
+          "path": "audit_reports/FIXNOW_COMPLETENESS_AND_GAPS.md",
+          "line": 10
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification.",
+      "status_label": "UNDEFINED_ID",
+      "confidence": "See disposition; no live verification"
+    },
+    {
+      "id": "GAP-64",
+      "status": "undefined",
+      "claim": "No finding definition in any of nine historical reports",
+      "current": "No definition or reference exists in the nine historical reports. This is a missing report ID, not a verified application defect.",
+      "evidence": [
+        {
+          "path": "audit_reports/FIXNOW_COMPLETENESS_AND_GAPS.md",
+          "line": 10
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification.",
+      "status_label": "UNDEFINED_ID",
+      "confidence": "See disposition; no live verification"
+    },
+    {
+      "id": "GAP-65",
+      "status": "undefined",
+      "claim": "No finding definition in any of nine historical reports",
+      "current": "No definition or reference exists in the nine historical reports. This is a missing report ID, not a verified application defect.",
+      "evidence": [
+        {
+          "path": "audit_reports/FIXNOW_COMPLETENESS_AND_GAPS.md",
+          "line": 10
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification.",
+      "status_label": "UNDEFINED_ID",
+      "confidence": "See disposition; no live verification"
+    },
+    {
+      "id": "GAP-66",
+      "status": "undefined",
+      "claim": "No finding definition in any of nine historical reports",
+      "current": "No definition or reference exists in the nine historical reports. This is a missing report ID, not a verified application defect.",
+      "evidence": [
+        {
+          "path": "audit_reports/FIXNOW_COMPLETENESS_AND_GAPS.md",
+          "line": 10
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification.",
+      "status_label": "UNDEFINED_ID",
+      "confidence": "See disposition; no live verification"
+    },
+    {
+      "id": "GAP-67",
+      "status": "duplicate",
+      "claim": "Bookings cursor without Load More.",
+      "current": "Same as GAP-25; fixed.",
+      "evidence": [
+        {
+          "path": "admin/src/app/bookings/page.tsx",
+          "line": 128
+        }
+      ],
+      "status_label": "DUPLICATE",
+      "confidence": "See disposition; no live verification"
+    },
+    {
+      "id": "GAP-68",
+      "status": "duplicate",
+      "claim": "Cosmetic provider date strip",
+      "current": "Same issue as GAP-24; fixed.",
+      "evidence": [
+        {
+          "path": "mobile/lib/features/provider/provider_jobs_screen.dart",
+          "line": 78
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification.",
+      "status_label": "DUPLICATE",
+      "confidence": "See disposition; no live verification"
+    },
+    {
+      "id": "GAP-69",
+      "status": "fixed",
+      "claim": "Auth offline/failure states lack screens",
+      "current": "App handles offline and failure session states explicitly.",
+      "evidence": [
+        {
+          "path": "mobile/lib/app/app.dart",
+          "line": 814
+        },
+        {
+          "path": "mobile/lib/app/app.dart",
+          "line": 839
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification.",
+      "status_label": "FIXED_IN_SOURCE",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-70",
+      "status": "fixed",
+      "claim": "Brand fonts commented out/missing assets",
+      "current": "Inter weights bundled, declared in pubspec; asset files present. Historical Playfair requirement not assumed.",
+      "evidence": [
+        {
+          "path": "mobile/pubspec.yaml",
+          "line": 60
+        },
+        {
+          "path": "mobile/assets/fonts/Inter-Regular.ttf",
+          "line": 1
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification.",
+      "status_label": "FIXED_IN_SOURCE",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-71",
+      "status": "open",
+      "claim": "Complaint lifecycle tables duplicated in shared/admin",
+      "current": "Both independent tables remain with currently matching transitions. Admin comment claiming table is imported by both sides is inaccurate; drift risk persists.",
+      "evidence": [
+        {
+          "path": "shared/complaint-lifecycle.types.ts",
+          "line": 27
+        },
+        {
+          "path": "admin/src/features/operations/complaint-lifecycle.ts",
+          "line": 22
+        }
+      ],
+      "status_label": "OPEN",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-72",
+      "status": "open",
+      "claim": "shortId copied across ten admin files.",
+      "current": "Ten app pages retain local shortId definitions despite shared lib formatter; maintainability duplication, no proven runtime bug.",
+      "evidence": [
+        {
+          "path": "admin/src/lib/format.ts",
+          "line": 1
+        },
+        {
+          "path": "admin/src/app/bookings/[bookingId]/page.tsx",
+          "line": 12
+        },
+        {
+          "path": "admin/src/app/trust/page.tsx",
+          "line": 11
+        },
+        {
+          "path": "admin/src/app/support/page.tsx",
+          "line": 11
+        },
+        {
+          "path": "admin/src/app/users/page.tsx",
+          "line": 10
+        },
+        {
+          "path": "admin/src/app/users/[userId]/page.tsx",
+          "line": 10
+        },
+        {
+          "path": "admin/src/app/support/[complaintId]/page.tsx",
+          "line": 22
+        },
+        {
+          "path": "admin/src/app/guarantees/page.tsx",
+          "line": 11
+        },
+        {
+          "path": "admin/src/app/guarantees/[id]/page.tsx",
+          "line": 13
+        },
+        {
+          "path": "admin/src/app/providers/page.tsx",
+          "line": 11
+        },
+        {
+          "path": "admin/src/app/providers/[applicationId]/page.tsx",
+          "line": 11
+        }
+      ],
+      "status_label": "OPEN",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-73",
+      "status": "fixed",
+      "claim": "Two conflicting getUser client implementations/types.",
+      "current": "Operations reexports canonical getUser; old operations UserDetail optional-field alias remains unused but no competing request implementation.",
+      "evidence": [
+        {
+          "path": "admin/src/features/operations/api.ts",
+          "line": 19
+        },
+        {
+          "path": "admin/src/features/users/api.ts",
+          "line": 11
+        },
+        {
+          "path": "admin/src/features/users/types.ts",
+          "line": 1
+        },
+        {
+          "path": "admin/src/features/operations/types.ts",
+          "line": 16
+        }
+      ],
+      "status_label": "FIXED_IN_SOURCE",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-74",
+      "status": "unsupported",
+      "claim": "Two admin fetch wrappers have conflicting error semantics.",
+      "current": "Both preserve HTTP status, handle 204, map network failures to 503. Management wrapper adds bearer and downstream redirect helper; auth wrapper supports pre-session login. Duplication exists but claimed conflict not established.",
+      "evidence": [
+        {
+          "path": "admin/src/auth/api.ts",
+          "line": 9
+        },
+        {
+          "path": "admin/src/features/management-api.ts",
+          "line": 6
+        },
+        {
+          "path": "admin/src/features/management-api.ts",
+          "line": 23
+        }
+      ],
+      "status_label": "UNSUPPORTED",
+      "confidence": "See disposition; no live verification"
+    },
+    {
+      "id": "GAP-75",
+      "status": "partial",
+      "claim": "Staff role lists duplicated across seven files with divergent permissions.",
+      "current": "Shared roles helper exists and services uses it; shell, search, several route arrays remain duplicated. Specific support/auditor mismatch fixed. No new unsupported permission divergence inferred from duplication alone.",
+      "evidence": [
+        {
+          "path": "admin/src/auth/roles.ts",
+          "line": 6
+        },
+        {
+          "path": "admin/src/components/admin-shell.tsx",
+          "line": 6
+        },
+        {
+          "path": "admin/src/app/search/page.tsx",
+          "line": 11
+        },
+        {
+          "path": "admin/src/app/services/page.tsx",
+          "line": 9
+        },
+        {
+          "path": "admin/src/app/guarantees/[id]/page.tsx",
+          "line": 37
+        }
+      ],
+      "status_label": "PARTIAL",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-76",
+      "status": "fixed",
+      "claim": "Category rating renderers have divergent honesty rules",
+      "current": "Catalog uses shared FixRatingBadge, discovery uses shared FixServiceCard with nullable rating and shared formatting.",
+      "evidence": [
+        {
+          "path": "mobile/lib/features/services/sub_service_catalog_screen.dart",
+          "line": 805
+        },
+        {
+          "path": "mobile/lib/features/services/service_discovery_screen.dart",
+          "line": 2294
+        },
+        {
+          "path": "mobile/lib/design_system/fix_service_card.dart",
+          "line": 581
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification.",
+      "status_label": "FIXED_IN_SOURCE",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-77",
+      "status": "fixed",
+      "claim": "Duplicate compact review-count formatters",
+      "current": "Single shared formatReviewCount/formatRatingWithReviews helper; named duplicate helpers absent.",
+      "evidence": [
+        {
+          "path": "mobile/lib/design_system/fix_rating_badge.dart",
+          "line": 6
+        },
+        {
+          "path": "mobile/lib/features/services/service_discovery_screen.dart",
+          "line": 1132
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification.",
+      "status_label": "FIXED_IN_SOURCE",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-78",
+      "status": "duplicate",
+      "claim": "Duplicate dead and active inbox controllers",
+      "current": "Same underlying dead stub as GAP-13, removed; active domain controller remains.",
+      "evidence": [
+        {
+          "path": "backend/src/notifications/domain/inbox.controller.ts",
+          "line": 1
+        }
+      ],
+      "status_label": "DUPLICATE",
+      "confidence": "See disposition; no live verification"
+    },
+    {
+      "id": "GAP-79",
+      "status": "partial",
+      "claim": "Status label mappings duplicated across four admin files.",
+      "current": "Shared StatusBadge is used by booking/guarantee/user pages; provider/support/trust still use domain-specific inline status rendering. Blanket four duplicated mapping claim no longer accurate; remaining inline renderers are maintainability concern without demonstrated status bug.",
+      "evidence": [
+        {
+          "path": "admin/src/features/status-badge.tsx",
+          "line": 1
+        },
+        {
+          "path": "admin/src/app/bookings/page.tsx",
+          "line": 8
+        },
+        {
+          "path": "admin/src/app/guarantees/page.tsx",
+          "line": 8
+        },
+        {
+          "path": "admin/src/app/users/page.tsx",
+          "line": 7
+        },
+        {
+          "path": "admin/src/app/providers/page.tsx",
+          "line": 107
+        },
+        {
+          "path": "admin/src/app/support/page.tsx",
+          "line": 134
+        }
+      ],
+      "status_label": "PARTIAL",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-80",
+      "status": "duplicate",
+      "claim": "Company address disagreement",
+      "current": "Address disagreement fixed through shared config; related residual configuration uncertainty tracked GAP-42.",
+      "evidence": [
+        {
+          "path": "mobile/lib/features/payments/invoice_screen.dart",
+          "line": 307
+        },
+        {
+          "path": "mobile/lib/features/payments/fix_pdf_invoice_builder.dart",
+          "line": 17
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification.",
+      "status_label": "DUPLICATE",
+      "confidence": "See disposition; no live verification"
+    },
+    {
+      "id": "GAP-81",
+      "status": "unverified",
+      "claim": "Integration suite blocked by mandatory PostgreSQL port 55432",
+      "current": "Current guard also permits loopback default port 5432 with dedicated fixnow_integration_test or fixnow_test DB. Old mandatory-port statement stale. Suite not rerun: harness truncates data and scope is read-only. Counts and historical execution claims are not current results.",
+      "evidence": [
+        {
+          "path": "backend/test/support/test-data-source.ts",
+          "line": 139
+        },
+        {
+          "path": "backend/test/support/test-data-source.ts",
+          "line": 143
+        },
+        {
+          "path": "backend/package.json",
+          "line": 23
+        }
+      ],
+      "status_label": "UNVERIFIED",
+      "confidence": "See disposition; no live verification"
+    },
+    {
+      "id": "GAP-82",
+      "status": "fixed",
+      "claim": "Transactional outbox has zero tests",
+      "current": "Dedicated tests now cover enqueue/dedupe, lease/SKIP LOCKED query, rollback, process, retry/backoff/dead-letter and prune. Existence does not prove real DB locking under concurrency.",
+      "evidence": [
+        {
+          "path": "backend/src/outbox/outbox.service.spec.ts",
+          "line": 11
+        },
+        {
+          "path": "backend/src/outbox/outbox.service.spec.ts",
+          "line": 111
+        },
+        {
+          "path": "backend/src/outbox/outbox.service.spec.ts",
+          "line": 191
+        }
+      ],
+      "status_label": "FIXED_IN_SOURCE",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-83",
+      "status": "fixed",
+      "claim": "ClamAV and S3 have zero tests",
+      "current": "Dedicated socket-mock scanner tests and mocked S3 command tests exist. Real storage and daemon integrations not exercised by these unit specs.",
+      "evidence": [
+        {
+          "path": "backend/src/storage/clamav-malware-scanner.spec.ts",
+          "line": 8
+        },
+        {
+          "path": "backend/src/storage/s3-private-object-storage.spec.ts",
+          "line": 11
+        }
+      ],
+      "status_label": "FIXED_IN_SOURCE",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-84",
+      "status": "partial",
+      "claim": "Eleven named controllers lack dedicated tests",
+      "current": "Four previously named gaps now have dedicated specs: payments, payments-admin, ratings-admin, emergency. Seven listed controllers still lack exact dedicated specs: provider earnings, application, profile, availability, documents, verification, ratings. Overall static inventory is 40 controller.ts files and 24 controller.spec.ts files, not coverage percentages.",
+      "evidence": [
+        {
+          "path": "backend/src/payments/payments.controller.spec.ts",
+          "line": 1
+        },
+        {
+          "path": "backend/src/payments/payments-admin.controller.spec.ts",
+          "line": 1
+        },
+        {
+          "path": "backend/src/ratings/ratings-admin.controller.spec.ts",
+          "line": 1
+        },
+        {
+          "path": "backend/src/emergency/emergency.controller.spec.ts",
+          "line": 1
+        }
+      ],
+      "status_label": "PARTIAL",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-85",
+      "status": "partial",
+      "claim": "Admin operations, dispatch and resource ownership have no unit specs",
+      "current": "Dispatch handlers now have dedicated tests for registrations, fanout, project and expiry. No exact admin-operations.service.spec.ts or resource-ownership.spec.ts found; other authorization tests provide indirect coverage and do not prove none.",
+      "evidence": [
+        {
+          "path": "backend/src/bookings/booking-dispatch.handlers.spec.ts",
+          "line": 12
+        },
+        {
+          "path": "backend/src/admin/admin-operations.service.ts",
+          "line": 1
+        },
+        {
+          "path": "backend/src/common/authorization/resource-ownership.ts",
+          "line": 1
+        }
+      ],
+      "status_label": "PARTIAL",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-86",
+      "status": "partial",
+      "claim": "All seventeen shared contracts lack tests; state machines untested",
+      "current": "Dedicated backend state-machines.spec.ts imports and checks booking and complaint tables; complaint service spec also covers transition invariants. No colocated shared specs, but zero-tests blanket claim false. Other compile-time type-only files do not inherently need runtime tests.",
+      "evidence": [
+        {
+          "path": "backend/src/common/state-machines.spec.ts",
+          "line": 1
+        },
+        {
+          "path": "backend/src/support/complaints/complaints.service.spec.ts",
+          "line": 390
+        }
+      ],
+      "status_label": "PARTIAL",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-87",
+      "status": "partial",
+      "claim": "12/18 routes have zero automated coverage.",
+      "current": "Numerical absolute claim stale/unsupported: dashboard/login/bookings/users/unauthorized have E2E route coverage; guarantee detail has lifecycle unit tests; trust role regression test exists. Several dossier/CRUD/routes still lack dedicated behavior coverage. Unit-helper coverage is not full rendered-page or persistence coverage. Parent runs current admin tests; no tests rerun by this subagent. Historical inventory cites management-api.test.ts and features/search/search.test.ts, neither exists in current admin/src; do not treat those as present tests.",
+      "evidence": [
+        {
+          "path": "audit_reports/FIXNOW_TEST_COVERAGE_INVENTORY.md",
+          "line": 104
+        },
+        {
+          "path": "e2e/tests/admin-access.spec.ts",
+          "line": 81
+        },
+        {
+          "path": "e2e/tests/admin-access.spec.ts",
+          "line": 97
+        },
+        {
+          "path": "e2e/tests/admin-operations.spec.ts",
+          "line": 171
+        },
+        {
+          "path": "e2e/tests/admin-operations.spec.ts",
+          "line": 171
+        },
+        {
+          "path": "admin/src/app/guarantees/[id]/page.test.ts",
+          "line": 4
+        },
+        {
+          "path": "admin/src/app/trust/page.test.tsx",
+          "line": 97
+        }
+      ],
+      "status_label": "PARTIAL",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-88",
+      "status": "unverified",
+      "claim": "E2E suite was unexecuted because browser binaries were missing.",
+      "current": "Existing Playwright journeys target the real admin app with a local stub API. Trust role test is active, not fixme. The e2e dependency directory is absent in this checkout; no dependencies/browsers were installed and no current browser run is claimed. Historical browser-unavailability diagnosis is not a current runtime result.",
+      "evidence": [
+        {
+          "path": "e2e/playwright.config.ts",
+          "line": 68
+        },
+        {
+          "path": "e2e/tests/admin-operations.spec.ts",
+          "line": 148
+        },
+        {
+          "path": "e2e/package.json",
+          "line": 1
+        }
+      ],
+      "status_label": "UNVERIFIED",
+      "confidence": "See disposition; no live verification"
+    },
+    {
+      "id": "GAP-89",
+      "status": "partial",
+      "claim": "fix_tests.dart rewrites tests; mock transports shipped",
+      "current": "Named Dart script absent; mobile/fix_tests.py mutates tests and fix_tests_again.py mutates app plus tests. Noop transport remains in lib for explicit SavedAddressRepository.test factory. Does not establish production use; app uses real repository. Source inclusion is not binary proof.",
+      "evidence": [
+        {
+          "path": "mobile/fix_tests.py",
+          "line": 7
+        },
+        {
+          "path": "mobile/fix_tests_again.py",
+          "line": 4
+        },
+        {
+          "path": "mobile/lib/features/location/saved_address.dart",
+          "line": 4
+        },
+        {
+          "path": "mobile/lib/features/location/saved_address.dart",
+          "line": 114
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification.",
+      "status_label": "PARTIAL",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-14/API-route-shadowing",
+      "status": "duplicate",
+      "claim": "API inventory uses GAP-14 for photo route shadowing",
+      "current": "ID collision: this claim corresponds to canonical GAP-04, not complaint DTO GAP-14. Original path collision is unsupported; route reordered.",
+      "evidence": [
+        {
+          "path": "audit_reports/FIXNOW_API_AND_BACKEND_INVENTORY.md",
+          "line": 450
+        },
+        {
+          "path": "backend/src/ratings/ratings-admin.controller.ts",
+          "line": 24
+        }
+      ],
+      "status_label": "DUPLICATE",
+      "confidence": "See disposition; no live verification"
+    },
+    {
+      "id": "GAP-16/API-DTO",
+      "status": "duplicate",
+      "claim": "API inventory uses GAP-16 for inline complaint body",
+      "current": "ID collision: corresponds to canonical GAP-14, fixed with decorated DTO.",
+      "evidence": [
+        {
+          "path": "audit_reports/FIXNOW_API_AND_BACKEND_INVENTORY.md",
+          "line": 334
+        },
+        {
+          "path": "backend/src/admin/admin-management.controller.ts",
+          "line": 58
+        }
+      ],
+      "status_label": "DUPLICATE",
+      "confidence": "See disposition; no live verification"
+    },
+    {
+      "id": "GAP-18/API-pagination",
+      "status": "fixed",
+      "claim": "API inventory uses GAP-18 for unpaginated complaint list",
+      "current": "This API-inventory use of GAP-18 concerns pagination, not analytics access. Complaint and trust queries now accept bounded limit/offset. Filtering remains separately open under DIA-004; complaint status DTO is not consumed by the management query.",
+      "evidence": [
+        {
+          "path": "audit_reports/FIXNOW_API_AND_BACKEND_INVENTORY.md",
+          "line": 332
+        },
+        {
+          "path": "backend/src/admin/admin-management.service.ts",
+          "line": 38
+        },
+        {
+          "path": "backend/src/support/complaints/complaints.service.ts",
+          "line": 243
+        }
+      ],
+      "status_label": "FIXED_IN_SOURCE",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-19/API-trust-pagination",
+      "status": "fixed",
+      "claim": "API inventory uses GAP-19 for unpaginated trust signals",
+      "current": "ID collision with mobile fabricated job proof. Trust endpoint now accepts limit/offset; service clamps take to 1..100 and applies skip. Status filtering remains a separate UI defect covered by parent.",
+      "evidence": [
+        {
+          "path": "audit_reports/FIXNOW_API_AND_BACKEND_INVENTORY.md",
+          "line": 283
+        },
+        {
+          "path": "backend/src/trust/trust-admin.controller.ts",
+          "line": 27
+        },
+        {
+          "path": "backend/src/trust/trust.service.ts",
+          "line": 282
+        }
+      ],
+      "status_label": "FIXED_IN_SOURCE",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "GAP-25/DB-audit-cascade",
+      "status": "duplicate",
+      "claim": "Database inventory uses GAP-25 for auth audit CASCADE",
+      "current": "Database inventory uses GAP-25 for canonical GAP-10. Later migration implements SET NULL; deployment and live constraints were not checked.",
+      "evidence": [
+        {
+          "path": "audit_reports/FIXNOW_DATABASE_AND_INTEGRATIONS.md",
+          "line": 126
+        },
+        {
+          "path": "backend/migrations/1789750500000-Phase2IntegrityAndConstraints.ts",
+          "line": 27
+        }
+      ],
+      "status_label": "DUPLICATE",
+      "confidence": "See disposition; no live verification"
+    },
+    {
+      "id": "DIA-001",
+      "status": "partial",
+      "claim": "Extra charges crashes because toJson absent and DTO mismatch",
+      "current": "Crash assertion false: actual LineItem has toJson; lineItems typed List<LineItem>. API mismatch remains: UI emits type/description/amount and repository lacks required expectedVersion. Current backend line items require subServiceId and quantity, not client-supplied name/unitPriceMinor; do not copy historical remediation DTO example.",
+      "evidence": [
+        {
+          "path": "mobile/lib/features/bookings/booking.dart",
+          "line": 167
+        },
+        {
+          "path": "mobile/lib/features/bookings/booking.dart",
+          "line": 231
+        },
+        {
+          "path": "mobile/lib/features/provider/provider_active_job_cockpit_screen.dart",
+          "line": 1332
+        },
+        {
+          "path": "mobile/lib/features/provider/provider_repository.dart",
+          "line": 437
+        },
+        {
+          "path": "backend/src/bookings/bookings.dto.ts",
+          "line": 100
+        },
+        {
+          "path": "backend/src/bookings/bookings.dto.ts",
+          "line": 30
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification.",
+      "status_label": "PARTIAL",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "DIA-002",
+      "status": "open",
+      "claim": "General complaint cannot submit without booking ID",
+      "current": "General entry points omit optional bookingId while backend requires it. Eligibility requirement may be deliberate, but UI contract remains incompatible.",
+      "evidence": [
+        {
+          "path": "mobile/lib/features/support/customer_help_screen.dart",
+          "line": 527
+        },
+        {
+          "path": "mobile/lib/features/support/complaint_list_screen.dart",
+          "line": 299
+        },
+        {
+          "path": "mobile/lib/features/support/submit_complaint_screen.dart",
+          "line": 60
+        },
+        {
+          "path": "backend/src/support/complaints/complaints.service.ts",
+          "line": 110
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification.",
+      "status_label": "OPEN",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "DIA-003",
+      "status": "duplicate",
+      "claim": "Dead call navigation/local hangup",
+      "current": "Same current partial finding as GAP-51. Screen is unreachable, so its local hangup is latent rather than currently exposed.",
+      "evidence": [
+        {
+          "path": "mobile/lib/app/app.dart",
+          "line": 1333
+        },
+        {
+          "path": "mobile/lib/features/call/call_screen.dart",
+          "line": 90
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification.",
+      "status_label": "DUPLICATE",
+      "confidence": "See disposition; no live verification"
+    },
+    {
+      "id": "DIA-004",
+      "status": "open",
+      "claim": "Support/trust filter only first fetched slice, masking matching older records.",
+      "current": "Both now expose subsequent pages, but filters still run after fetch-and-slice and are not sent to database. Support fetches 21 then slices 20, trust fetches 11 then slices 10; status/search matches on later pages invisible in current filter result; counts are slice-local.",
+      "evidence": [
+        {
+          "path": "admin/src/app/support/page.tsx",
+          "line": 28
+        },
+        {
+          "path": "admin/src/app/support/page.tsx",
+          "line": 35
+        },
+        {
+          "path": "admin/src/app/trust/page.tsx",
+          "line": 47
+        },
+        {
+          "path": "admin/src/app/trust/page.tsx",
+          "line": 55
+        },
+        {
+          "path": "admin/src/features/operations/api.ts",
+          "line": 10
+        },
+        {
+          "path": "backend/src/admin/admin-management.service.ts",
+          "line": 38
+        },
+        {
+          "path": "backend/src/trust/trust.service.ts",
+          "line": 282
+        }
+      ],
+      "status_label": "OPEN",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "DIA-005",
+      "status": "open",
+      "claim": "Hardcoded VIP membership",
+      "current": "Profile still renders VIP Tier 1 without membership source.",
+      "evidence": [
+        {
+          "path": "mobile/lib/features/profile/customer_profile_screen.dart",
+          "line": 229
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification.",
+      "status_label": "OPEN",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "DIA-006",
+      "status": "open",
+      "claim": "Guarantee reason minimum length absent in client",
+      "current": "Client checks nonempty only, backend requires >=10 chars; backend protects persistence but UI permits avoidable rejected requests.",
+      "evidence": [
+        {
+          "path": "mobile/lib/features/guarantees/ui/submit_claim_screen.dart",
+          "line": 24
+        },
+        {
+          "path": "backend/src/guarantees/dto/create-guarantee-claim.dto.ts",
+          "line": 38
+        }
+      ],
+      "verification": "Static source trace only; no live/device verification.",
+      "status_label": "OPEN",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "POLICY-cancellation",
+      "status": "open",
+      "claim": "En-route cancellation charges 100 rupees but backend fully refunds",
+      "current": "Current UI copy says 99 rupees, not 100. Booking cancellation and payment refunds are distinct operations; absence of fee capture is supported, automatic full refund claim is not established. Product pricing/fee decision remains required.",
+      "evidence": [
+        {
+          "path": "mobile/lib/features/bookings/cancellation_dialog.dart",
+          "line": 77
+        },
+        {
+          "path": "mobile/lib/features/support/customer_help_screen.dart",
+          "line": 91
+        },
+        {
+          "path": "backend/src/payments/payments.service.ts",
+          "line": 408
+        }
+      ],
+      "status_label": "OPEN",
+      "confidence": "HIGH (source)"
+    },
+    {
+      "id": "POLICY-escrow",
+      "status": "unsupported",
+      "claim": "Escrow holding window ambiguously 24 versus 72 hours",
+      "current": "Current payments service explicitly describes ledger net of refunds and no payouts. No implemented escrow release scheduler found. Customer help promises Tuesday settlements, which is unsupported product copy and should be reconciled; do not invent approved 24/72 hour requirement.",
+      "evidence": [
+        {
+          "path": "backend/src/payments/payments.service.ts",
+          "line": 598
+        },
+        {
+          "path": "backend/src/payments/provider-earnings.controller.ts",
+          "line": 10
+        },
+        {
+          "path": "mobile/lib/features/support/customer_help_screen.dart",
+          "line": 46
+        }
+      ],
+      "status_label": "UNSUPPORTED",
+      "confidence": "See disposition; no live verification"
+    },
+    {
+      "id": "POLICY-provider-reverification",
+      "status": "unverified",
+      "claim": "Police certificates require expiry after 365 days but no cron exists",
+      "current": "No expiry/reverification scheduler found in provider verification source. Report supplies no authoritative adopted 365-day policy; classify product requirement unverified, not proven compliance defect.",
+      "evidence": [
+        {
+          "path": "backend/src/providers/verification/provider-verification.controller.ts",
+          "line": 1
+        }
+      ],
+      "status_label": "UNVERIFIED",
+      "confidence": "See disposition; no live verification"
+    },
+    {
+      "id": "REPORT-counts-and-confidence",
+      "status": "unsupported",
+      "claim": "89 verified distinct gaps, 82% integrity, 36 PASS / 5 WARN / 4 FAIL, and feature completion percentages are established measurements.",
+      "current": "The gaps register references 74 distinct GAP IDs; the nine reports together reference 79. Ten IDs in 1\u201389 are absent. The 45-row integrity matrix actually has 34 PASS / 6 WARN / 5 FAIL. No scoring formula or reproducible feature-status denominator supports 82% or the summary percentages. Historical reported test counts are not current execution evidence. Source facts here use HIGH confidence; no live DB/device/HTTP persistence verification is claimed.",
+      "evidence": [
+        {
+          "path": "audit_reports/data_integrity_audit_report.md",
+          "line": 23
+        },
+        {
+          "path": "audit_reports/FIXNOW_AUDIT_SUMMARY.md",
+          "line": 44
+        }
+      ],
+      "status_label": "UNSUPPORTED",
+      "confidence": "See disposition; no live verification"
+    },
+    {
+      "id": "REPORT-emergency-policy",
+      "status": "unsupported",
+      "claim": "SOS waves at 60/120 seconds radii 3/6/12km with 300-second hotline fallback",
+      "current": "Current approved constant table uses wave 2 after 3 minutes, wave 3 after 8 minutes, wave2 radius multiplier 2, max wave 3, daily cap 3 and cooldown 30 minutes. Fallback guidance is local emergency services, not a proven dedicated hotline. Audit workflow table must not substitute invented schedule.",
+      "evidence": [
+        {
+          "path": "audit_reports/FIXNOW_DOMAIN_AND_WORKFLOW_INVENTORY.md",
+          "line": 249
+        },
+        {
+          "path": "backend/src/emergency/emergency-policy.ts",
+          "line": 23
+        },
+        {
+          "path": "backend/src/emergency/emergency-policy.ts",
+          "line": 40
+        }
+      ],
+      "status_label": "UNSUPPORTED",
+      "confidence": "See disposition; no live verification"
+    },
+    {
+      "id": "REPORT-integration-adapters",
+      "status": "unsupported",
+      "claim": "Database inventory describes Gemini vision, standalone speech adapter, redis-cache.service and mail.service as installed implementations",
+      "current": "Named paths do not exist. Actual AI adapter is ai/providers/huggingface-ai.provider.ts; SMTP is notifications/otp-delivery.ts; Redis is cache/cache.module.ts and realtime publisher. FCM is push-delivery.ts; Razorpay is payment-gateway.ts. Do not report nonexistent integrations as deployed/operational.",
+      "evidence": [
+        {
+          "path": "audit_reports/FIXNOW_DATABASE_AND_INTEGRATIONS.md",
+          "line": 150
+        },
+        {
+          "path": "backend/src/ai/providers/huggingface-ai.provider.ts",
+          "line": 53
+        },
+        {
+          "path": "backend/src/notifications/otp-delivery.ts",
+          "line": 16
+        },
+        {
+          "path": "backend/src/cache/cache.module.ts",
+          "line": 179
+        },
+        {
+          "path": "backend/src/payments/payment-gateway.ts",
+          "line": 1
+        },
+        {
+          "path": "backend/src/notifications/push/push-delivery.ts",
+          "line": 118
+        }
+      ],
+      "status_label": "UNSUPPORTED",
+      "confidence": "See disposition; no live verification"
+    },
+    {
+      "id": "REPORT-integration-config-behavior",
+      "status": "unsupported",
+      "claim": "Generic S3/AWS variables, presigned URLs, Redis graceful fallback, Postgres pool/TLS options are verified inventory",
+      "current": "S3 actually uses PROVIDER_DOCUMENT_* variables, private GetObject reads, quarantine metadata; no presigner here. Redis production failures remove readiness/fail boot, not blanket EventEmitter degradation. Database module does not explicitly set claimed pool/SSL options. Adapter defaults/retries/security promises must be re-evidenced individually; environment state not read.",
+      "evidence": [
+        {
+          "path": "backend/src/storage/s3-private-object-storage.ts",
+          "line": 41
+        },
+        {
+          "path": "backend/src/storage/s3-private-object-storage.ts",
+          "line": 76
+        },
+        {
+          "path": "backend/src/cache/cache.module.ts",
+          "line": 212
+        },
+        {
+          "path": "backend/src/database/database.module.ts",
+          "line": 9
+        }
+      ],
+      "status_label": "UNSUPPORTED",
+      "confidence": "See disposition; no live verification"
+    },
+    {
+      "id": "REPORT-map-geocode",
+      "status": "unsupported",
+      "claim": "Inventory says native geocoding service, BigDataCloud API key and Nominatim fallback plus OSM lacking custom User-Agent",
+      "current": "Actual BigDataCloud reverse-geocode-client calls live in location/live_location_service.dart and service_discovery_screen.dart. No referenced core/location/geocoding_service.dart exists. OSM widgets set userAgentPackageName to com.fixnow.app; no missing-User-Agent defect established. External terms/rate limits not verified.",
+      "evidence": [
+        {
+          "line": 73,
+          "path": "mobile/lib/features/location/live_location_service.dart"
+        },
+        {
+          "line": 493,
+          "path": "mobile/lib/features/tracking/provider_live_map.dart"
+        },
+        {
+          "line": 191,
+          "path": "mobile/lib/features/services/service_discovery_screen.dart"
+        }
+      ],
+      "status_label": "UNSUPPORTED",
+      "confidence": "See disposition; no live verification"
+    },
+    {
+      "id": "REPORT-metrics-mail",
+      "status": "unsupported",
+      "claim": "Inventory promises metrics IP allowlist and SMTP_PASSWORD/MAIL_FROM with audit persistence and timeout",
+      "current": "MetricsController is explicitly public with aggregate non-PII content, no controller IP allowlist. SMTP uses SMTP_PASS/SMTP_FROM in otp-delivery.ts; the adapter sends plain text, and its code does not set the reported 30-second timeout or audit-table write. Inventory must represent actual controls.",
+      "evidence": [
+        {
+          "line": 26,
+          "path": "backend/src/observability/metrics.controller.ts"
+        },
+        {
+          "line": 18,
+          "path": "backend/src/notifications/otp-delivery.ts"
+        },
+        {
+          "line": 24,
+          "path": "backend/src/notifications/otp-delivery.ts"
+        }
+      ],
+      "status_label": "UNSUPPORTED",
+      "confidence": "See disposition; no live verification"
+    }
+  ]
+}

@@ -1,3 +1,4 @@
+import { pageNumber as parsePageNumber } from "@/lib/format";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/auth/session";
@@ -6,32 +7,30 @@ import { env } from "@/config/env";
 import { requireManagementResult } from "@/features/management-api";
 import { listClaims } from "@/features/guarantees/api";
 import { StatusBadge } from "@/features/status-badge";
-import type { StaffRole } from "@/auth/types";
+import { hasPermission } from "@/auth/roles";
 
-const shortId = (id: string) => id.replaceAll("-", "").slice(0, 8).toUpperCase();
+import { shortId } from "@/lib/format";
 
 export default async function GuaranteesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; page?: string }>;
+  searchParams: Promise<{ status?: string; page?: string; search?: string }>;
 }) {
   const session = await getSession();
   if (session.state !== "authenticated") redirect("/login?reason=expired");
 
-  const allowedRoles: readonly StaffRole[] = ["support_agent", "trust_safety_reviewer", "operations_administrator", "auditor"];
-  if (!session.session.roles.some((r) => allowedRoles.includes(r))) {
+  if (!hasPermission(session.session.roles, "adminGuaranteesRead")) {
     redirect("/unauthorized");
   }
   
   const params = await searchParams;
-  const claims = await requireManagementResult(
-    await listClaims(params.status),
-  );
-
-  const pageNumber = Math.max(1, parseInt(params.page ?? "1", 10));
+  const pageNumber = parsePageNumber(params.page);
   const pageSize = 10;
-  const totalPages = Math.max(1, Math.ceil(claims.length / pageSize));
-  const pagedClaims = claims.slice((pageNumber - 1) * pageSize, pageNumber * pageSize);
+  const claims = await requireManagementResult(
+    await listClaims(params.status, pageSize + 1, (pageNumber - 1) * pageSize, params.search),
+  );
+  const hasNextPage = claims.length > pageSize;
+  const pagedClaims = claims.slice(0, pageSize);
 
   return (
     <AdminShell
@@ -53,7 +52,7 @@ export default async function GuaranteesPage({
             </div>
             <div className="rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-2.5 text-sm text-on-surface">
               <span className="block text-xs uppercase tracking-wider text-on-surface-variant">Claims Count</span>
-              <strong>{claims.length} claim{claims.length === 1 ? "" : "s"}</strong>
+              <strong>{pagedClaims.length} claim{pagedClaims.length === 1 ? "" : "s"} on this page</strong>
             </div>
           </div>
 
@@ -94,12 +93,12 @@ export default async function GuaranteesPage({
             )}
           </div>
 
-          {totalPages > 1 && (
+          {(hasNextPage || pageNumber > 1) && (
             <div className="flex items-center justify-between border-t border-outline-variant/20 pt-4">
               <div>
                 {pageNumber > 1 ? (
                   <Link
-                    href={{ pathname: "/guarantees", query: { status: params.status, page: String(pageNumber - 1) } }}
+                    href={{ pathname: "/guarantees", query: { status: params.status, search: params.search, page: String(pageNumber - 1) } }}
                     className="px-4 py-2 rounded-xl border border-outline-variant/40 bg-surface-container-low text-on-surface font-label-md text-sm font-semibold hover:bg-surface-container transition-colors inline-flex items-center gap-1"
                   >
                     <span className="material-symbols-outlined text-[16px]">arrow_back</span>
@@ -107,11 +106,11 @@ export default async function GuaranteesPage({
                   </Link>
                 ) : <div />}
               </div>
-              <span className="font-body-sm text-sm text-on-surface-variant">Page {pageNumber} of {totalPages}</span>
+              <span className="font-body-sm text-sm text-on-surface-variant">Page {pageNumber}</span>
               <div>
-                {pageNumber < totalPages ? (
+                {hasNextPage ? (
                   <Link
-                    href={{ pathname: "/guarantees", query: { status: params.status, page: String(pageNumber + 1) } }}
+                    href={{ pathname: "/guarantees", query: { status: params.status, search: params.search, page: String(pageNumber + 1) } }}
                     className="px-4 py-2 rounded-xl bg-primary text-on-primary font-label-md text-sm font-semibold hover:bg-primary/90 transition-colors inline-flex items-center gap-1"
                   >
                     <span>Next page</span>

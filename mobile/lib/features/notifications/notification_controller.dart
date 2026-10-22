@@ -7,8 +7,10 @@ import 'package:fixnow_mobile/features/realtime/realtime_client.dart';
 
 class NotificationController extends ChangeNotifier {
   NotificationController(this._repository, {RealtimeClient? realtime})
-      : _realtime = realtime {
-    _realtimeSubscription = _realtime?.notifications.listen(_onRealtimeNotification);
+    : _realtime = realtime {
+    _realtimeSubscription = _realtime?.notifications.listen(
+      _onRealtimeNotification,
+    );
     load();
   }
 
@@ -18,6 +20,8 @@ class NotificationController extends ChangeNotifier {
   List<InAppNotification> _notifications = [];
   NotificationCategory _selectedCategory = NotificationCategory.all;
   bool _loading = false;
+  bool _mutating = false;
+  bool get isMutating => _mutating;
   String? _errorMessage;
 
   List<InAppNotification> get notifications =>
@@ -44,14 +48,15 @@ class NotificationController extends ChangeNotifier {
   }
 
   Future<void> load() async {
-     _loading = true;
-     _errorMessage = null;
-     notifyListeners();
-     try {
-       _notifications = await _repository.fetchNotifications();
-     } catch (_) {
-       _errorMessage = 'Notifications are unavailable. Check your connection and try again.';
-     } finally {
+    _loading = true;
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      _notifications = await _repository.fetchNotifications();
+    } catch (_) {
+      _errorMessage =
+          'Notifications are unavailable. Check your connection and try again.';
+    } finally {
       _loading = false;
       notifyListeners();
     }
@@ -64,45 +69,57 @@ class NotificationController extends ChangeNotifier {
     }
   }
 
-  void markAsRead(String id) {
-    final index = _notifications.indexWhere((n) => n.id == id);
-    if (index != -1 && !_notifications[index].isRead) {
-      _notifications = [
-        ..._notifications.sublist(0, index),
-        _notifications[index].copyWith(isRead: true),
-        ..._notifications.sublist(index + 1),
-      ];
-      _repository.markAsRead(id);
+  Future<bool> _mutate(Future<void> Function() action) async {
+    if (_mutating) return false;
+    _mutating = true;
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      await action();
+      return true;
+    } catch (_) {
+      _errorMessage =
+          'Changes were not saved. Check your connection and try again.';
+      return false;
+    } finally {
+      _mutating = false;
       notifyListeners();
     }
   }
 
-  void markAllAsRead() {
-    if (unreadCount == 0) return;
-    _repository.markAllAsRead(
-      _notifications.where((n) => !n.isRead).map((n) => n.id),
-    );
+  Future<bool> markAsRead(String id) => _mutate(() async {
+    await _repository.markAsRead(id);
     _notifications = _notifications
-        .map((n) => n.copyWith(isRead: true))
+        .map((n) => n.id == id ? n.copyWith(isRead: true) : n)
         .toList();
-    notifyListeners();
-  }
+  });
 
-  void deleteNotification(String id) {
+  Future<bool> markAllAsRead() => _mutate(() async {
+    // Update individually so a partial failure still reflects confirmed writes.
+    for (final id
+        in _notifications.where((n) => !n.isRead).map((n) => n.id).toList()) {
+      await _repository.markAsRead(id);
+      _notifications = _notifications
+          .map((n) => n.id == id ? n.copyWith(isRead: true) : n)
+          .toList();
+    }
+  });
+
+  Future<bool> deleteNotification(String id) => _mutate(() async {
+    await _repository.deleteNotification(id);
     _notifications = _notifications.where((n) => n.id != id).toList();
-    _repository.deleteNotification(id);
-    notifyListeners();
-  }
+  });
 
-  void clearAll() {
-    _repository.clearAll(_notifications.map((n) => n.id));
-    _notifications = [];
-    notifyListeners();
-  }
+  Future<bool> clearAll() => _mutate(() async {
+    final ids = _notifications.map((n) => n.id).toSet();
+    await _repository.clearAll(ids);
+    // Preserve notifications received while the request was in flight.
+    _notifications = _notifications.where((n) => !ids.contains(n.id)).toList();
+  });
 
-   void addNotification(InAppNotification notification) {
-     _errorMessage = null;
-     _notifications = [
+  void addNotification(InAppNotification notification) {
+    _errorMessage = null;
+    _notifications = [
       notification,
       ..._notifications.where((n) => n.id != notification.id),
     ];
@@ -112,9 +129,7 @@ class NotificationController extends ChangeNotifier {
   void _onRealtimeNotification(RealtimeProjection projection) {
     try {
       addNotification(
-        InAppNotification.fromJson(
-          Map<String, dynamic>.from(projection.data),
-        ),
+        InAppNotification.fromJson(Map<String, dynamic>.from(projection.data)),
       );
     } catch (_) {}
   }

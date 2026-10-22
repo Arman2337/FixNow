@@ -12,6 +12,7 @@ import 'package:fixnow_mobile/features/location/booking_location.dart';
 import 'package:fixnow_mobile/features/services/service_category.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'support/test_address_repository.dart';
 
 class _FixedLocation implements BookingLocationProvider {
   @override
@@ -92,6 +93,7 @@ const _category = ServiceCategory(
 );
 
 void main() {
+  setUp(createTestAddressRepository);
   testWidgets('completed booking detail offers book again and fires it', (
     tester,
   ) async {

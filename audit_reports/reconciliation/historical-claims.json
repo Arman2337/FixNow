@@ -1,0 +1,1881 @@
+[
+  {
+    "report": "data_integrity_audit_report.md",
+    "historical_line": 113,
+    "ids": [
+      "DIA-001"
+    ],
+    "text": "### [DIA-001] Provider Extra Charges Runtime Crash & DTO Schema Break"
+  },
+  {
+    "report": "data_integrity_audit_report.md",
+    "historical_line": 194,
+    "ids": [
+      "DIA-002"
+    ],
+    "text": "### [DIA-002] Impossible General Dispute Submission Due to Enforced Missing Booking ID"
+  },
+  {
+    "report": "data_integrity_audit_report.md",
+    "historical_line": 274,
+    "ids": [
+      "DIA-003"
+    ],
+    "text": "### [DIA-003] Dead VoIP Audio Call Navigation & Unpersisted Call Hangup"
+  },
+  {
+    "report": "data_integrity_audit_report.md",
+    "historical_line": 379,
+    "ids": [
+      "DIA-004"
+    ],
+    "text": "### [DIA-004] Admin Complaints & Trust Signals Client-Side Slice Filtering"
+  },
+  {
+    "report": "data_integrity_audit_report.md",
+    "historical_line": 433,
+    "ids": [
+      "DIA-005"
+    ],
+    "text": "### [DIA-005] Hardcoded VIP Membership & Static Tier Presentation"
+  },
+  {
+    "report": "data_integrity_audit_report.md",
+    "historical_line": 480,
+    "ids": [
+      "DIA-006"
+    ],
+    "text": "### [DIA-006] Missing Client-Side Form Constraint on Guarantee Claims"
+  },
+  {
+    "report": "data_integrity_audit_report.md",
+    "historical_line": 525,
+    "ids": [
+      "DIA-001"
+    ],
+    "text": "1. **[DIA-001] Fix Provider Extra Charges Data Contract & Runtime Crash:**"
+  },
+  {
+    "report": "data_integrity_audit_report.md",
+    "historical_line": 529,
+    "ids": [
+      "DIA-002"
+    ],
+    "text": "2. **[DIA-002] Enable Platform-Level Dispute Submission:**"
+  },
+  {
+    "report": "data_integrity_audit_report.md",
+    "historical_line": 532,
+    "ids": [
+      "DIA-003"
+    ],
+    "text": "3. **[DIA-003] Fix VoIP Call Lifecycle & Navigation:**"
+  },
+  {
+    "report": "data_integrity_audit_report.md",
+    "historical_line": 537,
+    "ids": [
+      "DIA-004"
+    ],
+    "text": "1. **[DIA-004] Server-Side Filtering for Admin Support & Trust Portals:**"
+  },
+  {
+    "report": "data_integrity_audit_report.md",
+    "historical_line": 539,
+    "ids": [
+      "DIA-005"
+    ],
+    "text": "2. **[DIA-005] Align Customer Profile VIP Presentation:**"
+  },
+  {
+    "report": "data_integrity_audit_report.md",
+    "historical_line": 543,
+    "ids": [
+      "DIA-006"
+    ],
+    "text": "1. **[DIA-006] Synchronize Form Validation Rules:**"
+  },
+  {
+    "report": "FIXNOW_API_AND_BACKEND_INVENTORY.md",
+    "historical_line": 279,
+    "ids": [
+      "GAP-19"
+    ],
+    "text": "| `API-TRS-003` | GET | `/api/v1/admin/trust/signals` | `TrustAdminController.listSignals()` | `trustSignalsRead` | Query: `limit` (hard-capped at 100) | Reads `trust_signals` | Note: unpaginated query (GAP-19) | Global 60/min | `IMPLEMENTED_EVIDENCED` | `trust-admin.controller.ts:34`, `trust.service.spec.ts` |"
+  },
+  {
+    "report": "FIXNOW_API_AND_BACKEND_INVENTORY.md",
+    "historical_line": 308,
+    "ids": [
+      "GAP-13"
+    ],
+    "text": "*Dead/Orphaned Route Alert (`notifications/inbox.controller.ts`):* Declares `GET /api/v1/notifications/inbox` as a public endpoint returning mock data. It is **never imported in any NestJS module** and is therefore completely unreachable at runtime (`DEAD_UNREACHABLE`, GAP-13)."
+  },
+  {
+    "report": "FIXNOW_API_AND_BACKEND_INVENTORY.md",
+    "historical_line": 320,
+    "ids": [
+      "GAP-54"
+    ],
+    "text": "| `API-ADM-004` | GET | `/api/v1/admin/users` | `AdminManagementController.listUsers()` | `adminUsersRead` | Query: `limit`, `role` | Reads `users` joined with `user_roles` | Returns user registry; ORPHANED in UI (GAP-54) | Global 60/min | `IMPLEMENTED_EVIDENCED` | `admin-management.controller.ts:86`, `admin.service.spec.ts` |"
+  },
+  {
+    "report": "FIXNOW_API_AND_BACKEND_INVENTORY.md",
+    "historical_line": 321,
+    "ids": [
+      "GAP-54"
+    ],
+    "text": "| `API-ADM-005` | GET | `/api/v1/admin/users/:id` | `AdminManagementController.getUser()` | `adminUsersRead` | Param `id` (UUIDv4) | Reads user profile, active sessions, and roles | ORPHANED in UI (GAP-54) | Global 60/min | `IMPLEMENTED_EVIDENCED` | `admin-management.controller.ts:98`, `admin.service.spec.ts` |"
+  },
+  {
+    "report": "FIXNOW_API_AND_BACKEND_INVENTORY.md",
+    "historical_line": 328,
+    "ids": [
+      "GAP-18"
+    ],
+    "text": "| `API-ADM-012` | GET | `/api/v1/admin/complaints` | `AdminManagementController.listComplaints()` | `adminComplaintsRead` | None | Reads all `complaints` | UNPAGINATED query (GAP-18) | Global 60/min | `IMPLEMENTED_EVIDENCED` | `admin-management.controller.ts:182`, `admin.service.spec.ts` |"
+  },
+  {
+    "report": "FIXNOW_API_AND_BACKEND_INVENTORY.md",
+    "historical_line": 330,
+    "ids": [
+      "GAP-16"
+    ],
+    "text": "| `API-ADM-014` | PATCH | `/api/v1/admin/complaints/:complaintId/status` | `AdminManagementController.updateComplaintStatus()` | `adminComplaintsManage` | Param `complaintId`, Body: `{ status, resolutionNotes }` (inline type literal!) | Updates complaint status; inserts `complaint_audits` | Notice: inline type bypasses whitelist stripping (GAP-16) | Global 60/min | `IMPLEMENTED_EVIDENCED` | `admin-management.controller.ts:206`, `admin.service.spec.ts` |"
+  },
+  {
+    "report": "FIXNOW_API_AND_BACKEND_INVENTORY.md",
+    "historical_line": 446,
+    "ids": [
+      "GAP-14"
+    ],
+    "text": "1. **Shadowed Route in Ratings Moderation (`GAP-14`):**"
+  },
+  {
+    "report": "FIXNOW_API_AND_BACKEND_INVENTORY.md",
+    "historical_line": 448,
+    "ids": [
+      "GAP-13"
+    ],
+    "text": "2. **Orphaned Dead Endpoint (`GAP-13`):**"
+  },
+  {
+    "report": "FIXNOW_API_AND_BACKEND_INVENTORY.md",
+    "historical_line": 450,
+    "ids": [
+      "GAP-16"
+    ],
+    "text": "3. **Admin Complaints Status Type Bypassing Whitelist (`GAP-16`):**"
+  },
+  {
+    "report": "FIXNOW_API_AND_BACKEND_INVENTORY.md",
+    "historical_line": 452,
+    "ids": [
+      "GAP-18",
+      "GAP-19"
+    ],
+    "text": "4. **Unpaginated Admin Endpoints (`GAP-18`, `GAP-19`):**"
+  },
+  {
+    "report": "FIXNOW_AUDIT_SUMMARY.md",
+    "historical_line": 36,
+    "ids": [
+      "GAP-01",
+      "GAP-89"
+    ],
+    "text": "| **Identified Defect / Gap Records** | **89 Findings** | Verified technical debt, stubs, and vulnerabilities (`GAP-01` through `GAP-89`). |"
+  },
+  {
+    "report": "FIXNOW_AUDIT_SUMMARY.md",
+    "historical_line": 63,
+    "ids": [
+      "GAP-01"
+    ],
+    "text": "1. **`GAP-01` (P0 Blocker):** Secret scanner CI gate failure on committed PostgreSQL test fixture resolved with inline allowlist annotation. 1,721 blobs clean."
+  },
+  {
+    "report": "FIXNOW_AUDIT_SUMMARY.md",
+    "historical_line": 64,
+    "ids": [
+      "GAP-02"
+    ],
+    "text": "2. **`GAP-02` (P0 Blocker):** `seed.js` unconstrained `DELETE FROM sub_services` on every production deploy remediated to non-destructive `WHERE NOT EXISTS` insertion with 9 regression tests (`catalog-seed.spec.ts`)."
+  },
+  {
+    "report": "FIXNOW_AUDIT_SUMMARY.md",
+    "historical_line": 67,
+    "ids": [
+      "GAP-03"
+    ],
+    "text": "1. **`GAP-03` (P0 Workflow Logic):** Provider cockpit completion cancel dialog uses `if (shouldContinue != true && !mounted) return;`. Dismissing dialog proceeds to job completion anyway."
+  },
+  {
+    "report": "FIXNOW_AUDIT_SUMMARY.md",
+    "historical_line": 68,
+    "ids": [
+      "GAP-04"
+    ],
+    "text": "2. **`GAP-04` (P1 Route Shadowing):** In `ratings-admin.controller.ts`, `@Patch(':id/moderation')` is declared before `@Patch('photos/:photoId/moderation')`, rendering review photo moderation unreachable (404)."
+  },
+  {
+    "report": "FIXNOW_AUDIT_SUMMARY.md",
+    "historical_line": 69,
+    "ids": [
+      "GAP-05"
+    ],
+    "text": "3. **`GAP-05` (P1 Access Control):** Admin `/trust` route performs zero code-level role checks; accessible by any staff token."
+  },
+  {
+    "report": "FIXNOW_AUDIT_SUMMARY.md",
+    "historical_line": 70,
+    "ids": [
+      "GAP-06"
+    ],
+    "text": "4. **`GAP-06` (P1 Authorization Mismatch):** Navigation grants `/support` to `auditor`, but backend policies reject with 403 Forbidden."
+  },
+  {
+    "report": "FIXNOW_AUDIT_SUMMARY.md",
+    "historical_line": 71,
+    "ids": [
+      "GAP-07"
+    ],
+    "text": "5. **`GAP-07` (P1 State Invariant):** Admin guarantee claim dropdown permits illegal status transitions, crashing into `error.tsx`."
+  },
+  {
+    "report": "FIXNOW_AUDIT_SUMMARY.md",
+    "historical_line": 72,
+    "ids": [
+      "GAP-10"
+    ],
+    "text": "6. **`GAP-10` (P1 Audit Erasure):** Foreign key cascade on `auth_audit_events.user_id` purges authentication audit trails when a user is deleted."
+  },
+  {
+    "report": "FIXNOW_AUDIT_SUMMARY.md",
+    "historical_line": 73,
+    "ids": [
+      "GAP-12"
+    ],
+    "text": "7. **`GAP-12` (P1 Idempotency):** Chat message `clientMessageId` lacks a unique index; retrying sends inserts duplicate messages."
+  },
+  {
+    "report": "FIXNOW_AUDIT_SUMMARY.md",
+    "historical_line": 74,
+    "ids": [
+      "GAP-19",
+      "GAP-40"
+    ],
+    "text": "8. **`GAP-19` / `GAP-40` (P1 Trust Failure):** \"Simulate test photos\" button ships in production; camera failures substitute 1x1 dummy PNGs; saved into an in-memory singleton never uploaded to the backend."
+  },
+  {
+    "report": "FIXNOW_AUDIT_SUMMARY.md",
+    "historical_line": 75,
+    "ids": [
+      "GAP-41"
+    ],
+    "text": "9. **`GAP-41` (P1 Financial Simulation):** Checkout sheet simulates successful payment after 600ms if callback is omitted."
+  },
+  {
+    "report": "FIXNOW_AUDIT_SUMMARY.md",
+    "historical_line": 76,
+    "ids": [
+      "GAP-42"
+    ],
+    "text": "10. **`GAP-42` (P1 Statutory Compliance):** Tax invoice PDF contains hardcoded placeholder GSTIN `24AAACF1234F1Z5`, conflicting company addresses, and a 404 QR code link."
+  },
+  {
+    "report": "FIXNOW_AUDIT_SUMMARY.md",
+    "historical_line": 77,
+    "ids": [
+      "GAP-43",
+      "GAP-56"
+    ],
+    "text": "11. **`GAP-43` / `GAP-56` (P1 Ghost UI):** Notification \"Clear All\" operates on a local in-memory set only; items return on app restart."
+  },
+  {
+    "report": "FIXNOW_AUDIT_SUMMARY.md",
+    "historical_line": 78,
+    "ids": [
+      "GAP-51"
+    ],
+    "text": "12. **`GAP-51` (P1 Unwired Core Capability):** In-app audio calling backend is 100% complete with WebSockets and DB records, but mobile `HttpCallRepository` is never instantiated."
+  },
+  {
+    "report": "FIXNOW_AUDIT_SUMMARY.md",
+    "historical_line": 85,
+    "ids": [
+      "GAP-15"
+    ],
+    "text": "2. **Review Evidence URL Serialization:** `guarantee_claims.evidence_urls` stores URLs as comma-joined strings (`simple-array`), corrupting any URL that contains query parameter commas (`GAP-15`)."
+  },
+  {
+    "report": "FIXNOW_AUDIT_SUMMARY.md",
+    "historical_line": 102,
+    "ids": [
+      "GAP-01",
+      "GAP-89"
+    ],
+    "text": "| **F. Completeness & Gaps Register** | [`audit_reports/FIXNOW_COMPLETENESS_AND_GAPS.md`](file:///c:/Users/patel/OneDrive/Desktop/FixNow/audit_reports/FIXNOW_COMPLETENESS_AND_GAPS.md) | Catalog of all 89 verified findings (`GAP-01` through `GAP-89`), stubs, dead code, and severity ratings. |"
+  },
+  {
+    "report": "FIXNOW_AUDIT_SUMMARY.md",
+    "historical_line": 111,
+    "ids": [
+      "GAP-03"
+    ],
+    "text": "   - Fix `GAP-03` (`provider_active_job_cockpit_screen.dart:177` boolean operator `&&` -> `||`)."
+  },
+  {
+    "report": "FIXNOW_AUDIT_SUMMARY.md",
+    "historical_line": 112,
+    "ids": [
+      "GAP-04"
+    ],
+    "text": "   - Fix `GAP-04` (`ratings-admin.controller.ts` route declaration ordering)."
+  },
+  {
+    "report": "FIXNOW_AUDIT_SUMMARY.md",
+    "historical_line": 113,
+    "ids": [
+      "GAP-05"
+    ],
+    "text": "   - Fix `GAP-05` (Enforce code-level role checks on Next.js `/trust` page)."
+  },
+  {
+    "report": "FIXNOW_AUDIT_SUMMARY.md",
+    "historical_line": 114,
+    "ids": [
+      "GAP-10"
+    ],
+    "text": "   - Fix `GAP-10` (Restore `auth_audit_events.user_id` foreign key action to `SET NULL`)."
+  },
+  {
+    "report": "FIXNOW_AUDIT_SUMMARY.md",
+    "historical_line": 115,
+    "ids": [
+      "GAP-12"
+    ],
+    "text": "   - Fix `GAP-12` (Add unique constraint on `booking_messages(booking_id, client_message_id)`)."
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 6,
+    "ids": [
+      "GAP-01",
+      "GAP-89"
+    ],
+    "text": "**Total Verified Findings:** 89 Items (`GAP-01` through `GAP-89`)  "
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 19,
+    "ids": [
+      "GAP-01",
+      "GAP-02",
+      "GAP-03"
+    ],
+    "text": "| **P0 \u2014 Critical Blockers** | 3 | 2 (`GAP-01`, `GAP-02`) | 1 (`GAP-03`) |"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 29,
+    "ids": [
+      "GAP-01"
+    ],
+    "text": "### `GAP-01` \u00b7 CI Pipeline Blocker: Secret Scanner Fails on Committed Test Fixture"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 34,
+    "ids": [
+      "GAP-02"
+    ],
+    "text": "### `GAP-02` \u00b7 Production Data Loss: `seed.js` Purges Sub-Services on Every Deployment"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 39,
+    "ids": [
+      "GAP-03"
+    ],
+    "text": "### `GAP-03` \u00b7 Workflow Corruption: Booking Completion Cancel Dialog is Ineffective"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 48,
+    "ids": [
+      "GAP-04"
+    ],
+    "text": "### `GAP-04` \u00b7 Route Shadowing: Admin Photo Moderation Endpoint is Unreachable"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 53,
+    "ids": [
+      "GAP-05"
+    ],
+    "text": "### `GAP-05` \u00b7 Missing Access Control: Admin `/trust` Route Lacks Code-Level Role Checks"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 58,
+    "ids": [
+      "GAP-06"
+    ],
+    "text": "### `GAP-06` \u00b7 RBAC Role Mismatch: Navigation Grants `/support` to `auditor` but Backend Rejects"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 63,
+    "ids": [
+      "GAP-07"
+    ],
+    "text": "### `GAP-07` \u00b7 Illegal State Transitions: Admin Guarantee Status Dropdown Permits Conflicts"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 68,
+    "ids": [
+      "GAP-08"
+    ],
+    "text": "### `GAP-08` \u00b7 Schema Hygeine: Orphan Migration Shadows Applied Migration"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 73,
+    "ids": [
+      "GAP-09"
+    ],
+    "text": "### `GAP-09` \u00b7 Migration Timestamp Collision: Two Migrations Share Identical Timestamp"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 78,
+    "ids": [
+      "GAP-10"
+    ],
+    "text": "### `GAP-10` \u00b7 Compliance Audit Trail Erasure: Foreign Key Cascade on User Deletion"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 83,
+    "ids": [
+      "GAP-11"
+    ],
+    "text": "### `GAP-11` \u00b7 Database Invariant Void: Complaint State Machine Unenforced at SQL Level"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 88,
+    "ids": [
+      "GAP-12"
+    ],
+    "text": "### `GAP-12` \u00b7 Concurrency Hole: Chat Message `clientMessageId` Lacks Unique Constraint"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 93,
+    "ids": [
+      "GAP-13"
+    ],
+    "text": "### `GAP-13` \u00b7 Unauthenticated Mock Stub: `inbox.controller.ts` Shipped in Backend Source"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 98,
+    "ids": [
+      "GAP-14"
+    ],
+    "text": "### `GAP-14` \u00b7 Input Validation Bypass: Admin Complaint Status Update Uses Type Literal"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 103,
+    "ids": [
+      "GAP-17"
+    ],
+    "text": "### `GAP-17` \u00b7 UI Rendering Void: Admin `UserDetail` Type Mismatches API Response"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 108,
+    "ids": [
+      "GAP-18"
+    ],
+    "text": "### `GAP-18` \u00b7 Information Disclosure: `/admin/analytics` Accessible by Support Agents"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 113,
+    "ids": [
+      "GAP-19",
+      "GAP-40"
+    ],
+    "text": "### `GAP-19` / `GAP-40` \u00b7 Fabricated Job Proof: Simulated Dummy PNGs Bypassing Photo Proof"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 118,
+    "ids": [
+      "GAP-41"
+    ],
+    "text": "### `GAP-41` \u00b7 Simulated Payment Success: Checkout Sheet Emits Fake Receipt"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 123,
+    "ids": [
+      "GAP-42"
+    ],
+    "text": "### `GAP-42` \u00b7 Statutory Tax Defect: Invoice PDF Carries Hardcoded GSTIN and Conflicting Addresses"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 128,
+    "ids": [
+      "GAP-43",
+      "GAP-56"
+    ],
+    "text": "### `GAP-43` / `GAP-56` \u00b7 Phantom UI Action: Notification \"Clear All\" Never Persists"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 133,
+    "ids": [
+      "GAP-44"
+    ],
+    "text": "### `GAP-44` \u00b7 Fabricated Staff Identity: Admin Shell Renders Hardcoded \"Chief Dispatcher\""
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 138,
+    "ids": [
+      "GAP-50"
+    ],
+    "text": "### `GAP-50` \u00b7 Bloat & Confusion: 22 Mobile Files Completely Unreachable from `main.dart`"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 142,
+    "ids": [
+      "GAP-51"
+    ],
+    "text": "### `GAP-51` \u00b7 Unwired Core Feature: Entire In-App Audio Calling Feature Unwired"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 153,
+    "ids": [
+      "GAP-15"
+    ],
+    "text": "| `GAP-15` | Database | `recurring_schedules`, `guarantee_claims`, `review_photo_moderation_events` | Critical tables lack foreign keys. `guarantee_claims.evidence_urls` uses `simple-array` (comma-delimited text), which corrupts URLs containing query commas. |"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 154,
+    "ids": [
+      "GAP-16"
+    ],
+    "text": "| `GAP-16` | Testing | `scripts/verify-schema.ts:232-235` | Schema behavior probes (orphan booking FK check, negative amount check, lat/lng bounds) silently skip on empty database. |"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 155,
+    "ids": [
+      "GAP-20"
+    ],
+    "text": "| `GAP-20` | Admin | `admin/src/app/bookings/page.tsx:26-28` | Emergency count in alert banner is calculated by substring matching `\"emergency\"` against description. |"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 156,
+    "ids": [
+      "GAP-21"
+    ],
+    "text": "| `GAP-21` | Admin | `admin/src/app/guarantees/[id]/page.tsx:31,39` | Server actions `throw new Error(...)` instead of returning standard failure results, triggering full-page `error.tsx`. |"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 157,
+    "ids": [
+      "GAP-22"
+    ],
+    "text": "| `GAP-22` | Mobile | `mobile/lib/features/location/url_launcher_stub.dart:1-3` | Native URL launcher stub is an empty function; shows \"Opening directions\" toast while doing nothing. |"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 158,
+    "ids": [
+      "GAP-23"
+    ],
+    "text": "| `GAP-23` | Admin | `admin/src/app/{support, trust, services, search, guarantees}/page.tsx` | Seven admin pages load unpaginated full table datasets into memory. `/search` performs 2-4 sequential awaits instead of parallel queries. |"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 159,
+    "ids": [
+      "GAP-24"
+    ],
+    "text": "| `GAP-24` | Mobile | `mobile/lib/features/provider/provider_jobs_screen.dart:391-494` | 7-day date filter strip toggles visual selection but never filters the job list (`currentJobs` calculated beforehand). |"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 160,
+    "ids": [
+      "GAP-25"
+    ],
+    "text": "| `GAP-25` | Admin | `admin/src/app/bookings/page.tsx:79` | `nextCursor` is read only to display \"More records available\" banner; no \"Load More\" button exists (list capped at 20). |"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 161,
+    "ids": [
+      "GAP-26"
+    ],
+    "text": "| `GAP-26` | Admin | `admin/src/components/admin-shell.tsx:19` | Nav active tab highlight fails for Provider KYC (`\"Provider KYC Verification\"` vs `\"Providers & KYC Verification\"`). |"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 162,
+    "ids": [
+      "GAP-27"
+    ],
+    "text": "| `GAP-27` | Admin | `admin/src/app/bookings/page.tsx:97` | Table rows are plain `<tr>` elements without navigation links into `/bookings/[bookingId]`. |"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 163,
+    "ids": [
+      "GAP-28"
+    ],
+    "text": "| `GAP-28` | Admin | `providers/page.tsx:119-124`, `support/page.tsx:132-137` | Permanent static placeholder panes (\"RIGHT PANE: Placeholder Dossier\") take up 40% of the screen. |"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 164,
+    "ids": [
+      "GAP-34"
+    ],
+    "text": "| `GAP-34` | Admin | `admin/src/auth/actions.ts` | Next.js server actions have no CSRF tokens beyond Origin checking; login server action has no rate limiter. |"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 165,
+    "ids": [
+      "GAP-35"
+    ],
+    "text": "| `GAP-35` | Database | `review-photo.entity.ts:24` | Entity defines column length `varchar(512)` while PostgreSQL column is `varchar(16)`. |"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 166,
+    "ids": [
+      "GAP-36"
+    ],
+    "text": "| `GAP-36` | Database | `ComplaintStatus`, `PushPlatform`, `GuaranteeClaimStatus` | TypeScript enums omit `enumName`, causing type-name drift against PostgreSQL native enums. |"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 167,
+    "ids": [
+      "GAP-45"
+    ],
+    "text": "| `GAP-45` | Mobile | `auth_screen.dart:785`, `verification_screen.dart:697`, `push_settings_card.dart:261` | Five mobile controls collect input but do nothing (Referral code, Biometric switch, Push toggles, Callback button, Payment methods row). |"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 168,
+    "ids": [
+      "GAP-46"
+    ],
+    "text": "| `GAP-46` | Mobile | `design_system/fix_banner.dart:43` | `showFixBanner` renders live no-op button when action label is provided without handler (`onPressed: onAction ?? () {}`). |"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 169,
+    "ids": [
+      "GAP-47"
+    ],
+    "text": "| `GAP-47` | Mobile | `notification_center_screen.dart:786-859` | Notification sheet displays a Close button only; no navigation path exists to open referenced invoices. |"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 170,
+    "ids": [
+      "GAP-48"
+    ],
+    "text": "| `GAP-48` | Mobile | `fix_payment_checkout_sheet.dart:592`, `cancellation_dialog.dart:77` | Hardcoded policy text contradicts actual business rules (fake \u20b9250 wallet balance, \u20b999 dispatch fee vs 100% refund). |"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 171,
+    "ids": [
+      "GAP-52"
+    ],
+    "text": "| `GAP-52` | Mobile | `fix_service_card_gallery.dart`, `fix_provider_card_gallery.dart` | Two demo galleries containing fake ratings and providers compile into the production app. |"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 172,
+    "ids": [
+      "GAP-53"
+    ],
+    "text": "| `GAP-53` | Mobile | `mobile/lib/design_system/` | 33 unreferenced design-system widgets compiled into binary. |"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 173,
+    "ids": [
+      "GAP-54"
+    ],
+    "text": "| `GAP-54` | Admin | `admin/src/app/{analytics, users, users/[userId]}/page.tsx` | Completely orphaned pages with zero inbound links. |"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 174,
+    "ids": [
+      "GAP-57"
+    ],
+    "text": "| `GAP-57` | Admin | `admin/src/app/` | Backend endpoints for review and photo moderation exist, but admin dashboard provides zero UI to access them. |"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 175,
+    "ids": [
+      "GAP-58"
+    ],
+    "text": "| `GAP-58` | Admin | `admin/src/app/guarantees/[id]/page.tsx` | Missing client-side transition table for guarantee claims. |"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 176,
+    "ids": [
+      "GAP-71"
+    ],
+    "text": "| `GAP-71` | Shared | `shared/complaint-lifecycle.types.ts` vs `admin/src/features/operations/complaint-lifecycle.ts` | Complaint lifecycle transition rules defined twice across shared and admin code; prone to silent drift. |"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 177,
+    "ids": [
+      "GAP-72"
+    ],
+    "text": "| `GAP-72` | Admin | `admin/src/app/**` | Helper `shortId()` copy-pasted across 10 separate admin files. |"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 178,
+    "ids": [
+      "GAP-73"
+    ],
+    "text": "| `GAP-73` | Admin | `operations/api.ts` vs `users/api.ts` | Two conflicting `getUser` client implementations returning different types. |"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 179,
+    "ids": [
+      "GAP-74"
+    ],
+    "text": "| `GAP-74` | Admin | `auth/api.ts` vs `management-api.ts` | Two divergent admin fetch wrappers with conflicting error handling semantics. |"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 180,
+    "ids": [
+      "GAP-75"
+    ],
+    "text": "| `GAP-75` | Admin | `admin-shell.tsx` vs `search/page.tsx` | Staff role lists duplicated across 7 admin files with divergent permission grants. |"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 181,
+    "ids": [
+      "GAP-76"
+    ],
+    "text": "| `GAP-76` | Mobile | `sub_service_catalog_screen.dart` vs `service_discovery_screen.dart` | Two duplicate category rating renderers with divergent honesty rules. |"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 182,
+    "ids": [
+      "GAP-77"
+    ],
+    "text": "| `GAP-77` | Mobile | `fix_service_card.dart` vs `sub_service_catalog_screen.dart` | Duplicate `_formatCompactCount` and `_formatReviewCount` string formatting helpers. |"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 183,
+    "ids": [
+      "GAP-78"
+    ],
+    "text": "| `GAP-78` | Backend | `notifications/inbox.controller.ts` vs `notifications/domain/inbox.controller.ts` | Duplicate inbox controller files (one active, one dead stub). |"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 184,
+    "ids": [
+      "GAP-84"
+    ],
+    "text": "| `GAP-84` | Testing | Controllers | 11 backend controllers lack dedicated test specifications. |"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 185,
+    "ids": [
+      "GAP-85"
+    ],
+    "text": "| `GAP-85` | Testing | Services | Critical services (`admin-operations.service.ts`, `booking-dispatch.handlers.ts`, `resource-ownership.ts`) lack unit tests. |"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 186,
+    "ids": [
+      "GAP-86"
+    ],
+    "text": "| `GAP-86` | Testing | Shared | All 17 `shared/*.types.ts` contract files lack unit tests. |"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 187,
+    "ids": [
+      "GAP-87"
+    ],
+    "text": "| `GAP-87` | Testing | Admin | 12 of 18 admin routes lack automated test coverage. |"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 188,
+    "ids": [
+      "GAP-88"
+    ],
+    "text": "| `GAP-88` | Testing | E2E | Playwright end-to-end test suite unexecuted. |"
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 194,
+    "ids": [
+      "GAP-29"
+    ],
+    "text": "- `GAP-29`: Mobile address model fabricates default location (`Bengaluru`, `560034`)."
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 195,
+    "ids": [
+      "GAP-30"
+    ],
+    "text": "- `GAP-30`: Booking tracking screen displays a hardcoded Google avatar for every user."
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 196,
+    "ids": [
+      "GAP-38"
+    ],
+    "text": "- `GAP-38`: Mobile tracking hardcodes public OpenStreetMap raster tiles without custom User-Agent."
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 197,
+    "ids": [
+      "GAP-39"
+    ],
+    "text": "- `GAP-39`: Dead native MethodChannels in Android `MainActivity.kt` (`audio_tone`, `voice_stream`)."
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 198,
+    "ids": [
+      "GAP-49"
+    ],
+    "text": "- `GAP-49`: Permanently disabled \"Corporate SSO\" button on admin login page."
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 199,
+    "ids": [
+      "GAP-55"
+    ],
+    "text": "- `GAP-55`: Admin `/unauthorized` page performs no session check."
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 200,
+    "ids": [
+      "GAP-67"
+    ],
+    "text": "- `GAP-67`: Admin `/bookings` reads `nextCursor` but provides no \"Load More\" action."
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 201,
+    "ids": [
+      "GAP-68"
+    ],
+    "text": "- `GAP-68`: Provider jobs 7-day strip is purely cosmetic."
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 202,
+    "ids": [
+      "GAP-69"
+    ],
+    "text": "- `GAP-69`: Mobile auth state machine lacks dedicated screens for `offline` and `failure` states."
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 203,
+    "ids": [
+      "GAP-70"
+    ],
+    "text": "- `GAP-70`: Custom brand fonts (Playfair Display, Inter) commented out in `pubspec.yaml` due to missing TTF assets."
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 204,
+    "ids": [
+      "GAP-79"
+    ],
+    "text": "- `GAP-79`: Status badge label mappings duplicated across 4 admin files."
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 205,
+    "ids": [
+      "GAP-80"
+    ],
+    "text": "- `GAP-80`: Company legal address strings disagree between PDF (Ahmedabad) and UI (Bengaluru)."
+  },
+  {
+    "report": "FIXNOW_COMPLETENESS_AND_GAPS.md",
+    "historical_line": 206,
+    "ids": [
+      "GAP-89"
+    ],
+    "text": "- `GAP-89`: Test scripts (`fix_tests.dart`) modify test source files; mock transports shipped in production code."
+  },
+  {
+    "report": "FIXNOW_DATABASE_AND_INTEGRATIONS.md",
+    "historical_line": 34,
+    "ids": [
+      "GAP-25"
+    ],
+    "text": "| `auth_audit_events` | `AuthAuditEvent` | `id` (UUIDv4) | FK `user_id` -> `users.id` (M:1, CASCADE) | INDEX `(user_id, created_at)` | Append-only immutable | Security audit trail recording login successes, failures, lockouts, and token refreshes. *(Risk: CASCADE erases audit trail if user is deleted, GAP-25)*. |"
+  },
+  {
+    "report": "FIXNOW_DATABASE_AND_INTEGRATIONS.md",
+    "historical_line": 62,
+    "ids": [
+      "GAP-12"
+    ],
+    "text": "| `booking_messages` | `BookingMessage` | `id` (UUIDv4) | FK `booking_id` -> `bookings.id` (M:1, CASCADE), FK `sender_id` -> `users.id` (M:1) | INDEX `(booking_id, created_at)` | Immutable text | Two-way in-booking customer/provider chat history. *(Risk: client_message_id lacks UNIQUE index, GAP-12)*. |"
+  },
+  {
+    "report": "FIXNOW_DATABASE_AND_INTEGRATIONS.md",
+    "historical_line": 65,
+    "ids": [
+      "GAP-15"
+    ],
+    "text": "| `recurring_schedules` | `RecurringSchedule` | `id` (UUIDv4) | Soft association (No DB FK) | INDEX `user_id`, INDEX `status` | Mutable | Customer recurring maintenance subscriptions (Weekly, Bi-weekly, Monthly). *(Risk: lacks DB FK, GAP-15)*. |"
+  },
+  {
+    "report": "FIXNOW_DATABASE_AND_INTEGRATIONS.md",
+    "historical_line": 84,
+    "ids": [
+      "GAP-15"
+    ],
+    "text": "| `review_photo_moderation_events` | `ReviewPhotoModerationEvent` | `id` (UUIDv4) | Soft association (No DB FK) | INDEX `photo_id` | Append-only immutable | Logs moderation actions on individual review photos. *(Risk: lacks DB FK, GAP-15)*. |"
+  },
+  {
+    "report": "FIXNOW_DATABASE_AND_INTEGRATIONS.md",
+    "historical_line": 86,
+    "ids": [
+      "GAP-15"
+    ],
+    "text": "| `guarantee_claims` | `GuaranteeClaim` | `id` (UUIDv4) | Soft association (No DB FK) | INDEX `booking_id`, INDEX `status` | Mutable | Formal 30-day warranty claims filed by customers. Contains description and serialized evidence URLs. *(Risk: lacks DB FK, GAP-15)*. |"
+  },
+  {
+    "report": "FIXNOW_DATABASE_AND_INTEGRATIONS.md",
+    "historical_line": 120,
+    "ids": [
+      "GAP-08"
+    ],
+    "text": "  1. **Orphan Migration File (`GAP-08`):** `backend/src/database/migrations/1789735751504-add-phone-to-users.ts` exists outside the configured migration glob (`backend/migrations/`). It is never executed by TypeORM. Its intended schema change (`phone_number` on `users`) was separately applied by migration `1789748288429`. Attempting to run this orphan would crash with PostgreSQL error `42701 duplicate_column`."
+  },
+  {
+    "report": "FIXNOW_DATABASE_AND_INTEGRATIONS.md",
+    "historical_line": 121,
+    "ids": [
+      "GAP-09"
+    ],
+    "text": "  2. **Duplicate Timestamp Collision (`GAP-09`):** Timestamp `1786521300000` is shared by two distinct migration files (`1786521300000-BookingLineItems.ts` and `1786521300000-ComplaintsSchema.ts`). While TypeORM differentiates them by class name, their relative execution ordering is filesystem-dependent."
+  },
+  {
+    "report": "FIXNOW_DATABASE_AND_INTEGRATIONS.md",
+    "historical_line": 122,
+    "ids": [
+      "GAP-25"
+    ],
+    "text": "  3. **Foreign Key Cascade Drift on Users (`GAP-25`):** In `1789749980000-RestoreBookingIntegrity.ts`, the foreign key on `auth_audit_events.user_id` was modified to `ON DELETE CASCADE`. As a result, deleting a user completely purges their authentication security audit trail, violating compliance standards."
+  },
+  {
+    "report": "FIXNOW_DATABASE_AND_INTEGRATIONS.md",
+    "historical_line": 129,
+    "ids": [
+      "GAP-02"
+    ],
+    "text": "- **Deploy Safety Remediation (GAP-02):**"
+  },
+  {
+    "report": "FIXNOW_DOMAIN_AND_WORKFLOW_INVENTORY.md",
+    "historical_line": 185,
+    "ids": [
+      "GAP-51"
+    ],
+    "text": "- *Known Limitation:* While backend handlers and entities are fully operational, the mobile repository `HttpCallRepository` is currently unwired (`GAP-51`)."
+  },
+  {
+    "report": "FIXNOW_DOMAIN_AND_WORKFLOW_INVENTORY.md",
+    "historical_line": 264,
+    "ids": [
+      "GAP-15"
+    ],
+    "text": "   - In `guarantee_claims`, `evidence_urls` is stored as TypeORM `simple-array` (comma-separated strings). URLs containing query parameters with commas become corrupted upon deserialization (`GAP-15`)."
+  },
+  {
+    "report": "FIXNOW_MASTER_FEATURE_INVENTORY.md",
+    "historical_line": 37,
+    "ids": [
+      "GAP-45"
+    ],
+    "text": "| `CUS-AUTH-004` | Auth | Biometric Quick Login | Fingerprint / Face ID Re-auth | UI switch in verification screen claiming quick biometric login | `auth/verification_screen.dart:697` | `MOCKED_SIMULATED` | `verification_screen.dart:697` (`_biometricEnabled`) | None | Customer | None | Inert local boolean; no `local_auth` plugin in `pubspec.yaml`; never persisted (GAP-45) |"
+  },
+  {
+    "report": "FIXNOW_MASTER_FEATURE_INVENTORY.md",
+    "historical_line": 51,
+    "ids": [
+      "GAP-15"
+    ],
+    "text": "| `CUS-BOOK-008` | Booking | Recurring Booking | Scheduled Subscription Manager | Daily/weekly cadence selector; pause/resume/cancel controls; upcoming schedule feed | `features/bookings/customer_bookings_screen.dart:1400` | `IMPLEMENTED_EVIDENCED` | `schedules.controller.ts`, `customer_bookings_screen.dart` | `POST/PATCH /bookings/schedules`, `recurring_schedules` | Customer | `recurring_schedules_test.dart`, `schedules.service.spec.ts` | `recurring_schedules` lacks DB foreign keys (GAP-15) |"
+  },
+  {
+    "report": "FIXNOW_MASTER_FEATURE_INVENTORY.md",
+    "historical_line": 52,
+    "ids": [
+      "GAP-38"
+    ],
+    "text": "| `CUS-TRK-001` | Tracking | Live Map Tracking | Provider Route & Coordinate Render | OpenStreetMap raster tiles; polyline route from provider to customer; animated vehicle beacon; ETA ring | `features/tracking/provider_live_map.dart` | `IMPLEMENTED_EVIDENCED` | `provider_live_map.dart:120`, `booking_tracking_screen.dart` | WebSocket `location-update`, OpenStreetMap | Customer / Provider | `booking_tracking_test.dart` | Hardcoded public OSM tile servers without rate control (GAP-38) |"
+  },
+  {
+    "report": "FIXNOW_MASTER_FEATURE_INVENTORY.md",
+    "historical_line": 54,
+    "ids": [
+      "GAP-12"
+    ],
+    "text": "| `CUS-CHAT-001` | Chat | In-Booking Messaging | Two-Way Text Chat with Delivery Ticks | Message history feed; send bar; status ticks; realtime message stream with 3-second polling fallback | `features/chat/booking_chat_screen.dart` | `IMPLEMENTED_EVIDENCED` | `booking_chat_screen.dart:60`, `chat_controller.dart:46` | `GET/POST /bookings/:id/messages`, `booking_messages` | Customer / Provider | `chat_screen_test.dart`, `booking-messages.controller.spec.ts` | `client_message_id` lacks DB unique index (GAP-12) |"
+  },
+  {
+    "report": "FIXNOW_MASTER_FEATURE_INVENTORY.md",
+    "historical_line": 55,
+    "ids": [
+      "GAP-51",
+      "GAP-59"
+    ],
+    "text": "| `CUS-CALL-001` | Call | Voice Calling UI | In-App Audio Call Screen & Controls | Call button, mute toggle, speaker toggle, end call button | `features/call/call_screen.dart` | `UNWIRED` | `features/call/call_repository.dart:12`, `call_session.dart:32` | WebSocket `call.*.v1`, `booking_calls` | Customer / Provider | Unit test doubles only | Backend complete but `HttpCallRepository` is never instantiated in mobile code (GAP-51, GAP-59) |"
+  },
+  {
+    "report": "FIXNOW_MASTER_FEATURE_INVENTORY.md",
+    "historical_line": 56,
+    "ids": [
+      "GAP-42"
+    ],
+    "text": "| `CUS-PAY-001` | Payments | Invoice View | PDF & Breakdown Display | Itemized lines, GST calculation, statutory company details, download PDF, share sheet | `features/payments/invoice_screen.dart` | `IMPLEMENTED_EVIDENCED` | `invoice_screen.dart:85`, `fix_pdf_invoice_builder.dart` | `GET /payments/invoices/:orderId`, `invoices` | Customer | `invoice_screen_test.dart`, `pdf_tax_invoice_test.dart` | Hardcoded placeholder GSTIN and conflicting addresses between PDF and UI (GAP-42) |"
+  },
+  {
+    "report": "FIXNOW_MASTER_FEATURE_INVENTORY.md",
+    "historical_line": 57,
+    "ids": [
+      "GAP-41"
+    ],
+    "text": "| `CUS-PAY-002` | Payments | Checkout Sheet | Payment Execution Modal | Payment method picker (UPI, Cards, NetBanking, Cash); payment processing trigger | `design_system/fix_payment_checkout_sheet.dart` | `MOCKED_SIMULATED` | `fix_payment_checkout_sheet.dart:146` | Razorpay Gateway | Customer | `invoice_screen_test.dart` | When `onProcessPayment` is omitted, simulates success after 600ms; gated behind `_canPayLocally` (GAP-41) |"
+  },
+  {
+    "report": "FIXNOW_MASTER_FEATURE_INVENTORY.md",
+    "historical_line": 63,
+    "ids": [
+      "GAP-43",
+      "GAP-56"
+    ],
+    "text": "| `CUS-NOT-001` | Notifications | Notification Center | Categorized Inbox Feed | Category filter chips (All, Bookings, System); swipe-to-dismiss; unread badge counter | `features/notifications/notification_center_screen.dart` | `IMPLEMENTED_EVIDENCED` | `notification_center_screen.dart:65` | `GET /users/:id/notifications`, `in_app_notifications` | Customer | `notification_center_test.dart` | \"Clear All\" uses client-side in-memory set; no backend delete endpoint exists (GAP-43, GAP-56) |"
+  },
+  {
+    "report": "FIXNOW_MASTER_FEATURE_INVENTORY.md",
+    "historical_line": 64,
+    "ids": [
+      "GAP-45"
+    ],
+    "text": "| `CUS-NOT-002` | Notifications | Push Notification Registration | Device Token Registration | Firebase Messaging token registration; platform identification | `features/profile/push_settings_card.dart` | `IMPLEMENTED_EVIDENCED` | `push_enrollment.dart:40` | `PUT /notifications/push/devices`, `push_device_tokens` | Customer | `push_settings_card_test.dart` | Push category switches (Promo, System, Booking) only toggle local `setState` (GAP-45) |"
+  },
+  {
+    "report": "FIXNOW_MASTER_FEATURE_INVENTORY.md",
+    "historical_line": 65,
+    "ids": [
+      "GAP-45"
+    ],
+    "text": "| `CUS-SUP-001` | Support | Help Center & FAQs | Accordion FAQ & Ticket Entry | Search bar; 5 static expandable FAQs; hotline button; complaint history link | `features/support/customer_help_screen.dart` | `IMPLEMENTED_EVIDENCED` | `customer_help_screen.dart:80` | None (static) | Customer | `customer_help_screen_test.dart` | \"Request Instant Callback\" opens dialog claiming unavailable despite backend endpoint existing (GAP-45) |"
+  },
+  {
+    "report": "FIXNOW_MASTER_FEATURE_INVENTORY.md",
+    "historical_line": 67,
+    "ids": [
+      "GAP-15"
+    ],
+    "text": "| `CUS-GUA-001` | Guarantee | Warranty Claim Filing | Service Guarantee Claim Sheet | Booking ID association, issue description (min 10 chars), evidence URL attachments | `features/guarantees/ui/submit_claim_screen.dart` | `IMPLEMENTED_EVIDENCED` | `submit_claim_screen.dart:35` | `POST /guarantees/claims`, `guarantee_claims` | Customer | `guarantees.controller.spec.ts` | `evidence_urls` stored as comma-joined simple-array which corrupts URLs with commas (GAP-15) |"
+  },
+  {
+    "report": "FIXNOW_MASTER_FEATURE_INVENTORY.md",
+    "historical_line": 68,
+    "ids": [
+      "GAP-29"
+    ],
+    "text": "| `CUS-LOC-001` | Location | Address Book Management | CRUD Customer Addresses | Add address modal; lat/lng geocoding; default address toggle; address card list | `features/profile/customer_profile_screen.dart:520` | `IMPLEMENTED_EVIDENCED` | `customer-addresses.controller.ts`, `fix_address_selector.dart` | `GET/POST/DELETE /users/me/addresses`, `customer_addresses` | Customer | `saved_address_test.dart`, `customer-addresses.controller.spec.ts` | Fallback model fabricates 'Bengaluru' / '560034' defaults (GAP-29) |"
+  },
+  {
+    "report": "FIXNOW_MASTER_FEATURE_INVENTORY.md",
+    "historical_line": 77,
+    "ids": [
+      "GAP-50"
+    ],
+    "text": "| `PRO-ONB-001` | Onboarding | KYC Wizard | 4-Step Verification Wizard | Personal info, trade skills, service radius (1-100 km), document camera upload (Gov ID, trade cert) | `features/provider/provider_onboarding_screen.dart` | `IMPLEMENTED_EVIDENCED` | `provider_onboarding_screen.dart:120` | `POST /provider-applications/me/submit`, `provider_documents` | `provider_applicant` | `provider-document.service.spec.ts` | Dead onboarding entry screen exists in `auth/provider_onboarding_entry_screen.dart` (GAP-50) |"
+  },
+  {
+    "report": "FIXNOW_MASTER_FEATURE_INVENTORY.md",
+    "historical_line": 78,
+    "ids": [
+      "GAP-83"
+    ],
+    "text": "| `PRO-DOC-001` | Onboarding | KYC Document Upload | Multipart File & Camera Upload | Max 10 MiB, format validation, SHA-256 fingerprinting, ClamAV anti-malware stream | `features/provider/provider_onboarding_screen.dart:850` | `IMPLEMENTED_EVIDENCED` | `provider-document.controller.ts:52`, `clamav-malware-scanner.ts` | `POST /provider-documents/:type`, `provider_documents` | Provider Applicant | `provider-document.service.spec.ts` | ClamAV scanner integration lacks automated test spec (GAP-83) |"
+  },
+  {
+    "report": "FIXNOW_MASTER_FEATURE_INVENTORY.md",
+    "historical_line": 80,
+    "ids": [
+      "GAP-15"
+    ],
+    "text": "| `PRO-AVA-001` | Availability | Working Hours & Schedule | Weekly Rules & Exceptions Sheet | Per-day time ranges (start/end); exception dates; IANA timezone; optimistic version lock | `design_system/fix_schedule_hours_sheet.dart` | `IMPLEMENTED_EVIDENCED` | `provider-availability.controller.ts:34` | `PUT /provider-availability/me/schedule`, `provider_availability` | `verified_provider` | `provider-availability.service.spec.ts` | `version` column is manual integer, not automatic `@VersionColumn` (GAP-15) |"
+  },
+  {
+    "report": "FIXNOW_MASTER_FEATURE_INVENTORY.md",
+    "historical_line": 81,
+    "ids": [
+      "GAP-32"
+    ],
+    "text": "| `PRO-LOC-001` | Location | Background Location Broadcast | Throttled Coordinate Updates | Periodic GPS push; configurable throttle rate (env-driven); updates base coordinates for dispatch distance | `features/provider/provider_controller.dart:340` | `IMPLEMENTED_EVIDENCED` | `provider-profile.controller.ts:63` | `PUT /provider-profile/me/location`, `provider_profiles` | `verified_provider` | `provider-profile.service.spec.ts` | Sends raw coords; mobile uses third-party BigDataCloud reverse geocoder (GAP-32) |"
+  },
+  {
+    "report": "FIXNOW_MASTER_FEATURE_INVENTORY.md",
+    "historical_line": 82,
+    "ids": [
+      "GAP-39"
+    ],
+    "text": "| `PRO-JOB-001` | Jobs | Incoming Request Screen | Sound & Countdown Sheet | 30-second countdown ring; accept button; skip button; service distance & earnings preview | `features/provider/provider_incoming_request_screen.dart` | `IMPLEMENTED_EVIDENCED` | `provider_incoming_request_screen.dart:50` | WebSocket `provider.request.v1` | `verified_provider` | `provider_core_test.dart` | Audio tone MethodChannel has no Dart caller (GAP-39) |"
+  },
+  {
+    "report": "FIXNOW_MASTER_FEATURE_INVENTORY.md",
+    "historical_line": 84,
+    "ids": [
+      "GAP-24",
+      "GAP-68"
+    ],
+    "text": "| `PRO-JOB-003` | Jobs | Jobs List & History | Active & Past Jobs Queue | Date strip picker; urgent badges; customer navigation shortcut | `features/provider/provider_jobs_screen.dart` | `IMPLEMENTED_EVIDENCED` | `provider_jobs_screen.dart:110` | `GET /bookings/available`, `GET /bookings` | `verified_provider` | `provider_core_test.dart` | Date strip is cosmetic only: `onTap` changes highlight but does not filter jobs (GAP-24, GAP-68) |"
+  },
+  {
+    "report": "FIXNOW_MASTER_FEATURE_INVENTORY.md",
+    "historical_line": 85,
+    "ids": [
+      "GAP-03"
+    ],
+    "text": "| `PRO-ACT-001` | Cockpit | Active Job Cockpit | Mission Control Hub | Start journey button (`EN_ROUTE`); arrived button; start service OTP entry dialog; adjustments; proof photos; complete | `features/provider/provider_active_job_cockpit_screen.dart` | `IMPLEMENTED_EVIDENCED` | `provider_active_job_cockpit_screen.dart:95` | `PATCH /bookings/:id/status`, `bookings` | `verified_provider` | `provider_active_job_cockpit_test.dart` | Cancel guard in complete service dialog was previously ineffective (`&&` bug, GAP-03) |"
+  },
+  {
+    "report": "FIXNOW_MASTER_FEATURE_INVENTORY.md",
+    "historical_line": 87,
+    "ids": [
+      "GAP-19"
+    ],
+    "text": "| `PRO-ACT-003` | Cockpit | Job Proof Photos | Before & After Evidence Capture | Camera capture; uploads to quarantine; persists in `job_proof_photos` table | `design_system/fix_job_proof_dialog.dart`, `fix_job_proof_panel.dart` | `IMPLEMENTED_EVIDENCED` | `job-proof-photos.service.ts:242` | `POST /bookings/:id/job-proof-photos`, `job_proof_photos` | `verified_provider` | `job_proof_test.dart` | Legacy `JobProofRepository` in-memory singleton still lingers in `job_proof_service.dart` (GAP-19) |"
+  },
+  {
+    "report": "FIXNOW_MASTER_FEATURE_INVENTORY.md",
+    "historical_line": 89,
+    "ids": [
+      "GAP-22"
+    ],
+    "text": "| `PRO-NAV-001` | Navigation | Turn-by-Turn Map | OSM Route Navigation Screen | Polyline path, turn instruction cards, call customer shortcut, open native maps | `features/provider/provider_navigation_map_screen.dart` | `IMPLEMENTED_EVIDENCED` | `provider_navigation_map_screen.dart:60` | OpenRouteService Adapter | `verified_provider` | `provider_navigation_map_screen_test.dart` | Native `url_launcher_stub.dart` is empty no-op on Android/iOS (GAP-22) |"
+  },
+  {
+    "report": "FIXNOW_MASTER_FEATURE_INVENTORY.md",
+    "historical_line": 90,
+    "ids": [
+      "GAP-84"
+    ],
+    "text": "| `PRO-EAR-001` | Earnings | Provider Earnings Ledger | Financial Breakdown Dashboard | Gross earnings, platform fees, refunds deduction, net payout balance, per-booking breakdown | `features/provider/provider_earnings_screen.dart` | `IMPLEMENTED_EVIDENCED` | `provider-earnings.controller.ts:16` | `GET /providers/me/earnings`, `payment_orders`, `refunds` | `verified_provider` | Unit tested | Controller lacks dedicated standalone spec (GAP-84) |"
+  },
+  {
+    "report": "FIXNOW_MASTER_FEATURE_INVENTORY.md",
+    "historical_line": 98,
+    "ids": [
+      "GAP-49"
+    ],
+    "text": "| `ADM-AUTH-001` | Auth | Staff Authentication | Admin Login & Session Cookie | Validates staff role membership (requires exactly 1 staff role); sets `fixnow_admin_access` and `refresh` cookies | `/login` (`app/login/page.tsx`) | `IMPLEMENTED_EVIDENCED` | `admin-auth.controller.ts:25`, `session.ts:6` | `POST /auth/admin/login`, `user_roles` | Public | `admin-auth.controller.spec.ts`, `session.test.ts` | Corporate SSO button is permanently disabled mock (GAP-49) |"
+  },
+  {
+    "report": "FIXNOW_MASTER_FEATURE_INVENTORY.md",
+    "historical_line": 99,
+    "ids": [
+      "GAP-26",
+      "GAP-44"
+    ],
+    "text": "| `ADM-AUTH-002` | Auth | Shell & Navigation | Role-Gated Sidebar Navigation | Sidebar menu items filtered by session roles; active path highlight; user identity badge | `components/admin-shell.tsx` | `IMPLEMENTED_EVIDENCED` | `admin-shell.tsx:18` | `GET /auth/admin/session` | Staff | `admin-shell.test.tsx` | Hardcoded \"Chief Dispatcher\" name and external avatar URL on every page (GAP-44); active highlight mismatch on Providers and Search (GAP-26) |"
+  },
+  {
+    "report": "FIXNOW_MASTER_FEATURE_INVENTORY.md",
+    "historical_line": 100,
+    "ids": [
+      "GAP-18"
+    ],
+    "text": "| `ADM-DSH-001` | Dashboard | Operations Dashboard | Platform Metric Cards | Realtime counts of active bookings, open KYC applications, pending complaints, 24h revenue | `/` (`app/page.tsx`) | `IMPLEMENTED_EVIDENCED` | `page.tsx:15`, `admin-analytics.service.ts` | `GET /admin/analytics` | `operations_administrator`, `auditor` | `admin-analytics.service.spec.ts` | Backend endpoint allows broader roles (`support_agent`) than console admits (GAP-18) |"
+  },
+  {
+    "report": "FIXNOW_MASTER_FEATURE_INVENTORY.md",
+    "historical_line": 101,
+    "ids": [
+      "GAP-05",
+      "GAP-25",
+      "GAP-27"
+    ],
+    "text": "| `ADM-BOK-001` | Bookings | Bookings Dispatch Queue | Paginated Booking Table | Filter by status (`REQUESTED`, `ASSIGNED`, `COMPLETED`); emergency indicator; date filters | `/bookings` (`app/bookings/page.tsx`) | `PARTIAL` | `bookings/page.tsx:17` | `GET /admin/bookings?limit=20` | Staff | `admin-operations.spec.ts` (e2e) | No code-level role check (GAP-05); table rows are plain `<tr>` without links to detail dossier (GAP-27); lacks pagination control (GAP-25) |"
+  },
+  {
+    "report": "FIXNOW_MASTER_FEATURE_INVENTORY.md",
+    "historical_line": 102,
+    "ids": [
+      "GAP-87"
+    ],
+    "text": "| `ADM-BOK-002` | Bookings | Booking Dossier & Intervene | Detailed Dossier & Forced Cancel | Complete customer/provider details, line items, timestamps, administrative cancel button with audit reason | `/bookings/[bookingId]` | `IMPLEMENTED_UNVERIFIED` | `bookings/[bookingId]/page.tsx:15` | `GET /admin/bookings/:id`, `POST /admin/bookings/:id/cancel` | `trust_safety_reviewer`, `operations_administrator` | None | Route has no tests (GAP-87); unreachable from bookings table |"
+  },
+  {
+    "report": "FIXNOW_MASTER_FEATURE_INVENTORY.md",
+    "historical_line": 103,
+    "ids": [
+      "GAP-28"
+    ],
+    "text": "| `ADM-PRV-001` | Providers | Provider KYC Queue | Application Verification Table | List pending applications; filter by review status; claimant indicator | `/providers` (`app/providers/page.tsx`) | `PARTIAL` | `providers/page.tsx:12` | `GET /admin/provider-applications` | Staff | `providers/page.test.tsx` | Permanent static \"RIGHT PANE: Placeholder Dossier\" occupying 40% of layout (GAP-28); no code-level role check |"
+  },
+  {
+    "report": "FIXNOW_MASTER_FEATURE_INVENTORY.md",
+    "historical_line": 105,
+    "ids": [
+      "GAP-87"
+    ],
+    "text": "| `ADM-PRV-003` | Providers | Document Streaming Proxy | Secure Document Byte Pipe | Streams encrypted KYC document from S3 through admin server to prevent direct S3 URL leak | `/providers/[aId]/documents/[docId]` | `IMPLEMENTED_UNVERIFIED` | `documents/[documentId]/route.ts:4` | `GET /provider-documents/:id` | Staff | None | Route handler has no tests (GAP-87) |"
+  },
+  {
+    "report": "FIXNOW_MASTER_FEATURE_INVENTORY.md",
+    "historical_line": 106,
+    "ids": [
+      "GAP-06",
+      "GAP-23",
+      "GAP-28"
+    ],
+    "text": "| `ADM-SUP-001` | Support | Complaints Queue | Dispute Management Feed | Unpaginated complaint table; filter by status; priority indicators | `/support` (`app/support/page.tsx`) | `PARTIAL` | `support/page.tsx:12` | `GET /admin/complaints` | Staff | `support/page.test.tsx` | Fetches unpaginated list in full (GAP-23); nav grants `auditor` but backend rejects with 403 (GAP-06); static placeholder dossier pane (GAP-28) |"
+  },
+  {
+    "report": "FIXNOW_MASTER_FEATURE_INVENTORY.md",
+    "historical_line": 107,
+    "ids": [
+      "GAP-17",
+      "GAP-73"
+    ],
+    "text": "| `ADM-SUP-002` | Support | Case Dossier & Adjudication | Status Update & Refund Trigger | Full case timeline, evidence preview, status transition dropdown, refund order trigger | `/support/[complaintId]` | `IMPLEMENTED_EVIDENCED` | `support/[complaintId]/page.tsx` | `PATCH /admin/complaints/:id/status`, `POST /admin/payments/orders/:id/refunds` | `support_agent`, `operations_administrator`, `security_administrator` | `complaints.service.spec.ts` | Submitter/target user details render blank due to `UserDetail` type mismatch (GAP-17, GAP-73) |"
+  },
+  {
+    "report": "FIXNOW_MASTER_FEATURE_INVENTORY.md",
+    "historical_line": 108,
+    "ids": [
+      "GAP-05",
+      "GAP-23"
+    ],
+    "text": "| `ADM-TRU-001` | Trust | Trust Moderation Queue | Trust Signal Alerts Table | Listing provider accept-time anomalies and fraud flags; dismiss / escalate action forms | `/trust` (`app/trust/page.tsx`) | `PARTIAL` | `trust/page.tsx:32` | `GET /admin/trust/signals`, `PATCH .../:id` | None (broken) | `trust/page.test.tsx` | **Has no code-level role check at all** (GAP-05); fetches unpaginated list (GAP-23) |"
+  },
+  {
+    "report": "FIXNOW_MASTER_FEATURE_INVENTORY.md",
+    "historical_line": 109,
+    "ids": [
+      "GAP-06",
+      "GAP-57"
+    ],
+    "text": "| `ADM-CAT-001` | Catalog | Category & Price Management | Category CRUD & Sub-Service Editor | Create category form, toggle emergency, set starting price, view sub-services | `/services` (`app/services/page.tsx`) | `PARTIAL` | `services/page.tsx:11` | `POST|PUT|DELETE /admin/service-categories` | Staff | `design-tokens.test.ts` | All forms render for `auditor` who gets 403 on every submit (GAP-06); review and photo moderation have zero UI (GAP-57) |"
+  },
+  {
+    "report": "FIXNOW_MASTER_FEATURE_INVENTORY.md",
+    "historical_line": 110,
+    "ids": [
+      "GAP-07",
+      "GAP-21",
+      "GAP-58"
+    ],
+    "text": "| `ADM-GUA-001` | Guarantees | Guarantee Claim Queue | Claims List & Re-Service Trigger | Status update form; trigger free re-service booking linking parent booking ID | `/guarantees/[id]` | `PARTIAL` | `guarantees/[id]/page.tsx:12` | `PATCH /guarantees/claims/:id/status`, `POST .../re-service` | Staff | None | Status `<select>` offers illegal transitions causing 409 (GAP-07, GAP-58); server actions throw instead of standard redirect (GAP-21) |"
+  },
+  {
+    "report": "FIXNOW_MASTER_FEATURE_INVENTORY.md",
+    "historical_line": 111,
+    "ids": [
+      "GAP-54"
+    ],
+    "text": "| `ADM-USR-001` | Users | User Registry | Staff & Customer Directory Table | Paginated users table with role filter; account status inspection | `/users` (`app/users/page.tsx`) | `DEAD_UNREACHABLE` | `users/page.tsx:18` | `GET /admin/users` | Staff | None | Fully orphaned: no link anywhere in navigation or pages (GAP-54) |"
+  },
+  {
+    "report": "FIXNOW_MASTER_FEATURE_INVENTORY.md",
+    "historical_line": 112,
+    "ids": [
+      "GAP-54"
+    ],
+    "text": "| `ADM-ANL-001` | Analytics | Platform Analytics | Advanced Reporting Views | Detailed conversion, gross revenue, category popularity charts | `/analytics` (`app/analytics/page.tsx`) | `DEAD_UNREACHABLE` | `analytics/page.tsx:8` | `GET /admin/analytics` | `operations_administrator`, `auditor` | None | Fully orphaned: no link anywhere in navigation (GAP-54) |"
+  },
+  {
+    "report": "FIXNOW_MASTER_FEATURE_INVENTORY.md",
+    "historical_line": 113,
+    "ids": [
+      "GAP-23",
+      "GAP-26"
+    ],
+    "text": "| `ADM-SRH-001` | Search | Cross-Entity Search | Global Omnibox Search Page | Searches bookings, providers, complaints, claims in one query; tabbed results | `/search` (`app/search/page.tsx`) | `IMPLEMENTED_EVIDENCED` | `search/page.tsx:23` | Multiple API calls | Staff | None | Executes 4 sequential awaits rather than `Promise.all` (GAP-23); nav highlights Dashboard instead of Search (GAP-26) |"
+  },
+  {
+    "report": "FIXNOW_MASTER_FEATURE_INVENTORY.md",
+    "historical_line": 138,
+    "ids": [
+      "GAP-82"
+    ],
+    "text": "| Transactional Outbox | Background Poller | `OutboxService.processOutbox` | Internal service | Dedupe key check; lease renewal; max retries | Updates `outbox_messages.status` (`claimed`, `completed`, `dead_letter`) | Executes handlers | Untested (GAP-82) | `IMPLEMENTED_UNVERIFIED` |"
+  },
+  {
+    "report": "FIXNOW_MASTER_FEATURE_INVENTORY.md",
+    "historical_line": 139,
+    "ids": [
+      "GAP-84"
+    ],
+    "text": "| Admin Review Moderation | `PATCH /api/v1/admin/reviews/:id/moderation` | `RatingsAdminController.moderateReview` | Bearer JWT, `reviewModerate` | `ModerateReviewDto` | Updates `booking_reviews.status`; inserts moderation audit | Updates aggregates | Untested (GAP-84) | `IMPLEMENTED_UNVERIFIED` |"
+  },
+  {
+    "report": "FIXNOW_MASTER_FEATURE_INVENTORY.md",
+    "historical_line": 140,
+    "ids": [
+      "GAP-04"
+    ],
+    "text": "| Admin Photo Moderation | `PATCH /api/v1/admin/reviews/photos/:photoId/moderation` | `RatingsAdminController.moderatePhoto` | Bearer JWT, `reviewModerate` | `ModeratePhotoDto` | Updates `review_photos.status`; inserts audit event | None | Untested | `BROKEN` (Shadowed route, GAP-04) |"
+  },
+  {
+    "report": "FIXNOW_MASTER_FEATURE_INVENTORY.md",
+    "historical_line": 141,
+    "ids": [
+      "GAP-13"
+    ],
+    "text": "| Public Inbox Stub | `GET /api/v1/notifications/inbox` | `InboxController.getInbox` | `@Public()` | None | Returns static `{ notifications: [] }` | None | None | `DEAD_UNREACHABLE` (Unregistered stub, GAP-13) |"
+  },
+  {
+    "report": "FIXNOW_SCREEN_AND_UI_INVENTORY.md",
+    "historical_line": 57,
+    "ids": [
+      "GAP-45"
+    ],
+    "text": "- **Status & Defects:** `PARTIAL`. Registration and login work; referral code input is **inert** \u2014 `_referral.text` is collected but never passed to the registration API (GAP-45)."
+  },
+  {
+    "report": "FIXNOW_SCREEN_AND_UI_INVENTORY.md",
+    "historical_line": 75,
+    "ids": [
+      "GAP-45"
+    ],
+    "text": "- **Status & Defects:** `PARTIAL`. Biometric switch is **inert** (GAP-45); OTP verification works."
+  },
+  {
+    "report": "FIXNOW_SCREEN_AND_UI_INVENTORY.md",
+    "historical_line": 170,
+    "ids": [
+      "GAP-51"
+    ],
+    "text": "- **Status & Defects:** `IMPLEMENTED_EVIDENCED`. Call technician button launches dead call repository (GAP-51)."
+  },
+  {
+    "report": "FIXNOW_SCREEN_AND_UI_INVENTORY.md",
+    "historical_line": 187,
+    "ids": [
+      "GAP-30",
+      "GAP-48"
+    ],
+    "text": "- **Status & Defects:** `IMPLEMENTED_EVIDENCED`. Uses hardcoded Google avatar URL for customer icon (GAP-30); dispatch fee policy copy in UI contradicts cancellation dialog (GAP-48)."
+  },
+  {
+    "report": "FIXNOW_SCREEN_AND_UI_INVENTORY.md",
+    "historical_line": 238,
+    "ids": [
+      "GAP-45"
+    ],
+    "text": "- **Status & Defects:** `PARTIAL`. \"Request Instant Callback\" opens a modal claiming unavailable, despite a live `POST /support/complaints/:id/callback-request` endpoint existing (GAP-45)."
+  },
+  {
+    "report": "FIXNOW_SCREEN_AND_UI_INVENTORY.md",
+    "historical_line": 283,
+    "ids": [
+      "GAP-43",
+      "GAP-56"
+    ],
+    "text": "- **Status & Defects:** `PARTIAL`. \"Clear All\" deletes items from a local in-memory set only; returns on next app restart because backend has no delete endpoint (GAP-43, GAP-56)."
+  },
+  {
+    "report": "FIXNOW_SCREEN_AND_UI_INVENTORY.md",
+    "historical_line": 316,
+    "ids": [
+      "GAP-42"
+    ],
+    "text": "- **Status & Defects:** `IMPLEMENTED_EVIDENCED`. GSTIN in generated PDF is a static placeholder, and address contradicts header copy (GAP-42)."
+  },
+  {
+    "report": "FIXNOW_SCREEN_AND_UI_INVENTORY.md",
+    "historical_line": 335,
+    "ids": [
+      "GAP-45"
+    ],
+    "text": "- **Status & Defects:** `PARTIAL`. Payment Methods row has **no `onTap` gesture detector** (GAP-45); push switches only update local `setState` without API persistence (GAP-45)."
+  },
+  {
+    "report": "FIXNOW_SCREEN_AND_UI_INVENTORY.md",
+    "historical_line": 370,
+    "ids": [
+      "GAP-24",
+      "GAP-68"
+    ],
+    "text": "- **Status & Defects:** `PARTIAL`. 7-day strip picker is cosmetic: `onTap` updates styling index but does **not filter** `currentJobs` (GAP-24, GAP-68)."
+  },
+  {
+    "report": "FIXNOW_SCREEN_AND_UI_INVENTORY.md",
+    "historical_line": 390,
+    "ids": [
+      "GAP-03"
+    ],
+    "text": "- **Status & Defects:** `IMPLEMENTED_EVIDENCED`. Cancel guard bug on OTP dialog identified in GAP-03 (`shouldContinue != true && !mounted`)."
+  },
+  {
+    "report": "FIXNOW_SCREEN_AND_UI_INVENTORY.md",
+    "historical_line": 406,
+    "ids": [
+      "GAP-22"
+    ],
+    "text": "- **Status & Defects:** `PARTIAL`. Native `url_launcher_stub.dart` does nothing on Android/iOS devices when \"Open in External Maps\" is tapped (GAP-22)."
+  },
+  {
+    "report": "FIXNOW_SCREEN_AND_UI_INVENTORY.md",
+    "historical_line": 422,
+    "ids": [
+      "GAP-39"
+    ],
+    "text": "- **Status & Defects:** `IMPLEMENTED_EVIDENCED`. Audio tone MethodChannel has no caller (GAP-39)."
+  },
+  {
+    "report": "FIXNOW_SCREEN_AND_UI_INVENTORY.md",
+    "historical_line": 461,
+    "ids": [
+      "GAP-50"
+    ],
+    "text": "| `AiDiagnosticScreen` | `features/ai/ai_diagnostic_screen.dart` | 420 | Superseded by `ProblemDiagnosisScreen`; no imports from production code | P1 (GAP-50) |"
+  },
+  {
+    "report": "FIXNOW_SCREEN_AND_UI_INVENTORY.md",
+    "historical_line": 462,
+    "ids": [
+      "GAP-50"
+    ],
+    "text": "| `AiRecommendationScreen` | `features/ai/ai_recommendation_screen.dart` | 380 | Superseded by inline problem analysis view; dead file | P1 (GAP-50) |"
+  },
+  {
+    "report": "FIXNOW_SCREEN_AND_UI_INVENTORY.md",
+    "historical_line": 463,
+    "ids": [
+      "GAP-50"
+    ],
+    "text": "| `ComplaintDetailScreen` | `features/support/complaint_detail_screen.dart` | 567 | Imported only by test fixtures; live app uses bottom sheet | P1 (GAP-50) |"
+  },
+  {
+    "report": "FIXNOW_SCREEN_AND_UI_INVENTORY.md",
+    "historical_line": 464,
+    "ids": [
+      "GAP-50"
+    ],
+    "text": "| `ProviderSetupScreen` | `features/provider/provider_setup_screen.dart` | 397 | Legacy onboarding screen; superseded by `ProviderOnboardingScreen` | P1 (GAP-50) |"
+  },
+  {
+    "report": "FIXNOW_SCREEN_AND_UI_INVENTORY.md",
+    "historical_line": 465,
+    "ids": [
+      "GAP-50"
+    ],
+    "text": "| `ProviderOnboardingEntryScreen` | `auth/provider_onboarding_entry_screen.dart` | 72 | Dead wrapper; app swaps directly to `ProviderOnboardingScreen` | P1 (GAP-50) |"
+  },
+  {
+    "report": "FIXNOW_SCREEN_AND_UI_INVENTORY.md",
+    "historical_line": 466,
+    "ids": [
+      "GAP-50"
+    ],
+    "text": "| `BookingTrackingOverviewScreen` | `features/tracking/booking_tracking_overview_screen.dart` | 48 | Empty placeholder stub; no callers | P1 (GAP-50) |"
+  },
+  {
+    "report": "FIXNOW_SCREEN_AND_UI_INVENTORY.md",
+    "historical_line": 497,
+    "ids": [
+      "GAP-05"
+    ],
+    "text": "  - **No code-level role check** in page component (GAP-05)."
+  },
+  {
+    "report": "FIXNOW_SCREEN_AND_UI_INVENTORY.md",
+    "historical_line": 498,
+    "ids": [
+      "GAP-27"
+    ],
+    "text": "  - Table rows are plain `<tr>` elements \u2014 **not clickable links** to `/bookings/[bookingId]` (GAP-27)."
+  },
+  {
+    "report": "FIXNOW_SCREEN_AND_UI_INVENTORY.md",
+    "historical_line": 499,
+    "ids": [
+      "GAP-25"
+    ],
+    "text": "  - Lacks a \"Load More\" / pagination control (GAP-25)."
+  },
+  {
+    "report": "FIXNOW_SCREEN_AND_UI_INVENTORY.md",
+    "historical_line": 500,
+    "ids": [
+      "GAP-20"
+    ],
+    "text": "  - Emergency count computed via string matching `\"emergency\"` in description (GAP-20)."
+  },
+  {
+    "report": "FIXNOW_SCREEN_AND_UI_INVENTORY.md",
+    "historical_line": 514,
+    "ids": [
+      "GAP-87"
+    ],
+    "text": "- **Status:** `IMPLEMENTED_UNVERIFIED` (route has no tests, GAP-87)."
+  },
+  {
+    "report": "FIXNOW_SCREEN_AND_UI_INVENTORY.md",
+    "historical_line": 528,
+    "ids": [
+      "GAP-28"
+    ],
+    "text": "  - Right 40% of layout is occupied by a permanent static placeholder box (\"RIGHT PANE: Placeholder Dossier\") (GAP-28)."
+  },
+  {
+    "report": "FIXNOW_SCREEN_AND_UI_INVENTORY.md",
+    "historical_line": 529,
+    "ids": [
+      "GAP-05"
+    ],
+    "text": "  - No code-level role check in page component (GAP-05)."
+  },
+  {
+    "report": "FIXNOW_SCREEN_AND_UI_INVENTORY.md",
+    "historical_line": 559,
+    "ids": [
+      "GAP-23"
+    ],
+    "text": "  - Fetches the entire complaint database in full with no `limit` or `take` (GAP-23)."
+  },
+  {
+    "report": "FIXNOW_SCREEN_AND_UI_INVENTORY.md",
+    "historical_line": 560,
+    "ids": [
+      "GAP-06"
+    ],
+    "text": "  - Navigation permits `auditor` role, but backend rejects auditor with 403 (GAP-06)."
+  },
+  {
+    "report": "FIXNOW_SCREEN_AND_UI_INVENTORY.md",
+    "historical_line": 561,
+    "ids": [
+      "GAP-28"
+    ],
+    "text": "  - Layout contains duplicate permanent static placeholder pane (GAP-28)."
+  },
+  {
+    "report": "FIXNOW_SCREEN_AND_UI_INVENTORY.md",
+    "historical_line": 575,
+    "ids": [
+      "GAP-17",
+      "GAP-73"
+    ],
+    "text": "- **Defects:** Submitter name and target name render blank because `UserDetail` type promises fields backend never returns (GAP-17, GAP-73)."
+  },
+  {
+    "report": "FIXNOW_SCREEN_AND_UI_INVENTORY.md",
+    "historical_line": 587,
+    "ids": [
+      "GAP-05"
+    ],
+    "text": "- **Critical Defect:** **No code-level role check at all** (GAP-05). Any authenticated staff member can view this page directly."
+  },
+  {
+    "report": "FIXNOW_SCREEN_AND_UI_INVENTORY.md",
+    "historical_line": 602,
+    "ids": [
+      "GAP-06"
+    ],
+    "text": "  - Forms render for `auditor` who gets 403 on every submit (GAP-06)."
+  },
+  {
+    "report": "FIXNOW_SCREEN_AND_UI_INVENTORY.md",
+    "historical_line": 603,
+    "ids": [
+      "GAP-57"
+    ],
+    "text": "  - Review and photo moderation endpoints have **no UI on this or any other page** (GAP-57)."
+  },
+  {
+    "report": "FIXNOW_SCREEN_AND_UI_INVENTORY.md",
+    "historical_line": 616,
+    "ids": [
+      "GAP-07",
+      "GAP-58"
+    ],
+    "text": "  - Status dropdown has no transition table and offers illegal transitions (e.g. `COMPLETED -> PENDING`), causing 409 errors (GAP-07, GAP-58)."
+  },
+  {
+    "report": "FIXNOW_SCREEN_AND_UI_INVENTORY.md",
+    "historical_line": 617,
+    "ids": [
+      "GAP-21"
+    ],
+    "text": "  - Server actions `throw` rather than redirecting, crashing into `error.tsx` (GAP-21)."
+  },
+  {
+    "report": "FIXNOW_SCREEN_AND_UI_INVENTORY.md",
+    "historical_line": 622,
+    "ids": [
+      "GAP-54"
+    ],
+    "text": "- **`/analytics` (`app/analytics/page.tsx`):** Functional reporting page, but **zero links** point to it anywhere in the application (GAP-54)."
+  },
+  {
+    "report": "FIXNOW_SCREEN_AND_UI_INVENTORY.md",
+    "historical_line": 623,
+    "ids": [
+      "GAP-54"
+    ],
+    "text": "- **`/users` (`app/users/page.tsx`):** Complete user directory table with role filters, but **zero links** exist in navigation (GAP-54)."
+  },
+  {
+    "report": "FIXNOW_SCREEN_AND_UI_INVENTORY.md",
+    "historical_line": 624,
+    "ids": [
+      "GAP-54"
+    ],
+    "text": "- **`/users/[userId]` (`app/users/[userId]/page.tsx`):** User dossier page; unreachable except via manual URL entry or guarantee page link (GAP-54)."
+  },
+  {
+    "report": "FIXNOW_SCREEN_AND_UI_INVENTORY.md",
+    "historical_line": 642,
+    "ids": [
+      "GAP-41"
+    ],
+    "text": "| `FixPaymentCheckoutSheet`| `fix_payment_checkout_sheet.dart`| 790 | Multi-method payment sheet, simulated success timer, price breakdown | `MOCKED_SIMULATED` (GAP-41) |"
+  },
+  {
+    "report": "FIXNOW_SCREEN_AND_UI_INVENTORY.md",
+    "historical_line": 643,
+    "ids": [
+      "GAP-19",
+      "GAP-40"
+    ],
+    "text": "| `FixJobProofDialog` | `fix_job_proof_dialog.dart` | 680 | Before/after camera capture, review viewer, simulated test photos button | `PARTIAL` (GAP-19, GAP-40) |"
+  },
+  {
+    "report": "FIXNOW_SCREEN_AND_UI_INVENTORY.md",
+    "historical_line": 648,
+    "ids": [
+      "GAP-46"
+    ],
+    "text": "| `FixBanner` | `fix_banner.dart` | 95 | Top-anchored toast banner, optional action button | `PARTIAL` (Live no-op button, GAP-46) |"
+  },
+  {
+    "report": "FIXNOW_SCREEN_AND_UI_INVENTORY.md",
+    "historical_line": 649,
+    "ids": [
+      "GAP-53"
+    ],
+    "text": "| `FixSlideToConfirm` | `fix_slide_to_confirm.dart` | 165 | Draggable thumb slider, threshold trigger | `IMPLEMENTED_UNVERIFIED` (Unreferenced, GAP-53) |"
+  },
+  {
+    "report": "FIXNOW_SCREEN_AND_UI_INVENTORY.md",
+    "historical_line": 650,
+    "ids": [
+      "GAP-53"
+    ],
+    "text": "| `FixStarRatingBurst` | `fix_star_rating_burst.dart` | 130 | Particle burst on 5-star rating | `IMPLEMENTED_UNVERIFIED` (Unreferenced, GAP-53) |"
+  },
+  {
+    "report": "FIXNOW_SCREEN_AND_UI_INVENTORY.md",
+    "historical_line": 651,
+    "ids": [
+      "GAP-53"
+    ],
+    "text": "| `Fix3DSpatialBeacon` | `fix_3d_spatial_beacon.dart` | 210 | 3D matrix transformation beacon | `IMPLEMENTED_UNVERIFIED` (Unreferenced, GAP-53) |"
+  },
+  {
+    "report": "FIXNOW_SCREEN_AND_UI_INVENTORY.md",
+    "historical_line": 652,
+    "ids": [
+      "GAP-53"
+    ],
+    "text": "| `FixAudioWaveform` | `fix_audio_waveform.dart` | 110 | Animated frequency bars | `IMPLEMENTED_UNVERIFIED` (Unreferenced, GAP-53) |"
+  },
+  {
+    "report": "FIXNOW_SCREEN_AND_UI_INVENTORY.md",
+    "historical_line": 653,
+    "ids": [
+      "GAP-53"
+    ],
+    "text": "| `EtaProgressRing` | `fix_eta_ring.dart` | 95 | Circular arrival countdown ring | `IMPLEMENTED_UNVERIFIED` (Unreferenced, GAP-53) |"
+  },
+  {
+    "report": "FIXNOW_SCREEN_AND_UI_INVENTORY.md",
+    "historical_line": 654,
+    "ids": [
+      "GAP-52"
+    ],
+    "text": "| `FixServiceCardGallery` | `fix_service_card_gallery.dart` | 115 | Demo gallery with fake services | `DEAD_UNREACHABLE` (GAP-52) |"
+  },
+  {
+    "report": "FIXNOW_SCREEN_AND_UI_INVENTORY.md",
+    "historical_line": 655,
+    "ids": [
+      "GAP-52"
+    ],
+    "text": "| `FixProviderCardGallery` | `fix_provider_card_gallery.dart`| 145 | Demo gallery with fake providers | `DEAD_UNREACHABLE` (GAP-52) |"
+  },
+  {
+    "report": "FIXNOW_TEST_COVERAGE_INVENTORY.md",
+    "historical_line": 14,
+    "ids": [
+      "GAP-81"
+    ],
+    "text": "| **Backend Integration Tests** | Jest 29.x + Testcontainers | `backend/test/` | 14 Test Specs | 85 Tests | **UNEXECUTED** | Requires isolated PostgreSQL instance on port `55432`. Container environment was not active during audit (`GAP-81`). |"
+  },
+  {
+    "report": "FIXNOW_TEST_COVERAGE_INVENTORY.md",
+    "historical_line": 17,
+    "ids": [
+      "GAP-88"
+    ],
+    "text": "| **Playwright E2E Tests** | Playwright 1.x | `e2e/tests/` | 2 Test Specs | 13 Tests | **UNEXECUTED** | 12 active tests, 1 `test.fixme` (`admin-operations.spec.ts:148`). Blocked by missing headless browser binaries (`GAP-88`). |"
+  },
+  {
+    "report": "FIXNOW_TEST_COVERAGE_INVENTORY.md",
+    "historical_line": 45,
+    "ids": [
+      "GAP-81",
+      "GAP-86"
+    ],
+    "text": "## 3. Untested Backend Surface & Verification Gaps (`GAP-81` to `GAP-86`)"
+  },
+  {
+    "report": "FIXNOW_TEST_COVERAGE_INVENTORY.md",
+    "historical_line": 64,
+    "ids": [
+      "GAP-82"
+    ],
+    "text": "1. **Transactional Outbox Engine (`outbox/outbox.service.ts`):** 14,257 bytes of critical infrastructure code with **zero tests**. The lease locking, deduplication, retry exponential backoff, and poison message handling are completely unverified by unit tests (`GAP-82`)."
+  },
+  {
+    "report": "FIXNOW_TEST_COVERAGE_INVENTORY.md",
+    "historical_line": 65,
+    "ids": [
+      "GAP-83"
+    ],
+    "text": "2. **Storage & Malware Scanner (`storage/**`):** `clamav-malware-scanner.ts` and `s3-private-object-storage.ts` have **zero tests**. KYC document security rests on this unverified code (`GAP-83`)."
+  },
+  {
+    "report": "FIXNOW_TEST_COVERAGE_INVENTORY.md",
+    "historical_line": 66,
+    "ids": [
+      "GAP-85"
+    ],
+    "text": "3. **Dispatch Expiry Sweeper (`bookings/booking-dispatch.handlers.ts`):** 9,156 bytes of outbox-driven dispatch handlers with no test coverage (`GAP-85`)."
+  },
+  {
+    "report": "FIXNOW_TEST_COVERAGE_INVENTORY.md",
+    "historical_line": 67,
+    "ids": [
+      "GAP-86"
+    ],
+    "text": "4. **Shared Type Contracts (`shared/*.types.ts`):** All 17 shared contract files lack unit tests, leaving lifecycle state machine tables vulnerable to unverified edits (`GAP-86`)."
+  },
+  {
+    "report": "FIXNOW_TEST_COVERAGE_INVENTORY.md",
+    "historical_line": 86,
+    "ids": [
+      "GAP-51"
+    ],
+    "text": "- **Calling Subsystem:** `features/call/` contains unit tests for mock call sessions, but the actual repository is unwired in production code (`GAP-51`)."
+  },
+  {
+    "report": "FIXNOW_TEST_COVERAGE_INVENTORY.md",
+    "historical_line": 87,
+    "ids": [
+      "GAP-89"
+    ],
+    "text": "- **Simulated Test Harnesses:** `mobile/lib/features/location/saved_address.dart` ships an internal `MockApiTransport` inside production code (`GAP-89`)."
+  },
+  {
+    "report": "FIXNOW_TEST_COVERAGE_INVENTORY.md",
+    "historical_line": 88,
+    "ids": [
+      "GAP-39"
+    ],
+    "text": "- **Unexecuted Device Scenarios:** Native Android `MainActivity.kt` MethodChannels (`audio_tone`, `voice_stream`) have zero tests (`GAP-39`)."
+  },
+  {
+    "report": "FIXNOW_TEST_COVERAGE_INVENTORY.md",
+    "historical_line": 100,
+    "ids": [
+      "GAP-87"
+    ],
+    "text": "### 5.2 Admin Testing Gaps (`GAP-87`)"
+  },
+  {
+    "report": "FIXNOW_TEST_COVERAGE_INVENTORY.md",
+    "historical_line": 119,
+    "ids": [
+      "GAP-81"
+    ],
+    "text": "### 6.1 Integration Suite Blocked (`GAP-81`)"
+  },
+  {
+    "report": "FIXNOW_TEST_COVERAGE_INVENTORY.md",
+    "historical_line": 124,
+    "ids": [
+      "GAP-88"
+    ],
+    "text": "### 6.2 Playwright E2E Suite Blocked (`GAP-88`)"
+  },
+  {
+    "report": "FIXNOW_TEST_COVERAGE_INVENTORY.md",
+    "historical_line": 127,
+    "ids": [
+      "GAP-05"
+    ],
+    "text": "- **Key Finding:** Test `e2e/tests/admin-operations.spec.ts:148` is committed as `test.fixme`, explicitly documenting `GAP-05` (lack of role check on `/trust`)."
+  }
+]

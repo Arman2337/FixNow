@@ -8,14 +8,7 @@ import { listClaims } from "@/features/guarantees/api";
 import { listBookings, listComplaints } from "@/features/operations/api";
 import { listProviderApplications } from "@/features/providers/api";
 
-const bookingRoles = ["support_agent", "trust_safety_reviewer", "operations_administrator", "auditor"];
-const providerRoles = ["provider_reviewer", "operations_administrator", "auditor"];
-const complaintRoles = ["support_agent", "trust_safety_reviewer", "operations_administrator"];
-const claimRoles = ["support_agent", "trust_safety_reviewer", "operations_administrator", "auditor"];
-
-function hasRole(roles: readonly string[], allowed: readonly string[]) {
-  return roles.some((role) => allowed.includes(role));
-}
+import { hasPermission } from "@/auth/roles";
 
 function textResult(label: string, value: string, href: string) {
   return { label, value, href };
@@ -26,13 +19,12 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   if (session.state !== "authenticated") redirect("/login?reason=expired");
   const query = (await searchParams).q?.trim() ?? "";
   const roles = session.session.roles;
-  const normalized = query.toLowerCase();
   const results: { label: string; value: string; href: string }[] = [];
 
   if (query.length >= 2) {
     const searchTasks: Promise<void>[] = [];
 
-    if (hasRole(roles, bookingRoles)) {
+    if (hasPermission(roles, "adminBookingsRead")) {
       searchTasks.push(
         (async () => {
           const bookings = await requireManagementResult(await listBookings(query));
@@ -45,7 +37,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
       );
     }
 
-    if (hasRole(roles, providerRoles)) {
+    if (hasPermission(roles, "adminProviderApplicationsRead")) {
       searchTasks.push(
         (async () => {
           const providers = await requireManagementResult(await listProviderApplications(query));
@@ -58,13 +50,12 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
       );
     }
 
-    if (hasRole(roles, complaintRoles)) {
+    if (hasPermission(roles, "adminComplaintsRead")) {
       searchTasks.push(
         (async () => {
-          const complaints = await requireManagementResult(await listComplaints());
+          const complaints = await requireManagementResult(await listComplaints(20, 0, undefined, query));
           results.push(
             ...complaints
-              .filter((complaint) => `${complaint.id} ${complaint.category} ${complaint.description}`.toLowerCase().includes(normalized))
               .map((complaint) =>
                 textResult("Complaint", `${complaint.id} · ${complaint.status} · ${complaint.category}`, `/support/${complaint.id}`),
               ),
@@ -73,13 +64,12 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
       );
     }
 
-    if (hasRole(roles, claimRoles)) {
+    if (hasPermission(roles, "adminGuaranteesRead")) {
       searchTasks.push(
         (async () => {
-          const claims = await requireManagementResult(await listClaims());
+          const claims = await requireManagementResult(await listClaims(undefined, 20, 0, query));
           results.push(
             ...claims
-              .filter((claim) => `${claim.id} ${claim.bookingId} ${claim.description}`.toLowerCase().includes(normalized))
               .map((claim) =>
                 textResult("Guarantee claim", `${claim.id} · ${claim.status} · ${claim.description}`, `/guarantees/${claim.id}`),
               ),
@@ -104,7 +94,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
           <header>
             <p className="m-0 text-xs font-bold uppercase tracking-wider text-primary">Role-aware command search</p>
             <h1 className="mt-1 text-3xl font-bold tracking-tight text-on-surface">Search operations</h1>
-            <p className="mt-2 mb-0 text-sm text-on-surface-variant">Results are limited to records your staff role can access.</p>
+            <p className="mt-2 mb-0 text-sm text-on-surface-variant">Showing up to 20 matches per record type your staff role can access. Continue in a queue to browse additional matches.</p>
           </header>
           <form action="/search" role="search" aria-label="Search operations" className="flex gap-2 rounded-xl border border-outline-variant/30 bg-surface-container-low p-2">
             <label className="sr-only" htmlFor="command-search">Search operations</label>
@@ -118,6 +108,12 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
           {query.length >= 2 ? (
             <section aria-labelledby="search-results-heading" className="flex flex-col gap-space-md">
               <h2 id="search-results-heading" className="m-0 text-lg font-bold text-on-surface">Matches ({results.length})</h2>
+              <nav aria-label="Continue searching queues" className="flex flex-wrap gap-4 text-sm text-primary">
+                {hasPermission(roles, "adminBookingsRead") && <Link href={`/bookings?search=${encodeURIComponent(query)}`}>All matching bookings</Link>}
+                {hasPermission(roles, "adminProviderApplicationsRead") && <Link href={`/providers?search=${encodeURIComponent(query)}`}>All matching providers</Link>}
+                {hasPermission(roles, "adminComplaintsRead") && <Link href={`/support?search=${encodeURIComponent(query)}`}>All matching complaints</Link>}
+                {hasPermission(roles, "adminGuaranteesRead") && <Link href={`/guarantees?search=${encodeURIComponent(query)}`}>All matching claims</Link>}
+              </nav>
               {results.length > 0 ? (
                 <ul className="m-0 list-none divide-y divide-outline-variant/20 rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-0">
                   {results.map((item, index) => (

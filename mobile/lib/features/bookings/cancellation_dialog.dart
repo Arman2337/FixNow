@@ -41,7 +41,7 @@ Future<String?> showCancellationDialog(BuildContext context) async {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Free Cancellation Active Banner
+              // Cancellation and payments Banner
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
@@ -65,7 +65,7 @@ Future<String?> showCancellationDialog(BuildContext context) async {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Free Cancellation Active',
+                            'Cancellation and payments',
                             style: TextStyle(
                               color: AppColors.primary,
                               fontSize: 12,
@@ -74,7 +74,7 @@ Future<String?> showCancellationDialog(BuildContext context) async {
                           ),
                           SizedBox(height: 2),
                           Text(
-                            '100% refund back to original payment method. Free cancellation before dispatch; ₹99 fee applies once en route.',
+                            'Cancelling a booking does not automatically refund a payment. Contact support about any payment already made.',
                             style: TextStyle(
                               color: AppColors.textSecondary,
                               fontSize: 11,

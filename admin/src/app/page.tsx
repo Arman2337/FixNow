@@ -1,3 +1,4 @@
+import { hasPermission } from "@/auth/roles";
 import { getSession } from "@/auth/session";
 import { AdminShell } from "@/components/admin-shell";
 import { env } from "@/config/env";
@@ -20,9 +21,7 @@ export default async function Home() {
     redirect("/unauthorized");
   }
 
-  const canViewAnalytics = result.session.roles.some(
-    (role) => role === "operations_administrator" || role === "auditor",
-  );
+  const canViewAnalytics = hasPermission(result.session.roles, "adminAnalyticsRead");
   const analytics = canViewAnalytics
     ? await requireManagementResult(await getAnalytics())
     : null;

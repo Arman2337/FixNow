@@ -1,3 +1,4 @@
+import { pageNumber as parsePageNumber } from "@/lib/format";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/auth/session";
@@ -6,7 +7,7 @@ import { env } from "@/config/env";
 import { requireManagementResult } from "@/features/management-api";
 import { deleteCategoryAction, saveCategoryAction } from "@/features/operations/actions";
 import { listCategories } from "@/features/operations/api";
-import { canMutateServices, type StaffRole } from "@/auth/roles";
+import { canMutateServices, hasPermission } from "@/auth/roles";
 
 const field = "w-full py-2.5 px-3 rounded-xl border border-outline-variant/50 bg-surface-container-low font-body-sm text-body-sm text-on-surface focus:outline-none focus:border-primary transition-all disabled:opacity-60 disabled:cursor-not-allowed";
 
@@ -18,20 +19,19 @@ export default async function ServicesPage({
   const session = await getSession(); 
   if (session.state !== "authenticated") redirect("/login?reason=expired");
 
-  const allowedRoles: readonly StaffRole[] = ["service_catalog_manager", "operations_administrator", "auditor"];
-  if (!session.session.roles.some((r) => allowedRoles.includes(r))) {
+  if (!hasPermission(session.session.roles, "adminServicesRead")) {
     redirect("/unauthorized");
   }
 
   const canEdit = canMutateServices(session.session.roles);
-  const categories = await requireManagementResult(await listCategories()); 
   const params = await searchParams;
   const result = params.result;
 
-  const pageNumber = Math.max(1, parseInt(params.page ?? "1", 10));
+  const pageNumber = parsePageNumber(params.page);
   const pageSize = 8;
-  const totalPages = Math.max(1, Math.ceil(categories.length / pageSize));
-  const pagedCategories = categories.slice((pageNumber - 1) * pageSize, pageNumber * pageSize);
+  const categories = await requireManagementResult(await listCategories(pageSize + 1, (pageNumber - 1) * pageSize));
+  const hasNextPage = categories.length > pageSize;
+  const pagedCategories = categories.slice(0, pageSize);
 
   return (
     <AdminShell
@@ -193,7 +193,7 @@ export default async function ServicesPage({
             ))}
           </section>
 
-          {totalPages > 1 && (
+          {(hasNextPage || pageNumber > 1) && (
             <div className="flex items-center justify-between border-t border-outline-variant/20 pt-4 mt-2">
               <div>
                 {pageNumber > 1 ? (
@@ -206,9 +206,9 @@ export default async function ServicesPage({
                   </Link>
                 ) : <div />}
               </div>
-              <span className="font-body-sm text-sm text-on-surface-variant">Page {pageNumber} of {totalPages}</span>
+              <span className="font-body-sm text-sm text-on-surface-variant">Page {pageNumber}</span>
               <div>
-                {pageNumber < totalPages ? (
+                {hasNextPage ? (
                   <Link
                     href={`/services?page=${pageNumber + 1}`}
                     className="px-4 py-2 rounded-xl bg-primary text-on-primary font-label-md text-sm font-semibold hover:bg-primary/90 transition-colors inline-flex items-center gap-1"

@@ -1,9 +1,7 @@
-import 'dart:convert';
 import 'package:fixnow_mobile/features/location/saved_address.dart';
 import 'package:flutter/foundation.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:http/http.dart' as http;
 
 class LiveLocationService {
   const LiveLocationService._();
@@ -54,72 +52,27 @@ class LiveLocationService {
       String? postalCode;
       String? street;
 
-      if (kIsWeb) {
-        try {
-          final placemarks = await Geocoding()
-              .placemarkFromCoordinates(position.latitude, position.longitude)
-              .timeout(const Duration(seconds: 3));
-          if (placemarks.isNotEmpty) {
-            final p = placemarks.first;
-            street = p.street;
-            locality = p.subLocality ?? p.locality;
-            city = p.locality ?? p.subAdministrativeArea;
-            state = p.administrativeArea ?? p.country;
-            postalCode = p.postalCode;
-          }
-        } catch (_) {
-          try {
-            final uri = Uri.parse(
-              'https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${position.latitude}&longitude=${position.longitude}&localityLanguage=en',
-            );
-            final response =
-                await http.get(uri).timeout(const Duration(seconds: 3));
-            if (response.statusCode == 200) {
-              final data = jsonDecode(response.body);
-              locality = data['locality']?.toString();
-              city = data['city']?.toString() ?? locality;
-              state = data['principalSubdivision']?.toString() ??
-                  data['countryName']?.toString();
-              postalCode = data['postcode']?.toString();
-            }
-          } catch (e) {
-            debugPrint('Web geocoding fallback failed: $e');
-          }
+      // Location consent authorizes the platform location service. Do not send
+      // precise coordinates to an unrelated HTTP geocoder as a hidden fallback.
+      try {
+        final placemarks = await Geocoding()
+            .placemarkFromCoordinates(position.latitude, position.longitude)
+            .timeout(const Duration(seconds: 3));
+        if (placemarks.isNotEmpty) {
+          final p = placemarks.first;
+          street = p.street;
+          locality = p.subLocality ?? p.locality;
+          city = p.locality ?? p.subAdministrativeArea;
+          state = p.administrativeArea ?? p.country;
+          postalCode = p.postalCode;
         }
-      } else {
-        try {
-          final placemarks = await Geocoding()
-              .placemarkFromCoordinates(position.latitude, position.longitude)
-              .timeout(const Duration(seconds: 3));
-          if (placemarks.isNotEmpty) {
-            final p = placemarks.first;
-            street = p.street;
-            locality = p.subLocality ?? p.locality;
-            city = p.locality ?? p.subAdministrativeArea ?? p.administrativeArea;
-            state = p.administrativeArea ?? p.country;
-            postalCode = p.postalCode;
-          }
-        } catch (_) {
-          try {
-            final uri = Uri.parse(
-              'https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${position.latitude}&longitude=${position.longitude}&localityLanguage=en',
-            );
-            final response =
-                await http.get(uri).timeout(const Duration(seconds: 3));
-            if (response.statusCode == 200) {
-              final data = jsonDecode(response.body);
-              locality = data['locality']?.toString();
-              city = data['city']?.toString() ?? locality;
-              state = data['principalSubdivision']?.toString() ??
-                  data['countryName']?.toString();
-              postalCode = data['postcode']?.toString();
-            }
-          } catch (_) {}
-        }
+      } catch (_) {
+        // Keep the real GPS fix; the user can supply missing address details.
       }
 
-      final effectiveCity =
-          (city != null && city.trim().isNotEmpty) ? city.trim() : 'Local Area';
+      final effectiveCity = (city != null && city.trim().isNotEmpty)
+          ? city.trim()
+          : 'Local Area';
       final parts = [
         if (locality != null &&
             locality.trim().isNotEmpty &&
@@ -132,14 +85,18 @@ class LiveLocationService {
             (locality == null || locality.isEmpty))
           state.trim(),
       ];
-      final area =
-          parts.isNotEmpty ? parts.join(', ') : (state ?? 'Current Area');
+      final area = parts.isNotEmpty
+          ? parts.join(', ')
+          : (state ?? 'Current Area');
 
       final liveAddress = SavedAddress(
         id: 'addr-current-live',
         label: AddressLabel.other,
         customTitle: 'Current Location',
-        flatBuilding: (street != null && street.trim().isNotEmpty && street.trim() != area)
+        flatBuilding:
+            (street != null &&
+                street.trim().isNotEmpty &&
+                street.trim() != area)
             ? street.trim()
             : 'Current Location',
         streetArea: area,

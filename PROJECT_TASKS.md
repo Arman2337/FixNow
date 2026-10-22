@@ -54,20 +54,76 @@ Only these statuses are valid. A task cannot be completed while required validat
 
 # Project Progress
 
-Total Tasks: 141
-Completed: 128
+Total Tasks: 142
+Completed: 129
 In Progress: 0
 Blocked: 0
 Pending: 0
 Deferred: 14
 Cancelled: 2
-Current Task: None (FN-144 completed)
-Current Phase: Phase 19 — Mobile Widget-Test Reconciliation (Completed)
-Next Recommended Task: None; all tracked tasks are completed, deferred, or cancelled. Phase 2 item 4 (share-live-ETA deep link) is the next roadmap item.
+Current Task: None — FN-146 completed
+Current Phase: Audit remediation and local validation — 2026-10-22 (Completed)
+Next Recommended Task: Reconcile the historical task totals before selecting new work; production rollout and external-provider verification remain separate operational work.
 
 2026-10-08 FN-142 completed on `fix/security-and-schema-integrity`: the before/after job-proof backend that did not exist. The roadmap item assumed `fix_before_after_slider.dart` and `fix_job_proof_dialog.dart` were "unused by the customer UI" and could simply be surfaced — research found there is **no backend at all** for provider job proof (no entity, table, migration, route or DTO), that the only data source is the client-side in-memory singleton `JobProofRepository`, and that `booking_detail_screen.dart:525` already renders a customer-facing proof card from that map, which can never be true across sessions. Shipping the roadmap item as written would have powered a production screen from a mock repository, which `AGENTS.md` forbids. Delivered instead: a `job_proof_photos` table (one BEFORE and one AFTER per booking, enforced by a named unique index) with a reversible migration, a quarantine + magic-byte + malware-scan + sha256 capture path restricted to the *assigned* provider and to on-site/completed statuses, participant-only read and byte streaming, `present()` that never leaks the storage key, two new declared permissions, and new invariants in the schema gate including behavioural proof that PostgreSQL refuses an unknown stage, a zero-byte photo and a duplicate stage. Validation: backend eslint clean, tsc clean, 107 suites / 912 tests, production build, `check:body-dtos`, `check:env-declarations`, `deploy:verify-env` all pass. Mobile consumers remain: FN-143.
 
 2026-10-08 FN-142 research also found two pre-existing defects, recorded as **FN-144** and not fixed here (one task per run): the mobile client parses `GET /bookings/:id/review/photos` as a bare list while the backend returns `{ photos: [...] }` (`booking_repository.dart:177`), so it silently returns `[]` against the real API; and no endpoint anywhere streams review-photo bytes (`review-photos.service.ts:203` omits `objectKey`), so an approved review photo cannot be rendered by any client.
+
+## Current Work
+
+None.
+
+## FN-146 — Remediate Reconciled Audit Findings in Priority Order
+
+Status: ✅ Completed
+Priority: P1 — High
+Area: Backend / Mobile / Admin / Verification
+Branch: feat/system-audit-and-ui-fixes
+Depends On: FN-145
+
+### Scope
+The user explicitly requested all remaining findings in priority order, overriding the default one-finding-per-run limit. Fix verified code gaps; deduplicate aliases; preserve applied migration history and existing user changes. Do not invent legal policy, business entitlements, production credentials, or external service readiness. Record externally unverifiable requirements explicitly.
+
+### Acceptance and Validation
+- [x] Fix transactional/authorization contracts first, then persistent actions, honest UI, query completeness, and relevant maintenance/test gaps.
+- [x] Run relevant backend/admin/mobile checks, regression tests and safe isolated verification where available; report unavailable external checks accurately.
+- [x] Update audit dispositions with implementation evidence without silently refreshing the original reviewed snapshot.
+- [x] Do not mark the task complete while required validation is failing or an actionable code gap remains.
+
+### Implementation Record
+Completed locally; implementation and validation are recorded in `audit_reports/FIXNOW_REMEDIATION_STATUS.md` and the complete 109-row overlay in `audit_reports/reconciliation/fn146-remediation.json`. The frozen FN-145 reconciliation and source manifest remain unchanged.
+
+Implemented locally: backend lifecycle/optimistic-concurrency guards, platform-support complaint authorization, concurrent chat replay recovery, forward integrity constraints and rollback-only schema probes; admin query-before-pagination/search and shared role/status/format contracts; mobile persistent notification/push handling, honest receipt/profile/policy copy, removal of hidden coordinate disclosure, system-phone call fallback, claim validation and test-only prototype/no-op transport relocation.
+
+Validation passed: mobile analyze plus 95 suites / 745 tests and crawler 56 / 56; backend 124 suites / 1,051 tests, full type-check, production build and guards; isolated PostgreSQL 41 migrations, schema 67 / 67, existing integration 14 suites / 100 tests and domain reconciliation 1 suite / 5 tests; admin 18 files / 50 tests, type-check, lint, production build and Playwright 18 / 18. The scratch database cluster was stopped. The bounded secret scan and its 11 / 11 self-test passed, with clone/object and large-file limits recorded in the remediation report.
+
+No dependency installation or production deployment was authorized. Production migration/orphan validation, live FCM/S3/ClamAV, physical-device behavior, real statutory tax configuration, in-app VoIP media, and an adopted provider-reverification policy remain explicit external boundaries.
+
+## FN-145 — Reconcile Historical Audit Findings Against Current Source
+
+Status: ✅ Completed
+Priority: P1 — High
+Area: Audit Documentation / Verification
+Depends On: None
+Branch: feat/system-audit-and-ui-fixes
+
+### Objective
+Reconcile all bug and gap claims in the nine existing `audit_reports/` documents against the current working tree, retaining historical findings and correcting stale, unsupported, duplicate, or conflicting claims.
+
+### Scope and Acceptance Criteria
+- [x] Every historical GAP identifier and DIA finding has an evidence-backed disposition or an explicit verification limitation.
+- [x] Conflicting identifier meanings, missing IDs, duplicated findings, and inaccurate totals are documented.
+- [x] Each historical report points to the current reconciliation; historical runtime claims are not presented as fresh verification.
+- [x] Relevant available checks are run and their results or environment limitations recorded.
+- [x] No application code, user changes, or database contents are modified.
+
+### Validation
+Check report coverage, evidence path/line validity, calculated totals, documentation links, and `git diff --check`. Use targeted existing tests where practical; do not claim unexecuted runtime/DB checks.
+
+### Completion — 2026-10-21
+Added `audit_reports/FIXNOW_CURRENT_RECONCILIATION.md` with 109 dispositions: all 89 numbered GAP slots (79 historically referenced IDs and 10 undefined slots), all six DIA findings, conflicting ID meanings, policy questions and unsupported report/integration claims. All nine original reports retain historical content with superseding notices and current-disposition appendices. Added machine-readable evidence, 231 original claim references and hashes of 137 source files. Numbered-slot dispositions: 44 fixed in source, 18 partial, 3 open, 8 duplicates, 10 undefined, 3 unsupported, 2 unverified and 1 review required. These are report slots, not unique active bug totals.
+
+Validation: admin 14 files / 39 tests passed; focused backend runs 4 suites / 43 tests and 7 suites / 47 tests passed (two suites overlap). Secret scanner self-tests and bounded local scan passed; unavailable history objects and oversized-file skips recorded. Generated coverage, source path/line bounds, 304 current-register links, source hashes and `git diff --check` validated. Flutter tests were attempted twice; the serial retry captured OS error 112 (not enough disk space writing temporary `output.dill`), so no passing mobile baseline is claimed. DB/schema/integration and authenticated browser/device checks were not executed; their limitations are documented. No packages installed, no production code or database changes, no commit created. Used Data Integrity Audit skill, static scanner, parallel domain review and existing test tooling.
 
 ## FN-143 — Customer Before/After Job Proof Surface (Mobile)
 

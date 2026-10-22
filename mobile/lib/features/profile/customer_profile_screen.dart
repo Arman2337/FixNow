@@ -181,62 +181,6 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: AppSpacing.sm),
-                // FixNow Plus Member Tier Banner
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.sm,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.tertiaryFixed,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Row(
-                        children: [
-                          Icon(
-                            Icons.verified_user_rounded,
-                            size: 16,
-                            color: AppColors.onTertiaryFixed,
-                          ),
-                          SizedBox(width: 6),
-                          Text(
-                            'FIXNOW PLUS MEMBER',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 0.5,
-                              color: AppColors.onTertiaryFixed,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.onTertiaryFixed.withValues(
-                            alpha: 0.12,
-                          ),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: const Text(
-                          'VIP Tier 1',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.onTertiaryFixed,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
               ],
             ),
           ),
@@ -253,18 +197,6 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                   metric:
                       widget.controller.stats?.completedJobs.toString() ?? '-',
                   label: 'Completed',
-                ),
-              ),
-              const SizedBox(width: AppSpacing.xs),
-              Expanded(
-                child: _buildBentoStatCard(
-                  icon: Icons.account_balance_wallet_rounded,
-                  iconBg: AppColors.tertiaryFixed,
-                  iconColor: AppColors.onTertiaryFixed,
-                  metric: widget.controller.stats != null
-                      ? '₹${(widget.controller.stats!.cashbackMinor / 100).toStringAsFixed(0)}'
-                      : '₹--',
-                  label: 'Cashback',
                 ),
               ),
               const SizedBox(width: AppSpacing.xs),
@@ -337,12 +269,15 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                           ),
                         ),
                         const SizedBox(width: AppSpacing.sm),
-                        const Text(
-                          'Personal details',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
+                        const Expanded(
+                          child: Text(
+                            'Personal details',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
@@ -423,21 +358,30 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.payments_rounded, color: AppColors.primary, size: 24),
+                          const Icon(
+                            Icons.payments_rounded,
+                            color: AppColors.primary,
+                            size: 24,
+                          ),
                           const SizedBox(width: AppSpacing.sm),
                           Text(
                             'Payment Methods & Settlement',
-                            style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
-                            ),
+                            style: Theme.of(ctx).textTheme.titleMedium
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textPrimary,
+                                ),
                           ),
                         ],
                       ),
                       const SizedBox(height: AppSpacing.md),
                       const Text(
                         'FixNow operates on an honest on-completion settlement model. Supported methods include UPI, Net Banking, Cards, and Cash on Delivery. All completed jobs generate a statutory GST tax invoice.',
-                        style: TextStyle(color: AppColors.textSecondary, height: 1.4, fontSize: 13),
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          height: 1.4,
+                          fontSize: 13,
+                        ),
                       ),
                       const SizedBox(height: AppSpacing.lg),
                       FixButton(

@@ -2,7 +2,12 @@ import { DataSource, Repository } from 'typeorm';
 import { BookingDispatchHandlers } from './booking-dispatch.handlers';
 import { Booking } from './domain/booking.entity';
 import { BookingStatus } from '../../../shared/booking-lifecycle.types';
-import { OutboxService, OutboxWorker } from '../outbox/outbox.service';
+import {
+  type OutboxHandler,
+  type OutboxMessageKind,
+  OutboxService,
+  OutboxWorker,
+} from '../outbox/outbox.service';
 import { BookingsService } from './bookings.service';
 import { MatchingService } from '../matching/matching.service';
 import { DomainNotificationService } from '../notifications/domain/domain-notification.service';
@@ -19,7 +24,7 @@ describe('BookingDispatchHandlers', () => {
   let matching: jest.Mocked<MatchingService>;
   let notifications: jest.Mocked<DomainNotificationService>;
   let projections: jest.Mocked<BookingProjectionService>;
-  const registeredHandlers = new Map<string, (msg: any) => Promise<void>>();
+  const registeredHandlers = new Map<OutboxMessageKind, OutboxHandler>();
 
   const bookingId = '00000000-0000-4000-8000-000000000001';
 
@@ -53,7 +58,7 @@ describe('BookingDispatchHandlers', () => {
     } as unknown as jest.Mocked<DataSource>;
 
     worker = {
-      register: jest.fn((kind: string, handler: any) => {
+      register: jest.fn((kind: OutboxMessageKind, handler: OutboxHandler) => {
         registeredHandlers.set(kind, handler);
       }),
     } as unknown as jest.Mocked<OutboxWorker>;

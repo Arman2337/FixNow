@@ -26,118 +26,132 @@ class NotificationCenterScreen extends StatelessWidget {
         final unread = controller.unreadCount;
 
         return Scaffold(
-           backgroundColor: AppColors.background,
+          backgroundColor: AppColors.background,
           appBar: AppBar(
-             backgroundColor: AppColors.background,
+            backgroundColor: AppColors.background,
             elevation: 0,
             scrolledUnderElevation: 1,
-           leading: IconButton(
-             icon: const Icon(
-               Icons.arrow_back_rounded,
-               color: AppColors.textPrimary,
-             ),
-             onPressed: () => Navigator.of(context).maybePop(),
-           ),
-           title: Row(
-             children: [
-               const Expanded(
-                 child: Text(
-                   'Notifications & Activity',
-                   maxLines: 1,
-                   overflow: TextOverflow.ellipsis,
-                   style: TextStyle(
-                     fontWeight: FontWeight.w800,
-                     fontSize: 17,
-                     letterSpacing: -0.3,
-                     color: AppColors.textPrimary,
-                   ),
-                 ),
-               ),
-               if (unread > 0) ...[
-                 const SizedBox(width: 8),
-                 Container(
-                   padding: const EdgeInsets.symmetric(
-                     horizontal: 8,
-                     vertical: 2,
-                   ),
-                   decoration: BoxDecoration(
-                     color: AppColors.primarySoft,
-                     borderRadius: BorderRadius.circular(12),
-                   ),
-                   child: Text(
-                     '$unread New',
-                     maxLines: 1,
-                     overflow: TextOverflow.ellipsis,
-                     style: const TextStyle(
-                       color: AppColors.primary,
-                       fontSize: 11,
-                       fontWeight: FontWeight.w800,
-                     ),
-                   ),
-                 ),
-               ],
-             ],
-           ),
-           actions: [
-             if (controller.notifications.isNotEmpty)
-               IconButton(
-                 tooltip: 'Clear all notifications',
-                 icon: const Icon(
-                   Icons.delete_sweep_outlined,
-                   color: AppColors.textSecondary,
-                 ),
-                 onPressed: () => _confirmClearAll(context),
-               ),
-           ],
+            leading: IconButton(
+              icon: const Icon(
+                Icons.arrow_back_rounded,
+                color: AppColors.textPrimary,
+              ),
+              onPressed: () => Navigator.of(context).maybePop(),
+            ),
+            title: Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    'Notifications & Activity',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 17,
+                      letterSpacing: -0.3,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+                if (unread > 0) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primarySoft,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '$unread New',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            actions: [
+              if (controller.notifications.isNotEmpty)
+                IconButton(
+                  tooltip: 'Clear all notifications',
+                  icon: const Icon(
+                    Icons.delete_sweep_outlined,
+                    color: AppColors.textSecondary,
+                  ),
+                  onPressed: controller.isMutating
+                      ? null
+                      : () => _confirmClearAll(context),
+                ),
+            ],
           ),
           body: SafeArea(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
-             children: [
-               const SizedBox(height: AppSpacing.xs),
-               _buildCategoryFilterStrip(context),
-               if (unread > 0)
-                 Padding(
-                   padding: const EdgeInsets.only(
-                     left: AppSpacing.pagePadding,
-                     right: AppSpacing.pagePadding,
-                     top: AppSpacing.xs,
-                   ),
-                   child: Align(
-                     alignment: Alignment.centerRight,
-                     child: TextButton.icon(
-                       icon: const Icon(Icons.done_all_rounded, size: 18),
-                       label: const Text('Mark read'),
-                       onPressed: controller.markAllAsRead,
-                     ),
-                   ),
-                 ),
-               const SizedBox(height: AppSpacing.xs),
+              children: [
+                const SizedBox(height: AppSpacing.xs),
+                _buildCategoryFilterStrip(context),
+                if (controller.isMutating) const LinearProgressIndicator(),
+                if (controller.hasError && notifications.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.all(AppSpacing.sm),
+                    child: Text(
+                      controller.errorMessage!,
+                      semanticsLabel: controller.errorMessage,
+                      style: const TextStyle(color: AppColors.error),
+                    ),
+                  ),
+                if (unread > 0)
+                  Padding(
+                    padding: const EdgeInsets.only(
+                      left: AppSpacing.pagePadding,
+                      right: AppSpacing.pagePadding,
+                      top: AppSpacing.xs,
+                    ),
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton.icon(
+                        icon: const Icon(Icons.done_all_rounded, size: 18),
+                        label: const Text('Mark read'),
+                        onPressed: controller.isMutating
+                            ? null
+                            : controller.markAllAsRead,
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: AppSpacing.xs),
 
-               Expanded(
-                 child: notifications.isEmpty
-                     ? controller.hasError
-                         ? _buildErrorState(context)
-                         : _buildEmptyState(context)
-                     : ListView.separated(
-                         padding: const EdgeInsets.symmetric(
-                           horizontal: AppSpacing.pagePadding,
-                           vertical: AppSpacing.sm,
-                         ),
-                         physics: const BouncingScrollPhysics(),
-                         itemCount: notifications.length + 1,
-                         separatorBuilder: (context, index) =>
-                             const SizedBox(height: AppSpacing.sm),
-                         itemBuilder: (context, index) {
-                           if (index == notifications.length) {
-                             return _buildInboxFooter(context);
-                           }
-                           final item = notifications[index];
-                           return _buildNotificationCard(context, item);
-                         },
-                       ),
-               ),
-             ],
+                Expanded(
+                  child: notifications.isEmpty
+                      ? controller.hasError
+                            ? _buildErrorState(context)
+                            : _buildEmptyState(context)
+                      : ListView.separated(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.pagePadding,
+                            vertical: AppSpacing.sm,
+                          ),
+                          physics: const BouncingScrollPhysics(),
+                          itemCount: notifications.length + 1,
+                          separatorBuilder: (context, index) =>
+                              const SizedBox(height: AppSpacing.sm),
+                          itemBuilder: (context, index) {
+                            if (index == notifications.length) {
+                              return _buildInboxFooter(context);
+                            }
+                            final item = notifications[index];
+                            return _buildNotificationCard(context, item);
+                          },
+                        ),
+                ),
+              ],
             ),
           ),
         );
@@ -229,10 +243,7 @@ class NotificationCenterScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildNotificationCard(
-    BuildContext context,
-    InAppNotification item,
-  ) {
+  Widget _buildNotificationCard(BuildContext context, InAppNotification item) {
     final isUnread = !item.isRead;
     final cardBgColor = isUnread
         ? AppColors.primarySoft
@@ -280,7 +291,12 @@ class NotificationCenterScreen extends StatelessWidget {
           ],
         ),
       ),
-      onDismissed: (_) => controller.deleteNotification(item.id),
+      // Keep the item visible until deletion is confirmed. Failed requests
+      // leave the original item and display a recoverable error.
+      confirmDismiss: (_) async {
+        await controller.deleteNotification(item.id);
+        return false;
+      },
       child: Semantics(
         label: '${item.title}. ${item.body}',
         button: true,
@@ -329,116 +345,116 @@ class NotificationCenterScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                         Row(
-                           children: [
-                             Expanded(
-                               child: Row(
-                                 children: [
-                                   Flexible(
-                                     child: Container(
-                                       padding: const EdgeInsets.symmetric(
-                                         horizontal: 8,
-                                         vertical: 3,
-                                       ),
-                                       decoration: BoxDecoration(
-                                         color: isUnread
-                                             ? AppColors.primarySoft
-                                             : AppColors.surfaceContainer,
-                                         borderRadius: BorderRadius.circular(10),
-                                       ),
-                                       child: Row(
-                                         mainAxisSize: MainAxisSize.min,
-                                         children: [
-                                           if (isUnread) ...[
-                                             Container(
-                                               width: 5,
-                                               height: 5,
-                                               decoration: const BoxDecoration(
-                                                 color: AppColors.primary,
-                                                 shape: BoxShape.circle,
-                                               ),
-                                             ),
-                                             const SizedBox(width: 4),
-                                           ],
-                                           Flexible(
-                                             child: Text(
-                                               switch (item.category) {
-                                                 NotificationCategory.bookings =>
-                                                   'Active Booking',
-                                                 NotificationCategory.payments =>
-                                                   'Tax Invoice',
-                                                 NotificationCategory.offers =>
-                                                   'Rewards & Perk',
-                                                 NotificationCategory.system =>
-                                                   'Trust & Safety',
-                                                 _ => 'Notice',
-                                               },
-                                               maxLines: 1,
-                                               overflow: TextOverflow.ellipsis,
-                                               style: TextStyle(
-                                                 fontSize: 11,
-                                                 fontWeight: FontWeight.w800,
-                                                 color: isUnread
-                                                     ? AppColors.primary
-                                                     : AppColors.textSecondary,
-                                               ),
-                                             ),
-                                           ),
-                                         ],
-                                       ),
-                                     ),
-                                   ),
-                                   if (item.bookingId != null) ...[
-                                     const SizedBox(width: 6),
-                                     Flexible(
-                                       child: Text(
-                                         '#${item.bookingId!.length > 8 ? item.bookingId!.substring(0, 8).toUpperCase() : item.bookingId!.toUpperCase()}',
-                                         maxLines: 1,
-                                         overflow: TextOverflow.ellipsis,
-                                         style: const TextStyle(
-                                           fontSize: 11,
-                                           fontWeight: FontWeight.w600,
-                                           color: AppColors.textSecondary,
-                                         ),
-                                       ),
-                                     ),
-                                   ],
-                                 ],
-                               ),
-                             ),
-                             const SizedBox(width: AppSpacing.sm),
-                             Flexible(
-                               child: Row(
-                                 mainAxisSize: MainAxisSize.min,
-                                 children: [
-                                   Flexible(
-                                     child: Text(
-                                       item.timeAgo,
-                                       maxLines: 1,
-                                       overflow: TextOverflow.ellipsis,
-                                       style: const TextStyle(
-                                         fontSize: 11,
-                                         color: AppColors.textSecondary,
-                                         fontWeight: FontWeight.w500,
-                                       ),
-                                     ),
-                                   ),
-                                   if (isUnread) ...[
-                                     const SizedBox(width: 6),
-                                     Container(
-                                       width: 7,
-                                       height: 7,
-                                       decoration: const BoxDecoration(
-                                         color: AppColors.primary,
-                                         shape: BoxShape.circle,
-                                       ),
-                                     ),
-                                   ],
-                                 ],
-                               ),
-                             ),
-                           ],
-                         ),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  Flexible(
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 3,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: isUnread
+                                            ? AppColors.primarySoft
+                                            : AppColors.surfaceContainer,
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          if (isUnread) ...[
+                                            Container(
+                                              width: 5,
+                                              height: 5,
+                                              decoration: const BoxDecoration(
+                                                color: AppColors.primary,
+                                                shape: BoxShape.circle,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 4),
+                                          ],
+                                          Flexible(
+                                            child: Text(
+                                              switch (item.category) {
+                                                NotificationCategory.bookings =>
+                                                  'Active Booking',
+                                                NotificationCategory.payments =>
+                                                  'Tax Invoice',
+                                                NotificationCategory.offers =>
+                                                  'Rewards & Perk',
+                                                NotificationCategory.system =>
+                                                  'Trust & Safety',
+                                                _ => 'Notice',
+                                              },
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w800,
+                                                color: isUnread
+                                                    ? AppColors.primary
+                                                    : AppColors.textSecondary,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  if (item.bookingId != null) ...[
+                                    const SizedBox(width: 6),
+                                    Flexible(
+                                      child: Text(
+                                        '#${item.bookingId!.length > 8 ? item.bookingId!.substring(0, 8).toUpperCase() : item.bookingId!.toUpperCase()}',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: AppSpacing.sm),
+                            Flexible(
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      item.timeAgo,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: AppColors.textSecondary,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                  if (isUnread) ...[
+                                    const SizedBox(width: 6),
+                                    Container(
+                                      width: 7,
+                                      height: 7,
+                                      decoration: const BoxDecoration(
+                                        color: AppColors.primary,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                         const SizedBox(height: 10),
 
                         // Title & Body
@@ -498,64 +514,64 @@ class NotificationCenterScreen extends StatelessWidget {
                               horizontal: 10,
                               vertical: 8,
                             ),
-                             decoration: BoxDecoration(
-                               color: AppColors.surfaceContainerLow,
-                               borderRadius: BorderRadius.circular(10),
-                             ),
-                             child: Row(
-                               children: [
-                                 Expanded(
-                                   child: Row(
-                                     children: [
-                                       const Icon(
-                                         Icons.receipt_long_rounded,
-                                         size: 15,
-                                         color: AppColors.primary,
-                                       ),
-                                       const SizedBox(width: 4),
-                                       const Flexible(
-                                         child: Text(
-                                           'Payment update',
-                                           maxLines: 1,
-                                           overflow: TextOverflow.ellipsis,
-                                           style: TextStyle(
-                                             fontSize: 11,
-                                             fontWeight: FontWeight.w700,
-                                             color: AppColors.primary,
-                                           ),
-                                         ),
-                                       ),
-                                     ],
-                                   ),
-                                 ),
-                                 const SizedBox(width: AppSpacing.sm),
-                                 Flexible(
-                                   child: Row(
-                                     mainAxisSize: MainAxisSize.min,
-                                     children: [
-                                       const Flexible(
-                                         child: Text(
-                                           'View Invoice',
-                                           maxLines: 1,
-                                           overflow: TextOverflow.ellipsis,
-                                           style: TextStyle(
-                                             color: AppColors.primary,
-                                             fontSize: 12,
-                                             fontWeight: FontWeight.w700,
-                                           ),
-                                         ),
-                                       ),
-                                       const SizedBox(width: 3),
-                                       const Icon(
-                                         Icons.arrow_forward_rounded,
-                                         size: 13,
-                                         color: AppColors.primary,
-                                       ),
-                                     ],
-                                   ),
-                                 ),
-                               ],
-                             ),
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceContainerLow,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.receipt_long_rounded,
+                                        size: 15,
+                                        color: AppColors.primary,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      const Flexible(
+                                        child: Text(
+                                          'Payment update',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppColors.primary,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: AppSpacing.sm),
+                                Flexible(
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Flexible(
+                                        child: Text(
+                                          'View Invoice',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            color: AppColors.primary,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 3),
+                                      const Icon(
+                                        Icons.arrow_forward_rounded,
+                                        size: 13,
+                                        color: AppColors.primary,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           )
                         else if (item.bookingId != null)
                           Container(
@@ -563,52 +579,52 @@ class NotificationCenterScreen extends StatelessWidget {
                               horizontal: 10,
                               vertical: 8,
                             ),
-                             decoration: BoxDecoration(
-                               color: AppColors.surfaceContainerLow,
-                               borderRadius: BorderRadius.circular(10),
-                             ),
-                             child: Row(
-                               children: [
-                                 const Expanded(
-                                   child: Text(
-                                     'Booking update',
-                                     maxLines: 1,
-                                     overflow: TextOverflow.ellipsis,
-                                     style: TextStyle(
-                                       fontSize: 12,
-                                       fontWeight: FontWeight.w700,
-                                       color: AppColors.primary,
-                                     ),
-                                   ),
-                                 ),
-                                 const SizedBox(width: AppSpacing.sm),
-                                 Flexible(
-                                   child: Row(
-                                     mainAxisSize: MainAxisSize.min,
-                                     children: [
-                                       const Flexible(
-                                         child: Text(
-                                           'View Booking',
-                                           maxLines: 1,
-                                           overflow: TextOverflow.ellipsis,
-                                           style: TextStyle(
-                                             color: AppColors.primary,
-                                             fontSize: 12,
-                                             fontWeight: FontWeight.w700,
-                                           ),
-                                         ),
-                                       ),
-                                       const SizedBox(width: 3),
-                                       const Icon(
-                                         Icons.arrow_forward_rounded,
-                                         size: 13,
-                                         color: AppColors.primary,
-                                       ),
-                                     ],
-                                   ),
-                                 ),
-                               ],
-                             ),
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceContainerLow,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Row(
+                              children: [
+                                const Expanded(
+                                  child: Text(
+                                    'Booking update',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: AppSpacing.sm),
+                                Flexible(
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Flexible(
+                                        child: Text(
+                                          'View Booking',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            color: AppColors.primary,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 3),
+                                      const Icon(
+                                        Icons.arrow_forward_rounded,
+                                        size: 13,
+                                        color: AppColors.primary,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                       ],
                     ),
@@ -629,16 +645,12 @@ class NotificationCenterScreen extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.cloud_off_rounded,
-              size: 40,
-               color: AppColors.primary,
-            ),
+            Icon(Icons.cloud_off_rounded, size: 40, color: AppColors.primary),
             const SizedBox(height: AppSpacing.md),
             Text(
               'Notifications unavailable',
               style: TextStyle(
-                 color: AppColors.textPrimary,
+                color: AppColors.textPrimary,
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
               ),
@@ -677,7 +689,7 @@ class NotificationCenterScreen extends StatelessWidget {
               height: 76,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                 color: AppColors.primarySoft,
+                color: AppColors.primarySoft,
               ),
               child: const Icon(
                 Icons.notifications_off_rounded,
@@ -689,7 +701,7 @@ class NotificationCenterScreen extends StatelessWidget {
             Text(
               'You are all caught up!',
               style: TextStyle(
-                 color: AppColors.textPrimary,
+                color: AppColors.textPrimary,
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
               ),
@@ -699,7 +711,7 @@ class NotificationCenterScreen extends StatelessWidget {
               'No pending alerts or urgent updates right now. We\'ll buzz you when your next technician hits the road!',
               textAlign: TextAlign.center,
               style: TextStyle(
-                 color: AppColors.textSecondary,
+                color: AppColors.textSecondary,
                 fontSize: 13,
                 height: 1.4,
               ),
@@ -716,7 +728,9 @@ class NotificationCenterScreen extends StatelessWidget {
       child: Column(
         children: [
           TextButton.icon(
-            onPressed: () => _confirmClearAll(context),
+            onPressed: controller.isMutating
+                ? null
+                : () => _confirmClearAll(context),
             icon: const Icon(
               Icons.delete_sweep_outlined,
               size: 18,
@@ -751,7 +765,7 @@ class NotificationCenterScreen extends StatelessWidget {
         title: Text(
           'Clear all notifications?',
           style: TextStyle(
-             color: AppColors.textPrimary,
+            color: AppColors.textPrimary,
             fontWeight: FontWeight.w800,
           ),
         ),
@@ -772,9 +786,9 @@ class NotificationCenterScreen extends StatelessWidget {
               backgroundColor: AppColors.error,
               foregroundColor: Colors.white,
             ),
-            onPressed: () {
-              controller.clearAll();
+            onPressed: () async {
               Navigator.of(ctx).pop();
+              await controller.clearAll();
             },
             child: const Text('Clear all'),
           ),

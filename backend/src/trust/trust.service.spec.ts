@@ -1,5 +1,6 @@
 import { TrustService } from './trust.service';
 import { BookingStatus } from '../../../shared/booking-lifecycle.types';
+import { TrustSignalStatus } from '../../../shared/trust.types';
 
 describe('TrustService', () => {
   const providerId = '00000000-0000-4000-8000-000000000002';
@@ -63,6 +64,23 @@ describe('TrustService', () => {
   );
 
   beforeEach(() => jest.clearAllMocks());
+
+  it('applies trust status to the repository read before paging with stable ordering', async () => {
+    signals.find.mockResolvedValue([
+      { id: 'older-open-signal', status: TrustSignalStatus.OPEN },
+    ]);
+    await expect(
+      service.listSignals(11, 20, TrustSignalStatus.OPEN),
+    ).resolves.toEqual([
+      { id: 'older-open-signal', status: TrustSignalStatus.OPEN },
+    ]);
+    expect(signals.find).toHaveBeenCalledWith({
+      where: { status: TrustSignalStatus.OPEN },
+      order: { createdAt: 'DESC', id: 'DESC' },
+      take: 11,
+      skip: 20,
+    });
+  });
 
   it('calculates transparent metrics without fabricating zero-data rates', async () => {
     statusQuery.getRawMany.mockResolvedValue([

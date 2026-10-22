@@ -7,6 +7,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { createHash } from 'crypto';
+import { nextGuaranteeStatuses } from '../../../shared/guarantee-lifecycle.types';
 import {
   GuaranteeClaim,
   GuaranteeClaimStatus,
@@ -103,17 +104,26 @@ export class GuaranteesService {
   async findAll(
     status?: GuaranteeClaimStatus,
     limit: number = LIST_ENDPOINT_DEFAULT_LIMIT,
+    offset = 0,
+    search?: string,
   ): Promise<GuaranteeClaim[]> {
     const query = this.claimsRepository.createQueryBuilder('claim');
 
     if (status) {
       query.where('claim.status = :status', { status });
     }
+    if (search?.trim()) {
+      query.andWhere(
+        '(CAST(claim.id AS text) ILIKE :search OR CAST(claim.bookingId AS text) ILIKE :search OR claim.description ILIKE :search)',
+        { search: `%${search.trim()}%` },
+      );
+    }
 
     return query
       .orderBy('claim.createdAt', 'DESC')
       .addOrderBy('claim.id', 'DESC')
       .take(Math.min(limit, LIST_ENDPOINT_MAX_LIMIT))
+      .skip(Math.max(0, offset))
       .getMany();
   }
 
@@ -131,15 +141,35 @@ export class GuaranteesService {
   ): Promise<GuaranteeClaim> {
     const claim = await this.findOne(id);
 
-    if (updateDto.status) {
-      claim.status = updateDto.status;
+    if (
+      updateDto.status &&
+      !nextGuaranteeStatuses(claim.status).includes(updateDto.status)
+    ) {
+      throw new ConflictException(
+        `Claim cannot move from ${claim.status} to ${updateDto.status}`,
+      );
     }
-
-    if (updateDto.adminNotes !== undefined) {
-      claim.adminNotes = updateDto.adminNotes;
+    if (updateDto.assignedProviderId !== undefined) {
+      throw new BadRequestException(
+        'Assign a provider through the re-service action',
+      );
     }
-
-    return this.claimsRepository.save(claim);
+    const changes: Partial<GuaranteeClaim> = {};
+    if (updateDto.status) changes.status = updateDto.status;
+    if (updateDto.adminNotes !== undefined)
+      changes.adminNotes = updateDto.adminNotes;
+    if (Object.keys(changes).length === 0) return claim;
+    // A stale review must not reopen a claim or overwrite a concurrent outcome.
+    const updated = await this.claimsRepository.update(
+      { id: claim.id, status: claim.status, version: claim.version },
+      changes,
+    );
+    if (updated.affected !== 1) {
+      throw new ConflictException(
+        'Claim changed while you were reviewing it. Refresh and try again.',
+      );
+    }
+    return this.findOne(id);
   }
 
   /**
@@ -231,6 +261,14 @@ export class GuaranteesService {
       parentBookingId: originalBooking.id,
     });
 
+    // Booking creation is idempotent per claim. If two reviewers selected
+    // different providers, the durable booking decides which assignment won.
+    if (booking.providerId !== assignedProviderId) {
+      throw new ConflictException(
+        'This remedy was already assigned to another provider',
+      );
+    }
+
     // Conditional so a double submit cannot overwrite the first booking's id.
     // `createAssignedBooking` is idempotent on the same key, so a retry after a
     // partial failure reattaches to this booking instead of creating a second.
@@ -242,7 +280,13 @@ export class GuaranteesService {
         assignedProviderId,
         reServiceBookingId: booking.id,
       })
-      .where('id = :id AND re_service_booking_id IS NULL', { id: claim.id })
+      .where(
+        'id = :id AND re_service_booking_id IS NULL AND status = :status',
+        {
+          id: claim.id,
+          status: GuaranteeClaimStatus.APPROVED,
+        },
+      )
       .execute();
 
     if (claimed.affected !== 1) {

@@ -1,3 +1,4 @@
+import { StatusBadge } from "@/features/status-badge";
 import Link from "next/link";
 import { getSession } from "@/auth/session";
 import { AdminShell } from "@/components/admin-shell";
@@ -5,17 +6,16 @@ import { env } from "@/config/env";
 import { listProviderApplications } from "@/features/providers/api";
 import { requireManagementResult } from "@/features/management-api";
 import { redirect } from "next/navigation";
-import type { StaffRole } from "@/auth/types";
+import { hasPermission } from "@/auth/roles";
 
 const statuses = ["", "unverified", "under_review", "approved", "rejected", "resubmission_requested"];
-const shortId = (id: string) => id.replaceAll("-", "").slice(0, 8).toUpperCase();
+import { shortId } from "@/lib/format";
 
 export default async function ProvidersPage({ searchParams }: { searchParams: Promise<{ search?: string; status?: string; cursor?: string }> }) {
   const session = await getSession();
   if (session.state !== "authenticated") redirect("/login?reason=expired");
 
-  const allowedRoles: readonly StaffRole[] = ["provider_reviewer", "operations_administrator", "auditor"];
-  if (!session.session.roles.some((r) => allowedRoles.includes(r))) {
+  if (!hasPermission(session.session.roles, "adminProviderApplicationsRead")) {
     redirect("/unauthorized");
   }
 
@@ -104,9 +104,7 @@ export default async function ProvidersPage({ searchParams }: { searchParams: Pr
                         </div>
                       </div>
                       <div className="flex flex-col items-end">
-                        <span className={`px-2 py-0.5 rounded font-label-sm text-[10px] font-bold ${application.status === 'under_review' ? 'bg-secondary-container text-on-secondary-container' : 'bg-surface-container-high text-on-surface-variant'}`}>
-                          {application.status.replace("_", " ").toUpperCase()}
-                        </span>
+                        <StatusBadge status={application.status} />
                       </div>
                     </div>
                     <div className="flex flex-wrap items-center justify-between gap-1.5 pt-space-xs mt-4 border-t border-outline-variant/10">

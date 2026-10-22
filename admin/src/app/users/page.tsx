@@ -7,7 +7,7 @@ import { requireManagementResult } from "@/features/management-api";
 import { StatusBadge } from "@/features/status-badge";
 import { redirect } from "next/navigation";
 
-const shortId = (id: string) => id.replaceAll("-", "").slice(0, 8).toUpperCase();
+import { shortId } from "@/lib/format";
 
 const accountLabel = (roles: readonly string[]) => {
   if (roles.some((role) => role.includes("provider"))) return "Provider account";

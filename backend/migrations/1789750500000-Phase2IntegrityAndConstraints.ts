@@ -77,6 +77,32 @@ export class Phase2IntegrityAndConstraints1789750500000
       END $$;
     `);
 
+    // Ensure guarantee_claims table and status enum exist before altering constraints
+    await queryRunner.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'guarantee_claims_status_enum') THEN
+          CREATE TYPE "public"."guarantee_claims_status_enum" AS ENUM('PENDING', 'IN_REVIEW', 'MORE_INFO', 'APPROVED', 'REJECTED', 'COMPLETED');
+        END IF;
+      END $$;
+    `);
+    await queryRunner.query(`
+      CREATE TABLE IF NOT EXISTS "guarantee_claims" (
+        "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
+        "booking_id" uuid NOT NULL,
+        "customer_id" uuid NOT NULL,
+        "original_provider_id" uuid,
+        "status" "public"."guarantee_claims_status_enum" NOT NULL DEFAULT 'PENDING',
+        "description" text NOT NULL,
+        "evidence_urls" text,
+        "admin_notes" text,
+        "assigned_provider_id" uuid,
+        "re_service_booking_id" uuid,
+        "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+        "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+        CONSTRAINT "PK_84abb9e309fb6ac575527a96fa0" PRIMARY KEY ("id")
+      );
+    `);
+
     await queryRunner.query(`
       DO $$ BEGIN
         IF NOT EXISTS (

@@ -14,27 +14,38 @@ console.log(`\x1b[36m
 
 const childProcesses: Subprocess[] = [];
 
+import net from "node:net";
+
 /**
  * Polls until `port` accepts a TCP connection, or the timeout elapses.
  * The orchestrator must never announce a URL before the app behind it is
  * actually reachable — announcing early masks a failed launch as success.
  */
-async function waitForPort(port: number, timeoutMs: number): Promise<boolean> {
+function waitForPort(port: number, timeoutMs: number): Promise<boolean> {
   const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    try {
-      const socket = Bun.connect({
-        hostname: "127.0.0.1",
-        port,
-        socket: { data: () => {}, open: (s) => s.end(), error: () => {}, close: () => {} },
+  return new Promise((resolve) => {
+    function tryConnect() {
+      if (Date.now() >= deadline) {
+        return resolve(false);
+      }
+      const socket = new net.Socket();
+      socket.setTimeout(1000);
+      socket.once("connect", () => {
+        socket.destroy();
+        resolve(true);
       });
-      socket.end();
-      return true;
-    } catch {
-      await Bun.sleep(500);
+      socket.once("error", () => {
+        socket.destroy();
+        setTimeout(tryConnect, 500);
+      });
+      socket.once("timeout", () => {
+        socket.destroy();
+        setTimeout(tryConnect, 500);
+      });
+      socket.connect(port, "127.0.0.1");
     }
-  }
-  return false;
+    tryConnect();
+  });
 }
 
 /**

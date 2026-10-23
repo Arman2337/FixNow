@@ -614,6 +614,40 @@ void main() {
     expect(tester.takeException(), isNull);
     controller.dispose();
   });
+
+  testWidgets('renders assigned provider profile card with real details', (
+    tester,
+  ) async {
+    final controller = BookingTrackingController(
+      bookingId: 'booking-1',
+      source: _Source(
+        _tracking(
+          sequence: 1,
+          status: 'EN_ROUTE',
+          providerName: 'Rajesh Patil',
+          providerRating: 4.8,
+          providerJobsCount: 15,
+          providerPhone: '+919876543210',
+        ),
+      ),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light,
+        home: BookingTrackingScreen(controller: controller),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.text('Rajesh Patil'), findsOneWidget);
+    expect(find.text('4.8'), findsOneWidget);
+    expect(find.text('(15 jobs)'), findsOneWidget);
+    expect(find.text('Call Rajesh'), findsOneWidget);
+    expect(find.text('Provider details unavailable'), findsNothing);
+
+    controller.dispose();
+  });
 }
 
 BookingTracking _tracking({
@@ -624,6 +658,10 @@ BookingTracking _tracking({
   ProviderMapLocation? provider,
   CustomerMapLocation? customer,
   String? serviceStartOtp,
+  String? providerName,
+  double? providerRating,
+  int? providerJobsCount,
+  String? providerPhone,
   List<BookingLineItem> items = const [],
   BookingPricing? pricing,
 }) => BookingTracking(
@@ -635,6 +673,10 @@ BookingTracking _tracking({
   providerLocation: provider,
   customerLocation: customer,
   serviceStartOtp: serviceStartOtp,
+  providerName: providerName,
+  providerRating: providerRating,
+  providerJobsCount: providerJobsCount,
+  providerPhone: providerPhone,
   items: items,
   pricing: pricing,
 );

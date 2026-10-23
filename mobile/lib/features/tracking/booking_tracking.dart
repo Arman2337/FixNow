@@ -56,6 +56,7 @@ class BookingTracking {
     this.providerName,
     this.providerRating,
     this.providerJobsCount,
+    this.providerPhone,
     this.items = const [],
     this.pricing,
   });
@@ -72,6 +73,7 @@ class BookingTracking {
   final String? providerName;
   final double? providerRating;
   final int? providerJobsCount;
+  final String? providerPhone;
 
   /// Server-persisted line items. Empty when the booking has none, which the UI
   /// must state rather than replace with invented rows.
@@ -80,6 +82,67 @@ class BookingTracking {
   /// Server-computed totals, including GST. Null until the booking is
   /// itemized, so the UI shows "not available" instead of a made-up figure.
   final BookingPricing? pricing;
+
+  BookingTracking copyWith({
+    String? bookingId,
+    String? status,
+    int? sequence,
+    LocationAvailability? locationAvailability,
+    int? estimatedMinutes,
+    ProviderMapLocation? providerLocation,
+    CustomerMapLocation? customerLocation,
+    DrivingRoute? route,
+    String? serviceStartOtp,
+    String? providerName,
+    double? providerRating,
+    int? providerJobsCount,
+    String? providerPhone,
+    List<BookingLineItem>? items,
+    BookingPricing? pricing,
+  }) =>
+      BookingTracking(
+        bookingId: bookingId ?? this.bookingId,
+        status: status ?? this.status,
+        sequence: sequence ?? this.sequence,
+        locationAvailability: locationAvailability ?? this.locationAvailability,
+        estimatedMinutes: estimatedMinutes ?? this.estimatedMinutes,
+        providerLocation: providerLocation ?? this.providerLocation,
+        customerLocation: customerLocation ?? this.customerLocation,
+        route: route ?? this.route,
+        serviceStartOtp: serviceStartOtp ?? this.serviceStartOtp,
+        providerName: providerName ?? this.providerName,
+        providerRating: providerRating ?? this.providerRating,
+        providerJobsCount: providerJobsCount ?? this.providerJobsCount,
+        providerPhone: providerPhone ?? this.providerPhone,
+        items: items ?? this.items,
+        pricing: pricing ?? this.pricing,
+      );
+
+  factory BookingTracking.fromBooking(
+    CustomerBooking booking, {
+    String? serviceStartOtp,
+    LocationAvailability locationAvailability = LocationAvailability.unavailable,
+  }) =>
+      BookingTracking(
+        bookingId: booking.id,
+        status: booking.status,
+        sequence: booking.version,
+        locationAvailability: locationAvailability,
+        customerLocation: booking.locationLatitude != null &&
+                booking.locationLongitude != null
+            ? CustomerMapLocation(
+                latitude: booking.locationLatitude!,
+                longitude: booking.locationLongitude!,
+              )
+            : null,
+        serviceStartOtp: serviceStartOtp,
+        providerName: booking.providerName,
+        providerRating: booking.providerRating,
+        providerJobsCount: booking.providerJobsCount,
+        providerPhone: booking.providerPhone,
+        items: booking.items ?? const [],
+        pricing: booking.pricing,
+      );
 }
 
 abstract interface class BookingTrackingSource {

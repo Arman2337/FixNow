@@ -22,6 +22,9 @@ import { Booking } from './domain/booking.entity';
 import { BookingReview } from '../ratings/domain/review.entity';
 import { PaymentOrder } from '../payments/domain/payment-order.entity';
 import { SubServiceEntity } from '../services/sub-service.entity';
+import { UserEntity } from '../users/user.entity';
+import { ProviderProfileEntity } from '../providers/provider-profile.entity';
+import { CustomerProfileEntity } from '../users/customer-profile.entity';
 
 /**
  * The server-side price catalogue. Tests select entries by `subServiceId`;
@@ -104,6 +107,10 @@ describe('BookingsService', () => {
   // the booking specs are about the booking.
   let outboxEnqueue: jest.Mock;
   let outbox: jest.Mocked<OutboxService>;
+  let userRepo: jest.Mocked<Repository<ObjectLiteral>>;
+  let providerProfileRepo: jest.Mocked<Repository<ObjectLiteral>>;
+  let customerProfileRepo: jest.Mocked<Repository<ObjectLiteral>>;
+  let reviewRepo: jest.Mocked<Repository<ObjectLiteral>>;
 
   const booking = (overrides: Partial<Booking> = {}): Booking =>
     Object.assign(new Booking(), {
@@ -132,6 +139,10 @@ describe('BookingsService', () => {
     });
 
   beforeEach(() => {
+    userRepo = aggregateRepository();
+    providerProfileRepo = aggregateRepository();
+    customerProfileRepo = aggregateRepository();
+    reviewRepo = aggregateRepository();
     bookingFindOneBy = jest.fn();
     bookingFind = jest.fn();
     bookingSave = jest.fn();
@@ -185,7 +196,7 @@ describe('BookingsService', () => {
     (
       bookingRepository as unknown as { createQueryBuilder: jest.Mock }
     ).createQueryBuilder.mockImplementation((alias?: string) =>
-      alias === 'booking' ? lockableQuery : (lockableQuery as never),
+      alias === 'b' ? queryAggregate() : lockableQuery,
     );
     manager = {
       getRepository: jest.fn((entity: unknown) => {
@@ -197,9 +208,14 @@ describe('BookingsService', () => {
       }),
     } as unknown as jest.Mocked<EntityManager>;
     dataSource = {
-      getRepository: jest.fn((entity: unknown) =>
-        entity === PaymentOrder ? orderRepository : bookingRepository,
-      ),
+      getRepository: jest.fn((entity: unknown) => {
+        if (entity === PaymentOrder) return orderRepository;
+        if (entity === UserEntity) return userRepo;
+        if (entity === ProviderProfileEntity) return providerProfileRepo;
+        if (entity === CustomerProfileEntity) return customerProfileRepo;
+        if (entity === BookingReview) return reviewRepo;
+        return bookingRepository;
+      }),
       transaction: jest.fn(
         (callback: (transactionManager: EntityManager) => unknown) =>
           Promise.resolve(callback(manager)),
@@ -630,6 +646,25 @@ describe('BookingsService', () => {
       expect(result.locationLng).toBe(73.2);
     });
 
+    it('populates provider details, rating, and contact information for the customer', async () => {
+      bookingFindOneBy.mockResolvedValue(
+        booking({ status: BookingStatus.EN_ROUTE, providerId: PROVIDER_ID }),
+      );
+      (providerProfileRepo.find as jest.Mock).mockResolvedValue([
+        { userId: PROVIDER_ID, displayName: 'Rajesh Patil' },
+      ]);
+      (userRepo.find as jest.Mock).mockResolvedValue([
+        { id: CUSTOMER_ID, phone: '+919876543210' },
+        { id: PROVIDER_ID, phone: '+919876543211' },
+      ]);
+
+      const result = await service.getBookingForUser(BOOKING_ID, CUSTOMER_ID);
+
+      expect(result.providerName).toBe('Rajesh Patil');
+      expect(result.providerPhone).toBe('+919876543211');
+      expect(result.customerPhone).toBe('+919876543210');
+    });
+
     it('rejects a reader who is not a booking participant', async () => {
       bookingFindOneBy.mockResolvedValue(booking());
 
@@ -733,6 +768,9 @@ describe('BookingsService', () => {
             return lockQuery;
           });
           return lockQuery;
+        }
+        if (alias === 'b') {
+          return queryAggregate();
         }
         return builder;
       },

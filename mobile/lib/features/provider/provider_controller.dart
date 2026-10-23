@@ -113,33 +113,39 @@ class ProviderController extends ChangeNotifier {
       final bookingId = data['bookingId']?.toString();
       if (bookingId == null) return;
 
-      final typed = Map<String, Object?>.from(data);
-      final newRoute = _parseRoute(typed);
-      final newLocation = _parseLocation(typed);
-      if (newRoute != null) currentRoute = newRoute;
-      if (newLocation != null) currentLocation = newLocation;
-
-      final newStatus = data['status']?.toString();
-      final newVersion = (data['sequence'] as num?)?.toInt();
       final jobIndex = jobs.indexWhere(
         (j) => j.id.toLowerCase() == bookingId.toLowerCase(),
       );
 
-      if (jobIndex >= 0 && newStatus != null) {
+      final typed = Map<String, Object?>.from(data);
+      final newRoute = _parseRoute(typed);
+      final newLocation = _parseLocation(typed);
+
+      if (jobIndex >= 0) {
+        if (newRoute != null) currentRoute = newRoute;
+        if (newLocation != null) currentLocation = newLocation;
+
+        final newStatus = data['status']?.toString();
+        final newVersion = (data['sequence'] as num?)?.toInt();
         final current = jobs[jobIndex];
-        if (current.status != newStatus ||
-            (newVersion != null && newVersion > current.version)) {
+        final statusChanged = newStatus != null && current.status != newStatus;
+        final versionChanged =
+            newVersion != null && newVersion > current.version;
+
+        if (statusChanged || versionChanged) {
           final updated = current.copyWith(
-            status: newStatus,
+            status: newStatus ?? current.status,
             version: newVersion ?? current.version,
           );
           jobs = [...jobs]..[jobIndex] = updated;
-          _checkEnRouteBroadcasting();
+          if (statusChanged) {
+            _checkEnRouteBroadcasting();
+          }
           notifyListeners();
         } else if (newRoute != null || newLocation != null) {
           notifyListeners();
         }
-      } else if (jobIndex < 0 && newStatus != null) {
+      } else if (data['status'] != null) {
         unawaited(
           repository
               .jobs()
@@ -150,8 +156,6 @@ class ProviderController extends ChangeNotifier {
               })
               .catchError((_) {}),
         );
-      } else if (newRoute != null || newLocation != null) {
-        notifyListeners();
       }
     });
   }

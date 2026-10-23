@@ -23,6 +23,10 @@ export interface BookingTrackingProjection {
    */
   pricing?: BookingPricingContract | null;
   estimatedDurationMinutes?: number | null;
+  providerName?: string;
+  providerRating?: number | null;
+  providerJobsCount?: number | null;
+  providerPhone?: string | null;
   location: {
     latitude: number;
     longitude: number;

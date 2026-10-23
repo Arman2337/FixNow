@@ -10,7 +10,10 @@ class BookingTrackingController extends ChangeNotifier {
     required this.bookingId,
     required this.source,
     this.realtime,
-  });
+    CustomerBooking? initialBooking,
+  }) : tracking = initialBooking != null
+           ? BookingTracking.fromBooking(initialBooking)
+           : null;
   final String bookingId;
   final BookingTrackingSource source;
   final RealtimeClient? realtime;
@@ -21,20 +24,54 @@ class BookingTrackingController extends ChangeNotifier {
   BookingTracking? tracking;
   String? message;
 
+  void seedBooking(CustomerBooking booking) {
+    if (booking.id.trim().toLowerCase() != bookingId.trim().toLowerCase()) return;
+    if (tracking == null) {
+      tracking = BookingTracking.fromBooking(booking);
+      notifyListeners();
+    } else {
+      final current = tracking!;
+      final shouldUpdate =
+          (current.providerName == null && booking.providerName != null) ||
+          (current.providerRating == null && booking.providerRating != null) ||
+          (current.providerJobsCount == null && booking.providerJobsCount != null) ||
+          (current.providerPhone == null && booking.providerPhone != null) ||
+          (current.customerLocation == null &&
+              booking.locationLatitude != null &&
+              booking.locationLongitude != null);
+      if (shouldUpdate) {
+        tracking = current.copyWith(
+          providerName: current.providerName ?? booking.providerName,
+          providerRating: current.providerRating ?? booking.providerRating,
+          providerJobsCount:
+              current.providerJobsCount ?? booking.providerJobsCount,
+          providerPhone: current.providerPhone ?? booking.providerPhone,
+          customerLocation: current.customerLocation ??
+              (booking.locationLatitude != null && booking.locationLongitude != null
+                  ? CustomerMapLocation(
+                      latitude: booking.locationLatitude!,
+                      longitude: booking.locationLongitude!,
+                    )
+                  : null),
+        );
+        notifyListeners();
+      }
+    }
+  }
+
   Future<void> loadSnapshot() async {
     connection = TrackingConnection.reconciling;
     notifyListeners();
     try {
       final snapshot = await source.fetchSnapshot(bookingId);
       final current = tracking;
-      if (current != null && current.providerLocation != null) {
-        tracking = BookingTracking(
-          bookingId: snapshot.bookingId,
-          status: snapshot.status,
-          sequence: snapshot.sequence,
+      if (current != null) {
+        tracking = snapshot.copyWith(
           locationAvailability: snapshot.providerLocation != null
               ? snapshot.locationAvailability
-              : current.locationAvailability,
+              : (current.providerLocation != null
+                  ? current.locationAvailability
+                  : snapshot.locationAvailability),
           estimatedMinutes:
               current.estimatedMinutes ?? snapshot.estimatedMinutes,
           providerLocation:
@@ -43,6 +80,13 @@ class BookingTrackingController extends ChangeNotifier {
               snapshot.customerLocation ?? current.customerLocation,
           route: current.route ?? snapshot.route,
           serviceStartOtp: snapshot.serviceStartOtp ?? current.serviceStartOtp,
+          providerName: snapshot.providerName ?? current.providerName,
+          providerRating: snapshot.providerRating ?? current.providerRating,
+          providerJobsCount:
+              snapshot.providerJobsCount ?? current.providerJobsCount,
+          providerPhone: snapshot.providerPhone ?? current.providerPhone,
+          items: snapshot.items.isNotEmpty ? snapshot.items : current.items,
+          pricing: snapshot.pricing ?? current.pricing,
         );
       } else {
         tracking = snapshot;
@@ -104,11 +148,18 @@ class BookingTrackingController extends ChangeNotifier {
       serviceStartOtp: data['status'] == 'EN_ROUTE'
           ? tracking?.serviceStartOtp
           : null,
-      // A live frame carries no provider identity, so keep the snapshot's
-      // rather than blanking the specialist card on the first projection.
-      providerName: tracking?.providerName,
-      providerRating: tracking?.providerRating,
-      providerJobsCount: tracking?.providerJobsCount,
+      // If the projection carries provider identity, use it; otherwise preserve
+      // the snapshot's rather than blanking the specialist card.
+      providerName:
+          data['providerName']?.toString() ?? tracking?.providerName,
+      providerRating:
+          (data['providerRating'] as num?)?.toDouble() ??
+          tracking?.providerRating,
+      providerJobsCount:
+          (data['providerJobsCount'] as num?)?.toInt() ??
+          tracking?.providerJobsCount,
+      providerPhone:
+          data['providerPhone']?.toString() ?? tracking?.providerPhone,
       // A provider's on-site price adjustment arrives on this same frame.
       // Rendering the snapshot's totals until the next load would show the
       // customer a stale amount while the technician watches it change.
@@ -239,17 +290,7 @@ class BookingTrackingController extends ChangeNotifier {
           latest != null &&
           latest.status == 'EN_ROUTE' &&
           latest.serviceStartOtp == null) {
-        tracking = BookingTracking(
-          bookingId: latest.bookingId,
-          status: latest.status,
-          sequence: latest.sequence,
-          locationAvailability: latest.locationAvailability,
-          estimatedMinutes: latest.estimatedMinutes,
-          providerLocation: latest.providerLocation,
-          customerLocation: latest.customerLocation,
-          route: latest.route,
-          serviceStartOtp: otp,
-        );
+        tracking = latest.copyWith(serviceStartOtp: otp);
         notifyListeners();
       }
     } catch (_) {
@@ -296,16 +337,8 @@ class BookingTrackingController extends ChangeNotifier {
         DateTime.now().difference(receivedAt) <= const Duration(seconds: 60)) {
       return;
     }
-    tracking = BookingTracking(
-      bookingId: current.bookingId,
-      status: current.status,
-      sequence: current.sequence,
+    tracking = current.copyWith(
       locationAvailability: LocationAvailability.stale,
-      estimatedMinutes: current.estimatedMinutes,
-      providerLocation: current.providerLocation,
-      customerLocation: current.customerLocation,
-      route: current.route,
-      serviceStartOtp: current.serviceStartOtp,
     );
     notifyListeners();
   }

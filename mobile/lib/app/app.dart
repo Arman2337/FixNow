@@ -296,8 +296,11 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
     }
   }
 
-  BookingTrackingController _trackingController(String bookingId) {
-    return _trackingControllers.putIfAbsent(
+  BookingTrackingController _trackingController(
+    String bookingId, [
+    CustomerBooking? initialBooking,
+  ]) {
+    final controller = _trackingControllers.putIfAbsent(
       bookingId,
       () => BookingTrackingController(
         bookingId: bookingId,
@@ -306,8 +309,13 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
           accessToken: _auth.validAccessToken,
         ),
         realtime: _sharedRealtime,
+        initialBooking: initialBooking,
       ),
     );
+    if (initialBooking != null) {
+      controller.seedBooking(initialBooking);
+    }
+    return controller;
   }
 
   /// One-shot celebrate overlay when realtime reports a provider acceptance.
@@ -1387,7 +1395,10 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
             },
           );
         }
-        final tracking = _trackingController(currentBooking.id);
+        final tracking = _trackingController(
+          currentBooking.id,
+          currentBooking,
+        );
         return BookingTrackingScreen(
           controller: tracking,
           chatRepository: _chatRepository,
@@ -1405,13 +1416,17 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
             destinationCount: 4,
           ),
           onCallPressed: (context, id) async {
+            final name = tracking.tracking?.providerName ??
+                currentBooking.providerName ??
+                'Service Specialist';
+            final phone = tracking.tracking?.providerPhone ??
+                currentBooking.providerPhone;
             await Navigator.of(context).push(
               MaterialPageRoute<void>(
                 builder: (_) => CallScreen(
-                  oppositePartyName:
-                      currentBooking.providerName ?? 'Service Specialist',
+                  oppositePartyName: name,
                   oppositePartyRole: 'Service Specialist',
-                  phoneNumber: currentBooking.providerPhone,
+                  phoneNumber: phone,
                   bookingId: id,
                   controller: _callController,
                 ),

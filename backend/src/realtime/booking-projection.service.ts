@@ -88,6 +88,10 @@ export class BookingProjectionService {
       eta: estimate ? { ...estimate, calculatedAt: occurredAt } : null,
       pricing,
       route,
+      providerName: booking.providerName ?? undefined,
+      providerRating: booking.providerRating ?? undefined,
+      providerJobsCount: booking.providerJobsCount ?? undefined,
+      providerPhone: booking.providerPhone ?? undefined,
     };
     const frame = {
       type: 'booking.projection-updated.v1',

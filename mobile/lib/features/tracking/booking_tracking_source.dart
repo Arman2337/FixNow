@@ -36,26 +36,9 @@ class ApiBookingTrackingSource implements BookingTrackingSource {
     if (booking.status == 'EN_ROUTE') {
       serviceStartOtp = await fetchServiceStartOtp(bookingId);
     }
-    return BookingTracking(
-      bookingId: booking.id,
-      status: booking.status,
-      sequence: booking.version,
-      locationAvailability: LocationAvailability.unavailable,
-      customerLocation:
-          booking.locationLatitude != null && booking.locationLongitude != null
-          ? CustomerMapLocation(
-              latitude: booking.locationLatitude!,
-              longitude: booking.locationLongitude!,
-            )
-          : null,
+    return BookingTracking.fromBooking(
+      booking,
       serviceStartOtp: serviceStartOtp,
-      providerName: booking.providerName,
-      providerRating: booking.providerRating,
-      providerJobsCount: booking.providerJobsCount,
-      // The snapshot already carries the real line items and totals; they were
-      // being fetched and dropped here.
-      items: booking.items ?? const [],
-      pricing: booking.pricing,
     );
   }
 

@@ -323,8 +323,10 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
   }
 
   Widget _buildSpecialistProfileCard(BuildContext context) {
-    final providerName =
-        widget.controller.tracking?.providerName ?? 'Verified Specialist';
+    final tracking = widget.controller.tracking;
+    final rawName = tracking?.providerName?.trim();
+    final hasRealName = rawName != null && rawName.isNotEmpty;
+    final providerName = hasRealName ? rawName : 'Verified Specialist';
     final providerFirstName = providerName.split(' ').first;
 
     return Container(
@@ -394,8 +396,9 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
                       children: [
                         Flexible(
                           child: Text(
-                            widget.controller.tracking?.providerName ??
-                                'Provider details unavailable',
+                            hasRealName
+                                ? providerName
+                                : 'Provider details unavailable',
                             style: const TextStyle(
                               color: AppColors.textPrimary,
                               fontSize: 18,
@@ -450,13 +453,8 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
                             children: [
                               Flexible(
                                 child: Text(
-                                  widget.controller.tracking?.providerRating !=
-                                          null
-                                      ? widget
-                                            .controller
-                                            .tracking!
-                                            .providerRating!
-                                            .toStringAsFixed(1)
+                                  tracking?.providerRating != null
+                                      ? tracking!.providerRating!.toStringAsFixed(1)
                                       : 'Rating unavailable',
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
@@ -470,12 +468,8 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
                               const SizedBox(width: 4),
                               Flexible(
                                 child: Text(
-                                  widget
-                                              .controller
-                                              .tracking
-                                              ?.providerJobsCount !=
-                                          null
-                                      ? '(${widget.controller.tracking!.providerJobsCount} jobs)'
+                                  tracking?.providerJobsCount != null
+                                      ? '(${tracking!.providerJobsCount} jobs)'
                                       : 'Job history unavailable',
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,

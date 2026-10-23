@@ -40,6 +40,7 @@ import { BookingLineItem } from './domain/booking-line-item.entity';
 import { SubServiceEntity } from '../services/sub-service.entity';
 import { UserEntity } from '../users/user.entity';
 import { ProviderProfileEntity } from '../providers/provider-profile.entity';
+import { CustomerProfileEntity } from '../users/customer-profile.entity';
 import { BookingReview } from '../ratings/domain/review.entity';
 import { ReviewModerationStatus } from '../../../shared/ratings.types';
 import { ProviderCapacityService } from '../providers/availability/provider-capacity.service';
@@ -725,6 +726,7 @@ export class BookingsService {
         );
       });
 
+      await this.populatePhones([booking]);
       await this.bookingProjections?.publishBooking(booking);
       await this.notifySafely(async () => {
         await this.domainNotifications!.notifyBookingEvent(
@@ -776,6 +778,7 @@ export class BookingsService {
       // error. No second assignment event and no second notification: the work
       // already happened, and repeating it would page the provider again for a
       // job they are already on.
+      await this.populatePhones([candidate]);
       return candidate;
     }
     if (candidate.providerId) {
@@ -825,6 +828,7 @@ export class BookingsService {
         await this.capacity.syncAvailabilityForWorkload(manager, providerId);
       },
     );
+    await this.populatePhones([booking]);
     await this.bookingProjections?.publishBooking(booking);
     await this.notifySafely(async () => {
       await this.domainNotifications!.notifyBookingEvent(
@@ -870,6 +874,7 @@ export class BookingsService {
     ) {
       await this.locationService?.invalidateBooking(bookingId);
     }
+    await this.populatePhones([booking]);
     await this.bookingProjections?.publishBooking(booking);
     await this.notifySafely(async () => {
       await this.domainNotifications!.notifyBookingEvent(
@@ -959,6 +964,7 @@ export class BookingsService {
         }
       },
     );
+    await this.populatePhones([booking]);
     await this.bookingProjections?.publishBooking(booking);
     return booking;
   }
@@ -1282,6 +1288,7 @@ export class BookingsService {
       },
     );
     await this.locationService?.invalidateBooking(bookingId);
+    await this.populatePhones([booking]);
     await this.bookingProjections?.publishBooking(booking);
     await this.notifySafely(async () => {
       await this.domainNotifications!.notifyBookingEvent(
@@ -1358,7 +1365,9 @@ export class BookingsService {
     if (booking.customerId !== userId && booking.providerId !== userId) {
       throw new ForbiddenException('Booking participants only');
     }
-    return this.redactDestinationFor(booking, userId);
+    const result = this.redactDestinationFor(booking, userId);
+    await this.populatePhones([result]);
+    return result;
   }
 
   /// Providers do not receive the customer's exact destination until the job
@@ -1795,6 +1804,16 @@ export class BookingsService {
       providerProfiles.map((p) => [p.userId, p.displayName]),
     );
 
+    const customerProfiles =
+      providerIds.size > 0
+        ? await this.dataSource.getRepository(CustomerProfileEntity).find({
+            where: { userId: In([...providerIds]) },
+          })
+        : [];
+    const customerProfileMap = new Map(
+      customerProfiles.map((p) => [p.userId, p.displayName]),
+    );
+
     const jobsCounts =
       providerIds.size > 0
         ? await this.dataSource
@@ -1871,7 +1890,10 @@ export class BookingsService {
       b.customerPhone = phoneMap.get(b.customerId) ?? null;
       if (b.providerId) {
         b.providerPhone = phoneMap.get(b.providerId) ?? null;
-        b.providerName = profileMap.get(b.providerId) ?? 'Verified Specialist';
+        b.providerName =
+          profileMap.get(b.providerId) ||
+          customerProfileMap.get(b.providerId) ||
+          'Verified Specialist';
         const rating = ratingMap.get(b.providerId);
         // null means "no reviews yet", which the client renders as such.
         b.providerRating = rating && rating.count > 0 ? rating.average : null;

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:audioplayers/audioplayers.dart';
@@ -46,10 +47,13 @@ class _ProviderIncomingRequestScreenState
   }
 
   void _cancelNativeNotification() {
-    try {
-      const MethodChannel('com.fixnow.mobile/notifications')
-          .invokeMethod('cancelIncomingNotification');
-    } catch (_) {}
+    if (!kIsWeb) {
+      try {
+        const MethodChannel('com.fixnow.mobile/notifications')
+            .invokeMethod('cancelIncomingNotification')
+            .catchError((_) {});
+      } catch (_) {}
+    }
   }
 
   Future<void> _subscribeToBookingUpdates() async {

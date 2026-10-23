@@ -237,39 +237,41 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
     });
 
     // Native full-screen intent bridge
-    const MethodChannel('com.fixnow.mobile/notifications')
-        .setMethodCallHandler((call) async {
-      if (call.method == 'onIncomingRequest') {
-        final data = Map<String, dynamic>.from(call.arguments as Map);
-        _navigatorKey.currentState?.push(
-          MaterialPageRoute(
-            fullscreenDialog: true,
-            builder: (context) => ProviderIncomingRequestScreen(
-              requestData: data,
-              providerController: _provider,
-            ),
-          ),
-        );
-      }
-    });
-
-    const MethodChannel('com.fixnow.mobile/notifications')
-        .invokeMethod<Map<dynamic, dynamic>>('getInitialIncomingRequest')
-        .then((initialData) {
-      if (initialData != null && initialData.isNotEmpty) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (!kIsWeb) {
+      const channel = MethodChannel('com.fixnow.mobile/notifications');
+      channel.setMethodCallHandler((call) async {
+        if (call.method == 'onIncomingRequest') {
+          final data = Map<String, dynamic>.from(call.arguments as Map);
           _navigatorKey.currentState?.push(
             MaterialPageRoute(
               fullscreenDialog: true,
               builder: (context) => ProviderIncomingRequestScreen(
-                requestData: Map<String, dynamic>.from(initialData),
+                requestData: data,
                 providerController: _provider,
               ),
             ),
           );
-        });
-      }
-    });
+        }
+      });
+
+      channel
+          .invokeMethod<Map<dynamic, dynamic>>('getInitialIncomingRequest')
+          .then((initialData) {
+        if (initialData != null && initialData.isNotEmpty) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _navigatorKey.currentState?.push(
+              MaterialPageRoute(
+                fullscreenDialog: true,
+                builder: (context) => ProviderIncomingRequestScreen(
+                  requestData: Map<String, dynamic>.from(initialData),
+                  providerController: _provider,
+                ),
+              ),
+            );
+          });
+        }
+      }).catchError((_) {});
+    }
 
     _bookings.acceptedBooking.addListener(_showAcceptCelebration);
   }

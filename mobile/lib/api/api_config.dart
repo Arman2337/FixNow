@@ -7,9 +7,11 @@ class ApiConfig {
 
   static Uri baseUriFor(AppEnvironment environment) {
     final configured = _configuredBaseUrl.trim();
-    final value = configured.isEmpty
-        ? 'https://fixnow-lwys.onrender.com/api/v1/'
-        : configured;
+    final value = configured.isNotEmpty
+        ? configured
+        : (environment == AppEnvironment.development
+            ? 'http://127.0.0.1:8080/api/v1/'
+            : 'https://fixnow-lwys.onrender.com/api/v1/');
     final uri = Uri.parse(value);
 
     if (!uri.hasScheme || uri.host.isEmpty || uri.hasQuery || uri.hasFragment) {

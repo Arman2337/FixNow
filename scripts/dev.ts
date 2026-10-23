@@ -29,14 +29,28 @@ function waitForPort(port: number, timeoutMs: number): Promise<boolean> {
         return resolve(false);
       }
       const socket = new net.Socket();
-      socket.setTimeout(1000);
+      socket.setTimeout(800);
       socket.once("connect", () => {
         socket.destroy();
         resolve(true);
       });
       socket.once("error", () => {
         socket.destroy();
-        setTimeout(tryConnect, 500);
+        const socket6 = new net.Socket();
+        socket6.setTimeout(800);
+        socket6.once("connect", () => {
+          socket6.destroy();
+          resolve(true);
+        });
+        socket6.once("error", () => {
+          socket6.destroy();
+          setTimeout(tryConnect, 500);
+        });
+        socket6.once("timeout", () => {
+          socket6.destroy();
+          setTimeout(tryConnect, 500);
+        });
+        socket6.connect(port, "::1");
       });
       socket.once("timeout", () => {
         socket.destroy();
@@ -248,13 +262,17 @@ async function start() {
       console.log("📱 \x1b[1mLaunching Flutter Mobile App on attached device...\x1b[0m");
       // Explicit even though push now defaults on: it keeps the flag visible
       // and discoverable, and documents how to turn push off.
-      flutterArgs.push("--dart-define=PUSH_NOTIFICATIONS_ENABLED=true");
+      flutterArgs.push(
+        "--dart-define=PUSH_NOTIFICATIONS_ENABLED=true",
+        "--dart-define=API_BASE_URL=http://127.0.0.1:8080/api/v1/"
+      );
     } else {
       console.log("🌐 \x1b[1mLaunching Flutter Web App...\x1b[0m");
       flutterArgs.push(
         "-d", "chrome",
-        "--web-hostname", "localhost",
-        "--web-port", flutterWebPort
+        "--web-hostname", "127.0.0.1",
+        "--web-port", flutterWebPort,
+        "--dart-define=API_BASE_URL=http://127.0.0.1:8080/api/v1/"
       );
     }
     console.log("   \x1b[90mTip: Run with 'bun dev --backend-only' to only run backend + proxy.\x1b[0m\n");

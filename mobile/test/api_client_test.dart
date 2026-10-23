@@ -61,6 +61,28 @@ void main() {
     expect(calls, 1);
   });
 
+  test('strips leading slash from request path so base path prefix is preserved', () async {
+    Uri? requestedUri;
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    server.listen((request) async {
+      requestedUri = request.uri;
+      request.response.statusCode = 200;
+      request.response.headers.contentType = ContentType.json;
+      request.response.write(jsonEncode({'ok': true}));
+      await request.response.close();
+    });
+    final client = ApiClient(
+      baseUri: Uri.parse('http://${server.address.host}:${server.port}/api/v1/'),
+    );
+
+    await client.send(
+      const ApiRequest(method: ApiMethod.post, path: '/auth/token/refresh'),
+    );
+
+    expect(requestedUri?.path, '/api/v1/auth/token/refresh');
+  });
+
   test(
     'sends authorization and JSON body and accepts an empty response',
     () async {

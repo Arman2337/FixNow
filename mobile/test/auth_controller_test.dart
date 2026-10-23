@@ -243,6 +243,30 @@ void main() {
     expect(store.session, isNull);
   });
 
+  test('a defunct refresh error (e.g. 404) clears the stored session on restore', () async {
+    final store = MemorySessionStore(
+      session: _session(now.subtract(const Duration(minutes: 1))),
+    );
+    final controller = AuthController(
+      api: AuthApi(
+        FakeTransport(
+          error: const ApiException(
+            ApiFailureKind.invalidResponse,
+            'Cannot POST /auth/token/refresh',
+            statusCode: 404,
+          ),
+        ),
+      ),
+      store: store,
+      now: () => now,
+    );
+
+    await controller.restore();
+
+    expect(controller.status, AuthStatus.unauthenticated);
+    expect(store.session, isNull);
+  });
+
   test('validAccessToken returns a current stored token', () async {
     final controller = AuthController(
       api: AuthApi(FakeTransport()),

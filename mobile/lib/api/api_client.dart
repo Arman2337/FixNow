@@ -108,7 +108,7 @@ class ApiClient implements ApiTransport, BinaryDownloader {
     Map<String, String>? fields,
   }) async {
     try {
-      final request = http.MultipartRequest('POST', _baseUri.resolve(path))
+      final request = http.MultipartRequest('POST', _resolveUri(path))
         ..headers['Accept'] = 'application/json'
         ..headers['Authorization'] = 'Bearer $bearerToken'
         ..fields.addAll(fields ?? const <String, String>{})
@@ -206,7 +206,7 @@ class ApiClient implements ApiTransport, BinaryDownloader {
     int maxBytes = _maximumDownloadBytes,
   }) async {
     try {
-      final request = http.Request('GET', _baseUri.resolve(path))
+      final request = http.Request('GET', _resolveUri(path))
         ..headers['Accept'] = 'image/*'
         ..headers['Authorization'] = 'Bearer $bearerToken';
       final response = await _httpClient.send(request).timeout(timeout);
@@ -241,6 +241,11 @@ class ApiClient implements ApiTransport, BinaryDownloader {
 
   static const int _maximumDownloadBytes = 12 * 1024 * 1024;
 
+  Uri _resolveUri(String path) {
+    final cleanPath = path.startsWith('/') ? path.substring(1) : path;
+    return _baseUri.resolve(cleanPath);
+  }
+
   @override
   Future<ApiResponse> send(ApiRequest request) async {
     final attempts = request.method == ApiMethod.get ? maxGetAttempts : 1;
@@ -264,7 +269,7 @@ class ApiClient implements ApiTransport, BinaryDownloader {
 
   Future<ApiResponse> _sendOnce(ApiRequest request) async {
     try {
-      final uri = _baseUri.resolve(request.path);
+      final uri = _resolveUri(request.path);
       final headers = <String, String>{
         'Accept': 'application/json',
         ...request.headers,

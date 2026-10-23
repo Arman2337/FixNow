@@ -45,7 +45,18 @@ class AuthController extends ChangeNotifier {
       } else if (stored.isExpired(_now().toUtc())) {
         _session = stored;
         verificationEmail = stored.verificationEmail;
-        await _refresh(stored.refreshToken);
+        try {
+          await _refresh(stored.refreshToken);
+        } on ApiException catch (error) {
+          if (error.kind == ApiFailureKind.offline ||
+              error.kind == ApiFailureKind.timeout) {
+            _setStatus(AuthStatus.offline);
+            return;
+          }
+          await _store.clear();
+          _session = null;
+          _setStatus(AuthStatus.unauthenticated);
+        }
       } else {
         _session = stored;
         verificationEmail = stored.verificationEmail;

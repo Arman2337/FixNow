@@ -884,13 +884,25 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
             return Scaffold(
               body: SafeArea(
                 child: Center(
-                  child: FixErrorState(
-                    title: 'Authentication Error',
-                    message:
-                        _auth.errorMessage ??
-                        'Something went wrong restoring your session.',
-                    retryLabel: 'Retry',
-                    onRetry: () => _auth.restore(),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        FixErrorState(
+                          title: 'Authentication Error',
+                          message:
+                              _auth.errorMessage ??
+                              'Something went wrong restoring your session.',
+                          retryLabel: 'Retry',
+                          onRetry: () => _auth.restore(),
+                        ),
+                        const SizedBox(height: 16),
+                        TextButton(
+                          onPressed: () => _auth.logout(),
+                          child: const Text('Log In Again'),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

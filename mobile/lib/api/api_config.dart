@@ -21,6 +21,15 @@ class ApiConfig {
       throw StateError('API_BASE_URL must use HTTPS outside development.');
     }
 
-    return uri.path.endsWith('/') ? uri : uri.replace(path: '${uri.path}/');
+    var path = uri.path;
+    if (!path.endsWith('/')) {
+      path = '$path/';
+    }
+    if (!path.contains('/api/v1/')) {
+      path = '${path}api/v1/';
+    }
+    path = path.replaceAll(RegExp(r'/+'), '/');
+
+    return uri.replace(path: path);
   }
 }

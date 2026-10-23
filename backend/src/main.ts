@@ -70,6 +70,30 @@ async function bootstrap() {
   // every request with 502, and the only visible symptom was a Flutter client
   // logging "Unable to connect". Binding `use` hands Express an actual function
   // and keeps the middleware in its intended order.
+  // Rewrite requests missing /api/v1 prefix (e.g. clients configured with domain root)
+  app.use((req: any, _res: any, next: any) => {
+    const url = req.url || '';
+    if (
+      !url.startsWith('/api/v1') &&
+      !url.startsWith('/api/docs') &&
+      !url.startsWith('/health') &&
+      (url.startsWith('/auth') ||
+        url.startsWith('/bookings') ||
+        url.startsWith('/providers') ||
+        url.startsWith('/users') ||
+        url.startsWith('/services') ||
+        url.startsWith('/support') ||
+        url.startsWith('/ratings') ||
+        url.startsWith('/emergency') ||
+        url.startsWith('/ai') ||
+        url.startsWith('/guarantees') ||
+        url.startsWith('/payments'))
+    ) {
+      req.url = `/api/v1${url}`;
+    }
+    next();
+  });
+
   const securityHeaders = new SecurityHeadersMiddleware(configService);
   app.use(securityHeaders.use.bind(securityHeaders));
   const requestCorrelation = new RequestCorrelationMiddleware();

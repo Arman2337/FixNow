@@ -189,7 +189,7 @@ class _JobProofVerificationDialogState
         borderRadius: BorderRadius.vertical(
           top: Radius.circular(AppRadius.card),
         ),
-        border: Border(top: BorderSide(color: Colors.white12)),
+        border: Border(top: BorderSide(color: AppColors.borderDefault)),
       ),
       child: SafeArea(
         top: false,
@@ -205,7 +205,7 @@ class _JobProofVerificationDialogState
                   height: 4,
                   margin: const EdgeInsets.only(bottom: 12),
                   decoration: BoxDecoration(
-                    color: Colors.white24,
+                    color: AppColors.borderStrong,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -233,7 +233,7 @@ class _JobProofVerificationDialogState
                       Text(
                         'Job Verification Photos',
                         style: FixNowTypography.heading2.copyWith(
-                          color: Colors.white,
+                          color: AppColors.textPrimary,
                           fontSize: 18,
                         ),
                       ),
@@ -242,7 +242,7 @@ class _JobProofVerificationDialogState
                   IconButton(
                     icon: const Icon(
                       Icons.close_rounded,
-                      color: Colors.white70,
+                      color: AppColors.textSecondary,
                     ),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
@@ -252,7 +252,7 @@ class _JobProofVerificationDialogState
               const Text(
                 'Take mandatory Before and After photos to verify service quality, maintain customer trust, and protect against disputes.',
                 style: TextStyle(
-                  color: Colors.white60,
+                  color: AppColors.textSecondary,
                   fontSize: 12,
                   height: 1.4,
                 ),
@@ -312,7 +312,7 @@ class _JobProofVerificationDialogState
                                     const Text(
                                       'Compare Before & After',
                                       style: TextStyle(
-                                        color: Colors.white,
+                                        color: AppColors.textPrimary,
                                         fontWeight: FontWeight.bold,
                                         fontSize: 16,
                                       ),
@@ -320,7 +320,7 @@ class _JobProofVerificationDialogState
                                     IconButton(
                                       icon: const Icon(
                                         Icons.close_rounded,
-                                        color: Colors.white,
+                                        color: AppColors.textSecondary,
                                       ),
                                       onPressed: () =>
                                           Navigator.of(context).pop(),
@@ -356,12 +356,12 @@ class _JobProofVerificationDialogState
               TextField(
                 controller: _notesController,
                 maxLines: 2,
-                style: const TextStyle(color: Colors.white, fontSize: 13),
+                style: const TextStyle(color: AppColors.inputText, fontSize: 13),
                 decoration: InputDecoration(
                   hintText:
                       'Work notes (e.g. Replaced rubber gasket, tested zero leaks)...',
                   hintStyle: const TextStyle(
-                    color: Colors.white38,
+                    color: AppColors.inputHint,
                     fontSize: 12,
                   ),
                   filled: true,
@@ -369,11 +369,11 @@ class _JobProofVerificationDialogState
                   contentPadding: const EdgeInsets.all(12),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppRadius.card),
-                    borderSide: const BorderSide(color: Colors.white12),
+                    borderSide: const BorderSide(color: AppColors.borderDefault),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppRadius.card),
-                    borderSide: const BorderSide(color: Colors.white12),
+                    borderSide: const BorderSide(color: AppColors.borderDefault),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppRadius.card),
@@ -459,7 +459,7 @@ class _JobProofVerificationDialogState
                 onPressed: () => Navigator.of(context).pop(),
                 child: const Text(
                   'Cancel',
-                  style: TextStyle(color: Colors.white60),
+                  style: TextStyle(color: AppColors.textSecondary),
                 ),
               ),
             ],
@@ -484,7 +484,7 @@ class _JobProofVerificationDialogState
           color: AppColors.surfaceElevated,
           borderRadius: BorderRadius.circular(AppRadius.card),
           border: Border.all(
-            color: hasPhoto ? AppColors.success : Colors.white24,
+            color: hasPhoto ? AppColors.success : AppColors.borderDefault,
             width: hasPhoto ? 1.5 : 1.0,
           ),
         ),
@@ -507,13 +507,13 @@ class _JobProofVerificationDialogState
                   children: [
                     Container(
                       padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.08),
+                      decoration: const BoxDecoration(
+                        color: AppColors.surfaceSecondary,
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
                         Icons.add_a_photo_outlined,
-                        color: Colors.white70,
+                        color: AppColors.primary,
                         size: 22,
                       ),
                     ),
@@ -521,7 +521,7 @@ class _JobProofVerificationDialogState
                     const Text(
                       'Take Photo',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: AppColors.textPrimary,
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                       ),
@@ -621,7 +621,7 @@ class JobProofViewerCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surfaceElevated,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: Colors.white12),
+        border: Border.all(color: AppColors.borderDefault),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -644,7 +644,7 @@ class JobProofViewerCard extends StatelessWidget {
               const Text(
                 'Verified Job Proof Photos',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: AppColors.textPrimary,
                   fontWeight: FontWeight.w700,
                   fontSize: 14,
                 ),
@@ -712,7 +712,7 @@ class JobProofViewerCard extends StatelessWidget {
                               const Text(
                                 'Interactive Work Comparison',
                                 style: TextStyle(
-                                  color: Colors.white,
+                                  color: AppColors.textPrimary,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
                                 ),
@@ -720,7 +720,7 @@ class JobProofViewerCard extends StatelessWidget {
                               IconButton(
                                 icon: const Icon(
                                   Icons.close_rounded,
-                                  color: Colors.white,
+                                  color: AppColors.textSecondary,
                                 ),
                                 onPressed: () => Navigator.of(context).pop(),
                               ),
@@ -751,7 +751,7 @@ class JobProofViewerCard extends StatelessWidget {
             Text(
               'Technician Notes: ${proof.notes}',
               style: const TextStyle(
-                color: Colors.white70,
+                color: AppColors.textSecondary,
                 fontSize: 12,
                 fontStyle: FontStyle.italic,
               ),
@@ -761,7 +761,7 @@ class JobProofViewerCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             'Verified by ${proof.proName} • Watermarked on ${proof.capturedAt.toLocal().toString().split('.')[0]}',
-            style: const TextStyle(color: Colors.white38, fontSize: 11),
+            style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
           ),
         ],
       ),
@@ -773,7 +773,7 @@ class JobProofViewerCard extends StatelessWidget {
       height: 110,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: Colors.white12),
+        border: Border.all(color: AppColors.borderDefault),
       ),
       child: Stack(
         children: [

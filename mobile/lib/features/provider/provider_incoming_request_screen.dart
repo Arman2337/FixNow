@@ -197,7 +197,7 @@ class _ProviderIncomingRequestScreenState
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+                  color: Colors.white,
                 ),
               ),
               const SizedBox(height: 16),
@@ -238,7 +238,8 @@ class _ProviderIncomingRequestScreenState
                       onPressed: _dismissScreen,
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        side: const BorderSide(color: AppColors.error),
+                        foregroundColor: Colors.white,
+                        side: const BorderSide(color: Colors.white38),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -246,7 +247,7 @@ class _ProviderIncomingRequestScreenState
                       child: const Text(
                         'Skip',
                         style: TextStyle(
-                          color: AppColors.error,
+                          color: Colors.white,
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),

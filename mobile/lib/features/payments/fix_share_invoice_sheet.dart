@@ -70,7 +70,7 @@ class FixShareInvoiceSheet extends StatelessWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.white24,
+                color: AppColors.borderStrong,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -107,7 +107,7 @@ class FixShareInvoiceSheet extends StatelessWidget {
                           child: Text(
                             invoice.invoiceNumber,
                             style: const TextStyle(
-                              color: AppColors.cream,
+                              color: AppColors.textPrimary,
                               fontWeight: FontWeight.w800,
                               fontSize: 16,
                             ),
@@ -153,7 +153,7 @@ class FixShareInvoiceSheet extends StatelessWidget {
           const Text(
             'Share or Export Invoice',
             style: TextStyle(
-              color: AppColors.cream,
+              color: AppColors.textPrimary,
               fontWeight: FontWeight.w700,
               fontSize: 14,
             ),
@@ -295,7 +295,7 @@ class FixShareInvoiceSheet extends StatelessWidget {
   static void _showSnack(BuildContext context, String msg, {IconData? icon}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        backgroundColor: AppColors.surfaceElevated,
+        backgroundColor: AppColors.backgroundSecondary,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
@@ -312,7 +312,7 @@ class FixShareInvoiceSheet extends StatelessWidget {
             Expanded(
               child: Text(
                 msg,
-                style: const TextStyle(color: AppColors.cream, fontSize: 13),
+                style: const TextStyle(color: Colors.white, fontSize: 13),
               ),
             ),
           ],
@@ -347,10 +347,10 @@ class _ShareOptionTile extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
-            color: AppColors.backgroundSecondary.withValues(alpha: 0.4),
+            color: AppColors.surfaceSecondary,
             borderRadius: BorderRadius.circular(AppRadius.medium),
             border: Border.all(
-              color: AppColors.borderDefault.withValues(alpha: 0.1),
+              color: AppColors.borderDefault,
             ),
           ),
           child: Row(
@@ -372,7 +372,7 @@ class _ShareOptionTile extends StatelessWidget {
                     Text(
                       title,
                       style: const TextStyle(
-                        color: AppColors.cream,
+                        color: AppColors.textPrimary,
                         fontWeight: FontWeight.w600,
                         fontSize: 13,
                       ),
@@ -381,7 +381,7 @@ class _ShareOptionTile extends StatelessWidget {
                     Text(
                       subtitle,
                       style: const TextStyle(
-                        color: AppColors.textMuted,
+                        color: AppColors.textSecondary,
                         fontSize: 11,
                       ),
                     ),
@@ -390,7 +390,7 @@ class _ShareOptionTile extends StatelessWidget {
               ),
               const Icon(
                 Icons.chevron_right_rounded,
-                color: AppColors.textMuted,
+                color: AppColors.textSecondary,
                 size: 18,
               ),
             ],

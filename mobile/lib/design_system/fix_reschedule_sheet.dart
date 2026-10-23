@@ -87,7 +87,11 @@ class _FixRescheduleSheetState extends State<FixRescheduleSheet> {
         Navigator.of(context).pop(updated);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            backgroundColor: AppColors.surfaceElevated,
+            backgroundColor: AppColors.backgroundSecondary,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
             content: Row(
               children: [
                 const Icon(

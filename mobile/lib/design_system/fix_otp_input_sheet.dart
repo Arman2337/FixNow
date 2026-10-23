@@ -145,7 +145,7 @@ class _FixOtpInputSheetState extends State<FixOtpInputSheet> {
                   height: 64,
                   margin: const EdgeInsets.symmetric(horizontal: 6),
                   decoration: BoxDecoration(
-                    color: AppColors.backgroundSecondary,
+                    color: AppColors.surfaceContainerLow,
                     borderRadius: BorderRadius.circular(AppRadius.card),
                     border: Border.all(
                       color: isCurrent

@@ -324,7 +324,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
           children: [
             Icon(Icons.emergency_rounded, color: AppColors.emergency),
             SizedBox(width: 8),
-            Text('Emergency Support', style: TextStyle(color: Colors.white)),
+            Text('Emergency Support', style: TextStyle(color: AppColors.textPrimary)),
           ],
         ),
         content: const Column(
@@ -714,7 +714,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                                     style: const TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w700,
-                                      color: AppColors.textSecondary,
+                                      color: AppColors.textOnDarkPrimary,
                                     ),
                                   ),
                                 ),

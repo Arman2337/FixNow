@@ -232,7 +232,7 @@ class _ProviderNavigationMapScreenState
                   decoration: BoxDecoration(
                     color: AppColors.backgroundPrimary.withValues(alpha: 0.92),
                     borderRadius: AppRadius.cardBorder,
-                    border: Border.all(color: Colors.white12),
+                    border: Border.all(color: AppColors.borderDefault),
                     boxShadow: const [
                       BoxShadow(
                         color: Colors.black45,
@@ -246,7 +246,7 @@ class _ProviderNavigationMapScreenState
                       IconButton(
                         icon: const Icon(
                           Icons.arrow_back_rounded,
-                          color: AppColors.cream,
+                          color: AppColors.textPrimary,
                         ),
                         tooltip: 'Back to job',
                         onPressed: () => Navigator.of(context).pop(),
@@ -262,7 +262,7 @@ class _ProviderNavigationMapScreenState
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w700,
-                                color: AppColors.cream,
+                                color: AppColors.textPrimary,
                               ),
                             ),
                             Text(
@@ -323,7 +323,7 @@ class _ProviderNavigationMapScreenState
                         style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.cream,
+                          color: AppColors.textPrimary,
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -347,7 +347,7 @@ class _ProviderNavigationMapScreenState
                         style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.cream,
+                          color: AppColors.textPrimary,
                         ),
                       ),
                     ],
@@ -365,7 +365,7 @@ class _ProviderNavigationMapScreenState
                   decoration: BoxDecoration(
                     color: AppColors.backgroundPrimary.withValues(alpha: 0.95),
                     borderRadius: AppRadius.cardBorder,
-                    border: Border.all(color: Colors.white24),
+                    border: Border.all(color: AppColors.borderDefault),
                     boxShadow: const [
                       BoxShadow(
                         color: Colors.black87,
@@ -415,7 +415,7 @@ class _ProviderNavigationMapScreenState
                                   style: const TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w700,
-                                    color: AppColors.cream,
+                                    color: AppColors.textPrimary,
                                   ),
                                 ),
                               ],

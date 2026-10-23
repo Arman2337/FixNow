@@ -267,8 +267,8 @@ class FixUniversalSearchBar extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
           color: isCustom
-              ? AppColors.primarySoft.withValues(alpha: 0.2)
-              : AppColors.backgroundSecondary,
+              ? AppColors.primarySoft
+              : AppColors.surfaceContainerLow,
           borderRadius: BorderRadius.circular(AppRadius.pill),
           border: Border.all(
             color: isCustom ? AppColors.primary : AppColors.borderDefault,
@@ -315,8 +315,8 @@ class FixUniversalSearchBar extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: selected
-              ? AppColors.primary.withValues(alpha: 0.15)
-              : AppColors.backgroundSecondary,
+              ? AppColors.primarySoft
+              : AppColors.surfaceContainerLow,
           borderRadius: BorderRadius.circular(AppRadius.pill),
           border: Border.all(
             color: selected ? AppColors.primary : AppColors.borderDefault,

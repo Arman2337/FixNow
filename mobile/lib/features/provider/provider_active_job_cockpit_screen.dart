@@ -275,8 +275,13 @@ class _ProviderActiveJobCockpitScreenState
         return Scaffold(
           backgroundColor: AppColors.surface,
           body: SafeArea(
-            child: CustomScrollView(
-              slivers: [
+            child: RefreshIndicator(
+              color: AppColors.accentGold,
+              backgroundColor: AppColors.surfaceElevated,
+              onRefresh: widget.controller.refresh,
+              child: CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
                 SliverAppBar(
                   pinned: true,
                   backgroundColor: AppColors.surface.withValues(alpha: 0.8),
@@ -385,7 +390,8 @@ class _ProviderActiveJobCockpitScreenState
               ],
             ),
           ),
-        );
+        ),
+      );
       },
     );
   }

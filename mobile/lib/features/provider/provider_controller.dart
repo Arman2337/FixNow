@@ -98,32 +98,63 @@ class ProviderController extends ChangeNotifier {
 
   void _initRealtime() {
     _realtimeSub = realtime?.projections.listen((projection) {
-      if (projection.data['type'] == 'booking.projection-updated.v1') {
-        final data = projection.data['data'];
-        if (data is! Map) return;
-        final bookingId = data['bookingId'];
-        if (bookingId is! String) return;
-        if (!_isTrackedJob(bookingId)) return;
-        final typed = Map<String, Object?>.from(data);
-        final newRoute = _parseRoute(typed);
-        final newLocation = _parseLocation(typed);
-        if (newRoute != null || newLocation != null) {
-          if (newRoute != null) currentRoute = newRoute;
-          if (newLocation != null) currentLocation = newLocation;
+      final raw = projection.data;
+      final type = raw['type']?.toString();
+      final data = (raw['data'] is Map)
+          ? Map<String, Object?>.from(raw['data'] as Map)
+          : raw;
+
+      if (type == 'provider.request.v1') {
+        refreshRequests();
+        _incomingRequestsController.add(data);
+        return;
+      }
+
+      final bookingId = data['bookingId']?.toString();
+      if (bookingId == null) return;
+
+      final typed = Map<String, Object?>.from(data);
+      final newRoute = _parseRoute(typed);
+      final newLocation = _parseLocation(typed);
+      if (newRoute != null) currentRoute = newRoute;
+      if (newLocation != null) currentLocation = newLocation;
+
+      final newStatus = data['status']?.toString();
+      final newVersion = (data['sequence'] as num?)?.toInt();
+      final jobIndex = jobs.indexWhere(
+        (j) => j.id.toLowerCase() == bookingId.toLowerCase(),
+      );
+
+      if (jobIndex >= 0 && newStatus != null) {
+        final current = jobs[jobIndex];
+        if (current.status != newStatus ||
+            (newVersion != null && newVersion > current.version)) {
+          final updated = current.copyWith(
+            status: newStatus,
+            version: newVersion ?? current.version,
+          );
+          jobs = [...jobs]..[jobIndex] = updated;
+          _checkEnRouteBroadcasting();
+          notifyListeners();
+        } else if (newRoute != null || newLocation != null) {
           notifyListeners();
         }
-      } else if (projection.data['type'] == 'provider.request.v1') {
-        final data = projection.data['data'];
-        if (data is Map<String, Object?>) {
-          refreshRequests();
-          _incomingRequestsController.add(data);
-        }
+      } else if (jobIndex < 0 && newStatus != null) {
+        unawaited(
+          repository
+              .jobs()
+              .then((newJobs) {
+                jobs = newJobs;
+                _checkEnRouteBroadcasting();
+                notifyListeners();
+              })
+              .catchError((_) {}),
+        );
+      } else if (newRoute != null || newLocation != null) {
+        notifyListeners();
       }
     });
   }
-
-  bool _isTrackedJob(String bookingId) =>
-      jobs.any((j) => j.id.toLowerCase() == bookingId.toLowerCase());
 
   DrivingRoute? _parseRoute(Map<String, Object?> data) {
     final route = data['route'];
@@ -332,31 +363,50 @@ class ProviderController extends ChangeNotifier {
     state = ProviderLoadState.loading;
     notifyListeners();
     try {
-      application = await repository.application();
-      profile = await repository.profile();
-      skills = await repository.skills();
-      categories = await repository.categories();
-      documents = verified ? const [] : await repository.documents();
-      if (verified) {
+      if (!verified) {
+        final results = await Future.wait([
+          repository.application(),
+          repository.profile(),
+          repository.skills(),
+          repository.categories(),
+          repository.documents(),
+        ]);
+        application = results[0] as ProviderApplication;
+        profile = results[1] as ProviderProfile?;
+        skills = (results[2] as List).cast<ProviderSkill>();
+        categories = (results[3] as List).cast<Map<String, Object?>>();
+        documents = (results[4] as List).cast<ProviderDocument>();
+      } else {
         final userId = currentUserId?.call();
         if (userId != null) {
-          realtime?.subscribeAccount(userId);
+          unawaited(
+            realtime?.subscribeAccount(userId) ?? Future<void>.value(),
+          );
         }
-        availability = await repository.availability();
+        final results = await Future.wait([
+          repository.application(),
+          repository.profile(),
+          repository.skills(),
+          repository.categories(),
+          repository.availability(),
+          repository.jobs(),
+          repository.availableRequests().catchError((_) => <ProviderRequest>[]),
+        ]);
+        application = results[0] as ProviderApplication;
+        profile = results[1] as ProviderProfile?;
+        skills = (results[2] as List).cast<ProviderSkill>();
+        categories = (results[3] as List).cast<Map<String, Object?>>();
+        documents = const [];
+        availability = results[4] as ProviderAvailability?;
+        jobs = (results[5] as List).cast<CustomerBooking>();
+        requests = (results[6] as List).cast<ProviderRequest>();
+
         if (availability?.status == 'online') {
-          await _syncLocationOnce();
+          unawaited(_syncLocationOnce());
           _startLocationTracking();
           _startRequestPolling();
         }
-        jobs = await repository.jobs();
         _checkEnRouteBroadcasting();
-        try {
-          requests = await repository.availableRequests();
-        } catch (_) {
-          requests = const [];
-          actionError =
-              'Incoming requests are temporarily unavailable. Refresh to try again.';
-        }
       }
       state = ProviderLoadState.ready;
     } on ApiException {
@@ -364,6 +414,28 @@ class ProviderController extends ChangeNotifier {
       state = ProviderLoadState.failure;
     }
     notifyListeners();
+  }
+
+  /// Fast parallel refresh of live operational data (jobs, requests, availability).
+  /// Updates in-place without triggering a full-screen loading state.
+  Future<void> refresh() async {
+    try {
+      final results = await Future.wait([
+        repository.jobs(),
+        repository.availableRequests().catchError((_) => requests),
+        repository.availability(),
+      ]);
+      jobs = (results[0] as List).cast<CustomerBooking>();
+      requests = (results[1] as List).cast<ProviderRequest>();
+      availability = results[2] as ProviderAvailability?;
+      _checkEnRouteBroadcasting();
+      notifyListeners();
+      if (availability?.status == 'online') {
+        unawaited(_syncLocationOnce());
+      }
+    } catch (_) {
+      await load(verified: true);
+    }
   }
 
   Future<void> submitApplication() async {

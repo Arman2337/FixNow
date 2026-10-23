@@ -189,6 +189,9 @@ class RealtimeClient extends ChangeNotifier {
   });
 
   void _rememberSubscription(String channel, String resourceId) {
+    if (channel == 'account') {
+      _subscriptions.removeWhere((s) => s['channel'] == 'account');
+    }
     final exists = _subscriptions.any(
       (subscription) =>
           subscription['channel'] == channel &&
@@ -212,7 +215,7 @@ class RealtimeClient extends ChangeNotifier {
         'requestId': requestId,
       });
       try {
-        await acknowledgement.future.timeout(const Duration(milliseconds: 250));
+        await acknowledgement.future.timeout(const Duration(milliseconds: 1500));
       } on TimeoutException {
         return;
       }
@@ -224,7 +227,15 @@ class RealtimeClient extends ChangeNotifier {
 
   Future<void> _restoreSubscriptions() async {
     for (final subscription in List<Map<String, String>>.from(_subscriptions)) {
-      await _subscribe(subscription['channel']!, subscription['resourceId']!);
+      try {
+        await _subscribe(subscription['channel']!, subscription['resourceId']!);
+      } catch (_) {
+        _subscriptions.removeWhere(
+          (s) =>
+              s['channel'] == subscription['channel'] &&
+              s['resourceId'] == subscription['resourceId'],
+        );
+      }
     }
   }
 
@@ -311,10 +322,14 @@ class RealtimeClient extends ChangeNotifier {
       } else if (msgType == 'booking.projection-updated.v1') {
         final data = decoded['data'];
         if (data is Map) {
-          _projections.add(RealtimeProjection(Map<String, Object?>.from(data)));
+          final map = Map<String, Object?>.from(data);
+          map['type'] ??= 'booking.projection-updated.v1';
+          _projections.add(RealtimeProjection(map));
         }
       } else if (msgType != null &&
-          (msgType.startsWith('call.') || msgType.startsWith('chat.'))) {
+          (msgType.startsWith('call.') ||
+              msgType.startsWith('chat.') ||
+              msgType.startsWith('provider.'))) {
         _projections.add(
           RealtimeProjection({
             'type': msgType,
@@ -494,6 +509,33 @@ class RealtimeClient extends ChangeNotifier {
         StateError(decoded['code']?.toString() ?? 'Realtime request denied'),
       );
     }
+  }
+
+  /// Cleans up subscriptions and closes connection on logout/session change
+  /// without destroying event streams, allowing the client to be cleanly reused.
+  Future<void> resetSession() async {
+    _closed = false;
+    _subscriptions.clear();
+    for (final ack in _pendingAcks.values) {
+      if (!ack.isCompleted) ack.completeError(Exception('Session reset'));
+    }
+    _pendingAcks.clear();
+    _pendingSubscriptionAcks.clear();
+    _retryTimer?.cancel();
+    _retryTimer = null;
+    _retries = 0;
+    final socket = _socket;
+    _socket = null;
+    if (socket != null) {
+      try {
+        await socket.close();
+      } catch (_) {}
+    }
+    if (_readyCompleter?.isCompleted == false) {
+      _readyCompleter!.completeError(Exception('Session reset'));
+    }
+    _stale = false;
+    notifyListeners();
   }
 
   @override

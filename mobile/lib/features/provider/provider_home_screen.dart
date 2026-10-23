@@ -97,10 +97,7 @@ class ProviderHomeScreen extends StatelessWidget {
       return RefreshIndicator(
         color: AppColors.accentGold,
         backgroundColor: AppColors.surfaceElevated,
-        onRefresh: () async {
-          await controller.refreshRequests();
-          await controller.load(verified: true);
-        },
+        onRefresh: controller.refresh,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(AppSpacing.pagePadding),
@@ -354,17 +351,22 @@ class ProviderHomeScreen extends StatelessWidget {
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(
-                                    'Edit schedule',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleMedium
-                                        ?.copyWith(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w800,
-                                          height: 1.2,
-                                        ),
+                                  Expanded(
+                                    child: Text(
+                                      'Edit schedule',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium
+                                          ?.copyWith(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w800,
+                                            height: 1.2,
+                                          ),
+                                    ),
                                   ),
+                                  const SizedBox(width: 4),
                                   const Icon(
                                     Icons.chevron_right_rounded,
                                     color: Colors.white70,
@@ -443,16 +445,20 @@ class ProviderHomeScreen extends StatelessWidget {
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Text(
-                                      'View\nEarnings',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleMedium
-                                          ?.copyWith(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w800,
-                                            height: 1.2,
-                                          ),
+                                    Expanded(
+                                      child: Text(
+                                        'View\nEarnings',
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleMedium
+                                            ?.copyWith(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w800,
+                                              height: 1.2,
+                                            ),
+                                      ),
                                     ),
                                     const Icon(
                                       Icons.chevron_right_rounded,

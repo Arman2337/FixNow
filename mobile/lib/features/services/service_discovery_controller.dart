@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:fixnow_mobile/api/api_client.dart';
 import 'package:fixnow_mobile/data/last_good_cache.dart';
 import 'package:fixnow_mobile/features/services/service_category.dart';
@@ -65,12 +66,14 @@ class ServiceDiscoveryController extends ChangeNotifier {
     status = DiscoveryStatus.loading;
     notifyListeners();
     try {
-      categories = await _repository.active();
-      try {
-        allSubServices = await _subServiceRepository.getAllSubServices();
-      } catch (_) {
-        allSubServices = const [];
-      }
+      final results = await Future.wait([
+        _repository.active(),
+        _subServiceRepository
+            .getAllSubServices()
+            .catchError((_) => <SubServiceItem>[]),
+      ]);
+      categories = results[0] as List<ServiceCategory>;
+      allSubServices = results[1] as List<SubServiceItem>;
       status = categories.isEmpty
           ? DiscoveryStatus.empty
           : DiscoveryStatus.ready;
@@ -79,7 +82,7 @@ class ServiceDiscoveryController extends ChangeNotifier {
       // Notify BEFORE touching storage: a slow or hanging disk must never hold
       // the catalogue off the screen.
       notifyListeners();
-      await _saveSnapshot(categories);
+      unawaited(_saveSnapshot(categories));
       return;
     } on ApiException catch (error) {
       final restored = await _showSavedDataIfLostConnection(error);

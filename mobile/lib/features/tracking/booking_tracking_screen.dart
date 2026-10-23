@@ -140,31 +140,37 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
     ),
     body: ListenableBuilder(
       listenable: widget.controller,
-      builder: (context, _) => ListView(
-        padding: const EdgeInsets.only(bottom: 40),
-        children: [
-          _ConnectionCard(controller: widget.controller),
-          _TrackingCard(tracking: widget.controller.tracking),
-          Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            child: Column(
-              children: [
-                if (widget.controller.tracking?.serviceStartOtp
-                    case final otp?) ...[
-                  _buildSecurityOtpCard(otp),
+      builder: (context, _) => RefreshIndicator(
+        color: AppColors.accentGold,
+        backgroundColor: AppColors.surfaceElevated,
+        onRefresh: widget.controller.loadSnapshot,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.only(bottom: 40),
+          children: [
+            _ConnectionCard(controller: widget.controller),
+            _TrackingCard(tracking: widget.controller.tracking),
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              child: Column(
+                children: [
+                  if (widget.controller.tracking?.serviceStartOtp
+                      case final otp?) ...[
+                    _buildSecurityOtpCard(otp),
+                    const SizedBox(height: AppSpacing.md),
+                  ],
+                  _buildSpecialistProfileCard(context),
                   const SizedBox(height: AppSpacing.md),
+                  _buildStatusTimelineCard(context),
+                  const SizedBox(height: AppSpacing.md),
+                  _buildServiceSummaryCard(context),
+                  const SizedBox(height: AppSpacing.md),
+                  _buildContextualActions(context),
                 ],
-                _buildSpecialistProfileCard(context),
-                const SizedBox(height: AppSpacing.md),
-                _buildStatusTimelineCard(context),
-                const SizedBox(height: AppSpacing.md),
-                _buildServiceSummaryCard(context),
-                const SizedBox(height: AppSpacing.md),
-                _buildContextualActions(context),
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     ),
   );

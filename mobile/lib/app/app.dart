@@ -305,7 +305,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
           api: _api,
           accessToken: _auth.validAccessToken,
         ),
-        realtime: _createRealtimeClient(),
+        realtime: _sharedRealtime,
       ),
     );
   }
@@ -1463,6 +1463,11 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
     // them on disk would let the next person to sign in on this device read the
     // last customer's bookings before the network answered.
     await _lastGoodCache.clear();
+    for (final controller in _trackingControllers.values) {
+      controller.dispose();
+    }
+    _trackingControllers.clear();
+    await _sharedRealtime?.resetSession();
     if (!mounted) return;
     setState(() => _authEntryStep = _AuthEntryStep.welcome);
   }

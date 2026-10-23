@@ -314,7 +314,6 @@ class BookingTrackingController extends ChangeNotifier {
   void dispose() {
     unawaited(_projectionSubscription?.cancel());
     _stalenessTimer?.cancel();
-    realtime?.dispose();
     super.dispose();
   }
 }

@@ -77,12 +77,16 @@ class _ProviderJobsScreenState extends State<ProviderJobsScreen> {
 
       final filteredAssigned = assignedJobs.where((j) => isJobOnDate(j, selectedDate)).toList();
       final filteredHistory = historyJobs.where((j) => isJobOnDate(j, selectedDate)).toList();
-
       final currentJobs = _showHistory ? filteredHistory : filteredAssigned;
 
-      return SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSpacing.pagePadding),
-        child: Column(
+      return RefreshIndicator(
+        color: AppColors.accentGold,
+        backgroundColor: AppColors.surfaceElevated,
+        onRefresh: widget.controller.refresh,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(AppSpacing.pagePadding),
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Provider Profile & Status Banner
@@ -181,7 +185,8 @@ job: filteredAssigned.first,
             const SizedBox(height: AppSpacing.xl),
           ],
         ),
-      );
+      ),
+    );
     },
   );
 

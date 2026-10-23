@@ -72,7 +72,7 @@ class BookingController extends ChangeNotifier {
       // live data off the screen — the snapshot write is bookkeeping, not part
       // of the read the user is waiting for.
       notifyListeners();
-      await _saveSnapshot(latest);
+      unawaited(_saveSnapshot(latest));
       await _subscribeToActiveBooking();
       return;
     } on ApiException catch (error) {
@@ -235,7 +235,14 @@ class BookingController extends ChangeNotifier {
     final version = (projection.data['sequence'] as num?)?.toInt();
     if (id == null || statusValue == null || version == null) return;
     final index = bookings.indexWhere((booking) => booking.id == id);
-    if (index < 0 || version <= bookings[index].version) return;
+    if (index < 0) {
+      if (const {'ASSIGNED', 'EN_ROUTE', 'IN_PROGRESS'}.contains(statusValue)) {
+        acceptedBooking.value = id;
+      }
+      unawaited(load());
+      return;
+    }
+    if (version <= bookings[index].version) return;
     if (version > bookings[index].version + 1) {
       if (bookings[index].status == 'REQUESTED' &&
           const {'ASSIGNED', 'EN_ROUTE', 'IN_PROGRESS'}.contains(statusValue)) {

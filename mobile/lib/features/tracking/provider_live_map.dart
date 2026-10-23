@@ -3,6 +3,7 @@ import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking.dart';
+import 'package:fixnow_mobile/features/tracking/road_routing_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -46,6 +47,7 @@ class ProviderLiveMap extends StatefulWidget {
     this.showOverlay = true,
     this.isProviderPerspective = false,
     this.height = 348,
+    this.onRouteResolved,
     super.key,
   });
 
@@ -56,6 +58,7 @@ class ProviderLiveMap extends StatefulWidget {
   final double? distanceKm;
   final bool showOverlay;
   final bool isProviderPerspective;
+  final ValueChanged<DrivingRoute>? onRouteResolved;
 
   /// Height of the map viewport. The cockpit embeds this in a 110px snippet,
   /// so the fit padding has to be derived from the real size, never assumed.
@@ -77,6 +80,11 @@ class _ProviderLiveMapState extends State<ProviderLiveMap>
   // with both endpoints known), the live-emerald overlay is drawn
   // progressively and the vehicle marker travels along it. Runs once.
   DrivingRoute? _drawRoute;
+  DrivingRoute? _internalRoute;
+  bool _fetchingInternalRoute = false;
+
+  DrivingRoute? get _effectiveRoute => widget.route ?? _internalRoute;
+
   List<LatLng> _sliced = const [];
   LatLng? _drawPos;
   double _drawBearing = 0.0;
@@ -141,13 +149,17 @@ class _ProviderLiveMapState extends State<ProviderLiveMap>
       );
     }
     // A snapshot that already carries the route must not replay the reveal.
-    if (widget.route != null) _routeIntroduced = true;
+    if (_effectiveRoute != null) _routeIntroduced = true;
     WidgetsBinding.instance.addPostFrameCallback((_) => _fitCamera());
+    _checkResolveRoadRoute();
   }
 
   @override
   void didUpdateWidget(covariant ProviderLiveMap oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (widget.route != null && widget.route != oldWidget.route) {
+      _internalRoute = null;
+    }
     if (widget.providerLocation != oldWidget.providerLocation) {
       if (widget.providerLocation != null) {
         final newTarget = LatLng(
@@ -162,6 +174,39 @@ class _ProviderLiveMapState extends State<ProviderLiveMap>
       WidgetsBinding.instance.addPostFrameCallback((_) => _fitCamera());
     }
     _maybeStartRouteDraw();
+    _checkResolveRoadRoute();
+  }
+
+  /// Resolves the actual road network geometry if the parent hasn't provided one.
+  void _checkResolveRoadRoute() {
+    if (widget.route != null) return;
+    if (_fetchingInternalRoute) return;
+    final provider = widget.providerLocation;
+    final customer = widget.customerLocation;
+    if (provider == null || customer == null) return;
+
+    _fetchingInternalRoute = true;
+    RoadRoutingService.instance
+        .getRoadRoute(
+          originLat: provider.latitude,
+          originLng: provider.longitude,
+          destLat: customer.latitude,
+          destLng: customer.longitude,
+        )
+        .then((route) {
+          if (!mounted || route == null) return;
+          setState(() {
+            _internalRoute = route;
+          });
+          widget.onRouteResolved?.call(route);
+          _maybeStartRouteDraw();
+        })
+        .catchError((_) {
+          // Graceful fallback: straight line dotted pattern remains if offline
+        })
+        .whenComplete(() {
+          _fetchingInternalRoute = false;
+        });
   }
 
   /// Glides the vehicle marker from [from] to [to] over 900ms, updating
@@ -197,8 +242,9 @@ class _ProviderLiveMapState extends State<ProviderLiveMap>
 
   void _maybeStartRouteDraw() {
     if (_routeIntroduced) return;
-    if (widget.route == null) return;
-    if (widget.route!.coordinates.length < 2) return;
+    final currentRoute = _effectiveRoute;
+    if (currentRoute == null) return;
+    if (currentRoute.coordinates.length < 2) return;
     if (widget.providerLocation == null || widget.customerLocation == null) {
       return;
     }
@@ -207,15 +253,16 @@ class _ProviderLiveMapState extends State<ProviderLiveMap>
     if (MediaQuery.maybeOf(context)?.disableAnimations ?? false) {
       return; // Static full route; nothing to animate.
     }
-    _drawRoute = _orientRoute(widget.route!);
+    _drawRoute = _orientRoute(currentRoute);
     _routeDrawController.forward(from: 0);
   }
 
   void _onRouteDrawTick() {
     if (!mounted || _drawRoute == null) return;
     // Route refresh mid-draw re-slices in place; never restart.
-    if (!identical(widget.route, _drawRoute) && widget.route != null) {
-      _drawRoute = _orientRoute(widget.route!);
+    final currentRoute = _effectiveRoute;
+    if (!identical(currentRoute, _drawRoute) && currentRoute != null) {
+      _drawRoute = _orientRoute(currentRoute);
     }
     final sliced = sliceRoute(
       _drawRoute!.coordinates,
@@ -349,7 +396,7 @@ class _ProviderLiveMapState extends State<ProviderLiveMap>
 
   Widget _buildTextAlternative() {
     final provider = widget.providerLocation;
-    final route = widget.route;
+    final route = _effectiveRoute;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.sm),
@@ -498,7 +545,7 @@ class _ProviderLiveMapState extends State<ProviderLiveMap>
                           polylines: [
                             Polyline(
                               points:
-                                  widget.route?.coordinates
+                                  _effectiveRoute?.coordinates
                                       .map(
                                         (point) => LatLng(
                                           point.latitude,
@@ -507,15 +554,15 @@ class _ProviderLiveMapState extends State<ProviderLiveMap>
                                       )
                                       .toList() ??
                                   [provider, customer],
-                              strokeWidth: widget.route == null ? 6 : 9,
+                              strokeWidth: _effectiveRoute == null ? 6 : 9,
                               color: Colors.white.withValues(alpha: 0.9),
-                              pattern: widget.route == null
+                              pattern: _effectiveRoute == null
                                   ? const StrokePattern.dotted()
                                   : const StrokePattern.solid(),
                             ),
                             Polyline(
                               points:
-                                  widget.route?.coordinates
+                                  _effectiveRoute?.coordinates
                                       .map(
                                         (point) => LatLng(
                                           point.latitude,
@@ -524,9 +571,9 @@ class _ProviderLiveMapState extends State<ProviderLiveMap>
                                       )
                                       .toList() ??
                                   [provider, customer],
-                              strokeWidth: widget.route == null ? 3 : 5,
+                              strokeWidth: _effectiveRoute == null ? 3 : 5,
                               color: AppColors.primary,
-                              pattern: widget.route == null
+                              pattern: _effectiveRoute == null
                                   ? const StrokePattern.dotted()
                                   : const StrokePattern.solid(),
                             ),

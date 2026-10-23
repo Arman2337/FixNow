@@ -149,7 +149,10 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
           padding: const EdgeInsets.only(bottom: 40),
           children: [
             _ConnectionCard(controller: widget.controller),
-            _TrackingCard(tracking: widget.controller.tracking),
+            _TrackingCard(
+              tracking: widget.controller.tracking,
+              onRouteResolved: widget.controller.updateRoute,
+            ),
             Padding(
               padding: const EdgeInsets.all(AppSpacing.md),
               child: Column(
@@ -1285,8 +1288,12 @@ class _ConnectionCard extends StatelessWidget {
 }
 
 class _TrackingCard extends StatelessWidget {
-  const _TrackingCard({required this.tracking});
+  const _TrackingCard({
+    required this.tracking,
+    this.onRouteResolved,
+  });
   final BookingTracking? tracking;
+  final ValueChanged<DrivingRoute>? onRouteResolved;
 
   @override
   Widget build(BuildContext context) {
@@ -1437,6 +1444,7 @@ class _TrackingCard extends StatelessWidget {
                 distanceKm: value.route == null
                     ? null
                     : value.route!.distanceMeters / 1000,
+                onRouteResolved: onRouteResolved,
               ),
             )
           else

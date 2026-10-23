@@ -1,7 +1,5 @@
-import 'dart:convert';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_radius.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
@@ -18,6 +16,7 @@ import 'package:fixnow_mobile/features/location/map_navigation_launcher.dart';
 import 'package:fixnow_mobile/features/provider/provider_controller.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking.dart';
 import 'package:fixnow_mobile/features/tracking/provider_live_map.dart';
+import 'package:fixnow_mobile/features/tracking/road_routing_service.dart';
 
 /// Full-screen navigation map screen for service technicians.
 /// Displays the live interactive route from the provider to the customer's
@@ -87,98 +86,16 @@ class _ProviderNavigationMapScreenState
     if (provider == null || custLat == null || custLng == null) return;
 
     _fetchingRoute = true;
-
-    // 1. Try OpenRouteService
     try {
-      const orsKey =
-          'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjQzOWUxYTg5ZWQ1ZTRmZTVhYzA2NjQ5ZmY1YzdjZDdhIiwiaCI6Im11cm11cjY0In0=';
-      final orsUrl = Uri.parse(
-        'https://api.openrouteservice.org/v2/directions/driving-car/geojson',
+      final route = await RoadRoutingService.instance.getRoadRoute(
+        originLat: provider.latitude,
+        originLng: provider.longitude,
+        destLat: custLat,
+        destLng: custLng,
       );
-      final orsRes = await http
-          .post(
-            orsUrl,
-            headers: {
-              'Authorization': orsKey,
-              'Content-Type': 'application/json',
-            },
-            body: jsonEncode({
-              'coordinates': [
-                [provider.longitude, provider.latitude],
-                [custLng, custLat],
-              ],
-            }),
-          )
-          .timeout(const Duration(seconds: 4));
-
-      if (orsRes.statusCode == 200) {
-        final data = jsonDecode(orsRes.body);
-        final features = data['features'] as List?;
-        if (features != null && features.isNotEmpty) {
-          final feature = features.first as Map;
-          final properties = feature['properties'] as Map?;
-          final summary = properties?['summary'] as Map?;
-          final geometry = feature['geometry'] as Map?;
-          final coords = geometry?['coordinates'] as List?;
-          if (coords != null && coords.length >= 2) {
-            final points = coords.map((p) {
-              final raw = p as List;
-              return CustomerMapLocation(
-                longitude: (raw[0] as num).toDouble(),
-                latitude: (raw[1] as num).toDouble(),
-              );
-            }).toList();
-            final route = DrivingRoute(
-              distanceMeters: (summary?['distance'] as num?)?.toDouble() ?? 0,
-              durationSeconds: (summary?['duration'] as num?)?.toInt() ?? 0,
-              coordinates: points,
-            );
-            if (mounted) {
-              setState(() => _directRoute = route);
-              widget.controller.currentRoute = route;
-            }
-            return;
-          }
-        }
-      }
-    } catch (_) {}
-
-    // 2. Resilient fallback: Open Source Routing Machine (OSRM)
-    try {
-      final osrmUrl = Uri.parse(
-        'https://router.project-osrm.org/route/v1/driving/${provider.longitude},${provider.latitude};$custLng,$custLat?overview=full&geometries=geojson',
-      );
-      final osrmRes = await http
-          .get(osrmUrl, headers: {'User-Agent': 'FixNow-Mobile/1.0'})
-          .timeout(const Duration(seconds: 5));
-      if (osrmRes.statusCode == 200) {
-        final data = jsonDecode(osrmRes.body);
-        final routes = data['routes'] as List?;
-        if (routes != null && routes.isNotEmpty) {
-          final first = routes.first as Map;
-          final distance = (first['distance'] as num?)?.toDouble() ?? 0;
-          final duration = (first['duration'] as num?)?.toInt() ?? 0;
-          final geometry = first['geometry'] as Map?;
-          final coords = geometry?['coordinates'] as List?;
-          if (coords != null && coords.length >= 2) {
-            final points = coords.map((p) {
-              final raw = p as List;
-              return CustomerMapLocation(
-                longitude: (raw[0] as num).toDouble(),
-                latitude: (raw[1] as num).toDouble(),
-              );
-            }).toList();
-            final route = DrivingRoute(
-              distanceMeters: distance,
-              durationSeconds: duration,
-              coordinates: points,
-            );
-            if (mounted) {
-              setState(() => _directRoute = route);
-              widget.controller.currentRoute = route;
-            }
-          }
-        }
+      if (route != null && mounted) {
+        setState(() => _directRoute = route);
+        widget.controller.currentRoute = route;
       }
     } catch (_) {
     } finally {

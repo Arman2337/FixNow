@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:fixnow_mobile/features/bookings/booking.dart';
 import 'package:fixnow_mobile/features/tracking/booking_tracking.dart';
+import 'package:fixnow_mobile/features/tracking/road_routing_service.dart';
 import 'package:fixnow_mobile/features/realtime/realtime_client.dart';
 import 'package:flutter/foundation.dart';
 
@@ -10,16 +11,20 @@ class BookingTrackingController extends ChangeNotifier {
     required this.bookingId,
     required this.source,
     this.realtime,
+    RoadRoutingService? routingService,
     CustomerBooking? initialBooking,
-  }) : tracking = initialBooking != null
+  }) : routingService = routingService ?? RoadRoutingService.instance,
+       tracking = initialBooking != null
            ? BookingTracking.fromBooking(initialBooking)
            : null;
   final String bookingId;
   final BookingTrackingSource source;
   final RealtimeClient? realtime;
+  final RoadRoutingService routingService;
   StreamSubscription<RealtimeProjection>? _projectionSubscription;
   Timer? _stalenessTimer;
   bool _otpFetchInFlight = false;
+  bool _fetchingRoute = false;
   TrackingConnection connection = TrackingConnection.connecting;
   BookingTracking? tracking;
   String? message;
@@ -55,6 +60,11 @@ class BookingTrackingController extends ChangeNotifier {
                   : null),
         );
         notifyListeners();
+        if (tracking?.providerLocation != null &&
+            tracking?.customerLocation != null &&
+            tracking?.route == null) {
+          _resolveRoadRoute();
+        }
       }
     }
   }
@@ -114,6 +124,11 @@ class BookingTrackingController extends ChangeNotifier {
       } else {
         _stalenessTimer?.cancel();
         _stalenessTimer = null;
+      }
+      if (tracking?.providerLocation != null &&
+          tracking?.customerLocation != null &&
+          tracking?.route == null) {
+        _resolveRoadRoute();
       }
     } catch (_) {
       connection = TrackingConnection.offline;
@@ -324,6 +339,60 @@ class BookingTrackingController extends ChangeNotifier {
       _stalenessTimer = null;
     }
     notifyListeners();
+    if (next.providerLocation != null &&
+        next.customerLocation != null &&
+        next.route == null) {
+      _resolveRoadRoute();
+    }
+  }
+
+  /// Updates the tracking route (and calculated ETA if not yet set) when resolved.
+  void updateRoute(DrivingRoute route) {
+    final current = tracking;
+    if (current == null) return;
+    if (current.route != null &&
+        current.route!.coordinates.length == route.coordinates.length) {
+      return;
+    }
+    final calcEta = (route.durationSeconds / 60).ceil().clamp(1, 180);
+    tracking = current.copyWith(
+      route: route,
+      estimatedMinutes: current.estimatedMinutes ?? calcEta,
+    );
+    notifyListeners();
+  }
+
+  Future<void> _resolveRoadRoute() async {
+    if (_fetchingRoute) return;
+    final current = tracking;
+    if (current == null) return;
+    final provider = current.providerLocation;
+    final customer = current.customerLocation;
+    if (provider == null || customer == null) return;
+    if (current.route != null && current.route!.coordinates.length >= 2) return;
+
+    _fetchingRoute = true;
+    try {
+      final route = await routingService.getRoadRoute(
+        originLat: provider.latitude,
+        originLng: provider.longitude,
+        destLat: customer.latitude,
+        destLng: customer.longitude,
+      );
+      final latest = tracking;
+      if (route != null && latest != null) {
+        final calcEta = (route.durationSeconds / 60).ceil().clamp(1, 180);
+        tracking = latest.copyWith(
+          route: route,
+          estimatedMinutes: latest.estimatedMinutes ?? calcEta,
+        );
+        notifyListeners();
+      }
+    } catch (_) {
+      // Graceful degradation: preserves current state
+    } finally {
+      _fetchingRoute = false;
+    }
   }
 
   void markDisconnected() {

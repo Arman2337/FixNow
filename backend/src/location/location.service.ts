@@ -294,7 +294,7 @@ export class LocationService {
       update.longitude > 180
     )
       throw new BadRequestException('Invalid coordinates');
-    const maxAccuracy = this.numberConfig('LOCATION_MAX_ACCURACY_METERS', 100);
+    const maxAccuracy = this.numberConfig('LOCATION_MAX_ACCURACY_METERS', 250);
     if (
       !Number.isFinite(update.accuracyMeters) ||
       update.accuracyMeters <= 0 ||

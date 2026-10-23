@@ -82,6 +82,8 @@ class ProviderController extends ChangeNotifier {
   final Map<String, int> _locationSequences = {};
   final Map<String, DateTime> _lastLocationSentAt = {};
   final Map<String, bool> locationSharing = {};
+  final Map<String, bool> _locationConsentSent = {};
+  DateTime? _lastPresenceSentAt;
 
   DrivingRoute? currentRoute;
   ProviderMapLocation? currentLocation;
@@ -361,6 +363,7 @@ class ProviderController extends ChangeNotifier {
   void _stopEnRouteBroadcasting() {
     _enRouteBroadcastTimer?.cancel();
     _enRouteBroadcastTimer = null;
+    _locationConsentSent.clear();
   }
 
   Future<void> load({required bool verified}) async {
@@ -590,6 +593,7 @@ class ProviderController extends ChangeNotifier {
         noticeVersion: '2026-08-13',
       );
       locationSharing[job.id] = granted;
+      _locationConsentSent[job.id] = granted;
       if (!granted) locationPublished.remove(job.id);
       _checkEnRouteBroadcasting();
       notifyListeners();
@@ -644,14 +648,24 @@ class ProviderController extends ChangeNotifier {
       final sequence = (_locationSequences[job.id] ?? 0) + 1;
       _locationSequences[job.id] = sequence;
 
-      // Ensure presence and consent are recorded before sending coordinates
-      await client.subscribeBooking(job.id);
-      await client.sendPresence(true);
-      await client.sendLocationConsent(
-        bookingId: job.id,
-        granted: true,
-        noticeVersion: '2026-08-13',
-      );
+      // Ensure presence and consent are recorded before sending coordinates,
+      // but avoid flooding the socket with redundant consent frames every tick.
+      if (_locationConsentSent[job.id] != true) {
+        await client.subscribeBooking(job.id);
+        await client.sendPresence(true);
+        await client.sendLocationConsent(
+          bookingId: job.id,
+          granted: true,
+          noticeVersion: '2026-08-13',
+        );
+        _locationConsentSent[job.id] = true;
+        _lastPresenceSentAt = DateTime.now();
+      } else if (_lastPresenceSentAt == null ||
+          DateTime.now().difference(_lastPresenceSentAt!) >
+              const Duration(seconds: 35)) {
+        await client.sendPresence(true);
+        _lastPresenceSentAt = DateTime.now();
+      }
       if (locationSharing[job.id] == false) {
         locationPublished.remove(job.id);
         return;

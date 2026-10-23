@@ -94,9 +94,18 @@ class BookingTrackingController extends ChangeNotifier {
       _projectionSubscription ??= realtime?.projections.listen(
         _applyProjection,
       );
-      await realtime?.subscribeBooking(bookingId);
-      connection = TrackingConnection.live;
-      message = null;
+      try {
+        await realtime?.subscribeBooking(bookingId);
+        connection = TrackingConnection.live;
+        message = null;
+      } catch (_) {
+        if (realtime?.isConnected ?? false) {
+          connection = TrackingConnection.live;
+          message = null;
+        } else {
+          connection = TrackingConnection.connecting;
+        }
+      }
       if (tracking?.status == 'EN_ROUTE') {
         _stalenessTimer ??= Timer.periodic(
           const Duration(seconds: 15),

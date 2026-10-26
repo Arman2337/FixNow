@@ -208,8 +208,14 @@ function asBookingId(message: OutboxMessage): string | null {
 }
 
 function bookingRequestSignal(booking: Booking): Record<string, unknown> {
-  let totalMinor = 0;
-  if (booking.lineItems) {
+  let totalMinor = booking.totalAmountMinor ?? 0;
+  if (!totalMinor && booking.items?.length) {
+    totalMinor = booking.items.reduce(
+      (sum, item) => sum + item.unitPriceMinor * item.quantity,
+      0,
+    );
+  }
+  if (!totalMinor && booking.lineItems?.length) {
     totalMinor = booking.lineItems.reduce(
       (sum, item) => sum + item.priceMinor * item.quantity,
       0,

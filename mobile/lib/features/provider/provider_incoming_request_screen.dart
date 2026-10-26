@@ -35,6 +35,36 @@ class _ProviderIncomingRequestScreenState
     super.initState();
     _startRinging();
     _subscribeToBookingUpdates();
+    if (_resolvePriceMinor() <= 0) {
+      widget.providerController.refreshRequests();
+    }
+  }
+
+  int _resolvePriceMinor() {
+    int priceMinor = 0;
+    final rawPrice = widget.requestData['priceMinor'] ??
+        widget.requestData['totalAmountMinor'] ??
+        widget.requestData['totalMinor'];
+    if (rawPrice != null) {
+      priceMinor = int.tryParse(rawPrice.toString()) ?? 0;
+    }
+    if (priceMinor <= 0 && widget.requestData['pricing'] is Map) {
+      final pricingMap = widget.requestData['pricing'] as Map;
+      priceMinor = (pricingMap['totalMinor'] as num?)?.toInt() ??
+          int.tryParse(pricingMap['totalMinor']?.toString() ?? '0') ??
+          0;
+    }
+    final bookingId = widget.requestData['bookingId'] as String? ??
+        widget.requestData['id'] as String?;
+    if (priceMinor <= 0 && bookingId != null) {
+      final existing = widget.providerController.requests
+          .where((r) => r.id == bookingId)
+          .firstOrNull;
+      if (existing?.priceMinor != null && existing!.priceMinor! > 0) {
+        priceMinor = existing.priceMinor!;
+      }
+    }
+    return priceMinor;
   }
 
   Future<void> _startRinging() async {
@@ -128,7 +158,8 @@ class _ProviderIncomingRequestScreenState
   }
 
   ProviderRequest? _requestFromData() {
-    final bookingId = widget.requestData['bookingId'] as String?;
+    final bookingId = widget.requestData['bookingId'] as String? ??
+        widget.requestData['id'] as String?;
     if (bookingId == null) return null;
     final existing = widget.providerController.requests
         .where((request) => request.id == bookingId)
@@ -144,6 +175,7 @@ class _ProviderIncomingRequestScreenState
       createdAt: DateTime.tryParse(widget.requestData['createdAt']?.toString() ?? '') ?? DateTime.now(),
       version: version,
       distanceKm: (widget.requestData['distanceKm'] as num?)?.toDouble() ?? 0,
+      priceMinor: _resolvePriceMinor(),
     );
   }
 
@@ -151,27 +183,24 @@ class _ProviderIncomingRequestScreenState
   Widget build(BuildContext context) {
     final description =
         widget.requestData['description']?.toString() ?? 'No description';
-    final priceMinor =
-        int.tryParse(widget.requestData['priceMinor']?.toString() ?? '0') ?? 0;
-    final price = (priceMinor / 100).toStringAsFixed(2);
-    final bookingId = widget.requestData['bookingId'] as String?;
-    // `_isAccepting` guards this instance's own button. The controller's flag is
-    // what covers the case this screen cannot see: the app pushes a separate
-    // instance per notification, so the same booking can be on screen twice at
-    // once and the other copy's tap is invisible from here. Without the shared
-    // check, both copies accept and the second POST loses a race it started.
+    final bookingId = widget.requestData['bookingId'] as String? ??
+        widget.requestData['id'] as String?;
     final acceptInFlight =
         _isAccepting ||
         (bookingId != null &&
             widget.providerController.isAcceptingRequest(bookingId));
     return ListenableBuilder(
       listenable: widget.providerController,
-      builder: (context, _) => _buildBody(
-        context,
-        description: description,
-        price: price,
-        acceptInFlight: acceptInFlight,
-      ),
+      builder: (context, _) {
+        final priceMinor = _resolvePriceMinor();
+        final price = (priceMinor / 100).toStringAsFixed(2);
+        return _buildBody(
+          context,
+          description: description,
+          price: price,
+          acceptInFlight: acceptInFlight,
+        );
+      },
     );
   }
 

@@ -194,8 +194,14 @@ export class DomainNotificationService {
     const template = BOOKING_NOTIFICATION_TEMPLATES['provider:REQUESTED'];
     if (!template) return;
 
-    let totalMinor = 0;
-    if (booking.lineItems) {
+    let totalMinor = booking.totalAmountMinor ?? 0;
+    if (!totalMinor && booking.items?.length) {
+      totalMinor = booking.items.reduce(
+        (sum, item) => sum + item.unitPriceMinor * item.quantity,
+        0,
+      );
+    }
+    if (!totalMinor && booking.lineItems?.length) {
       totalMinor = booking.lineItems.reduce(
         (sum, item) => sum + item.priceMinor * item.quantity,
         0,

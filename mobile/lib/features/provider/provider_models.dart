@@ -252,6 +252,7 @@ class ProviderRequest {
     required this.version,
     required this.distanceKm,
     this.customerPhone,
+    this.priceMinor,
   });
 
   final String id;
@@ -261,6 +262,7 @@ class ProviderRequest {
   final int version;
   final double distanceKm;
   final String? customerPhone;
+  final int? priceMinor;
 
   factory ProviderRequest.fromJson(Map<String, Object?> json) {
     final id = json['id'];
@@ -272,6 +274,19 @@ class ProviderRequest {
     if (id is! String || category is! String || createdAt == null) {
       throw const FormatException();
     }
+    int? priceMinor;
+    if (json['pricing'] is Map) {
+      final pricingMap = json['pricing'] as Map;
+      priceMinor = (pricingMap['totalMinor'] as num?)?.toInt() ??
+          int.tryParse(pricingMap['totalMinor']?.toString() ?? '');
+    }
+    priceMinor ??= (json['priceMinor'] as num?)?.toInt() ??
+        int.tryParse(json['priceMinor']?.toString() ?? '');
+    priceMinor ??= (json['totalAmountMinor'] as num?)?.toInt() ??
+        int.tryParse(json['totalAmountMinor']?.toString() ?? '');
+    priceMinor ??= (json['totalMinor'] as num?)?.toInt() ??
+        int.tryParse(json['totalMinor']?.toString() ?? '');
+
     return ProviderRequest(
       id: id,
       serviceCategoryId: category,
@@ -280,6 +295,7 @@ class ProviderRequest {
       version: (json['version'] as num?)?.toInt() ?? 1,
       distanceKm: (distance as num?)?.toDouble() ?? 0.0,
       customerPhone: customerPhone,
+      priceMinor: priceMinor,
     );
   }
 }

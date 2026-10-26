@@ -216,7 +216,7 @@ class RealtimeClient extends ChangeNotifier {
       });
       try {
         await acknowledgement.future.timeout(const Duration(milliseconds: 1500));
-      } on TimeoutException {
+      } catch (_) {
         return;
       }
     } finally {

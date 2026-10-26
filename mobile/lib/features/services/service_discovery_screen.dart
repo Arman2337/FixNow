@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_motion.dart';
 import 'package:fixnow_mobile/design_system/app_radius.dart';
@@ -184,8 +186,42 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
       }
     }
 
-    // No third-party HTTP fallback: preserve the coordinates without sending
-    // them outside the consented platform service merely to produce a label.
+    // Web & platform geocoder fallback: query OSM Nominatim so real location name is displayed
+    try {
+      final uri = Uri.parse(
+        'https://nominatim.openstreetmap.org/reverse?format=json&lat=$lat&lon=$lng',
+      );
+      final response = await http.get(
+        uri,
+        headers: {'User-Agent': 'FixNow-Mobile/1.0 (com.fixnow.app)'},
+      ).timeout(const Duration(seconds: 3));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is Map && data['address'] is Map) {
+          final addr = data['address'] as Map;
+          final locality = addr['suburb'] ??
+              addr['neighbourhood'] ??
+              addr['residential'] ??
+              addr['road'];
+          final city = addr['city'] ??
+              addr['town'] ??
+              addr['village'] ??
+              addr['county'] ??
+              addr['state_district'];
+          final state = addr['state'] ?? addr['country'];
+          final label = locality != null && city != null
+              ? '$locality, $city'
+              : (city != null && state != null
+                  ? '$city, $state'
+                  : (city ?? state ?? data['display_name']));
+          if (mounted && label != null && label.toString().trim().isNotEmpty) {
+            setState(() => _locationName = label.toString().trim());
+            return;
+          }
+        }
+      }
+    } catch (_) {}
+
     if (mounted) setState(() => _locationName = 'Current location');
   }
 

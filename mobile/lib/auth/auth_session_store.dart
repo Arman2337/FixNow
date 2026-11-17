@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:fixnow_mobile/auth/auth_session.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -11,6 +13,7 @@ class SecureAuthSessionStore implements AuthSessionStore {
   SecureAuthSessionStore({FlutterSecureStorage? storage})
     : _storage = storage ?? const FlutterSecureStorage();
 
+  static const _sessionKey = 'fixnow.auth.session';
   static const _userIdKey = 'fixnow.auth.user_id';
   static const _accessTokenKey = 'fixnow.auth.access_token';
   static const _refreshTokenKey = 'fixnow.auth.refresh_token';
@@ -22,6 +25,23 @@ class SecureAuthSessionStore implements AuthSessionStore {
 
   @override
   Future<AuthSession?> read() async {
+    final encoded = await _storage.read(key: _sessionKey);
+    if (encoded != null) {
+      try {
+        final data = jsonDecode(encoded) as Map<String, dynamic>;
+        return AuthSession(
+          userId: data['userId'] as String,
+          accessToken: data['accessToken'] as String,
+          refreshToken: data['refreshToken'] as String,
+          expiresAt: DateTime.parse(data['expiresAt'] as String).toUtc(),
+          verificationEmail: data['verificationEmail'] as String?,
+          role: AccountRole.values.byName(data['role'] as String),
+        );
+      } on Object {
+        await clear();
+        return null;
+      }
+    }
     final values = await Future.wait([
       _storage.read(key: _userIdKey),
       _storage.read(key: _accessTokenKey),
@@ -55,35 +75,24 @@ class SecureAuthSessionStore implements AuthSessionStore {
 
   @override
   Future<void> write(AuthSession session) async {
-    await Future.wait([
-      _storage.write(key: _userIdKey, value: session.userId),
-      _storage.write(key: _accessTokenKey, value: session.accessToken),
-      _storage.write(key: _refreshTokenKey, value: session.refreshToken),
-      _storage.write(
-        key: _expiresAtKey,
-        value: session.expiresAt.toUtc().toIso8601String(),
-      ),
-      _storage.write(
-        key: _roleKey,
-        value: session.role == AccountRole.customer
-            ? 'customer'
-            : session.role == AccountRole.providerApplicant
-            ? 'provider_applicant'
-            : 'verified_provider',
-      ),
-      if (session.verificationEmail == null)
-        _storage.delete(key: _verificationEmailKey)
-      else
-        _storage.write(
-          key: _verificationEmailKey,
-          value: session.verificationEmail,
-        ),
-    ]);
+    // One encrypted write also initializes the browser encryption key once.
+    await _storage.write(
+      key: _sessionKey,
+      value: jsonEncode({
+        'userId': session.userId,
+        'accessToken': session.accessToken,
+        'refreshToken': session.refreshToken,
+        'expiresAt': session.expiresAt.toUtc().toIso8601String(),
+        'role': session.role.name,
+        'verificationEmail': session.verificationEmail,
+      }),
+    );
   }
 
   @override
   Future<void> clear() async {
     await Future.wait([
+      _storage.delete(key: _sessionKey),
       _storage.delete(key: _userIdKey),
       _storage.delete(key: _accessTokenKey),
       _storage.delete(key: _refreshTokenKey),

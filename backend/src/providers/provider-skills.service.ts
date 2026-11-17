@@ -8,8 +8,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ProviderSkillEntity } from './provider-skill.entity';
 import { ServiceCategoryEntity } from '../services/service-category.entity';
-import { UserEntity } from '../users/user.entity';
-import { AccountStatus } from '../users/account-status';
+import { ProviderApplicationEntity } from './provider-application.entity';
+import { ProviderOnboardingStatus } from './provider-onboarding-status';
 import type { AuthorizationPrincipal } from '../common/authorization/authorization.types';
 import { assertOwnedResource } from '../common/authorization/resource-ownership';
 import {
@@ -37,8 +37,8 @@ export class ProviderSkillsService {
     private readonly providerSkillRepository: Repository<ProviderSkillEntity>,
     @InjectRepository(ServiceCategoryEntity)
     private readonly serviceCategoryRepository: Repository<ServiceCategoryEntity>,
-    @InjectRepository(UserEntity)
-    private readonly userRepository: Repository<UserEntity>,
+    @InjectRepository(ProviderApplicationEntity)
+    private readonly applicationRepository: Repository<ProviderApplicationEntity>,
   ) {}
 
   async findByUserId(
@@ -144,17 +144,7 @@ export class ProviderSkillsService {
       );
     }
 
-    // A skill is not self-certified. It inherits the provider's own account
-    // verification: the authorization guard already refuses any account that is
-    // not Active, and matching requires Active too, so reaching this point means
-    // the identity behind the skill has been checked.
-    //
-    // This used to hardcode `isVerified: true` with no reference to the
-    // account, which meant the flag carried no information and the admin
-    // verification route could never be the thing that granted it. `update()`
-    // already refuses to let a provider set this field, so the create path was
-    // the one place a provider could assert it. Deciding it from the account
-    // keeps onboarding fast while making the flag mean something.
+    // Email verification opens the workspace. Only approved KYC confers verified status.
     const accountVerified = await this.isAccountVerified(userId);
 
     const skill = this.providerSkillRepository.create({
@@ -172,11 +162,11 @@ export class ProviderSkillsService {
    * produce a verified skill, no matter who calls this.
    */
   private async isAccountVerified(userId: string): Promise<boolean> {
-    const user = await this.userRepository.findOne({
-      where: { id: userId },
+    const application = await this.applicationRepository.findOne({
+      where: { userId },
       select: { id: true, status: true },
     });
-    return user?.status === AccountStatus.Active;
+    return application?.status === ProviderOnboardingStatus.Approved;
   }
 
   async update(

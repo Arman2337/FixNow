@@ -15,6 +15,7 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { ProvidersModule } from './providers/providers.module';
 import { ServicesModule } from './services/services.module';
+import { GroupServicesModule } from './group-services/group-services.module';
 import { BookingsModule } from './bookings/bookings.module';
 import { MatchingModule } from './matching/matching.module';
 import { RealtimeModule } from './realtime/realtime.module';
@@ -45,6 +46,7 @@ import { OutboxModule } from './outbox/outbox.module';
     ProvidersModule,
     ServicesModule,
     BookingsModule,
+    GroupServicesModule,
     MatchingModule,
     RealtimeModule,
     AdminModule,

@@ -126,7 +126,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
                 ),
                 Text(
-                  'Phone Login',
+                  'Email Login',
                   style: FixNowTypography.headlineMd.copyWith(
                     color: AppColors.textPrimary,
                     fontWeight: FontWeight.w600,
@@ -166,7 +166,8 @@ class _AuthScreenState extends State<AuthScreen> {
                 children: [
                   if (widget.controller.status == AuthStatus.offline) ...[
                     FixOfflineBanner(
-                      message: widget.controller.errorMessage ??
+                      message:
+                          widget.controller.errorMessage ??
                           'You appear to be offline. Please check your connection.',
                     ),
                     const SizedBox(height: AppSpacing.md),
@@ -272,7 +273,7 @@ class _AuthScreenState extends State<AuthScreen> {
                             widget.role == AccountRole.providerApplicant) ...[
                           const SizedBox(height: 4),
                           Text(
-                            'Verification is required before accepting service requests.',
+                            'Identity verification is optional. Verify your email to get started.',
                             style: FixNowTypography.bodySmall.copyWith(
                               color: AppColors.textSecondary,
                             ),
@@ -433,7 +434,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   Text(
                     _register
                         ? 'Register your home to track quick repairs, warranties, and emergency dispatches.'
-                        : 'Enter your mobile number or email to access your bookings & warranty protection.',
+                        : 'Enter your email address to access your bookings and service history.',
                     style: FixNowTypography.body.copyWith(
                       color: AppColors.textSecondary,
                     ),
@@ -847,10 +848,11 @@ class _AuthScreenState extends State<AuthScreen> {
                                                     AuthStatus.offline
                                                 ? 'Retry Connection'
                                                 : _register
-                                                    ? 'Create Account & Continue'
-                                                    : 'Continue',
+                                                ? 'Create Account & Continue'
+                                                : 'Continue',
                                             style: FixNowTypography.headlineMd
                                                 .copyWith(
+                                                  color: AppColors.onPrimary,
                                                   fontWeight: FontWeight.w600,
                                                   fontSize: 16,
                                                   letterSpacing: -0.5,

@@ -313,8 +313,12 @@ export class LocationService {
   }
 
   private assertProvider(principal: AuthorizationPrincipal): void {
-    if (!principal.roles.includes('verified_provider'))
-      throw new ForbiddenException('Verified provider access required');
+    if (
+      !principal.roles.some(
+        (role) => role === 'provider_applicant' || role === 'verified_provider',
+      )
+    )
+      throw new ForbiddenException('Provider access required');
   }
 
   private assertUuid(value: string): void {

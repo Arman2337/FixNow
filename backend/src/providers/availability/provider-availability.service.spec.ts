@@ -1,4 +1,4 @@
-import { ConflictException, ForbiddenException } from '@nestjs/common';
+import { ConflictException } from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
 import { ProviderAvailabilityStatus } from '../../../../shared/provider-availability.types';
 import { ProviderApplicationEntity } from '../provider-application.entity';
@@ -137,7 +137,7 @@ describe('ProviderAvailabilityService', () => {
     );
   });
 
-  it('rejects providers whose verification is no longer approved', async () => {
+  it('lets providers under KYC review manage their schedule', async () => {
     findApplication.mockResolvedValue({
       status: ProviderOnboardingStatus.UnderReview,
     });
@@ -148,7 +148,7 @@ describe('ProviderAvailabilityService', () => {
         exceptions: [],
         expectedVersion: 0,
       }),
-    ).rejects.toBeInstanceOf(ForbiddenException);
+    ).resolves.toMatchObject({ version: 1 });
   });
 
   it('rejects a stale version without saving', async () => {

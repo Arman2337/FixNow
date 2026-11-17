@@ -226,30 +226,18 @@ class BookingDetailScreen extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
-                                children: [
-                                  Flexible(
-                                    child: Text(
-                                      'Assigned Professional',
-                                      style: TextStyle(
-                                        color: AppColors.textPrimary,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                  SizedBox(width: 4),
-                                  Icon(
-                                    Icons.verified,
-                                    color: AppColors.primary,
-                                    size: 16,
-                                  ),
-                                ],
+                              Text(
+                                'Assigned Professional',
+                                style: TextStyle(
+                                  color: AppColors.textPrimary,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                overflow: TextOverflow.ellipsis,
                               ),
                               SizedBox(height: 2),
                               Text(
-                                'Verified Partner • Vetted',
+                                'Assigned through FixNow',
                                 style: TextStyle(
                                   color: AppColors.textSecondary,
                                   fontSize: 12,
@@ -346,12 +334,17 @@ class BookingDetailScreen extends StatelessWidget {
                                   size: 24,
                                 ),
                                 const SizedBox(width: AppSpacing.sm),
-                                Text(
-                                  _category(booking.serviceCategoryId),
-                                  style: const TextStyle(
-                                    color: AppColors.textPrimary,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700,
+                                Expanded(
+                                  child: Text(
+                                    booking.serviceCategoryName ??
+                                        _category(booking.serviceCategoryId),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      color: AppColors.textPrimary,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -446,8 +439,10 @@ class BookingDetailScreen extends StatelessWidget {
                               color: AppColors.surfaceContainerHigh,
                             ),
                             const SizedBox(height: AppSpacing.md),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            Wrap(
+                              alignment: WrapAlignment.spaceBetween,
+                              spacing: 16,
+                              runSpacing: 12,
                               children: [
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -585,25 +580,6 @@ class BookingDetailScreen extends StatelessWidget {
                                 letterSpacing: 0.5,
                               ),
                             ),
-                            const Spacer(),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.primary.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: const Text(
-                                'FixNow Verified',
-                                style: TextStyle(
-                                  color: AppColors.primary,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
                           ],
                         ),
                         const SizedBox(height: AppSpacing.sm),
@@ -709,9 +685,16 @@ class BookingDetailScreen extends StatelessWidget {
                                         if (onCallPressed != null) ...[
                                           const Spacer(),
                                           IconButton(
-                                            icon: const Icon(Icons.call_rounded, size: 18, color: AppColors.primary),
+                                            icon: const Icon(
+                                              Icons.call_rounded,
+                                              size: 18,
+                                              color: AppColors.primary,
+                                            ),
                                             tooltip: 'Call Technician',
-                                            onPressed: () => onCallPressed!(context, booking.id),
+                                            onPressed: () => onCallPressed!(
+                                              context,
+                                              booking.id,
+                                            ),
                                           ),
                                         ],
                                       ],
@@ -832,7 +815,7 @@ class BookingDetailScreen extends StatelessWidget {
                 if (onViewInvoice != null &&
                     booking.statusValue.isCompleted) ...[
                   FixButton(
-                    label: 'View / Pay Invoice',
+                    label: 'Payment & invoice',
                     icon: Icons.receipt_long_rounded,
                     onPressed: onViewInvoice,
                   ),
@@ -926,12 +909,15 @@ class BookingDetailScreen extends StatelessWidget {
       title: 'Status unavailable',
     ),
   };
-  static String _category(String value) => value
-      .replaceAll('_', ' ')
-      .split(' ')
-      .where((word) => word.isNotEmpty)
-      .map((word) => '${word[0].toUpperCase()}${word.substring(1)}')
-      .join(' ');
+  static String _category(String value) =>
+      RegExp(r'^[0-9a-fA-F]{8}-[0-9a-fA-F-]{27}$').hasMatch(value)
+      ? 'Service'
+      : value
+            .replaceAll('_', ' ')
+            .split(' ')
+            .where((word) => word.isNotEmpty)
+            .map((word) => '${word[0].toUpperCase()}${word.substring(1)}')
+            .join(' ');
 
   static String _shortId(String value) {
     final compact = value.replaceAll('-', '');

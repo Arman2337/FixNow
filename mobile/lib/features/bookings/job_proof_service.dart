@@ -10,7 +10,7 @@ class JobProof {
     this.afterPhotoName,
     this.notes,
     required this.capturedAt,
-    this.proName = 'Verified Pro',
+    this.proName = 'Service Provider',
   });
 
   final String bookingId;

@@ -115,6 +115,11 @@ void main() {
       200,
       scrollable: find.byType(Scrollable).first,
     );
+    await tester.scrollUntilVisible(
+      find.textContaining('not guaranteed'),
+      100,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('Book again'), findsOneWidget);
     expect(find.textContaining('not guaranteed'), findsOneWidget);
     await tester.tap(find.text('Book again'));
@@ -205,13 +210,11 @@ void main() {
       'Kitchen sink leaking again; same issue as last visit.',
     );
     await tester.scrollUntilVisible(
-      find.widgetWithText(FixButton, 'Find a verified provider'),
+      find.widgetWithText(FixButton, 'Find a provider'),
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.tap(
-      find.widgetWithText(FixButton, 'Find a verified provider'),
-    );
+    await tester.tap(find.widgetWithText(FixButton, 'Find a provider'));
     await tester.pumpAndSettle();
 
     expect(controller.bookings.single.status, 'REQUESTED');
@@ -249,13 +252,11 @@ void main() {
     await tester.pump();
 
     await tester.scrollUntilVisible(
-      find.widgetWithText(FixButton, 'Find a verified provider'),
+      find.widgetWithText(FixButton, 'Find a provider'),
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.tap(
-      find.widgetWithText(FixButton, 'Find a verified provider'),
-    );
+    await tester.tap(find.widgetWithText(FixButton, 'Find a provider'));
     await tester.pump();
 
     expect(
@@ -300,8 +301,8 @@ void main() {
   );
 }
 
-
 class MockClient implements ApiTransport {
   @override
-  Future<ApiResponse> send(ApiRequest request) async => ApiResponse(statusCode: 200, body: {});
+  Future<ApiResponse> send(ApiRequest request) async =>
+      ApiResponse(statusCode: 200, body: {});
 }

@@ -47,18 +47,15 @@ enum BookingStatusValue {
 /// by the client. The backend rejects any body that still contains
 /// `unitPriceMinor` (global `forbidNonWhitelisted: true`).
 class BookingItemDraft {
-  const BookingItemDraft({
-    required this.subServiceId,
-    required this.quantity,
-  });
+  const BookingItemDraft({required this.subServiceId, required this.quantity});
 
   final String subServiceId;
   final int quantity;
 
   Map<String, Object?> toJson() => {
-        'subServiceId': subServiceId,
-        'quantity': quantity,
-      };
+    'subServiceId': subServiceId,
+    'quantity': quantity,
+  };
 }
 
 /// An itemized line stored on a booking by the backend.
@@ -82,10 +79,8 @@ class BookingLineItem {
 
   /// `id` is the sub-service id on a server-priced snapshot, so a stored line
   /// round-trips back into a valid request shape.
-  BookingItemDraft toDraft() => BookingItemDraft(
-        subServiceId: id,
-        quantity: quantity,
-      );
+  BookingItemDraft toDraft() =>
+      BookingItemDraft(subServiceId: id, quantity: quantity);
 
   factory BookingLineItem.fromJson(Map<String, Object?> json) {
     final id = json['id'];
@@ -133,7 +128,10 @@ class BookingPricing {
     final gst = json['gstMinor'];
     final total = json['totalMinor'];
     final currency = json['currency'];
-    if (subtotal is! int || gst is! int || total is! int || currency is! String) {
+    if (subtotal is! int ||
+        gst is! int ||
+        total is! int ||
+        currency is! String) {
       throw const FormatException();
     }
     return BookingPricing(
@@ -151,7 +149,7 @@ class LineItem {
     required this.description,
     required this.amount,
   });
-  
+
   final String type;
   final String description;
   final num amount;
@@ -198,6 +196,7 @@ class CustomerBooking {
     required this.description,
     required this.createdAt,
     required this.version,
+    this.serviceCategoryName,
     this.customerPhone,
     this.providerPhone,
     this.providerName,
@@ -206,6 +205,7 @@ class CustomerBooking {
     this.locationLatitude,
     this.locationLongitude,
     this.scheduledAt,
+    this.completedAt,
     this.items,
     this.pricing,
     this.estimatedDurationMinutes,
@@ -213,6 +213,7 @@ class CustomerBooking {
   });
   final String id;
   final String serviceCategoryId;
+  final String? serviceCategoryName;
   final String status;
   final String description;
   final DateTime createdAt;
@@ -225,6 +226,7 @@ class CustomerBooking {
   final double? locationLatitude;
   final double? locationLongitude;
   final DateTime? scheduledAt;
+  final DateTime? completedAt;
   final List<BookingLineItem>? items;
   final BookingPricing? pricing;
   final int? estimatedDurationMinutes;
@@ -239,6 +241,7 @@ class CustomerBooking {
     String? description,
     DateTime? createdAt,
     int? version,
+    String? serviceCategoryName,
     String? customerPhone,
     String? providerPhone,
     String? providerName,
@@ -247,32 +250,34 @@ class CustomerBooking {
     double? locationLatitude,
     double? locationLongitude,
     DateTime? scheduledAt,
+    DateTime? completedAt,
     List<BookingLineItem>? items,
     BookingPricing? pricing,
     int? estimatedDurationMinutes,
     List<LineItem>? lineItems,
-  }) =>
-      CustomerBooking(
-        id: id ?? this.id,
-        serviceCategoryId: serviceCategoryId ?? this.serviceCategoryId,
-        status: status ?? this.status,
-        description: description ?? this.description,
-        createdAt: createdAt ?? this.createdAt,
-        version: version ?? this.version,
-        customerPhone: customerPhone ?? this.customerPhone,
-        providerPhone: providerPhone ?? this.providerPhone,
-        providerName: providerName ?? this.providerName,
-        providerRating: providerRating ?? this.providerRating,
-        providerJobsCount: providerJobsCount ?? this.providerJobsCount,
-        locationLatitude: locationLatitude ?? this.locationLatitude,
-        locationLongitude: locationLongitude ?? this.locationLongitude,
-        scheduledAt: scheduledAt ?? this.scheduledAt,
-        items: items ?? this.items,
-        pricing: pricing ?? this.pricing,
-        estimatedDurationMinutes:
-            estimatedDurationMinutes ?? this.estimatedDurationMinutes,
-        lineItems: lineItems ?? this.lineItems,
-      );
+  }) => CustomerBooking(
+    id: id ?? this.id,
+    serviceCategoryId: serviceCategoryId ?? this.serviceCategoryId,
+    status: status ?? this.status,
+    description: description ?? this.description,
+    createdAt: createdAt ?? this.createdAt,
+    version: version ?? this.version,
+    serviceCategoryName: serviceCategoryName ?? this.serviceCategoryName,
+    customerPhone: customerPhone ?? this.customerPhone,
+    providerPhone: providerPhone ?? this.providerPhone,
+    providerName: providerName ?? this.providerName,
+    providerRating: providerRating ?? this.providerRating,
+    providerJobsCount: providerJobsCount ?? this.providerJobsCount,
+    locationLatitude: locationLatitude ?? this.locationLatitude,
+    locationLongitude: locationLongitude ?? this.locationLongitude,
+    scheduledAt: scheduledAt ?? this.scheduledAt,
+    completedAt: completedAt ?? this.completedAt,
+    items: items ?? this.items,
+    pricing: pricing ?? this.pricing,
+    estimatedDurationMinutes:
+        estimatedDurationMinutes ?? this.estimatedDurationMinutes,
+    lineItems: lineItems ?? this.lineItems,
+  );
 
   factory CustomerBooking.fromJson(Map<String, Object?> json) {
     final id = json['id'];
@@ -303,6 +308,7 @@ class CustomerBooking {
     return CustomerBooking(
       id: id,
       serviceCategoryId: category,
+      serviceCategoryName: json['serviceCategoryName'] as String?,
       status: status,
       description: description,
       createdAt: createdAt,
@@ -315,14 +321,15 @@ class CustomerBooking {
       locationLatitude: latitude is num ? latitude.toDouble() : null,
       locationLongitude: longitude is num ? longitude.toDouble() : null,
       scheduledAt: scheduledAt,
+      completedAt: DateTime.tryParse(json['completedAt']?.toString() ?? ''),
       items: rawItems is List && rawItems.isNotEmpty
           ? rawItems
-              .map(
-                (item) => BookingLineItem.fromJson(
-                  Map<String, Object?>.from(item as Map),
-                ),
-              )
-              .toList(growable: false)
+                .map(
+                  (item) => BookingLineItem.fromJson(
+                    Map<String, Object?>.from(item as Map),
+                  ),
+                )
+                .toList(growable: false)
           : null,
       pricing: rawPricing is Map
           ? BookingPricing.fromJson(Map<String, Object?>.from(rawPricing))
@@ -341,6 +348,7 @@ class CustomerBooking {
   Map<String, Object?> toJson() => {
     'id': id,
     'serviceCategoryId': serviceCategoryId,
+    if (serviceCategoryName != null) 'serviceCategoryName': serviceCategoryName,
     'status': status,
     'description': description,
     'createdAt': createdAt.toUtc().toIso8601String(),
@@ -354,6 +362,8 @@ class CustomerBooking {
     if (locationLongitude != null) 'locationLng': locationLongitude,
     if (scheduledAt != null)
       'scheduledAt': scheduledAt!.toUtc().toIso8601String(),
+    if (completedAt != null)
+      'completedAt': completedAt!.toUtc().toIso8601String(),
     if (items != null)
       'items': items!
           .map(

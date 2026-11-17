@@ -25,8 +25,11 @@ export const PERMISSIONS = {
   adminSkillsUpdate: 'admin.skills.update',
   adminSkillsVerify: 'admin.skills.verify',
   adminSkillsDelete: 'admin.skills.delete',
+  groupServiceCustomer: 'group-services.customer',
+  groupServiceProvider: 'group-services.provider',
   bookingCreateSelf: 'bookings.request.create.self',
   bookingScheduleManageSelf: 'bookings.schedule.manage.self',
+  paymentCheckoutRead: 'payments.checkout.read',
   paymentOrderManageSelf: 'payments.order.manage.self',
   paymentRefundCreate: 'payments.refund.create',
   paymentInvoiceReadSelf: 'payments.invoice.read.self',
@@ -220,11 +223,11 @@ export const PERMISSION_POLICIES: Readonly<
     relationship: 'self',
   },
   [PERMISSIONS.providerAvailabilityRead]: {
-    roles: ['verified_provider'],
+    roles: ['provider_applicant', 'verified_provider'],
     relationship: 'self',
   },
   [PERMISSIONS.providerAvailabilityUpdate]: {
-    roles: ['verified_provider'],
+    roles: ['provider_applicant', 'verified_provider'],
     relationship: 'self',
   },
   [PERMISSIONS.providerDocumentsCreate]: {
@@ -279,6 +282,14 @@ export const PERMISSION_POLICIES: Readonly<
     roles: ['service_catalog_manager', 'operations_administrator'],
     audience: 'admin',
   },
+  [PERMISSIONS.groupServiceCustomer]: {
+    roles: ['customer'],
+    audience: 'mobile',
+  },
+  [PERMISSIONS.groupServiceProvider]: {
+    roles: ['provider_applicant', 'verified_provider'],
+    audience: 'mobile',
+  },
   [PERMISSIONS.bookingCreateSelf]: {
     roles: ['customer'],
     relationship: 'self',
@@ -289,14 +300,14 @@ export const PERMISSION_POLICIES: Readonly<
     relationship: 'self',
   },
   [PERMISSIONS.bookingAccept]: {
-    roles: ['verified_provider'],
+    roles: ['provider_applicant', 'verified_provider'],
   },
   [PERMISSIONS.bookingAvailableRead]: {
-    roles: ['verified_provider'],
+    roles: ['provider_applicant', 'verified_provider'],
     audience: 'mobile',
   },
   [PERMISSIONS.bookingUpdateStatus]: {
-    roles: ['verified_provider'],
+    roles: ['provider_applicant', 'verified_provider'],
     relationship: 'self',
   },
   // Rewriting the priced item snapshot and the booking total. This was gated on
@@ -304,7 +315,7 @@ export const PERMISSION_POLICIES: Readonly<
   // status change during review. The service still restricts it to the provider
   // assigned to the booking.
   [PERMISSIONS.bookingManageItems]: {
-    roles: ['verified_provider'],
+    roles: ['provider_applicant', 'verified_provider'],
     relationship: 'self',
   },
   // Issuing the service-start OTP. This was gated on
@@ -315,34 +326,34 @@ export const PERMISSION_POLICIES: Readonly<
     relationship: 'self',
   },
   [PERMISSIONS.bookingCancelSelf]: {
-    roles: ['customer', 'verified_provider'],
+    roles: ['customer', 'provider_applicant', 'verified_provider'],
     relationship: 'self',
   },
   [PERMISSIONS.bookingHistoryReadSelf]: {
-    roles: ['customer', 'verified_provider'],
+    roles: ['customer', 'provider_applicant', 'verified_provider'],
     relationship: 'self',
   },
   [PERMISSIONS.bookingShareLink]: {
-    roles: ['customer', 'verified_provider'],
+    roles: ['customer', 'provider_applicant', 'verified_provider'],
     relationship: 'self',
   },
   [PERMISSIONS.bookingChatSendSelf]: {
-    roles: ['customer', 'verified_provider'],
+    roles: ['customer', 'provider_applicant', 'verified_provider'],
     audience: 'mobile',
     relationship: 'self',
   },
   [PERMISSIONS.bookingChatReadSelf]: {
-    roles: ['customer', 'verified_provider'],
+    roles: ['customer', 'provider_applicant', 'verified_provider'],
     audience: 'mobile',
     relationship: 'self',
   },
   [PERMISSIONS.bookingCallInitiateSelf]: {
-    roles: ['customer', 'verified_provider'],
+    roles: ['customer', 'provider_applicant', 'verified_provider'],
     audience: 'mobile',
     relationship: 'self',
   },
   [PERMISSIONS.bookingCallManageSelf]: {
-    roles: ['customer', 'verified_provider'],
+    roles: ['customer', 'provider_applicant', 'verified_provider'],
     audience: 'mobile',
     relationship: 'self',
   },
@@ -351,21 +362,21 @@ export const PERMISSION_POLICIES: Readonly<
     relationship: 'self',
   },
   [PERMISSIONS.reviewReadBooking]: {
-    roles: ['customer', 'verified_provider'],
+    roles: ['customer', 'provider_applicant', 'verified_provider'],
     relationship: 'self',
   },
   [PERMISSIONS.reviewModerate]: {
     roles: ['trust_safety_reviewer', 'operations_administrator'],
     audience: 'admin',
   },
-  // FN-142. `verified_provider` only — a customer must not be able to author
+  // FN-142. Providers only — a customer must not be able to author
   // the evidence that is presented as proof of the provider's work.
   [PERMISSIONS.jobProofCreateSelf]: {
-    roles: ['verified_provider'],
+    roles: ['provider_applicant', 'verified_provider'],
     relationship: 'self',
   },
   [PERMISSIONS.jobProofReadBooking]: {
-    roles: ['customer', 'verified_provider'],
+    roles: ['customer', 'provider_applicant', 'verified_provider'],
     relationship: 'self',
   },
   [PERMISSIONS.trustSignalsRead]: {
@@ -427,7 +438,7 @@ export const PERMISSION_POLICIES: Readonly<
     audience: 'admin',
   },
   [PERMISSIONS.complaintsCreate]: {
-    roles: ['customer', 'verified_provider'],
+    roles: ['customer', 'provider_applicant', 'verified_provider'],
     // Self-scoped: a complaint may only ever concern a booking the caller is a
     // party to, which ComplaintsService now proves before writing.
     relationship: 'self',
@@ -453,7 +464,7 @@ export const PERMISSION_POLICIES: Readonly<
     audience: 'admin',
   },
   [PERMISSIONS.complaintsReadSelf]: {
-    roles: ['customer', 'verified_provider'],
+    roles: ['customer', 'provider_applicant', 'verified_provider'],
     relationship: 'self',
   },
   [PERMISSIONS.pushTokenManageSelf]: {
@@ -466,9 +477,13 @@ export const PERMISSION_POLICIES: Readonly<
     relationship: 'self',
   },
   [PERMISSIONS.trustAcceptTimeReadSelf]: {
-    roles: ['verified_provider'],
+    roles: ['provider_applicant', 'verified_provider'],
     audience: 'mobile',
     relationship: 'self',
+  },
+  [PERMISSIONS.paymentCheckoutRead]: {
+    roles: ['customer'],
+    audience: 'mobile',
   },
   [PERMISSIONS.paymentOrderManageSelf]: {
     roles: ['customer'],
@@ -485,7 +500,7 @@ export const PERMISSION_POLICIES: Readonly<
     relationship: 'self',
   },
   [PERMISSIONS.providerEarningsReadSelf]: {
-    roles: ['verified_provider'],
+    roles: ['provider_applicant', 'verified_provider'],
     audience: 'mobile',
     relationship: 'self',
   },
@@ -523,7 +538,7 @@ export const PERMISSION_POLICIES: Readonly<
     audience: 'admin',
   },
   [PERMISSIONS.guaranteeClaimCreateSelf]: {
-    roles: ['customer', 'verified_provider'],
+    roles: ['customer', 'provider_applicant', 'verified_provider'],
     relationship: 'self',
   },
 };

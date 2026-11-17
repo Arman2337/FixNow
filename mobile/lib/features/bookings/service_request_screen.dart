@@ -425,7 +425,7 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
                 title: widget.category.name,
                 description:
                     widget.category.description ??
-                    'Tell us what needs attention and we will match a verified provider nearby.',
+                    'Tell us what needs attention and we will match an eligible provider nearby.',
               ),
               const SizedBox(height: AppSpacing.lg),
 
@@ -616,7 +616,7 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
               ],
               const SizedBox(height: AppSpacing.xl),
               FixPrimaryButton(
-                label: 'Find a verified provider',
+                label: 'Find a provider',
                 icon: Icons.arrow_forward_rounded,
                 onPressed: _submit,
                 isLoading: _submitting,

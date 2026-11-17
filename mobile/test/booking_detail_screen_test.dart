@@ -9,15 +9,48 @@ void main() {
     required List<BookingLineItem> items,
     BookingPricing? pricing,
   }) => CustomerBooking(
-        id: 'booking-1',
-        serviceCategoryId: 'plumbing',
-        status: 'ASSIGNED',
-        description: 'Repair a leaking pipe',
-        createdAt: DateTime(2026, 9, 1),
-        version: 1,
-        items: items,
-        pricing: pricing,
+    id: 'booking-1',
+    serviceCategoryId: 'plumbing',
+    status: 'ASSIGNED',
+    description: 'Repair a leaking pipe',
+    createdAt: DateTime(2026, 9, 1),
+    version: 1,
+    items: items,
+    pricing: pricing,
+  );
+
+  testWidgets(
+    'shows the named service at narrow width and preserves completion data',
+    (tester) async {
+      tester.view.physicalSize = const Size(320, 640);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final booking = CustomerBooking.fromJson({
+        'id': 'booking-1',
+        'serviceCategoryId': '4ca7e780-7a59-42a8-b1c4-65d100126ff8',
+        'serviceCategoryName': 'Plumbing',
+        'status': 'COMPLETED',
+        'description': 'Tap repaired',
+        'createdAt': '2026-11-05T08:00:00Z',
+        'completedAt': '2026-11-05T09:00:00Z',
+        'version': 1,
+      });
+      final restored = CustomerBooking.fromJson(booking.copyWith().toJson());
+      expect(restored.completedAt, DateTime.utc(2026, 11, 5, 9));
+      expect(restored.serviceCategoryName, 'Plumbing');
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.light,
+          home: BookingDetailScreen(booking: restored),
+        ),
       );
+      await tester.pump();
+      expect(find.text('Plumbing'), findsOneWidget);
+      expect(find.text(booking.serviceCategoryId), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('renders item name, quantity, and line total', (tester) async {
     await tester.pumpWidget(
@@ -81,9 +114,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light,
-        home: BookingDetailScreen(
-          booking: bookingWithItems(items: const []),
-        ),
+        home: BookingDetailScreen(booking: bookingWithItems(items: const [])),
       ),
     );
     await tester.pump();

@@ -239,12 +239,12 @@ void main() {
 
         // Submit booking
         await tester.scrollUntilVisible(
-          find.widgetWithText(FixButton, 'Find a verified provider'),
+          find.widgetWithText(FixButton, 'Find a provider'),
           300,
           scrollable: find.byType(Scrollable).first,
         );
         await tester.tap(
-          find.widgetWithText(FixButton, 'Find a verified provider'),
+          find.widgetWithText(FixButton, 'Find a provider'),
         );
         await tester.pumpAndSettle();
 

@@ -31,7 +31,8 @@ export type PaymentOrderStatus = 'CREATED' | 'PAID' | 'FAILED' | 'CANCELLED';
 
 export interface PaymentOrderContract {
   id: string;
-  bookingId: string;
+  bookingId: string | null;
+  groupServiceId?: string;
   amountMinor: number;
   currency: string;
   status: PaymentOrderStatus;

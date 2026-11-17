@@ -98,7 +98,12 @@ export class MatchingService {
         availStatus: ProviderAvailabilityStatus.Online,
       })
       .andWhere('availability.status_expires_at > CURRENT_TIMESTAMP')
-      .andWhere('skill.is_verified = :isVerified', { isVerified: true })
+      .andWhere(
+        `(category.is_emergency = false OR (skill.is_verified = true AND EXISTS (
+        SELECT 1 FROM provider_applications application
+        WHERE application.user_id = profile.user_id AND application.status = 'approved'
+      )))`,
+      )
       .andWhere('category.is_active = :categoryActive', {
         categoryActive: true,
       })
@@ -321,7 +326,12 @@ export class MatchingService {
       .andWhere('skill.service_category_id = :categoryId', {
         categoryId: serviceCategoryId,
       })
-      .andWhere('skill.is_verified = :isVerified', { isVerified: true })
+      .andWhere(
+        `(category.is_emergency = false OR (skill.is_verified = true AND EXISTS (
+        SELECT 1 FROM provider_applications application
+        WHERE application.user_id = profile.user_id AND application.status = 'approved'
+      )))`,
+      )
       .andWhere('category.is_active = :categoryActive', {
         categoryActive: true,
       })

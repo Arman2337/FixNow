@@ -12,7 +12,7 @@ class BookingChatScreen extends StatefulWidget {
   const BookingChatScreen({
     super.key,
     required this.controller,
-    this.providerName = 'Verified Professional',
+    this.providerName = 'Service Provider',
     this.recipientName,
     this.customerName,
     this.onCallPressed,
@@ -47,7 +47,7 @@ class _BookingChatScreenState extends State<BookingChatScreen> {
           widget.customerName!.trim().isNotEmpty) {
         return widget.customerName!;
       }
-      return (widget.providerName != 'Verified Professional' &&
+      return (widget.providerName != 'Service Provider' &&
               widget.providerName.isNotEmpty)
           ? widget.providerName
           : 'Customer';

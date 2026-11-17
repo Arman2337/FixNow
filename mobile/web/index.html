@@ -31,13 +31,15 @@
 
   <title>FixNow</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
 
 </head>
 <body>
+  <div id="startup" role="status" style="font-family: system-ui; max-width: 28rem; margin: 20vh auto; padding: 24px; color: #0B1C30">
+    <h1>FixNow</h1>
+    <p id="startup-message">Loading your workspace…</p>
+    <button id="startup-retry" hidden onclick="location.reload()">Try again</button>
+  </div>
+  <noscript>Enable JavaScript to open FixNow.</noscript>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

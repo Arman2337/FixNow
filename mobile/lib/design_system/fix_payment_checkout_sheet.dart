@@ -17,8 +17,10 @@ class FixPaymentCheckoutSheet extends StatefulWidget {
     required this.bookingId,
     required this.baseAmountMinor,
     this.sparePartsMinor = 0,
+    this.confirmedTotalMinor,
+    this.demo = false,
     this.currency = 'INR',
-    this.proName = 'Verified Pro',
+    this.proName = 'Service Provider',
     this.onProcessPayment,
     this.onViewInvoice,
     this.onDone,
@@ -28,6 +30,8 @@ class FixPaymentCheckoutSheet extends StatefulWidget {
   final String bookingId;
   final int baseAmountMinor;
   final int sparePartsMinor;
+  final int? confirmedTotalMinor;
+  final bool demo;
   final String currency;
   final String proName;
 
@@ -48,8 +52,10 @@ class FixPaymentCheckoutSheet extends StatefulWidget {
     required String bookingId,
     required int baseAmountMinor,
     int sparePartsMinor = 0,
+    int? confirmedTotalMinor,
+    bool demo = false,
     String currency = 'INR',
-    String proName = 'Verified Pro',
+    String proName = 'Service Provider',
     Future<void> Function({
       required String paymentMethod,
       required int totalMinor,
@@ -67,6 +73,8 @@ class FixPaymentCheckoutSheet extends StatefulWidget {
         bookingId: bookingId,
         baseAmountMinor: baseAmountMinor,
         sparePartsMinor: sparePartsMinor,
+        confirmedTotalMinor: confirmedTotalMinor,
+        demo: demo,
         currency: currency,
         proName: proName,
         onProcessPayment: onProcessPayment,
@@ -121,7 +129,9 @@ class _FixPaymentCheckoutSheetState extends State<FixPaymentCheckoutSheet>
   int get _subtotalMinor => widget.baseAmountMinor + widget.sparePartsMinor;
   int get _gstMinor => (_subtotalMinor * 0.18).round();
   int get _baseServiceMinor => widget.baseAmountMinor;
-  int get _grandTotalMinor => _subtotalMinor + _gstMinor + _selectedTipMinor;
+  int get _grandTotalMinor =>
+      widget.confirmedTotalMinor ??
+      (_subtotalMinor + _gstMinor + _selectedTipMinor);
 
   String _formatPaise(int minor) {
     final rupees = minor / 100;
@@ -142,7 +152,9 @@ class _FixPaymentCheckoutSheetState extends State<FixPaymentCheckoutSheet>
           tipMinor: _selectedTipMinor,
         );
       } else {
-        throw StateError('Payment processing callback is required for real verification.');
+        throw StateError(
+          'Payment processing callback is required for real verification.',
+        );
       }
 
       if (!mounted) return;
@@ -191,7 +203,9 @@ class _FixPaymentCheckoutSheetState extends State<FixPaymentCheckoutSheet>
         top: false,
         child: AnimatedSwitcher(
           duration: const Duration(milliseconds: 350),
-          child: _isSuccess ? _buildSuccessView() : _buildCheckoutView(),
+          child: _isSuccess
+              ? SingleChildScrollView(child: _buildSuccessView())
+              : _buildCheckoutView(),
         ),
       ),
     );
@@ -221,33 +235,39 @@ class _FixPaymentCheckoutSheetState extends State<FixPaymentCheckoutSheet>
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Checkout & Pay',
-                    style: FixNowTypography.heading2.copyWith(
-                      color: AppColors.textPrimary,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.demo ? 'Demo Checkout' : 'Checkout & Pay',
+                      style: FixNowTypography.heading2.copyWith(
+                        color: AppColors.textPrimary,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.shield_rounded,
-                        size: 13,
-                        color: AppColors.success,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '100% Safe & Encrypted • FixNow Guarantee',
-                        style: FixNowTypography.caption.copyWith(
-                          color: AppColors.textSecondary,
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.shield_rounded,
+                          size: 13,
+                          color: AppColors.success,
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            widget.demo
+                                ? 'Simulated payment for your college demo'
+                                : '100% Safe & Encrypted • FixNow Guarantee',
+                            style: FixNowTypography.caption.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
               IconButton(
                 icon: const Icon(
@@ -308,10 +328,10 @@ class _FixPaymentCheckoutSheetState extends State<FixPaymentCheckoutSheet>
 
                 const SizedBox(height: AppSpacing.lg),
 
-                // Tip Technician
-                _buildTipSection(),
-
-                const SizedBox(height: AppSpacing.lg),
+                if (widget.confirmedTotalMinor == null) ...[
+                  _buildTipSection(),
+                  const SizedBox(height: AppSpacing.lg),
+                ],
 
                 // Payment Method Selector
                 _buildPaymentMethodSection(),
@@ -388,8 +408,10 @@ class _FixPaymentCheckoutSheetState extends State<FixPaymentCheckoutSheet>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            spacing: 12,
+            runSpacing: 8,
             children: [
               const Text(
                 'Service Cost Breakdown',
@@ -417,19 +439,29 @@ class _FixPaymentCheckoutSheetState extends State<FixPaymentCheckoutSheet>
             ],
           ),
           const Divider(color: AppColors.borderDefault, height: 16),
-          _buildRow('Base Service & Labour', _formatPaise(_baseServiceMinor)),
-          if (widget.sparePartsMinor > 0)
+          if (widget.confirmedTotalMinor != null)
             _buildRow(
-              'Approved Spare Parts',
-              _formatPaise(widget.sparePartsMinor),
-            ),
-          _buildRow('GST (18% Goods & Services Tax)', _formatPaise(_gstMinor)),
-          if (_selectedTipMinor > 0)
+              'Confirmed service amount',
+              _formatPaise(_grandTotalMinor),
+            )
+          else ...[
+            _buildRow('Base Service & Labour', _formatPaise(_baseServiceMinor)),
+            if (widget.sparePartsMinor > 0)
+              _buildRow(
+                'Approved Spare Parts',
+                _formatPaise(widget.sparePartsMinor),
+              ),
             _buildRow(
-              'Technician Appreciation Tip',
-              _formatPaise(_selectedTipMinor),
-              valueColor: AppColors.accentGold,
+              'GST (18% Goods & Services Tax)',
+              _formatPaise(_gstMinor),
             ),
+            if (_selectedTipMinor > 0)
+              _buildRow(
+                'Technician Appreciation Tip',
+                _formatPaise(_selectedTipMinor),
+                valueColor: AppColors.accentGold,
+              ),
+          ],
           const Divider(color: AppColors.borderDefault, height: 14),
           _buildRow(
             'Total Amount',
@@ -559,37 +591,39 @@ class _FixPaymentCheckoutSheetState extends State<FixPaymentCheckoutSheet>
           subtitle: 'Google Pay, PhonePe, Paytm, BHIM',
           badge: 'POPULAR',
         ),
-        _buildMethodCard(
-          type: PaymentMethodType.card,
-          icon: Icons.credit_card_rounded,
-          title: 'Credit / Debit Card',
-          subtitle: 'Visa, MasterCard, RuPay (256-Bit SSL)',
-        ),
-        if (_selectedMethod == PaymentMethodType.card) ...[
-          const SizedBox(height: 12),
-          const Fix3DFlipCard(),
-          const SizedBox(height: 4),
-          const Center(
-            child: Text(
-              'Tap card to flip in 3D & inspect Escrow Protection',
-              style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+        if (widget.confirmedTotalMinor == null) ...[
+          _buildMethodCard(
+            type: PaymentMethodType.card,
+            icon: Icons.credit_card_rounded,
+            title: 'Credit / Debit Card',
+            subtitle: 'Visa, MasterCard, RuPay (256-Bit SSL)',
+          ),
+          if (_selectedMethod == PaymentMethodType.card) ...[
+            const SizedBox(height: 12),
+            const Fix3DFlipCard(),
+            const SizedBox(height: 4),
+            const Center(
+              child: Text(
+                'Tap card to flip in 3D & inspect Escrow Protection',
+                style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+              ),
             ),
+          ],
+          const SizedBox(height: 8),
+          _buildMethodCard(
+            type: PaymentMethodType.cash,
+            icon: Icons.payments_outlined,
+            title: 'Cash on Delivery (Pay to Pro)',
+            subtitle: 'Pay exact cash upon inspection of completed work',
+          ),
+          const SizedBox(height: 8),
+          _buildMethodCard(
+            type: PaymentMethodType.wallet,
+            icon: Icons.account_balance_wallet_rounded,
+            title: 'FixNow Wallet',
+            subtitle: 'Pay securely with your FixNow wallet balance',
           ),
         ],
-        const SizedBox(height: 8),
-        _buildMethodCard(
-          type: PaymentMethodType.cash,
-          icon: Icons.payments_outlined,
-          title: 'Cash on Delivery (Pay to Pro)',
-          subtitle: 'Pay exact cash upon inspection of completed work',
-        ),
-        const SizedBox(height: 8),
-        _buildMethodCard(
-          type: PaymentMethodType.wallet,
-          icon: Icons.account_balance_wallet_rounded,
-          title: 'FixNow Wallet',
-          subtitle: 'Pay securely with your FixNow wallet balance',
-        ),
       ],
     );
   }
@@ -638,7 +672,10 @@ class _FixPaymentCheckoutSheetState extends State<FixPaymentCheckoutSheet>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       Text(
                         title,
@@ -649,7 +686,6 @@ class _FixPaymentCheckoutSheetState extends State<FixPaymentCheckoutSheet>
                         ),
                       ),
                       if (badge != null) ...[
-                        const SizedBox(width: 6),
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 6,
@@ -736,7 +772,7 @@ class _FixPaymentCheckoutSheetState extends State<FixPaymentCheckoutSheet>
           const SizedBox(height: AppSpacing.lg),
 
           Text(
-            'Payment Successful!',
+            widget.demo ? 'Demo Payment Successful!' : 'Payment Successful!',
             style: FixNowTypography.heading1.copyWith(
               color: AppColors.textPrimary,
               fontWeight: FontWeight.w800,
@@ -758,7 +794,9 @@ class _FixPaymentCheckoutSheetState extends State<FixPaymentCheckoutSheet>
           const SizedBox(height: AppSpacing.xs),
 
           Text(
-            'Paid to ${widget.proName} via ${_selectedMethod == PaymentMethodType.cash ? 'Cash on Delivery' : 'Instant Checkout'}',
+            widget.demo
+                ? 'Demo payment recorded for ${widget.proName}'
+                : 'Paid to ${widget.proName} via ${_selectedMethod == PaymentMethodType.cash ? 'Cash on Delivery' : 'Instant Checkout'}',
             textAlign: TextAlign.center,
             style: const TextStyle(
               color: AppColors.textSecondary,
@@ -831,8 +869,8 @@ class _FixPaymentCheckoutSheetState extends State<FixPaymentCheckoutSheet>
   Widget _buildReceiptRow(String label, String value, {Color? valueColor}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             label,

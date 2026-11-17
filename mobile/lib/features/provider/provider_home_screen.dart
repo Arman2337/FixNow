@@ -42,6 +42,7 @@ class ProviderHomeScreen extends StatelessWidget {
     this.callRepository,
     this.loadAcceptTime,
     this.onViewEarnings,
+    this.onGroupQuotes,
     this.notificationController,
     this.onTechDesk,
     this.onOpenBooking,
@@ -58,6 +59,7 @@ class ProviderHomeScreen extends StatelessWidget {
 
   /// FN-053: opens the earnings ledger; null hides the entry point.
   final VoidCallback? onViewEarnings;
+  final VoidCallback? onGroupQuotes;
 
   final NotificationController? notificationController;
   final VoidCallback? onTechDesk;
@@ -140,6 +142,22 @@ class ProviderHomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.md),
 
+              if (controller.profile == null || controller.skills.isEmpty) ...[
+                const FixCard(
+                  child: Text(
+                    'Add a provider profile and trade skills in Profile → Provider Setup to receive matching requests.',
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+              ],
+              if (onGroupQuotes != null) ...[
+                OutlinedButton.icon(
+                  onPressed: onGroupQuotes,
+                  icon: const Icon(Icons.groups_outlined),
+                  label: const Text('Group quote requests'),
+                ),
+                const SizedBox(height: AppSpacing.md),
+              ],
               if (notificationController != null &&
                   notificationController!.notifications.any(
                     (n) => !n.isRead,

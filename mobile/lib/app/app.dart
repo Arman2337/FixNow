@@ -14,6 +14,7 @@ import 'package:fixnow_mobile/app/app_navigation.dart';
 import 'package:fixnow_mobile/api/api_client.dart';
 import 'package:fixnow_mobile/api/api_config.dart';
 import 'package:fixnow_mobile/auth/auth_api.dart';
+import 'package:fixnow_mobile/features/group_services/group_services_screen.dart';
 import 'package:fixnow_mobile/auth/auth_controller.dart';
 import 'package:fixnow_mobile/auth/auth_session.dart';
 import 'package:fixnow_mobile/auth/auth_session_store.dart';
@@ -47,7 +48,6 @@ import 'package:fixnow_mobile/features/provider/provider_earnings_repository.dar
 import 'package:fixnow_mobile/features/provider/provider_earnings_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_home_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_jobs_screen.dart';
-import 'package:fixnow_mobile/features/provider/provider_onboarding_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_active_job_cockpit_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_profile_screen.dart';
 import 'package:fixnow_mobile/features/provider/provider_incoming_request_screen.dart';
@@ -66,6 +66,7 @@ import 'package:fixnow_mobile/features/ai/price_estimate_repository.dart';
 import 'package:fixnow_mobile/features/ai/problem_analysis_repository.dart';
 import 'package:fixnow_mobile/features/emergency/emergency_repository.dart';
 import 'package:fixnow_mobile/features/payments/invoice_repository.dart';
+import 'package:fixnow_mobile/features/payments/gateway_checkout_repository.dart';
 import 'package:fixnow_mobile/features/payments/invoice_screen.dart';
 import 'package:fixnow_mobile/features/payments/local_payment_repository.dart';
 import 'package:fixnow_mobile/features/guarantees/data/guarantee_repository.dart';
@@ -121,7 +122,13 @@ class FixNowApp extends StatefulWidget {
 }
 
 class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
+  String? _pendingGroupInvite;
   late final ApiTransport _api;
+  late final _gatewayCheckout = GatewayCheckoutRepository(
+    _api,
+    ApiConfig.baseUriFor(widget.environment),
+    _auth.validAccessToken,
+  );
   late final AuthController _auth;
   late final LastGoodCache _lastGoodCache;
   late final CustomerProfileController _profile;
@@ -181,6 +188,9 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _pendingGroupInvite = groupInviteToken(
+      WidgetsBinding.instance.platformDispatcher.defaultRouteName,
+    );
     _routeObserver = _AppRouteRestorationObserver(
       _routeStore,
       () => _auth.session?.userId,
@@ -412,6 +422,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
     _discovery = ServiceDiscoveryController(
       _categoryRepository,
       SubServiceRepository(api),
+      loadOnlineProviderCount: _categoryRepository.onlineProviderCount,
       cache: _lastGoodCache,
     );
     _location = LocationConsentController(
@@ -485,6 +496,51 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
     unawaited(_requestNotificationPermission());
   }
 
+  @override
+  Future<bool> didPushRouteInformation(RouteInformation routeInformation) async {
+    final token = groupInviteToken(routeInformation.uri.toString());
+    if (token == null) return false;
+    _pendingGroupInvite = token;
+    _scheduleGroupInvite();
+    return true;
+  }
+
+  void _scheduleGroupInvite() {
+    if (_pendingGroupInvite == null ||
+        !_auth.isAuthenticated ||
+        _auth.session?.role != AccountRole.customer) {
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final token = _pendingGroupInvite;
+      if (!mounted ||
+          token == null ||
+          !_auth.isAuthenticated ||
+          _auth.session?.role != AccountRole.customer ||
+          _navigatorKey.currentState == null) {
+        return;
+      }
+      _pendingGroupInvite = null;
+      _openGroupServices(inviteToken: token);
+    });
+    WidgetsBinding.instance.ensureVisualUpdate();
+  }
+
+  void _openGroupServices({bool provider = false, String? inviteToken}) {
+    _navigatorKey.currentState?.push<void>(
+      MaterialPageRoute(
+        builder: (_) => GroupServicesScreen(
+          api: _api,
+          accessToken: _auth.validAccessToken,
+          baseUri: ApiConfig.baseUriFor(widget.environment),
+          provider: provider,
+          inviteToken: inviteToken,
+          gatewayCheckout: _gatewayCheckout,
+        ),
+      ),
+    );
+  }
+
   void _handleAuthChange() {
     if (_auth.isAuthenticated) {
       unawaited(_requestNotificationPermission());
@@ -499,6 +555,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
         );
       }
       _scheduleRouteRestore();
+      _scheduleGroupInvite();
     }
   }
 
@@ -811,6 +868,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
     navigator.push(
       MaterialPageRoute<void>(
         builder: (_) => InvoiceScreen(
+          gatewayCheckout: _gatewayCheckout,
           repository: InvoiceRepository(
             _api,
             accessToken: _auth.validAccessToken,
@@ -931,27 +989,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
               ),
             };
           }
-          if (_auth.session?.role == AccountRole.providerApplicant) {
-            if (_provider.state == ProviderLoadState.loading &&
-                _provider.application == null) {
-              _provider.load(verified: false);
-            }
-            return ProviderOnboardingScreen(
-              controller: _provider,
-              pushController: _push,
-              notificationController: _notifications,
-              onSupportCases: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        ComplaintListScreen(controller: _complaints),
-                  ),
-                );
-              },
-              onSignOut: _signOut,
-            );
-          }
-          if (_auth.session?.role == AccountRole.verifiedProvider) {
+          if (_auth.session?.role != AccountRole.customer) {
             if (_provider.state == ProviderLoadState.loading &&
                 _provider.application == null) {
               _provider.load(verified: true);
@@ -963,6 +1001,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
               role: AppShellRole.provider,
               providerHome: ProviderHomeScreen(
                 controller: _provider,
+                onGroupQuotes: () => _openGroupServices(provider: true),
                 chatRepository: _chatRepository,
                 onTechDesk: () {
                   final nav = _navigatorKey.currentState;
@@ -1045,6 +1084,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
             activeBookingIsland: _customerActiveBookingIsland(),
             customerHome: ServiceDiscoveryScreen(
               controller: _discovery,
+              onGroupServices: _openGroupServices,
               locationController: _location,
               bookingsController: _bookings,
               onBookAgain: (booking) => _openRebooking(context, booking),
@@ -1148,6 +1188,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
                 nav.push(
                   MaterialPageRoute(
                     builder: (_) => InvoiceScreen(
+                      gatewayCheckout: _gatewayCheckout,
                       repository: InvoiceRepository(
                         _api,
                         accessToken: _auth.validAccessToken,
@@ -1198,6 +1239,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
                 nav.push(
                   MaterialPageRoute(
                     builder: (_) => InvoiceScreen(
+                      gatewayCheckout: _gatewayCheckout,
                       repository: InvoiceRepository(
                         _api,
                         accessToken: _auth.validAccessToken,
@@ -1310,6 +1352,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
             _navigatorKey.currentState?.push(
               MaterialPageRoute(
                 builder: (_) => InvoiceScreen(
+                  gatewayCheckout: _gatewayCheckout,
                   repository: InvoiceRepository(
                     _api,
                     accessToken: _auth.validAccessToken,
@@ -1379,6 +1422,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
             onViewInvoice: () => Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (_) => InvoiceScreen(
+                  gatewayCheckout: _gatewayCheckout,
                   repository: InvoiceRepository(
                     _api,
                     accessToken: _auth.validAccessToken,

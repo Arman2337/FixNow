@@ -19,18 +19,44 @@ class LocalPaymentRepository {
   /// transport or validation failure so the caller can surface it honestly.
   /// The amount is derived server-side from the booking; the client only names
   /// the booking and never sends money.
-  Future<void> pay(String bookingId) async {
-    final token = await _accessToken?.call();
+  Future<Map<String, Object?>> prepare(String bookingId) async {
     final order = _order(
       await _transport.send(
         ApiRequest(
           method: ApiMethod.post,
           path: 'payments/orders',
-          bearerToken: token,
+          bearerToken: await _accessToken?.call(),
           body: {'bookingId': bookingId},
         ),
       ),
     );
+    final amount = order['amountMinor'];
+    final gatewayId = order['gatewayOrderId'];
+    if (amount is! int ||
+        amount <= 0 ||
+        order['currency'] != 'INR' ||
+        order['id'] is! String ||
+        gatewayId is! String ||
+        !gatewayId.startsWith('order_fake_')) {
+      throw const ApiException(
+        ApiFailureKind.invalidResponse,
+        'A valid local payment order is required.',
+      );
+    }
+    return order;
+  }
+
+  Future<void> pay(String bookingId, {int? expectedAmountMinor}) async {
+    final token = await _accessToken?.call();
+    final order = await prepare(bookingId);
+    if (expectedAmountMinor != null &&
+        order['amountMinor'] != expectedAmountMinor) {
+      throw const ApiException(
+        ApiFailureKind.invalidResponse,
+        'The payment amount changed. Open checkout again.',
+      );
+    }
+    if (order['status'] == 'PAID') return;
     final orderId = order['id']! as String;
     final gatewayOrderId = order['gatewayOrderId']! as String;
     // The fake gateway accepts exactly `fake-<gatewayOrderId>:<paymentId>`

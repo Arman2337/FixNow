@@ -97,8 +97,9 @@ describe('MatchingService', () => {
         { categoryId: 'category-id' },
       );
       expect(andWhereMock).toHaveBeenCalledWith(
-        'skill.is_verified = :isVerified',
-        { isVerified: true },
+        expect.stringContaining(
+          'category.is_emergency = false OR (skill.is_verified = true',
+        ),
       );
       expect(andWhereMock).toHaveBeenCalledWith(
         expect.stringContaining('<= profile.serviceRadiusKm'),
@@ -194,7 +195,11 @@ describe('MatchingService', () => {
 
       const predicates = andWhereCalls.map(([sql]) => String(sql).trim());
       expect(
-        predicates.some((p) => p.includes('skill.is_verified = :isVerified')),
+        predicates.some((p) =>
+          p.includes(
+            'category.is_emergency = false OR (skill.is_verified = true',
+          ),
+        ),
       ).toBe(true);
       expect(
         predicates.some((p) =>
@@ -301,7 +306,7 @@ describe('MatchingService', () => {
       );
       for (const expected of [
         'availability.status = :availStatus',
-        'skill.is_verified = :isVerified',
+        'category.is_emergency = false OR (skill.is_verified = true',
         'skill.service_category_id = :categoryId',
         'category.is_active = :categoryActive',
       ]) {

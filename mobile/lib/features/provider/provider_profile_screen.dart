@@ -13,10 +13,8 @@ import 'package:fixnow_mobile/features/provider/provider_onboarding_screen.dart'
 import 'package:fixnow_mobile/notifications/push_enrollment.dart';
 import 'package:fixnow_mobile/notifications/push_settings_card.dart';
 
-/// Dedicated Profile, Settings & Operations Hub for Verified Providers (Tab 3).
-///
-/// Keeps verified providers strictly separated from the 4-step applicant KYC onboarding wizard,
-/// while providing full access to working hours, service radius, verified skills,
+/// Provider profile, settings and operations hub.
+/// Provides access to working hours, service radius, trade skills,
 /// earnings shortcuts, notification preferences, and document management.
 class ProviderProfileScreen extends StatefulWidget {
   const ProviderProfileScreen({
@@ -126,8 +124,10 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
       listenable: widget.controller,
       builder: (context, _) {
         final profile = widget.controller.profile;
-        final displayName = profile?.displayName ?? 'Verified Partner';
-        final bio = profile?.bio ?? 'FixNow Certified Service Professional';
+        final verified = widget.controller.application?.status ==
+            ProviderApplicationStatus.approved;
+        final displayName = profile?.displayName ?? 'Service Partner';
+        final bio = profile?.bio ?? 'FixNow Service Provider';
         final radius = _serviceRadius ?? profile?.serviceRadiusKm ?? 10.0;
         final stats = profile?.stats;
         final availability = widget.controller.availability;
@@ -175,7 +175,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                           FixAvatar(
                             name: displayName,
                             radius: 32,
-                            verified: true,
+                            verified: verified,
                           ),
                           const SizedBox(width: AppSpacing.md),
                           Expanded(
@@ -193,26 +193,28 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                                         overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
-                                    const SizedBox(width: 6),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 6,
-                                        vertical: 2,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.primaryEmerald.withValues(alpha: 0.15),
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      child: const Text(
-                                        'VERIFIED',
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w800,
-                                          letterSpacing: 0.5,
-                                          color: AppColors.primaryEmerald,
+                                    if (verified) ...[
+                                      const SizedBox(width: 6),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 6,
+                                          vertical: 2,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.primaryEmerald.withValues(alpha: 0.15),
+                                          borderRadius: BorderRadius.circular(6),
+                                        ),
+                                        child: const Text(
+                                          'VERIFIED',
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w800,
+                                            letterSpacing: 0.5,
+                                            color: AppColors.primaryEmerald,
+                                          ),
                                         ),
                                       ),
-                                    ),
+                                    ],
                                   ],
                                 ),
                                 const SizedBox(height: 4),
@@ -408,7 +410,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                           SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'Verified Trade Skills',
+                              'Trade Skills',
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w700,
@@ -422,7 +424,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                       const SizedBox(height: AppSpacing.sm),
                       if (skills.isEmpty)
                         const Text(
-                          'All primary verified service categories enabled.',
+                          'Manage your service categories in Provider Setup.',
                           style: TextStyle(
                             fontSize: 13,
                             color: AppColors.textSecondary,
@@ -480,14 +482,17 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                       const Divider(height: 1),
                       _SettingsActionTile(
                         icon: Icons.badge_rounded,
-                        title: 'Manage KYC & Trade Credentials',
-                        subtitle: 'Aadhaar, PAN, police clearance, and trade licenses',
-                        onTap: () {
-                          Navigator.of(context).push(
+                        title: 'Provider Setup',
+                        subtitle: 'Manage your profile, trade skills and optional identity verification',
+                        onTap: () async {
+                          final navigator = Navigator.of(context);
+                          await widget.controller.load(verified: false);
+                          if (!mounted) return;
+                          await navigator.push(
                             MaterialPageRoute(
                               builder: (_) => Scaffold(
                                 appBar: AppBar(
-                                  title: const Text('KYC Document Management'),
+                                  title: const Text('Provider Setup'),
                                 ),
                                 body: ProviderOnboardingScreen(
                                   controller: widget.controller,
@@ -498,6 +503,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                               ),
                             ),
                           );
+                          if (mounted) await widget.controller.load(verified: true);
                         },
                       ),
                       const Divider(height: 1),

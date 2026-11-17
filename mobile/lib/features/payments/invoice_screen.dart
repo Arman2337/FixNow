@@ -12,6 +12,8 @@ import 'package:fixnow_mobile/design_system/fix_state_views.dart';
 import 'package:fixnow_mobile/features/payments/fix_pdf_invoice_builder.dart';
 import 'package:fixnow_mobile/features/payments/fix_share_invoice_sheet.dart';
 import 'package:fixnow_mobile/features/payments/invoice_repository.dart';
+import 'package:fixnow_mobile/features/payments/gateway_checkout_repository.dart';
+import 'package:fixnow_mobile/features/payments/gateway_checkout_actions.dart';
 import 'package:fixnow_mobile/features/payments/local_payment_config.dart';
 import 'package:fixnow_mobile/features/payments/local_payment_repository.dart';
 import 'package:flutter/material.dart';
@@ -26,6 +28,7 @@ class InvoiceScreen extends StatefulWidget {
     this.initialInvoice,
     this.paymentId,
     this.localPaymentRepository,
+    this.gatewayCheckout,
     bool? localPaymentBypassEnabled,
     super.key,
   }) : localPaymentBypassEnabled =
@@ -41,6 +44,7 @@ class InvoiceScreen extends StatefulWidget {
   /// FN-118: dev-only local checkout. When null the pay affordance never
   /// shows; production and non-dev builds simply pass nothing here.
   final LocalPaymentRepository? localPaymentRepository;
+  final GatewayCheckoutRepository? gatewayCheckout;
 
   /// Defaults to `LocalPaymentConfig.bypassEnabled`; injectable for tests.
   final bool localPaymentBypassEnabled;
@@ -105,6 +109,7 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
             InvoiceState.pending => _PendingView(
               bypassEnabled: widget.localPaymentBypassEnabled,
               repository: widget.localPaymentRepository,
+              gatewayCheckout: widget.gatewayCheckout,
               bookingId: widget.bookingId,
               onPaid: _controller.load,
             ),
@@ -138,12 +143,14 @@ class _PendingView extends StatefulWidget {
     required this.repository,
     required this.bookingId,
     required this.onPaid,
+    this.gatewayCheckout,
   });
 
   final bool bypassEnabled;
   final LocalPaymentRepository? repository;
   final String bookingId;
   final Future<void> Function() onPaid;
+  final GatewayCheckoutRepository? gatewayCheckout;
 
   @override
   State<_PendingView> createState() => _PendingViewState();
@@ -151,6 +158,9 @@ class _PendingView extends StatefulWidget {
 
 class _PendingViewState extends State<_PendingView> {
   bool _paying = false;
+  late final Future<bool>? _gatewayAvailable = widget.bookingId.isEmpty
+      ? null
+      : widget.gatewayCheckout?.isAvailable();
 
   bool get _canPayLocally => widget.bypassEnabled && widget.repository != null;
 
@@ -170,7 +180,24 @@ class _PendingViewState extends State<_PendingView> {
   }
 
   @override
-  Widget build(BuildContext context) => Center(
+  Widget build(BuildContext context) {
+    final available = _gatewayAvailable;
+    if (available == null) return _content(gatewayAvailable: false);
+    return FutureBuilder<bool>(
+      future: available,
+      builder: (context, snapshot) => _content(
+        gatewayAvailable: snapshot.data == true,
+        checkingGateway: snapshot.connectionState != ConnectionState.done,
+        gatewayError: snapshot.hasError,
+      ),
+    );
+  }
+
+  Widget _content({
+    required bool gatewayAvailable,
+    bool checkingGateway = false,
+    bool gatewayError = false,
+  }) => Center(
     child: Padding(
       padding: const EdgeInsets.all(AppSpacing.pagePadding),
       child: Column(
@@ -183,15 +210,37 @@ class _PendingViewState extends State<_PendingView> {
                 'An invoice is issued once a payment is completed for '
                 'this booking.',
           ),
-          if (_canPayLocally) ...[
+          if (checkingGateway)
+            const Text('Checking online payment availability…'),
+          if (gatewayError)
+            TextButton(
+              onPressed: widget.onPaid,
+              child: const Text('Retry payment availability'),
+            ),
+          if (gatewayAvailable) ...[
+            const SizedBox(height: AppSpacing.lg),
+            GatewayCheckoutActions(
+              repository: widget.gatewayCheckout!,
+              serviceId: widget.bookingId,
+              refresh: widget.onPaid,
+            ),
+          ],
+          if (!checkingGateway &&
+              !gatewayAvailable &&
+              !gatewayError &&
+              _canPayLocally) ...[
             const SizedBox(height: AppSpacing.lg),
             FixButton(
               label: 'Pay Now (Interactive Checkout)',
               icon: Icons.payments_rounded,
-              onPressed: () => _openCheckoutSheet(context),
+              isLoading: _paying,
+              onPressed: _paying ? null : () => _openCheckoutSheet(context),
             ),
           ],
-          if (_canPayLocally) ...[
+          if (!checkingGateway &&
+              !gatewayAvailable &&
+              !gatewayError &&
+              _canPayLocally) ...[
             const SizedBox(height: AppSpacing.sm),
             FixButton(
               label: 'Complete payment (local)',
@@ -213,35 +262,48 @@ class _PendingViewState extends State<_PendingView> {
     ),
   );
 
-  void _openCheckoutSheet(BuildContext context) {
-    // FN-118 / ADR-0016: reachable only through the dev-gated local bypass.
-    // This state is "no invoice yet", so no server amount exists to quote.
-    // The figure below is therefore a development placeholder for exercising
-    // the checkout sheet, never a customer-facing price. It must not become
-    // production-reachable — gate the caller with `_canPayLocally` instead of
-    // relying on the repository merely being present.
-    const devPlaceholderBaseMinor = 49900;
-    FixPaymentCheckoutSheet.show(
-      context,
-      bookingId: widget.bookingId,
-      baseAmountMinor: devPlaceholderBaseMinor,
-      onProcessPayment:
-          ({
-            required paymentMethod,
-            required totalMinor,
-            required tipMinor,
-          }) async {
-            if (widget.repository != null) {
-              await widget.repository!.pay(widget.bookingId);
-            }
-          },
-      onViewInvoice: () async {
+  Future<void> _openCheckoutSheet(BuildContext context) async {
+    setState(() => _paying = true);
+    try {
+      final order = await widget.repository!.prepare(widget.bookingId);
+      if (!context.mounted) return;
+      setState(() => _paying = false);
+      if (order['status'] == 'PAID') {
         await widget.onPaid();
-      },
-      onDone: () async {
-        await widget.onPaid();
-      },
-    );
+        return;
+      }
+      final amountMinor = order['amountMinor'] as int;
+      await FixPaymentCheckoutSheet.show(
+        context,
+        bookingId: widget.bookingId,
+        baseAmountMinor: amountMinor,
+        confirmedTotalMinor: amountMinor,
+        demo: true,
+        onProcessPayment:
+            ({
+              required paymentMethod,
+              required totalMinor,
+              required tipMinor,
+            }) => widget.repository!.pay(
+              widget.bookingId,
+              expectedAmountMinor: totalMinor,
+            ),
+        onViewInvoice: () {
+          widget.onPaid();
+        },
+        onDone: () {
+          widget.onPaid();
+        },
+      );
+    } on ApiException catch (error) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.message)));
+      }
+    } finally {
+      if (mounted) setState(() => _paying = false);
+    }
   }
 }
 

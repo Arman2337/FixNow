@@ -144,7 +144,7 @@ describe('ProviderVerificationService', () => {
     expect(result.decisionReason).toBe('document issue');
     expect(events.save).toHaveBeenCalled();
   });
-  it('activates the account and grants verified-provider role only after approval', async () => {
+  it('grants verified-provider role without changing account access', async () => {
     applications.findOne.mockResolvedValue({
       ...application,
       status: ProviderOnboardingStatus.UnderReview,
@@ -157,9 +157,7 @@ describe('ProviderVerificationService', () => {
       ProviderOnboardingStatus.Approved,
       'requirements satisfied',
     );
-    expect(users.save).toHaveBeenCalledWith(
-      expect.objectContaining({ status: AccountStatus.Active }),
-    );
+    expect(users.save).not.toHaveBeenCalled();
     expect(grants.save).toHaveBeenCalledWith(
       expect.objectContaining({ userId: 'provider-id', roleId: 'role-id' }),
     );

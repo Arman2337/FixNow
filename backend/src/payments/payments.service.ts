@@ -10,6 +10,7 @@ import { createHash } from 'crypto';
 import {
   DataSource,
   EntityManager,
+  In,
   QueryFailedError,
   Repository,
 } from 'typeorm';
@@ -52,8 +53,8 @@ export class PaymentsService {
 
   /**
    * FN-052: create (or idempotently return) the booking-bound payment order.
-   * The amount is the category's published price at order time; bookings in
-   * "price on request" categories cannot be paid yet.
+   * Use the final itemized total, falling back to the published category price
+   * for bookings without priced items.
    */
   async createForBooking(
     customerId: string,
@@ -90,7 +91,9 @@ export class PaymentsService {
     // Only the approved currency is payable; anything else is treated as
     // "price on request" rather than guessed.
     const currency =
-      category?.priceCurrency === 'INR' ? category.priceCurrency : null;
+      booking.totalAmountMinor != null || category?.priceCurrency === 'INR'
+        ? 'INR'
+        : null;
     // The itemized booking total is authoritative; the category's published
     // price is only a fallback for bookings created without line items.
     // totalAmountMinor already includes GST (computeBookingTotals adds 18%), so
@@ -190,6 +193,73 @@ export class PaymentsService {
     });
   }
 
+  async groupOrder(
+    customerId: string,
+    groupServiceId: string,
+    principal: AuthorizationPrincipal,
+    create = false,
+  ): Promise<PaymentOrderContract | null> {
+    const [member] = await this.dataSource.query<
+      { customerId: string; amountMinor: number | null }[]
+    >(
+      `SELECT m.customer_id AS "customerId", q.group_minor AS "amountMinor"
+       FROM group_service_members m
+       JOIN group_service_requests g ON g.id = m.group_id
+       LEFT JOIN group_service_quotes q ON q.id = g.selected_quote_id
+       WHERE m.group_id = $1 AND m.customer_id = $2`,
+      [groupServiceId, customerId],
+    );
+    if (!member) throw new NotFoundException('Service group not found');
+    assertOwnedResource(principal, member.customerId, 'group.customerId');
+    const receipt = `group:${groupServiceId}:${customerId}`;
+    const existing = await this.orders.findOneBy({ receipt });
+    if (existing || !create) return existing ? this.present(existing) : null;
+    if (member.amountMinor === null) {
+      throw new ConflictException(
+        'Select a provider before paying for this service',
+      );
+    }
+    const gatewayOrder = await this.gateway.createOrder({
+      amountMinor: member.amountMinor,
+      currency: 'INR',
+      receipt,
+      notes: { groupServiceId },
+    });
+    return this.dataSource.transaction(async (manager) => {
+      const [lockedMember] = await manager.query<{ customerId: string }[]>(
+        `SELECT customer_id AS "customerId" FROM group_service_members
+         WHERE group_id = $1 AND customer_id = $2 FOR UPDATE`,
+        [groupServiceId, customerId],
+      );
+      if (!lockedMember) throw new NotFoundException('Service group not found');
+      // Selection fixes both group membership and quote terms, so the quoted
+      // amount read before the gateway request is still authoritative here.
+      const orders = manager.getRepository(PaymentOrder);
+      const replay = await orders.findOneBy({ receipt });
+      if (replay) return this.present(replay);
+      const order = await orders.save(
+        orders.create({
+          groupServiceId,
+          bookingId: null,
+          customerId,
+          amountMinor: gatewayOrder.amountMinor,
+          currency: gatewayOrder.currency,
+          status: PaymentOrderStatus.CREATED,
+          gatewayOrderId: gatewayOrder.gatewayOrderId,
+          receipt,
+        }),
+      );
+      await this.appendEventWithManager(
+        manager,
+        order.id,
+        'order.created',
+        customerId,
+        createHash('sha256').update(receipt).digest('hex'),
+      );
+      return this.present(order);
+    });
+  }
+
   /** Customer-side Checkout handshake verification (webhook stays authoritative). */
   async verifyCheckout(
     customerId: string,
@@ -209,6 +279,7 @@ export class PaymentsService {
     if (!valid) {
       throw new ForbiddenException('Payment signature verification failed');
     }
+    if (this.gateway.capturedUpiOnly) return this.present(order);
     return this.markPaid(order, params.gatewayPaymentId, 'customer');
   }
 
@@ -272,6 +343,20 @@ export class PaymentsService {
         );
         return { handled: true };
       }
+      if (
+        this.gateway.capturedUpiOnly &&
+        (entity?.currency !== order.currency ||
+          entity?.method !== 'upi' ||
+          !gatewayPaymentId)
+      ) {
+        await this.appendEvent(
+          order.id,
+          'payment.captured.details_mismatch',
+          'webhook',
+          digest,
+        );
+        return { handled: true };
+      }
       await this.markPaid(order, gatewayPaymentId ?? null, 'webhook');
       await this.appendEvent(order.id, eventType, 'webhook', digest);
       return { handled: true };
@@ -314,21 +399,33 @@ export class PaymentsService {
     return order ? this.present(order) : null;
   }
 
-  /** Race-safe PAID transition: only CREATED orders may advance. */
+  /** Race-safe capture. A gateway retry may capture after a failed attempt. */
   private async markPaid(
     order: PaymentOrder,
     gatewayPaymentId: string | null,
     actor: string,
   ): Promise<PaymentOrderContract> {
     const advanced = await this.orders.update(
-      { id: order.id, status: PaymentOrderStatus.CREATED },
-      { status: PaymentOrderStatus.PAID, gatewayPaymentId },
+      {
+        id: order.id,
+        // A failed Razorpay attempt can be followed by a valid capture for
+        // the same order. The captured event decides the final state.
+        status: this.gateway.capturedUpiOnly
+          ? In([PaymentOrderStatus.CREATED, PaymentOrderStatus.FAILED])
+          : PaymentOrderStatus.CREATED,
+      },
+      {
+        status: PaymentOrderStatus.PAID,
+        gatewayPaymentId,
+        failureReason: null,
+      },
     );
     if (!advanced.affected) {
       const raced = await this.orders.findOneByOrFail({ id: order.id });
       if (raced.status !== PaymentOrderStatus.PAID) {
         throw new ConflictException('This payment was already finalised');
       }
+      await this.ensureInvoice(raced.id);
       return this.present(raced);
     }
     await this.appendEvent(
@@ -545,7 +642,7 @@ export class PaymentsService {
       },
     );
 
-    if (completed.status === 'PROCESSED') {
+    if (completed.status === 'PROCESSED' && reservation.order.bookingId) {
       const booking = await this.dataSource
         .getRepository(Booking)
         .findOneBy({ id: reservation.order.bookingId });
@@ -610,16 +707,20 @@ export class PaymentsService {
     >(
       `SELECT COALESCE(SUM(o.amount_minor), 0) AS gross, COUNT(*)::int AS count
        FROM payment_orders o
-       JOIN bookings b ON b.id = o.booking_id
-       WHERE b.provider_id = $1 AND o.status = 'PAID'`,
+       LEFT JOIN bookings b ON b.id = o.booking_id
+       LEFT JOIN group_service_requests g ON g.id = o.group_service_id
+       LEFT JOIN group_service_quotes q ON q.id = g.selected_quote_id
+       WHERE COALESCE(b.provider_id, q.provider_id) = $1 AND o.status = 'PAID'`,
       [providerId],
     );
     const refundedRows = await this.dataSource.query<Array<{ total?: string }>>(
       `SELECT COALESCE(SUM(r.amount_minor), 0) AS total
        FROM refunds r
        JOIN payment_orders o ON o.id = r.payment_order_id
-       JOIN bookings b ON b.id = o.booking_id
-       WHERE b.provider_id = $1 AND o.status = 'PAID'`,
+       LEFT JOIN bookings b ON b.id = o.booking_id
+       LEFT JOIN group_service_requests g ON g.id = o.group_service_id
+       LEFT JOIN group_service_quotes q ON q.id = g.selected_quote_id
+       WHERE COALESCE(b.provider_id, q.provider_id) = $1 AND o.status = 'PAID'`,
       [providerId],
     );
     const grossMinor = parseInt(grossRows[0]?.gross ?? '0', 10);
@@ -746,6 +847,7 @@ export class PaymentsService {
     return {
       id: order.id,
       bookingId: order.bookingId,
+      ...(order.groupServiceId ? { groupServiceId: order.groupServiceId } : {}),
       amountMinor: order.amountMinor,
       currency: order.currency,
       status: order.status,

@@ -38,6 +38,23 @@ export class ServiceCategoriesService {
     private readonly dataSource: DataSource,
   ) {}
 
+  async onlineProviderCount(): Promise<{ count: number }> {
+    const [result] = await this.dataSource.query<{ count: number }[]>(
+      `SELECT COUNT(DISTINCT pa.user_id)::int AS count
+       FROM provider_availability pa
+       JOIN users u ON u.id = pa.user_id AND u.status = $1
+       JOIN provider_skills ps ON ps.user_id = pa.user_id
+       JOIN service_categories sc ON sc.id = ps.service_category_id AND sc.is_active
+       WHERE pa.status = $2 AND pa.status_expires_at > CURRENT_TIMESTAMP
+         AND (sc.is_emergency = false OR (ps.is_verified AND EXISTS (
+           SELECT 1 FROM provider_applications a
+           WHERE a.user_id = pa.user_id AND a.status = 'approved'
+         )))`,
+      [AccountStatus.Active, ProviderAvailabilityStatus.Online],
+    );
+    return { count: result?.count ?? 0 };
+  }
+
   async findAll(
     query: ServiceCategoryQueryDto,
   ): Promise<ServiceCategoryEntity[]> {
@@ -234,6 +251,7 @@ export class ServiceCategoriesService {
               COUNT(DISTINCT ps.user_id)::int AS count
        FROM provider_skills ps
        JOIN users u ON u.id = ps.user_id
+       JOIN provider_applications a ON a.user_id = ps.user_id AND a.status = 'approved'
        WHERE ps.is_verified = true
          AND u.status = $1
          AND ps.service_category_id = ANY($2::uuid[])
@@ -251,7 +269,11 @@ export class ServiceCategoriesService {
               COUNT(DISTINCT ps.user_id)::int AS count
        FROM provider_availability pa
        JOIN provider_skills ps
-         ON ps.user_id = pa.user_id AND ps.is_verified = true
+         ON ps.user_id = pa.user_id
+       JOIN service_categories sc ON sc.id = ps.service_category_id
+         AND (sc.is_emergency = false OR (ps.is_verified = true AND EXISTS (
+           SELECT 1 FROM provider_applications a WHERE a.user_id = pa.user_id AND a.status = 'approved'
+         )))
        JOIN users u ON u.id = pa.user_id
        WHERE pa.status = $1
          AND pa.status_expires_at > CURRENT_TIMESTAMP

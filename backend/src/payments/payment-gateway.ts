@@ -4,7 +4,7 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { createHmac, timingSafeEqual } from 'crypto';
+import { createHash, createHmac, timingSafeEqual } from 'crypto';
 import type {
   CreatePaymentOrderRequest,
   PaymentGatewayOrder,
@@ -28,6 +28,8 @@ export interface GatewayRefund {
 }
 
 export interface PaymentGateway {
+  /** Live checkout waits for a signed capture event. */
+  readonly capturedUpiOnly?: boolean;
   createOrder(input: CreatePaymentOrderRequest): Promise<PaymentGatewayOrder>;
   /** Verifies the raw webhook body against X-Razorpay-Signature. */
   verifyWebhookSignature(rawBody: string, signature: string): boolean;
@@ -118,6 +120,7 @@ export class FakePaymentGateway implements PaymentGateway {
 /** Thin Razorpay REST adapter — no SDK, basic auth, global fetch (ADR-0016). */
 @Injectable()
 export class RazorpayPaymentGateway implements PaymentGateway {
+  readonly capturedUpiOnly = true;
   private readonly config: ConfigService;
 
   constructor(config: ConfigService) {
@@ -162,7 +165,13 @@ export class RazorpayPaymentGateway implements PaymentGateway {
       body: JSON.stringify({
         amount: input.amountMinor,
         currency: input.currency,
-        receipt: input.receipt,
+        receipt:
+          input.receipt.length <= 40
+            ? input.receipt
+            : createHash('sha256')
+                .update(input.receipt)
+                .digest('hex')
+                .slice(0, 40),
         notes: input.notes ?? {},
       }),
     });
@@ -177,6 +186,15 @@ export class RazorpayPaymentGateway implements PaymentGateway {
       currency: string;
       status: string;
     };
+    if (
+      !/^order_[A-Za-z0-9]+$/.test(body.id) ||
+      body.amount !== input.amountMinor ||
+      body.currency !== input.currency
+    ) {
+      throw new ServiceUnavailableException(
+        'Payment gateway returned an invalid order',
+      );
+    }
     return {
       gatewayOrderId: body.id,
       amountMinor: body.amount,

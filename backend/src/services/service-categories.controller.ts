@@ -37,6 +37,12 @@ export class ServiceCategoriesController {
   }
 
   @Public()
+  @Get('online-provider-count')
+  onlineProviderCount(): Promise<{ count: number }> {
+    return this.serviceCategoriesService.onlineProviderCount();
+  }
+
+  @Public()
   @Get('active')
   getActiveCategories(): Promise<ServiceCategoryResponseDto[]> {
     return this.serviceCategoriesService.findAllWithStats({ isActive: true });

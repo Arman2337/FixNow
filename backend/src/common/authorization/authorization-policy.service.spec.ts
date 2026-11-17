@@ -36,7 +36,7 @@ describe('AuthorizationPolicyService', () => {
     ).toBe(false);
   });
 
-  it('allows only a verified provider to manage their own availability', () => {
+  it('allows active providers to manage their own availability without KYC', () => {
     expect(
       policy.isAllowed(
         {
@@ -56,7 +56,7 @@ describe('AuthorizationPolicyService', () => {
         },
         AccountStatus.Active,
       ),
-    ).toBe(false);
+    ).toBe(true);
     expect(
       policy.isAllowed(
         {

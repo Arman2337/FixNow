@@ -5,7 +5,6 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
-import { AccountStatus } from '../../users/account-status';
 import { RoleEntity } from '../../users/role.entity';
 import { UserRoleEntity } from '../../users/user-role.entity';
 import { UserEntity } from '../../users/user.entity';
@@ -103,7 +102,7 @@ export class ProviderVerificationService {
         applicationVersion: saved.version,
       });
       if (to === ProviderOnboardingStatus.Approved)
-        await this.activateProvider(manager, application.userId, actorId);
+        await this.grantVerification(manager, application.userId, actorId);
       return saved;
     });
   }
@@ -124,7 +123,7 @@ export class ProviderVerificationService {
     );
   }
 
-  private async activateProvider(
+  private async grantVerification(
     manager: EntityManager,
     userId: string,
     actorId: string,
@@ -137,10 +136,6 @@ export class ProviderVerificationService {
       .findOne({ where: { code: 'verified_provider' } });
     if (!user || !role)
       throw new ConflictException('Provider activation prerequisites missing');
-    user.status = AccountStatus.Active;
-    user.statusReason = 'provider-approved';
-    user.statusChangedAt = new Date();
-    await manager.getRepository(UserEntity).save(user);
     const grants = manager.getRepository(UserRoleEntity);
     if (!(await grants.findOne({ where: { userId, roleId: role.id } })))
       await grants.save(

@@ -484,6 +484,18 @@ describe('PaymentsService', () => {
     });
   });
 
+  it('keeps Razorpay checkout authorization pending until the capture webhook', async () => {
+    Object.defineProperty(gateway, 'capturedUpiOnly', { value: true });
+    const order = savedOrder();
+    orders.findOneBy.mockResolvedValue(order);
+    const result = await service.verifyCheckout(customerId, order.id, {
+      gatewayPaymentId: 'pay_pending',
+      signature: `fake-${order.gatewayOrderId}:pay_pending`,
+    });
+    expect(result.status).toBe('CREATED');
+    expect(orders.update).not.toHaveBeenCalled();
+  });
+
   describe('processWebhook', () => {
     // The fake gateway's marker scheme is `fake-<bodyLength>`.
     const sign = (body: string) => `fake-${body.length}`;
@@ -529,6 +541,43 @@ describe('PaymentsService', () => {
       expect(eventRepo.insert).toHaveBeenCalledWith(
         expect.objectContaining({
           eventType: 'payment.captured.amount_mismatch',
+        }),
+      );
+    });
+
+    it('accepts only a matching captured UPI payment in Razorpay mode', async () => {
+      Object.defineProperty(gateway, 'capturedUpiOnly', { value: true });
+      const order = savedOrder({ status: PaymentOrderStatus.FAILED });
+      orders.findOneBy.mockResolvedValue(order);
+      const checkoutBody = (method: string, currency: string) =>
+        JSON.stringify({
+          event: 'payment.captured',
+          payload: {
+            payment: {
+              entity: {
+                id: 'pay_upi',
+                order_id: order.gatewayOrderId,
+                amount: order.amountMinor,
+                currency,
+                method,
+              },
+            },
+          },
+        });
+      for (const body of [
+        checkoutBody('card', 'INR'),
+        checkoutBody('upi', 'USD'),
+      ]) {
+        await service.processWebhook(body, sign(body));
+      }
+      expect(orders.update).not.toHaveBeenCalled();
+      const body = checkoutBody('upi', 'INR');
+      await service.processWebhook(body, sign(body));
+      expect(orders.update).toHaveBeenCalledWith(
+        expect.objectContaining({ id: order.id }),
+        expect.objectContaining({
+          status: 'PAID',
+          gatewayPaymentId: 'pay_upi',
         }),
       );
     });

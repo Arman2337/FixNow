@@ -48,7 +48,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('SERVICE PROVIDER'), findsOneWidget);
-    expect(find.textContaining('Verification is required'), findsOneWidget);
+    expect(find.textContaining('Identity verification is optional'), findsOneWidget);
   });
 
   testWidgets('sign in intent does not claim unsupported recovery', (
@@ -68,7 +68,7 @@ void main() {
     expect(find.textContaining('Google'), findsNothing);
   });
 
-  testWidgets('provider session routes to incomplete onboarding handoff', (
+  testWidgets('provider can open the workspace before completing identity verification', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -84,8 +84,22 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Profile incomplete'), findsOneWidget);
-    expect(find.textContaining('Complete supported profile'), findsOneWidget);
+    expect(find.text('Ready for your next job?'), findsOneWidget);
+    expect(find.text('Group quote requests'), findsOneWidget);
+  });
+
+  testWidgets('a cold group invitation keeps the sign-in entry available', (
+    tester,
+  ) async {
+    final dispatcher = tester.binding.platformDispatcher;
+    dispatcher.defaultRouteNameTestValue = 'fixnow://group-invite/${'a' * 48}';
+    addTearDown(dispatcher.clearDefaultRouteNameTestValue);
+
+    await tester.pumpWidget(_app());
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Get started'), findsOneWidget);
   });
 
   testWidgets('auth entry remains usable on a small phone with large text', (
@@ -152,6 +166,16 @@ class _Transport implements ApiTransport {
         statusCode: 200,
         body: {'categories': <Object?>[]},
       );
+    }
+    if (request.path == 'provider-availability/me') {
+      return const ApiResponse(
+        statusCode: 200,
+        body: {'status': 'offline', 'version': 1},
+      );
+    }
+    if (request.path == 'bookings?limit=30' ||
+        request.path == 'bookings/available?limit=30') {
+      return const ApiResponse(statusCode: 200, body: {'bookings': <Object?>[]});
     }
     if (request.path == 'provider-documents') {
       return const ApiResponse(

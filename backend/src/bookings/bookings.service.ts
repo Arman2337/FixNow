@@ -41,6 +41,7 @@ import { SubServiceEntity } from '../services/sub-service.entity';
 import { UserEntity } from '../users/user.entity';
 import { ProviderProfileEntity } from '../providers/provider-profile.entity';
 import { CustomerProfileEntity } from '../users/customer-profile.entity';
+import { ServiceCategoryEntity } from '../services/service-category.entity';
 import { BookingReview } from '../ratings/domain/review.entity';
 import { ReviewModerationStatus } from '../../../shared/ratings.types';
 import { ProviderCapacityService } from '../providers/availability/provider-capacity.service';
@@ -1780,6 +1781,19 @@ export class BookingsService {
 
   private async populatePhones(bookings: Booking[]): Promise<void> {
     if (bookings.length === 0) return;
+    const categories = await this.dataSource
+      .getRepository(ServiceCategoryEntity)
+      .find({
+        where: {
+          id: In([
+            ...new Set(bookings.map((booking) => booking.serviceCategoryId)),
+          ]),
+        },
+        select: { id: true, name: true },
+      });
+    const categoryNames = new Map(
+      categories.map((category) => [category.id, category.name]),
+    );
     const userIds = new Set<string>();
     const providerIds = new Set<string>();
     bookings.forEach((b) => {
@@ -1887,6 +1901,7 @@ export class BookingsService {
     );
 
     bookings.forEach((b) => {
+      b.serviceCategoryName = categoryNames.get(b.serviceCategoryId) ?? null;
       b.customerPhone = phoneMap.get(b.customerId) ?? null;
       if (b.providerId) {
         b.providerPhone = phoneMap.get(b.providerId) ?? null;

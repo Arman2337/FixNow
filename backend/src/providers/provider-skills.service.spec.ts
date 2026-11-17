@@ -13,8 +13,8 @@ import {
   AUTO_VERIFIED_NOTE,
 } from './provider-skills.service';
 import { ProviderSkillEntity } from './provider-skill.entity';
-import { UserEntity } from '../users/user.entity';
-import { AccountStatus } from '../users/account-status';
+import { ProviderApplicationEntity } from './provider-application.entity';
+import { ProviderOnboardingStatus } from './provider-onboarding-status';
 import { ServiceCategoryEntity } from '../services/service-category.entity';
 import {
   CreateProviderSkillDto,
@@ -25,7 +25,7 @@ describe('ProviderSkillsService', () => {
   let service: ProviderSkillsService;
   let skillRepository: jest.Mocked<Repository<ProviderSkillEntity>>;
   let categoryRepository: jest.Mocked<Repository<ServiceCategoryEntity>>;
-  let userRepository: jest.Mocked<Repository<UserEntity>>;
+  let applicationRepository: jest.Mocked<Repository<ProviderApplicationEntity>>;
 
   const mockSkill: ProviderSkillEntity = {
     id: 'skill-id',
@@ -85,7 +85,7 @@ describe('ProviderSkillsService', () => {
       findOne: jest.fn(),
     };
 
-    const mockUserRepository = {
+    const mockApplicationRepository = {
       findOne: jest.fn(),
     };
 
@@ -101,8 +101,8 @@ describe('ProviderSkillsService', () => {
           useValue: mockCategoryRepository,
         },
         {
-          provide: getRepositoryToken(UserEntity),
-          useValue: mockUserRepository,
+          provide: getRepositoryToken(ProviderApplicationEntity),
+          useValue: mockApplicationRepository,
         },
       ],
     }).compile();
@@ -110,7 +110,9 @@ describe('ProviderSkillsService', () => {
     service = module.get<ProviderSkillsService>(ProviderSkillsService);
     skillRepository = module.get(getRepositoryToken(ProviderSkillEntity));
     categoryRepository = module.get(getRepositoryToken(ServiceCategoryEntity));
-    userRepository = module.get(getRepositoryToken(UserEntity));
+    applicationRepository = module.get(
+      getRepositoryToken(ProviderApplicationEntity),
+    );
   });
 
   afterEach(() => {
@@ -176,10 +178,10 @@ describe('ProviderSkillsService', () => {
     it('should create skill successfully', async () => {
       categoryRepository.findOne.mockResolvedValue(mockCategory);
       skillRepository.findOne.mockResolvedValue(null); // No existing skill
-      userRepository.findOne.mockResolvedValue({
+      applicationRepository.findOne.mockResolvedValue({
         id: 'user-id',
-        status: AccountStatus.Active,
-      } as UserEntity);
+        status: ProviderOnboardingStatus.Approved,
+      } as ProviderApplicationEntity);
       skillRepository.create.mockReturnValue(mockSkill);
       skillRepository.save.mockResolvedValue(mockSkill);
 
@@ -202,13 +204,13 @@ describe('ProviderSkillsService', () => {
       expect(result).toEqual(mockSkill);
     });
 
-    it('never lets the request body set the verified flag', async () => {
+    it('never lets an unverified provider set the verified flag', async () => {
       categoryRepository.findOne.mockResolvedValue(mockCategory);
       skillRepository.findOne.mockResolvedValue(null);
-      userRepository.findOne.mockResolvedValue({
+      applicationRepository.findOne.mockResolvedValue({
         id: 'user-id',
-        status: AccountStatus.Active,
-      } as UserEntity);
+        status: ProviderOnboardingStatus.Unverified,
+      } as ProviderApplicationEntity);
       skillRepository.create.mockReturnValue(mockSkill);
       skillRepository.save.mockResolvedValue(mockSkill);
 
@@ -220,17 +222,17 @@ describe('ProviderSkillsService', () => {
       } as CreateProviderSkillDto);
 
       expect(skillRepository.create).toHaveBeenCalledWith(
-        expect.objectContaining({ isVerified: true }),
+        expect.objectContaining({ isVerified: false }),
       );
     });
 
     it('leaves the skill unverified when the account is not verified', async () => {
       categoryRepository.findOne.mockResolvedValue(mockCategory);
       skillRepository.findOne.mockResolvedValue(null);
-      userRepository.findOne.mockResolvedValue({
+      applicationRepository.findOne.mockResolvedValue({
         id: 'user-id',
-        status: AccountStatus.PendingVerification,
-      } as UserEntity);
+        status: ProviderOnboardingStatus.Unverified,
+      } as ProviderApplicationEntity);
       skillRepository.create.mockReturnValue(mockSkill);
       skillRepository.save.mockResolvedValue(mockSkill);
 
@@ -247,7 +249,7 @@ describe('ProviderSkillsService', () => {
     it('leaves the skill unverified when the account cannot be found', async () => {
       categoryRepository.findOne.mockResolvedValue(mockCategory);
       skillRepository.findOne.mockResolvedValue(null);
-      userRepository.findOne.mockResolvedValue(null);
+      applicationRepository.findOne.mockResolvedValue(null);
       skillRepository.create.mockReturnValue(mockSkill);
       skillRepository.save.mockResolvedValue(mockSkill);
 

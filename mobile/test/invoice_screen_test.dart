@@ -49,12 +49,12 @@ Widget hostWithLocalPay(
 );
 
 Widget hostByPayment(ApiTransport transport, String paymentId) => MaterialApp(
-      home: InvoiceScreen(
-        repository: InvoiceRepository(transport, accessToken: () async => 'token'),
-        bookingId: '',
-        paymentId: paymentId,
-      ),
-    );
+  home: InvoiceScreen(
+    repository: InvoiceRepository(transport, accessToken: () async => 'token'),
+    bookingId: '',
+    paymentId: paymentId,
+  ),
+);
 
 void main() {
   testWidgets('payment notifications open the invoice by payment id', (
@@ -271,6 +271,59 @@ void main() {
     expect(find.text('INV-2026-0009'), findsNWidgets(2)); // header + details
     expect(find.text('₹1500'), findsOneWidget);
   });
+
+  testWidgets(
+    'interactive demo uses the server total through checkout and receipt',
+    (tester) async {
+      tester.view.physicalSize = const Size(320, 640);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      var paid = false;
+      final transport = FakeTransport((request) {
+        if (request.path == 'payments/orders/verify') paid = true;
+        if (request.path.startsWith('payments/invoices/')) {
+          return const ApiResponse(
+            statusCode: 200,
+            body: {
+              'invoiceNumber': 'DEMO-873',
+              'issuedAt': '2026-11-05T10:00:00Z',
+              'amountMinor': 87300,
+              'currency': 'INR',
+              'status': 'PAID',
+            },
+          );
+        }
+        return ApiResponse(
+          statusCode: 200,
+          body: {
+            'id': 'order-873',
+            'gatewayOrderId': 'order_fake_873',
+            'amountMinor': 87300,
+            'currency': 'INR',
+            'status': paid ? 'PAID' : 'CREATED',
+          },
+        );
+      });
+      await tester.pumpWidget(
+        hostWithLocalPay(transport, 'booking-873', bypassEnabled: true),
+      );
+      await tester.pumpIdle();
+      await tester.tap(find.text('Pay Now (Interactive Checkout)'));
+      await tester.pumpAndSettle();
+      expect(find.text('Pay ₹873'), findsOneWidget);
+      expect(find.textContaining('₹588.82'), findsNothing);
+      expect(find.text('Tip Your Technician (Optional)'), findsNothing);
+      await tester.tap(find.text('Pay ₹873'));
+      await tester.pumpAndSettle();
+      expect(find.text('Demo Payment Successful!'), findsOneWidget);
+      await tester.ensureVisible(find.text('View Invoice'));
+      await tester.tap(find.text('View Invoice'));
+      await tester.pumpIdle();
+      expect(find.text('DEMO-873'), findsNWidgets(2));
+      expect(find.text('₹873'), findsOneWidget);
+    },
+  );
 
   testWidgets(
     'without the local bypass the pending state offers no pay affordance',

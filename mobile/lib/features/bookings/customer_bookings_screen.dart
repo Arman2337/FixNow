@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:intl/intl.dart';
+
 import 'package:fixnow_mobile/app/app_shell.dart';
 import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_radius.dart';
@@ -928,7 +930,9 @@ class _BookingCard extends StatelessWidget {
                           ),
                           SizedBox(width: 6),
                           Text(
-                            'Completed Yesterday',
+                            booking.completedAt == null
+                                ? 'Completed'
+                                : 'Completed ${DateFormat.yMMMd().format(booking.completedAt!.toLocal())}',
                             style: TextStyle(
                               color: AppColors.primary,
                               fontSize: 11,
@@ -1018,9 +1022,11 @@ class _BookingCard extends StatelessWidget {
                           ),
                           SizedBox(width: 6),
                           Text(
-                            booking.scheduledAt != null
-                                ? '${booking.scheduledAt!.day}/${booking.scheduledAt!.month}/${booking.scheduledAt!.year}'
-                                : 'Recently',
+                            booking.completedAt == null
+                                ? 'Completion date unavailable'
+                                : DateFormat.yMMMd().format(
+                                    booking.completedAt!.toLocal(),
+                                  ),
                             style: TextStyle(
                               color: AppColors.textSecondary,
                               fontSize: 12,

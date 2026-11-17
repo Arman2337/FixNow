@@ -24,6 +24,7 @@ import { PaymentOrder } from '../payments/domain/payment-order.entity';
 import { SubServiceEntity } from '../services/sub-service.entity';
 import { UserEntity } from '../users/user.entity';
 import { ProviderProfileEntity } from '../providers/provider-profile.entity';
+import { ServiceCategoryEntity } from '../services/service-category.entity';
 import { CustomerProfileEntity } from '../users/customer-profile.entity';
 
 /**
@@ -210,6 +211,12 @@ describe('BookingsService', () => {
     dataSource = {
       getRepository: jest.fn((entity: unknown) => {
         if (entity === PaymentOrder) return orderRepository;
+        if (entity === ServiceCategoryEntity)
+          return {
+            find: jest
+              .fn()
+              .mockResolvedValue([{ id: CATEGORY_ID, name: 'Plumbing' }]),
+          };
         if (entity === UserEntity) return userRepo;
         if (entity === ProviderProfileEntity) return providerProfileRepo;
         if (entity === CustomerProfileEntity) return customerProfileRepo;

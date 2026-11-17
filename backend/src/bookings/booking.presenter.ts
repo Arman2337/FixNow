@@ -35,6 +35,9 @@ export const presentBooking = (booking: Booking): BookingContract => ({
   customerId: booking.customerId,
   providerId: booking.providerId,
   serviceCategoryId: booking.serviceCategoryId,
+  ...(booking.serviceCategoryName
+    ? { serviceCategoryName: booking.serviceCategoryName }
+    : {}),
   status: booking.status,
   description: booking.description,
   items: booking.items,

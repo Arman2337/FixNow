@@ -29,6 +29,7 @@ export class Booking {
   @Column('uuid', { name: 'provider_id', nullable: true })
   providerId: string | null;
 
+  serviceCategoryName?: string | null;
   customerPhone?: string | null;
   providerPhone?: string | null;
   providerName?: string | null;

@@ -59,15 +59,15 @@ export function isTerminalBookingStatus(status: BookingStatus): boolean {
  */
 export const PROVIDER_ABANDONMENT_REASONS = [
   /** The customer is not present, or will not answer. */
-  'CUSTOMER_UNAVAILABLE',
+  "CUSTOMER_UNAVAILABLE",
   /** What was found is not the work that was described or quoted. */
-  'JOB_MISDESCRIBED',
+  "JOB_MISDESCRIBED",
   /** The provider judges it unsafe to proceed. */
-  'UNSAFE_CONDITIONS',
+  "UNSAFE_CONDITIONS",
   /** Parts, tools or materials needed are unavailable. */
-  'RESOURCES_UNAVAILABLE',
+  "RESOURCES_UNAVAILABLE",
   /** Any other reason, spelled out in the free-text field. */
-  'OTHER',
+  "OTHER",
 ] as const;
 
 export type ProviderAbandonmentReason =
@@ -77,14 +77,14 @@ export const PROVIDER_ABANDONMENT_COPY: Readonly<
   Record<ProviderAbandonmentReason, string>
 > = {
   CUSTOMER_UNAVAILABLE:
-    'The provider could not reach the customer. The request is open again so another provider can be matched.',
+    "The provider could not reach the customer. The request is open again so another provider can be matched.",
   JOB_MISDESCRIBED:
-    'The provider reported that the work did not match the request. Support will review this booking.',
+    "The provider reported that the work did not match the request. Support will review this booking.",
   UNSAFE_CONDITIONS:
-    'The provider judged the conditions unsafe to proceed. Support will review this booking.',
+    "The provider judged the conditions unsafe to proceed. Support will review this booking.",
   RESOURCES_UNAVAILABLE:
-    'The provider could not obtain what the job required. Support will review this booking.',
-  OTHER: 'The provider ended this job. Support will review this booking.',
+    "The provider could not obtain what the job required. Support will review this booking.",
+  OTHER: "The provider ended this job. Support will review this booking.",
 };
 
 export interface CreateBookingLineItemRequest {
@@ -148,6 +148,7 @@ export interface UpdateBookingItemsRequest {
 }
 
 export interface BookingContract {
+  serviceCategoryName?: string;
   id: string;
   customerId: string;
   providerId: string | null;

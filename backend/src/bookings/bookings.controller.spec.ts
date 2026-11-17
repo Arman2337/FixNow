@@ -422,7 +422,7 @@ describe('BookingsController', () => {
 
     it('restricts the new permissions to the right roles and scope', () => {
       expect(PERMISSION_POLICIES[PERMISSIONS.bookingManageItems]).toEqual({
-        roles: ['verified_provider'],
+        roles: ['provider_applicant', 'verified_provider'],
         relationship: 'self',
       });
       expect(PERMISSION_POLICIES[PERMISSIONS.bookingServiceStartOtp]).toEqual({

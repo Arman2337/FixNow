@@ -51,6 +51,7 @@ class ServiceDiscoveryScreen extends StatefulWidget {
     required this.locationController,
     this.bookingsController,
     this.onCategorySelected,
+    this.onGroupServices,
     this.aiRepository,
     this.problemAnalysisRepository,
     this.emergencyRepository,
@@ -63,6 +64,7 @@ class ServiceDiscoveryScreen extends StatefulWidget {
   final ServiceDiscoveryController controller;
   final LocationConsentController locationController;
   final BookingController? bookingsController;
+  final VoidCallback? onGroupServices;
   final void Function(ServiceCategory, BookingLocationFix?)? onCategorySelected;
   final AiRecommendationRepository? aiRepository;
   final ProblemAnalysisRepository? problemAnalysisRepository;
@@ -191,19 +193,23 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
       final uri = Uri.parse(
         'https://nominatim.openstreetmap.org/reverse?format=json&lat=$lat&lon=$lng',
       );
-      final response = await http.get(
-        uri,
-        headers: {'User-Agent': 'FixNow-Mobile/1.0 (com.fixnow.app)'},
-      ).timeout(const Duration(seconds: 3));
+      final response = await http
+          .get(
+            uri,
+            headers: {'User-Agent': 'FixNow-Mobile/1.0 (com.fixnow.app)'},
+          )
+          .timeout(const Duration(seconds: 3));
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data is Map && data['address'] is Map) {
           final addr = data['address'] as Map;
-          final locality = addr['suburb'] ??
+          final locality =
+              addr['suburb'] ??
               addr['neighbourhood'] ??
               addr['residential'] ??
               addr['road'];
-          final city = addr['city'] ??
+          final city =
+              addr['city'] ??
               addr['town'] ??
               addr['village'] ??
               addr['county'] ??
@@ -212,8 +218,8 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
           final label = locality != null && city != null
               ? '$locality, $city'
               : (city != null && state != null
-                  ? '$city, $state'
-                  : (city ?? state ?? data['display_name']));
+                    ? '$city, $state'
+                    : (city ?? state ?? data['display_name']));
           if (mounted && label != null && label.toString().trim().isNotEmpty) {
             setState(() => _locationName = label.toString().trim());
             return;
@@ -360,7 +366,10 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
           children: [
             Icon(Icons.emergency_rounded, color: AppColors.emergency),
             SizedBox(width: 8),
-            Text('Emergency Support', style: TextStyle(color: AppColors.textPrimary)),
+            Text(
+              'Emergency Support',
+              style: TextStyle(color: AppColors.textPrimary),
+            ),
           ],
         ),
         content: const Column(
@@ -487,6 +496,14 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
               ),
               const SizedBox(height: AppSpacing.md),
 
+              if (widget.onGroupServices != null) ...[
+                OutlinedButton.icon(
+                  onPressed: widget.onGroupServices,
+                  icon: const Icon(Icons.groups_outlined),
+                  label: const Text('Group services'),
+                ),
+                const SizedBox(height: AppSpacing.md),
+              ],
               _buildRebookSection(),
               const SizedBox(height: AppSpacing.md),
 
@@ -508,7 +525,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Verified categories',
+                    'Service categories',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
@@ -878,7 +895,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
 
         switch (active.status) {
           case 'REQUESTED':
-            title = 'Matching Verified Pro...';
+            title = 'Finding a provider…';
             etaText = 'Broadcasting nearby';
             icon = Icons.radar_rounded;
             break;
@@ -1146,7 +1163,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
           : 'On inspection';
       final ratingStr = cat.rating != null
           ? formatRatingWithReviews(cat.rating!, cat.reviewCount)
-          : 'Verified Pro';
+          : 'No reviews yet';
       return (
         '${cat.name} Package',
         cat.description ?? '${cat.name} inspection, maintenance & repair.',
@@ -1260,35 +1277,44 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 6,
-                                        vertical: 2,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFFEF3C7),
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          const Icon(
-                                            Icons.star_rounded,
-                                            size: 13,
-                                            color: Color(0xFFD97706),
+                                    Flexible(
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 6,
+                                          vertical: 2,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFFEF3C7),
+                                          borderRadius: BorderRadius.circular(
+                                            6,
                                           ),
-                                          const SizedBox(width: 3),
-                                          Text(
-                                            item.$5,
-                                            style: const TextStyle(
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.bold,
-                                              color: Color(0xFF92400E),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const Icon(
+                                              Icons.star_rounded,
+                                              size: 13,
+                                              color: Color(0xFFD97706),
                                             ),
-                                          ),
-                                        ],
+                                            const SizedBox(width: 3),
+                                            Flexible(
+                                              child: Text(
+                                                item.$5,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: const TextStyle(
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Color(0xFF92400E),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ),
+                                    const SizedBox(width: AppSpacing.xs),
                                     Container(
                                       padding: const EdgeInsets.symmetric(
                                         horizontal: 6,
@@ -1482,8 +1508,8 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
               Expanded(
                 child: _buildGuaranteePillar(
                   icon: Icons.badge_rounded,
-                  title: 'Police Verified',
-                  subtitle: '7-point screening',
+                  title: 'Provider profiles',
+                  subtitle: 'See available trust details',
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
@@ -1557,10 +1583,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
             : isPermanentlyDenied
             ? 'Location blocked \u2014 open settings'
             : 'Enable Location';
-        final onlineCount = widget.controller.categories.fold<int>(
-          0,
-          (sum, c) => sum + c.onlineProCount,
-        );
+        final onlineCount = widget.controller.onlineProviderCount;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1759,7 +1782,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                                 ),
                                 Text(
                                   isGranted
-                                      ? 'Verified Service Grid'
+                                      ? 'Service Grid'
                                       : 'Tap to enable matching',
                                   style: FixNowTypography.labelSmall.copyWith(
                                     color: isGranted
@@ -1773,7 +1796,7 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                               ],
                             ),
                           ),
-                          if (onlineCount > 0) ...[
+                          if (onlineCount != null && onlineCount > 0) ...[
                             const SizedBox(width: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(
@@ -1968,8 +1991,9 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
             children: [
               _buildBulletPoint(
                 icon: Icons.verified_user_rounded,
-                title: 'Vetted professionals',
-                description: 'Only the top 5% of experts make the cut.',
+                title: 'Provider information',
+                description:
+                    'Check available reviews and identity verification status.',
               ),
               const SizedBox(height: AppSpacing.md),
               _buildBulletPoint(

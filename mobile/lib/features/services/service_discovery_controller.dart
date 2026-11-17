@@ -13,6 +13,20 @@ class ApiServiceCategoryRepository implements ServiceCategoryRepository {
   const ApiServiceCategoryRepository(this._api);
   final ApiTransport _api;
 
+  Future<int> onlineProviderCount() async {
+    final response = await _api.send(
+      const ApiRequest(
+        method: ApiMethod.get,
+        path: 'service-categories/online-provider-count',
+      ),
+    );
+    final body = response.body;
+    if (body is! Map || body['count'] is! int || (body['count'] as int) < 0) {
+      throw const FormatException('Invalid provider availability');
+    }
+    return body['count'] as int;
+  }
+
   @override
   Future<List<ServiceCategory>> active() async {
     final response = await _api.send(
@@ -43,9 +57,16 @@ enum DiscoveryStatus { initial, loading, ready, empty, offline, error }
 const String kServiceCategoryCacheKey = 'service-categories';
 
 class ServiceDiscoveryController extends ChangeNotifier {
-  ServiceDiscoveryController(this._repository, this._subServiceRepository, {this.cache});
+  ServiceDiscoveryController(
+    this._repository,
+    this._subServiceRepository, {
+    this.cache,
+    this.loadOnlineProviderCount,
+  });
   final ServiceCategoryRepository _repository;
   final SubServiceRepository _subServiceRepository;
+  final Future<int> Function()? loadOnlineProviderCount;
+  int? onlineProviderCount;
 
   /// FN-140: optional last-good store. Absent keeps the original online-only
   /// behaviour for every caller that does not pass one.
@@ -66,14 +87,20 @@ class ServiceDiscoveryController extends ChangeNotifier {
     status = DiscoveryStatus.loading;
     notifyListeners();
     try {
-      final results = await Future.wait([
+      onlineProviderCount = null;
+      final results = await Future.wait<Object?>([
         _repository.active(),
-        _subServiceRepository
-            .getAllSubServices()
-            .catchError((_) => <SubServiceItem>[]),
+        _subServiceRepository.getAllSubServices().catchError(
+          (_) => <SubServiceItem>[],
+        ),
+        if (loadOnlineProviderCount != null)
+          loadOnlineProviderCount!()
+              .then<int?>((count) => count)
+              .catchError((_) => null),
       ]);
       categories = results[0] as List<ServiceCategory>;
       allSubServices = results[1] as List<SubServiceItem>;
+      onlineProviderCount = results.length > 2 ? results[2] as int? : null;
       status = categories.isEmpty
           ? DiscoveryStatus.empty
           : DiscoveryStatus.ready;
@@ -111,6 +138,7 @@ class ServiceDiscoveryController extends ChangeNotifier {
   /// behind, and DESIGN.md §27 requires that to surface as an error rather than
   /// as a plausible-looking cached screen.
   Future<bool> _showSavedDataIfLostConnection(ApiException error) async {
+    onlineProviderCount = null;
     if (error.kind != ApiFailureKind.offline &&
         error.kind != ApiFailureKind.timeout) {
       return false;
@@ -131,9 +159,7 @@ class ServiceDiscoveryController extends ChangeNotifier {
       // A snapshot we cannot parse is not a snapshot we can show.
       return false;
     }
-    status = categories.isEmpty
-        ? DiscoveryStatus.empty
-        : DiscoveryStatus.ready;
+    status = categories.isEmpty ? DiscoveryStatus.empty : DiscoveryStatus.ready;
     isShowingSavedData = true;
     savedDataAt = snapshot.savedAt;
     return true;

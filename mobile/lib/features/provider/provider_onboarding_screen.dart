@@ -1390,7 +1390,7 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
                                       ),
                                       TextSpan(
                                         text:
-                                            '. Upon approval, your partner dashboard unlocks job broadcasts.',
+                                            '. Approval adds verified status to your provider profile.',
                                       ),
                                     ],
                                   ),

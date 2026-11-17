@@ -23,14 +23,14 @@ Only these statuses are valid. A task cannot be completed while required validat
 
 # Project Progress
 
-Total Tasks: 98
-Completed: 97
+Total Tasks: 101
+Completed: 99
 In Progress: 0
-Blocked: 0
+Blocked: 1
 Pending: 0
 Deferred: 0
 Cancelled: 1
-Current Task: None — All active roadmap tasks (FN-001 through FN-146) completed
+Current Task: FN-150 — UI audit remediation completed
 Current Phase: Monorepo Verification, System Audit Remediation & Documentation (Completed)
 Next Recommended Task: Production operational deployment and external-provider verification per docs/deployment/production-readiness-checklist.md.
 
@@ -41,6 +41,49 @@ Next Recommended Task: Production operational deployment and external-provider v
 ## Current Work
 
 None.
+
+## FN-150 — UI Audit Remediation
+
+Status: ✅ Completed
+Priority: P1 — High
+Area: Mobile / Web / Backend display data
+
+- Fix all eight defects from the 2026-11-05 UI audit: web startup, email login copy, Continue contrast, duplicated online-provider totals, raw category IDs, inconsistent demo payment totals, hardcoded completion dates, and sessions lost on browser reload.
+- Bundle the web renderer and provide a startup retry state; persist the encrypted auth session in one write; expose distinct eligible provider counts and category names; carry completion timestamps through cached booking models; use the server order amount throughout demo checkout and receipt.
+- Also correct narrow booking metadata layout and convert malformed provider API responses into recoverable errors, resolving the two incoming-request crawler failures.
+- Validated: Flutter analysis clean; 660/660 Flutter tests; 125 backend suites / 1059 tests; backend build; changed backend files lint clean; production web build; Chrome customer/provider reloads, external-request-blocked startup and retry state, real API category/count display, and 320px ₹873 demo checkout through its persisted ₹873 receipt.
+- Evidence: `.gstack/qa-reports/ui-fixes-2026-11-05.md`. Native devices and real Razorpay transactions remain outside this UI fix verification.
+
+## FN-149 — UPI Gateway Checkout for Individual and Group Services
+
+Status: Blocked
+Priority: P1 — High
+Area: Backend / Mobile / Payments
+Depends On: FN-052, FN-053, FN-148
+
+- Completed bookings use the final server-priced INR amount. Each group household confirms service receipt and gets its own order for the selected quote amount.
+- Customers open Razorpay Standard Checkout through a short-lived FixNow checkout session. The checkout offers UPI. FixNow records a payment as paid when a signed Razorpay capture event matches the order, amount, currency and UPI method.
+- Local verification covered Flutter checkout and invoice tests, a Chrome smoke test with a mocked Razorpay SDK, and PostgreSQL migration apply and rollback, household isolation, invoices and provider earnings records.
+
+### Blocker
+
+Razorpay sandbox verification needs merchant test credentials and a public test webhook endpoint.
+
+### Required To Unblock
+
+Configure `PAYMENT_PROVIDER=razorpay` and the existing Razorpay key and webhook environment variables on staging. Enable UPI and automatic capture in Razorpay, subscribe to `payment.captured` and `payment.failed` at `/api/v1/payments/webhook`, and run a test-mode payment through to a receipt. Live activation follows the production review in ADR-0016.
+
+## FN-148 — Optional Provider KYC and Group Service Quotes
+
+Status: ✅ Completed
+Priority: P1 — High
+Area: Backend / Mobile / Marketplace
+
+- Providers with verified email can enter the workspace, set availability and accept eligible ordinary work without KYC. Optional identity verification stays in Provider Setup. Priority emergency dispatch follows its existing verified-provider policy.
+- Customers can form a group for an active non-emergency service, invite others with a link, and request quotes once two households have joined. Requesting quotes closes membership and fixes the group size.
+- Providers with a matching service skill can quote a discounted INR price per household. Members compare prices and terms, and the organizer confirms one provider. The organizer and the selected provider receive each other's contact number to coordinate scheduling and payment.
+- PostgreSQL integration covered concurrent creation, duplicate joins, competing quotes, organizer-only selection and contact visibility. The migration applied and reverted in an isolated database. Backend unit tests, Flutter analysis and focused widget tests passed. Two incoming-request crawler failures also reproduced on the original mobile code.
+- Release requires applying the migration and shipping the updated mobile build. Native Android and iOS invitation opening still needs a device smoke test.
 
 ## FN-147 — Background Push Notifications & Provider Full-Screen Incoming Alert with Sound
 

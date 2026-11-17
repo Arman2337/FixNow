@@ -11,6 +11,7 @@ import {
   IsOptional,
   IsString,
   MinLength,
+  ValidateIf,
   validateSync,
 } from 'class-validator';
 
@@ -432,9 +433,12 @@ export class EnvironmentVariables {
    * (for example `22-7` for 10pm to 7am). Read as a string and parsed by a
    * regex because it is a range, not a duration.
    */
-  @IsOptional()
+  @ValidateIf(
+    (_o, val) =>
+      val !== undefined && val !== null && String(val).trim().length > 0,
+  )
   @IsString()
-  @Matches(/^\s*\d{1,2}\s*-\s*\d{1,2}\s*$/, {
+  @Matches(/^(\s*|\s*\d{1,2}\s*-\s*\d{1,2}\s*)$/, {
     message: 'NOTIFICATION_QUIET_HOURS_UTC must look like "22-7"',
   })
   NOTIFICATION_QUIET_HOURS_UTC?: string;

@@ -329,7 +329,7 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
     final tracking = widget.controller.tracking;
     final rawName = tracking?.providerName?.trim();
     final hasRealName = rawName != null && rawName.isNotEmpty;
-    final providerName = hasRealName ? rawName : 'Verified Specialist';
+    final providerName = hasRealName ? rawName : 'Assigned Specialist';
     final providerFirstName = providerName.split(' ').first;
 
     return Container(
@@ -350,45 +350,24 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Stack(
-                children: [
-                  Container(
-                    width: 64,
-                    height: 64,
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryContainer,
-                      borderRadius: BorderRadius.circular(AppRadius.medium),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      providerFirstName.isNotEmpty
-                          ? providerFirstName[0].toUpperCase()
-                          : 'T',
-                      style: const TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primary,
-                      ),
-                    ),
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: AppColors.primaryContainer,
+                  borderRadius: BorderRadius.circular(AppRadius.medium),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  providerFirstName.isNotEmpty
+                      ? providerFirstName[0].toUpperCase()
+                      : 'T',
+                  style: const TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary,
                   ),
-                  Positioned(
-                    bottom: -4,
-                    right: -4,
-                    child: Container(
-                      width: 20,
-                      height: 20,
-                      decoration: const BoxDecoration(
-                        color: AppColors.primary,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.verified_rounded,
-                        color: AppColors.onPrimary,
-                        size: 12,
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -1221,7 +1200,7 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
             ),
             providerName:
                 widget.controller.tracking?.providerName ??
-                'Verified Specialist',
+                'Assigned Specialist',
             onCallPressed: () => _startCall(context),
           ),
         ),

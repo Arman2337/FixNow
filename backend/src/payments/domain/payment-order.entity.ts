@@ -20,6 +20,14 @@ export type PaymentOrderStatus =
 /** Booking-bound payment order. Amounts are integer paise (ADR-0016). */
 @Entity('payment_orders')
 @Index('IX_payment_orders_booking', ['bookingId'])
+@Index('UQ_payment_orders_group_customer', ['groupServiceId', 'customerId'], {
+  unique: true,
+  where: 'group_service_id IS NOT NULL',
+})
+@Check(
+  'CHK_payment_orders_subject',
+  'num_nonnulls(booking_id, group_service_id) = 1',
+)
 @Check(
   'CHK_payment_orders_status',
   "status IN ('CREATED', 'PAID', 'FAILED', 'CANCELLED')",
@@ -28,8 +36,11 @@ export class PaymentOrder {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column('uuid', { name: 'booking_id' })
-  bookingId!: string;
+  @Column('uuid', { name: 'booking_id', nullable: true })
+  bookingId!: string | null;
+
+  @Column('uuid', { name: 'group_service_id', nullable: true })
+  groupServiceId!: string | null;
 
   @Column('uuid', { name: 'customer_id' })
   customerId!: string;

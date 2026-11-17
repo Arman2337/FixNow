@@ -359,4 +359,17 @@ describe('Object storage configuration', () => {
   it('is optional when unset', () => {
     expect(() => validate(base)).not.toThrow();
   });
+
+  it('accepts empty string or valid format for NOTIFICATION_QUIET_HOURS_UTC, and rejects invalid format', () => {
+    expect(() =>
+      validate({ ...base, NOTIFICATION_QUIET_HOURS_UTC: '' }),
+    ).not.toThrow();
+    expect(() =>
+      validate({ ...base, NOTIFICATION_QUIET_HOURS_UTC: '22-7' }),
+    ).not.toThrow();
+    expect(() =>
+      validate({ ...base, NOTIFICATION_QUIET_HOURS_UTC: 'invalid' }),
+    ).toThrow(/NOTIFICATION_QUIET_HOURS_UTC/);
+  });
 });
+

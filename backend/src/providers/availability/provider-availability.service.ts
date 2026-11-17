@@ -1,13 +1,11 @@
 import {
   ConflictException,
-  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
 import { ProviderAvailabilityStatus } from '../../../../shared/provider-availability.types';
 import { ProviderApplicationEntity } from '../provider-application.entity';
-import { ProviderOnboardingStatus } from '../provider-onboarding-status';
 import {
   ProviderAvailabilityResponseDto,
   UpdateProviderScheduleDto,
@@ -22,7 +20,7 @@ export class ProviderAvailabilityService {
   constructor(private readonly dataSource: DataSource) {}
 
   async getOwn(userId: string): Promise<ProviderAvailabilityResponseDto> {
-    await this.assertVerified(this.dataSource.manager, userId, false);
+    await this.assertProvider(this.dataSource.manager, userId, false);
     return this.dataSource.transaction(async (manager) => {
       const repository = manager.getRepository(ProviderAvailabilityEntity);
       let entity = await repository.findOne({
@@ -87,7 +85,7 @@ export class ProviderAvailabilityService {
     change: (entity: ProviderAvailabilityEntity) => void,
   ): Promise<ProviderAvailabilityResponseDto> {
     return this.dataSource.transaction(async (manager) => {
-      await this.assertVerified(manager, userId, true);
+      await this.assertProvider(manager, userId, true);
       const repository = manager.getRepository(ProviderAvailabilityEntity);
       let entity = await repository.findOne({
         where: { userId },
@@ -114,7 +112,7 @@ export class ProviderAvailabilityService {
     });
   }
 
-  private async assertVerified(
+  private async assertProvider(
     manager: EntityManager,
     userId: string,
     lockForUpdate: boolean,
@@ -129,8 +127,6 @@ export class ProviderAvailabilityService {
       });
     if (!application)
       throw new NotFoundException('Provider application not found');
-    if (application.status !== ProviderOnboardingStatus.Approved)
-      throw new ForbiddenException('Verified provider access required');
   }
 
   private validateTimeZone(timeZone: string): void {

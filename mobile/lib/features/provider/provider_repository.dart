@@ -6,7 +6,8 @@ class ProviderRepository {
   ProviderRepository({
     required ApiTransport api,
     required Future<String?> Function() accessToken,
-  }) : _api = api, _accessToken = accessToken;
+  }) : _api = api,
+       _accessToken = accessToken;
   final ApiTransport _api;
   final Future<String?> Function() _accessToken;
 
@@ -21,8 +22,15 @@ class ProviderRepository {
         ApiFailureKind.unauthorized,
         'Sign in required.',
       ));
-  Map<String, Object?> _map(Object? value) =>
-      Map<String, Object?>.from(value as Map);
+  Map<String, Object?> _map(Object? value) {
+    if (value is! Map<String, Object?>) {
+      throw const ApiException(
+        ApiFailureKind.invalidResponse,
+        'The server returned an invalid response. Refresh and try again.',
+      );
+    }
+    return value;
+  }
 
   Future<ProviderApplication> application() async =>
       ProviderApplication.fromJson(
@@ -424,5 +432,4 @@ class ProviderRepository {
     );
     return CustomerBooking.fromJson(_map(body['booking']));
   }
-
 }

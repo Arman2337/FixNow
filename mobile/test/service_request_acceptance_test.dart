@@ -69,7 +69,7 @@ void main() {
         // Submit the request
         await tester.drag(find.byType(ListView), const Offset(0, -400));
         await tester.pumpAndSettle();
-        await tester.tap(find.text('Find a verified provider'));
+        await tester.tap(find.text('Find a provider'));
         await tester.pump(); // starts submit
         await tester.pump(const Duration(milliseconds: 100));
 
@@ -156,7 +156,7 @@ void main() {
 
         await tester.drag(find.byType(ListView), const Offset(0, -400));
         await tester.pumpAndSettle();
-        await tester.tap(find.text('Find a verified provider'));
+        await tester.tap(find.text('Find a provider'));
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 100));
 
@@ -219,14 +219,14 @@ void main() {
       await tester.drag(find.byType(ListView), const Offset(0, -400));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Find a verified provider'));
+      await tester.tap(find.text('Find a provider'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
       expect(find.text('You are offline. Reconnect and try again.'), findsOneWidget);
 
       await tester.drag(find.byType(ListView), const Offset(0, -300));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Find a verified provider'));
+      await tester.tap(find.text('Find a provider'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
 

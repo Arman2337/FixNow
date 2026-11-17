@@ -166,7 +166,7 @@ class _JobProofVerificationDialogState
               ? _notesController.text.trim()
               : null,
           capturedAt: DateTime.now(),
-          proName: 'FixNow Verified Pro',
+          proName: 'FixNow Provider',
         ),
       );
     } finally {

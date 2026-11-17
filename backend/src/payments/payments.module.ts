@@ -10,6 +10,7 @@ import { PaymentOrder } from './domain/payment-order.entity';
 import { PaymentEvent } from './domain/payment-event.entity';
 import { Refund } from './domain/refund.entity';
 import { Invoice } from './domain/invoice.entity';
+import { HostedCheckoutController } from './hosted-checkout.controller';
 import { PaymentsController } from './payments.controller';
 import { PaymentsAdminController } from './payments-admin.controller';
 import { ProviderEarningsController } from './provider-earnings.controller';
@@ -28,6 +29,7 @@ export enum PaymentProviderName {
   ],
   controllers: [
     PaymentsController,
+    HostedCheckoutController,
     PaymentsAdminController,
     ProviderEarningsController,
   ],

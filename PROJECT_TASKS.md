@@ -23,14 +23,14 @@ Only these statuses are valid. A task cannot be completed while required validat
 
 # Project Progress
 
-Total Tasks: 101
-Completed: 99
+Total Tasks: 102
+Completed: 100
 In Progress: 0
 Blocked: 1
 Pending: 0
 Deferred: 0
 Cancelled: 1
-Current Task: FN-150 — UI audit remediation completed
+Current Task: FN-151 — production group-services 500 repaired (Render start command follow-up pending with maintainer)
 Current Phase: Monorepo Verification, System Audit Remediation & Documentation (Completed)
 Next Recommended Task: Production operational deployment and external-provider verification per docs/deployment/production-readiness-checklist.md.
 
@@ -53,6 +53,18 @@ Area: Mobile / Web / Backend display data
 - Also correct narrow booking metadata layout and convert malformed provider API responses into recoverable errors, resolving the two incoming-request crawler failures.
 - Validated: Flutter analysis clean; 660/660 Flutter tests; 125 backend suites / 1059 tests; backend build; changed backend files lint clean; production web build; Chrome customer/provider reloads, external-request-blocked startup and retry state, real API category/count display, and 320px ₹873 demo checkout through its persisted ₹873 receipt.
 - Evidence: `.gstack/qa-reports/ui-fixes-2026-11-05.md`. Native devices and real Razorpay transactions remain outside this UI fix verification.
+
+## FN-151 — Repair Group Services 500 in Production
+
+Status: ✅ Completed
+Priority: P1 — High
+Area: Backend / Production database
+
+- The mobile Group Services screen returned `Internal server error` (500 from `GET /api/v1/group-services`) on the Render-hosted API while every other authenticated route worked.
+- Root cause: the live Render service start command was only `npm run start:prod`, so TypeORM migrations never ran against the production database. Production was at `MIGRATIONS=41` with no `group_service_*` tables, while the deployed code required `group_service_requests`, `group_service_members` and `group_service_quotes`.
+- Applied `1789750700000-GroupServices` and `1789750800000-GroupServicePaymentOrders` directly to the production database via `DATABASE_URL`; production now reports `MIGRATIONS=43` with the three group tables present and `payment_orders` intact.
+- Verified: the exact `listCustomer` SQL runs clean against production, `GET /api/v1/group-services/categories` returns 8 categories, and on a physical Android device the Group Services screen loads and the "Create a service group" dialog opens with a populated service dropdown.
+- Open follow-up owned by the maintainer: change the Render start command to `npm run typeorm -- migration:run -d typeorm.config.ts && node seed.js && npm run start:prod` before the next deploy, otherwise new migrations will silently miss production again. `render.yaml` already documents this command. No repository commit was required (working tree clean).
 
 ## FN-149 — UPI Gateway Checkout for Individual and Group Services
 

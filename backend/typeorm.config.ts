@@ -1,13 +1,30 @@
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { config } from 'dotenv';
+import { existsSync } from 'fs';
 import { join } from 'path';
 
-// Load environment variables from .env
-config({ path: join(__dirname, '../.env') });
+// Load environment variables from the closest .env when running from source or dist/
+for (const candidate of [
+  join(__dirname, '../.env'),
+  join(__dirname, '../../.env'),
+  join(__dirname, '../../../.env'),
+]) {
+  if (!process.env.DATABASE_URL && existsSync(candidate)) {
+    config({ path: candidate });
+  }
+}
 
 // Fallback to .env.example if DATABASE_URL is still missing
 if (!process.env.DATABASE_URL) {
-  config({ path: join(__dirname, '../.env.example') });
+  for (const candidate of [
+    join(__dirname, '../.env.example'),
+    join(__dirname, '../../.env.example'),
+    join(__dirname, '../../../.env.example'),
+  ]) {
+    if (existsSync(candidate)) {
+      config({ path: candidate });
+    }
+  }
 }
 
 export const dataSourceOptions: DataSourceOptions = {

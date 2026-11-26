@@ -51,6 +51,15 @@ export class EmergencyController {
     );
   }
 
+  @Get('active')
+  @RequireOwnPermission(PERMISSIONS.emergencyCreateSelf)
+  active(@Req() request: AuthorizedRequest) {
+    assertNoResourceToProve(request.authorizationPrincipal);
+    return this.emergency.getActiveForCustomer(
+      request.authorizationPrincipal!.userId,
+    );
+  }
+
   @Get('requests/:bookingId')
   @RequireOwnPermission(PERMISSIONS.emergencyCreateSelf)
   status(@Req() request: AuthorizedRequest, @Param() params: EmergencyIdParam) {

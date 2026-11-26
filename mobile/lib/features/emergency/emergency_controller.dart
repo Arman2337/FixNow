@@ -26,12 +26,47 @@ class EmergencyController extends ChangeNotifier {
   EmergencyFlowState state = EmergencyFlowState.idle;
   EmergencyCreationResult? creation;
   EmergencyStatusResult? status;
+  ActiveEmergencyResult? activeEmergency;
   BookingLocationFix? resolvedLocation;
   String? errorMessage;
 
   bool get showFallback =>
       state == EmergencyFlowState.dispatched &&
       (status?.fallbackRequired ?? false);
+
+  /// Automatically discovers and resumes any active emergency that is
+  /// currently in progress or awaiting specialist dispatch.
+  Future<bool> checkActiveEmergency() async {
+    final active = await _repository.getActive();
+    activeEmergency = active;
+    if (active != null && active.hasActive && active.bookingId != null) {
+      creation = EmergencyCreationResult(
+        bookingId: active.bookingId!,
+        currentWave: active.currentWave,
+        eligibleCount: active.eligibleCount,
+      );
+      status = EmergencyStatusResult(
+        status: active.status ?? 'REQUESTED',
+        currentWave: active.currentWave,
+        fallbackRequired: active.fallbackRequired,
+        guidance: active.guidance,
+        eligibleCount: active.eligibleCount,
+      );
+      if (active.locationLat != null && active.locationLng != null) {
+        resolvedLocation = BookingLocationFix(
+          latitude: active.locationLat!,
+          longitude: active.locationLng!,
+          accuracyMeters: 10,
+          timestamp: active.createdAt ?? DateTime.now(),
+        );
+      }
+      state = EmergencyFlowState.dispatched;
+      notifyListeners();
+      _startPolling();
+      return true;
+    }
+    return false;
+  }
 
   Future<bool> confirmAndDispatch({
     required String serviceCategoryId,
@@ -100,6 +135,12 @@ class EmergencyController extends ChangeNotifier {
   }
 
   String _friendlyMessage(ApiException failure) {
+    if (failure.message.isNotEmpty &&
+        failure.message != 'The request could not be completed.' &&
+        failure.message != 'The service is temporarily unavailable.' &&
+        failure.message != 'The emergency alert could not be sent.') {
+      return failure.message;
+    }
     switch (failure.kind) {
       case ApiFailureKind.offline:
       case ApiFailureKind.timeout:

@@ -26,6 +26,8 @@ export const EMERGENCY_POLICY_V1 = {
   wave3AfterMinutes: 8,
   /** Radius widening applied when wave 2 fans out. */
   radiusMultiplierWave2: 2,
+  /** Minimum radius in km for emergency provider matching (starts at 10km, doubles on wave 2). */
+  minRadiusKm: 10,
   /** Max emergencies per rolling 24 hours per customer (policy §6). */
   dailyCustomerCap: 3,
   /** Minimum minutes between two emergencies for one customer. */

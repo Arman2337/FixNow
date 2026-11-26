@@ -150,16 +150,21 @@ export class MatchingService {
     limit = 50,
     /** FN-063 wave-2 widening: multiplies each provider's own radius. */
     radiusMultiplier = 1,
+    minRadiusKm = 0,
   ): Promise<MatchedProvider[]> {
     const boundedLimit = Math.min(Math.max(Math.trunc(limit), 1), 50);
     const boundedMultiplier = this.boundedRadius(radiusMultiplier);
+    const radiusExpr =
+      minRadiusKm > 0
+        ? `GREATEST(profile.serviceRadiusKm, ${Number(minRadiusKm)}) * ${boundedMultiplier}`
+        : `profile.serviceRadiusKm * ${boundedMultiplier}`;
 
     const raw = await this.eligibleQuery()
       .andWhere('skill.service_category_id = :categoryId', {
         categoryId: serviceCategoryId,
       })
       .andWhere(
-        `${HAVERSINE_SQL} <= profile.serviceRadiusKm * ${boundedMultiplier}`,
+        `${HAVERSINE_SQL} <= ${radiusExpr}`,
         {
           lat: locationLat,
           lng: locationLng,
@@ -203,6 +208,7 @@ export class MatchingService {
     locationLng: number,
     serviceCategoryId: string,
     radiusMultiplier = 1,
+    minRadiusKm = 0,
   ): Promise<boolean> {
     // Observability. This predicate is a haversine evaluation across every
     // skill-matching provider, so it is the single most expensive query on the
@@ -219,6 +225,7 @@ export class MatchingService {
           this.boundedRadius(radiusMultiplier),
           'profile.user_id = :providerId',
           { providerId },
+          minRadiusKm,
         )) > 0
       );
     } finally {
@@ -246,12 +253,16 @@ export class MatchingService {
     locationLng: number,
     serviceCategoryId: string,
     radiusMultiplier = 1,
+    minRadiusKm = 0,
   ): Promise<number> {
     return this.countWhereEligible(
       locationLat,
       locationLng,
       serviceCategoryId,
       this.boundedRadius(radiusMultiplier),
+      undefined,
+      undefined,
+      minRadiusKm,
     );
   }
 
@@ -347,13 +358,19 @@ export class MatchingService {
     radiusMultiplier: number,
     extraWhere?: string,
     extraParams?: Record<string, unknown>,
+    minRadiusKm = 0,
   ): Promise<number> {
+    const radiusExpr =
+      minRadiusKm > 0
+        ? `GREATEST(profile.serviceRadiusKm, ${Number(minRadiusKm)}) * ${radiusMultiplier}`
+        : `profile.serviceRadiusKm * ${radiusMultiplier}`;
+
     const query = this.eligibleQuery()
       .andWhere('skill.service_category_id = :categoryId', {
         categoryId: serviceCategoryId,
       })
       .andWhere(
-        `${HAVERSINE_SQL} <= profile.serviceRadiusKm * ${radiusMultiplier}`,
+        `${HAVERSINE_SQL} <= ${radiusExpr}`,
         { lat: locationLat, lng: locationLng },
       );
     if (extraWhere) query.andWhere(extraWhere, extraParams ?? {});

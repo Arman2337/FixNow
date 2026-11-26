@@ -8,7 +8,7 @@ import {
   Optional,
 } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
-import { DataSource, EntityManager, QueryFailedError } from 'typeorm';
+import { DataSource, EntityManager, IsNull, QueryFailedError } from 'typeorm';
 import { Booking } from '../bookings/domain/booking.entity';
 import { BookingStatus } from '../../../shared/booking-lifecycle.types';
 import { BookingEvent } from '../bookings/domain/booking-event.entity';
@@ -119,6 +119,10 @@ export class EmergencyService implements OnModuleInit, OnModuleDestroy {
     input: CreateBookingDto,
     idempotencyKey: string,
   ): Promise<EmergencyCreationResult> {
+    // Proactively close dispatches whose bookings have already finished
+    // so legitimate new requests are never blocked by stale state.
+    await this.closeTerminalDispatches();
+
     const category = await this.dataSource
       .getRepository(ServiceCategoryEntity)
       .findOneBy({ id: input.serviceCategoryId });
@@ -312,6 +316,8 @@ export class EmergencyService implements OnModuleInit, OnModuleDestroy {
           Number(booking.locationLat),
           Number(booking.locationLng),
           booking.serviceCategoryId,
+          currentWave >= 2 ? EMERGENCY_POLICY_V1.radiusMultiplierWave2 : 1,
+          EMERGENCY_POLICY_V1.minRadiusKm,
         )
       : 0;
     const unassignedFallback = stillOpen && (supply === 0 || currentWave >= 3);
@@ -323,6 +329,88 @@ export class EmergencyService implements OnModuleInit, OnModuleDestroy {
       fallbackRequired: unassignedFallback,
       guidance: unassignedFallback ? EMERGENCY_FALLBACK_GUIDANCE : null,
       eligibleCount: supply,
+    };
+  }
+
+  /**
+   * Resumes or inspects any active emergency for the customer.
+   * If the customer leaves the screen or app, this allows them to return
+   * to their active radar sweep or tracking session without duplicate requests.
+   */
+  async getActiveForCustomer(customerId: string): Promise<{
+    hasActive: boolean;
+    bookingId?: string;
+    status?: BookingStatus;
+    currentWave?: number;
+    fallbackRequired?: boolean;
+    guidance?: string | null;
+    eligibleCount?: number;
+    providerAssigned?: boolean;
+    providerId?: string | null;
+    description?: string;
+    serviceCategoryId?: string;
+    locationLat?: number;
+    locationLng?: number;
+    createdAt?: Date;
+  }> {
+    await this.closeTerminalDispatches();
+
+    const dispatch = await this.dataSource
+      .getRepository(EmergencyDispatch)
+      .findOne({
+        where: { customerId, closedAt: IsNull() },
+        order: { createdAt: 'DESC' },
+      });
+
+    if (!dispatch) {
+      return { hasActive: false };
+    }
+
+    const booking = await this.dataSource
+      .getRepository(Booking)
+      .findOneBy({ id: dispatch.bookingId });
+
+    if (
+      !booking ||
+      booking.status === BookingStatus.CANCELLED ||
+      booking.status === BookingStatus.COMPLETED
+    ) {
+      await this.dataSource
+        .getRepository(EmergencyDispatch)
+        .update({ bookingId: dispatch.bookingId }, { closedAt: new Date() });
+      return { hasActive: false };
+    }
+
+    const stillOpen = booking.status === BookingStatus.REQUESTED;
+    const supply = stillOpen
+      ? await this.matching.countEligibleProviders(
+          Number(booking.locationLat),
+          Number(booking.locationLng),
+          booking.serviceCategoryId,
+          dispatch.currentWave >= 2 ? EMERGENCY_POLICY_V1.radiusMultiplierWave2 : 1,
+          EMERGENCY_POLICY_V1.minRadiusKm,
+        )
+      : 0;
+
+    const unassignedFallback =
+      stillOpen && (supply === 0 || dispatch.currentWave >= 3);
+
+    return {
+      hasActive: true,
+      bookingId: booking.id,
+      status: booking.status,
+      currentWave: dispatch.currentWave,
+      fallbackRequired: unassignedFallback,
+      guidance: unassignedFallback ? EMERGENCY_FALLBACK_GUIDANCE : null,
+      eligibleCount: supply,
+      providerAssigned:
+        booking.status !== BookingStatus.REQUESTED && Boolean(booking.providerId),
+      providerId: booking.providerId,
+      description: booking.description,
+      serviceCategoryId: booking.serviceCategoryId,
+      locationLat: booking.locationLat ? Number(booking.locationLat) : undefined,
+      locationLng: booking.locationLng ? Number(booking.locationLng) : undefined,
+      createdAt: booking.createdAt,
     };
   }
 
@@ -560,6 +648,7 @@ export class EmergencyService implements OnModuleInit, OnModuleDestroy {
       booking.serviceCategoryId,
       EMERGENCY_POLICY_V1.fanOutCap,
       wave >= 2 ? EMERGENCY_POLICY_V1.radiusMultiplierWave2 : 1,
+      EMERGENCY_POLICY_V1.minRadiusKm,
     );
 
     let totalMinor = booking.totalAmountMinor ?? 0;

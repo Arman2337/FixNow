@@ -89,6 +89,25 @@ describe('EmergencyController & EmergencyAdminController', () => {
         '',
       );
     });
+    it('retrieves active emergency for the requesting customer', async () => {
+      const activeResult = {
+        hasActive: true,
+        bookingId: 'book-em-1',
+        status: BookingStatus.REQUESTED,
+        currentWave: 1,
+        eligibleCount: 2,
+      };
+      (emergencyService as any).getActiveForCustomer = jest
+        .fn()
+        .mockResolvedValue(activeResult);
+
+      const result = await controller.active(mockRequest);
+
+      expect((emergencyService as any).getActiveForCustomer).toHaveBeenCalledWith(
+        'user-emergency-1',
+      );
+      expect(result).toBe(activeResult);
+    });
   });
 
   describe('EmergencyController.status', () => {

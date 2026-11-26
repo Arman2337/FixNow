@@ -206,6 +206,7 @@ describe('EmergencyService (FN-063)', () => {
     expect(EMERGENCY_POLICY_V1.wave2AfterMinutes).toBe(3);
     expect(EMERGENCY_POLICY_V1.wave3AfterMinutes).toBe(8);
     expect(EMERGENCY_POLICY_V1.radiusMultiplierWave2).toBe(2);
+    expect(EMERGENCY_POLICY_V1.minRadiusKm).toBe(10);
     expect(EMERGENCY_POLICY_V1.dailyCustomerCap).toBe(3);
     expect(EMERGENCY_POLICY_V1.cooldownMinutes).toBe(30);
     expect(EMERGENCY_FALLBACK_GUIDANCE).toContain('local emergency services');
@@ -493,6 +494,7 @@ describe('EmergencyService (FN-063)', () => {
         categoryId,
         EMERGENCY_POLICY_V1.fanOutCap,
         1,
+        EMERGENCY_POLICY_V1.minRadiusKm,
       );
       expect(notificationSend).toHaveBeenCalledTimes(2);
 
@@ -530,6 +532,7 @@ describe('EmergencyService (FN-063)', () => {
         categoryId,
         EMERGENCY_POLICY_V1.fanOutCap,
         EMERGENCY_POLICY_V1.radiusMultiplierWave2,
+        EMERGENCY_POLICY_V1.minRadiusKm,
       );
     });
 

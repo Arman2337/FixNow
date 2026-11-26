@@ -244,4 +244,29 @@ void main() {
     expect(find.textContaining('23.02000, 72.57000'), findsOneWidget);
     expect(find.text('15-Min SLA'), findsNothing);
   });
+
+  testWidgets('automatically resumes active emergency radar view if already dispatched', (
+    tester,
+  ) async {
+    final activeBody = {
+      'hasActive': true,
+      'bookingId': 'book-active-1',
+      'status': 'REQUESTED',
+      'currentWave': 1,
+      'eligibleCount': 4,
+      'locationLat': 23.02,
+      'locationLng': 72.57,
+    };
+    final transport = FakeTransport(
+      ApiResponse(statusCode: 201, body: created),
+      () => ApiResponse(statusCode: 200, body: activeBody),
+    );
+
+    await tester.pumpWidget(host(await screen(transport)));
+    await tester.pumpIdle();
+
+    expect(find.text('Alert sent'), findsOneWidget);
+    expect(find.text('Eligible professionals: 4'), findsOneWidget);
+    expect(find.textContaining('23.02000, 72.57000'), findsOneWidget);
+  });
 }

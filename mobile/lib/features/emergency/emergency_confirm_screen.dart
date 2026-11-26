@@ -53,6 +53,7 @@ class _EmergencyConfirmScreenState extends State<EmergencyConfirmScreen> {
     _selected = widget.categories.first;
     _controller = EmergencyController(widget.repository)
       ..addListener(_onChanged);
+    _controller.checkActiveEmergency();
   }
 
   void _onChanged() {
@@ -495,21 +496,25 @@ class _RadarSweepBox extends StatelessWidget {
               Positioned(
                 top: 12,
                 left: 20,
-                child: _techPingBadge('Tech in range (${wave * 2} km)'),
+                child: _techPingBadge(
+                  'Tech in range (~${wave == 1 ? 10 : 20} km)',
+                ),
               ),
             if (eligibleCount >= 2)
               Positioned(
                 bottom: 14,
                 right: 20,
                 child: _techPingBadge(
-                  'Tech in range (${(wave * 2.5).toStringAsFixed(1)} km)',
+                  'Tech in range (~${wave == 1 ? 7.5 : 15} km)',
                 ),
               ),
             if (eligibleCount >= 3)
               Positioned(
                 top: 20,
                 right: 28,
-                child: _techPingBadge('Tech in range (${wave * 3} km)'),
+                child: _techPingBadge(
+                  'Tech in range (~${wave == 1 ? 5 : 10} km)',
+                ),
               ),
           ],
         ],
@@ -625,7 +630,9 @@ class _DispatchedView extends StatelessWidget {
           Text(
             status == null
                 ? 'Contacting professionals near you…'
-                : 'Alerting verified professionals nearby — wave ${status.currentWave}.',
+                : (status.status != 'REQUESTED'
+                    ? 'Specialist accepted! They are preparing to dispatch to your location.'
+                    : 'Alerting verified professionals nearby within ${status.currentWave == 1 ? '10' : '20'} km — wave ${status.currentWave}.'),
             textAlign: TextAlign.center,
             semanticsLabel: 'Emergency alert progress',
             style: Theme.of(
@@ -633,6 +640,45 @@ class _DispatchedView extends StatelessWidget {
             ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
           ),
           const SizedBox(height: AppSpacing.md),
+          if (status != null && status.status != 'REQUESTED')
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              margin: const EdgeInsets.only(bottom: AppSpacing.md),
+              decoration: BoxDecoration(
+                color: AppColors.successSoft,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.primary, width: 1.5),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.check_circle_rounded, color: AppColors.primary, size: 28),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Text(
+                          'Specialist Assigned & On the Way',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 13,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          'A verified technician has accepted your emergency request and is heading to your dispatch address.',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
           if (controller.showFallback && status != null)
             Container(
               padding: const EdgeInsets.all(AppSpacing.md),

@@ -5,6 +5,8 @@ import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
 import 'package:fixnow_mobile/design_system/fix_state_views.dart';
+import 'package:fixnow_mobile/features/call/call_screen.dart';
+import 'package:fixnow_mobile/features/location/saved_address.dart';
 import 'package:fixnow_mobile/features/payments/gateway_checkout_repository.dart';
 import 'package:fixnow_mobile/features/payments/group_service_payment.dart';
 import 'package:flutter/material.dart';
@@ -72,7 +74,13 @@ class _GroupServicesScreenState extends State<GroupServicesScreen> {
   static const _path = 'group-services';
   String? _selectedId;
   bool _busy = false;
-  ({String? categoryId, String area, String description})? _lastCreation;
+  ({
+    String? categoryId,
+    String area,
+    String serviceAddress,
+    String preferredSchedule,
+    String description,
+  })? _lastCreation;
   String? _creationKey;
   late Future<Object?> _content;
 
@@ -116,7 +124,9 @@ class _GroupServicesScreenState extends State<GroupServicesScreen> {
   );
 
   Future<void> _refresh() async {
-    setState(() => _content = _fetch());
+    setState(() {
+      _content = _fetch();
+    });
     try {
       await _content;
     } catch (_) {
@@ -151,8 +161,27 @@ class _GroupServicesScreenState extends State<GroupServicesScreen> {
     });
   }
 
+  Future<List<SavedAddress>> _loadManualAddresses() async {
+    try {
+      final repo = SavedAddressRepository.instance;
+      if (repo.addresses.isEmpty) {
+        await repo.fetchAddresses();
+      }
+      return repo.addresses
+          .where(
+            (a) =>
+                a.id != 'addr-current-live' &&
+                a.customTitle.trim().toLowerCase() != 'current location',
+          )
+          .toList(growable: false);
+    } catch (_) {
+      return const <SavedAddress>[];
+    }
+  }
+
   Future<void> _create() => _run(() async {
     final categories = (await _send('$_path/categories') as List).cast<_Row>();
+    final savedAddresses = await _loadManualAddresses();
     if (!mounted) return;
     if (categories.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -161,101 +190,245 @@ class _GroupServicesScreenState extends State<GroupServicesScreen> {
       return;
     }
     String? categoryId;
-    var area = '';
+    final areaCtrl = TextEditingController();
+    final addressCtrl = TextEditingController();
+    final scheduleCtrl = TextEditingController();
     var description = '';
-    final form = GlobalKey<FormState>();
-    final confirmed = await _formDialog(
-      'Create a service group',
-      'Create group',
-      form,
-      [
-        DropdownButtonFormField<String>(
-          decoration: const InputDecoration(
-            labelText: 'Service',
-            floatingLabelBehavior: FloatingLabelBehavior.always,
-          ),
-          isExpanded: true,
-          items: [
-            for (final category in categories)
-              DropdownMenuItem(
-                value: category['id'] as String,
-                child: Text(category['name'] as String),
-              ),
-          ],
-          onChanged: (value) => categoryId = value,
-          validator: (value) => value == null ? 'Choose a service.' : null,
-        ),
-        _field(
-          'Neighbourhood or PIN code',
-          (value) => area = value,
-          min: 2,
-          max: 120,
-        ),
-        _field(
-          'What does each household need?',
-          (value) => description = value,
-          min: 3,
-          max: 1000,
-          hint:
-              'For example, one split AC cleaning per household. Keep addresses and phone numbers private.',
-        ),
-      ],
-    );
-    if (!confirmed || !mounted) return;
-    final input = (
-      categoryId: categoryId,
-      area: area,
-      description: description,
-    );
-    if (_lastCreation != input) {
-      final random = Random.secure();
-      _lastCreation = input;
-      _creationKey = List.generate(
-        16,
-        (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0'),
-      ).join();
+    if (savedAddresses.isNotEmpty) {
+      final initial = savedAddresses.first;
+      addressCtrl.text = initial.formattedFull;
+      areaCtrl.text = initial.city.trim().isNotEmpty
+          ? '${initial.streetArea}, ${initial.city}'
+          : initial.streetArea;
     }
-    final result =
-        await _send(
-              _path,
-              body: {
-                'categoryId': categoryId,
-                'requestKey': _creationKey,
-                'area': area,
-                'description': description,
+    final form = GlobalKey<FormState>();
+    try {
+      final confirmed = await _formDialog(
+        'Create a service group',
+        'Create group',
+        form,
+        [
+          DropdownButtonFormField<String>(
+            decoration: const InputDecoration(
+              labelText: 'Service',
+              floatingLabelBehavior: FloatingLabelBehavior.always,
+            ),
+            isExpanded: true,
+            items: [
+              for (final category in categories)
+                DropdownMenuItem(
+                  value: category['id'] as String,
+                  child: Text(category['name'] as String),
+                ),
+            ],
+            onChanged: (value) => categoryId = value,
+            validator: (value) => value == null ? 'Choose a service.' : null,
+          ),
+          if (savedAddresses.isNotEmpty)
+            DropdownButtonFormField<String>(
+              decoration: const InputDecoration(
+                labelText: 'Saved service address',
+                floatingLabelBehavior: FloatingLabelBehavior.always,
+              ),
+              isExpanded: true,
+              initialValue: savedAddresses.first.id,
+              items: [
+                for (final addr in savedAddresses)
+                  DropdownMenuItem(
+                    value: addr.id,
+                    child: Text(
+                      '${addr.labelText}: ${addr.formattedFull}',
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+              ],
+              onChanged: (value) {
+                final picked = savedAddresses
+                    .where((a) => a.id == value)
+                    .firstOrNull;
+                if (picked == null) return;
+                addressCtrl.text = picked.formattedFull;
+                areaCtrl.text = picked.city.trim().isNotEmpty
+                    ? '${picked.streetArea}, ${picked.city}'
+                    : picked.streetArea;
               },
-            )
-            as _Row;
-    _lastCreation = null;
-    _creationKey = null;
-    _open(result['id'] as String);
+            ),
+          TextFormField(
+            controller: addressCtrl,
+            decoration: const InputDecoration(
+              labelText: 'Service address',
+              floatingLabelBehavior: FloatingLabelBehavior.always,
+              helperText:
+                  'Enter flat/house number, building & street (never your live GPS).',
+              helperMaxLines: 3,
+            ),
+            maxLength: 300,
+            maxLines: 2,
+            validator: (value) => (value ?? '').trim().length < 5
+                ? 'Enter a complete service address (at least 5 characters).'
+                : null,
+          ),
+          TextFormField(
+            controller: areaCtrl,
+            decoration: const InputDecoration(
+              labelText: 'Neighbourhood or PIN code',
+              floatingLabelBehavior: FloatingLabelBehavior.always,
+            ),
+            maxLength: 120,
+            validator: (value) => (value ?? '').trim().length < 2
+                ? 'Enter at least 2 characters.'
+                : null,
+          ),
+          TextFormField(
+            controller: scheduleCtrl,
+            decoration: const InputDecoration(
+              labelText: 'Preferred date & time (optional)',
+              floatingLabelBehavior: FloatingLabelBehavior.always,
+              hintText: 'e.g. Saturday 10:00 AM - 1:00 PM',
+            ),
+            maxLength: 120,
+          ),
+          _field(
+            'What does each household need?',
+            (value) => description = value,
+            min: 3,
+            max: 1000,
+            hint: 'For example, one split AC cleaning per household.',
+          ),
+        ],
+      );
+      if (!confirmed || !mounted) return;
+      final area = areaCtrl.text.trim();
+      final serviceAddress = addressCtrl.text.trim();
+      final preferredSchedule = scheduleCtrl.text.trim();
+      final input = (
+        categoryId: categoryId,
+        area: area,
+        serviceAddress: serviceAddress,
+        preferredSchedule: preferredSchedule,
+        description: description,
+      );
+      if (_lastCreation != input) {
+        final random = Random.secure();
+        _lastCreation = input;
+        _creationKey = List.generate(
+          16,
+          (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0'),
+        ).join();
+      }
+      final result =
+          await _send(
+                _path,
+                body: {
+                  'categoryId': categoryId,
+                  'requestKey': _creationKey,
+                  'area': area,
+                  'serviceAddress': serviceAddress,
+                  if (preferredSchedule.isNotEmpty)
+                    'preferredSchedule': preferredSchedule,
+                  'description': description,
+                },
+              )
+              as _Row;
+      _lastCreation = null;
+      _creationKey = null;
+      _open(result['id'] as String);
+    } finally {
+      areaCtrl.dispose();
+      addressCtrl.dispose();
+      scheduleCtrl.dispose();
+    }
   });
 
   Future<void> _join([String? invitation]) => _run(() async {
     var token = invitation;
-    final form = GlobalKey<FormState>();
-    final confirmed = await _formDialog(
-      'Join a service group',
-      'Join group',
-      form,
-      [
-        const Text(
-          'Joining adds your household to this request. The organizer chooses the provider.',
-        ),
-        if (invitation == null)
-          TextFormField(
-            decoration: const InputDecoration(labelText: 'Invitation link'),
-            autocorrect: false,
-            validator: (value) {
-              token = groupInviteToken(value ?? '');
-              return token == null ? 'Enter a FixNow group invitation.' : null;
-            },
-          ),
-      ],
+    final savedAddresses = await _loadManualAddresses();
+    if (!mounted) return;
+    final addressCtrl = TextEditingController(
+      text: savedAddresses.isNotEmpty ? savedAddresses.first.formattedFull : '',
     );
-    if (!confirmed || !mounted) return;
-    final result = await _send('$_path/join', body: {'token': token}) as _Row;
-    _open(result['id'] as String);
+    final form = GlobalKey<FormState>();
+    try {
+      final confirmed = await _formDialog(
+        'Join a service group',
+        'Send join request',
+        form,
+        [
+          const Text(
+            'Send a join request with your household service address. Once the group maker accepts your request, you can share the invite link and track full service progress.',
+          ),
+          if (invitation == null)
+            TextFormField(
+              decoration: const InputDecoration(
+                labelText: 'Invitation link or code',
+                floatingLabelBehavior: FloatingLabelBehavior.always,
+              ),
+              autocorrect: false,
+              validator: (value) {
+                token = groupInviteToken(value ?? '');
+                return token == null
+                    ? 'Enter a FixNow group invitation.'
+                    : null;
+              },
+            ),
+          if (savedAddresses.isNotEmpty)
+            DropdownButtonFormField<String>(
+              decoration: const InputDecoration(
+                labelText: 'Saved service address',
+                floatingLabelBehavior: FloatingLabelBehavior.always,
+              ),
+              isExpanded: true,
+              initialValue: savedAddresses.first.id,
+              items: [
+                for (final addr in savedAddresses)
+                  DropdownMenuItem(
+                    value: addr.id,
+                    child: Text(
+                      '${addr.labelText}: ${addr.formattedFull}',
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+              ],
+              onChanged: (value) {
+                final picked = savedAddresses
+                    .where((a) => a.id == value)
+                    .firstOrNull;
+                if (picked != null) {
+                  addressCtrl.text = picked.formattedFull;
+                }
+              },
+            ),
+          TextFormField(
+            controller: addressCtrl,
+            decoration: const InputDecoration(
+              labelText: 'Your service address',
+              floatingLabelBehavior: FloatingLabelBehavior.always,
+              helperText:
+                  'Enter flat/house number & street for your household.',
+              helperMaxLines: 3,
+            ),
+            maxLength: 300,
+            maxLines: 2,
+            validator: (value) => (value ?? '').trim().length < 5
+                ? 'Enter a complete service address (at least 5 characters).'
+                : null,
+          ),
+        ],
+      );
+      if (!confirmed || !mounted) return;
+      final result =
+          await _send(
+                '$_path/join',
+                body: {
+                  'token': token,
+                  'serviceAddress': addressCtrl.text.trim(),
+                },
+              )
+              as _Row;
+      _open(result['id'] as String);
+    } finally {
+      addressCtrl.dispose();
+    }
   });
 
   Future<void> _quote(String id) => _run(() async {
@@ -539,41 +712,236 @@ class _GroupServicesScreenState extends State<GroupServicesScreen> {
       ),
   ];
 
-  String _status(_Row group) => group['selectedQuoteId'] != null
-      ? 'Provider selected'
-      : group['requestedAt'] != null
-      ? 'Collecting quotes'
-      : 'Inviting members';
+  String _status(_Row group) {
+    if (group['membershipStatus'] == 'pending') {
+      return 'Pending approval';
+    }
+    final serviceStatus = group['serviceStatus']?.toString();
+    return switch (serviceStatus) {
+      'COMPLETED' => 'Completed',
+      'IN_PROGRESS' => 'Service in progress',
+      'SCHEDULED' => 'Service scheduled',
+      'PROVIDER_SELECTED' => 'Provider selected',
+      'COLLECTING_QUOTES' => 'Collecting quotes',
+      'INVITING' => 'Inviting members',
+      _ => group['selectedQuoteId'] != null
+          ? 'Provider selected'
+          : group['requestedAt'] != null
+          ? 'Collecting quotes'
+          : 'Inviting members',
+    };
+  }
+
+  Widget _statusTimeline(String serviceStatus, _Row group) {
+    final activeCode = switch (serviceStatus) {
+      'COMPLETED' ||
+      'IN_PROGRESS' ||
+      'SCHEDULED' ||
+      'PROVIDER_SELECTED' ||
+      'COLLECTING_QUOTES' ||
+      'INVITING' => serviceStatus,
+      _ => group['selectedQuoteId'] != null
+          ? 'PROVIDER_SELECTED'
+          : group['requestedAt'] != null
+          ? 'COLLECTING_QUOTES'
+          : 'INVITING',
+    };
+    const steps = [
+      ('INVITING', 'Inviting members'),
+      ('COLLECTING_QUOTES', 'Collecting quotes'),
+      ('PROVIDER_SELECTED', 'Provider selected'),
+      ('SCHEDULED', 'Scheduled'),
+      ('IN_PROGRESS', 'In progress'),
+      ('COMPLETED', 'Completed'),
+    ];
+    final currentIdx = steps.indexWhere((s) => s.$1 == activeCode);
+    return FixCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Service status timeline',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          for (var i = 0; i < steps.length; i++)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                children: [
+                  Icon(
+                    i < currentIdx
+                        ? Icons.check_circle_rounded
+                        : i == currentIdx
+                        ? Icons.radio_button_checked_rounded
+                        : Icons.radio_button_unchecked_rounded,
+                    size: 18,
+                    color: i <= currentIdx
+                        ? AppColors.primary
+                        : AppColors.textSecondary,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    steps[i].$2,
+                    style: TextStyle(
+                      fontWeight: i == currentIdx
+                          ? FontWeight.w700
+                          : FontWeight.w500,
+                      color: i <= currentIdx
+                          ? AppColors.textPrimary
+                          : AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 
   Widget _providerRequest(_Row group) {
+    final groupId = group['id'] as String;
     final quoted = group['ownQuoteId'] != null;
     final selected = group['selectedQuoteId'];
+    final isSelected = quoted && selected == group['ownQuoteId'];
     final contact = group['organizerPhone'] as String?;
+    final organizerName = group['organizerName'] as String? ?? 'Organizer';
+    final schedule = group['preferredSchedule'] as String?;
+    final serviceAddress = group['serviceAddress'] as String?;
+    final ownNote = group['ownNote'] as String?;
+    final ownRegularMinor = group['ownRegularMinor'];
+    final serviceStatus =
+        group['serviceStatus']?.toString() ??
+        (selected != null ? 'PROVIDER_SELECTED' : 'COLLECTING_QUOTES');
+    final members = (group['members'] as List?)?.cast<_Row>() ?? const [];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          group['service'] as String,
-          style: Theme.of(context).textTheme.titleMedium,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Text(
+                group['service'] as String,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
+            Chip(label: Text(_status(group))),
+          ],
         ),
-        Text('${group['area']} · ${group['memberCount']} households'),
+        Text('${group['area']} · ${group['memberCount']} approved households'),
+        Text('Organizer: $organizerName'),
+        if (schedule != null && schedule.isNotEmpty)
+          Text('Preferred schedule: $schedule'),
         const SizedBox(height: AppSpacing.sm),
         Text(group['description'] as String),
         const SizedBox(height: AppSpacing.sm),
-        if (quoted)
+        if (quoted) ...[
           Text(
             selected == null
                 ? 'Quote sent · ${_rupees(group['ownGroupMinor'])} per household'
-                : selected == group['ownQuoteId']
-                ? 'Your quote was selected'
+                : isSelected
+                ? 'Your quote was selected · ${_rupees(group['ownGroupMinor'])} per household'
                 : 'The group selected another quote',
-          )
-        else
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+          if (ownRegularMinor is int)
+            Text('Your regular price: ${_rupees(ownRegularMinor)}'),
+          if (ownNote != null && ownNote.isNotEmpty) Text('Quote note: $ownNote'),
+        ] else
           FilledButton(
-            onPressed: _busy ? null : () => _quote(group['id'] as String),
+            onPressed: _busy ? null : () => _quote(groupId),
             child: const Text('Send a discounted quote'),
           ),
-        if (contact != null) SelectableText('Organizer phone $contact'),
+        if (isSelected) ...[
+          const SizedBox(height: AppSpacing.md),
+          if (serviceAddress != null && serviceAddress.isNotEmpty)
+            Text('Primary service address: $serviceAddress'),
+          if (contact != null && contact.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                Expanded(child: SelectableText('Organizer phone: $contact')),
+                TextButton.icon(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => CallScreen(
+                        oppositePartyName: organizerName,
+                        oppositePartyRole: 'Organizer',
+                        phoneNumber: contact,
+                        isProvider: true,
+                      ),
+                    ),
+                  ),
+                  icon: const Icon(Icons.call_rounded, size: 18),
+                  label: const Text('Call'),
+                ),
+              ],
+            ),
+          ],
+          if (members.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.sm),
+            const Text(
+              'Household service locations:',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
+            for (final m in members)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  '• ${m['displayName'] ?? 'Customer'}'
+                  '${m['serviceAddress'] != null ? ' — ${m['serviceAddress']}' : ''}'
+                  '${m['phone'] != null ? ' (${m['phone']})' : ''}',
+                ),
+              ),
+          ],
+          const SizedBox(height: AppSpacing.sm),
+          if (serviceStatus == 'PROVIDER_SELECTED')
+            FilledButton(
+              onPressed: _busy
+                  ? null
+                  : () => _confirmChange(
+                      '$_path/$groupId/status',
+                      {'status': 'SCHEDULED'},
+                      'Mark service as scheduled?',
+                      'Confirm you have coordinated the visit schedule with the group organizer.',
+                      'Mark scheduled',
+                    ),
+              child: const Text('Mark scheduled'),
+            ),
+          if (serviceStatus == 'PROVIDER_SELECTED' ||
+              serviceStatus == 'SCHEDULED')
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: FilledButton(
+                onPressed: _busy
+                    ? null
+                    : () => _confirmChange(
+                        '$_path/$groupId/status',
+                        {'status': 'IN_PROGRESS'},
+                        'Start group service?',
+                        'All approved households will see that work is now in progress.',
+                        'Start service',
+                      ),
+                child: const Text('Start service'),
+              ),
+            ),
+          if (serviceStatus == 'IN_PROGRESS')
+            FilledButton(
+              onPressed: _busy
+                  ? null
+                  : () => _confirmChange(
+                      '$_path/$groupId/status',
+                      {'status': 'COMPLETED'},
+                      'Complete group service?',
+                      'Marks this group service completed for all households.',
+                      'Mark completed',
+                    ),
+              child: const Text('Mark completed'),
+            ),
+        ],
       ],
     );
   }
@@ -581,19 +949,72 @@ class _GroupServicesScreenState extends State<GroupServicesScreen> {
   List<Widget> _detail(_Row group) {
     final id = group['id'] as String;
     final organizer = group['organizer'] == true;
+    final membershipStatus = group['membershipStatus']?.toString() ?? 'approved';
     final selected = group['selectedQuoteId'];
     final invite = group['inviteToken'] as String?;
     final contact = group['providerPhone'] as String?;
     final requested = group['requestedAt'] != null;
-    final quotes = (group['quotes'] as List).cast<_Row>();
-    final selectedQuote = quotes.where((quote) => quote['id'] == selected).firstOrNull;
+    final serviceAddress = group['serviceAddress'] as String?;
+    final myServiceAddress = group['myServiceAddress'] as String?;
+    final preferredSchedule = group['preferredSchedule'] as String?;
+    final organizerName = group['organizerName'] as String? ?? 'Organizer';
+    final serviceStatus = group['serviceStatus']?.toString() ?? '';
+    final quotes = (group['quotes'] as List? ?? const []).cast<_Row>();
+    final members = (group['members'] as List? ?? const []).cast<_Row>();
+    final pendingMembers = members
+        .where((m) => m['status'] == 'pending')
+        .toList();
+    final approvedMembers = members
+        .where((m) => m['status'] == 'approved')
+        .toList();
+    final selectedQuote =
+        quotes.where((quote) => quote['id'] == selected).firstOrNull;
+
+    if (!organizer && membershipStatus == 'pending') {
+      return [
+        Text(
+          group['service'] as String,
+          style: Theme.of(context).textTheme.headlineSmall,
+        ),
+        Text('${group['area']} · ${group['memberCount']} approved households'),
+        const SizedBox(height: AppSpacing.md),
+        FixCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Join request pending approval',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'The group organizer reviews every joining request. Once accepted, you can share the group link with others and view full quotes and service progress.',
+              ),
+              if (myServiceAddress != null && myServiceAddress.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text('Your submitted service address: $myServiceAddress'),
+              ],
+            ],
+          ),
+        ),
+      ];
+    }
+
     return [
       Text(
         group['service'] as String,
         style: Theme.of(context).textTheme.headlineSmall,
       ),
       Text('${group['area']} · ${group['memberCount']} households'),
-      Text(_status(group)),
+      Text('Organizer: $organizerName · Status: ${_status(group)}'),
+      if (serviceAddress != null && serviceAddress.isNotEmpty)
+        Text('Group service address: $serviceAddress'),
+      if (myServiceAddress != null &&
+          myServiceAddress.isNotEmpty &&
+          myServiceAddress != serviceAddress)
+        Text('Your service address: $myServiceAddress'),
+      if (preferredSchedule != null && preferredSchedule.isNotEmpty)
+        Text('Preferred schedule: $preferredSchedule'),
       const SizedBox(height: AppSpacing.md),
       Text(group['description'] as String),
       const SizedBox(height: AppSpacing.md),
@@ -603,12 +1024,6 @@ class _GroupServicesScreenState extends State<GroupServicesScreen> {
             onPressed: _busy
                 ? null
                 : () => _run(() async {
-                    // No raw API host, and no token printed as a bare URL.
-                    // The app already understands
-                    // `fixnow://group-invite/<token>`, and `groupInviteToken`
-                    // also accepts a pasted code, so this shares a deep link
-                    // first and a code second without exposing the
-                    // deployment's internal address.
                     final link = Uri.parse('fixnow://group-invite/$invite');
                     final box = context.findRenderObject() as RenderBox?;
                     await SharePlus.instance.share(
@@ -628,7 +1043,7 @@ class _GroupServicesScreenState extends State<GroupServicesScreen> {
             icon: const Icon(Icons.share_outlined),
             label: const Text('Share invitation'),
           ),
-        if (organizer && invite == null)
+        if (invite == null)
           const Text('The invitation link has expired.'),
         if (organizer)
           FilledButton(
@@ -644,8 +1059,90 @@ class _GroupServicesScreenState extends State<GroupServicesScreen> {
             child: const Text('Request group quotes'),
           ),
         if ((group['memberCount'] as int) < 2)
-          const Text('At least two households are needed to request quotes.'),
-      ] else ...[
+          const Text('At least two approved households are needed to request quotes.'),
+      ],
+      if (organizer && pendingMembers.isNotEmpty) ...[
+        const SizedBox(height: AppSpacing.md),
+        Text(
+          'Pending join requests (${pendingMembers.length})',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        for (final member in pendingMembers)
+          Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.sm),
+            child: FixCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    member['displayName'] as String? ?? 'Customer',
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  if (member['serviceAddress'] != null)
+                    Text('Address: ${member['serviceAddress']}'),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      FilledButton(
+                        onPressed: _busy
+                            ? null
+                            : () => _run(() async {
+                                await _send(
+                                  '$_path/$id/members/${member['customerId']}/approve',
+                                  body: const {},
+                                );
+                                if (mounted) await _refresh();
+                              }),
+                        child: const Text('Accept'),
+                      ),
+                      const SizedBox(width: 8),
+                      OutlinedButton(
+                        onPressed: _busy
+                            ? null
+                            : () => _run(() async {
+                                await _send(
+                                  '$_path/$id/members/${member['customerId']}/reject',
+                                  body: const {},
+                                );
+                                if (mounted) await _refresh();
+                              }),
+                        child: const Text('Decline'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
+      const SizedBox(height: AppSpacing.md),
+      _statusTimeline(serviceStatus, group),
+      if (approvedMembers.isNotEmpty) ...[
+        const SizedBox(height: AppSpacing.md),
+        Text(
+          'Group members (${approvedMembers.length})',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        for (final member in approvedMembers)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: FixCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${member['displayName'] ?? 'Customer'}${member['organizer'] == true ? ' (Organizer)' : ''}',
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  if (member['serviceAddress'] != null)
+                    Text('Address: ${member['serviceAddress']}'),
+                ],
+              ),
+            ),
+          ),
+      ],
+      if (requested) ...[
+        const SizedBox(height: AppSpacing.md),
         Text('Provider quotes', style: Theme.of(context).textTheme.titleLarge),
         if (quotes.isEmpty)
           const Text(
@@ -653,7 +1150,7 @@ class _GroupServicesScreenState extends State<GroupServicesScreen> {
           ),
         if (selected != null)
           const Text(
-            'Your group has chosen a provider. The organizer coordinates scheduling with the provider.',
+            'Your group has chosen a provider. All approved members can track scheduling, service progress, and payments here.',
           ),
         if (contact != null) SelectableText('Selected provider phone $contact'),
         if (selectedQuote != null && widget.gatewayCheckout != null) ...[

@@ -206,7 +206,7 @@ export class PaymentsService {
        FROM group_service_members m
        JOIN group_service_requests g ON g.id = m.group_id
        LEFT JOIN group_service_quotes q ON q.id = g.selected_quote_id
-       WHERE m.group_id = $1 AND m.customer_id = $2`,
+       WHERE m.group_id = $1 AND m.customer_id = $2 AND m.status = 'approved'`,
       [groupServiceId, customerId],
     );
     if (!member) throw new NotFoundException('Service group not found');
@@ -228,7 +228,7 @@ export class PaymentsService {
     return this.dataSource.transaction(async (manager) => {
       const [lockedMember] = await manager.query<{ customerId: string }[]>(
         `SELECT customer_id AS "customerId" FROM group_service_members
-         WHERE group_id = $1 AND customer_id = $2 FOR UPDATE`,
+         WHERE group_id = $1 AND customer_id = $2 AND status = 'approved' FOR UPDATE`,
         [groupServiceId, customerId],
       );
       if (!lockedMember) throw new NotFoundException('Service group not found');

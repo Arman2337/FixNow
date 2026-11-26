@@ -65,10 +65,12 @@ describe('Group services (PostgreSQL)', () => {
     await db.destroy();
   });
 
-  it('keeps invitations, competing quotes, selection and contacts scoped to their parties', async () => {
+  it('keeps invitations, approvals, addresses, competing quotes, selection and status scoped to their parties', async () => {
     const input = {
       categoryId,
       area: 'Indiranagar',
+      serviceAddress: 'Flat 201, Palm Residency, Indiranagar',
+      preferredSchedule: 'Sunday 10 AM',
       description: 'One split AC cleaning per household',
       requestKey: 'a'.repeat(32),
     };
@@ -79,8 +81,10 @@ describe('Group services (PostgreSQL)', () => {
     expect(retry.id).toBe(id);
     const draft = (await service.detail(organizer, id)) as {
       inviteToken: string;
+      serviceStatus: string;
     };
     expect(draft.inviteToken).toHaveLength(48);
+    expect(draft.serviceStatus).toBe('INVITING');
     await expect(service.detail(stranger, id)).rejects.toBeInstanceOf(
       NotFoundException,
     );
@@ -88,18 +92,44 @@ describe('Group services (PostgreSQL)', () => {
       ConflictException,
     );
     await Promise.all([
-      service.join(member, draft.inviteToken),
-      service.join(member, draft.inviteToken),
+      service.join(member, draft.inviteToken, 'House 12, Green Park'),
+      service.join(member, draft.inviteToken, 'House 12, Green Park'),
     ]);
+    await expect(service.detail(member, id)).resolves.toMatchObject({
+      membershipStatus: 'pending',
+      inviteToken: null,
+      quotes: [],
+    });
+    // Pending member does not count toward the minimum 2 approved households yet.
+    await expect(service.request(organizer, id)).rejects.toBeInstanceOf(
+      ConflictException,
+    );
+    await expect(
+      service.approveMember(member, id, member),
+    ).rejects.toBeInstanceOf(NotFoundException);
+    await service.approveMember(organizer, id, member);
+    // Approved member can also share the invite link while open.
+    await expect(service.detail(member, id)).resolves.toMatchObject({
+      membershipStatus: 'approved',
+      inviteToken: draft.inviteToken,
+      serviceStatus: 'INVITING',
+    });
+
     await expect(service.request(member, id)).rejects.toBeInstanceOf(
       NotFoundException,
     );
     await service.request(organizer, id);
     await expect(
-      service.join(stranger, draft.inviteToken),
+      service.join(stranger, draft.inviteToken, 'House 99, Other Lane'),
     ).rejects.toBeInstanceOf(ConflictException);
     expect(await service.listProvider(firstProvider)).toEqual([
-      expect.objectContaining({ id, memberCount: 2, ownQuoteId: null }),
+      expect.objectContaining({
+        id,
+        memberCount: 2,
+        ownQuoteId: null,
+        serviceAddress: null,
+        preferredSchedule: 'Sunday 10 AM',
+      }),
     ]);
 
     const firstTerms = {
@@ -120,7 +150,7 @@ describe('Group services (PostgreSQL)', () => {
     expect(await service.detail(member, id)).toMatchObject({
       inviteToken: null,
       memberCount: 2,
-      providerPhone: null,
+      serviceStatus: 'COLLECTING_QUOTES',
       quotes: [
         expect.objectContaining({
           id: firstQuote.id,
@@ -143,17 +173,33 @@ describe('Group services (PostgreSQL)', () => {
     ).rejects.toBeInstanceOf(ConflictException);
     expect(await service.detail(organizer, id)).toMatchObject({
       selectedQuoteId: firstQuote.id,
+      serviceStatus: 'PROVIDER_SELECTED',
       providerPhone,
     });
     expect(await service.detail(member, id)).toMatchObject({
       selectedQuoteId: firstQuote.id,
-      providerPhone: null,
+      serviceStatus: 'PROVIDER_SELECTED',
+      providerPhone,
     });
     expect(await service.listProvider(firstProvider)).toEqual([
-      expect.objectContaining({ organizerPhone }),
+      expect.objectContaining({
+        organizerPhone,
+        serviceAddress: 'Flat 201, Palm Residency, Indiranagar',
+        members: expect.arrayContaining([
+          expect.objectContaining({
+            serviceAddress: 'House 12, Green Park',
+          }),
+        ]),
+      }),
     ]);
     expect(await service.listProvider(secondProvider)).toEqual([
-      expect.objectContaining({ organizerPhone: null }),
+      expect.objectContaining({ organizerPhone: null, serviceAddress: null }),
     ]);
+    await service.updateStatus(firstProvider, id, 'SCHEDULED');
+    await service.updateStatus(firstProvider, id, 'IN_PROGRESS');
+    await service.updateStatus(firstProvider, id, 'COMPLETED');
+    expect(await service.detail(member, id)).toMatchObject({
+      serviceStatus: 'COMPLETED',
+    });
   });
 });

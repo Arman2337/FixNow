@@ -22,11 +22,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 String providerStatusLabel(String status) => switch (status) {
+  'REQUESTED' => 'Requested',
   'ASSIGNED' => 'Assigned',
   'EN_ROUTE' => 'En route',
   'ARRIVED' => 'Arrived',
   'IN_PROGRESS' => 'In progress',
   'COMPLETED' => 'Completed',
+  'CANCELLED' => 'Cancelled',
   _ => 'Status unavailable',
 };
 
@@ -488,10 +490,12 @@ class _ProviderActiveJobCockpitScreenState
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      providerServiceName(
-                        widget.controller.categories,
-                        job.serviceCategoryId,
-                      ),
+                      (job.serviceCategoryName?.trim().isNotEmpty == true)
+                          ? job.serviceCategoryName!
+                          : providerServiceName(
+                              widget.controller.categories,
+                              job.serviceCategoryId,
+                            ),
                       style: const TextStyle(
                         color: AppColors.textPrimary,
                         fontSize: 20,

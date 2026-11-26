@@ -20,10 +20,12 @@ import {
   JoinGroupServiceDto,
   QuoteGroupServiceDto,
   SelectGroupQuoteDto,
+  UpdateGroupServiceStatusDto,
 } from './group-services.dto';
 import { GroupServicesService } from './group-services.service';
 
 const groupId = new ParseUUIDPipe({ version: '4' });
+const memberIdPipe = new ParseUUIDPipe({ version: '4' });
 
 // URL fragments stay in the browser, keeping invitation credentials out of request logs.
 const inviteScript = `
@@ -92,7 +94,11 @@ export class GroupServicesController {
   @Post('join')
   @RequirePermission(PERMISSIONS.groupServiceCustomer)
   join(@Req() req: AuthorizedRequest, @Body() dto: JoinGroupServiceDto) {
-    return this.groups.join(req.authorizationPrincipal!.userId, dto.token);
+    return this.groups.join(
+      req.authorizationPrincipal!.userId,
+      dto.token,
+      dto.serviceAddress,
+    );
   }
 
   @Get(':id')
@@ -100,6 +106,34 @@ export class GroupServicesController {
   @RequirePermission(PERMISSIONS.groupServiceCustomer)
   detail(@Req() req: AuthorizedRequest, @Param('id', groupId) id: string) {
     return this.groups.detail(req.authorizationPrincipal!.userId, id);
+  }
+
+  @Post(':id/members/:memberId/approve')
+  @RequirePermission(PERMISSIONS.groupServiceCustomer)
+  approveMember(
+    @Req() req: AuthorizedRequest,
+    @Param('id', groupId) id: string,
+    @Param('memberId', memberIdPipe) memberId: string,
+  ) {
+    return this.groups.approveMember(
+      req.authorizationPrincipal!.userId,
+      id,
+      memberId,
+    );
+  }
+
+  @Post(':id/members/:memberId/reject')
+  @RequirePermission(PERMISSIONS.groupServiceCustomer)
+  rejectMember(
+    @Req() req: AuthorizedRequest,
+    @Param('id', groupId) id: string,
+    @Param('memberId', memberIdPipe) memberId: string,
+  ) {
+    return this.groups.rejectMember(
+      req.authorizationPrincipal!.userId,
+      id,
+      memberId,
+    );
   }
 
   @Post(':id/request')
@@ -129,6 +163,20 @@ export class GroupServicesController {
       req.authorizationPrincipal!.userId,
       id,
       dto.quoteId,
+    );
+  }
+
+  @Post(':id/status')
+  @RequirePermission(PERMISSIONS.groupServiceProvider)
+  updateStatus(
+    @Req() req: AuthorizedRequest,
+    @Param('id', groupId) id: string,
+    @Body() dto: UpdateGroupServiceStatusDto,
+  ) {
+    return this.groups.updateStatus(
+      req.authorizationPrincipal!.userId,
+      id,
+      dto.status,
     );
   }
 }

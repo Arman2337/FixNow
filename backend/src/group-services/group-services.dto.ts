@@ -1,6 +1,8 @@
 import { Transform } from 'class-transformer';
 import {
+  IsIn,
   IsInt,
+  IsOptional,
   IsUUID,
   Matches,
   Max,
@@ -25,6 +27,18 @@ export class CreateGroupServiceDto {
   @MaxLength(120)
   area!: string;
 
+  @IsOptional()
+  @Transform(trim)
+  @MinLength(5)
+  @MaxLength(300)
+  serviceAddress?: string;
+
+  @IsOptional()
+  @Transform(trim)
+  @MinLength(3)
+  @MaxLength(120)
+  preferredSchedule?: string;
+
   @Transform(trim)
   @MinLength(3)
   @MaxLength(1000)
@@ -34,6 +48,12 @@ export class CreateGroupServiceDto {
 export class JoinGroupServiceDto {
   @Matches(/^[a-f0-9]{48}$/)
   token!: string;
+
+  @IsOptional()
+  @Transform(trim)
+  @MinLength(5)
+  @MaxLength(300)
+  serviceAddress?: string;
 }
 
 export class QuoteGroupServiceDto {
@@ -56,4 +76,9 @@ export class QuoteGroupServiceDto {
 export class SelectGroupQuoteDto {
   @IsUUID('4')
   quoteId!: string;
+}
+
+export class UpdateGroupServiceStatusDto {
+  @IsIn(['SCHEDULED', 'IN_PROGRESS', 'COMPLETED'])
+  status!: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED';
 }

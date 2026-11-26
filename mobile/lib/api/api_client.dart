@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
+// TEMP-DIAG: temporary instrumentation, reverted before commit.
+import 'dart:developer' as developer;
 import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
@@ -268,6 +270,8 @@ class ApiClient implements ApiTransport, BinaryDownloader {
   }
 
   Future<ApiResponse> _sendOnce(ApiRequest request) async {
+    // TEMP-DIAG: temporary instrumentation, reverted before commit.
+    developer.log('-> ${request.method.name} ${request.path}', name: 'api_client');
     try {
       final uri = _resolveUri(request.path);
       final headers = <String, String>{
@@ -300,12 +304,16 @@ class ApiClient implements ApiTransport, BinaryDownloader {
         throw _safeHttpFailure(response.statusCode, body);
       }
       return ApiResponse(statusCode: response.statusCode, body: body);
-    } on TimeoutException {
+      // TEMP-DIAG: temporary instrumentation, reverted before commit.
+    } on TimeoutException catch (error) {
+      developer.log('TimeoutException: $error', name: 'api_client');
       throw const ApiException(
         ApiFailureKind.timeout,
         'The request timed out.',
       );
-    } on http.ClientException {
+    } on http.ClientException catch (error) {
+      // TEMP-DIAG: temporary instrumentation, reverted before commit.
+      developer.log('ClientException: $error', name: 'api_client');
       throw const ApiException(
         ApiFailureKind.offline,
         'No network connection.',

@@ -324,9 +324,14 @@ void main() {
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
-    expect(find.text('Provider is on the way'), findsOneWidget);
-    expect(find.text('Live location unavailable'), findsOneWidget);
-    expect(find.text('Unavailable'), findsOneWidget);
+    // One coherent state. With neither endpoint known there is no map and no
+    // journey to describe, and the screen must not pair an "on the way"
+    // claim with "Live location unavailable" and an "Unavailable" ETA.
+    expect(find.text('Map unavailable'), findsOneWidget);
+    expect(find.text('Live location unavailable'), findsNothing);
+    expect(find.text('Unavailable'), findsNothing);
+    expect(find.text('Traffic Flow'), findsNothing);
+    expect(find.text('Provider is on the way'), findsNothing);
     controller.markDisconnected();
     await tester.pump();
     expect(find.text('Updates paused'), findsOneWidget);
@@ -362,7 +367,11 @@ void main() {
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
-    expect(find.text('Live location available'), findsOneWidget);
+    // The journey headline plus the one status chip on the map - the second
+    // status pill this screen used to draw on top of it is gone.
+    expect(find.text('Provider is on the way'), findsOneWidget);
+    expect(find.textContaining('Technician en route'), findsOneWidget);
+    expect(find.text('Live location available'), findsNothing);
     controller.dispose();
   });
 

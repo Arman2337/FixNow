@@ -245,14 +245,21 @@ class NotificationCenterScreen extends StatelessWidget {
 
   Widget _buildNotificationCard(BuildContext context, InAppNotification item) {
     final isUnread = !item.isRead;
+    // A cancellation is not a success, so it must not wear the success-green
+    // card treatment that every other booking notification gets.
+    final tone = item.isCancellation
+        ? AppColors.danger
+        : AppColors.primary;
     final cardBgColor = isUnread
-        ? AppColors.primarySoft
+        ? (item.isCancellation
+              ? AppColors.dangerSoft
+              : AppColors.primarySoft)
         : AppColors.surfaceContainerLowest;
     final cardBorderColor = isUnread
-        ? AppColors.primary.withValues(alpha: 0.28)
+        ? tone.withValues(alpha: 0.28)
         : AppColors.outline.withValues(alpha: 0.12);
 
-    Color stripeColor = AppColors.primary;
+    Color stripeColor = tone;
     if (item.category == NotificationCategory.system) {
       stripeColor = AppColors.secondary;
     } else if (item.category == NotificationCategory.offers) {
@@ -345,113 +352,106 @@ class NotificationCenterScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
+                        // Wrap, not Row: the chip, booking id and timestamp
+                        // used to compete for one line and the chip was the
+                        // one that lost, rendering as "Active Bo…".
+                        Wrap(
+                          spacing: AppSpacing.sm,
+                          runSpacing: 6,
+                          crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
-                            Expanded(
-                              child: Row(
-                                children: [
-                                  Flexible(
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 3,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: isUnread
-                                            ? AppColors.primarySoft
-                                            : AppColors.surfaceContainer,
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          if (isUnread) ...[
-                                            Container(
-                                              width: 5,
-                                              height: 5,
-                                              decoration: const BoxDecoration(
-                                                color: AppColors.primary,
-                                                shape: BoxShape.circle,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 4),
-                                          ],
-                                          Flexible(
-                                            child: Text(
-                                              switch (item.category) {
-                                                NotificationCategory.bookings =>
-                                                  'Active Booking',
-                                                NotificationCategory.payments =>
-                                                  'Tax Invoice',
-                                                NotificationCategory.offers =>
-                                                  'Rewards & Perk',
-                                                NotificationCategory.system =>
-                                                  'Trust & Safety',
-                                                _ => 'Notice',
-                                              },
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: TextStyle(
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.w800,
-                                                color: isUnread
-                                                    ? AppColors.primary
-                                                    : AppColors.textSecondary,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  if (item.bookingId != null) ...[
-                                    const SizedBox(width: 6),
-                                    Flexible(
-                                      child: Text(
-                                        '#${item.bookingId!.length > 8 ? item.bookingId!.substring(0, 8).toUpperCase() : item.bookingId!.toUpperCase()}',
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w600,
-                                          color: AppColors.textSecondary,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ],
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
                               ),
-                            ),
-                            const SizedBox(width: AppSpacing.sm),
-                            Flexible(
+                              // Bounded so the label can never outgrow the line
+                              // it sits on. "Booking cancelled" is a third wider
+                              // than "Active Booking", and at the system's 2x
+                              // text scale on a 320px phone it pushed this row
+                              // 77px past its box.
+                              constraints: const BoxConstraints(maxWidth: 220),
+                              decoration: BoxDecoration(
+                                color: isUnread
+                                    ? cardBgColor
+                                    : AppColors.surfaceContainer,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Flexible(
-                                    child: Text(
-                                      item.timeAgo,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        color: AppColors.textSecondary,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ),
                                   if (isUnread) ...[
-                                    const SizedBox(width: 6),
                                     Container(
-                                      width: 7,
-                                      height: 7,
-                                      decoration: const BoxDecoration(
-                                        color: AppColors.primary,
+                                      width: 5,
+                                      height: 5,
+                                      decoration: BoxDecoration(
+                                        color: tone,
                                         shape: BoxShape.circle,
                                       ),
                                     ),
+                                    const SizedBox(width: 4),
                                   ],
+                                  Flexible(
+                                    child: Text(
+                                      switch (item.category) {
+                                        NotificationCategory.bookings =>
+                                          item.isCancellation
+                                              ? 'Booking cancelled'
+                                              : 'Active Booking',
+                                        NotificationCategory.payments =>
+                                          'Tax Invoice',
+                                        NotificationCategory.offers =>
+                                          'Rewards & Perk',
+                                        NotificationCategory.system =>
+                                          'Trust & Safety',
+                                        _ => 'Notice',
+                                      },
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w800,
+                                        color: isUnread
+                                            ? tone
+                                            : AppColors.textSecondary,
+                                      ),
+                                    ),
+                                  ),
                                 ],
                               ),
+                            ),
+                            if (item.bookingId != null)
+                              Text(
+                                '#${item.bookingId!.length > 8 ? item.bookingId!.substring(0, 8).toUpperCase() : item.bookingId!.toUpperCase()}',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  item.timeAgo,
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: AppColors.textSecondary,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                if (isUnread) ...[
+                                  const SizedBox(width: 6),
+                                  Container(
+                                    width: 7,
+                                    height: 7,
+                                    decoration: const BoxDecoration(
+                                      color: AppColors.primary,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
                           ],
                         ),
@@ -464,13 +464,19 @@ class NotificationCenterScreen extends StatelessWidget {
                             CircleAvatar(
                               radius: 18,
                               backgroundColor: isUnread
-                                  ? AppColors.primarySoft
+                                  ? (item.isCancellation
+                                        ? AppColors.dangerSoft
+                                        : AppColors.primarySoft)
                                   : AppColors.surfaceContainer,
                               child: Icon(
-                                item.category.icon,
+                                item.isCancellation
+                                    ? Icons.cancel_outlined
+                                    : item.category.icon,
                                 size: 18,
                                 color: isUnread
-                                    ? AppColors.primary
+                                    ? (item.isCancellation
+                                          ? AppColors.danger
+                                          : AppColors.primary)
                                     : AppColors.textSecondary,
                               ),
                             ),

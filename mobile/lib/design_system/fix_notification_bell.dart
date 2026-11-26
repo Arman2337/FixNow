@@ -108,7 +108,9 @@ class _FixNotificationBellIconState extends State<FixNotificationBellIcon> {
               child: FixScaleIn(
                 key: ValueKey(unread),
                 from: 0.4,
-                child: _badge(unread),
+                // The label above already announces the count; without this
+                // a screen reader said the number twice ("...1 unread alerts, 1").
+                child: ExcludeSemantics(child: _badge(unread)),
               ),
             ),
         ],
@@ -118,7 +120,7 @@ class _FixNotificationBellIconState extends State<FixNotificationBellIcon> {
     return Semantics(
       button: true,
       label: hasUnread
-          ? 'Activity and notifications, $unread unread alerts'
+          ? 'Activity and notifications, $unread unread ${unread == 1 ? 'alert' : 'alerts'}'
           : 'Activity and notifications',
       child: Material(
         color: Colors.transparent,

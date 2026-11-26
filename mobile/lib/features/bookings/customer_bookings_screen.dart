@@ -318,6 +318,7 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
                   ? [
                       _EmptyBookings(
                         filter: _filter,
+                        totalCount: widget.controller.bookings.length,
                         onReset: () {
                           setState(() {
                             _filter = _BookingFilter.active;
@@ -480,6 +481,13 @@ class _BookingCard extends StatelessWidget {
   final CustomerBooking booking;
   final VoidCallback? onTap;
   final VoidCallback? onBookAgain;
+
+  /// A provider exists on this booking.
+  ///
+  /// The backend only populates `providerName` when `provider_id` is set
+  /// (bookings.service.ts), so this is the reliable "somebody took the job"
+  /// test rather than trusting an active-but-unassigned status.
+  bool get _providerAssigned => booking.providerName != null;
 
   @override
   Widget build(BuildContext context) {
@@ -650,199 +658,293 @@ class _BookingCard extends StatelessWidget {
                 ),
 
                 // Technician Assigned Pod
-                Container(
-                  padding: const EdgeInsets.all(AppSpacing.sm),
-                  margin: const EdgeInsets.symmetric(vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceContainerLow,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryContainer,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.05),
-                              blurRadius: 4,
-                            ),
-                          ],
+                //
+                // Only rendered once a provider has actually taken the job.
+                // Before assignment this card used to claim "Provider
+                // Assigned" with a START PIN for a REQUESTED booking that had
+                // no provider_id at all - a security surface that had no
+                // provider behind it.
+                if (_providerAssigned) ...[
+                  Container(
+                    padding: const EdgeInsets.all(AppSpacing.sm),
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceContainerLow,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryContainer,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.05),
+                                blurRadius: 4,
+                              ),
+                            ],
+                          ),
+                          alignment: Alignment.center,
+                          child: const Icon(
+                            Icons.person_rounded,
+                            color: AppColors.onPrimaryContainer,
+                            size: 24,
+                          ),
                         ),
-                        alignment: Alignment.center,
-                        child: const Icon(
-                          Icons.person_rounded,
-                          color: AppColors.onPrimaryContainer,
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                const Flexible(
-                                  child: Text(
-                                    'Provider Assigned',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.textPrimary,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      booking.providerName ?? 'Provider Assigned',
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.textPrimary,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  const Icon(
+                                    Icons.verified_rounded,
+                                    size: 16,
+                                    color: AppColors.primary,
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                booking.providerRating == null
+                                    ? 'Professional'
+                                    : 'Professional · ★ ${booking.providerRating!.toStringAsFixed(1)}',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: AppColors.textSecondary,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Start PIN Pod
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              const Text(
+                                'START PIN',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.surfaceContainerHigh,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Text(
+                                  '••••',
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.primary,
+                                    letterSpacing: 1.5,
                                   ),
                                 ),
-                                const SizedBox(width: 4),
-                                const Icon(
-                                  Icons.verified_rounded,
-                                  size: 16,
-                                  color: AppColors.primary,
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 2),
-                            const Text(
-                              'Professional',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: AppColors.textSecondary,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                      // Start PIN Pod
-                      Padding(
-                        padding: const EdgeInsets.only(left: 8),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            const Text(
-                              'START PIN',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.textSecondary,
-                              ),
+                      ],
+                    ),
+                  ),
+
+                  // Security Note
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: 4),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.security_rounded,
+                          size: 15,
+                          color: AppColors.outline,
+                        ),
+                        SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'Share PIN only after the professional inspects the setup',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
                             ),
-                            const SizedBox(height: 2),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 4,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Action Grid
+                  Padding(
+                    padding: const EdgeInsets.only(top: AppSpacing.sm),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: SizedBox(
+                            height: 48,
+                            child: FilledButton.icon(
+                              onPressed: onTap,
+                              style: FilledButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                foregroundColor: AppColors.onPrimary,
+                                elevation: 1,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
                               ),
-                              decoration: BoxDecoration(
-                                color: AppColors.surfaceContainerHigh,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Text(
-                                '••••',
+                              icon: const Icon(Icons.near_me_rounded, size: 20),
+                              label: const Text(
+                                'Track Live GPS',
                                 style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.primary,
-                                  letterSpacing: 1.5,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.1,
                                 ),
                               ),
                             ),
-                          ],
+                          ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: AppSpacing.sm),
+                        Expanded(
+                          child: SizedBox(
+                            height: 48,
+                            child: FilledButton.tonalIcon(
+                              onPressed: onTap,
+                              style: FilledButton.styleFrom(
+                                backgroundColor: AppColors.secondaryContainer,
+                                foregroundColor: AppColors.onSecondaryContainer,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              icon: const Icon(Icons.call_rounded, size: 20),
+                              label: const Text(
+                                'Call Specialist',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.1,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-
-                // Security Note
-                Padding(
-                  padding: EdgeInsets.symmetric(vertical: 4),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.security_rounded,
-                        size: 15,
-                        color: AppColors.outline,
-                      ),
-                      SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          'Share PIN only after the professional inspects the setup',
+                ] else ...[
+                  // Matching pod. No PIN, no call, no GPS - there is nobody to
+                  // call and no location to follow yet.
+                  Container(
+                    padding: const EdgeInsets.all(AppSpacing.sm),
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceContainerLow,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 32,
+                          height: 32,
+                          decoration: const BoxDecoration(
+                            color: AppColors.primaryContainer,
+                            shape: BoxShape.circle,
+                          ),
+                          alignment: Alignment.center,
+                          child: const Icon(
+                            Icons.person_search_rounded,
+                            color: AppColors.onPrimaryContainer,
+                            size: 18,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Finding your professional',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              SizedBox(height: 2),
+                              Text(
+                                'Your request is live with nearby providers. '
+                                'The PIN, call and tracking appear once one accepts.',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: AppColors.textSecondary,
+                                  height: 1.3,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: AppSpacing.sm),
+                    child: SizedBox(
+                      height: 48,
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        onPressed: onTap,
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: AppColors.onPrimary,
+                          elevation: 1,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        icon: const Icon(Icons.visibility_outlined, size: 20),
+                        label: const Text(
+                          'View request status',
                           style: TextStyle(
-                            fontSize: 12,
-                            color: AppColors.textSecondary,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.1,
                           ),
                         ),
                       ),
-                    ],
+                    ),
                   ),
-                ),
-
-                // Action Grid
-                Padding(
-                  padding: const EdgeInsets.only(top: AppSpacing.sm),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: SizedBox(
-                          height: 48,
-                          child: FilledButton.icon(
-                            onPressed: onTap,
-                            style: FilledButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              foregroundColor: AppColors.onPrimary,
-                              elevation: 1,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            icon: const Icon(Icons.near_me_rounded, size: 20),
-                            label: const Text(
-                              'Track Live GPS',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 0.1,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.sm),
-                      Expanded(
-                        child: SizedBox(
-                          height: 48,
-                          child: FilledButton.tonalIcon(
-                            onPressed: onTap,
-                            style: FilledButton.styleFrom(
-                              backgroundColor: AppColors.secondaryContainer,
-                              foregroundColor: AppColors.onSecondaryContainer,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            icon: const Icon(Icons.call_rounded, size: 20),
-                            label: const Text(
-                              'Call Specialist',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 0.1,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                ],
               ],
             ),
           ),
@@ -1321,13 +1423,32 @@ class _BookingCard extends StatelessWidget {
 }
 
 class _EmptyBookings extends StatelessWidget {
-  const _EmptyBookings({this.filter, this.onReset, this.onStartService});
+  const _EmptyBookings({
+    this.filter,
+    this.totalCount = 0,
+    this.onReset,
+    this.onStartService,
+  });
+
   final _BookingFilter? filter;
+
+  /// How many bookings the account has in total, across every filter.
+  ///
+  /// Zero means "nothing has ever been booked"; more than zero means the
+  /// active filter simply has no rows. Those are different situations and used
+  /// to share one message.
+  final int totalCount;
   final VoidCallback? onReset;
   final VoidCallback? onStartService;
 
   @override
-  Widget build(BuildContext context) => Container(
+  Widget build(BuildContext context) {
+    final neverBooked = totalCount == 0;
+    final label = filter == null || filter == _BookingFilter.all
+        ? null
+        : _filterLabel(filter!);
+
+    return Container(
     padding: const EdgeInsets.symmetric(
       vertical: 48,
       horizontal: AppSpacing.lg,
@@ -1339,22 +1460,22 @@ class _EmptyBookings extends StatelessWidget {
         Container(
           width: 64,
           height: 64,
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: AppColors.surfaceContainerHigh,
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
-          child: const Icon(
-            Icons.search_off_rounded,
+          child: Icon(
+            neverBooked ? Icons.receipt_long_rounded : Icons.filter_alt_off_rounded,
             size: 32,
             color: AppColors.outline,
           ),
         ),
         const SizedBox(height: AppSpacing.sm),
         Text(
-          filter == null || filter == _BookingFilter.all
+          neverBooked
               ? 'No bookings yet'
-              : 'No ${_filterLabel(filter!)} bookings',
+              : 'No ${label ?? 'matching'} bookings',
           style: const TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w600,
@@ -1363,13 +1484,18 @@ class _EmptyBookings extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          filter == null || filter == _BookingFilter.all
-              ? "We couldn't find any service history matching your query or selected filter."
-              : 'Choose another filter to review a different part of your service history.',
+          // Only claim a query or filter is hiding results when one is.
+          // With "All" selected there is nothing filtering the list, so
+          // blaming a query the user never typed was simply untrue.
+          neverBooked
+              ? 'Your bookings will appear here as soon as you schedule a service.'
+              : label == null
+              ? 'Nothing to show yet. Your service history will appear here.'
+              : 'Nothing under "$label" right now. Pick another filter to see the rest of your bookings.',
           textAlign: TextAlign.center,
           style: const TextStyle(color: AppColors.outline, fontSize: 12),
         ),
-        if (onReset != null) ...[
+        if (onReset != null && !neverBooked) ...[
           const SizedBox(height: AppSpacing.md),
           ElevatedButton(
             onPressed: onReset,
@@ -1413,6 +1539,7 @@ class _EmptyBookings extends StatelessWidget {
       ],
     ),
   );
+  }
 
   static String _filterLabel(_BookingFilter value) => switch (value) {
     _BookingFilter.all => '',

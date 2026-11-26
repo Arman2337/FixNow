@@ -76,7 +76,11 @@ class _ProviderJobsScreenState extends State<ProviderJobsScreen> {
       }
 
       final filteredAssigned = assignedJobs.where((j) => isJobOnDate(j, selectedDate)).toList();
-      final filteredHistory = historyJobs.where((j) => isJobOnDate(j, selectedDate)).toList();
+      // The date strip is a dispatch planner for *today's* work. Applying it
+      // to the archive too meant the "Completed History" count shrank as you
+      // swiped days, so the same screen reported 10, 5 and 4 for one set of
+      // jobs. History is a record of everything; it does not filter.
+      final filteredHistory = historyJobs;
       final currentJobs = _showHistory ? filteredHistory : filteredAssigned;
 
       return RefreshIndicator(
@@ -85,7 +89,16 @@ class _ProviderJobsScreenState extends State<ProviderJobsScreen> {
         onRefresh: widget.controller.refresh,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(AppSpacing.pagePadding),
+          // The shell floats the live-booking island directly under this
+          // scroll area. Without a reserve, the card's action row - the
+          // primary "Start journey" CTA - lands flush against it and reads as
+          // half-hidden (QA c67). The extra 96px keeps the last row clear.
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.pagePadding,
+            AppSpacing.pagePadding,
+            AppSpacing.pagePadding,
+            AppSpacing.pagePadding + 96,
+          ),
           child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -251,35 +264,44 @@ job: filteredAssigned.first,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // The name is the primary label and gets the whole
+                      // line; the verified badge moved down beside the
+                      // skills line. Sharing the row meant the name lost to
+                      // the badge and ellipsized first ("Acceptanc...") even
+                      // though the subtitle had room.
+                      Text(
+                        widget.controller.profile?.displayName ?? 'Provider',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 16,
+                          height: 1.2,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
                       Row(
                         children: [
-                          Flexible(
-                            child: Text(
-                              widget.controller.profile?.displayName ??
-                                  'Provider',
-                              style: const TextStyle(
-                                color: AppColors.textPrimary,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
                           const Icon(
                             Icons.verified_rounded,
                             color: AppColors.primary,
-                            size: 16,
+                            size: 14,
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              '${widget.controller.skills.isNotEmpty ? widget.controller.skills.take(2).map((s) => s.categoryName).join(' & ') : 'Service Professional'} • FixNow Pro',
+                              maxLines: 1,
+                              softWrap: false,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 11,
+                              ),
+                            ),
                           ),
                         ],
-                      ),
-                      Text(
-                        '${widget.controller.skills.isNotEmpty ? widget.controller.skills.take(2).map((s) => s.categoryName).join(' & ') : 'Service Professional'} • FixNow Pro',
-                        style: const TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 11,
-                        ),
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
@@ -357,11 +379,22 @@ job: filteredAssigned.first,
     );
   }
 
+  /// What emergency dispatch really is, and the switch that controls it.
+  ///
+  /// This used to be a permanently-lit "Emergency On-Call Active · 1.5x Pay
+  /// Rate" strip. Neither claim survived contact with the backend:
+  /// `EMERGENCY_POLICY_V1` defines fan-out, wave timing and cooldowns but no
+  /// pay multiplier, and there is no provider-side on-call roster at all. The
+  /// banner therefore advertised a state nobody could see and a raise nobody
+  /// was paying. Dispatch eligibility is driven by the provider's own online
+  /// status, so that is what is shown and controlled here.
   Widget _buildEmergencyOnCallBanner() {
+    final online = widget.controller.availability?.status == 'online';
+
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.md,
-        vertical: 10,
+        vertical: AppSpacing.md,
       ),
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerHigh,
@@ -373,15 +406,15 @@ job: filteredAssigned.first,
         children: [
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.bolt_rounded,
-                color: AppColors.accentGold,
+                color: online ? AppColors.accentGold : AppColors.outline,
                 size: 20,
               ),
               const SizedBox(width: 8),
-              const Flexible(
+              const Expanded(
                 child: Text(
-                  'Emergency On-Call Active',
+                  'Emergency dispatch',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
@@ -389,25 +422,57 @@ job: filteredAssigned.first,
                   ),
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: AppColors.accentGold.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Text(
-                '1.5x Pay Rate',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.accentGold,
+              // Not a Material `Switch`: this screen is also rendered without
+              // a Scaffold in the widget tests, and `Switch` hard-requires a
+              // Material ancestor. The track is drawn directly instead.
+              Semantics(
+                toggled: online,
+                label: 'Emergency dispatch',
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => widget.controller.updateStatus(
+                    online ? 'offline' : 'online',
+                  ),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    width: 44,
+                    height: 26,
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(999),
+                      color: online
+                          ? AppColors.accentGold
+                          : AppColors.surfaceContainerHighest,
+                    ),
+                    child: Align(
+                      alignment: online
+                          ? Alignment.centerRight
+                          : Alignment.centerLeft,
+                      child: Container(
+                        width: 20,
+                        height: 20,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            online
+                ? 'You are notified about nearby emergencies while you are '
+                      'online and inside your working radius.'
+                : 'You will not receive emergency requests while offline. '
+                      'Switch your status on to be eligible.',
+            style: const TextStyle(
+              fontSize: 11,
+              color: AppColors.textSecondary,
+              height: 1.4,
             ),
           ),
         ],
@@ -606,7 +671,7 @@ job: filteredAssigned.first,
                         : null,
                   ),
                   child: Text(
-                    'Completed History ($historyCount)',
+                    'History ($historyCount)',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 12,
@@ -738,11 +803,18 @@ job: filteredAssigned.first,
               ),
               const SizedBox(height: 2),
               Text(
-                '$completedCount Resolved',
+                '$completedCount',
                 style: const TextStyle(
-                  fontSize: 18,
+                  fontSize: 20,
                   fontWeight: FontWeight.w900,
                   color: AppColors.primary,
+                ),
+              ),
+              Text(
+                'Resolved',
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: AppColors.textSecondary,
                 ),
               ),
             ],
@@ -751,7 +823,7 @@ job: filteredAssigned.first,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '${history.length}',
+                '$cancelledCount',
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w900,
@@ -759,7 +831,7 @@ job: filteredAssigned.first,
                 ),
               ),
               Text(
-                '$cancelledCount Cancelled',
+                'Cancelled',
                 style: const TextStyle(
                   fontSize: 11,
                   color: AppColors.textSecondary,
@@ -1654,8 +1726,16 @@ String _category(String value) => value
 /// The booking's own `providerRating` is the customer-facing aggregate the API
 /// stamps on the list; when it is absent there is nothing to show, and an
 /// invented "★ 5.0" is worse than an honest "Not yet rated".
+///
+/// Two corrections over the previous version: the category falls back to the
+/// human name instead of running a raw UUID through title-casing (a provider
+/// was shown `D434c984-64f6-4342-ade7-6216a5a66f59` as a service name), and a
+/// cancelled job carries no rating at all - it was never completed, so there
+/// is nothing to have rated it.
 String _historyMetaLine(CustomerBooking job, ProviderController controller) {
-  final category = _category(job.serviceCategoryId);
+  final category = _categoryLabel(job) ?? 'Service request';
+  if (job.status == 'CANCELLED') return '$category • Cancelled';
+
   final stats = controller.profile?.stats;
   final rating = job.providerRating ?? stats?.rating;
   if (rating == null || rating <= 0 || (stats != null && !stats.hasRating)) {
@@ -1663,6 +1743,24 @@ String _historyMetaLine(CustomerBooking job, ProviderController controller) {
   }
   return '$category • Rating ★ ${rating.toStringAsFixed(1)}';
 }
+
+/// A human service name, or `null` when the backend only gave us an id.
+///
+/// UUID-shaped ids are never shown: they are meaningless to the person
+/// reading the card and expose an internal identifier.
+String? _categoryLabel(CustomerBooking job) {
+  final name = job.serviceCategoryName?.trim();
+  if (name != null && name.isNotEmpty && !_looksLikeId(name)) {
+    return _category(name);
+  }
+  final id = job.serviceCategoryId.trim();
+  if (id.isEmpty || _looksLikeId(id)) return null;
+  return _category(id);
+}
+
+bool _looksLikeId(String value) =>
+    RegExp(r'^[0-9a-fA-F]{8}-[0-9a-fA-F-]{10,}$').hasMatch(value) ||
+    RegExp(r'^[0-9a-fA-F]{24,}$').hasMatch(value);
 
 String _shortId(String value) {
   final compact = value.replaceAll('-', '');

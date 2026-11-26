@@ -6,11 +6,13 @@ import 'package:flutter/material.dart';
 enum PricingModelType { fixed, unit, quote }
 
 /// A transparent, itemized pricing breakdown card conforming to DESIGN.md tokens.
-/// Automatically computes statutory GST (18%) and total customer payable amount.
+/// Computes statutory GST (18%) and the total customer payable amount from
+/// whichever basis the caller declares via [gstInclusive].
 class FixPriceBreakdownCard extends StatefulWidget {
   const FixPriceBreakdownCard({
     required this.amountMinor,
     this.currency = 'INR',
+    this.gstInclusive = false,
     this.modelType = PricingModelType.fixed,
     this.modelLabel,
     this.isExpandable = true,
@@ -18,9 +20,14 @@ class FixPriceBreakdownCard extends StatefulWidget {
     super.key,
   });
 
-  /// Base amount in minor units (paise for INR). 0 means price on request.
+  /// Amount in minor units (paise for INR). 0 means price on request.
+  /// Whether it already contains GST is declared by [gstInclusive].
   final int amountMinor;
   final String currency;
+
+  /// True when [amountMinor] is the GST-inclusive payable total, so GST is
+  /// backed out of it instead of being added on top of it.
+  final bool gstInclusive;
   final PricingModelType modelType;
   final String? modelLabel;
   final bool isExpandable;
@@ -39,9 +46,20 @@ class _FixPriceBreakdownCardState extends State<FixPriceBreakdownCard> {
     _expanded = widget.initiallyExpanded;
   }
 
-  int get _subtotalMinor => widget.amountMinor;
-  int get _gstMinor => (_subtotalMinor * 0.18).round();
-  int get _totalMinor => _subtotalMinor + _gstMinor;
+  /// GST is 18% of the pre-tax amount, so for an inclusive input it is
+  /// `total * 18/118`. Deriving the subtotal from the inclusive total keeps
+  /// `subtotal + gst` exactly equal to what the customer will be charged.
+  int get _gstMinor => widget.gstInclusive
+      ? ((widget.amountMinor * 18) / 118).round()
+      : (widget.amountMinor * 0.18).round();
+
+  int get _subtotalMinor => widget.gstInclusive
+      ? widget.amountMinor - _gstMinor
+      : widget.amountMinor;
+
+  int get _totalMinor => widget.gstInclusive
+      ? widget.amountMinor
+      : _subtotalMinor + _gstMinor;
 
   String _formatPaise(int minor) {
     if (widget.currency == 'INR') {

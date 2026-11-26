@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:fixnow_mobile/api/api_client.dart';
+import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
 import 'package:fixnow_mobile/design_system/fix_state_views.dart';
@@ -169,7 +170,10 @@ class _GroupServicesScreenState extends State<GroupServicesScreen> {
       form,
       [
         DropdownButtonFormField<String>(
-          decoration: const InputDecoration(labelText: 'Service'),
+          decoration: const InputDecoration(
+            labelText: 'Service',
+            floatingLabelBehavior: FloatingLabelBehavior.always,
+          ),
           isExpanded: true,
           items: [
             for (final category in categories)
@@ -361,8 +365,14 @@ class _GroupServicesScreenState extends State<GroupServicesScreen> {
   }) => TextFormField(
     decoration: InputDecoration(
       labelText: label,
+      // A floating label sits in the field's placeholder slot until it is
+      // focused, so every field looked label-less and the longer ones were
+      // ellipsized ("What does each house..."). Pinned above the field the
+      // label is always visible and never truncated.
+      floatingLabelBehavior: FloatingLabelBehavior.always,
       helperText: hint,
-      helperMaxLines: 4,
+      // 4 lines cut the privacy reminder mid-word ("...addresses and pho...").
+      helperMaxLines: 8,
     ),
     maxLength: max,
     maxLines: max > 120 ? 3 : 1,
@@ -475,10 +485,39 @@ class _GroupServicesScreenState extends State<GroupServicesScreen> {
     if (groups.isEmpty)
       Padding(
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
-        child: Text(
-          widget.provider
-              ? 'No group requests match your service skills yet.'
-              : 'Your service groups will appear here.',
+        child: FixCard(
+          child: Column(
+            children: [
+              Icon(
+                widget.provider ? Icons.request_page_rounded : Icons.groups_2,
+                size: 40,
+                color: AppColors.textSecondary,
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                widget.provider
+                    ? 'No group requests yet'
+                    : 'No service groups yet',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                widget.provider
+                    ? 'Group quote requests from households in your trade '
+                          'will appear here.'
+                    : 'Invite neighbours into one shared request so a single '
+                          'provider can quote for the whole street.',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 12,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     for (final group in groups)
@@ -564,13 +603,22 @@ class _GroupServicesScreenState extends State<GroupServicesScreen> {
             onPressed: _busy
                 ? null
                 : () => _run(() async {
-                    final link = widget.baseUri.resolve(
-                      '$_path/invite#$invite',
-                    );
+                    // No raw API host, and no token printed as a bare URL.
+                    // The app already understands
+                    // `fixnow://group-invite/<token>`, and `groupInviteToken`
+                    // also accepts a pasted code, so this shares a deep link
+                    // first and a code second without exposing the
+                    // deployment's internal address.
+                    final link = Uri.parse('fixnow://group-invite/$invite');
                     final box = context.findRenderObject() as RenderBox?;
                     await SharePlus.instance.share(
                       ShareParams(
-                        text: 'Join my FixNow service group: $link',
+                        text:
+                            'Join my FixNow service group. Open this link on '
+                            'your phone: $link\n\n'
+                            'If it does not open, go to FixNow > Group '
+                            'services > Join with an invitation and paste: '
+                            '$invite',
                         sharePositionOrigin: box == null || !box.hasSize
                             ? null
                             : box.localToGlobal(Offset.zero) & box.size,

@@ -1051,17 +1051,37 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // The status owns its own line. It used to share one
+                          // with the #ID chip while a static SECURITY column
+                          // sat to the right, so the state word was cut in
+                          // half ("Active • REQUE..."). The chip moved down
+                          // beside the description, where there is room.
+                          Text(
+                            'Active • ${active.status.replaceAll('_', ' ')}',
+                            maxLines: 1,
+                            softWrap: false,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
                           Row(
                             children: [
-                              Flexible(
+                              Expanded(
                                 child: Text(
-                                  'Active • ${active.status.replaceAll('_', ' ')}',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                  ),
+                                  active.description.isNotEmpty
+                                      ? active.description
+                                      : 'Service Booking #${active.id.length > 8 ? active.id.substring(0, 8) : active.id}',
+                                  maxLines: 1,
+                                  softWrap: false,
                                   overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: Colors.white.withValues(alpha: 0.75),
+                                    fontSize: 11,
+                                  ),
                                 ),
                               ),
                               const SizedBox(width: 6),
@@ -1085,18 +1105,6 @@ class _ServiceDiscoveryScreenState extends State<ServiceDiscoveryScreen> {
                                 ),
                               ),
                             ],
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            active.description.isNotEmpty
-                                ? active.description
-                                : 'Service Booking #${active.id.length > 8 ? active.id.substring(0, 8) : active.id}',
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.75),
-                              fontSize: 11,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),

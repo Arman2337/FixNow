@@ -52,6 +52,40 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
     }
   }
 
+  /// Same confirmation the provider profile asks for.
+  ///
+  /// Signing out wipes the local session; doing it on a stray tap, on one role
+  /// but not the other, was an avoidable difference between the two halves of
+  /// the app.
+  void _confirmSignOut() {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Sign out'),
+        content: const Text(
+          'Are you sure you want to sign out of your FixNow account?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              widget.onSignOut?.call();
+            },
+            child: const Text('Sign out'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   void dispose() {
     widget.controller.removeListener(_syncName);
@@ -73,7 +107,10 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
           const FixPageHeader(
             eyebrow: 'Your account',
             title: 'Profile & Settings',
-            description: 'Only your display name is collected here.',
+            // This screen holds the saved addresses and payment methods too,
+            // so claiming only a display name was simply not true.
+            description:
+                'Manage your name, saved addresses and payment methods.',
           ),
           const SizedBox(height: AppSpacing.sm),
 
@@ -599,7 +636,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
               label: 'Sign out',
               icon: Icons.logout_rounded,
               variant: FixButtonVariant.secondary,
-              onPressed: widget.onSignOut,
+              onPressed: _confirmSignOut,
             ),
           ],
 
@@ -653,7 +690,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                     ),
                     const SizedBox(width: 5),
                     Text(
-                      'FixNow v2.4.1 (Build 492) • ISO 27001 Certified',
+                      'FixNow v2.4.1 (Build 492)',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
@@ -664,7 +701,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  'End-to-end encrypted home maintenance records',
+                  'Your data is encrypted in transit over HTTPS',
                   style: TextStyle(
                     fontSize: 11,
                     color: AppColors.textSecondary.withValues(alpha: 0.7),

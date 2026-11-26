@@ -544,6 +544,10 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
   void _handleAuthChange() {
     if (_auth.isAuthenticated) {
       unawaited(_requestNotificationPermission());
+      // FN-152. The notification controller outlives the session that created
+      // it, so re-binding here is what stops the last account's rows from
+      // being handed to the next one.
+      unawaited(_notifications.onSessionChanged());
       final userId = _auth.session?.userId;
       if (userId != null) {
         // One account subscription on the shared socket. Previously each feature
@@ -556,6 +560,8 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
       }
       _scheduleRouteRestore();
       _scheduleGroupInvite();
+    } else {
+      _notifications.clearSession();
     }
   }
 
@@ -972,7 +978,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
             return VerificationScreen(controller: _auth);
           }
           if (!_auth.isAuthenticated) {
-            return switch (_authEntryStep) {
+            final entry = switch (_authEntryStep) {
               _AuthEntryStep.welcome => WelcomeScreen(
                 onContinue: (role, isRegister) => setState(() {
                   _selectedRole = role;
@@ -988,6 +994,22 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
                     setState(() => _authEntryStep = _AuthEntryStep.welcome),
               ),
             };
+            // The welcome -> form hand-over is widget state, not a route, so
+            // the navigator has nothing beneath it: hardware Back on the Email
+            // Login screen bubbled up to the OS and closed the app (QA c13).
+            // Claim the gesture while the form is up and step back to role
+            // select instead.
+            if (_authEntryStep == _AuthEntryStep.form) {
+              return PopScope(
+                canPop: false,
+                onPopInvokedWithResult: (didPop, _) {
+                  if (didPop) return;
+                  setState(() => _authEntryStep = _AuthEntryStep.welcome);
+                },
+                child: entry,
+              );
+            }
+            return entry;
           }
           if (_auth.session?.role != AccountRole.customer) {
             if (_provider.state == ProviderLoadState.loading &&

@@ -103,6 +103,12 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
     final totalMinor = _cart.isNotEmpty
         ? _cart.grandTotalMinor
         : (widget.category.pricing?.amountMinor ?? 14900);
+    // The cart's grand total already carries GST; the published base price
+    // fallback does not. Carry the basis across so the request screen never
+    // taxes an amount that was already taxed.
+    final gstInclusive = _cart.isNotEmpty
+        ? true
+        : (widget.category.pricing?.gstInclusive ?? false);
 
     // Create updated category reflecting calculated subtotal
     final updatedCategory = ServiceCategory(
@@ -115,6 +121,7 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
       pricing: ServiceCategoryPricing(
         amountMinor: totalMinor,
         currency: widget.category.pricing?.currency ?? 'INR',
+        gstInclusive: gstInclusive,
       ),
       verifiedProCount: widget.category.verifiedProCount,
       onlineProCount: widget.category.onlineProCount,
@@ -190,13 +197,33 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
-          'Services Catalog',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-          ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Services Catalog',
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            if (widget.category.rating != null) ...[
+              const SizedBox(height: 1),
+              // Shown once, for the category - not repeated down every row.
+              Text(
+                '${widget.category.name} · ${formatRatingWithReviews(widget.category.rating!, widget.category.reviewCount)}',
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ],
         ),
         centerTitle: false,
       ),
@@ -802,12 +829,12 @@ class _SubServiceCatalogScreenState extends State<SubServiceCatalogScreen> {
                   children: [
                     Row(
                       children: [
-                        if (widget.category.rating != null)
-                          FixRatingBadge(
-                            rating: widget.category.rating!,
-                            reviewCount: widget.category.reviewCount,
-                            fontSize: 11,
-                          ),
+                        // No rating badge here. `widget.category.rating` is the
+                        // whole Plumbing category's score; stamped on every row
+                        // it read as if each individual job (Tap & Mixer
+                        // Repair, Drain Unblocking, ...) had its own three
+                        // reviews. The category's rating is shown once, in the
+                        // header, where it actually applies.
                         if (item.badge != null) ...[
                           const Spacer(),
                           Container(

@@ -41,6 +41,18 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
   ];
   String? _selectedCategory;
 
+  /// True once the user has pressed Submit at least once.
+  ///
+  /// Validators only run after that, so nobody is told "Please select a
+  /// category" while they are still reading the form; from then on each field
+  /// re-validates as it changes, so an error clears the moment the field
+  /// becomes valid instead of staying red under a filled-in value.
+  bool _submitted = false;
+
+  void _revalidate() {
+    if (_submitted) _formKey.currentState?.validate();
+  }
+
   @override
   void dispose() {
     _categoryController.dispose();
@@ -49,6 +61,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
   }
 
   void _submit() async {
+    _submitted = true;
     if (!_formKey.currentState!.validate()) return;
     if (_selectedCategory == null) return;
 
@@ -105,10 +118,42 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
               child: ListView(
                 padding: const EdgeInsets.all(AppSpacing.pagePadding),
                 children: [
-                  if (widget.controller.submitError != null) ...[
-                    Text(
-                      widget.controller.submitError!,
-                      style: const TextStyle(color: Colors.red),
+                  // Server failures only. Field problems are reported under
+                  // their own field, so a form that simply fails validation
+                  // never also gets a second block of red text at the top -
+                  // that pairing is what read as one error rendered twice.
+                  if (widget.controller.submitStatus ==
+                          SubmitComplaintStatus.error &&
+                      widget.controller.submitError != null) ...[
+                    Container(
+                      padding: const EdgeInsets.all(AppSpacing.md),
+                      decoration: BoxDecoration(
+                        color: AppColors.dangerSoft,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.danger),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(
+                            Icons.error_outline_rounded,
+                            color: AppColors.danger,
+                            size: 18,
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          const Expanded(
+                            child: Text(
+                              "We couldn't send your complaint. Your answers "
+                              'are still here - please try again.',
+                              style: TextStyle(
+                                color: AppColors.textPrimary,
+                                fontSize: 13,
+                                height: 1.4,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: AppSpacing.md),
                   ],
@@ -176,6 +221,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
                                   setState(() {
                                     _selectedCategory = val;
                                   });
+                                  _revalidate();
                                 },
                           validator: (val) =>
                               val == null ? 'Please select a category' : null,
@@ -193,6 +239,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
                           controller: _descriptionController,
                           style: const TextStyle(color: AppColors.inputText),
                           cursorColor: AppColors.primary,
+                          onChanged: (_) => _revalidate(),
                           decoration: const InputDecoration(
                             hintText:
                                 'Describe what happened, when it happened, and what you need from us.',

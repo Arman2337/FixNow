@@ -1229,7 +1229,11 @@ class _ConnectionCard extends StatelessWidget {
   final BookingTrackingController controller;
   @override
   Widget build(BuildContext context) {
-    if (controller.connection == TrackingConnection.live) {
+    // Blank top of screen while the first snapshot is still in flight is not
+    // an acceptable state: with a live connection but no tracking payload yet
+    // this used to render nothing at all, leaving a page of skeletons.
+    if (controller.connection == TrackingConnection.live &&
+        controller.tracking != null) {
       return const SizedBox.shrink();
     }
     final loading = controller.connection != TrackingConnection.offline;
@@ -1438,277 +1442,18 @@ class _TrackingCard extends StatelessWidget {
                 ),
               ),
             ),
-
-          // Floating Live ETA Badge Overlay
-          Positioned(
-            top: 12,
-            left: 12,
-            right: 12,
-            child: Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceContainerLowest.withValues(
-                        alpha: 0.9,
-                      ),
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: const BoxDecoration(
-                            color: AppColors.primary,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            _statusTitle(value.status),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: AppColors.textPrimary,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Flexible(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color:
-                                  value.locationAvailability ==
-                                      LocationAvailability.live
-                                  ? AppColors.primaryEmerald.withValues(
-                                      alpha: 0.15,
-                                    )
-                                  : AppColors.surfaceContainerHigh,
-                              borderRadius: BorderRadius.circular(
-                                AppRadius.pill,
-                              ),
-                            ),
-                            child: Text(
-                              value.locationAvailability ==
-                                      LocationAvailability.live
-                                  ? (value.providerLocation != null
-                                        ? 'Live location available'
-                                        : 'GPS Active')
-                                  : 'Live location unavailable',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color:
-                                    value.locationAvailability ==
-                                        LocationAvailability.live
-                                    ? AppColors.primaryEmerald
-                                    : AppColors.textSecondary,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceContainerLowest.withValues(
-                      alpha: 0.9,
-                    ),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.my_location_rounded,
-                    size: 18,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Live ETA Summary Bar
-          Positioned(
-            bottom: 12,
-            left: 12,
-            right: 12,
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.surfaceContainerLowest.withValues(alpha: 0.95),
-                borderRadius: BorderRadius.circular(AppRadius.medium),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: AppColors.primaryFixed,
-                            borderRadius: BorderRadius.circular(
-                              AppRadius.small,
-                            ),
-                          ),
-                          child: const Icon(
-                            Icons.timer_rounded,
-                            color: AppColors.onPrimaryFixed,
-                            size: 22,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Text(
-                                'ESTIMATED ARRIVAL',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: AppColors.textSecondary,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.baseline,
-                                textBaseline: TextBaseline.alphabetic,
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      value.estimatedMinutes == null
-                                          ? 'Unavailable'
-                                          : '${value.estimatedMinutes} mins',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        color: AppColors.primary,
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                    ),
-                                  ),
-                                  if (value.route != null) ...[
-                                    const SizedBox(width: 4),
-                                    Flexible(
-                                      child: Text(
-                                        '(${(value.route!.distanceMeters / 1000).toStringAsFixed(1)} km away)',
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          color: AppColors.textSecondary,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Flexible(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text(
-                          'Traffic Flow',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 11,
-                          ),
-                        ),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.circle,
-                              size: 6,
-                              color: AppColors.primary,
-                            ),
-                            const SizedBox(width: 4),
-                            Flexible(
-                              child: Text(
-                                'Clear Road',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  color: AppColors.primary,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+          // One overlay, not two.
+          //
+          // ProviderLiveMap owns its own status chip, Fit View control and
+          // ETA/route strip. This screen used to stack a second status pill
+          // and a second ETA bar on top of them, so four chips - booking
+          // status, "Technician en route", "Live location unavailable" and
+          // "Fit View" - all rendered over each other, alongside a hardcoded
+          // "Traffic Flow - Clear Road" for traffic data nobody collects.
+          // Degraded tracking is reported by _ConnectionCard above the map,
+          // where it cannot contradict what the map is showing.
         ],
       ),
     );
   }
-
-  static String _statusTitle(String value) => switch (value.toUpperCase()) {
-    'EN_ROUTE' => 'Provider is on the way',
-    'IN_PROGRESS' => 'Service in progress',
-    'COMPLETED' => 'Service completed',
-    'CANCELLED' => 'Booking cancelled',
-    _ => 'Live Tracking',
-  };
 }

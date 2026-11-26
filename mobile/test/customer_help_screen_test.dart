@@ -47,12 +47,12 @@ void main() {
 
       // Verify header and hero
       expect(find.text('Help & Knowledge Base'), findsOneWidget);
-      expect(find.text('24/7 RESOLUTION PORTAL'), findsOneWidget);
-      expect(find.text('Desk Online'), findsOneWidget);
+      expect(find.text('SUPPORT RESOLUTION PORTAL'), findsOneWidget);
+      expect(find.text('Open 7 AM-11 PM IST'), findsOneWidget);
 
       // Verify Emergency Hazard alert banner
       expect(find.text('Active Electrical or Gas Hazard?'), findsOneWidget);
-      expect(find.text('Call 24/7 Safety Desk (Toll Free)'), findsOneWidget);
+      expect(find.text('Call Safety Desk (Toll Free)'), findsOneWidget);
 
       // Verify Quick Resolution Hub
       expect(find.text('Quick Resolution Hub'), findsOneWidget);
@@ -86,10 +86,10 @@ void main() {
       final searchField = find.byType(TextField);
       await tester.ensureVisible(searchField);
       await tester.pumpAndSettle();
-      await tester.enterText(searchField, 'Escrow');
+      await tester.enterText(searchField, 'payment');
       await tester.pumpAndSettle();
       expect(
-        find.textContaining('How does FixNow Escrow protect my payment?'),
+        find.textContaining('How is my payment protected?'),
         findsOneWidget,
       );
     },

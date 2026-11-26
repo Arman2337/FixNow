@@ -757,6 +757,11 @@ class _ProviderLiveMapState extends State<ProviderLiveMap>
                       : IgnorePointer(
                           child: _JourneyOverlay(
                             hasCustomerLocation: customer != null,
+                            // Keyed on the provider pin, not the customer's.
+                            // It used to read "Provider location is live"
+                            // purely because the *customer* address was
+                            // known, which is the wrong signal entirely.
+                            hasProviderLocation: provider != null,
                             estimatedMinutes: widget.estimatedMinutes,
                             distanceKm: widget.distanceKm,
                             isProviderPerspective: widget.isProviderPerspective,
@@ -806,15 +811,28 @@ class _ProviderLiveMapState extends State<ProviderLiveMap>
 class _JourneyOverlay extends StatelessWidget {
   const _JourneyOverlay({
     required this.hasCustomerLocation,
+    required this.hasProviderLocation,
     required this.estimatedMinutes,
     required this.distanceKm,
     this.isProviderPerspective = false,
   });
 
   final bool hasCustomerLocation;
+  final bool hasProviderLocation;
   final int? estimatedMinutes;
   final double? distanceKm;
   final bool isProviderPerspective;
+
+  /// The one line that describes the journey, chosen from what we actually
+  /// know rather than from the booking status alone.
+  String get _headline {
+    if (isProviderPerspective) {
+      if (!hasProviderLocation) return 'Waiting to share your location';
+      return hasCustomerLocation ? 'Heading to customer destination' : 'Your location is active';
+    }
+    if (!hasProviderLocation) return 'Waiting for provider location';
+    return hasCustomerLocation ? 'Provider is on the way' : 'Provider location is live';
+  }
 
   @override
   Widget build(BuildContext context) => Container(
@@ -853,22 +871,18 @@ class _JourneyOverlay extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                isProviderPerspective
-                    ? (hasCustomerLocation
-                          ? 'Heading to customer destination'
-                          : 'Your location is active')
-                    : (hasCustomerLocation
-                          ? 'Provider is on the way'
-                          : 'Provider location is live'),
+                _headline,
                 style: const TextStyle(
                   color: AppColors.textOnDarkPrimary,
                   fontWeight: FontWeight.w700,
                 ),
               ),
               const SizedBox(height: 2),
-              const Text(
-                'Verified FixNow service journey',
-                style: TextStyle(
+              Text(
+                hasProviderLocation
+                    ? 'Verified FixNow service journey'
+                    : 'Location updates will appear here',
+                style: const TextStyle(
                   color: AppColors.textOnDarkMuted,
                   fontSize: 12,
                 ),

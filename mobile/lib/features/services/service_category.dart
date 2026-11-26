@@ -2,9 +2,19 @@ class ServiceCategoryPricing {
   const ServiceCategoryPricing({
     required this.amountMinor,
     required this.currency,
+    this.gstInclusive = false,
   });
   final int amountMinor;
   final String currency;
+
+  /// Whether [amountMinor] already contains the 18% GST.
+  ///
+  /// The catalogue's published base price is exclusive, but once the customer
+  /// has built a cart the running total carried forward is the inclusive
+  /// grand total. Declaring the basis here keeps that choice travelling with
+  /// the number instead of being re-guessed at every render - guessing wrong
+  /// is what produced a total that taxed an already-taxed amount.
+  final bool gstInclusive;
 
   factory ServiceCategoryPricing.fromJson(Object? json) {
     if (json is! Map<String, dynamic>) throw const FormatException();
@@ -13,7 +23,11 @@ class ServiceCategoryPricing {
     if (amountMinor is! int || currency is! String) {
       throw const FormatException();
     }
-    return ServiceCategoryPricing(amountMinor: amountMinor, currency: currency);
+    return ServiceCategoryPricing(
+      amountMinor: amountMinor,
+      currency: currency,
+      gstInclusive: json['gstInclusive'] == true,
+    );
   }
 
   /// Human display, e.g. ₹499. Minor units assumed paise for INR; other
@@ -104,7 +118,11 @@ class ServiceCategory {
     if (iconName != null) 'iconName': iconName,
     'pricing': pricing == null
         ? null
-        : {'amountMinor': pricing!.amountMinor, 'currency': pricing!.currency},
+        : {
+            'amountMinor': pricing!.amountMinor,
+            'currency': pricing!.currency,
+            'gstInclusive': pricing!.gstInclusive,
+          },
     'isEmergency': isEmergency,
     'verifiedProCount': verifiedProCount,
     'onlineProCount': onlineProCount,

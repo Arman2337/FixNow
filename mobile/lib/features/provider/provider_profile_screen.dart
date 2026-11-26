@@ -128,10 +128,15 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
             ProviderApplicationStatus.approved;
         final displayName = profile?.displayName ?? 'Service Partner';
         final bio = profile?.bio ?? 'FixNow Service Provider';
-        final radius = _serviceRadius ?? profile?.serviceRadiusKm ?? 10.0;
+        final radius = _serviceRadius ?? profile?.serviceRadiusKm;
         final stats = profile?.stats;
         final availability = widget.controller.availability;
         final skills = widget.controller.skills;
+        // FN-153: nothing below is real until the profile lands. The old
+        // `?? 100%`, `?? 0` and `?? 'Mon-Sat (Default)'` fallbacks painted a
+        // plausible-but-false reputation (100% acceptance, 0 jobs, invented
+        // working hours) for the second or two before the real figures arrived.
+        final loading = profile == null;
 
         return Scaffold(
           backgroundColor: AppColors.background,
@@ -239,6 +244,17 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
+                          if (loading) ...[
+                            const Expanded(
+                              child: _MetricSkeleton(label: 'Rating'),
+                            ),
+                            const Expanded(
+                              child: _MetricSkeleton(label: 'Completed'),
+                            ),
+                            const Expanded(
+                              child: _MetricSkeleton(label: 'Acceptance'),
+                            ),
+                          ] else ...[
                           Expanded(
                             child: _MetricColumn(
                               label: 'Rating',
@@ -260,10 +276,11 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                           Expanded(
                             child: _MetricColumn(
                               label: 'Acceptance',
-                              value: '${stats?.acceptanceRate ?? 100}%',
+                              value: '${stats?.acceptanceRate ?? 0}%',
                               caption: 'Response rate',
                             ),
                           ),
+                          ],
                         ],
                       ),
                     ],
@@ -309,14 +326,17 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                         ],
                       ),
                       const SizedBox(height: AppSpacing.xs),
-                      Text(
-                        availability?.scheduleSummary ?? 'Mon–Sat · 09:00–17:00 (Default)',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textSecondary,
+                      if (availability == null)
+                        const _LineSkeleton(width: 168)
+                      else
+                        Text(
+                          availability.scheduleSummary,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textSecondary,
+                          ),
                         ),
-                      ),
                       const SizedBox(height: 4),
                       const Text(
                         'Dispatch algorithms assign instant repair leads only during your active shifts.',
@@ -365,7 +385,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
-                              '${radius.toStringAsFixed(1)} km',
+                              radius == null ? '—' : '${radius.toStringAsFixed(1)} km',
                               style: const TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w800,
@@ -376,15 +396,21 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                         ],
                       ),
                       Slider(
-                        value: radius.clamp(1.0, 50.0),
+                        value: (radius ?? 10.0).clamp(1.0, 50.0),
                         min: 1.0,
                         max: 50.0,
                         divisions: 49,
-                        label: '${radius.toStringAsFixed(1)} km',
-                        onChanged: (val) {
-                          setState(() => _serviceRadius = val);
-                        },
-                        onChangeEnd: (val) => _saveRadius(val),
+                        label: radius == null
+                            ? null
+                            : '${radius.toStringAsFixed(1)} km',
+                        onChanged: radius == null
+                            ? null
+                            : (val) {
+                                setState(() => _serviceRadius = val);
+                              },
+                        onChangeEnd: radius == null
+                            ? null
+                            : (val) => _saveRadius(val),
                       ),
                       const Text(
                         'Controls maximum driving distance from your base GPS pin for incoming job dispatches.',
@@ -588,6 +614,70 @@ class _MetricColumn extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
         ),
       ],
+    );
+  }
+}
+
+/// Placeholder shown while the provider's real figures are still in flight.
+///
+/// Deliberately shapeless: a skeleton cannot be mistaken for a value the way
+/// a `0`, a `100%` or a default working week can.
+class _MetricSkeleton extends StatelessWidget {
+  const _MetricSkeleton({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textTertiary,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        const SizedBox(height: 2),
+        Container(
+          width: 42,
+          height: 16,
+          decoration: BoxDecoration(
+            color: AppColors.surfaceContainerHigh,
+            borderRadius: BorderRadius.circular(6),
+          ),
+        ),
+        Container(
+          width: 30,
+          height: 10,
+          margin: const EdgeInsets.only(top: 3),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceContainer,
+            borderRadius: BorderRadius.circular(5),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _LineSkeleton extends StatelessWidget {
+  const _LineSkeleton({required this.width});
+
+  final double width;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      height: 14,
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(7),
+      ),
     );
   }
 }

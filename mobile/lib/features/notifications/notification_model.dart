@@ -41,6 +41,7 @@ class InAppNotification {
     required this.category,
     required this.timestamp,
     this.isRead = false,
+    this.kind,
     this.bookingId,
     this.paymentId,
     this.actionUrl,
@@ -52,9 +53,32 @@ class InAppNotification {
   final NotificationCategory category;
   final DateTime timestamp;
   final bool isRead;
+
+  /// The backend's routing key, e.g. `booking:provider:ASSIGNED` or
+  /// `booking:customer:CANCELLED`. Null for kinds the server does not send.
+  ///
+  /// [category] is a coarse bucket derived from it and is not enough to tell
+  /// a notification addressed to this role from one addressed to the other
+  /// side of the same booking.
+  final String? kind;
   final String? bookingId;
   final String? paymentId;
   final String? actionUrl;
+
+  /// Whether this row was addressed to a provider rather than a customer.
+  ///
+  /// Unknown kinds default to `true` so a new server-side kind is still shown
+  /// everywhere instead of silently disappearing from the provider workspace.
+  bool get isProviderKind =>
+      kind == null || kind!.startsWith('booking:provider:');
+
+  /// A negative booking outcome (cancelled / expired).
+  ///
+  /// Used for tone only: a cancellation rendered in the same green as a
+  /// successful booking reads as good news.
+  bool get isCancellation =>
+      (kind?.toUpperCase().contains('CANCELLED') ?? false) ||
+      body.toLowerCase().contains('cancelled');
 
   InAppNotification copyWith({
     String? id,
@@ -63,6 +87,7 @@ class InAppNotification {
     NotificationCategory? category,
     DateTime? timestamp,
     bool? isRead,
+    String? kind,
     String? bookingId,
     String? paymentId,
     String? actionUrl,
@@ -74,6 +99,7 @@ class InAppNotification {
       category: category ?? this.category,
       timestamp: timestamp ?? this.timestamp,
       isRead: isRead ?? this.isRead,
+      kind: kind ?? this.kind,
       bookingId: bookingId ?? this.bookingId,
       paymentId: paymentId ?? this.paymentId,
       actionUrl: actionUrl ?? this.actionUrl,
@@ -121,6 +147,7 @@ class InAppNotification {
           ) ??
           DateTime.now(),
       isRead: json['isRead'] == true,
+      kind: json['kind']?.toString(),
       bookingId: json['bookingId']?.toString(),
       paymentId: json['paymentId']?.toString(),
       actionUrl: json['actionUrl']?.toString(),
@@ -134,6 +161,7 @@ class InAppNotification {
     'category': category.name,
     'timestamp': timestamp.toIso8601String(),
     'isRead': isRead,
+    'kind': kind,
     'bookingId': bookingId,
     'paymentId': paymentId,
     'actionUrl': actionUrl,

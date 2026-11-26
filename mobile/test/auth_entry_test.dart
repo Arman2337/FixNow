@@ -14,19 +14,16 @@ void main() {
     await tester.pumpWidget(_app());
     await tester.pumpAndSettle();
 
-    // Headline renders as two separately-revealed lines (welcome entrance).
+    // Headline and role options render immediately on the welcome screen.
     expect(find.text('Trusted help.'), findsOneWidget);
     expect(find.text('When you need it.'), findsOneWidget);
-    final getStarted = find.text('Get started');
-    await tester.ensureVisible(getStarted);
-    await tester.tap(getStarted);
-    await tester.pumpAndSettle();
-
     expect(find.text('How would you like to continue?'), findsOneWidget);
     expect(find.text('Customer'), findsOneWidget);
     expect(find.text('Service provider'), findsOneWidget);
 
-    await tester.tap(find.text('Continue'));
+    final getStarted = find.text('Get started');
+    await tester.ensureVisible(getStarted);
+    await tester.tap(getStarted);
     await tester.pumpAndSettle();
 
     expect(find.text('Create your account'), findsOneWidget);
@@ -39,12 +36,11 @@ void main() {
     await tester.pumpWidget(_app());
     await tester.pumpAndSettle();
 
-    final getStarted = find.text('Get started');
-    await tester.ensureVisible(getStarted);
-    await tester.tap(getStarted);
-    await tester.pumpAndSettle();
     await tester.tap(find.text('Service provider'));
-    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+    final joinPartner = find.text('Join as Service Partner');
+    await tester.ensureVisible(joinPartner);
+    await tester.tap(joinPartner);
     await tester.pumpAndSettle();
 
     expect(find.text('SERVICE PROVIDER'), findsOneWidget);

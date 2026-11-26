@@ -317,7 +317,7 @@ class _Fix3DFlipCardState extends State<Fix3DFlipCard>
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  'FixNow 256-Bit Escrow Vault Protected',
+                  'FixNow Secured Payment',
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,

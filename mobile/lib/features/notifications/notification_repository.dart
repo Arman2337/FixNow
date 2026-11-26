@@ -10,6 +10,16 @@ class NotificationRepository {
   final Set<String> _readIds = {};
   final Set<String> _deletedIds = {};
 
+  /// Drops the local read/deleted overlays built up by the previous account.
+  ///
+  /// These sets are only ever merged into a freshly fetched server list, so
+  /// leaving them in place would let one account's "read" and "deleted" marks
+  /// suppress rows belonging to the next account that signs in on this device.
+  void resetSession() {
+    _readIds.clear();
+    _deletedIds.clear();
+  }
+
   Future<List<InAppNotification>> fetchNotifications() async {
     List<InAppNotification> remoteList = [];
     if (api != null) {

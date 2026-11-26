@@ -260,9 +260,13 @@ class _AuthScreenState extends State<AuthScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          widget.role == AccountRole.providerApplicant
-                              ? 'SERVICE PROVIDER'
-                              : 'CUSTOMER',
+                          // Reflects the role this screen actually signs in.
+                          // It used to read CUSTOMER for every role other than
+                          // `providerApplicant`, so a verified provider was
+                          // handed a customer heading on the provider login.
+                          widget.role == AccountRole.customer
+                              ? 'CUSTOMER'
+                              : 'SERVICE PROVIDER',
                           style: FixNowTypography.dataMono.copyWith(
                             color: AppColors.primary,
                             fontWeight: FontWeight.w600,
@@ -1014,7 +1018,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                   children: const [
                                     TextSpan(text: 'Explore '),
                                     TextSpan(
-                                      text: 'local ',
+                                      text: 'local',
                                       style: TextStyle(
                                         color: AppColors.textPrimary,
                                         fontWeight: FontWeight.w600,
@@ -1022,7 +1026,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                     ),
                                     TextSpan(
                                       text:
-                                          ' available service professionals in your area.',
+                                          ' service professionals in your area.',
                                     ),
                                   ],
                                 ),

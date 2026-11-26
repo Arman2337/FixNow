@@ -80,9 +80,9 @@ class _CustomerHelpScreenState extends State<CustomerHelpScreen> {
     ),
     _FaqData(
       icon: Icons.lock_rounded,
-      question: 'How does FixNow Escrow protect my payment?',
+      question: 'How is my payment protected?',
       summary:
-          'When booking, your funds are safely reserved in a protected Escrow custody account. Funds are released to the technician only after you test the repair and provide the final completion OTP.\n\nAutomated dispute freeze holds payout if issues are flagged.',
+          'You are not charged when you send a request. Payment is recorded once the job is completed.\n\nIf something went wrong, raise a case from the booking and our support team will review it.',
     ),
     _FaqData(
       icon: Icons.currency_exchange_rounded,
@@ -234,8 +234,8 @@ class _CustomerHelpScreenState extends State<CustomerHelpScreen> {
                 Expanded(
                   child: Text(
                     widget.isProvider
-                        ? '24/7 PARTNER RESOLUTION DESK'
-                        : '24/7 RESOLUTION PORTAL',
+                        ? 'PARTNER RESOLUTION DESK'
+                        : 'SUPPORT RESOLUTION PORTAL',
                     style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
@@ -268,7 +268,7 @@ class _CustomerHelpScreenState extends State<CustomerHelpScreen> {
                       ),
                       const SizedBox(width: 5),
                       const Text(
-                        'Desk Online',
+                        'Open 7 AM-11 PM IST',
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
@@ -296,7 +296,7 @@ class _CustomerHelpScreenState extends State<CustomerHelpScreen> {
             Text(
               widget.isProvider
                   ? 'Official operating procedures, dispute protection, and payout guarantees for FixNow verified partners.'
-                  : 'Verified home repairs backed by FixNow Escrow and 30-Day Guarantee protection.',
+                  : 'Verified home repairs backed by the FixNow 30-Day Guarantee.',
               style: const TextStyle(
                 fontSize: 13,
                 color: AppColors.textSecondary,
@@ -409,7 +409,7 @@ class _CustomerHelpScreenState extends State<CustomerHelpScreen> {
                             ),
                             SizedBox(height: 2),
                             Text(
-                              'Call our 24/7 Priority Safety Hotline immediately. For severe gas leaks, fire, or medical risk, contact local authorities immediately.',
+                      'Call our Priority Safety Hotline immediately. For severe gas leaks, fire, or medical risk, contact local authorities immediately.',
                               style: TextStyle(
                                 fontSize: 12,
                                 color: AppColors.onErrorContainer,
@@ -433,7 +433,7 @@ class _CustomerHelpScreenState extends State<CustomerHelpScreen> {
                       );
                     },
                     icon: const Icon(Icons.emergency_rounded, size: 18),
-                    label: const Text('Call 24/7 Safety Desk (Toll Free)'),
+            label: const Text('Call Safety Desk (Toll Free)'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.error,
                       foregroundColor: AppColors.onError,
@@ -557,7 +557,7 @@ class _CustomerHelpScreenState extends State<CustomerHelpScreen> {
                       baseColor: const Color(0xFFC2410C),
                       tag: 'Toll-Free',
                       title: 'Call Support',
-                      subtitle: 'Talk to our support team\n24/7 via phone.',
+                      subtitle: 'Talk to our support team\nby phone.',
                       onTap: () {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
@@ -898,8 +898,8 @@ class _CustomerHelpScreenState extends State<CustomerHelpScreen> {
                             title: Text(widget.isProvider ? 'Partner Operations Hotline' : 'Support Hotline'),
                             content: Text(
                               widget.isProvider
-                                  ? 'Direct phone callback is currently busy. For immediate operations support, please call our 24/7 priority partner desk at 1800-FIX-PRO (1800-349-776) or file a ticket.'
-                                  : 'Direct phone callback is currently unavailable. For immediate assistance, please call our 24/7 toll-free safety helpline at 1800-FIX-NOW (1800-349-669) or file a ticket.',
+          ? 'Direct phone callback is currently busy. For immediate operations support, please call our priority partner desk at 1800-FIX-PRO (1800-349-776) or file a ticket.'
+          : 'Direct phone callback is currently unavailable. For immediate assistance, please call our toll-free safety helpline at 1800-FIX-NOW (1800-349-669) or file a ticket.',
                             ),
                             actions: [
                               TextButton(
@@ -1023,7 +1023,7 @@ class _CustomerHelpScreenState extends State<CustomerHelpScreen> {
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    'ISO 27001 Certified • Escrow protection powered by RBI-regulated banking partners',
+                    'Payments are taken only after the job is completed',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 11,
@@ -1122,7 +1122,10 @@ class _QuickActionTile extends StatelessWidget {
                   padding: const EdgeInsets.all(14.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    // Top-aligned. `spaceBetween` used to split the header
+                    // and the copy to opposite ends, which left a hole in the
+                    // middle of every card.
+                    mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1162,51 +1165,53 @@ class _QuickActionTile extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      Text(
+                        title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textPrimary,
+                          height: 1.2,
+                          letterSpacing: -0.3,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      // The chevron sits in this row rather than floating over
+                      // the card, so copy can no longer run underneath it and
+                      // get sliced ("...for quick resol...").
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          Text(
-                            title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.textPrimary,
-                              letterSpacing: -0.3,
+                          Expanded(
+                            child: Text(
+                              subtitle,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: AppColors.textSecondary,
+                                height: 1.3,
+                              ),
                             ),
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            subtitle,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: AppColors.textSecondary,
-                              height: 1.3,
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: baseColor.withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.chevron_right_rounded,
+                              size: 16,
+                              color: baseColor,
                             ),
                           ),
                         ],
                       ),
                     ],
-                  ),
-                ),
-                // Bottom Right Chevron
-                Positioned(
-                  right: 12,
-                  bottom: 12,
-                  child: Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: baseColor.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.chevron_right_rounded,
-                      size: 16,
-                      color: baseColor,
-                    ),
                   ),
                 ),
               ],

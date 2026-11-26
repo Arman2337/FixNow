@@ -66,6 +66,23 @@ class ProviderHomeScreen extends StatelessWidget {
   final void Function(String bookingId)? onOpenBooking;
   final void Function(InAppNotification notification)? onOpenInvoice;
 
+  /// Flips availability and confirms it on screen.
+  ///
+  /// Shared by the switch and by the card around it: tapping anywhere on the
+  /// availability card used to do nothing, because the switch was the only
+  /// hit target on it.
+  Future<void> _setOnline(BuildContext context, bool value) async {
+    await controller.updateStatus(value ? 'online' : 'offline');
+    if (!context.mounted) return;
+    showFixBanner(
+      ScaffoldMessenger.of(context),
+      message: value
+          ? 'You are now online. Receiving eligible jobs in your area.'
+          : 'You are now offline. Go online to receive customer requests.',
+      tone: value ? FixBannerTone.success : FixBannerTone.info,
+    );
+  }
+
   @override
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: notificationController == null
@@ -160,12 +177,14 @@ class ProviderHomeScreen extends StatelessWidget {
               ],
               if (notificationController != null &&
                   notificationController!.notifications.any(
-                    (n) => !n.isRead,
+                    (n) => !n.isRead && n.isProviderKind,
                   )) ...[
                 Builder(
                   builder: (context) {
                     final unread = notificationController!.notifications
-                        .firstWhere((n) => !n.isRead);
+                        .firstWhere(
+                          (n) => !n.isRead && n.isProviderKind,
+                        );
                     return _ProviderNotificationBanner(
                       notification: unread,
                       onTap: () {
@@ -210,90 +229,89 @@ class ProviderHomeScreen extends StatelessWidget {
                   },
                 ),
 
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.md,
-                  vertical: AppSpacing.sm,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.accentGoldSoft,
-                  borderRadius: BorderRadius.circular(AppRadius.card),
-                  border: Border.all(color: AppColors.borderGold),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(
-                      Icons.trending_up_rounded,
-                      color: Color(0xFF92400E),
-                      size: 18,
-                    ),
-                    SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'High demand nearby · stay online for faster matching',
-                        style: TextStyle(
-                          color: Color(0xFF92400E),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
+              // Only a nudge when the provider is actually offline. This used
+              // to be a permanently rendered "High demand nearby · stay
+              // online" banner, which both claimed demand the app has no data
+              // for and told somebody who was already offline to stay online.
+              if (!online)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.sm,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.accentGoldSoft,
+                    borderRadius: BorderRadius.circular(AppRadius.card),
+                    border: Border.all(color: AppColors.borderGold),
+                  ),
+                  child: Row(
+                    children: const [
+                      Icon(
+                        Icons.toggle_off_rounded,
+                        color: Color(0xFF92400E),
+                        size: 18,
+                      ),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          "You're offline. Go online to be matched with "
+                          'eligible requests nearby.',
+                          style: TextStyle(
+                            color: Color(0xFF92400E),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
               const SizedBox(height: AppSpacing.lg),
 
               FixCard(
                 tone: FixCardTone.elevated,
                 semanticLabel: 'Availability ${online ? 'online' : 'offline'}',
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: FixStatusChip(
-                            label: online ? 'Online' : 'Offline',
-                            icon: online
-                                ? Icons.online_prediction_rounded
-                                : Icons.offline_bolt_rounded,
-                            tone: online
-                                ? FixStatusTone.success
-                                : FixStatusTone.neutral,
+                // The card is the tap target, not just the switch. The switch
+                // still handles its own taps (it is the deeper hit target), so
+                // a tap never toggles twice.
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(AppRadius.card),
+                  onTap: availability == null
+                      ? null
+                      : () => _setOnline(context, !online),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: FixStatusChip(
+                              label: online ? 'Online' : 'Offline',
+                              icon: online
+                                  ? Icons.online_prediction_rounded
+                                  : Icons.offline_bolt_rounded,
+                              tone: online
+                                  ? FixStatusTone.success
+                                  : FixStatusTone.neutral,
+                            ),
                           ),
-                        ),
-                        Switch.adaptive(
-                          value: online,
-                          onChanged: availability == null
-                              ? null
-                              : (value) async {
-                                  final newStatus = value
-                                      ? 'online'
-                                      : 'offline';
-                                  await controller.updateStatus(newStatus);
-                                  if (context.mounted) {
-                                    showFixBanner(
-                                      ScaffoldMessenger.of(context),
-                                      message: value
-                                          ? 'You are now online. Receiving eligible jobs in your area.'
-                                          : 'You are now offline. Go online to receive customer requests.',
-                                      tone: value
-                                          ? FixBannerTone.success
-                                          : FixBannerTone.info,
-                                    );
-                                  }
-                                },
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    Text(
-                      online
-                          ? 'Matching eligible requests in your service area.'
-                          : 'Go online to receive eligible requests nearby.',
-                      style: Theme.of(context).textTheme.bodyLarge,
-                    ),
-                  ],
+                          Switch.adaptive(
+                            value: online,
+                            onChanged: availability == null
+                                ? null
+                                : (value) => _setOnline(context, value),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      Text(
+                        online
+                            ? 'Matching eligible requests in your service area.'
+                            : 'Go online to receive eligible requests nearby.',
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
@@ -669,8 +687,15 @@ class ProviderHomeScreen extends StatelessWidget {
                   ),
                 )
               else
-                ...active.map(
-                  (job) => Padding(
+                ...active.map((job) {
+                  // An ASSIGNED/EN_ROUTE job whose scheduled time has passed
+                  // is late, not "upcoming". Without this the workspace listed
+                  // a job scheduled a month ago as if it were the next thing
+                  // on the calendar.
+                  final scheduled = job.scheduledAt ?? job.createdAt;
+                  final overdue = job.status != 'IN_PROGRESS' &&
+                      scheduled.isBefore(DateTime.now());
+                  return Padding(
                     padding: const EdgeInsets.only(bottom: AppSpacing.md),
                     child: InkWell(
                       key: Key('active_job_${job.id}'),
@@ -700,6 +725,14 @@ class ProviderHomeScreen extends StatelessWidget {
                                       ? FixStatusTone.warning
                                       : FixStatusTone.info,
                                 ),
+                                if (overdue) ...[
+                                  const SizedBox(width: 6),
+                                  FixStatusChip(
+                                    label: 'OVERDUE',
+                                    icon: Icons.warning_amber_rounded,
+                                    tone: FixStatusTone.danger,
+                                  ),
+                                ],
                                 const Row(
                                   children: [
                                     Text(
@@ -763,10 +796,17 @@ class ProviderHomeScreen extends StatelessWidget {
                                 const SizedBox(width: 6),
                                 Expanded(
                                   child: Text(
-                                    'Scheduled: ${_requestTime(job.scheduledAt ?? job.createdAt)}',
+                                    overdue
+                                        ? 'Scheduled ${_requestTime(scheduled)} · overdue'
+                                        : 'Scheduled: ${_requestTime(scheduled)}',
                                     style: Theme.of(context).textTheme.bodySmall
                                         ?.copyWith(
-                                          color: AppColors.textSecondary,
+                                          color: overdue
+                                              ? AppColors.danger
+                                              : AppColors.textSecondary,
+                                          fontWeight: overdue
+                                              ? FontWeight.w700
+                                              : FontWeight.w400,
                                         ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -801,8 +841,8 @@ class ProviderHomeScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                  ),
-                ),
+                  );
+                }),
             ],
           ),
         ),

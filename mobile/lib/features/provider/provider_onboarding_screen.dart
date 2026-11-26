@@ -1285,26 +1285,11 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
                                               fontWeight: FontWeight.w600,
                                             ),
                                           ),
-                                          const SizedBox(width: 6),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 6,
-                                              vertical: 2,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: AppColors.primary,
-                                              borderRadius:
-                                                  BorderRadius.circular(999),
-                                            ),
-                                            child: const Text(
-                                              '1.5x Pay',
-                                              style: TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.w700,
-                                              ),
-                                            ),
-                                          ),
+                                          // No pay-multiplier chip here. There
+                                          // is no 1.5x rate anywhere in the
+                                          // backend, so promising one during
+                                          // onboarding was a promise nobody
+                                          // was going to keep.
                                         ],
                                       ),
                                       const SizedBox(height: 2),

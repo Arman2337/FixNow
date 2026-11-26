@@ -20,6 +20,7 @@ class NotificationController extends ChangeNotifier {
   List<InAppNotification> _notifications = [];
   NotificationCategory _selectedCategory = NotificationCategory.all;
   bool _loading = false;
+  int _loadTicket = 0;
   bool _mutating = false;
   bool get isMutating => _mutating;
   String? _errorMessage;
@@ -48,18 +49,51 @@ class NotificationController extends ChangeNotifier {
   }
 
   Future<void> load() async {
+    final ticket = ++_loadTicket;
     _loading = true;
     _errorMessage = null;
     notifyListeners();
     try {
-      _notifications = await _repository.fetchNotifications();
+      final fresh = await _repository.fetchNotifications();
+      // A newer load started while this one was in flight (account switch, or
+      // the screen reopening). Dropping the stale result keeps the previous
+      // account's rows from ever landing on top of the new one.
+      if (ticket != _loadTicket) return;
+      _notifications = fresh;
     } catch (_) {
+      if (ticket != _loadTicket) return;
       _errorMessage =
           'Notifications are unavailable. Check your connection and try again.';
     } finally {
-      _loading = false;
-      notifyListeners();
+      if (ticket != _loadTicket) {
+        _loading = false;
+        notifyListeners();
+      }
     }
+  }
+
+  /// Re-bind this controller to whichever account is now signed in.
+  ///
+  /// The controller is built once per app run, not once per session, so
+  /// without this the previous account's notification rows survive a
+  /// sign-out/sign-in and are shown to somebody else. Everything the previous
+  /// session left behind - rows, error, category filter and the repository's
+  /// local read/deleted overlays - is dropped before the reload.
+  Future<void> onSessionChanged() {
+    clearSession();
+    return load();
+  }
+
+  /// [clearSession] without a follow-up fetch, for sign-out where there is no
+  /// account left to load for. Clears first so a stale row is never rendered
+  /// even for the frame it would otherwise take.
+  void clearSession() {
+    _notifications = [];
+    _errorMessage = null;
+    _loading = false;
+    _selectedCategory = NotificationCategory.all;
+    _repository.resetSession();
+    notifyListeners();
   }
 
   void setFilter(NotificationCategory category) {

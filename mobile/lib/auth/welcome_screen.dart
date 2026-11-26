@@ -20,11 +20,8 @@ class WelcomeScreen extends StatefulWidget {
 
 class _WelcomeScreenState extends State<WelcomeScreen> {
   AccountRole _selected = AccountRole.customer;
-  bool _roleSelectionRequested = false;
 
-  String get _ctaLabel => _roleSelectionRequested
-      ? 'Continue'
-      : _selected == AccountRole.customer
+  String get _ctaLabel => _selected == AccountRole.customer
       ? 'Get started'
       : 'Join as Service Partner';
 
@@ -383,15 +380,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                               height: 54,
                               width: double.infinity,
                               child: ElevatedButton(
-                                onPressed: () {
-                                  if (!_roleSelectionRequested) {
-                                    setState(
-                                      () => _roleSelectionRequested = true,
-                                    );
-                                    return;
-                                  }
-                                  widget.onContinue(_selected, true);
-                                },
+                                onPressed: () =>
+                                    widget.onContinue(_selected, true),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.primary,
                                   foregroundColor: AppColors.onPrimary,
@@ -424,30 +414,41 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                             ),
                           ),
                           const SizedBox(height: AppSpacing.sm),
-                          Wrap(
-                            alignment: WrapAlignment.center,
-                            crossAxisAlignment: WrapCrossAlignment.center,
-                            children: [
-                              Text(
-                                'Already have an account?',
-                                style: FixNowTypography.body.copyWith(
-                                  color: AppColors.textSecondary,
-                                ),
+                          // The whole line is the target. Tapping only the
+                          // two-word "Sign in" span left the sentence-looking
+                          // part of the row dead.
+                          GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () =>
+                                widget.onContinue(_selected, false),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 6,
+                                horizontal: 4,
                               ),
-                              const SizedBox(width: 6),
-                              GestureDetector(
-                                onTap: () =>
-                                    widget.onContinue(_selected, false),
-                                child: Text(
-                                  'Sign in',
-                                  style: FixNowTypography.headlineMd.copyWith(
-                                    color: AppColors.primary,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 16,
+                              child: Wrap(
+                                alignment: WrapAlignment.center,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  Text(
+                                    'Already have an account?',
+                                    style: FixNowTypography.body.copyWith(
+                                      color: AppColors.textSecondary,
+                                    ),
                                   ),
-                                ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'Sign in',
+                                    style: FixNowTypography.headlineMd
+                                        .copyWith(
+                                          color: AppColors.primary,
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 16,
+                                        ),
+                                  ),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
                         ],
                       ),

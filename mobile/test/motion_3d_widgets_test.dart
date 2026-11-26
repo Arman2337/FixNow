@@ -35,7 +35,7 @@ void main() {
       expect(find.text('CVV / CVC'), findsOneWidget);
       expect(find.text('742'), findsOneWidget);
       expect(
-        find.text('FixNow 256-Bit Escrow Vault Protected'),
+        find.text('FixNow Secured Payment'),
         findsOneWidget,
       );
     });

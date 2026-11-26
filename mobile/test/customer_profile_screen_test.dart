@@ -28,7 +28,7 @@ void main() {
     expect(find.text('Cashback'), findsNothing);
 
     expect(
-      find.text('Only your display name is collected here.'),
+      find.text('Manage your name, saved addresses and payment methods.'),
       findsOneWidget,
     );
     expect(

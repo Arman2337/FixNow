@@ -98,6 +98,11 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
     if (mounted) setState(() {});
   }
 
+  /// ₹ formatting shared by the price and summary cards, so the same amount
+  /// never renders two ways on one screen.
+  static String _money(int minor) =>
+      '₹${(minor / 100).toStringAsFixed(minor % 100 == 0 ? 0 : 2)}';
+
   void _onBookingChanged() {
     if (!mounted || _createdBookingId == null || !_showRadar) return;
     final booking = widget.controller.bookings
@@ -114,20 +119,57 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
   /// FN-113: the price card shows the advisory estimate when one is
   /// available and otherwise falls back to the static published-price
   /// content. The estimate never blocks booking and is labelled advisory.
+  ///
+  /// Once a priced cart exists the estimate is deliberately not shown: it
+  /// quotes a different scope (the whole category, from its base price) and
+  /// used to sit on this screen next to the cart total and the breakdown,
+  /// giving three different figures for one booking.
   Widget _buildPriceContent(BuildContext context) {
     final estimate = _estimate?.estimate;
+    final priced = widget.pricedItems ?? const <BookingLineItem>[];
+    final labelStyle = Theme.of(context).textTheme.labelMedium?.copyWith(
+      color: Theme.of(context).colorScheme.onSurfaceVariant,
+    );
+
+    if (priced.isNotEmpty) {
+      // Prefer the category total; if the route into this screen carried no
+      // category pricing, derive it from the lines rather than showing ₹0.
+      final baseMinor = widget.category.pricing?.amountMinor;
+      final totalMinor = baseMinor == null
+          ? priced.fold<int>(
+              0,
+              (sum, line) => sum + line.unitPriceMinor * line.quantity,
+            )
+          : widget.category.pricing!.gstInclusive
+              ? baseMinor
+              : baseMinor + (baseMinor * 0.18).round();
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Estimated total', style: labelStyle),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            _money(totalMinor),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          const Text(
+            'Exact for your selected services. GST is itemised below.',
+            style: TextStyle(color: AppColors.textOnSurfaceSecondary),
+          ),
+        ],
+      );
+    }
+
     if (_estimate?.state == PriceEstimateState.ready &&
         estimate != null &&
         estimate.kind != PriceEstimateKind.priceOnRequest) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Estimated price',
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-          ),
+          Text('Estimated price', style: labelStyle),
           const SizedBox(height: AppSpacing.xs),
           Text(
             estimate.rangeLabel,
@@ -476,6 +518,7 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
                 FixPriceBreakdownCard(
                   amountMinor: widget.category.pricing!.amountMinor,
                   currency: widget.category.pricing!.currency,
+                  gstInclusive: widget.category.pricing!.gstInclusive,
                   modelType: PricingModelType.fixed,
                 ),
               ],

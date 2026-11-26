@@ -891,7 +891,11 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'DISPUTED ITEM',
+                  // The customer's own words from the complaint form, where the
+                  // field is labelled "Description". Calling it "DISPUTED
+                  // ITEM" implied a billing dispute we had raised, which is
+                  // not what this text is.
+                  'DESCRIPTION',
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w800,

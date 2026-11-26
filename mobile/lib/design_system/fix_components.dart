@@ -513,7 +513,7 @@ class FixEmergencyBanner extends StatelessWidget {
   const FixEmergencyBanner({
     required this.onCallNow,
     this.title = 'Emergency Help',
-    this.subtitle = 'Immediate assistance available 24/7.',
+    this.subtitle = 'Immediate assistance for urgent hazards.',
     super.key,
   });
 

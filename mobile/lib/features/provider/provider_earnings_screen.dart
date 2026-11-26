@@ -281,7 +281,10 @@ class _EarningsView extends StatelessWidget {
               icon: Icons.task_alt_rounded,
               iconColor: AppColors.primary,
               title: '${earnings.paidOrderCount}',
-              subtitle: 'Completed Jobs',
+              // This tile counts *paid* orders, not completed jobs - the two
+              // differ (4 paid vs 5 completed) and the old label made the
+              // earnings screen contradict the profile and history tabs.
+              subtitle: 'Paid Jobs',
             ),
           ),
           const SizedBox(width: AppSpacing.sm),

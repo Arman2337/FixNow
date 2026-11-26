@@ -395,7 +395,13 @@ class _EmergencyConfirmScreenState extends State<EmergencyConfirmScreen> {
 
 /// Concentric Radar sweep widget with radar circles and tech pings
 class _RadarSweepBox extends StatelessWidget {
-  const _RadarSweepBox();
+  const _RadarSweepBox({
+    this.eligibleCount = 0,
+    this.wave = 1,
+  });
+
+  final int eligibleCount;
+  final int wave;
 
   @override
   Widget build(BuildContext context) {
@@ -443,22 +449,69 @@ class _RadarSweepBox extends StatelessWidget {
               ),
             ],
           ),
-          // Dispersed Tech Pings
-          Positioned(
-            top: 12,
-            left: 20,
-            child: _techPingBadge('Tech #104 (0.8 km)'),
-          ),
-          Positioned(
-            bottom: 14,
-            right: 20,
-            child: _techPingBadge('Tech #88 (1.4 km)'),
-          ),
-          Positioned(
-            top: 20,
-            right: 28,
-            child: _techPingBadge('Tech #41 (2.2 km)'),
-          ),
+          // Dispersed Tech Pings - only show if eligible providers actually exist
+          if (eligibleCount == 0)
+            Positioned(
+              bottom: 8,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceContainerLowest.withValues(alpha: 0.92),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x10000000),
+                      blurRadius: 4,
+                      offset: Offset(0, 1),
+                    ),
+                  ],
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: 8,
+                      height: 8,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 1.5,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    SizedBox(width: 6),
+                    Text(
+                      'Scanning for available specialists...',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else ...[
+            if (eligibleCount >= 1)
+              Positioned(
+                top: 12,
+                left: 20,
+                child: _techPingBadge('Tech in range (${wave * 2} km)'),
+              ),
+            if (eligibleCount >= 2)
+              Positioned(
+                bottom: 14,
+                right: 20,
+                child: _techPingBadge(
+                  'Tech in range (${(wave * 2.5).toStringAsFixed(1)} km)',
+                ),
+              ),
+            if (eligibleCount >= 3)
+              Positioned(
+                top: 20,
+                right: 28,
+                child: _techPingBadge('Tech in range (${wave * 3} km)'),
+              ),
+          ],
         ],
       ),
     );
@@ -682,7 +735,10 @@ class _DispatchedView extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: AppSpacing.sm),
-                const _RadarSweepBox(),
+                _RadarSweepBox(
+                  eligibleCount: status?.eligibleCount ?? controller.creation?.eligibleCount ?? 0,
+                  wave: status?.currentWave ?? controller.creation?.currentWave ?? 1,
+                ),
                 const SizedBox(height: AppSpacing.sm),
                 Container(
                   padding: const EdgeInsets.symmetric(

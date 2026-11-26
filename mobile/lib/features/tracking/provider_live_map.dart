@@ -843,7 +843,7 @@ class _JourneyOverlay extends StatelessWidget {
       AppSpacing.sm,
     ),
     decoration: BoxDecoration(
-      color: AppColors.backgroundPrimary.withValues(alpha: 0.94),
+      color: AppColors.backgroundSecondary.withValues(alpha: 0.94),
       borderRadius: AppRadius.cardBorder,
       border: Border.all(color: Colors.white24),
       boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 16)],

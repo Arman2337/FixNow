@@ -928,8 +928,10 @@ class BookingDetailScreen extends StatelessWidget {
   static String _date(DateTime value) =>
       '${value.day}/${value.month}/${value.year}';
 
-  static String _money(int minor) =>
-      '₹${(minor / 100).toStringAsFixed(minor % 100 == 0 ? 0 : 2)}';
+  static String _money(int minor) {
+    if (minor <= 0) return 'Quote On-Site';
+    return '₹${(minor / 100).toStringAsFixed(minor % 100 == 0 ? 0 : 2)}';
+  }
 }
 
 class _BookingProgress extends StatelessWidget {

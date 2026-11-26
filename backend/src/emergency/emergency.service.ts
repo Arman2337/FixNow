@@ -5,6 +5,7 @@ import {
   NotFoundException,
   OnModuleDestroy,
   OnModuleInit,
+  Optional,
 } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource, EntityManager, QueryFailedError } from 'typeorm';
@@ -14,11 +15,13 @@ import { BookingEvent } from '../bookings/domain/booking-event.entity';
 import { CreateBookingDto } from '../bookings/bookings.dto';
 import { BookingsService } from '../bookings/bookings.service';
 import { ServiceCategoryEntity } from '../services/service-category.entity';
+import { SubServiceEntity } from '../services/sub-service.entity';
 import { MatchingService } from '../matching/matching.service';
 import {
   DomainNotificationService,
   EMERGENCY_NOTIFICATION_TEMPLATES,
 } from '../notifications/domain/domain-notification.service';
+import { BookingProjectionService } from '../realtime/booking-projection.service';
 import { TrustService } from '../trust/trust.service';
 import { OutboxService } from '../outbox/outbox.service';
 import { runBounded } from '../common/run-bounded';
@@ -93,6 +96,7 @@ export class EmergencyService implements OnModuleInit, OnModuleDestroy {
     private readonly outbox: OutboxService,
     private readonly notifications: DomainNotificationService,
     private readonly trust: TrustService,
+    @Optional() private readonly projections?: BookingProjectionService,
   ) {}
 
   onModuleInit(): void {
@@ -143,6 +147,32 @@ export class EmergencyService implements OnModuleInit, OnModuleDestroy {
     // index on `(customer_id) WHERE closed_at IS NULL`. The INSERT is the test
     // and the unique violation is the 409, so the rule can no longer be lost to
     // a race.
+
+    // If caller did not provide line items, resolve default emergency assessment fee
+    if (!input.items || input.items.length === 0) {
+      try {
+        const defaultSubService = await this.dataSource
+          .getRepository(SubServiceEntity)
+          .findOne({
+            where: { categoryId: category.id, isActive: true },
+            order: { priceMinor: 'ASC' },
+          });
+
+        if (
+          defaultSubService &&
+          typeof defaultSubService.priceMinor === 'number' &&
+          defaultSubService.priceMinor > 0
+        ) {
+          input = {
+            ...input,
+            items: [{ subServiceId: defaultSubService.id, quantity: 1 }],
+          };
+        }
+      } catch {
+        // Fallback to unpriced emergency creation if sub-service lookup fails
+      }
+    }
+
     const booking = await this.bookings.create(
       customerId,
       input,
@@ -532,6 +562,62 @@ export class EmergencyService implements OnModuleInit, OnModuleDestroy {
       wave >= 2 ? EMERGENCY_POLICY_V1.radiusMultiplierWave2 : 1,
     );
 
+    let totalMinor = booking.totalAmountMinor ?? 0;
+    if (!totalMinor && booking.items?.length) {
+      totalMinor = booking.items.reduce(
+        (sum, item) => sum + item.unitPriceMinor * item.quantity,
+        0,
+      );
+    }
+    if (!totalMinor && booking.lineItems?.length) {
+      totalMinor = booking.lineItems.reduce(
+        (sum, item) => sum + item.priceMinor * item.quantity,
+        0,
+      );
+    }
+
+    const signal: Record<string, unknown> = {
+      bookingId: booking.id,
+      serviceCategoryId: booking.serviceCategoryId,
+      locationLat: booking.locationLat ? booking.locationLat.toString() : '',
+      locationLng: booking.locationLng ? booking.locationLng.toString() : '',
+      description: booking.description ?? 'EMERGENCY: Urgent hazard assistance requested',
+      priceMinor: totalMinor.toString(),
+      version: booking.version,
+      type: 'booking:provider:REQUESTED',
+      isEmergency: 'true',
+    };
+
+    const pushContent = {
+      ...EMERGENCY_NOTIFICATION_TEMPLATES['provider:EMERGENCY_REQUEST'],
+      data: {
+        bookingId: booking.id,
+        serviceCategoryId: booking.serviceCategoryId,
+        locationLat: booking.locationLat ? booking.locationLat.toString() : '',
+        locationLng: booking.locationLng ? booking.locationLng.toString() : '',
+        description: booking.description ?? 'EMERGENCY: Urgent hazard assistance requested',
+        priceMinor: totalMinor.toString(),
+        type: 'booking:provider:REQUESTED',
+        isEmergency: 'true',
+      },
+    };
+
+    // Realtime in-app WebSocket dispatch to any provider whose app is currently open
+    if (this.projections) {
+      await runBounded(
+        eligible.map(
+          ({ providerId }) =>
+            () =>
+              this.projections!.publishAccountSignal(
+                providerId,
+                'provider.request.v1',
+                signal,
+              ).catch(() => undefined),
+        ),
+        WAVE_CONCURRENCY,
+      );
+    }
+
     // Sends within a wave are bounded: 50 providers awaited one at a time meant
     // one slow push stalled the rest of the wave.
     await runBounded(
@@ -543,7 +629,7 @@ export class EmergencyService implements OnModuleInit, OnModuleDestroy {
                 providerId,
                 'provider:EMERGENCY_REQUEST',
                 `emergency:${booking.id}:w${wave}:${providerId}`,
-                EMERGENCY_NOTIFICATION_TEMPLATES['provider:EMERGENCY_REQUEST'],
+                pushContent,
                 booking.id,
                 { bypassQuietHours: true },
               )

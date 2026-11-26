@@ -200,8 +200,11 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
 
     // Foreground messages (banner inside app)
     _foregroundPushSub = _pushGateway.foregroundMessages().listen((message) {
+      final type = message.data?['type'];
+      final isEmergency = message.data?['isEmergency'] == 'true' ||
+          type == 'provider:EMERGENCY_REQUEST';
       if (message.data != null &&
-          message.data!['type'] == 'booking:provider:REQUESTED') {
+          (type == 'booking:provider:REQUESTED' || isEmergency)) {
         _presentIncomingRequest(message.data!);
       } else {
         _messengerKey.currentState?.showSnackBar(
@@ -295,7 +298,9 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
   void _handlePushInteraction(ForegroundPushMessage message) {
     if (message.data == null) return;
     final type = message.data!['type'];
-    if (type == 'booking:provider:REQUESTED') {
+    final isEmergency = message.data!['isEmergency'] == 'true' ||
+        type == 'provider:EMERGENCY_REQUEST';
+    if (type == 'booking:provider:REQUESTED' || isEmergency) {
       _presentIncomingRequest(message.data!);
     } else if (type != null && (type as String).startsWith('booking:')) {
       // General booking update - open booking tracking screen

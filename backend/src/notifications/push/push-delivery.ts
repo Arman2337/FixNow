@@ -79,7 +79,9 @@ export class FcmPushDelivery implements PushDelivery {
   ): Promise<PushDeliveryResult> {
     const messaging = await this.resolveMessaging();
     const isIncomingRequest =
-      content.data?.['type'] === 'booking:provider:REQUESTED';
+      content.data?.['type'] === 'booking:provider:REQUESTED' ||
+      content.data?.['type'] === 'provider:EMERGENCY_REQUEST' ||
+      content.data?.['isEmergency'] === 'true';
     const channelId = isIncomingRequest
       ? 'incoming_requests_channel'
       : 'fixnow_default_channel';

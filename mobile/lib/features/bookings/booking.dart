@@ -119,6 +119,7 @@ class BookingPricing {
   final String currency;
 
   String get formattedTotal {
+    if (totalMinor <= 0) return 'Quote On-Site';
     final rupees = totalMinor / 100;
     return '₹${rupees.toStringAsFixed(totalMinor % 100 == 0 ? 0 : 2)}';
   }

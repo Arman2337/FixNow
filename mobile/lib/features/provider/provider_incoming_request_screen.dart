@@ -192,8 +192,7 @@ class _ProviderIncomingRequestScreenState
     final rawVersion = widget.requestData['version'];
     final version = rawVersion is num
         ? rawVersion.toInt()
-        : int.tryParse(rawVersion?.toString() ?? '');
-    if (version == null) return null;
+        : int.tryParse(rawVersion?.toString() ?? '1') ?? 1;
     final rawDistance = widget.requestData['distanceKm'];
     final distanceKm = rawDistance is num
         ? rawDistance.toDouble()
@@ -228,6 +227,7 @@ class _ProviderIncomingRequestScreenState
           context,
           description: description,
           price: price,
+          priceMinor: priceMinor,
           acceptInFlight: acceptInFlight,
         );
       },
@@ -238,8 +238,11 @@ class _ProviderIncomingRequestScreenState
     BuildContext context, {
     required String description,
     required String price,
+    required int priceMinor,
     required bool acceptInFlight,
   }) {
+    final isEmergency = widget.requestData['isEmergency'] == 'true' ||
+        widget.requestData['type'] == 'provider:EMERGENCY_REQUEST';
 
     return Scaffold(
       backgroundColor: AppColors.backgroundSecondary,
@@ -249,15 +252,42 @@ class _ProviderIncomingRequestScreenState
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
-                Icons.notifications_active_rounded,
+              if (isEmergency) ...[
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.error.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppColors.error),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.warning_amber_rounded, size: 16, color: AppColors.error),
+                      SizedBox(width: 6),
+                      Text(
+                        'EMERGENCY SOS DISPATCH',
+                        style: TextStyle(
+                          color: AppColors.error,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+              Icon(
+                isEmergency ? Icons.warning_rounded : Icons.notifications_active_rounded,
                 size: 80,
-                color: AppColors.primary,
+                color: isEmergency ? AppColors.error : AppColors.primary,
               ),
               const SizedBox(height: 24),
-              const Text(
-                'New Request Available',
-                style: TextStyle(
+              Text(
+                isEmergency ? 'Urgent Emergency Request' : 'New Request Available',
+                style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
@@ -282,14 +312,41 @@ class _ProviderIncomingRequestScreenState
                       ),
                     ),
                     const SizedBox(height: 16),
-                    Text(
-                      '₹$price',
-                      style: const TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.primary,
+                    if (priceMinor > 0) ...[
+                      Text(
+                        '₹${(priceMinor / 100).toStringAsFixed(priceMinor % 100 == 0 ? 0 : 2)}',
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w800,
+                          color: isEmergency ? AppColors.error : AppColors.primary,
+                        ),
                       ),
-                    ),
+                      if (isEmergency)
+                        const Padding(
+                          padding: EdgeInsets.only(top: 4),
+                          child: Text(
+                            'Emergency Rapid Assessment Fee',
+                            style: TextStyle(fontSize: 12, color: AppColors.textTertiary),
+                          ),
+                        ),
+                    ] else ...[
+                      Text(
+                        isEmergency ? 'On-Site Diagnostic Quote' : 'Quote On-Site',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                          color: isEmergency ? AppColors.error : AppColors.primary,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        isEmergency
+                            ? 'Parts & repair labor quoted after on-site inspection'
+                            : 'Pricing determined upon inspection',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontSize: 12, color: AppColors.textTertiary),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -322,7 +379,7 @@ class _ProviderIncomingRequestScreenState
                     child: ElevatedButton(
                       onPressed: acceptInFlight ? null : _acceptRequest,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
+                        backgroundColor: isEmergency ? AppColors.error : AppColors.primary,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -337,9 +394,9 @@ class _ProviderIncomingRequestScreenState
                                 strokeWidth: 2,
                               ),
                             )
-                          : const Text(
-                              'Accept',
-                              style: TextStyle(
+                          : Text(
+                              isEmergency ? 'Accept Emergency' : 'Accept',
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,

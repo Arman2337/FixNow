@@ -8,6 +8,7 @@ import { MatchingModule } from '../matching/matching.module';
 import { DomainNotificationsModule } from '../notifications/domain/domain-notifications.module';
 import { TrustModule } from '../trust/trust.module';
 import { OutboxModule } from '../outbox/outbox.module';
+import { RealtimeModule } from '../realtime/realtime.module';
 import { EmergencyDispatch } from './emergency-dispatch.entity';
 import {
   EmergencyAdminController,
@@ -28,6 +29,7 @@ import { EmergencyWaveHandlers } from './emergency-wave.handlers';
     MatchingModule,
     DomainNotificationsModule,
     TrustModule,
+    RealtimeModule,
     // FN-082: the emergency service enqueues waves; the outbox drains them.
     OutboxModule,
   ],

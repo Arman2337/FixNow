@@ -32,30 +32,35 @@ const IDENTITIES = {
     id: '10000000-0000-4000-8000-000000000001',
     email: 'fixnow.acceptance.customer-a@local.test',
     password: 'FixNow-local-customer-a-2026!',
+    phone: '+919000000101',
     role: 'customer',
   },
   providerA: {
     id: '10000000-0000-4000-8000-000000000002',
     email: 'fixnow.acceptance.provider-a@local.test',
     password: 'FixNow-local-provider-a-2026!',
+    phone: '+919000000102',
     role: 'verified_provider',
   },
   providerB: {
     id: '10000000-0000-4000-8000-000000000003',
     email: 'fixnow.acceptance.provider-b@local.test',
     password: 'FixNow-local-provider-b-2026!',
+    phone: '+919000000103',
     role: 'verified_provider',
   },
   reviewer: {
     id: '10000000-0000-4000-8000-000000000004',
     email: 'fixnow.acceptance.reviewer@local.test',
     password: 'FixNow-local-reviewer-2026!',
+    phone: null,
     role: 'provider_reviewer',
   },
   operationsAdmin: {
     id: '10000000-0000-4000-8000-000000000005',
     email: 'fixnow.acceptance.admin@local.test',
     password: 'FixNow-local-admin-2026!',
+    phone: null,
     role: 'operations_administrator',
   },
 };
@@ -93,14 +98,20 @@ async function createIdentity(client, identity) {
     [identity.email],
   );
   if (existing.rowCount > 0) {
+    if (identity.phone) {
+      await client.query(
+        'UPDATE "users" SET "phone" = $2 WHERE "id" = $1 AND "phone" IS NULL',
+        [existing.rows[0].id, identity.phone],
+      );
+    }
     console.log(`skip (exists): ${identity.email}`);
     return;
   }
   const hash = await argon2.hash(identity.password, { type: argon2.argon2id });
   const inserted = await client.query(
-    `INSERT INTO "users" ("id", "status", "status_reason")
-     VALUES ($1, 'active', 'Local acceptance fixture') RETURNING "id"`,
-    [identity.id],
+    `INSERT INTO "users" ("id", "phone", "status", "status_reason")
+     VALUES ($1, $2, 'active', 'Local acceptance fixture') RETURNING "id"`,
+    [identity.id, identity.phone],
   );
   const userId = inserted.rows[0].id;
   const identityRow = await client.query(
@@ -157,6 +168,12 @@ async function main() {
         [provider.id, reviewerId],
       );
     }
+    await client.query(
+      `INSERT INTO "customer_profiles" ("user_id", "display_name")
+       VALUES ($1, 'Acceptance Customer A')
+       ON CONFLICT ("user_id") DO UPDATE SET "display_name" = EXCLUDED."display_name"`,
+      [IDENTITIES.customerA.id],
+    );
     await client.query(
       `INSERT INTO "provider_profiles"
         ("user_id", "display_name", "bio", "service_radius_km", "base_latitude", "base_longitude")

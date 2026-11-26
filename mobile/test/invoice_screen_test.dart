@@ -340,4 +340,45 @@ void main() {
       expect(find.text('Complete payment (local)'), findsNothing);
     },
   );
+
+  testWidgets(
+    'autoStartCheckout opens interactive checkout directly when booking is unpaid',
+    (tester) async {
+      final transport = FakeTransport((request) {
+        return const ApiResponse(
+          statusCode: 200,
+          body: {
+            'id': 'order-auto-1',
+            'gatewayOrderId': 'order_fake_auto_1',
+            'amountMinor': 47082,
+            'currency': 'INR',
+            'status': 'CREATED',
+          },
+        );
+      });
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: InvoiceScreen(
+            repository: InvoiceRepository(
+              transport,
+              accessToken: () async => 'token',
+            ),
+            localPaymentRepository: LocalPaymentRepository(
+              transport,
+              accessToken: () async => 'token',
+            ),
+            localPaymentBypassEnabled: true,
+            autoStartCheckout: true,
+            bookingId: 'booking-auto-1',
+          ),
+        ),
+      );
+      await tester.pumpIdle();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Payment'), findsOneWidget);
+      expect(find.textContaining('Pay ₹'), findsOneWidget);
+    },
+  );
 }

@@ -57,6 +57,7 @@ export const presentBooking = (booking: Booking): BookingContract => ({
   createdAt: booking.createdAt.toISOString(),
   updatedAt: booking.updatedAt.toISOString(),
   version: booking.version,
+  customerName: booking.customerName ?? null,
   customerPhone: booking.customerPhone,
   providerPhone: booking.providerPhone,
   providerName: booking.providerName ?? null,

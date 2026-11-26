@@ -540,6 +540,61 @@ void main() {
   });
 
   testWidgets(
+    'full-screen incoming request dialog closes after accepting even with string version',
+    (tester) async {
+      final transport = _ProviderTransport(verified: true);
+      final controller = ProviderController(
+        ProviderRepository(api: transport, accessToken: () async => 'token'),
+      );
+      await controller.load(verified: true);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData.dark(),
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: Center(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      fullscreenDialog: true,
+                      builder: (_) => ProviderIncomingRequestScreen(
+                        providerController: controller,
+                        requestData: const {
+                          'bookingId': 'request-1',
+                          'serviceCategoryId': 'plumbing',
+                          'description': 'Kitchen sink leak',
+                          'version': '4',
+                          'createdAt': '2026-08-14T10:00:00.000Z',
+                          'distanceKm': '1.2',
+                          'priceMinor': '45000',
+                        },
+                      ),
+                    ),
+                  ),
+                  child: const Text('Underlying Screen'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Underlying Screen'));
+      await tester.pumpAndSettle();
+      expect(find.text('New Request Available'), findsOneWidget);
+
+      await tester.tap(find.text('Accept'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('New Request Available'), findsNothing);
+      expect(find.text('Underlying Screen'), findsOneWidget);
+      expect(controller.jobs.any((j) => j.id == 'request-1'), isTrue);
+    },
+  );
+
+  testWidgets(
     'provider home does not report success after an acceptance conflict',
     (tester) async {
       final transport = _ProviderTransport(

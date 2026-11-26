@@ -660,6 +660,9 @@ describe('BookingsService', () => {
       (providerProfileRepo.find as jest.Mock).mockResolvedValue([
         { userId: PROVIDER_ID, displayName: 'Rajesh Patil' },
       ]);
+      (customerProfileRepo.find as jest.Mock).mockResolvedValue([
+        { userId: CUSTOMER_ID, displayName: 'Meera Nair' },
+      ]);
       (userRepo.find as jest.Mock).mockResolvedValue([
         { id: CUSTOMER_ID, phone: '+919876543210' },
         { id: PROVIDER_ID, phone: '+919876543211' },
@@ -667,6 +670,7 @@ describe('BookingsService', () => {
 
       const result = await service.getBookingForUser(BOOKING_ID, CUSTOMER_ID);
 
+      expect(result.customerName).toBe('Meera Nair');
       expect(result.providerName).toBe('Rajesh Patil');
       expect(result.providerPhone).toBe('+919876543211');
       expect(result.customerPhone).toBe('+919876543210');

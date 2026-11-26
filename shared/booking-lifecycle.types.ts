@@ -170,6 +170,7 @@ export interface BookingContract {
   createdAt: string;
   updatedAt: string;
   version: number;
+  customerName?: string | null;
   customerPhone?: string | null;
   providerPhone?: string | null;
   providerName?: string | null;

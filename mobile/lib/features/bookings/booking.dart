@@ -197,6 +197,7 @@ class CustomerBooking {
     required this.createdAt,
     required this.version,
     this.serviceCategoryName,
+    this.customerName,
     this.customerPhone,
     this.providerPhone,
     this.providerName,
@@ -218,6 +219,7 @@ class CustomerBooking {
   final String description;
   final DateTime createdAt;
   final int version;
+  final String? customerName;
   final String? customerPhone;
   final String? providerPhone;
   final String? providerName;
@@ -234,6 +236,24 @@ class CustomerBooking {
 
   BookingStatusValue get statusValue => BookingStatusValue.parse(status);
 
+  String get customerDisplayName {
+    final trimmed = customerName?.trim();
+    return (trimmed != null && trimmed.isNotEmpty) ? trimmed : 'Customer';
+  }
+
+  String get customerInitials {
+    final trimmed = customerName?.trim() ?? '';
+    if (trimmed.isEmpty) return 'CU';
+    final parts = trimmed
+        .split(RegExp(r'\s+'))
+        .where((p) => p.isNotEmpty)
+        .toList();
+    if (parts.length >= 2) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+    return parts.first.substring(0, parts.first.length >= 2 ? 2 : 1).toUpperCase();
+  }
+
   CustomerBooking copyWith({
     String? id,
     String? serviceCategoryId,
@@ -242,6 +262,7 @@ class CustomerBooking {
     DateTime? createdAt,
     int? version,
     String? serviceCategoryName,
+    String? customerName,
     String? customerPhone,
     String? providerPhone,
     String? providerName,
@@ -263,6 +284,7 @@ class CustomerBooking {
     createdAt: createdAt ?? this.createdAt,
     version: version ?? this.version,
     serviceCategoryName: serviceCategoryName ?? this.serviceCategoryName,
+    customerName: customerName ?? this.customerName,
     customerPhone: customerPhone ?? this.customerPhone,
     providerPhone: providerPhone ?? this.providerPhone,
     providerName: providerName ?? this.providerName,
@@ -285,6 +307,7 @@ class CustomerBooking {
     final status = json['status'];
     final description = json['description'];
     final createdAt = DateTime.tryParse(json['createdAt']?.toString() ?? '');
+    final customerName = json['customerName'] as String?;
     final customerPhone = json['customerPhone'] as String?;
     final providerPhone = json['providerPhone'] as String?;
     final providerName = json['providerName'] as String?;
@@ -313,6 +336,7 @@ class CustomerBooking {
       description: description,
       createdAt: createdAt,
       version: (json['version'] as num?)?.toInt() ?? 1,
+      customerName: customerName,
       customerPhone: customerPhone,
       providerPhone: providerPhone,
       providerName: providerName,
@@ -353,6 +377,7 @@ class CustomerBooking {
     'description': description,
     'createdAt': createdAt.toUtc().toIso8601String(),
     'version': version,
+    if (customerName != null) 'customerName': customerName,
     if (customerPhone != null) 'customerPhone': customerPhone,
     if (providerPhone != null) 'providerPhone': providerPhone,
     if (providerName != null) 'providerName': providerName,

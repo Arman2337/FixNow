@@ -29,6 +29,7 @@ class _ProviderIncomingRequestScreenState
   StreamSubscription<RealtimeProjection>? _subscription;
   bool _isDisposed = false;
   bool _isAccepting = false;
+  bool _isClosing = false;
 
   @override
   void initState() {
@@ -90,41 +91,64 @@ class _ProviderIncomingRequestScreenState
     final realtime = widget.providerController.realtime;
     if (realtime == null) return;
 
-    final bookingId = widget.requestData['bookingId'] as String?;
-    if (bookingId == null) return;
+    final bookingId = widget.requestData['bookingId']?.toString() ??
+        widget.requestData['id']?.toString();
+    if (bookingId == null || bookingId.isEmpty) return;
 
     await realtime.subscribeBooking(bookingId);
     _subscription = realtime.projections.listen((projection) {
-      if (_isDisposed) return;
-      final data = projection.data;
-      final status = data['status'];
-      // If status changes to ASSIGNED (someone else took it) or CANCELLED, dismiss.
-      if (status != 'REQUESTED') {
+      if (_isDisposed || _isClosing) return;
+      final raw = projection.data;
+      final data = (raw['data'] is Map)
+          ? Map<String, Object?>.from(raw['data'] as Map)
+          : raw;
+      final eventBookingId =
+          data['bookingId']?.toString() ?? data['id']?.toString();
+      if (eventBookingId != null &&
+          eventBookingId.toLowerCase() != bookingId.toLowerCase()) {
+        return;
+      }
+      final status = data['status']?.toString();
+      // If status transitions away from REQUESTED (e.g. ASSIGNED/CANCELLED), dismiss.
+      if (status != null && status != 'REQUESTED') {
         _dismissScreen();
       }
     });
   }
 
-  void _dismissScreen() {
-    if (_isDisposed) return;
+  Future<void> _stopAudioSafely() async {
+    try {
+      await _audioPlayer.stop();
+    } catch (_) {}
+  }
+
+  void _closeScreen() {
+    if (_isDisposed || _isClosing) return;
+    _isClosing = true;
     _cancelNativeNotification();
-    if (mounted) {
+    unawaited(_stopAudioSafely());
+    if (mounted && Navigator.of(context).canPop()) {
       Navigator.of(context).pop();
     }
   }
+
+  void _dismissScreen() => _closeScreen();
 
   @override
   void dispose() {
     _isDisposed = true;
     _cancelNativeNotification();
-    _audioPlayer.stop();
-    _audioPlayer.dispose();
+    unawaited(_stopAudioSafely().whenComplete(() {
+      try {
+        _audioPlayer.dispose();
+      } catch (_) {}
+    }));
     _subscription?.cancel();
     super.dispose();
   }
 
   Future<void> _acceptRequest() async {
-    if (_isAccepting) return;
+    if (_isAccepting || _isClosing) return;
     final request = _requestFromData();
     if (request == null) {
       if (mounted) {
@@ -153,28 +177,34 @@ class _ProviderIncomingRequestScreenState
       return;
     }
 
-    await _audioPlayer.stop();
-    if (mounted) Navigator.of(context).pop();
+    _closeScreen();
   }
 
   ProviderRequest? _requestFromData() {
-    final bookingId = widget.requestData['bookingId'] as String? ??
-        widget.requestData['id'] as String?;
-    if (bookingId == null) return null;
+    final bookingId = widget.requestData['bookingId']?.toString() ??
+        widget.requestData['id']?.toString();
+    if (bookingId == null || bookingId.isEmpty) return null;
     final existing = widget.providerController.requests
         .where((request) => request.id == bookingId)
         .firstOrNull;
     if (existing != null) return existing;
 
-    final version = (widget.requestData['version'] as num?)?.toInt();
+    final rawVersion = widget.requestData['version'];
+    final version = rawVersion is num
+        ? rawVersion.toInt()
+        : int.tryParse(rawVersion?.toString() ?? '');
     if (version == null) return null;
+    final rawDistance = widget.requestData['distanceKm'];
+    final distanceKm = rawDistance is num
+        ? rawDistance.toDouble()
+        : double.tryParse(rawDistance?.toString() ?? '') ?? 0;
     return ProviderRequest(
       id: bookingId,
       serviceCategoryId: widget.requestData['serviceCategoryId']?.toString() ?? '',
       description: widget.requestData['description']?.toString() ?? 'Service request',
       createdAt: DateTime.tryParse(widget.requestData['createdAt']?.toString() ?? '') ?? DateTime.now(),
       version: version,
-      distanceKm: (widget.requestData['distanceKm'] as num?)?.toDouble() ?? 0,
+      distanceKm: distanceKm,
       priceMinor: _resolvePriceMinor(),
     );
   }

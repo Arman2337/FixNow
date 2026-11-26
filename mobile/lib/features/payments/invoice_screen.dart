@@ -29,6 +29,7 @@ class InvoiceScreen extends StatefulWidget {
     this.paymentId,
     this.localPaymentRepository,
     this.gatewayCheckout,
+    this.autoStartCheckout = false,
     bool? localPaymentBypassEnabled,
     super.key,
   }) : localPaymentBypassEnabled =
@@ -45,6 +46,10 @@ class InvoiceScreen extends StatefulWidget {
   /// shows; production and non-dev builds simply pass nothing here.
   final LocalPaymentRepository? localPaymentRepository;
   final GatewayCheckoutRepository? gatewayCheckout;
+
+  /// When true on an unpaid booking, opens checkout automatically once ready
+  /// instead of stopping on the "No invoice yet" empty state.
+  final bool autoStartCheckout;
 
   /// Defaults to `LocalPaymentConfig.bypassEnabled`; injectable for tests.
   final bool localPaymentBypassEnabled;
@@ -80,13 +85,26 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
         ),
         onPressed: () => Navigator.of(context).maybePop(),
       ),
-      title: const Text(
-        'Invoice',
-        style: TextStyle(
-          color: AppColors.textPrimary,
-          fontSize: 18,
-          fontWeight: FontWeight.w700,
-        ),
+      title: ListenableBuilder(
+        listenable: _controller,
+        builder: (context, _) {
+          final canPayHere =
+              widget.gatewayCheckout != null ||
+              (widget.localPaymentBypassEnabled &&
+                  widget.localPaymentRepository != null);
+          final title =
+              (_controller.state == InvoiceState.pending && canPayHere)
+              ? 'Payment'
+              : 'Invoice';
+          return Text(
+            title,
+            style: const TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+            ),
+          );
+        },
       ),
       centerTitle: false,
     ),
@@ -111,6 +129,7 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
               repository: widget.localPaymentRepository,
               gatewayCheckout: widget.gatewayCheckout,
               bookingId: widget.bookingId,
+              autoStartCheckout: widget.autoStartCheckout,
               onPaid: _controller.load,
             ),
             InvoiceState.unavailable => Center(
@@ -144,6 +163,7 @@ class _PendingView extends StatefulWidget {
     required this.bookingId,
     required this.onPaid,
     this.gatewayCheckout,
+    this.autoStartCheckout = false,
   });
 
   final bool bypassEnabled;
@@ -151,6 +171,7 @@ class _PendingView extends StatefulWidget {
   final String bookingId;
   final Future<void> Function() onPaid;
   final GatewayCheckoutRepository? gatewayCheckout;
+  final bool autoStartCheckout;
 
   @override
   State<_PendingView> createState() => _PendingViewState();
@@ -158,11 +179,28 @@ class _PendingView extends StatefulWidget {
 
 class _PendingViewState extends State<_PendingView> {
   bool _paying = false;
+  bool _autoStarted = false;
   late final Future<bool>? _gatewayAvailable = widget.bookingId.isEmpty
       ? null
       : widget.gatewayCheckout?.isAvailable();
 
   bool get _canPayLocally => widget.bypassEnabled && widget.repository != null;
+
+  void _maybeAutoStartCheckout({
+    required bool gatewayAvailable,
+    required bool checkingGateway,
+    required bool gatewayError,
+  }) {
+    if (_autoStarted || !widget.autoStartCheckout) return;
+    if (checkingGateway || gatewayError) return;
+    if (!gatewayAvailable && _canPayLocally) {
+      _autoStarted = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || _paying) return;
+        _openCheckoutSheet(context);
+      });
+    }
+  }
 
   Future<void> _payLocally() async {
     setState(() => _paying = true);
@@ -182,14 +220,32 @@ class _PendingViewState extends State<_PendingView> {
   @override
   Widget build(BuildContext context) {
     final available = _gatewayAvailable;
-    if (available == null) return _content(gatewayAvailable: false);
+    if (available == null) {
+      _maybeAutoStartCheckout(
+        gatewayAvailable: false,
+        checkingGateway: false,
+        gatewayError: false,
+      );
+      return _content(gatewayAvailable: false);
+    }
     return FutureBuilder<bool>(
       future: available,
-      builder: (context, snapshot) => _content(
-        gatewayAvailable: snapshot.data == true,
-        checkingGateway: snapshot.connectionState != ConnectionState.done,
-        gatewayError: snapshot.hasError,
-      ),
+      builder: (context, snapshot) {
+        final gatewayAvailable = snapshot.data == true;
+        final checkingGateway =
+            snapshot.connectionState != ConnectionState.done;
+        final gatewayError = snapshot.hasError;
+        _maybeAutoStartCheckout(
+          gatewayAvailable: gatewayAvailable,
+          checkingGateway: checkingGateway,
+          gatewayError: gatewayError,
+        );
+        return _content(
+          gatewayAvailable: gatewayAvailable,
+          checkingGateway: checkingGateway,
+          gatewayError: gatewayError,
+        );
+      },
     );
   }
 

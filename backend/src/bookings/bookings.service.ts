@@ -1819,9 +1819,9 @@ export class BookingsService {
     );
 
     const customerProfiles =
-      providerIds.size > 0
+      userIds.size > 0
         ? await this.dataSource.getRepository(CustomerProfileEntity).find({
-            where: { userId: In([...providerIds]) },
+            where: { userId: In([...userIds]) },
           })
         : [];
     const customerProfileMap = new Map(
@@ -1904,6 +1904,7 @@ export class BookingsService {
       b.serviceCategoryName = categoryNames.get(b.serviceCategoryId) ?? null;
       b.customerPhone = phoneMap.get(b.customerId) ?? null;
       if (b.providerId) {
+        b.customerName = customerProfileMap.get(b.customerId) ?? null;
         b.providerPhone = phoneMap.get(b.providerId) ?? null;
         b.providerName =
           profileMap.get(b.providerId) ||

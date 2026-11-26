@@ -30,6 +30,7 @@ export class Booking {
   providerId: string | null;
 
   serviceCategoryName?: string | null;
+  customerName?: string | null;
   customerPhone?: string | null;
   providerPhone?: string | null;
   providerName?: string | null;

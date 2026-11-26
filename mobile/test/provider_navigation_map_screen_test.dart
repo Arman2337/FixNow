@@ -200,7 +200,9 @@ void main() {
 
     testWidgets('ProviderJobsScreen renders Route Map and Navigate buttons for active jobs',
         (tester) async {
-      final job = testJob('EN_ROUTE');
+      final job = testJob('EN_ROUTE').copyWith(
+        customerName: 'Acceptance Customer A',
+      );
       controller.jobs = [job];
 
       await tester.pumpWidget(
@@ -213,6 +215,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      expect(find.text('Acceptance Customer A'), findsOneWidget);
+      expect(find.text('AC'), findsOneWidget);
+      expect(find.text('Available upon arrival'), findsNothing);
+      expect(find.text('Customer details'), findsNothing);
       expect(find.text('Route Map'), findsOneWidget);
       expect(find.text('Navigate'), findsOneWidget);
 

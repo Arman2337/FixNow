@@ -183,6 +183,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
   _AuthEntryStep _authEntryStep = _AuthEntryStep.welcome;
   bool _registrationIntent = false;
   AccountRole _selectedRole = AccountRole.customer;
+  final Set<String> _openIncomingRequestIds = <String>{};
 
   @override
   void initState() {
@@ -201,15 +202,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
     _foregroundPushSub = _pushGateway.foregroundMessages().listen((message) {
       if (message.data != null &&
           message.data!['type'] == 'booking:provider:REQUESTED') {
-        _navigatorKey.currentState?.push(
-          MaterialPageRoute(
-            fullscreenDialog: true,
-            builder: (context) => ProviderIncomingRequestScreen(
-              requestData: message.data!,
-              providerController: _provider,
-            ),
-          ),
-        );
+        _presentIncomingRequest(message.data!);
       } else {
         _messengerKey.currentState?.showSnackBar(
           SnackBar(content: Text('${message.title} — ${message.body}')),
@@ -235,15 +228,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
     });
 
     _provider.incomingRequests.listen((requestData) {
-      _navigatorKey.currentState?.push(
-        MaterialPageRoute(
-          fullscreenDialog: true,
-          builder: (context) => ProviderIncomingRequestScreen(
-            requestData: requestData,
-            providerController: _provider,
-          ),
-        ),
-      );
+      _presentIncomingRequest(requestData);
     });
 
     // Native full-screen intent bridge
@@ -252,15 +237,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
       channel.setMethodCallHandler((call) async {
         if (call.method == 'onIncomingRequest') {
           final data = Map<String, dynamic>.from(call.arguments as Map);
-          _navigatorKey.currentState?.push(
-            MaterialPageRoute(
-              fullscreenDialog: true,
-              builder: (context) => ProviderIncomingRequestScreen(
-                requestData: data,
-                providerController: _provider,
-              ),
-            ),
-          );
+          _presentIncomingRequest(data);
         }
       });
 
@@ -269,15 +246,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
           .then((initialData) {
         if (initialData != null && initialData.isNotEmpty) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            _navigatorKey.currentState?.push(
-              MaterialPageRoute(
-                fullscreenDialog: true,
-                builder: (context) => ProviderIncomingRequestScreen(
-                  requestData: Map<String, dynamic>.from(initialData),
-                  providerController: _provider,
-                ),
-              ),
-            );
+            _presentIncomingRequest(Map<String, dynamic>.from(initialData));
           });
         }
       }).catchError((_) {});
@@ -286,19 +255,48 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
     _bookings.acceptedBooking.addListener(_showAcceptCelebration);
   }
 
+  void _presentIncomingRequest(Map<String, dynamic> data) {
+    if (!mounted) return;
+    if (_auth.isAuthenticated && _auth.session?.role == AccountRole.customer) {
+      return;
+    }
+    final rawId = (data['bookingId'] ?? data['id'])?.toString().trim();
+    final normalizedId =
+        (rawId != null && rawId.isNotEmpty) ? rawId.toLowerCase() : null;
+    if (normalizedId != null) {
+      if (_openIncomingRequestIds.contains(normalizedId)) return;
+      if (_provider.jobs.any((j) => j.id.toLowerCase() == normalizedId)) {
+        return;
+      }
+      _openIncomingRequestIds.add(normalizedId);
+    }
+    final nav = _navigatorKey.currentState;
+    if (nav == null) {
+      if (normalizedId != null) _openIncomingRequestIds.remove(normalizedId);
+      return;
+    }
+    nav
+        .push(
+          MaterialPageRoute(
+            fullscreenDialog: true,
+            builder: (context) => ProviderIncomingRequestScreen(
+              requestData: data,
+              providerController: _provider,
+            ),
+          ),
+        )
+        .whenComplete(() {
+          if (normalizedId != null) {
+            _openIncomingRequestIds.remove(normalizedId);
+          }
+        });
+  }
+
   void _handlePushInteraction(ForegroundPushMessage message) {
     if (message.data == null) return;
     final type = message.data!['type'];
     if (type == 'booking:provider:REQUESTED') {
-      _navigatorKey.currentState?.push(
-        MaterialPageRoute(
-          fullscreenDialog: true,
-          builder: (context) => ProviderIncomingRequestScreen(
-            requestData: message.data!,
-            providerController: _provider,
-          ),
-        ),
-      );
+      _presentIncomingRequest(message.data!);
     } else if (type != null && (type as String).startsWith('booking:')) {
       // General booking update - open booking tracking screen
       final bookingId = message.data!['bookingId'];
@@ -1385,6 +1383,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
                   ),
                   localPaymentBypassEnabled:
                       AppEnvironment.current == AppEnvironment.development,
+                  autoStartCheckout: true,
                   bookingId: currentBooking.id,
                 ),
               ),
@@ -1455,6 +1454,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
                   ),
                   localPaymentBypassEnabled:
                       AppEnvironment.current == AppEnvironment.development,
+                  autoStartCheckout: true,
                   bookingId: currentBooking.id,
                 ),
               ),

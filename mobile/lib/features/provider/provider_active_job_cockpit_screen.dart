@@ -203,7 +203,7 @@ class _ProviderActiveJobCockpitScreenState
             realtimeClient: widget.controller.realtime,
             isProvider: true,
           ),
-          providerName: 'Customer',
+          providerName: job.customerDisplayName,
           onCallPressed: () => _openCall(context, job),
         ),
       ),
@@ -214,7 +214,7 @@ class _ProviderActiveJobCockpitScreenState
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => CallScreen(
-          oppositePartyName: 'Customer',
+          oppositePartyName: job.customerDisplayName,
           oppositePartyRole: 'Customer',
           phoneNumber: job.customerPhone,
           bookingId: job.id,
@@ -560,9 +560,9 @@ class _ProviderActiveJobCockpitScreenState
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
-                                  'Customer',
-                                  style: TextStyle(
+                                Text(
+                                  job.customerDisplayName,
+                                  style: const TextStyle(
                                     color: AppColors.textPrimary,
                                     fontSize: 13,
                                     fontWeight: FontWeight.w700,

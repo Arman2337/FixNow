@@ -1044,7 +1044,7 @@ final CustomerBooking job;
                 ),
                 const SizedBox(height: AppSpacing.md),
 
-                // Customer Cardlet (Removed fake VIP info)
+                // Customer Cardlet
                 Container(
                   padding: const EdgeInsets.all(AppSpacing.sm),
                   decoration: BoxDecoration(
@@ -1064,10 +1064,10 @@ final CustomerBooking job;
                                 color: AppColors.primarySoft,
                                 borderRadius: BorderRadius.circular(17),
                               ),
-                              child: const Center(
+                              child: Center(
                                 child: Text(
-                                  'CU',
-                                  style: TextStyle(
+                                  job.customerInitials,
+                                  style: const TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w800,
                                     color: AppColors.primary,
@@ -1077,29 +1077,15 @@ final CustomerBooking job;
                             ),
                             const SizedBox(width: 8),
                             Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Customer details',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.textPrimary,
-                                    ),
-                                  ),
-                                  const Text(
-                                    'Available upon arrival',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: AppColors.textSecondary,
-                                    ),
-                                  ),
-                                ],
+                              child: Text(
+                                job.customerDisplayName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textPrimary,
+                                ),
                               ),
                             ),
                           ],
@@ -1344,7 +1330,7 @@ if (job.status == 'IN_PROGRESS') {
                                   realtimeClient: controller.realtime,
                                   isProvider: true,
                                 ),
-                                providerName: 'Customer',
+                                providerName: job.customerDisplayName,
                               ),
                             ),
                           ),
@@ -1363,7 +1349,7 @@ if (job.status == 'IN_PROGRESS') {
                           onPressed: () {
                             Navigator.of(context).push(MaterialPageRoute<void>(
         builder: (_) => CallScreen(
-          oppositePartyName: 'Customer',
+          oppositePartyName: job.customerDisplayName,
           oppositePartyRole: 'Customer',
           phoneNumber: job.customerPhone,
           bookingId: job.id,

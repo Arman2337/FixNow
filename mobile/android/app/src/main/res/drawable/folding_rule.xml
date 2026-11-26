@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="180" android:viewportHeight="180">
+    <!-- Keep the ruler within the adaptive launcher's central safe zone. -->
+    <group android:pivotX="90" android:pivotY="90"
+        android:scaleX="0.68" android:scaleY="0.68" android:rotation="6">
+        <path android:fillColor="#85F8C4"
+            android:pathData="M57,27h3a10,10 0,0 1,10 10v111a10,10 0,0 1,-10 10h-3a10,10 0,0 1,-10 -10V37a10,10 0,0 1,10 -10z"/>
+        <path android:strokeColor="@color/fixnow_emerald" android:strokeWidth="2"
+            android:pathData="M47,63h7m-7,9h4m-4,36h7m-7,9h4m-4,9h7m-7,9h4"/>
+        <path android:fillColor="#FFFFFF"
+            android:pathData="M57,27h78a10,10 0,0 1,10 10v3a10,10 0,0 1,-10 10H57a10,10 0,0 1,-10 -10v-3a10,10 0,0 1,10 -10z"/>
+        <path android:strokeColor="#44806D" android:strokeWidth="2"
+            android:pathData="M82,27v8m9,-8v5m9,-5v8m9,-8v5m9,-5v8m9,-8v5"/>
+        <path android:fillColor="#C7FFE5"
+            android:pathData="M57,78h56a10,10 0,0 1,10 10v1a10,10 0,0 1,-10 10H57a10,10 0,0 1,-10 -10v-1a10,10 0,0 1,10 -10z"/>
+        <path android:strokeColor="#44806D" android:strokeWidth="2"
+            android:pathData="M83,78v7m9,-7v4m9,-4v7m9,-7v4"/>
+        <path android:fillColor="@color/fixnow_emerald"
+            android:pathData="M54,38a4,4 0,1 0,8 0a4,4 0,1 0,-8 0zM54,88a4,4 0,1 0,8 0a4,4 0,1 0,-8 0z"/>
+    </group>
+</vector>

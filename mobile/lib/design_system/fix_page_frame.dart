@@ -1,5 +1,6 @@
 import 'package:fixnow_mobile/design_system/app_colors.dart';
 import 'package:fixnow_mobile/design_system/app_spacing.dart';
+import 'package:fixnow_mobile/design_system/folding_rule_opening.dart';
 import 'package:flutter/material.dart';
 
 class FixPageFrame extends StatelessWidget {
@@ -72,20 +73,7 @@ class FixBrandMark extends StatelessWidget {
     spacing: AppSpacing.md,
     runSpacing: AppSpacing.sm,
     children: [
-      Container(
-        width: compact ? 40 : 52,
-        height: compact ? 40 : 52,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: AppColors.primary,
-          borderRadius: BorderRadius.circular(compact ? 12 : 16),
-        ),
-        child: Icon(
-          Icons.home_repair_service_rounded,
-          color: AppColors.onPrimary,
-          size: compact ? 22 : 28,
-        ),
-      ),
+      FoldingRuleTile(size: compact ? 40 : 52, radius: compact ? 12 : 16),
       Text(
         'FixNow',
         style:

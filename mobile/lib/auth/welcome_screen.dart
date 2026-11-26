@@ -5,6 +5,7 @@ import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/app_typography.dart';
 import 'package:fixnow_mobile/design_system/fix_motion.dart';
 import 'package:fixnow_mobile/design_system/fix_page_frame.dart';
+import 'package:fixnow_mobile/design_system/folding_rule_opening.dart';
 import 'package:flutter/material.dart';
 
 class WelcomeScreen extends StatefulWidget {
@@ -115,29 +116,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       child: Center(
                         child: Column(
                           children: [
-                            Container(
-                              width: 80,
-                              height: 80,
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: AppColors.surfaceContainerLowest,
-                                borderRadius: BorderRadius.circular(16),
-                                boxShadow: const [
-                                  BoxShadow(
-                                    color: Color(0x1A000000),
-                                    blurRadius: 12,
-                                    offset: Offset(0, 4),
-                                  ),
-                                ],
-                              ),
-                              child: const Center(
-                                child: Icon(
-                                  Icons.home_repair_service_rounded,
-                                  size: 40,
-                                  color: AppColors.primary,
-                                ),
-                              ),
-                            ),
+                            const FoldingRuleTile(size: 80, radius: 16),
                             const SizedBox(height: AppSpacing.xs),
                             Row(
                               mainAxisSize: MainAxisSize.min,

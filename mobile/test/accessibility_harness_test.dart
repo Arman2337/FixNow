@@ -11,6 +11,7 @@ import 'support/prototypes/fix_eta_ring.dart';
 import 'package:fixnow_mobile/design_system/fix_saved_data_banner.dart';
 import 'package:fixnow_mobile/design_system/fix_state_views.dart';
 import 'package:fixnow_mobile/design_system/fix_status_chip.dart';
+import 'package:fixnow_mobile/design_system/folding_rule_opening.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -339,6 +340,39 @@ void main() {
         await tester.expectMinimumTouchTargets(screen: name);
       });
     }
+
+    testWidgets('launch overlay exposes only its accessible Skip action', (
+      tester,
+    ) async {
+      final semantics = tester.ensureSemantics();
+      addTearDown(semantics.dispose);
+      var skipped = false;
+      await tester.pumpForAccessibility(
+        Scaffold(
+          body: Stack(
+            fit: StackFit.expand,
+            children: [
+              TextButton(onPressed: _noop, child: const Text('Open booking')),
+              // Freeze the visible frame while the harness settles and inspects
+              // the transient overlay at its standard 200% text scale.
+              TickerMode(
+                enabled: false,
+                child: FoldingRuleOpening(onFinished: () => skipped = true),
+              ),
+            ],
+          ),
+        ),
+      );
+
+      expect(find.bySemanticsLabel('Open booking'), findsNothing);
+      final skip = find.bySemanticsLabel('Skip FixNow opening');
+      expect(skip, findsOneWidget);
+      tester.expectRendersWithoutOverflow(component: 'FoldingRuleOpening');
+      await tester.expectActionsAreLabelled(screen: 'FoldingRuleOpening');
+      await tester.expectMinimumTouchTargets(screen: 'FoldingRuleOpening');
+      await tester.tap(skip);
+      expect(skipped, isTrue);
+    });
 
     testWidgets('reading order follows the visual order of a form', (
       tester,

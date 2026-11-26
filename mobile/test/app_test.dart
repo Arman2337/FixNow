@@ -5,12 +5,37 @@ import 'package:fixnow_mobile/auth/auth_session_store.dart';
 import 'package:fixnow_mobile/config/app_environment.dart';
 import 'package:fixnow_mobile/data/last_good_cache.dart';
 import 'package:fixnow_mobile/design_system/app_colors.dart';
+import 'package:fixnow_mobile/design_system/folding_rule_opening.dart';
 import 'package:fixnow_mobile/features/location/location_consent_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'pump_idle.dart';
 
 void main() {
+  testWidgets(
+    'launch prepares the session underneath and only plays once',
+    (tester) async {
+      await tester.pumpWidget(_testApp(AppEnvironment.development));
+      await tester.pump();
+      expect(find.byType(FoldingRuleOpening), findsOneWidget);
+      expect(find.text('Bookings'), findsOneWidget);
+
+      await tester.tap(find.text('Skip'));
+      await tester.pumpIdle();
+      expect(find.byType(FoldingRuleOpening), findsNothing);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pumpIdle();
+      expect(find.byType(FoldingRuleOpening), findsNothing);
+      expect(find.text('Bookings'), findsOneWidget);
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.android),
+  );
+
   testWidgets('renders the customer shell with design tokens', (tester) async {
     await tester.pumpWidget(_testApp(AppEnvironment.development));
     await tester.pumpIdle();

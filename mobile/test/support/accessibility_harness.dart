@@ -460,6 +460,7 @@ class _ActionableNode {
 /// The gate asserts the file existence of every entry, so a deleted or renamed
 /// component cannot leave a permanent phantom entry behind.
 const Map<String, AccessibilityCoverage> accessibilityCoverage = {
+  'folding_rule_opening.dart': AccessibilityCoverage.audited(),
   'fix_button.dart': AccessibilityCoverage.audited(),
   'fix_card.dart': AccessibilityCoverage.audited(),
   'fix_status_chip.dart': AccessibilityCoverage.audited(),

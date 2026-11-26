@@ -23,6 +23,7 @@ import 'package:fixnow_mobile/auth/welcome_screen.dart';
 import 'package:fixnow_mobile/auth/verification_screen.dart';
 import 'package:fixnow_mobile/config/app_environment.dart';
 import 'package:fixnow_mobile/design_system/app_theme.dart';
+import 'package:fixnow_mobile/design_system/folding_rule_opening.dart';
 import 'package:fixnow_mobile/design_system/fix_active_booking_island.dart';
 import 'package:fixnow_mobile/design_system/fix_banner.dart';
 import 'package:fixnow_mobile/features/location/location_consent_controller.dart';
@@ -178,6 +179,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
   );
   late final NavigatorObserver _routeObserver;
   bool _routeRestoreInProgress = false;
+  late bool _showOpening;
   StreamSubscription<ForegroundPushMessage>? _foregroundPushSub;
   StreamSubscription<ForegroundPushMessage>? _backgroundPushSub;
   _AuthEntryStep _authEntryStep = _AuthEntryStep.welcome;
@@ -192,16 +194,25 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
     _pendingGroupInvite = groupInviteToken(
       WidgetsBinding.instance.platformDispatcher.defaultRouteName,
     );
+    _showOpening =
+        (defaultTargetPlatform == TargetPlatform.android ||
+            defaultTargetPlatform == TargetPlatform.iOS) &&
+        WidgetsBinding.instance.platformDispatcher.defaultRouteName == '/';
     _routeObserver = _AppRouteRestorationObserver(
       _routeStore,
       () => _auth.session?.userId,
     );
     _initializeData();
+    if (_showOpening) {
+      _bookings.addListener(_checkOpeningBooking);
+      _provider.addListener(_checkOpeningBooking);
+    }
 
     // Foreground messages (banner inside app)
     _foregroundPushSub = _pushGateway.foregroundMessages().listen((message) {
       final type = message.data?['type'];
-      final isEmergency = message.data?['isEmergency'] == 'true' ||
+      final isEmergency =
+          message.data?['isEmergency'] == 'true' ||
           type == 'provider:EMERGENCY_REQUEST';
       if (message.data != null &&
           (type == 'booking:provider:REQUESTED' || isEmergency)) {
@@ -247,12 +258,13 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
       channel
           .invokeMethod<Map<dynamic, dynamic>>('getInitialIncomingRequest')
           .then((initialData) {
-        if (initialData != null && initialData.isNotEmpty) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            _presentIncomingRequest(Map<String, dynamic>.from(initialData));
-          });
-        }
-      }).catchError((_) {});
+            if (initialData != null && initialData.isNotEmpty) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                _presentIncomingRequest(Map<String, dynamic>.from(initialData));
+              });
+            }
+          })
+          .catchError((_) {});
     }
 
     _bookings.acceptedBooking.addListener(_showAcceptCelebration);
@@ -264,8 +276,9 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
       return;
     }
     final rawId = (data['bookingId'] ?? data['id'])?.toString().trim();
-    final normalizedId =
-        (rawId != null && rawId.isNotEmpty) ? rawId.toLowerCase() : null;
+    final normalizedId = (rawId != null && rawId.isNotEmpty)
+        ? rawId.toLowerCase()
+        : null;
     if (normalizedId != null) {
       if (_openIncomingRequestIds.contains(normalizedId)) return;
       if (_provider.jobs.any((j) => j.id.toLowerCase() == normalizedId)) {
@@ -278,6 +291,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
       if (normalizedId != null) _openIncomingRequestIds.remove(normalizedId);
       return;
     }
+    _finishOpening();
     nav
         .push(
           MaterialPageRoute(
@@ -296,9 +310,12 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
   }
 
   void _handlePushInteraction(ForegroundPushMessage message) {
+    if (!mounted) return;
+    _finishOpening();
     if (message.data == null) return;
     final type = message.data!['type'];
-    final isEmergency = message.data!['isEmergency'] == 'true' ||
+    final isEmergency =
+        message.data!['isEmergency'] == 'true' ||
         type == 'provider:EMERGENCY_REQUEST';
     if (type == 'booking:provider:REQUESTED' || isEmergency) {
       _presentIncomingRequest(message.data!);
@@ -500,9 +517,12 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
   }
 
   @override
-  Future<bool> didPushRouteInformation(RouteInformation routeInformation) async {
+  Future<bool> didPushRouteInformation(
+    RouteInformation routeInformation,
+  ) async {
     final token = groupInviteToken(routeInformation.uri.toString());
     if (token == null) return false;
+    _finishOpening();
     _pendingGroupInvite = token;
     _scheduleGroupInvite();
     return true;
@@ -568,7 +588,27 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
     }
   }
 
+  void _checkOpeningBooking() {
+    if (!_showOpening ||
+        (_bookings.bookings.firstActive == null &&
+            _provider.jobs.firstActive == null)) {
+      return;
+    }
+    // Controllers can notify while a descendant is building.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _finishOpening());
+    WidgetsBinding.instance.ensureVisualUpdate();
+  }
+
+  void _finishOpening() {
+    if (!mounted || !_showOpening) return;
+    _bookings.removeListener(_checkOpeningBooking);
+    _provider.removeListener(_checkOpeningBooking);
+    setState(() => _showOpening = false);
+    unawaited(_requestNotificationPermission());
+  }
+
   Future<void> _requestNotificationPermission() async {
+    if (_showOpening) return;
     try {
       final status = await Permission.notification.status;
       if (!status.isGranted) {
@@ -745,6 +785,8 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
       return;
     }
 
+    if (!mounted) return;
+    _finishOpening();
     _routeRestoreInProgress = true;
     try {
       if (savedRoute.name == 'notifications') {
@@ -906,399 +948,400 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
       scaffoldMessengerKey: _messengerKey,
       theme: AppTheme.light,
       themeMode: ThemeMode.light,
-      home: ListenableBuilder(
-        listenable: _auth,
-        builder: (context, _) {
-          if (_auth.status == AuthStatus.initial ||
-              _auth.status == AuthStatus.loading && _auth.session == null) {
-            return const Scaffold(
-              body: Center(
-                child: CircularProgressIndicator(
-                  semanticsLabel: 'Restoring session',
-                ),
+      home: Stack(
+        fit: StackFit.expand,
+        children: [
+          ExcludeFocus(
+            excluding: _showOpening,
+            child: ListenableBuilder(
+              listenable: _auth,
+              builder: _buildSessionHome,
+            ),
+          ),
+          if (_showOpening)
+            Positioned.fill(
+              child: FoldingRuleOpening(onFinished: _finishOpening),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSessionHome(BuildContext context, Widget? _) {
+    if (_auth.status == AuthStatus.initial ||
+        _auth.status == AuthStatus.loading && _auth.session == null) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(semanticsLabel: 'Restoring session'),
+        ),
+      );
+      // MOB-005: deliberately still a spinner. This is not content - it is
+      // the app deciding whether it has a session at all, and there is no
+      // shape to reserve because nothing has been decided yet. A skeleton
+      // here would imply a bookings list that may never be shown.
+    }
+    if (_auth.status == AuthStatus.offline && _auth.session != null) {
+      return Scaffold(
+        body: SafeArea(
+          child: Column(
+            children: [
+              FixOfflineBanner(
+                message:
+                    _auth.errorMessage ??
+                    'You appear to be offline. Please check your connection.',
               ),
-            );
-            // MOB-005: deliberately still a spinner. This is not content - it is
-            // the app deciding whether it has a session at all, and there is no
-            // shape to reserve because nothing has been decided yet. A skeleton
-            // here would imply a bookings list that may never be shown.
-          }
-          if (_auth.status == AuthStatus.offline && _auth.session != null) {
-            return Scaffold(
-              body: SafeArea(
-                child: Column(
-                  children: [
-                    FixOfflineBanner(
-                      message:
-                          _auth.errorMessage ??
-                          'You appear to be offline. Please check your connection.',
-                    ),
-                    Expanded(
-                      child: Center(
-                        child: FixErrorState(
-                          title: 'Connection Offline',
-                          message:
-                              'Unable to verify your session while offline. Check your internet connection and try again.',
-                          retryLabel: 'Retry Connection',
-                          onRetry: () => _auth.restore(),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }
-          if (_auth.status == AuthStatus.failure && _auth.session != null) {
-            return Scaffold(
-              body: SafeArea(
+              Expanded(
                 child: Center(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        FixErrorState(
-                          title: 'Authentication Error',
-                          message:
-                              _auth.errorMessage ??
-                              'Something went wrong restoring your session.',
-                          retryLabel: 'Retry',
-                          onRetry: () => _auth.restore(),
-                        ),
-                        const SizedBox(height: 16),
-                        TextButton(
-                          onPressed: () => _auth.logout(),
-                          child: const Text('Log In Again'),
-                        ),
-                      ],
-                    ),
+                  child: FixErrorState(
+                    title: 'Connection Offline',
+                    message:
+                        'Unable to verify your session while offline. Check your internet connection and try again.',
+                    retryLabel: 'Retry Connection',
+                    onRetry: () => _auth.restore(),
                   ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    if (_auth.status == AuthStatus.failure && _auth.session != null) {
+      return Scaffold(
+        body: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  FixErrorState(
+                    title: 'Authentication Error',
+                    message:
+                        _auth.errorMessage ??
+                        'Something went wrong restoring your session.',
+                    retryLabel: 'Retry',
+                    onRetry: () => _auth.restore(),
+                  ),
+                  const SizedBox(height: 16),
+                  TextButton(
+                    onPressed: () => _auth.logout(),
+                    child: const Text('Log In Again'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+    if (_auth.status == AuthStatus.verificationRequired) {
+      return VerificationScreen(controller: _auth);
+    }
+    if (!_auth.isAuthenticated) {
+      final entry = switch (_authEntryStep) {
+        _AuthEntryStep.welcome => WelcomeScreen(
+          onContinue: (role, isRegister) => setState(() {
+            _selectedRole = role;
+            _registrationIntent = isRegister;
+            _authEntryStep = _AuthEntryStep.form;
+          }),
+        ),
+        _AuthEntryStep.form => AuthScreen(
+          controller: _auth,
+          role: _selectedRole,
+          initialRegister: _registrationIntent,
+          onBack: () => setState(() => _authEntryStep = _AuthEntryStep.welcome),
+        ),
+      };
+      // The welcome -> form hand-over is widget state, not a route, so
+      // the navigator has nothing beneath it: hardware Back on the Email
+      // Login screen bubbled up to the OS and closed the app (QA c13).
+      // Claim the gesture while the form is up and step back to role
+      // select instead.
+      if (_authEntryStep == _AuthEntryStep.form) {
+        return PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, _) {
+            if (didPop) return;
+            setState(() => _authEntryStep = _AuthEntryStep.welcome);
+          },
+          child: entry,
+        );
+      }
+      return entry;
+    }
+    if (_auth.session?.role != AccountRole.customer) {
+      if (_provider.state == ProviderLoadState.loading &&
+          _provider.application == null) {
+        _provider.load(verified: true);
+      }
+      return AppShell(
+        statusBanner: _realtimeStatusBanner(),
+        controller: _providerShellController,
+        activeBookingIsland: _providerActiveBookingIsland(),
+        role: AppShellRole.provider,
+        providerHome: ProviderHomeScreen(
+          controller: _provider,
+          onGroupQuotes: () => _openGroupServices(provider: true),
+          chatRepository: _chatRepository,
+          onTechDesk: () {
+            final nav = _navigatorKey.currentState;
+            if (nav == null) return;
+            nav.push(
+              MaterialPageRoute(
+                builder: (_) => CustomerHelpScreen(
+                  controller: _complaints,
+                  isProvider: true,
                 ),
               ),
             );
-          }
-          if (_auth.status == AuthStatus.verificationRequired) {
-            return VerificationScreen(controller: _auth);
-          }
-          if (!_auth.isAuthenticated) {
-            final entry = switch (_authEntryStep) {
-              _AuthEntryStep.welcome => WelcomeScreen(
-                onContinue: (role, isRegister) => setState(() {
-                  _selectedRole = role;
-                  _registrationIntent = isRegister;
-                  _authEntryStep = _AuthEntryStep.form;
-                }),
-              ),
-              _AuthEntryStep.form => AuthScreen(
-                controller: _auth,
-                role: _selectedRole,
-                initialRegister: _registrationIntent,
-                onBack: () =>
-                    setState(() => _authEntryStep = _AuthEntryStep.welcome),
-              ),
-            };
-            // The welcome -> form hand-over is widget state, not a route, so
-            // the navigator has nothing beneath it: hardware Back on the Email
-            // Login screen bubbled up to the OS and closed the app (QA c13).
-            // Claim the gesture while the form is up and step back to role
-            // select instead.
-            if (_authEntryStep == _AuthEntryStep.form) {
-              return PopScope(
-                canPop: false,
-                onPopInvokedWithResult: (didPop, _) {
-                  if (didPop) return;
-                  setState(() => _authEntryStep = _AuthEntryStep.welcome);
-                },
-                child: entry,
-              );
+          },
+          notificationController: _notifications,
+          onOpenBooking: (bookingId) {
+            unawaited(_openProviderBookingById(bookingId));
+          },
+          onOpenInvoice: (_) => _openProviderEarnings(),
+          loadAcceptTime: () async {
+            try {
+              return await _provider.repository.acceptTime();
+            } catch (_) {
+              // An unavailable signal is hidden, never faked.
+              return null;
             }
-            return entry;
-          }
-          if (_auth.session?.role != AccountRole.customer) {
-            if (_provider.state == ProviderLoadState.loading &&
-                _provider.application == null) {
-              _provider.load(verified: true);
-            }
-            return AppShell(
-              statusBanner: _realtimeStatusBanner(),
-              controller: _providerShellController,
-              activeBookingIsland: _providerActiveBookingIsland(),
-              role: AppShellRole.provider,
-              providerHome: ProviderHomeScreen(
-                controller: _provider,
-                onGroupQuotes: () => _openGroupServices(provider: true),
-                chatRepository: _chatRepository,
-                onTechDesk: () {
-                  final nav = _navigatorKey.currentState;
-                  if (nav == null) return;
-                  nav.push(
-                    MaterialPageRoute(
-                      builder: (_) => CustomerHelpScreen(
-                        controller: _complaints,
-                        isProvider: true,
-                      ),
-                    ),
-                  );
-                },
-                notificationController: _notifications,
-                onOpenBooking: (bookingId) {
-                  unawaited(_openProviderBookingById(bookingId));
-                },
-                onOpenInvoice: (_) => _openProviderEarnings(),
-                loadAcceptTime: () async {
-                  try {
-                    return await _provider.repository.acceptTime();
-                  } catch (_) {
-                    // An unavailable signal is hidden, never faked.
-                    return null;
-                  }
-                },
-                onViewEarnings: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => ProviderEarningsScreen(
-                      repository: ProviderEarningsRepository(
-                        _api,
-                        accessToken: _auth.validAccessToken,
-                      ),
-                    ),
-                  ),
+          },
+          onViewEarnings: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => ProviderEarningsScreen(
+                repository: ProviderEarningsRepository(
+                  _api,
+                  accessToken: _auth.validAccessToken,
                 ),
               ),
-              providerJobs: ProviderJobsScreen(
-                controller: _provider,
-                chatRepository: _chatRepository,
-                showHistory: false,
-              ),
-              providerHistory: ProviderJobsScreen(
-                controller: _provider,
-                chatRepository: _chatRepository,
-                showHistory: true,
-              ),
-              providerProfile: ProviderProfileScreen(
-                controller: _provider,
-                pushController: _push,
-                notificationController: _notifications,
-                onViewEarnings: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => ProviderEarningsScreen(
-                      repository: ProviderEarningsRepository(
-                        _api,
-                        accessToken: _auth.validAccessToken,
-                      ),
-                    ),
-                  ),
+            ),
+          ),
+        ),
+        providerJobs: ProviderJobsScreen(
+          controller: _provider,
+          chatRepository: _chatRepository,
+          showHistory: false,
+        ),
+        providerHistory: ProviderJobsScreen(
+          controller: _provider,
+          chatRepository: _chatRepository,
+          showHistory: true,
+        ),
+        providerProfile: ProviderProfileScreen(
+          controller: _provider,
+          pushController: _push,
+          notificationController: _notifications,
+          onViewEarnings: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => ProviderEarningsScreen(
+                repository: ProviderEarningsRepository(
+                  _api,
+                  accessToken: _auth.validAccessToken,
                 ),
-                onSupportCases: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => CustomerHelpScreen(
-                        controller: _complaints,
-                        isProvider: true,
-                      ),
-                    ),
-                  );
-                },
-                onSignOut: _signOut,
+              ),
+            ),
+          ),
+          onSupportCases: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => CustomerHelpScreen(
+                  controller: _complaints,
+                  isProvider: true,
+                ),
               ),
             );
+          },
+          onSignOut: _signOut,
+        ),
+      );
+    }
+    unawaited(_bookings.startRealtime());
+    return AppShell(
+      statusBanner: _realtimeStatusBanner(),
+      controller: _customerShellController,
+      activeBookingIsland: _customerActiveBookingIsland(),
+      customerHome: ServiceDiscoveryScreen(
+        controller: _discovery,
+        onGroupServices: _openGroupServices,
+        locationController: _location,
+        bookingsController: _bookings,
+        onBookAgain: (booking) => _openRebooking(context, booking),
+        emergencyRepository: EmergencyRepository(
+          _api,
+          accessToken: _auth.validAccessToken,
+        ),
+        onCategorySelected: (category, location) async {
+          final result = await Navigator.of(context).push<dynamic>(
+            MaterialPageRoute(
+              builder: (_) => SubServiceCatalogScreen(
+                category: category,
+                api: _api,
+                initialLocation: location,
+                onProceedToBooking:
+                    (
+                      updatedCategory,
+                      description,
+                      priceMinor,
+                      loc,
+                      items,
+                      pricedItems,
+                    ) async {
+                      final reqResult = await Navigator.of(context)
+                          .push<dynamic>(
+                            MaterialPageRoute(
+                              builder: (_) => ServiceRequestScreen(
+                                category: updatedCategory,
+                                controller: _bookings,
+                                initialLocation: loc,
+                                initialDescription: description,
+                                initialItems: items,
+                                pricedItems: pricedItems,
+                                estimateRepository: PriceEstimateRepository(
+                                  _api,
+                                  accessToken: _auth.validAccessToken,
+                                ),
+                              ),
+                            ),
+                          );
+                      if (reqResult != null && context.mounted) {
+                        Navigator.of(context).pop(reqResult);
+                      }
+                    },
+              ),
+            ),
+          );
+          if (result is CustomerBooking && context.mounted) {
+            Navigator.of(context).push(_bookingRoute(result));
+          } else if (result == true && context.mounted) {
+            showFixBanner(
+              ScaffoldMessenger.of(context),
+              tone: FixBannerTone.success,
+              title: 'Request created',
+              message: 'We are finding an eligible provider.',
+            );
           }
-          unawaited(_bookings.startRealtime());
-          return AppShell(
-            statusBanner: _realtimeStatusBanner(),
-            controller: _customerShellController,
-            activeBookingIsland: _customerActiveBookingIsland(),
-            customerHome: ServiceDiscoveryScreen(
-              controller: _discovery,
-              onGroupServices: _openGroupServices,
-              locationController: _location,
-              bookingsController: _bookings,
-              onBookAgain: (booking) => _openRebooking(context, booking),
-              emergencyRepository: EmergencyRepository(
-                _api,
-                accessToken: _auth.validAccessToken,
-              ),
-              onCategorySelected: (category, location) async {
-                final result = await Navigator.of(context).push<dynamic>(
-                  MaterialPageRoute(
-                    builder: (_) => SubServiceCatalogScreen(
-                      category: category,
-                      api: _api,
-                      initialLocation: location,
-                      onProceedToBooking:
-                          (
-                            updatedCategory,
-                            description,
-                            priceMinor,
-                            loc,
-                            items,
-                            pricedItems,
-                          ) async {
-                            final reqResult = await Navigator.of(context)
-                                .push<dynamic>(
-                                  MaterialPageRoute(
-                                    builder: (_) => ServiceRequestScreen(
-                                      category: updatedCategory,
-                                      controller: _bookings,
-                                      initialLocation: loc,
-                                      initialDescription: description,
-                                      initialItems: items,
-                                      pricedItems: pricedItems,
-                                      estimateRepository:
-                                          PriceEstimateRepository(
-                                            _api,
-                                            accessToken: _auth.validAccessToken,
-                                          ),
-                                    ),
-                                  ),
-                                );
-                            if (reqResult != null && context.mounted) {
-                              Navigator.of(context).pop(reqResult);
-                            }
-                          },
-                    ),
-                  ),
-                );
-                if (result is CustomerBooking && context.mounted) {
-                  Navigator.of(context).push(_bookingRoute(result));
-                } else if (result == true && context.mounted) {
-                  showFixBanner(
-                    ScaffoldMessenger.of(context),
-                    tone: FixBannerTone.success,
-                    title: 'Request created',
-                    message: 'We are finding an eligible provider.',
-                  );
-                }
-              },
-              aiRepository: AiRecommendationRepository(
-                _api,
-                _auth.validAccessToken,
-              ),
-              problemAnalysisRepository: ProblemAnalysisRepository(
-                _api,
-                accessToken: _auth.validAccessToken,
-              ),
-              notificationController: _notifications,
-              onBookingSelected: (bookingId) async {
-                if (_bookings.bookings.isEmpty) {
-                  await _bookings.load();
-                }
-                CustomerBooking? match = _bookings.bookings
-                    .where((b) => b.id == bookingId)
-                    .firstOrNull;
-                match ??= _bookings.bookings
-                    .where(
-                      (b) => const {
-                        'ASSIGNED',
-                        'EN_ROUTE',
-                        'IN_PROGRESS',
-                        'REQUESTED',
-                      }.contains(b.status),
-                    )
-                    .firstOrNull;
-                if (match == null) {
-                  try {
-                    match = await _bookings.repository.get(bookingId);
-                  } catch (_) {
-                    return;
-                  }
-                }
-                if (!mounted) return;
-                final nav = _navigatorKey.currentState;
-                if (nav == null) return;
-                nav.push(_bookingRoute(match));
-              },
-              onInvoiceSelected: (InAppNotification notification) {
-                final nav = _navigatorKey.currentState;
-                if (nav == null) return;
-                nav.push(
-                  MaterialPageRoute(
-                    builder: (_) => InvoiceScreen(
-                      gatewayCheckout: _gatewayCheckout,
-                      repository: InvoiceRepository(
+        },
+        aiRepository: AiRecommendationRepository(_api, _auth.validAccessToken),
+        problemAnalysisRepository: ProblemAnalysisRepository(
+          _api,
+          accessToken: _auth.validAccessToken,
+        ),
+        notificationController: _notifications,
+        onBookingSelected: (bookingId) async {
+          if (_bookings.bookings.isEmpty) {
+            await _bookings.load();
+          }
+          CustomerBooking? match = _bookings.bookings
+              .where((b) => b.id == bookingId)
+              .firstOrNull;
+          match ??= _bookings.bookings
+              .where(
+                (b) => const {
+                  'ASSIGNED',
+                  'EN_ROUTE',
+                  'IN_PROGRESS',
+                  'REQUESTED',
+                }.contains(b.status),
+              )
+              .firstOrNull;
+          if (match == null) {
+            try {
+              match = await _bookings.repository.get(bookingId);
+            } catch (_) {
+              return;
+            }
+          }
+          if (!mounted) return;
+          final nav = _navigatorKey.currentState;
+          if (nav == null) return;
+          nav.push(_bookingRoute(match));
+        },
+        onInvoiceSelected: (InAppNotification notification) {
+          final nav = _navigatorKey.currentState;
+          if (nav == null) return;
+          nav.push(
+            MaterialPageRoute(
+              builder: (_) => InvoiceScreen(
+                gatewayCheckout: _gatewayCheckout,
+                repository: InvoiceRepository(
+                  _api,
+                  accessToken: _auth.validAccessToken,
+                ),
+                localPaymentRepository: notification.bookingId == null
+                    ? null
+                    : LocalPaymentRepository(
                         _api,
                         accessToken: _auth.validAccessToken,
                       ),
-                      localPaymentRepository: notification.bookingId == null
-                          ? null
-                          : LocalPaymentRepository(
-                              _api,
-                              accessToken: _auth.validAccessToken,
-                            ),
-                      bookingId: notification.bookingId ?? '',
-                      paymentId: notification.paymentId,
-                    ),
-                  ),
-                );
-              },
-            ),
-            customerProfile: CustomerProfileScreen(
-              controller: _profile,
-              pushController: _push,
-              onSupportCases: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        ComplaintListScreen(controller: _complaints),
-                  ),
-                );
-              },
-              onSignOut: _signOut,
-            ),
-            customerBookings: CustomerBookingsScreen(
-              controller: _bookings,
-              notificationController: _notifications,
-              onStartService: () => _customerShellController.selectDestination(
-                0,
-                destinationCount: 4,
+                bookingId: notification.bookingId ?? '',
+                paymentId: notification.paymentId,
               ),
-              onOpenProfile: () {
-                _customerShellController.selectDestination(
-                  3,
-                  destinationCount: 4,
-                );
-                if (context.mounted) Navigator.of(context).pop();
-              },
-              onInvoiceSelected: (notification) {
-                final nav = _navigatorKey.currentState;
-                if (nav == null) return;
-                nav.push(
-                  MaterialPageRoute(
-                    builder: (_) => InvoiceScreen(
-                      gatewayCheckout: _gatewayCheckout,
-                      repository: InvoiceRepository(
-                        _api,
-                        accessToken: _auth.validAccessToken,
-                      ),
-                      localPaymentRepository: notification.bookingId == null
-                          ? null
-                          : LocalPaymentRepository(
-                              _api,
-                              accessToken: _auth.validAccessToken,
-                            ),
-                      bookingId: notification.bookingId ?? '',
-                      paymentId: notification.paymentId,
-                    ),
-                  ),
-                );
-              },
-              onBookingSelected: (booking) =>
-                  Navigator.of(context).push(_bookingRoute(booking)),
-              onBookAgain: (booking) => _openRebooking(context, booking),
-              schedulesController: _schedules,
-              onOccurrenceConfirmed: () {
-                showFixBanner(
-                  ScaffoldMessenger.of(context),
-                  tone: FixBannerTone.success,
-                  title: 'Visit booked',
-                  message: 'We are finding an eligible provider.',
-                );
-                unawaited(_bookings.load());
-              },
             ),
-            customerHelp: CustomerHelpScreen(controller: _complaints),
           );
         },
       ),
+      customerProfile: CustomerProfileScreen(
+        controller: _profile,
+        pushController: _push,
+        onSupportCases: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => ComplaintListScreen(controller: _complaints),
+            ),
+          );
+        },
+        onSignOut: _signOut,
+      ),
+      customerBookings: CustomerBookingsScreen(
+        controller: _bookings,
+        notificationController: _notifications,
+        onStartService: () =>
+            _customerShellController.selectDestination(0, destinationCount: 4),
+        onOpenProfile: () {
+          _customerShellController.selectDestination(3, destinationCount: 4);
+          if (context.mounted) Navigator.of(context).pop();
+        },
+        onInvoiceSelected: (notification) {
+          final nav = _navigatorKey.currentState;
+          if (nav == null) return;
+          nav.push(
+            MaterialPageRoute(
+              builder: (_) => InvoiceScreen(
+                gatewayCheckout: _gatewayCheckout,
+                repository: InvoiceRepository(
+                  _api,
+                  accessToken: _auth.validAccessToken,
+                ),
+                localPaymentRepository: notification.bookingId == null
+                    ? null
+                    : LocalPaymentRepository(
+                        _api,
+                        accessToken: _auth.validAccessToken,
+                      ),
+                bookingId: notification.bookingId ?? '',
+                paymentId: notification.paymentId,
+              ),
+            ),
+          );
+        },
+        onBookingSelected: (booking) =>
+            Navigator.of(context).push(_bookingRoute(booking)),
+        onBookAgain: (booking) => _openRebooking(context, booking),
+        schedulesController: _schedules,
+        onOccurrenceConfirmed: () {
+          showFixBanner(
+            ScaffoldMessenger.of(context),
+            tone: FixBannerTone.success,
+            title: 'Visit booked',
+            message: 'We are finding an eligible provider.',
+          );
+          unawaited(_bookings.load());
+        },
+      ),
+      customerHelp: CustomerHelpScreen(controller: _complaints),
     );
   }
 
@@ -1480,10 +1523,7 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
             },
           );
         }
-        final tracking = _trackingController(
-          currentBooking.id,
-          currentBooking,
-        );
+        final tracking = _trackingController(currentBooking.id, currentBooking);
         return BookingTrackingScreen(
           controller: tracking,
           chatRepository: _chatRepository,
@@ -1501,10 +1541,12 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
             destinationCount: 4,
           ),
           onCallPressed: (context, id) async {
-            final name = tracking.tracking?.providerName ??
+            final name =
+                tracking.tracking?.providerName ??
                 currentBooking.providerName ??
                 'Service Specialist';
-            final phone = tracking.tracking?.providerPhone ??
+            final phone =
+                tracking.tracking?.providerPhone ??
                 currentBooking.providerPhone;
             await Navigator.of(context).push(
               MaterialPageRoute<void>(

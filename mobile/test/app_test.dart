@@ -106,6 +106,28 @@ void main() {
 
     expect(find.byType(Banner), findsNothing);
   });
+
+  testWidgets(
+    'customer profile icon on Bookings tab switches to Profile without popping the root route',
+    (tester) async {
+      await tester.pumpWidget(_testApp(AppEnvironment.development));
+      await tester.pumpIdle();
+
+      await tester.tap(find.text('Bookings'));
+      await tester.pumpIdle();
+      expect(find.text('No bookings yet'), findsOneWidget);
+
+      await tester.tap(find.bySemanticsLabel('Customer profile'));
+      await tester.pumpIdle();
+
+      expect(tester.takeException(), isNull);
+      final navigation = tester.widget<NavigationBar>(
+        find.byType(NavigationBar),
+      );
+      expect(navigation.selectedIndex, 3);
+      expect(find.text('Profile'), findsWidgets);
+    },
+  );
 }
 
 FixNowApp _testApp(AppEnvironment environment) => FixNowApp(

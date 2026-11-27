@@ -837,6 +837,11 @@ bool isAcceptingRequest(String requestId) =>
           : 'That request is no longer available. Refresh to try another.';
       notifyListeners();
       return false;
+    } catch (_) {
+      actionError =
+          'The request could not be accepted. Check your connection and try again.';
+      notifyListeners();
+      return false;
     }
   }
 

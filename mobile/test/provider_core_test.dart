@@ -595,6 +595,63 @@ void main() {
   );
 
   testWidgets(
+    'incoming emergency request screen closes cleanly after Accept Emergency without black screen',
+    (tester) async {
+      final transport = _ProviderTransport(verified: true);
+      final controller = ProviderController(
+        ProviderRepository(api: transport, accessToken: () async => 'token'),
+      );
+      await controller.load(verified: true);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData.dark(),
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: Center(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      fullscreenDialog: true,
+                      builder: (_) => ProviderIncomingRequestScreen(
+                        providerController: controller,
+                        requestData: const {
+                          'bookingId': 'request-1',
+                          'serviceCategoryId': 'emergency',
+                          'description': 'Major burst pipe',
+                          'type': 'booking:provider:REQUESTED',
+                          'isEmergency': 'true',
+                          'createdAt': '2026-08-14T10:00:00.000Z',
+                          'priceMinor': '0',
+                        },
+                      ),
+                    ),
+                  ),
+                  child: const Text('Underlying Provider Home'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Underlying Provider Home'));
+      await tester.pumpAndSettle();
+      expect(find.text('Urgent Emergency Request'), findsOneWidget);
+      expect(find.text('Accept Emergency'), findsOneWidget);
+
+      await tester.tap(find.text('Accept Emergency'));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Urgent Emergency Request'), findsNothing);
+      expect(find.text('Underlying Provider Home'), findsOneWidget);
+      expect(controller.jobs.any((j) => j.id == 'request-1'), isTrue);
+    },
+  );
+
+  testWidgets(
     'provider home does not report success after an acceptance conflict',
     (tester) async {
       final transport = _ProviderTransport(
@@ -692,7 +749,7 @@ void main() {
   });
 
   testWidgets(
-    'verified provider sees notification banner when unread alerts exist and can open notification',
+    'verified provider hides inline notification bar and opens notifications from header bell',
     (tester) async {
       tester.view.physicalSize = const Size(800, 2400);
       tester.view.devicePixelRatio = 1.0;
@@ -722,88 +779,24 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Provider Notification Banner should be displayed with the unread notification
-      expect(find.text('Booking Confirmed & Assigned'), findsOneWidget);
-      expect(find.text('NEW'), findsOneWidget);
-      expect(find.text('View Booking'), findsOneWidget);
+      // Inline notification banner should not appear on ProviderHomeScreen
+      expect(find.text('Booking Confirmed & Assigned'), findsNothing);
+      expect(find.text('View Booking'), findsNothing);
 
-      // Tap on the notification banner
+      // Opening from the header notification bell still shows and opens alerts
+      await tester.tap(
+        find.bySemanticsLabel(RegExp('Activity and notifications')),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Booking Confirmed & Assigned'), findsOneWidget);
+
       await tester.tap(find.text('Booking Confirmed & Assigned'));
       await tester.pumpAndSettle();
 
       expect(openedBooking, 'booking-seed-1');
+      notifController.dispose();
     },
   );
-
-  testWidgets('provider notification banner keeps readable title text', (
-    tester,
-  ) async {
-    final controller = _loadedVerifiedController();
-    final notifRepo = NotificationRepository(
-      api: _ProviderNotificationTransport(),
-      accessToken: () async => 'token',
-    );
-    final notifController = NotificationController(notifRepo);
-    await notifController.load();
-
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: ThemeData.dark(),
-        home: Scaffold(
-          body: ProviderHomeScreen(
-            controller: controller,
-            notificationController: notifController,
-          ),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    final title = tester.widget<Text>(
-      find.text('Booking Confirmed & Assigned'),
-    );
-    expect(title.style?.color, AppColors.textPrimary);
-    notifController.dispose();
-  });
-
-  testWidgets('verified provider can dismiss notification banner', (
-    tester,
-  ) async {
-    tester.view.physicalSize = const Size(800, 2400);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(tester.view.resetPhysicalSize);
-
-    final controller = _loadedVerifiedController();
-    final notifRepo = NotificationRepository(
-      api: _ProviderNotificationTransport(),
-      accessToken: () async => 'token',
-    );
-    final notifController = NotificationController(notifRepo);
-    await notifController.load();
-
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: ThemeData.dark(),
-        home: Scaffold(
-          body: ProviderHomeScreen(
-            controller: controller,
-            notificationController: notifController,
-          ),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.text('Booking Confirmed & Assigned'), findsOneWidget);
-
-    // Tap dismiss (close icon button)
-    await tester.tap(find.byTooltip('Dismiss notification'));
-    await tester.pumpAndSettle();
-
-    // That notification is dismissed/marked read, so the next unread notification appears
-    expect(find.text('Booking Confirmed & Assigned'), findsNothing);
-    expect(find.text('Seasonal Home Checkup'), findsOneWidget);
-  });
 
   test(
     'on-site adjustment sends drafts and refreshes the job totals',

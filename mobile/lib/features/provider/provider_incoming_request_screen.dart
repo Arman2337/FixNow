@@ -127,8 +127,15 @@ class _ProviderIncomingRequestScreenState
     _isClosing = true;
     _cancelNativeNotification();
     unawaited(_stopAudioSafely());
-    if (mounted && Navigator.of(context).canPop()) {
-      Navigator.of(context).pop();
+    if (!mounted) return;
+    final route = ModalRoute.of(context);
+    final nav = Navigator.of(context);
+    if (route != null && !route.isFirst && route.isActive) {
+      if (route.isCurrent) {
+        if (nav.canPop()) nav.pop();
+      } else {
+        nav.removeRoute(route);
+      }
     }
   }
 
@@ -162,7 +169,12 @@ class _ProviderIncomingRequestScreenState
     }
     setState(() => _isAccepting = true);
 
-    final accepted = await widget.providerController.acceptRequest(request);
+    bool accepted = false;
+    try {
+      accepted = await widget.providerController.acceptRequest(request);
+    } catch (_) {
+      accepted = false;
+    }
     if (!mounted) return;
     if (!accepted) {
       setState(() => _isAccepting = false);

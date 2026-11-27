@@ -5,6 +5,7 @@ import 'package:fixnow_mobile/design_system/app_spacing.dart';
 import 'package:fixnow_mobile/design_system/app_typography.dart';
 import 'package:fixnow_mobile/design_system/fix_button.dart';
 import 'package:fixnow_mobile/design_system/fix_card.dart';
+import 'package:fixnow_mobile/design_system/fix_components.dart';
 import 'package:fixnow_mobile/design_system/fix_motion.dart';
 import 'package:fixnow_mobile/features/bookings/booking.dart';
 import 'package:flutter/material.dart';
@@ -63,73 +64,57 @@ class FixRebookRow extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Expanded(
-              child: Semantics(
-                header: true,
-                child: Text(
-                  'Book again',
-                  style: FixNowTypography.heading3.copyWith(
-                    color: AppColors.textOnSurface,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            // Flexible (not a bare Text) so the supporting copy wraps or
-            // clips at large text scale instead of overflowing the row.
-            Flexible(
-              child: Text(
-                'Your recent services, one tap away',
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.end,
-                style: FixNowTypography.caption.copyWith(
-                  color: AppColors.textOnSurfaceMuted,
-                ),
-              ),
-            ),
-          ],
+        const FixSectionHeader(
+          title: 'Book again',
+          subtitle: 'Your recent services, one tap away',
         ),
         const SizedBox(height: AppSpacing.md),
-        // A Wrap, not a horizontal ListView: the row lives inside Home's
-        // vertical scroll, and a horizontal viewport there would demand an
-        // unbounded height. Wrapping also keeps the row correct at any text
-        // scale — cards grow taller instead of clipping.
-        Wrap(
-          spacing: AppSpacing.sm,
-          runSpacing: AppSpacing.sm,
-          children: [
-            for (var index = 0; index < completed.length; index += 1)
-              FixScaleIn(
-                delay: AppMotion.staggerStep * index,
-                child: SizedBox(
-                  width: 208,
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(minHeight: 116),
-                    child: FixCard(
-                      semanticLabel:
-                          'Book again: ${categoryName(completed[index].serviceCategoryId)}',
-                      child: _RebookCardBody(
-                        booking: completed[index],
-                        categoryLabel:
-                            categoryName(completed[index].serviceCategoryId),
-                        onBookAgain: onBookAgain,
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final maxW = constraints.maxWidth.isFinite
+                ? constraints.maxWidth
+                : 360.0;
+            final cardWidth = completed.length == 1
+                ? maxW
+                : (maxW < 252 ? maxW : 216.0);
+            return SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              clipBehavior: Clip.none,
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (var index = 0; index < completed.length; index += 1) ...[
+                      if (index > 0) const SizedBox(width: AppSpacing.sm),
+                      FixScaleIn(
+                        delay: AppMotion.staggerStep * index,
+                        child: SizedBox(
+                          width: cardWidth,
+                          child: FixCard(
+                            semanticLabel:
+                                'Book again: ${categoryName(completed[index].serviceCategoryId)}',
+                            child: _RebookCardBody(
+                              booking: completed[index],
+                              categoryLabel:
+                                  categoryName(completed[index].serviceCategoryId),
+                              onBookAgain: onBookAgain,
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
+                    ],
+                  ],
                 ),
               ),
-          ],
+            );
+          },
         ),
       ],
     );
   }
 }
 
-/// One rebook offer: service, how long ago it was completed, and the CTA.
+/// One rebook offer: service, scope summary, completion age, and the CTA.
 class _RebookCardBody extends StatelessWidget {
   const _RebookCardBody({
     required this.booking,
@@ -143,9 +128,9 @@ class _RebookCardBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final description = booking.description.trim();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
       children: [
         Row(
           children: [
@@ -180,7 +165,19 @@ class _RebookCardBody extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: AppSpacing.xs + 2),
+        if (description.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            description,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: FixNowTypography.bodySmall.copyWith(
+              color: AppColors.textOnSurfaceSecondary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+        const SizedBox(height: AppSpacing.xs),
         Text(
           fixRebookAgeLabel(booking.createdAt),
           maxLines: 1,
@@ -190,10 +187,11 @@ class _RebookCardBody extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppSpacing.md),
+        const Spacer(),
         FixButton(
           label: 'Book again',
           variant: FixButtonVariant.primary,
-          height: 40,
+          height: 48,
           expand: true,
           onPressed: () => onBookAgain(booking),
         ),

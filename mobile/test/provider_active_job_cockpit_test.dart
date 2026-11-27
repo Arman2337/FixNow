@@ -705,6 +705,42 @@ void main() {
       expect(find.text('₹1177.64'), findsOneWidget);
     });
   });
+
+  testWidgets(
+    'cockpit shows clear status and hides location placeholder for cancelled emergency jobs',
+    (tester) async {
+      final controller = ProviderController(_FakeProviderRepository());
+      final job = CustomerBooking(
+        id: '21e26d95-0000-4000-8000-000000000001',
+        serviceCategoryId: 'cat-emergency',
+        serviceCategoryName: 'Emergency Repair',
+        status: 'CANCELLED',
+        description: 'Burst pipe leak',
+        createdAt: DateTime(2026, 11, 27, 9),
+        version: 2,
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.light,
+          home: ProviderActiveJobCockpitScreen(
+            job: job,
+            controller: controller,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('CANCELLED'), findsOneWidget);
+      expect(find.text('STATUS UNAVAILABLE'), findsNothing);
+      expect(find.text('Customer location unavailable'), findsNothing);
+      expect(
+        find.text('Customer address hidden after closure'),
+        findsOneWidget,
+      );
+      expect(find.text('Job Cancelled'), findsOneWidget);
+    },
+  );
 }
 
 double _contrastRatio(Color foreground, Color background) =>

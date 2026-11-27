@@ -1300,10 +1300,8 @@ class _FixNowAppState extends State<FixNowApp> with WidgetsBindingObserver {
         notificationController: _notifications,
         onStartService: () =>
             _customerShellController.selectDestination(0, destinationCount: 4),
-        onOpenProfile: () {
-          _customerShellController.selectDestination(3, destinationCount: 4);
-          if (context.mounted) Navigator.of(context).pop();
-        },
+        onOpenProfile: () =>
+            _customerShellController.selectDestination(3, destinationCount: 4),
         onInvoiceSelected: (notification) {
           final nav = _navigatorKey.currentState;
           if (nav == null) return;

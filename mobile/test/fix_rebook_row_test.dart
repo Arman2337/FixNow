@@ -72,7 +72,7 @@ void main() {
         ),
       ),
     );
-    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
 
     // Section header plus at most three cards; the fourth booking is dropped.
     expect(find.text('Your recent services, one tap away'), findsOneWidget);
@@ -93,7 +93,7 @@ void main() {
         ),
       ),
     );
-    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
 
     final cta = find.widgetWithText(FilledButton, 'Book again');
     expect(cta, findsOneWidget);
@@ -112,7 +112,7 @@ void main() {
         ),
       ),
     );
-    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
     expect(find.text('Completed today'), findsOneWidget);
   });
 
@@ -146,9 +146,48 @@ void main() {
         ),
       ),
     );
-    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
     // The card still renders; long values clip rather than overflow.
     expect(tester.takeException(), isNull);
     expect(find.byType(FixCard), findsOneWidget);
+  });
+
+  testWidgets('multiple bookings render side-by-side horizontally without stacking vertically', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light,
+        home: Scaffold(
+          body: SizedBox(
+            width: 390,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: FixRebookRow(
+                bookings: [
+                  _booking(id: 'a', description: 'Tap & Mixer Repair'),
+                  _booking(id: 'b', categoryId: 'cat-electrical', description: 'Ceiling Fan Fix'),
+                  _booking(id: 'c', description: 'Drain Clog Removal'),
+                ],
+                categoryName: (id) => id == 'cat-electrical' ? 'Electrical' : 'Plumbing',
+                onBookAgain: (_) {},
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final cards = tester.widgetList<FixCard>(find.byType(FixCard)).toList();
+    expect(cards.length, 3);
+    final firstY = tester.getTopLeft(find.byType(FixCard).at(0)).dy;
+    final secondY = tester.getTopLeft(find.byType(FixCard).at(1)).dy;
+    final firstX = tester.getTopLeft(find.byType(FixCard).at(0)).dx;
+    final secondX = tester.getTopLeft(find.byType(FixCard).at(1)).dx;
+    expect(secondY, firstY);
+    expect(secondX, greaterThan(firstX));
+    expect(find.text('Tap & Mixer Repair'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }

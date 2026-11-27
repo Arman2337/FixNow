@@ -21,7 +21,7 @@ import 'package:fixnow_mobile/features/services/sub_service_item.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-String providerStatusLabel(String status) => switch (status) {
+String providerStatusLabel(String status) => switch (status.trim().toUpperCase()) {
   'REQUESTED' => 'Requested',
   'ASSIGNED' => 'Assigned',
   'EN_ROUTE' => 'En route',
@@ -410,6 +410,8 @@ class _ProviderActiveJobCockpitScreenState
       pillColor = AppColors.primary;
     } else if (job.status == 'IN_PROGRESS' || job.status == 'ASSIGNED') {
       pillColor = const Color(0xFFa36700);
+    } else if (job.status == 'CANCELLED') {
+      pillColor = AppColors.danger;
     }
 
     return Container(
@@ -577,6 +579,9 @@ class _ProviderActiveJobCockpitScreenState
                                 Text(
                                   job.locationLatitude != null
                                       ? 'Location Available'
+                                      : (job.status == 'CANCELLED' ||
+                                            job.status == 'COMPLETED')
+                                      ? 'Customer address hidden after closure'
                                       : 'Address on file',
                                   style: const TextStyle(
                                     color: AppColors.textSecondary,
@@ -605,25 +610,28 @@ class _ProviderActiveJobCockpitScreenState
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
-                if (!hasNavigationDestination(job))
-                  Container(
-                    height: 110,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceContainer,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    alignment: Alignment.center,
-                    child: const Text(
-                      'Customer location unavailable',
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 12,
+                if (hasNavigationDestination(job) ||
+                    (job.status != 'CANCELLED' &&
+                        job.status != 'COMPLETED')) ...[
+                  const SizedBox(height: 4),
+                  if (!hasNavigationDestination(job))
+                    Container(
+                      height: 110,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceContainer,
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                    ),
-                  )
-                else
+                      alignment: Alignment.center,
+                      child: const Text(
+                        'Customer location unavailable',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                        ),
+                      ),
+                    )
+                  else
                   InkWell(
                     onTap: () => _openMaps(job),
                     child: Container(
@@ -759,6 +767,7 @@ class _ProviderActiveJobCockpitScreenState
                       ),
                     ),
                   ),
+                ],
               ],
             ),
           ),
@@ -1113,6 +1122,73 @@ class _ProviderActiveJobCockpitScreenState
               'Great work! Payment has been processed and added to your ledger.',
               textAlign: TextAlign.center,
               style: TextStyle(color: AppColors.success, fontSize: 13),
+            ),
+          ],
+        ),
+      );
+    }
+    if (job.status == 'CANCELLED') {
+      return Container(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          color: AppColors.danger.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          children: const [
+            Icon(
+              Icons.cancel_outlined,
+              color: AppColors.danger,
+              size: 40,
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Job Cancelled',
+              style: TextStyle(
+                color: AppColors.danger,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            SizedBox(height: 4),
+            Text(
+              'This booking was cancelled. No further action is required.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (job.status == 'REQUESTED') {
+      return Container(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceContainer,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          children: const [
+            Icon(
+              Icons.radar_rounded,
+              color: AppColors.primary,
+              size: 36,
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Awaiting Provider Acceptance',
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            SizedBox(height: 4),
+            Text(
+              'Accept this request from Provider Home to unlock customer details and dispatch actions.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
             ),
           ],
         ),
